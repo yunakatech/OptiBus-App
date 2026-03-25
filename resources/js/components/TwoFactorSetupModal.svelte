@@ -90,6 +90,7 @@
             showVerificationStep = true;
             await tick();
             pinInputContainerRef?.querySelector('input')?.focus();
+
             return;
         }
 
@@ -109,6 +110,7 @@
     $effect(() => {
         if (!isOpen) {
             resetModalState();
+
             return;
         }
 
@@ -275,8 +277,9 @@
                                     </InputOTPGroup>
                                 </InputOTP>
                                 <InputError
-                                    message={formErrors
-                                        ?.confirmTwoFactorAuthentication?.code}
+                                    message={formErrors?.[
+                                        'confirmTwoFactorAuthentication.code'
+                                    ]}
                                 />
                             </div>
 
