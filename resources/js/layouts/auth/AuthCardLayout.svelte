@@ -1,7 +1,9 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
-    import AppLogoIcon from '@/components/AppLogoIcon.svelte';
+    import GlobalConfirmDialog from '@/components/GlobalConfirmDialog.svelte';
+    import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay.svelte';
+    import ToastContainer from '@/components/ToastContainer.svelte';
     import {
         Card,
         CardContent,
@@ -30,11 +32,13 @@
             href={home()}
             class="flex items-center gap-2 self-center font-medium"
         >
-            <div class="flex h-9 w-9 items-center justify-center">
-                <AppLogoIcon
-                    class="size-9 fill-current text-black dark:text-white"
-                />
-            </div>
+            <img
+                src="/branding/qbus-logo-full.png"
+                alt="Qbus Booking & Operations Workspace"
+                class="h-auto w-[220px] object-contain"
+                loading="eager"
+                decoding="async"
+            />
         </Link>
 
         <div class="flex flex-col gap-6">
@@ -51,4 +55,7 @@
             </Card>
         </div>
     </div>
+    <GlobalLoadingOverlay />
+    <GlobalConfirmDialog />
+    <ToastContainer />
 </div>

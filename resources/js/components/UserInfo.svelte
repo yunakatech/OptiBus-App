@@ -4,6 +4,7 @@
         AvatarFallback,
         AvatarImage,
     } from '@/components/ui/avatar';
+    import { resolveAvatarUrl } from '@/lib/avatar';
     import { getInitials } from '@/lib/initials';
     import type { User } from '@/types';
 
@@ -15,13 +16,11 @@
         showEmail?: boolean;
     } = $props();
 
-    const showAvatar = $derived(user.avatar && user.avatar !== '');
+    const avatarUrl = $derived(resolveAvatarUrl(user.avatar, user.name));
 </script>
 
 <Avatar class="h-8 w-8 overflow-hidden rounded-lg">
-    {#if showAvatar}
-        <AvatarImage src={user.avatar!} alt={user.name} />
-    {/if}
+    <AvatarImage src={avatarUrl} alt={user.name} />
     <AvatarFallback class="rounded-lg text-black dark:text-white">
         {getInitials(user.name)}
     </AvatarFallback>

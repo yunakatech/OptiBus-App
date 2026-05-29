@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { Link, page } from '@inertiajs/svelte';
+    import { Link } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
-    import AppLogoIcon from '@/components/AppLogoIcon.svelte';
     import { home } from '@/routes';
 
     let {
@@ -14,7 +13,6 @@
         children?: Snippet;
     } = $props();
 
-    const name = $derived(page.props.name);
 </script>
 
 <div
@@ -28,8 +26,13 @@
             href={home()}
             class="relative z-20 flex items-center text-lg font-medium"
         >
-            <AppLogoIcon class="mr-2 size-8 fill-current text-white" />
-            {name}
+            <img
+                src="/branding/qbus-logo-full.png"
+                alt="Qbus Booking & Operations Workspace"
+                class="h-auto w-[240px] object-contain"
+                loading="eager"
+                decoding="async"
+            />
         </Link>
     </div>
     <div class="lg:p-8">

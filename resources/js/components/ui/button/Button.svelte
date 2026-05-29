@@ -17,7 +17,7 @@
     };
 
     const base =
-        'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+        'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:[html[data-density=compact]_&]:text-[13px]';
 
     const variants: Record<Variant, string> = {
         default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
@@ -31,10 +31,11 @@
     };
 
     const sizes: Record<Size, string> = {
-        default: 'h-9 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-10 rounded-md px-8',
-        icon: 'h-9 w-9',
+        default:
+            'h-9 px-4 py-2 md:[html[data-density=compact]_&]:h-8 md:[html[data-density=compact]_&]:px-3.5',
+        sm: 'h-8 rounded-md px-3 text-xs md:[html[data-density=compact]_&]:h-7 md:[html[data-density=compact]_&]:px-2.5',
+        lg: 'h-10 rounded-md px-8 md:[html[data-density=compact]_&]:h-9 md:[html[data-density=compact]_&]:px-6',
+        icon: 'h-9 w-9 md:[html[data-density=compact]_&]:h-8 md:[html[data-density=compact]_&]:w-8',
     };
 
     let {

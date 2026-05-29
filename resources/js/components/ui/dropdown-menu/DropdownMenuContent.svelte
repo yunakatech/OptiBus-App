@@ -18,7 +18,32 @@
         children?: Snippet;
     } = $props();
 
-    const { open, setOpen } = getContext<DropdownMenuContext>(DROPDOWN_MENU_CONTEXT);
+    const { open, setOpen, triggerElement, setContentElement } = getContext<DropdownMenuContext>(DROPDOWN_MENU_CONTEXT);
+    let contentElement = $state<HTMLDivElement | null>(null);
+
+    const portal = (node: HTMLElement) => {
+        if (typeof document === 'undefined') {
+            return {};
+        }
+
+        document.body.appendChild(node);
+
+        return {
+            destroy() {
+                if (node.parentNode) {
+                    node.parentNode.removeChild(node);
+                }
+            },
+        };
+    };
+
+    $effect(() => {
+        setContentElement(contentElement);
+
+        return () => {
+            setContentElement(null);
+        };
+    });
 
     const alignClasses: Record<string, string> = {
         start: 'left-0',
@@ -36,6 +61,25 @@
     const close = () => setOpen(false);
 
     const offsetStyle = () => {
+        const trigger = triggerElement();
+        if (trigger && typeof window !== 'undefined') {
+            const rect = trigger.getBoundingClientRect();
+            const vertical =
+                side === 'top'
+                    ? `bottom: ${Math.max(window.innerHeight - rect.top + sideOffset, 8)}px;`
+                    : `top: ${Math.min(rect.bottom + sideOffset, window.innerHeight - 8)}px;`;
+
+            if (align === 'end') {
+                return `${vertical} right: ${Math.max(window.innerWidth - rect.right, 8)}px;`;
+            }
+
+            if (align === 'center') {
+                return `${vertical} left: ${rect.left + rect.width / 2}px; transform: translateX(-50%);`;
+            }
+
+            return `${vertical} left: ${Math.max(rect.left, 8)}px;`;
+        }
+
         switch (side) {
             case 'top':
                 return `margin-bottom: ${sideOffset}px;`;
@@ -51,10 +95,12 @@
 
 {#if open()}
     <div
+        bind:this={contentElement}
+        use:portal
         class={cn(
-            'absolute z-50 min-w-48 rounded-md border bg-popover p-2 text-popover-foreground shadow-md',
-            alignClasses[align] ?? alignClasses.start,
-            sideClasses[side] ?? sideClasses.bottom,
+            'fixed z-50 min-w-48 rounded-md border bg-popover p-2 text-popover-foreground shadow-md',
+            triggerElement() ? '' : (alignClasses[align] ?? alignClasses.start),
+            triggerElement() ? '' : (sideClasses[side] ?? sideClasses.bottom),
             className,
         )}
         style={offsetStyle()}

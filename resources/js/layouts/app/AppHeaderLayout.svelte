@@ -3,7 +3,10 @@
     import AppContent from '@/components/AppContent.svelte';
     import AppHeader from '@/components/AppHeader.svelte';
     import AppShell from '@/components/AppShell.svelte';
-    import { Toaster } from '@/components/ui/sonner';
+    import GlobalConfirmDialog from '@/components/GlobalConfirmDialog.svelte';
+    import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay.svelte';
+    import MobileBottomNav from '@/components/MobileBottomNav.svelte';
+    import ToastContainer from '@/components/ToastContainer.svelte';
     import type { BreadcrumbItem } from '@/types';
 
     let {
@@ -17,8 +20,11 @@
 
 <AppShell variant="header">
     <AppHeader {breadcrumbs} />
-    <AppContent variant="header">
+    <AppContent variant="header" class="overflow-x-hidden pb-24 md:pb-0">
         {@render children?.()}
     </AppContent>
-    <Toaster />
+    <MobileBottomNav />
+    <GlobalLoadingOverlay />
+    <GlobalConfirmDialog />
+    <ToastContainer />
 </AppShell>

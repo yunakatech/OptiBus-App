@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import { getContext } from 'svelte';
+    import { cn } from '@/lib/utils';
     import { DROPDOWN_MENU_CONTEXT, type DropdownMenuContext } from './context';
 
     type TriggerProps = {
@@ -12,18 +13,36 @@
 
     let {
         asChild = false,
+        class: className = '',
         children,
-    }: { asChild?: boolean; children?: Snippet<[TriggerProps]> } = $props();
+    }: { asChild?: boolean; class?: string; children?: Snippet<[TriggerProps]> } = $props();
 
-    const { open, setOpen } = getContext<DropdownMenuContext>(DROPDOWN_MENU_CONTEXT);
+    const { open, setOpen, setTriggerElement } = getContext<DropdownMenuContext>(DROPDOWN_MENU_CONTEXT);
+    let triggerElement = $state<HTMLElement | null>(null);
 
-    const handleClick = () => setOpen(!open());
+    $effect(() => {
+        setTriggerElement(triggerElement);
+    });
+
+    const handleClick = (event?: MouseEvent) => {
+        event?.stopPropagation();
+        setOpen(!open());
+    };
+
 </script>
 
 {#if asChild}
-    {@render children?.({ onclick: handleClick, 'aria-expanded': open(), 'data-state': open() ? 'open' : 'closed' })}
+    <span
+        bind:this={triggerElement}
+        class={cn('inline-flex', className)}
+        role="presentation"
+        data-state={open() ? 'open' : 'closed'}
+        onclick={handleClick}
+    >
+        {@render children?.({ onclick: handleClick, 'aria-expanded': open(), 'data-state': open() ? 'open' : 'closed' })}
+    </span>
 {:else}
-    <button type="button" onclick={handleClick} aria-expanded={open()}>
+    <button type="button" class={className} bind:this={triggerElement} onclick={handleClick} aria-expanded={open()} data-state={open() ? 'open' : 'closed'}>
         {@render children?.({})}
     </button>
 {/if}

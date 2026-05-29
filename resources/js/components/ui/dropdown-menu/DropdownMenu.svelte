@@ -14,11 +14,21 @@
         children?: Snippet;
     } = $props();
     let menuElement: HTMLDivElement | null = null;
+    let triggerElement: HTMLElement | null = null;
+    let contentElement: HTMLElement | null = null;
 
     const context: DropdownMenuContext = {
         open: () => open,
         setOpen: (value: boolean) => {
             open = value;
+        },
+        triggerElement: () => triggerElement,
+        setTriggerElement: (value: HTMLElement | null) => {
+            triggerElement = value;
+        },
+        contentElement: () => contentElement,
+        setContentElement: (value: HTMLElement | null) => {
+            contentElement = value;
         },
     };
 
@@ -29,7 +39,7 @@
             if (!open || !menuElement) return;
 
             const target = event.target as Node | null;
-            if (target && !menuElement.contains(target)) {
+            if (target && !menuElement.contains(target) && !contentElement?.contains(target)) {
                 open = false;
             }
         };

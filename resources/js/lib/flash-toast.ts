@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/svelte';
-import { toast } from 'svelte-sonner';
+import { showToast } from '@/lib/toast';
 import type { FlashToast } from '@/types/ui';
 
 export function initializeFlashToast(): void {
@@ -11,6 +11,6 @@ export function initializeFlashToast(): void {
             return;
         }
 
-        toast[data.type](data.message);
+        showToast(data.type, data.message);
     });
 }
