@@ -1,22 +1,16 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:22-bookworm-slim AS frontend
-
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
-COPY components.json tsconfig.json vite.config.ts ./
-COPY public ./public
-COPY resources ./resources
-COPY scripts ./scripts
-
-RUN npm run build
+FROM node:22-bookworm-slim AS node_runtime
 
 FROM php:8.3-cli-bookworm AS app
 
 WORKDIR /var/www/html
+
+COPY --from=node_runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node_runtime /usr/local/bin/npm /usr/local/bin/npm
+COPY --from=node_runtime /usr/local/bin/npx /usr/local/bin/npx
+COPY --from=node_runtime /usr/local/bin/corepack /usr/local/bin/corepack
+COPY --from=node_runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -37,10 +31,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
-COPY . .
-COPY --from=frontend /app/public/build ./public/build
+COPY package.json package-lock.json ./
+RUN npm ci
 
-RUN php artisan package:discover --ansi \
+COPY . .
+
+RUN APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= npm run build \
+    && APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= php artisan package:discover --ansi \
     && mkdir -p \
         bootstrap/cache \
         storage/app/public \
