@@ -7,9 +7,6 @@ FROM php:8.3-cli-bookworm AS app
 WORKDIR /var/www/html
 
 COPY --from=node_runtime /usr/local/bin/node /usr/local/bin/node
-COPY --from=node_runtime /usr/local/bin/npm /usr/local/bin/npm
-COPY --from=node_runtime /usr/local/bin/npx /usr/local/bin/npx
-COPY --from=node_runtime /usr/local/bin/corepack /usr/local/bin/corepack
 COPY --from=node_runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 RUN apt-get update \
@@ -24,6 +21,8 @@ RUN apt-get update \
         libzip-dev \
         unzip \
     && docker-php-ext-install bcmath intl mbstring pdo_pgsql \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
