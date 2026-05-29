@@ -1,0 +1,324 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Support\ActivityLog;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+
+class OperationsApiController extends Controller
+{
+    public function charterRoutes(): JsonResponse
+    {
+        $routes = DB::table('master_carter')
+            ->orderBy('name')
+            ->get(['id', 'name', 'origin', 'destination', 'duration', 'rental_price', 'bop_price']);
+
+        return $this->ok(['routes' => $routes]);
+    }
+
+    public function segments(Request $request): JsonResponse
+    {
+        $routeName = trim((string) $request->query('route_name', ''));
+
+        $query = DB::table('segments as s')
+            ->leftJoin('routes as r', 's.route_id', '=', 'r.id')
+            ->select(['s.id', 's.rute', 's.harga']);
+
+        if ($routeName !== '') {
+            $query->where('r.name', $routeName);
+        }
+
+        $segments = $query->orderBy('s.rute')->get();
+        return $this->ok(['segments' => $segments]);
+    }
+
+    public function segmentPrice(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $price = DB::table('segments')->where('id', $validated['id'])->value('harga');
+        return $this->ok(['price' => (float) ($price ?? 0)]);
+    }
+
+    public function units(): JsonResponse
+    {
+        $units = DB::table('units')
+            ->where('status', 'Aktif')
+            ->orderBy('nopol')
+            ->get(['id', 'nopol', 'merek', 'type', 'kapasitas']);
+
+        return $this->ok(['units' => $units]);
+    }
+
+    public function drivers(): JsonResponse
+    {
+        $drivers = DB::table('drivers')
+            ->orderBy('nama')
+            ->get(['id', 'nama', 'phone']);
+
+        return $this->ok(['drivers' => $drivers]);
+    }
+
+    public function luggageServices(): JsonResponse
+    {
+        $services = DB::table('luggage_services')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return $this->ok(['services' => $services]);
+    }
+
+    public function searchCustomers(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '' || mb_strlen($q) < 2) {
+            return $this->ok(['customers' => []]);
+        }
+
+        $cacheKey = 'ops:customer-search:'.md5(mb_strtolower($q));
+        $customers = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($q) {
+            $phoneQuery = preg_replace('/\D+/', '', $q) ?? '';
+            $qLower = mb_strtolower($q);
+            $like = '%'.$qLower.'%';
+            $rawLike = '%'.$q.'%';
+            $phoneLike = $phoneQuery !== '' ? '%'.$phoneQuery.'%' : '';
+            $phoneExact = $phoneQuery;
+
+            return DB::table('customers')
+                ->select(['name', 'phone', 'pickup_point', 'address'])
+                ->where(function ($query) use ($like, $rawLike, $phoneQuery, $phoneLike) {
+                    $query->whereRaw("LOWER(COALESCE(name, '')) LIKE ?", [$like])
+                        ->orWhere('phone', 'like', $rawLike)
+                        ->orWhereRaw("LOWER(COALESCE(pickup_point, '')) LIKE ?", [$like]);
+
+                    if ($phoneQuery !== '') {
+                        $query->orWhereRaw("REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), ' ', ''), '-', ''), '+', '') LIKE ?", [$phoneLike]);
+                    }
+                })
+                ->orderByRaw(
+                    "CASE
+                        WHEN REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), ' ', ''), '-', ''), '+', '') = ? THEN 0
+                        WHEN LOWER(COALESCE(name, '')) = ? THEN 1
+                        ELSE 2
+                    END",
+                    [$phoneExact, $qLower]
+                )
+                ->orderBy('name')
+                ->limit(20)
+                ->get();
+        });
+
+        return $this->ok(['customers' => $customers]);
+    }
+
+    public function submitCharter(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'company_name' => ['nullable', 'string', 'max:180'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'start_date' => ['required', 'date_format:Y-m-d'],
+            'end_date' => ['required', 'date_format:Y-m-d'],
+            'departure_time' => ['nullable', 'date_format:H:i'],
+            'pickup_point' => ['nullable', 'string', 'max:180'],
+            'drop_point' => ['nullable', 'string', 'max:180'],
+            'unit_id' => ['required', 'integer', 'min:1'],
+            'driver_name' => ['nullable', 'string', 'max:120'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'layanan' => ['nullable', 'string', 'max:120'],
+            'bop_price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $id = DB::table('charters')->insertGetId([
+            'name' => strtoupper(trim((string) $data['name'])),
+            'company_name' => $this->nullableString($data['company_name'] ?? null),
+            'phone' => $this->nullableString($data['phone'] ?? null),
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'departure_time' => ! empty($data['departure_time']) ? $data['departure_time'].':00' : null,
+            'pickup_point' => $this->nullableString($data['pickup_point'] ?? null),
+            'drop_point' => $this->nullableString($data['drop_point'] ?? null),
+            'unit_id' => (int) $data['unit_id'],
+            'driver_name' => $this->nullableString($data['driver_name'] ?? null),
+            'price' => (float) ($data['price'] ?? 0),
+            'layanan' => $this->nullableString($data['layanan'] ?? null) ?? 'Regular',
+            'bop_price' => (float) ($data['bop_price'] ?? 0),
+            'created_at' => now(),
+        ]);
+
+        return $this->ok([
+            'message' => 'Charter submitted successfully',
+            'charter_id' => $id,
+        ], 201);
+    }
+
+    public function submitLuggage(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'sender_name' => ['required', 'string', 'max:120'],
+            'sender_phone' => ['required', 'string', 'max:30'],
+            'sender_address' => ['nullable', 'string'],
+            'receiver_name' => ['required', 'string', 'max:120'],
+            'receiver_phone' => ['required', 'string', 'max:30'],
+            'receiver_address' => ['nullable', 'string'],
+            'service_id' => ['nullable', 'integer', 'min:1'],
+            'layanan_id' => ['nullable', 'integer', 'min:1'],
+            'rute_id' => ['nullable', 'integer', 'min:1'],
+            'tanggal' => ['nullable', 'date_format:Y-m-d'],
+            'unit_id' => ['nullable', 'integer', 'min:1'],
+            'quantity' => ['nullable', 'integer', 'min:1'],
+            'notes' => ['nullable', 'string'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'payment_status' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $serviceId = (int) ($data['service_id'] ?? $data['layanan_id'] ?? 0);
+        $routeId = (int) ($data['rute_id'] ?? 0);
+        $senderName = strtoupper(trim((string) $data['sender_name']));
+        $receiverName = strtoupper(trim((string) $data['receiver_name']));
+        $senderPhone = $this->normalizePhone((string) $data['sender_phone']);
+        $receiverPhone = $this->normalizePhone((string) $data['receiver_phone']);
+        $senderAddress = $this->nullableString($data['sender_address'] ?? null);
+        $receiverAddress = $this->nullableString($data['receiver_address'] ?? null);
+        $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim');
+        $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima');
+        $mappedPrice = $this->resolveMappedLuggagePrice($routeId, $serviceId);
+        $inputPrice = (float) ($data['price'] ?? 0);
+        $resolvedPrice = $inputPrice > 0 ? $inputPrice : $mappedPrice;
+        $routeName = $routeId > 0 ? (string) (DB::table('routes')->where('id', $routeId)->value('name') ?? '') : '';
+
+        $id = DB::table('luggages')->insertGetId([
+            'sender_name' => $senderName,
+            'sender_phone' => $senderPhone,
+            'sender_address' => $senderAddress,
+            'receiver_name' => $receiverName,
+            'receiver_phone' => $receiverPhone,
+            'receiver_address' => $receiverAddress,
+            'service_id' => $serviceId > 0 ? $serviceId : null,
+            'layanan_id' => $serviceId > 0 ? $serviceId : null,
+            'rute_id' => $routeId > 0 ? $routeId : null,
+            'rute' => $routeName !== '' ? $routeName : null,
+            'tanggal' => $data['tanggal'] ?? now()->toDateString(),
+            'unit_id' => isset($data['unit_id']) ? (int) $data['unit_id'] : null,
+            'pengirim_id' => $pengirimId > 0 ? $pengirimId : null,
+            'penerima_id' => $penerimaId > 0 ? $penerimaId : null,
+            'quantity' => max(1, (int) ($data['quantity'] ?? 1)),
+            'notes' => $this->nullableString($data['notes'] ?? null),
+            'price' => $resolvedPrice,
+            'status' => $this->luggageReceivedStatus(),
+            'payment_status' => $this->nullableString($data['payment_status'] ?? null) ?? 'Belum Bayar',
+            'kode_resi' => $this->nextLuggageResi(),
+            'created_at' => now(),
+        ]);
+
+        $resi = (string) (DB::table('luggages')->where('id', $id)->value('kode_resi') ?? '');
+        if ($resi !== '' && DB::getSchemaBuilder()->hasTable('bagasi_logs')) {
+            DB::table('bagasi_logs')->insert([
+                'kode_resi' => $resi,
+                'status' => $this->luggageReceivedStatus(),
+                'notes' => $this->luggageReceivedStatus(),
+                'created_by_username' => auth()->user()?->email ?? auth()->user()?->name ?? 'system',
+                'created_at' => now(),
+            ]);
+        }
+
+        ActivityLog::write(
+            'BAGASI',
+            'Bagasi '.$resi.' - '.$this->luggageReceivedStatus(),
+            $this->luggageReceivedStatus(),
+            (string) (auth()->user()?->email ?? auth()->user()?->name ?? 'system'),
+            ['kode_resi' => $resi, 'status' => $this->luggageReceivedStatus()],
+        );
+
+        return $this->ok([
+            'message' => 'Luggage shipment saved successfully',
+            'luggage_id' => $id,
+            'kode_resi' => $resi,
+        ], 201);
+    }
+
+    private function nullableString(?string $value): ?string
+    {
+        $v = trim((string) ($value ?? ''));
+        return $v === '' ? null : $v;
+    }
+
+    private function normalizePhone(string $value): string
+    {
+        $trimmed = trim($value);
+        $digits = preg_replace('/\D+/', '', $trimmed) ?? '';
+        return $digits !== '' ? $digits : $trimmed;
+    }
+
+    private function upsertCustomerBagasi(string $nama, string $noHp, ?string $alamat, string $tipe): int
+    {
+        if ($noHp === '') {
+            return 0;
+        }
+
+        $existing = DB::table('customer_bagasi')->where('no_hp', $noHp)->first(['id', 'tipe']);
+        if ($existing) {
+            $existingTipe = strtolower((string) ($existing->tipe ?? ''));
+            $nextTipe = $existingTipe;
+            if ($existingTipe !== $tipe && $existingTipe !== 'keduanya') {
+                $nextTipe = 'keduanya';
+            }
+            DB::table('customer_bagasi')->where('id', (int) $existing->id)->update([
+                'nama' => $nama,
+                'alamat' => $alamat,
+                'tipe' => $nextTipe === '' ? $tipe : $nextTipe,
+            ]);
+            return (int) $existing->id;
+        }
+
+        return (int) DB::table('customer_bagasi')->insertGetId([
+            'nama' => $nama,
+            'no_hp' => $noHp,
+            'alamat' => $alamat,
+            'tipe' => $tipe,
+            'created_at' => now(),
+        ]);
+    }
+
+    private function resolveMappedLuggagePrice(int $routeId, int $serviceId): float
+    {
+        return 0;
+    }
+
+    private function nextLuggageResi(): string
+    {
+        $date = now()->format('Ymd');
+        $prefix = "BGS-{$date}-";
+        $last = (string) (DB::table('luggages')
+            ->where('kode_resi', 'like', "{$prefix}%")
+            ->orderByDesc('id')
+            ->value('kode_resi') ?? '');
+
+        $seq = 1;
+        if ($last !== '') {
+            $parts = explode('-', $last);
+            $tail = (int) end($parts);
+            if ($tail > 0) {
+                $seq = $tail + 1;
+            }
+        }
+
+        return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function luggageReceivedStatus(): string
+    {
+        return 'Diterima';
+    }
+
+    private function ok(array $data = [], int $status = 200): JsonResponse
+    {
+        return response()->json(array_merge(['success' => true], $data), $status);
+    }
+}

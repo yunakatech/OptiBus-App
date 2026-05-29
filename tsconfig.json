@@ -122,5 +122,8 @@
         "resources/js/**/*.ts",
         "resources/js/**/*.d.ts",
         "resources/js/**/*.svelte"
+    ],
+    "exclude": [
+        "resources/js/actions/App/Http/Controllers/BookingController.ts"
     ]
 }

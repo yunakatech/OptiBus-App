@@ -90,83 +90,126 @@
 }
 
 :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
+    --background: hsl(210 33% 98%);
+    --foreground: hsl(218 36% 14%);
+    --card: hsl(210 33% 99%);
+    --card-foreground: hsl(218 36% 14%);
+    --popover: hsl(210 33% 99%);
+    --popover-foreground: hsl(218 36% 14%);
+    --primary: hsl(201 96% 32%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(210 27% 93%);
+    --secondary-foreground: hsl(218 32% 22%);
+    --muted: hsl(210 25% 95%);
+    --muted-foreground: hsl(217 16% 41%);
+    --accent: hsl(194 92% 95%);
+    --accent-foreground: hsl(201 88% 26%);
     --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
-    --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(214 24% 86%);
+    --input: hsl(214 24% 86%);
+    --ring: hsl(201 96% 40%);
+    --chart-1: hsl(201 96% 36%);
+    --chart-2: hsl(173 84% 32%);
+    --chart-3: hsl(31 92% 48%);
+    --chart-4: hsl(146 73% 33%);
+    --chart-5: hsl(16 82% 53%);
+    --radius: 0.75rem;
+    --sidebar-background: hsl(210 30% 97%);
+    --sidebar-foreground: hsl(218 30% 20%);
+    --sidebar-primary: hsl(201 96% 32%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(194 88% 94%);
+    --sidebar-accent-foreground: hsl(201 88% 26%);
+    --sidebar-border: hsl(214 24% 86%);
+    --sidebar-ring: hsl(201 96% 40%);
+    --sidebar: hsl(210 30% 97%);
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
-    --accent-foreground: hsl(0 0% 98%);
+    --background: hsl(221 47% 9%);
+    --foreground: hsl(210 40% 96%);
+    --card: hsl(221 44% 12%);
+    --card-foreground: hsl(210 40% 96%);
+    --popover: hsl(221 44% 12%);
+    --popover-foreground: hsl(210 40% 96%);
+    --primary: hsl(193 94% 68%);
+    --primary-foreground: hsl(222 47% 12%);
+    --secondary: hsl(218 30% 18%);
+    --secondary-foreground: hsl(210 40% 96%);
+    --muted: hsl(218 28% 16%);
+    --muted-foreground: hsl(215 20% 70%);
+    --accent: hsl(214 32% 20%);
+    --accent-foreground: hsl(202 94% 84%);
     --destructive: hsl(0 84% 60%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(240 5.9% 10%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(217 27% 22%);
+    --input: hsl(217 27% 22%);
+    --ring: hsl(193 94% 68%);
+    --chart-1: hsl(193 94% 68%);
+    --chart-2: hsl(168 76% 52%);
+    --chart-3: hsl(36 92% 66%);
+    --chart-4: hsl(146 67% 58%);
+    --chart-5: hsl(15 82% 62%);
+    --sidebar-background: hsl(222 41% 10%);
+    --sidebar-foreground: hsl(210 40% 94%);
+    --sidebar-primary: hsl(193 94% 68%);
+    --sidebar-primary-foreground: hsl(222 47% 12%);
+    --sidebar-accent: hsl(218 28% 16%);
+    --sidebar-accent-foreground: hsl(202 94% 84%);
+    --sidebar-border: hsl(217 27% 22%);
+    --sidebar-ring: hsl(193 94% 68%);
+    --sidebar: hsl(222 41% 10%);
 }
 
 @layer base {
     * {
         @apply border-border outline-ring/50;
     }
+    html {
+        @apply antialiased;
+    }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background font-sans text-foreground leading-relaxed;
+    }
+    h1,
+    h2,
+    h3,
+    h4 {
+        @apply font-semibold tracking-tight text-foreground;
+    }
+    a {
+        @apply text-primary underline-offset-4 transition-colors;
+    }
+    a:hover {
+        @apply text-primary/80;
+    }
+    ::selection {
+        @apply bg-primary/20 text-foreground;
+    }
+}
+
+@layer components {
+    @media (min-width: 768px) {
+        html[data-density='compact'] [data-slot='sidebar-inset'] table th,
+        html[data-density='compact'] [data-slot='sidebar-inset'] table td {
+            @apply px-2.5 py-1.5 text-[13px] leading-tight;
+        }
+
+        html[data-density='compact']
+            [data-slot='sidebar-inset']
+            input:not([type='checkbox']):not([type='radio']),
+        html[data-density='compact'] [data-slot='sidebar-inset'] select,
+        html[data-density='compact'] [data-slot='sidebar-inset'] textarea {
+            @apply text-[13px];
+        }
+
+        html[data-density='compact'] [data-slot='sidebar-inset'] h1 {
+            @apply text-xl;
+        }
+
+        html[data-density='compact'] [data-slot='sidebar-inset'] h2 {
+            @apply text-lg;
+        }
     }
 }

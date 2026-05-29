@@ -21,6 +21,7 @@ export default defineConfig({
         tailwindcss(),
         svelte(),
         wayfinder({
+            command: 'node scripts/generate-wayfinder.mjs',
             formVariants: true,
         }),
     ],

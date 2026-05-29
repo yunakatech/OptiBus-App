@@ -12,33 +12,880 @@
 </script>
 
 <script lang="ts">
+    import { ArrowRight, BusFront, Copy, Package, Ticket, TrendingDown, TrendingUp, Wallet } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
-    import PlaceholderPattern from '@/components/PlaceholderPattern.svelte';
+    import { Badge } from '@/components/ui/badge';
+    import { Button } from '@/components/ui/button';
+    import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+    type DashboardStats = {
+        total_bookings: number;
+        pending: number;
+        confirmed: number;
+        canceled: number;
+        live_fleet: number;
+        revenue_today: number;
+        revenue_booking_month: number;
+        revenue_charter_month: number;
+        revenue_luggage_month: number;
+        revenue_total_today: number;
+        revenue_total_month: number;
+        revenue_total_year: number;
+        top_route: string;
+        top_route_count: number;
+    };
+
+    type SummaryScopeStats = {
+        total_bookings: number;
+        revenue_booking: number;
+        revenue_charter: number;
+        revenue_luggage: number;
+    };
+
+    type SummaryPeriodMeta = {
+        current_label: string;
+        previous_label: string;
+        subtitle_label: string;
+    };
+
+    type TrendItem = {
+        label: string;
+        date?: string;
+        name?: string;
+        revenue: number;
+        booking_revenue?: number;
+        charter_revenue?: number;
+        luggage_revenue?: number;
+    };
+
+    type ActivityItem = {
+        title: string;
+        meta: string;
+        tag: string;
+        time: string;
+    };
+
+    type DepartureItem = {
+        rute: string;
+        tanggal: string;
+        jam: string;
+        unit: number;
+        total_bookings: number;
+        driver_name: string;
+        bookings: Array<{
+            seat: string;
+            name: string;
+            phone: string;
+            pickup_point: string;
+            gmaps: string;
+            pembayaran: string;
+        }>;
+    };
+
+    type UpcomingCharterItem = {
+        id: number;
+        name: string;
+        company_name: string | null;
+        phone: string | null;
+        start_date: string;
+        end_date: string;
+        departure_time: string | null;
+        pickup_point: string;
+        drop_point: string;
+        driver_name: string | null;
+        payment_status: string | null;
+        layanan: string | null;
+        status: string | null;
+        day_diff: number;
+        date_label: string;
+    };
+
+    type UpcomingCharterReminder = {
+        total: number;
+        visible_count: number;
+        items: UpcomingCharterItem[];
+    };
+
+    let {
+        stats,
+        dailyTrend = [],
+        monthlyTrend = [],
+        recentActivity = [],
+        departuresToday = [],
+        upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
+        recentActivityTotal = 0,
+        recentActivityVisibleCount = 0,
+        summaryStatsByScope = {
+            day: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+            month: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+            year: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+        },
+        summaryComparisonByScope = {
+            day: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+            month: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+            year: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+        },
+        summaryPeriodByScope = {
+            day: { current_label: 'Hari Ini', previous_label: 'Kemarin', subtitle_label: 'hari ini' },
+            month: { current_label: 'Bulan Ini', previous_label: 'Bulan Lalu', subtitle_label: 'bulan ini' },
+            year: { current_label: 'Tahun Ini', previous_label: 'Tahun Lalu', subtitle_label: 'tahun ini' },
+        },
+    }: {
+        stats: DashboardStats;
+        dailyTrend?: TrendItem[];
+        monthlyTrend?: TrendItem[];
+        recentActivity?: ActivityItem[];
+        departuresToday?: DepartureItem[];
+        upcomingCharterReminder?: UpcomingCharterReminder;
+        recentActivityTotal?: number;
+        recentActivityVisibleCount?: number;
+        summaryStatsByScope?: Record<'day' | 'month' | 'year', SummaryScopeStats>;
+        summaryComparisonByScope?: Record<'day' | 'month' | 'year', SummaryScopeStats>;
+        summaryPeriodByScope?: Record<'day' | 'month' | 'year', SummaryPeriodMeta>;
+    } = $props();
+
+    const maxDaily = $derived(Math.max(1, ...dailyTrend.map((item) => Number(item.revenue || 0))));
+    const maxMonthly = $derived(Math.max(1, ...monthlyTrend.map((item) => Number(item.revenue || 0))));
+    const upcomingCharterOverflow = $derived(
+        Math.max(Number(upcomingCharterReminder.total || 0) - Number(upcomingCharterReminder.visible_count || 0), 0),
+    );
+    const recentActivityOverflow = $derived(Math.max(Number(recentActivityTotal || 0) - Number(recentActivityVisibleCount || 0), 0));
+
+    const dailyKey = (row: TrendItem) => `daily-${row.label}-${row.date ?? ''}`;
+    const monthlyKey = (row: TrendItem) => `month-${row.label}-${row.name ?? ''}`;
+
+    let selectedDailyKey = $state<string>('');
+    let selectedMonthlyKey = $state<string>('');
+    let selectedSummaryScope = $state<'day' | 'month' | 'year'>('month');
+
+    const selectedDaily = $derived.by(() => dailyTrend.find((row) => dailyKey(row) === selectedDailyKey) ?? null);
+    const selectedMonthly = $derived.by(
+        () => monthlyTrend.find((row) => monthlyKey(row) === selectedMonthlyKey) ?? null,
+    );
+    const activeSummaryStats = $derived(summaryStatsByScope[selectedSummaryScope] ?? summaryStatsByScope.month);
+    const activeSummaryComparison = $derived(
+        summaryComparisonByScope[selectedSummaryScope] ?? summaryComparisonByScope.month,
+    );
+    const activeSummaryPeriod = $derived(summaryPeriodByScope[selectedSummaryScope] ?? summaryPeriodByScope.month);
+
+    const toCurrency = (value: number) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+    const normalizeJam = (value: string) => String(value || '').trim();
+    const formatDepartDateTime = (tanggal: string, jam: string) => {
+        const date = new Date(`${tanggal}T00:00:00`);
+        const dateLabel = Number.isNaN(date.getTime())
+            ? tanggal
+            : date.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+              });
+        const jamLabel = normalizeJam(jam).replace(':', '.');
+
+        return `${dateLabel} - ${jamLabel}`;
+    };
+
+    const charterReminderTag = (item: UpcomingCharterItem) => {
+        if (Number(item.day_diff) <= 0) {
+            return 'Hari Ini';
+        }
+
+        if (Number(item.day_diff) === 1) {
+            return 'Besok';
+        }
+
+        return `H-${item.day_diff}`;
+    };
+
+    const formatCompactNumber = (value: number) => Number(value || 0).toLocaleString('id-ID');
+
+    const metricTrend = (current: number, previous: number, formatter: (value: number) => string) => {
+        const delta = Number(current || 0) - Number(previous || 0);
+        const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+        const percent = previous > 0 ? Math.abs((delta / previous) * 100) : null;
+        const percentLabel = percent === null ? (current > 0 ? 'Baru' : '0%') : `${percent.toFixed(1).replace('.0', '')}%`;
+
+        return {
+            delta,
+            direction,
+            label:
+                direction === 'flat'
+                    ? `Stabil vs ${activeSummaryPeriod.previous_label}`
+                    : `${direction === 'up' ? 'Naik' : 'Turun'} ${percentLabel} vs ${activeSummaryPeriod.previous_label}`,
+            detail:
+                direction === 'flat'
+                    ? formatter(previous)
+                    : `${delta > 0 ? '+' : '-'}${formatter(Math.abs(delta))}`,
+        };
+    };
+
+    const metricBars = (current: number, previous: number) => {
+        const max = Math.max(Number(current || 0), Number(previous || 0), 1);
+
+        return {
+            previous: Math.max(previous > 0 ? Math.round((previous / max) * 100) : 10, 10),
+            current: Math.max(current > 0 ? Math.round((current / max) * 100) : 10, 10),
+        };
+    };
+
+    const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
+    const selectDailyOnMobile = (row: TrendItem) => {
+        if (isMobileViewport()) {
+            const key = dailyKey(row);
+            selectedDailyKey = selectedDailyKey === key ? '' : key;
+        }
+    };
+    const selectMonthlyOnMobile = (row: TrendItem) => {
+        if (isMobileViewport()) {
+            const key = monthlyKey(row);
+            selectedMonthlyKey = selectedMonthlyKey === key ? '' : key;
+        }
+    };
+    const updateSummaryScope = (scope: 'day' | 'month' | 'year') => {
+        selectedSummaryScope = scope;
+    };
+
+    const trendBreakdown = (row: TrendItem) => [
+        { label: 'Booking', value: Number(row.booking_revenue || 0) },
+        { label: 'Carter', value: Number(row.charter_revenue || 0) },
+        { label: 'Bagasi', value: Number(row.luggage_revenue || 0) },
+    ];
+
+    const dailySelectedClass = (row: TrendItem) =>
+        selectedDailyKey === dailyKey(row) ? 'ring-2 ring-primary/35 bg-primary/5' : '';
+    const monthlySelectedClass = (row: TrendItem) =>
+        selectedMonthlyKey === monthlyKey(row) ? 'ring-2 ring-emerald-500/35 bg-emerald-500/5' : '';
+
+    const dashboardMetricCards = () => [
+        {
+            key: 'bookings',
+            title: 'Booking Active',
+            subtitle: `Keberangkatan ${activeSummaryPeriod.subtitle_label}`,
+            value: `${formatCompactNumber(activeSummaryStats.total_bookings)}`,
+            href: '/bookings',
+            cta: 'Buka Data Keberangkatan',
+            periodLabel: activeSummaryPeriod.current_label,
+            trend: metricTrend(activeSummaryStats.total_bookings, activeSummaryComparison.total_bookings, formatCompactNumber),
+            compareBars: metricBars(activeSummaryStats.total_bookings, activeSummaryComparison.total_bookings),
+            icon: BusFront,
+            shellClass: 'border-cyan-200/80 bg-[linear-gradient(135deg,rgba(236,254,255,0.98),rgba(224,242,254,0.92))]',
+            iconClass: 'border-cyan-200/70 bg-cyan-500/12 text-cyan-700',
+            valueClass: 'text-cyan-950',
+            barClass: 'bg-cyan-500/75',
+            noteClass: 'text-cyan-700/80',
+        },
+        {
+            key: 'booking-revenue',
+            title: 'Revenue Booking',
+            subtitle: `Pendapatan keberangkatan ${activeSummaryPeriod.subtitle_label}`,
+            value: toCurrency(activeSummaryStats.revenue_booking),
+            href: '/bookings',
+            cta: 'Buka Menu Booking',
+            periodLabel: activeSummaryPeriod.current_label,
+            trend: metricTrend(activeSummaryStats.revenue_booking, activeSummaryComparison.revenue_booking, toCurrency),
+            compareBars: metricBars(activeSummaryStats.revenue_booking, activeSummaryComparison.revenue_booking),
+            icon: Ticket,
+            shellClass: 'border-emerald-200/80 bg-[linear-gradient(135deg,rgba(240,253,244,0.98),rgba(220,252,231,0.92))]',
+            iconClass: 'border-emerald-200/70 bg-emerald-500/12 text-emerald-700',
+            valueClass: 'text-emerald-950',
+            barClass: 'bg-emerald-500/75',
+            noteClass: 'text-emerald-700/80',
+        },
+        {
+            key: 'charter-revenue',
+            title: 'Revenue Carter',
+            subtitle: `Pendapatan carter ${activeSummaryPeriod.subtitle_label}`,
+            value: toCurrency(activeSummaryStats.revenue_charter),
+            href: '/charters',
+            cta: 'Buka Menu Carter',
+            periodLabel: activeSummaryPeriod.current_label,
+            trend: metricTrend(activeSummaryStats.revenue_charter, activeSummaryComparison.revenue_charter, toCurrency),
+            compareBars: metricBars(activeSummaryStats.revenue_charter, activeSummaryComparison.revenue_charter),
+            icon: Wallet,
+            shellClass: 'border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98),rgba(254,243,199,0.92))]',
+            iconClass: 'border-amber-200/70 bg-amber-500/12 text-amber-700',
+            valueClass: 'text-amber-950',
+            barClass: 'bg-amber-500/75',
+            noteClass: 'text-amber-700/80',
+        },
+        {
+            key: 'luggage-revenue',
+            title: 'Revenue Bagasi',
+            subtitle: `Pendapatan bagasi ${activeSummaryPeriod.subtitle_label}`,
+            value: toCurrency(activeSummaryStats.revenue_luggage),
+            href: '/luggages',
+            cta: 'Buka Menu Bagasi',
+            periodLabel: activeSummaryPeriod.current_label,
+            trend: metricTrend(activeSummaryStats.revenue_luggage, activeSummaryComparison.revenue_luggage, toCurrency),
+            compareBars: metricBars(activeSummaryStats.revenue_luggage, activeSummaryComparison.revenue_luggage),
+            icon: Package,
+            shellClass: 'border-fuchsia-200/80 bg-[linear-gradient(135deg,rgba(253,244,255,0.98),rgba(250,232,255,0.92))]',
+            iconClass: 'border-fuchsia-200/70 bg-fuchsia-500/12 text-fuchsia-700',
+            valueClass: 'text-fuchsia-950',
+            barClass: 'bg-fuchsia-500/75',
+            noteClass: 'text-fuchsia-700/80',
+        },
+    ];
+
+    let copyMessage = $state('');
+    let copyError = $state('');
+    let copyingDepartureKey = $state('');
+
+    const copyText = async (text: string) => {
+        if (
+            typeof navigator !== 'undefined' &&
+            navigator.clipboard &&
+            typeof navigator.clipboard.writeText === 'function' &&
+            window.isSecureContext
+        ) {
+            await navigator.clipboard.writeText(text);
+
+            return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', 'true');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        textarea.style.pointerEvents = 'none';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        if (!copied) {
+            throw new Error('copy_failed');
+        }
+    };
+
+    const departureCopyKey = (item: DepartureItem) => `${item.rute}-${item.jam}-${item.unit}`;
+
+    const departureCopyBlock = (item: DepartureItem) => {
+        const lines = item.bookings.map(
+            (row) =>
+                `- Kursi: ${row.seat || '-'}\n` +
+                `Nama: ${row.name || '-'}\n` +
+                `No. HP: ${row.phone || '-'}\n` +
+                `Titik Jemput: ${row.pickup_point || '-'}\n` +
+                `Gmaps: ${row.gmaps || ''}\n` +
+                `Pembayaran: ${row.pembayaran || '-'}`,
+        );
+
+        return (
+        `Info Pemberangkatan\n` +
+        `Tanggal & Jam: ${formatDepartDateTime(item.tanggal, item.jam)}\n` +
+        `Rute: ${item.rute}\n` +
+        `Total Penumpang: ${item.total_bookings}\n` +
+        `Driver: ${item.driver_name || '-'}\n\n` +
+        lines.join('\n\n')
+        );
+    };
+
+    const copyDepartureData = async (item: DepartureItem) => {
+        const key = departureCopyKey(item);
+        copyingDepartureKey = key;
+        copyMessage = '';
+        copyError = '';
+
+        try {
+            await copyText(departureCopyBlock(item));
+            copyMessage = 'Data jadwal berhasil disalin.';
+        } catch {
+            copyError = 'Gagal menyalin data keberangkatan.';
+        } finally {
+            copyingDepartureKey = '';
+        }
+    };
 </script>
 
 <AppHead title="Dashboard" />
 
-<div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-    <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-        <div
-            class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-        >
-            <PlaceholderPattern />
+<div class="flex h-full flex-1 flex-col gap-2.5 overflow-x-hidden rounded-xl p-3 md:gap-3 md:p-4">
+    <div class="space-y-2">
+        <div class="flex flex-col gap-2 rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-4 py-3 shadow-sm md:flex-row md:items-end md:justify-between">
+            <div class="space-y-1">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ringkasan Dashboard</p>
+                <h2 class="text-lg font-semibold tracking-tight text-foreground">Performa Booking dan Pendapatan</h2>
+            </div>
+            <div class="flex flex-col gap-2 md:items-end">
+                <div class="flex items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground md:self-auto">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Perbandingan vs {activeSummaryPeriod.previous_label}
+                </div>
+                <div class="inline-flex rounded-2xl border border-border/70 bg-white/80 p-1 shadow-sm">
+                    {#each [
+                        { key: 'day', label: 'Hari Ini' },
+                        { key: 'month', label: 'Bulan Ini' },
+                        { key: 'year', label: 'Tahun Ini' },
+                    ] as option (`summary-scope-${option.key}`)}
+                        <button
+                            type="button"
+                            class={`rounded-xl px-3 py-1.5 text-[11px] font-medium transition ${
+                                selectedSummaryScope === option.key
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:bg-muted/60'
+                            }`}
+                            onclick={() => updateSummaryScope(option.key as 'day' | 'month' | 'year')}
+                        >
+                            {option.label}
+                        </button>
+                    {/each}
+                </div>
+            </div>
         </div>
-        <div
-            class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-        >
-            <PlaceholderPattern />
-        </div>
-        <div
-            class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-        >
-            <PlaceholderPattern />
+        <div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+            {#each dashboardMetricCards() as metric (metric.key)}
+                <a href={metric.href} class="block h-full">
+                    <Card
+                        class={`group h-full overflow-hidden border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${metric.shellClass}`}
+                    >
+                        <CardHeader class="gap-3 p-3.5 md:p-4">
+                            {@const MetricIcon = metric.icon}
+                            {@const TrendIcon =
+                                metric.trend.direction === 'up'
+                                    ? TrendingUp
+                                    : metric.trend.direction === 'down'
+                                      ? TrendingDown
+                                      : ArrowRight}
+                            <div class="flex items-start justify-between gap-3">
+                                <div class={`flex h-11 w-11 items-center justify-center rounded-2xl border backdrop-blur ${metric.iconClass}`}>
+                                    <MetricIcon class="h-5 w-5" />
+                                </div>
+                                <div class="rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                    {metric.periodLabel}
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <CardDescription class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                    {metric.title}
+                                </CardDescription>
+                                <p class="line-clamp-1 text-[11px] leading-relaxed text-slate-600">{metric.subtitle}</p>
+                                <CardTitle class={`pt-0 text-xl tracking-tight md:text-2xl ${metric.valueClass}`}>
+                                    {metric.value}
+                                </CardTitle>
+                            </div>
+
+                            <div class="grid gap-2 md:grid-cols-[1.15fr_0.85fr]">
+                                <div class="rounded-2xl border border-white/70 bg-white/60 px-3 py-2">
+                                    <div class={`mb-1.5 flex items-center gap-2 text-[11px] font-semibold ${metric.noteClass}`}>
+                                        <TrendIcon class="h-3.5 w-3.5" />
+                                        <span>{metric.trend.label}</span>
+                                    </div>
+                                    <p class={`text-[11px] font-semibold ${metric.noteClass}`}>{metric.trend.detail}</p>
+                                </div>
+
+                                <div class="rounded-2xl border border-white/70 bg-white/55 px-3 py-2">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500">
+                                                <span class="truncate">{activeSummaryPeriod.previous_label}</span>
+                                                <span>{metric.compareBars.previous}%</span>
+                                            </div>
+                                            <div class="h-1.5 rounded-full bg-white/80">
+                                                <div class="h-1.5 rounded-full bg-slate-300/90" style={`width:${metric.compareBars.previous}%`}></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500">
+                                                <span>{activeSummaryPeriod.current_label}</span>
+                                                <span>{metric.compareBars.current}%</span>
+                                            </div>
+                                            <div class="h-1.5 rounded-full bg-white/80">
+                                                <div class={`h-1.5 rounded-full ${metric.barClass}`} style={`width:${metric.compareBars.current}%`}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between border-t border-white/60 pt-1 text-[10px] font-medium text-slate-600 md:text-[11px]">
+                                <span>{metric.cta}</span>
+                                <ArrowRight class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                            </div>
+                        </CardHeader>
+                    </Card>
+                </a>
+            {/each}
         </div>
     </div>
-    <div
-        class="relative min-h-screen flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
-    >
-        <PlaceholderPattern />
+
+    <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
+        <div class="space-y-2.5 xl:col-span-2">
+            <Card class="h-fit">
+                <CardHeader class="space-y-1 pb-2">
+                    <CardTitle class="text-sm md:text-base">Tren Revenue Harian</CardTitle>
+                    <CardDescription class="text-xs">7 hari terakhir (booking + carter + bagasi)</CardDescription>
+                </CardHeader>
+                <CardContent class="pt-0 pb-3">
+                    {#if selectedDaily}
+                        <div class="mb-3 rounded-2xl border border-primary/15 bg-primary/5 px-3 py-3 text-[11px] md:hidden">
+                            <div class="mb-2 flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-semibold leading-tight text-foreground">{selectedDaily.label} {selectedDaily.date ?? ''}</p>
+                                    <p class="mt-0.5 text-[10px] text-muted-foreground">Total {toCurrency(selectedDaily.revenue)}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="rounded-full border border-primary/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground"
+                                    onclick={() => (selectedDailyKey = '')}
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                            <div class="grid gap-2 sm:grid-cols-3">
+                                {#each trendBreakdown(selectedDaily) as item (`selected-daily-panel-${item.label}`)}
+                                    <div class="rounded-xl border border-primary/10 bg-white/80 px-2.5 py-2">
+                                        <p class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{item.label}</p>
+                                        <p class="mt-1 font-semibold text-foreground">{toCurrency(item.value)}</p>
+                                    </div>
+                                {/each}
+                            </div>
+                            <p class="mt-2 text-[10px] text-muted-foreground">Sentuh batang lain untuk melihat hari yang berbeda.</p>
+                        </div>
+                    {/if}
+                    <div class="grid grid-cols-7 items-end gap-1 md:gap-1.5">
+                        {#each dailyTrend as row (dailyKey(row))}
+                            <div class="flex flex-col items-center justify-end gap-1">
+                                <button
+                                    type="button"
+                                    class={`group relative flex h-11 w-full items-end rounded-sm outline-hidden ring-ring/40 focus-visible:ring-2 md:h-14 ${dailySelectedClass(row)}`}
+                                    style="touch-action: manipulation;"
+                                    onclick={() => selectDailyOnMobile(row)}
+                                    title={`${row.label} ${row.date ?? ''} - ${toCurrency(row.revenue)}`}
+                                    aria-label={`${row.label} ${row.date ?? ''} ${toCurrency(row.revenue)}`}
+                                >
+                                    <div
+                                        class="w-full rounded-sm bg-primary/75 transition-opacity group-hover:opacity-90"
+                                        style={`height:${Math.max(6, Math.round((Number(row.revenue || 0) / maxDaily) * 100))}%`}
+                                    ></div>
+                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
+                                        <p>{row.label} {row.date ?? ''}</p>
+                                        <p class="text-muted-foreground">Total {toCurrency(row.revenue)}</p>
+                                        {#each trendBreakdown(row) as item (`daily-breakdown-${row.label}-${item.label}`)}
+                                            <div class="flex items-center justify-between gap-4 text-[10px] text-muted-foreground">
+                                                <span>{item.label}</span>
+                                                <span>{toCurrency(item.value)}</span>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                </button>
+                                <p class="text-[10px] font-medium leading-none text-muted-foreground md:text-[11px]">{row.label}</p>
+                            </div>
+                        {/each}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card class="h-fit">
+                <CardHeader class="space-y-1 pb-2">
+                    <CardTitle class="text-sm md:text-base">Tren Revenue Bulanan</CardTitle>
+                    <CardDescription class="text-xs">Tahun berjalan</CardDescription>
+                </CardHeader>
+                <CardContent class="pt-0 pb-3">
+                    {#if selectedMonthly}
+                        <div class="mb-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 px-3 py-3 text-[11px] md:hidden">
+                            <div class="mb-2 flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-semibold leading-tight text-foreground">{selectedMonthly.name ?? selectedMonthly.label}</p>
+                                    <p class="mt-0.5 text-[10px] text-muted-foreground">Total {toCurrency(selectedMonthly.revenue)}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="rounded-full border border-emerald-500/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground"
+                                    onclick={() => (selectedMonthlyKey = '')}
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                            <div class="grid gap-2 sm:grid-cols-3">
+                                {#each trendBreakdown(selectedMonthly) as item (`selected-monthly-panel-${item.label}`)}
+                                    <div class="rounded-xl border border-emerald-500/10 bg-white/80 px-2.5 py-2">
+                                        <p class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{item.label}</p>
+                                        <p class="mt-1 font-semibold text-foreground">{toCurrency(item.value)}</p>
+                                    </div>
+                                {/each}
+                            </div>
+                            <p class="mt-2 text-[10px] text-muted-foreground">Sentuh batang lain untuk melihat bulan yang berbeda.</p>
+                        </div>
+                    {/if}
+                    <div class="grid grid-cols-6 gap-1 md:grid-cols-12 md:gap-1.5">
+                        {#each monthlyTrend as row (monthlyKey(row))}
+                            <div class="flex flex-col items-center justify-end gap-1">
+                                <button
+                                    type="button"
+                                    class={`group relative flex h-10 w-full items-end rounded-sm outline-hidden ring-ring/40 focus-visible:ring-2 md:h-12 ${monthlySelectedClass(row)}`}
+                                    style="touch-action: manipulation;"
+                                    onclick={() => selectMonthlyOnMobile(row)}
+                                    title={`${row.name ?? row.label} - ${toCurrency(row.revenue)}`}
+                                    aria-label={`${row.name ?? row.label} ${toCurrency(row.revenue)}`}
+                                >
+                                    <div
+                                        class="w-full rounded-sm bg-emerald-500/75 transition-opacity group-hover:opacity-90"
+                                        style={`height:${Math.max(6, Math.round((Number(row.revenue || 0) / maxMonthly) * 100))}%`}
+                                    ></div>
+                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
+                                        <p>{row.name ?? row.label}</p>
+                                        <p class="text-muted-foreground">Total {toCurrency(row.revenue)}</p>
+                                        {#each trendBreakdown(row) as item (`monthly-breakdown-${row.label}-${item.label}`)}
+                                            <div class="flex items-center justify-between gap-4 text-[10px] text-muted-foreground">
+                                                <span>{item.label}</span>
+                                                <span>{toCurrency(item.value)}</span>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                </button>
+                                <p class="text-[10px] font-medium leading-none text-muted-foreground md:text-[11px]">{row.label}</p>
+                            </div>
+                        {/each}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card class="hidden h-fit xl:block">
+                <CardHeader class="space-y-1 pb-2">
+                    <CardTitle class="text-sm md:text-base">Insight Cepat</CardTitle>
+                    <CardDescription class="text-xs">Snapshot operasional</CardDescription>
+                </CardHeader>
+                <CardContent class="grid gap-2.5 pt-0 text-sm xl:grid-cols-2">
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Rute Teratas</p>
+                        <p class="text-sm font-semibold">{stats.top_route}</p>
+                        <p class="text-xs text-muted-foreground">{stats.top_route_count} booking</p>
+                    </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Armada Aktif Hari Ini</p>
+                        <p class="text-sm font-semibold">{stats.live_fleet} unit</p>
+                    </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Pendapatan Hari Ini</p>
+                        <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_today)}</p>
+                    </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Pendapatan Bulan Ini</p>
+                        <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_month)}</p>
+                    </div>
+                    <div class="rounded-md border p-2.5 xl:col-span-2">
+                        <p class="text-xs text-muted-foreground">Pendapatan Tahun Ini</p>
+                        <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_year)}</p>
+                    </div>
+                </CardContent>
+            </Card>
+
+        </div>
+
+        <div class="space-y-2.5 xl:col-span-1">
+            <Card class="overflow-hidden">
+                <CardHeader class="space-y-1 pb-2">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <CardTitle class="text-sm md:text-base">Info Carter 7 Hari Kedepan</CardTitle>
+                            <CardDescription class="text-xs">Reminder charter terdekat, diurutkan dari tanggal paling dekat</CardDescription>
+                        </div>
+                        {#if upcomingCharterReminder.total > 0}
+                            <Badge variant="secondary">{upcomingCharterReminder.total} data</Badge>
+                        {/if}
+                    </div>
+                </CardHeader>
+                <CardContent class="space-y-2.5 pt-0">
+                    {#if upcomingCharterReminder.items.length === 0}
+                        <div class="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                            Belum ada data carter untuk 7 hari ke depan.
+                        </div>
+                    {:else}
+                        {#each upcomingCharterReminder.items as item (`upcoming-charter-${item.id}`)}
+                            <a
+                                href={`/charters/view/${item.id}`}
+                                class="block rounded-xl border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-3 transition hover:border-cyan-300/70 hover:shadow-sm"
+                            >
+                                <div class="mb-2 flex items-start justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-semibold text-foreground">{item.name}</p>
+                                        <p class="truncate text-[11px] text-muted-foreground">
+                                            {item.company_name || item.phone || 'Customer charter'}
+                                        </p>
+                                    </div>
+                                    <span class="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-700">
+                                        {charterReminderTag(item)}
+                                    </span>
+                                </div>
+                                <div class="space-y-1 text-[11px] text-muted-foreground">
+                                    <p class="font-medium text-foreground">{item.date_label}</p>
+                                    <p>{item.departure_time || '--:--'} • {item.layanan || '-'}</p>
+                                    <p class="truncate">Rute: {item.pickup_point || '-'} → {item.drop_point || '-'}</p>
+                                    <p class="truncate">Driver: {item.driver_name || '-'}</p>
+                                </div>
+                            </a>
+                        {/each}
+                        {#if upcomingCharterOverflow > 0}
+                            <a
+                                href="/charters"
+                                class="flex items-center justify-between rounded-xl border border-dashed border-cyan-300/70 bg-cyan-50/70 px-3 py-2 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100/80"
+                            >
+                                <span>Lihat {upcomingCharterOverflow} reminder lainnya</span>
+                                <span>Ke menu Carter</span>
+                            </a>
+                        {/if}
+                    {/if}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader class="space-y-1 pb-2">
+                    <CardTitle class="text-sm md:text-base">Keberangkatan Hari Ini</CardTitle>
+                    <CardDescription class="text-xs">Data jadwal dari booking aktif hari ini</CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-2.5 pt-0">
+                    {#if copyMessage}
+                        <p class="text-xs text-emerald-600">{copyMessage}</p>
+                    {/if}
+                    {#if copyError}
+                        <p class="text-xs text-destructive">{copyError}</p>
+                    {/if}
+                    {#if departuresToday.length === 0}
+                        <p class="text-xs text-muted-foreground">Belum ada data keberangkatan hari ini.</p>
+                    {:else}
+                        {#each departuresToday as item, idx (`departure-${idx}-${item.rute}-${item.jam}-${item.unit}`)}
+                            <div class="rounded-md border p-2.5">
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <p class="text-xs font-semibold md:text-sm">{item.jam} - Unit {item.unit}</p>
+                                    <Badge variant="secondary">{item.total_bookings} booking</Badge>
+                                </div>
+                                <div class="flex items-end justify-between gap-2">
+                                    <p class="text-xs text-muted-foreground">{item.rute}</p>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        class="h-7 rounded-md px-2 text-[11px]"
+                                        onclick={() => void copyDepartureData(item)}
+                                        disabled={copyingDepartureKey === departureCopyKey(item)}
+                                    >
+                                        <Copy class="mr-1 h-3 w-3" />
+                                        {copyingDepartureKey === departureCopyKey(item)
+                                            ? 'Menyalin...'
+                                            : 'Copy Data'}
+                                    </Button>
+                                </div>
+                            </div>
+                        {/each}
+                    {/if}
+                </CardContent>
+            </Card>
+
+            <Card class="xl:hidden">
+                <CardHeader class="space-y-1 pb-2">
+                    <CardTitle class="text-sm md:text-base">Insight Cepat</CardTitle>
+                    <CardDescription class="text-xs">Snapshot operasional</CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-2.5 pt-0 text-sm">
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Rute Teratas</p>
+                        <p class="text-sm font-semibold">{stats.top_route}</p>
+                        <p class="text-xs text-muted-foreground">{stats.top_route_count} booking</p>
+                    </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Armada Aktif Hari Ini</p>
+                        <p class="text-sm font-semibold">{stats.live_fleet} unit</p>
+                    </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Pendapatan Hari Ini</p>
+                        <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_today)}</p>
+                    </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Pendapatan Bulan Ini</p>
+                        <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_month)}</p>
+                    </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Pendapatan Tahun Ini</p>
+                        <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_year)}</p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card class="hidden h-fit xl:block">
+                <CardHeader class="space-y-1 pb-2">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <CardTitle class="text-sm md:text-base">Aktivitas Terbaru</CardTitle>
+                            <CardDescription class="text-xs">Update terbaru dari sistem</CardDescription>
+                        </div>
+                        {#if recentActivityTotal > 0}
+                            <Badge variant="secondary">{recentActivityTotal} log</Badge>
+                        {/if}
+                    </div>
+                </CardHeader>
+                <CardContent class="pt-0">
+                    {#if recentActivity.length === 0}
+                        <p class="text-xs text-muted-foreground">Belum ada aktivitas.</p>
+                    {:else}
+                        <div class="divide-y divide-border rounded-xl border border-border/70 bg-background/70">
+                            {#each recentActivity as item, idx (`activity-desktop-${idx}-${item.tag}`)}
+                                <div class="flex items-start justify-between gap-3 px-3 py-2.5">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="mb-1 flex items-center gap-2">
+                                            <Badge variant="secondary">{item.tag}</Badge>
+                                        </div>
+                                        <p class="truncate text-sm font-semibold leading-snug text-foreground">{item.title}</p>
+                                        <p class="truncate text-xs leading-relaxed text-muted-foreground">{item.meta}</p>
+                                    </div>
+                                    <span class="shrink-0 text-[11px] text-muted-foreground">{item.time}</span>
+                                </div>
+                            {/each}
+                        </div>
+                        {#if recentActivityOverflow > 0}
+                            <a
+                                href="/admin-ops/cancellations"
+                                class="mt-2.5 flex items-center justify-between rounded-xl border border-dashed border-border/70 bg-muted/25 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted/40"
+                            >
+                                <span>Lihat {recentActivityOverflow} aktivitas lainnya</span>
+                                <span>Ke menu Log</span>
+                            </a>
+                        {/if}
+                    {/if}
+                </CardContent>
+            </Card>
+        </div>
+
+        <Card class="order-last h-fit xl:hidden">
+            <CardHeader class="space-y-1 pb-2">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <CardTitle class="text-sm md:text-base">Aktivitas Terbaru</CardTitle>
+                        <CardDescription class="text-xs">Update terbaru dari sistem</CardDescription>
+                    </div>
+                    {#if recentActivityTotal > 0}
+                        <Badge variant="secondary">{recentActivityTotal} log</Badge>
+                    {/if}
+                </div>
+            </CardHeader>
+            <CardContent class="space-y-2.5 pt-0">
+                {#if recentActivity.length === 0}
+                    <p class="text-xs text-muted-foreground">Belum ada aktivitas.</p>
+                {:else}
+                    {#each recentActivity as item, idx (`activity-mobile-${idx}-${item.tag}`)}
+                        <div class="rounded-md border p-2.5">
+                            <div class="mb-1 flex items-center justify-between gap-2">
+                                <Badge variant="secondary">{item.tag}</Badge>
+                                <span class="text-xs text-muted-foreground">{item.time}</span>
+                            </div>
+                            <p class="text-xs font-semibold md:text-sm">{item.title}</p>
+                            <p class="text-xs text-muted-foreground">{item.meta}</p>
+                        </div>
+                    {/each}
+                    {#if recentActivityOverflow > 0}
+                        <a
+                            href="/admin-ops/cancellations"
+                            class="flex items-center justify-between rounded-xl border border-dashed border-border/70 bg-muted/25 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted/40"
+                        >
+                            <span>Lihat {recentActivityOverflow} aktivitas lainnya</span>
+                            <span>Ke menu Log</span>
+                        </a>
+                    {/if}
+                {/if}
+            </CardContent>
+        </Card>
+
     </div>
 </div>

@@ -55,6 +55,24 @@ export default ts.config(
         },
         rules: {
             'no-undef': 'off',
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector:
+                        "AssignmentExpression[left.object.type='MemberExpression'][left.object.object.name='window'][left.object.property.name='location'][left.property.name='href']",
+                    message: 'Gunakan Inertia router.visit() atau Link untuk navigasi internal, bukan window.location.href.',
+                },
+                {
+                    selector:
+                        "CallExpression[callee.object.type='MemberExpression'][callee.object.object.name='window'][callee.object.property.name='location'][callee.property.name='assign']",
+                    message: 'Gunakan Inertia router.visit() atau Link untuk navigasi internal, bukan window.location.assign().',
+                },
+                {
+                    selector:
+                        "CallExpression[callee.object.type='MemberExpression'][callee.object.object.name='window'][callee.object.property.name='location'][callee.property.name='replace']",
+                    message: 'Gunakan Inertia router.visit() atau Link untuk navigasi internal, bukan window.location.replace().',
+                },
+            ],
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-vars': [
                 'error',

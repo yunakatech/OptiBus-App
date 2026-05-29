@@ -1,16 +1,21 @@
-import type { Appearance, ResolvedAppearance } from '@/types';
+import type { Appearance, Density, ResolvedAppearance } from '@/types';
 
-export type { Appearance, ResolvedAppearance };
+export type { Appearance, Density, ResolvedAppearance };
 
 export type ThemeState = {
     appearance: {
         value: Appearance;
     };
+    density: {
+        value: Density;
+    };
     resolvedAppearance: () => ResolvedAppearance;
     updateAppearance: (value: Appearance) => void;
+    updateDensity: (value: Density) => void;
 };
 
 const appearance = $state<{ value: Appearance }>({ value: 'system' });
+const density = $state<{ value: Density }>({ value: 'compact' });
 
 let themeChangeMediaQuery: MediaQueryList | null = null;
 
@@ -49,6 +54,14 @@ const applyTheme = (value: Appearance): void => {
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 };
 
+const applyDensity = (value: Density): void => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    document.documentElement.dataset.density = value;
+};
+
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
         return 'system';
@@ -59,6 +72,18 @@ const getStoredAppearance = (): Appearance => {
     return stored === 'light' || stored === 'dark' || stored === 'system'
         ? stored
         : 'system';
+};
+
+const getStoredDensity = (): Density => {
+    if (typeof window === 'undefined') {
+        return 'compact';
+    }
+
+    const stored = localStorage.getItem('density');
+
+    return stored === 'compact' || stored === 'comfortable'
+        ? stored
+        : 'compact';
 };
 
 const handleSystemThemeChange = (): void => {
@@ -87,8 +112,15 @@ export function initializeTheme(): () => void {
         setCookie('appearance', 'system');
     }
 
+    if (!localStorage.getItem('density')) {
+        localStorage.setItem('density', 'compact');
+        setCookie('density', 'compact');
+    }
+
     appearance.value = getStoredAppearance();
+    density.value = getStoredDensity();
     applyTheme(appearance.value);
+    applyDensity(density.value);
 
     detachThemeChangeListener();
     themeChangeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -108,10 +140,23 @@ export function updateAppearance(value: Appearance): void {
     applyTheme(value);
 }
 
+export function updateDensity(value: Density): void {
+    density.value = value;
+
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('density', value);
+    }
+
+    setCookie('density', value);
+    applyDensity(value);
+}
+
 export function themeState(): ThemeState {
     return {
         appearance,
+        density,
         resolvedAppearance: getResolvedAppearance,
         updateAppearance,
+        updateDensity,
     };
 }
