@@ -4,7 +4,7 @@
     import { LoadingButton } from '@/components/ui/loading-button';
 
     type LayoutCellType = 'seat' | 'empty' | 'driver';
-    type LayoutPattern = '2-2' | '2-1' | '1-1' | '2-3' | '4-0' | 'sleep' | 'empty';
+    type LayoutPattern = '2-2' | '2-1' | '1-1' | '2-3' | '3-0' | '4-0' | 'sleep' | 'empty';
     type LayoutCell = {
         type: LayoutCellType;
         label: string;
@@ -122,6 +122,7 @@
                         <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('2-2')}>Template 2-2 · Bus Besar</Button>
                         <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('2-1')}>Template 2-1 · Executive</Button>
                         <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('2-3')}>Template 2-3 · High Capacity</Button>
+                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('3-0')}>Template 3-0 · Triple Seat</Button>
                         <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('4-0')}>Template 4-0 · Tanpa Lorong</Button>
                         <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('1-1')}>Template 1-1 · Shuttle</Button>
                         <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('sleep')}>Template Sleep Seat</Button>
@@ -138,6 +139,7 @@
                         <Button type="button" variant="outline" onclick={() => addLayoutRow('2-2')}>+ Baris 2-2</Button>
                         <Button type="button" variant="outline" onclick={() => addLayoutRow('2-1')}>+ Baris 2-1</Button>
                         <Button type="button" variant="outline" onclick={() => addLayoutRow('2-3')}>+ Baris 2-3</Button>
+                        <Button type="button" variant="outline" onclick={() => addLayoutRow('3-0')}>+ Baris 3-0</Button>
                         <Button type="button" variant="outline" onclick={() => addLayoutRow('4-0')}>+ Baris 4-0</Button>
                         <Button type="button" variant="outline" onclick={() => addLayoutRow('1-1')}>+ Baris 1-1</Button>
                         <Button type="button" variant="outline" onclick={() => addLayoutRow('sleep')}>+ Sleep Seat</Button>
@@ -223,6 +225,7 @@
                                                 <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '2-2')}>2-2</Button>
                                                 <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '2-1')}>2-1</Button>
                                                 <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '2-3')}>2-3</Button>
+                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '3-0')}>3-0</Button>
                                                 <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '4-0')}>4-0</Button>
                                                 <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '1-1')}>1-1</Button>
                                                 <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, 'sleep')}>Sleep</Button>

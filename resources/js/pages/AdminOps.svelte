@@ -249,6 +249,7 @@
         | '2-1'
         | '1-1'
         | '2-3'
+        | '3-0'
         | '4-0'
         | 'sleep'
         | 'empty';
@@ -1422,6 +1423,10 @@
             return [seat(), seat(), aisle(), seat(), seat(), seat()];
         }
 
+        if (pattern === '3-0') {
+            return [seat(), seat(), seat()];
+        }
+
         if (pattern === '4-0') {
             return [seat(), seat(), seat(), seat()];
         }
@@ -1521,6 +1526,14 @@
             if (parts.length > 1) {
                 return parts.join('-');
             }
+        }
+
+        if (rowSeatCount(row) === 3) {
+            return '3-0';
+        }
+
+        if (rowSeatCount(row) === 4) {
+            return '4-0';
         }
 
         return `${rowSeatCount(row)} kursi`;
