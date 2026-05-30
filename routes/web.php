@@ -14,6 +14,33 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
 
+Route::get('style.css', function () {
+    $manifestPath = public_path('build/manifest.json');
+
+    if (! file_exists($manifestPath)) {
+        return response('', 200, [
+            'Content-Type' => 'text/css; charset=UTF-8',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ]);
+    }
+
+    $manifest = json_decode((string) file_get_contents($manifestPath), true);
+    $cssFile = $manifest['resources/css/app.css']['file'] ?? null;
+    $cssPath = $cssFile ? public_path('build/'.$cssFile) : null;
+
+    if (! $cssPath || ! file_exists($cssPath)) {
+        return response('', 200, [
+            'Content-Type' => 'text/css; charset=UTF-8',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ]);
+    }
+
+    return response()->file($cssPath, [
+        'Content-Type' => 'text/css; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->name('style.css');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::inertia('menu', 'Menu')->name('menu.index');

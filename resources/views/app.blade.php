@@ -17,6 +17,9 @@
             $manifestVersion = @filemtime(public_path('manifest.json')) ?: time();
         @endphp
 
+        <link rel="preload" href="/style.css" as="style">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="manifest" href="/manifest.json?v={{ $manifestVersion }}">
         <link rel="icon" type="image/svg+xml" href="/favicon.svg?v={{ $faviconVersion }}">
         <link rel="icon" type="image/x-icon" href="/favicon.ico?v={{ $faviconVersion }}" sizes="any">
