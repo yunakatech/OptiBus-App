@@ -35,16 +35,16 @@ RUN npm ci
 
 COPY . .
 
-RUN APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= php artisan package:discover --ansi \
-    && PHP_BINARY=/usr/local/bin/php APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= node scripts/generate-wayfinder.mjs --with-form \
-    && SKIP_WAYFINDER_GENERATE=true npm run build \
-    && mkdir -p \
+RUN mkdir -p \
         bootstrap/cache \
         storage/app/public \
         storage/framework/cache/data \
         storage/framework/sessions \
         storage/framework/views \
         storage/logs \
+    && APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= php artisan package:discover --ansi \
+    && PHP_BINARY=/usr/local/bin/php APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= node scripts/generate-wayfinder.mjs --with-form \
+    && SKIP_WAYFINDER_GENERATE=true npm run build \
     && if [ ! -L public/storage ]; then php artisan storage:link; fi \
     && chown -R www-data:www-data bootstrap/cache public storage \
     && chmod -R ug+rwx bootstrap/cache public storage
