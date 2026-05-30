@@ -401,19 +401,19 @@
 
 <AppHead title="Dashboard" />
 
-<div class="flex h-full flex-1 flex-col gap-2.5 overflow-x-hidden rounded-xl p-3 md:gap-3 md:p-4">
+<div class="flex h-full flex-1 flex-col gap-2 overflow-x-hidden rounded-xl p-2.5 md:gap-3 md:p-4">
     <div class="space-y-2">
-        <div class="flex flex-col gap-2 rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-4 py-3 shadow-sm md:flex-row md:items-end md:justify-between">
-            <div class="space-y-1">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ringkasan Dashboard</p>
-                <h2 class="text-lg font-semibold tracking-tight text-foreground">Performa Booking dan Pendapatan</h2>
+        <div class="flex flex-col gap-2 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-3 py-2.5 shadow-sm md:flex-row md:items-end md:justify-between md:rounded-3xl md:px-4 md:py-3">
+            <div class="space-y-0.5 md:space-y-1">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:text-[11px]">Ringkasan Dashboard</p>
+                <h2 class="text-base font-semibold tracking-tight text-foreground md:text-lg">Performa Booking dan Pendapatan</h2>
             </div>
             <div class="flex flex-col gap-2 md:items-end">
-                <div class="flex items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground md:self-auto">
+                <div class="hidden items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground sm:flex md:self-auto">
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                     Perbandingan vs {activeSummaryPeriod.previous_label}
                 </div>
-                <div class="inline-flex rounded-2xl border border-border/70 bg-white/80 p-1 shadow-sm">
+                <div class="inline-flex rounded-2xl border border-border/70 bg-white/80 p-0.5 shadow-sm md:p-1">
                     {#each [
                         { key: 'day', label: 'Hari Ini' },
                         { key: 'month', label: 'Bulan Ini' },
@@ -421,7 +421,7 @@
                     ] as option (`summary-scope-${option.key}`)}
                         <button
                             type="button"
-                            class={`rounded-xl px-3 py-1.5 text-[11px] font-medium transition ${
+                            class={`rounded-xl px-2.5 py-1.5 text-[10px] font-medium transition md:px-3 md:text-[11px] ${
                                 selectedSummaryScope === option.key
                                     ? 'bg-primary text-primary-foreground shadow-sm'
                                     : 'text-muted-foreground hover:bg-muted/60'
@@ -434,13 +434,13 @@
                 </div>
             </div>
         </div>
-        <div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+        <div class="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-2.5 xl:grid-cols-4">
             {#each dashboardMetricCards() as metric (metric.key)}
                 <a href={metric.href} class="block h-full">
                     <Card
                         class={`group h-full overflow-hidden border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${metric.shellClass}`}
                     >
-                        <CardHeader class="gap-3 p-3.5 md:p-4">
+                        <CardHeader class="gap-2 p-2.5 sm:p-3.5 md:gap-3 md:p-4">
                             {@const MetricIcon = metric.icon}
                             {@const TrendIcon =
                                 metric.trend.direction === 'up'
@@ -448,26 +448,26 @@
                                     : metric.trend.direction === 'down'
                                       ? TrendingDown
                                       : ArrowRight}
-                            <div class="flex items-start justify-between gap-3">
-                                <div class={`flex h-11 w-11 items-center justify-center rounded-2xl border backdrop-blur ${metric.iconClass}`}>
-                                    <MetricIcon class="h-5 w-5" />
+                            <div class="flex items-start justify-between gap-2 md:gap-3">
+                                <div class={`flex h-9 w-9 items-center justify-center rounded-xl border backdrop-blur sm:h-11 sm:w-11 sm:rounded-2xl ${metric.iconClass}`}>
+                                    <MetricIcon class="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
-                                <div class="rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                <div class="hidden rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:block">
                                     {metric.periodLabel}
                                 </div>
                             </div>
 
-                            <div class="space-y-1">
-                                <CardDescription class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            <div class="space-y-0.5 sm:space-y-1">
+                                <CardDescription class="line-clamp-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 sm:text-[11px] sm:tracking-[0.14em]">
                                     {metric.title}
                                 </CardDescription>
-                                <p class="line-clamp-1 text-[11px] leading-relaxed text-slate-600">{metric.subtitle}</p>
-                                <CardTitle class={`pt-0 text-xl tracking-tight md:text-2xl ${metric.valueClass}`}>
+                                <p class="hidden text-[11px] leading-relaxed text-slate-600 sm:line-clamp-1">{metric.subtitle}</p>
+                                <CardTitle class={`break-words pt-0 text-[15px] leading-tight tracking-tight sm:text-xl md:text-2xl ${metric.valueClass}`}>
                                     {metric.value}
                                 </CardTitle>
                             </div>
 
-                            <div class="grid gap-2 md:grid-cols-[1.15fr_0.85fr]">
+                            <div class="hidden gap-2 sm:grid md:grid-cols-[1.15fr_0.85fr]">
                                 <div class="rounded-2xl border border-white/70 bg-white/60 px-3 py-2">
                                     <div class={`mb-1.5 flex items-center gap-2 text-[11px] font-semibold ${metric.noteClass}`}>
                                         <TrendIcon class="h-3.5 w-3.5" />
@@ -500,7 +500,7 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between border-t border-white/60 pt-1 text-[10px] font-medium text-slate-600 md:text-[11px]">
+                            <div class="hidden items-center justify-between border-t border-white/60 pt-1 text-[10px] font-medium text-slate-600 sm:flex md:text-[11px]">
                                 <span>{metric.cta}</span>
                                 <ArrowRight class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                             </div>

@@ -41,7 +41,7 @@
 </script>
 
 <div>
-    <div class="border-b border-sidebar-border/80">
+    <div class="mobile-safe-header-shell border-b border-sidebar-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
         <div class="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
             <MobileSettingsMenuButton class="mr-2" />
 

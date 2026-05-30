@@ -201,6 +201,26 @@
 }
 
 @layer components {
+    .mobile-safe-header-shell {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .mobile-safe-header {
+        min-height: calc(4rem + env(safe-area-inset-top));
+        padding-top: env(safe-area-inset-top);
+    }
+
+    @media (min-width: 768px) {
+        .mobile-safe-header-shell {
+            padding-top: 0;
+        }
+
+        .mobile-safe-header {
+            min-height: 4rem;
+            padding-top: 0;
+        }
+    }
+
     @media (min-width: 768px) {
         html[data-density='compact'] [data-slot='sidebar-inset'] table th,
         html[data-density='compact'] [data-slot='sidebar-inset'] table td {

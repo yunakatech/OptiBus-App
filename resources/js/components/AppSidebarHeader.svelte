@@ -41,7 +41,7 @@
 </script>
 
 <header
-    class="grid h-16 shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-sidebar-border/70 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:[html[data-density=compact]_&]:h-14 md:[html[data-density=compact]_&]:px-4"
+    class="mobile-safe-header grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-sidebar-border/70 bg-background/95 px-4 backdrop-blur transition-[width,height] ease-linear supports-[backdrop-filter]:bg-background/85 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-6 md:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:[html[data-density=compact]_&]:h-14 md:[html[data-density=compact]_&]:px-4"
 >
     <div class="flex min-w-0 items-center gap-2">
         <SidebarTrigger class="-ml-1 hidden md:inline-flex" />
