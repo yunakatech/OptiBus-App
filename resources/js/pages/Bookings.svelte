@@ -5632,39 +5632,39 @@
 
     {#if !listOnly && detailModalOpen && detailSeat}
         <div
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+            class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/55 p-3 sm:items-center sm:p-4"
             role="dialog"
             aria-modal="true"
         >
             <div
-                class="w-full max-w-3xl rounded-2xl border bg-background p-4 shadow-xl md:p-5"
+                class="w-full max-w-2xl overflow-hidden rounded-2xl border bg-background shadow-xl"
             >
                 <div
-                    class="mb-4 flex items-start justify-between gap-3 border-b pb-3"
+                    class="sticky top-0 z-10 mb-4 flex items-start justify-between gap-3 border-b bg-background/95 px-3 pb-3 pt-3 backdrop-blur md:px-5"
                 >
                     <div class="min-w-0 space-y-1">
                         <div class="flex flex-wrap items-center gap-1.5">
                             <Badge
                                 variant="secondary"
-                                class="rounded-full px-2.5 py-0.5 text-[10px]"
+                                class="rounded-full px-2 py-0.5 text-[9px] sm:text-[10px]"
                                 >Detail Penumpang</Badge
                             >
                             <Badge
                                 variant="secondary"
-                                class="rounded-full px-2.5 py-0.5 text-[10px]"
+                                class="rounded-full px-2 py-0.5 text-[9px] sm:text-[10px]"
                                 >Kursi {detailSeat.seat}</Badge
                             >
                             <Badge
                                 variant={paymentVariant(detailSeat.pembayaran)}
-                                class="rounded-full px-2.5 py-0.5 text-[10px]"
+                                class="rounded-full px-2 py-0.5 text-[9px] sm:text-[10px]"
                             >
                                 {detailSeat.pembayaran || '-'}
                             </Badge>
                         </div>
-                        <h3 class="truncate text-base font-semibold md:text-lg">
+                        <h3 class="truncate text-sm font-semibold sm:text-base md:text-lg">
                             {detailSeat.name || '-'}
                         </h3>
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-[11px] text-muted-foreground sm:text-xs">
                             {selectedRoute} · {bookingDate} · {selectedJam} · Unit
                             {selectedUnit}
                         </p>
@@ -5673,7 +5673,7 @@
                         type="button"
                         variant="outline"
                         size="icon"
-                        class="h-8 w-8 shrink-0"
+                        class="h-7 w-7 shrink-0 sm:h-8 sm:w-8"
                         onclick={closeSeatDetail}
                         aria-label="Tutup detail"
                     >
@@ -5681,98 +5681,99 @@
                     </Button>
                 </div>
 
+                <div class="max-h-[calc(100vh-9rem)] overflow-y-auto px-3 pb-3 md:px-5 md:pb-5">
                 {#if !detailEditMode}
-                    <div class="grid gap-3 text-sm md:grid-cols-2">
+                    <div class="grid gap-2.5 text-sm sm:grid-cols-2">
                         <div
-                            class="rounded-xl border bg-muted/20 p-3 md:col-span-2"
+                            class="rounded-xl border bg-muted/20 p-2.5 sm:col-span-2 sm:p-3"
                         >
-                            <p class="text-[11px] text-muted-foreground">
+                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
                                 Ringkasan Harga
                             </p>
                             <div
                                 class="mt-1 flex flex-wrap items-center justify-between gap-2"
                             >
-                                <p class="text-base font-semibold">
+                                <p class="text-sm font-semibold sm:text-base">
                                     Rp {Math.max(
                                         Number(detailSeat.price || 0) -
                                             Number(detailSeat.discount || 0),
                                         0,
                                     ).toLocaleString('id-ID')}
                                 </p>
-                                <p class="text-xs text-muted-foreground">
+                                <p class="text-[11px] text-muted-foreground sm:text-xs">
                                     Diskon: Rp {Number(
                                         detailSeat.discount || 0,
                                     ).toLocaleString('id-ID')}
                                 </p>
                             </div>
                         </div>
-                        <div class="rounded-xl border bg-muted/20 p-3">
-                            <p class="text-[11px] text-muted-foreground">
+                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
                                 Nama
                             </p>
-                            <p class="mt-1 font-semibold">
+                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
                                 {detailSeat.name || '-'}
                             </p>
                         </div>
-                        <div class="rounded-xl border bg-muted/20 p-3">
-                            <p class="text-[11px] text-muted-foreground">
+                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
                                 Telepon
                             </p>
-                            <p class="mt-1 font-semibold">
+                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
                                 {detailSeat.phone || '-'}
                             </p>
                         </div>
-                        <div class="rounded-xl border bg-muted/20 p-3">
-                            <p class="text-[11px] text-muted-foreground">
+                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
                                 Segment
                             </p>
-                            <p class="mt-1 font-semibold">
+                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
                                 {detailSeat.segment_name || '-'}
                             </p>
                         </div>
-                        <div class="rounded-xl border bg-muted/20 p-3">
-                            <p class="text-[11px] text-muted-foreground">
+                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
                                 Pembayaran
                             </p>
-                            <p class="mt-1 font-semibold">
+                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
                                 {detailSeat.pembayaran || '-'}
                             </p>
                         </div>
                         <div
-                            class="rounded-xl border bg-muted/20 p-3 md:col-span-2"
+                            class="rounded-xl border bg-muted/20 p-2.5 sm:col-span-2 sm:p-3"
                         >
-                            <p class="text-[11px] text-muted-foreground">
+                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
                                 Pickup Point
                             </p>
-                            <p class="mt-1 font-semibold">
+                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
                                 {detailSeat.pickup_point || '-'}
                             </p>
                         </div>
                     </div>
                 {:else}
-                    <div class="grid gap-3 md:grid-cols-2">
+                    <div class="grid gap-2.5 sm:grid-cols-2">
                         <Input
-                            class="h-11 rounded-xl"
+                            class="h-10 rounded-xl sm:h-11"
                             placeholder="Seat"
                             bind:value={detailEditSeat}
                         />
                         <Input
-                            class="h-11 rounded-xl"
+                            class="h-10 rounded-xl sm:h-11"
                             placeholder="Nama"
                             bind:value={detailEditName}
                         />
                         <Input
-                            class="h-11 rounded-xl"
+                            class="h-10 rounded-xl sm:h-11"
                             placeholder="Telepon"
                             bind:value={detailEditPhone}
                         />
                         <Input
-                            class="h-11 rounded-xl"
+                            class="h-10 rounded-xl sm:h-11"
                             placeholder="Pickup Point"
                             bind:value={detailEditPickupPoint}
                         />
                         <select
-                            class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                            class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
                             bind:value={detailEditPayment}
                         >
                             {#each paymentOptions as option (option)}
@@ -5780,7 +5781,7 @@
                             {/each}
                         </select>
                         <Input
-                            class="h-11 rounded-xl"
+                            class="h-10 rounded-xl sm:h-11"
                             type="number"
                             min="0"
                             step="1000"
@@ -5788,7 +5789,7 @@
                             bind:value={detailEditDiscount}
                         />
                         <select
-                            class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:col-span-2"
+                            class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:col-span-2 sm:h-11"
                             bind:value={detailEditSegmentId}
                         >
                             <option value={0}
@@ -5807,7 +5808,7 @@
                     </div>
                 {/if}
 
-                <div class="mt-5 flex flex-wrap gap-2 border-t pt-3">
+                <div class="mt-4 flex flex-wrap gap-2 border-t pt-3">
                     {#if detailEditMode}
                         <Button
                             type="button"
@@ -5882,12 +5883,13 @@
                     {/if}
                 </div>
 
-                {#if formSuccess}
-                    <p class="mt-2 text-sm text-green-600">{formSuccess}</p>
-                {/if}
-                {#if formError}
-                    <p class="mt-1 text-sm text-destructive">{formError}</p>
-                {/if}
+                    {#if formSuccess}
+                        <p class="mt-2 text-sm text-green-600">{formSuccess}</p>
+                    {/if}
+                    {#if formError}
+                        <p class="mt-1 text-sm text-destructive">{formError}</p>
+                    {/if}
+                </div>
             </div>
         </div>
     {/if}
