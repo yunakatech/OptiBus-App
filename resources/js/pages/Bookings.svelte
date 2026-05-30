@@ -18,6 +18,7 @@
         CarFront,
         Clock3,
         Copy,
+        CheckCircle2,
         MoreHorizontal,
         MoreVertical,
         Pencil,
@@ -197,6 +198,25 @@
         ticket_code?: string;
     };
 
+    type BookingSuccessItem = {
+        seat: string;
+        name: string;
+        phone: string;
+        pickup_point: string;
+        segment_name: string;
+        pembayaran: string;
+        final_price: number;
+    };
+
+    type BookingSuccessSnapshot = {
+        tanggal: string;
+        jam: string;
+        rute: string;
+        unit: number;
+        total: number;
+        items: BookingSuccessItem[];
+    };
+
     type DriverItem = {
         id: number;
         nama: string;
@@ -348,6 +368,9 @@
     let detailError = $state('');
     let formError = $state('');
     let formSuccess = $state('');
+    let bookingSuccessModalOpen = $state(false);
+    let bookingSuccessFeedback = $state('');
+    let bookingSuccessSnapshot = $state<BookingSuccessSnapshot | null>(null);
 
     let formName = $state('');
     let formPhone = $state('');
@@ -1583,6 +1606,85 @@
         } catch {
             formError = 'Gagal menyalin rekap.';
         }
+    };
+
+    const buildBookingSuccessCopyText = (
+        snapshot: BookingSuccessSnapshot,
+    ) => {
+        if (snapshot.items.length === 0) {
+            return '';
+        }
+
+        if (snapshot.items.length === 1) {
+            const item = snapshot.items[0];
+            const lines = [
+                'BOOKING BERHASIL ✅',
+                '',
+                `Tanggal: ${snapshot.tanggal || '-'}`,
+                `Jam: ${normalizeJamToken(snapshot.jam) || '-'} (Keberangkatan dari Perwakilan)`,
+                `Kursi: ${item.seat || '-'}`,
+                `Nama: ${item.name || '-'}`,
+                `Telepon: ${item.phone || '-'}`,
+                `Segment: ${item.segment_name || '-'}`,
+                `Jemput: ${item.pickup_point || '-'}`,
+                '',
+                `Harga: Rp ${item.final_price.toLocaleString('id-ID')}`,
+            ];
+
+            if (
+                String(item.pembayaran || '')
+                    .trim()
+                    .toLowerCase() === 'belum lunas'
+            ) {
+                lines.push('*Opsi Pembayaran: Transfer / QRIS / Tunai');
+            }
+
+            return lines.join('\n');
+        }
+
+        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${normalizeJamToken(snapshot.jam) || '-'}`;
+        const lines = snapshot.items.map(
+            (item, index) =>
+                `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
+                `   Segment: ${item.segment_name || '-'}\n` +
+                `   Jemput: ${item.pickup_point || '-'}\n` +
+                `   Pembayaran: ${item.pembayaran || '-'}\n` +
+                `   Harga: Rp ${item.final_price.toLocaleString('id-ID')}`,
+        );
+        const footer = `Total: Rp ${snapshot.total.toLocaleString('id-ID')}`;
+        const hasBelumLunas = snapshot.items.some(
+            (item) =>
+                String(item.pembayaran || '')
+                    .trim()
+                    .toLowerCase() === 'belum lunas',
+        );
+        const paymentHint = hasBelumLunas
+            ? '_*Opsi Pembayaran: Transfer / QRIS / Tunai_'
+            : '';
+
+        return [header, ...lines, footer, paymentHint]
+            .filter((part) => part !== '')
+            .join('\n\n');
+    };
+
+    const copyBookingSuccessDetail = async () => {
+        if (!bookingSuccessSnapshot) {
+            return;
+        }
+
+        try {
+            await copyText(
+                buildBookingSuccessCopyText(bookingSuccessSnapshot),
+            );
+            bookingSuccessFeedback = 'Detail booking berhasil disalin.';
+        } catch {
+            bookingSuccessFeedback = 'Gagal menyalin detail booking.';
+        }
+    };
+
+    const closeBookingSuccessModal = () => {
+        bookingSuccessModalOpen = false;
+        bookingSuccessFeedback = '';
     };
 
     const syncSelectedSeatsFromInput = () => {
@@ -4290,11 +4392,9 @@
         detailError = '';
     };
 
-    const resetBookingForm = async () => {
-        bookingDate = today;
-        bookingDatePicker?.setDate(today, false, 'Y-m-d');
-        selectedRoute = '';
-        resetScheduleState();
+    const resetBookingForm = () => {
+        selectedSeats = [];
+        formSeat = '';
         formName = '';
         formPhone = '';
         formPickupPoint = '';
@@ -4303,12 +4403,14 @@
         customerSuggestions = [];
         customerSuggestOpen = false;
         loadingCustomerLookup = false;
+        formSegmentId = 0;
+        formDiscount = '';
         formPayment = 'Belum Lunas';
         formError = '';
+        formSuccess = '';
+        rekapItems = [];
         lastTappedSeat = '';
         lastSelectedPulseSeat = '';
-
-        await onDateChange();
     };
 
     const loadRoutesByDate = async () => {
@@ -4562,12 +4664,36 @@
                           ticket_code: record.ticket_code
                               ? String(record.ticket_code)
                               : undefined,
-                      };
-                  })
+                    };
+                })
                 : [];
             const recordBySeat = new Map<string, CreatedBookingRecord>(
                 createdRecords.map((item) => [item.seat, item]),
             );
+            const seatPrice = Math.max(Number(activeSegment()?.harga ?? 0), 0);
+            const seatDiscount = seatCandidates.length > 0
+                ? Math.max(Number(formDiscount || 0), 0) / seatCandidates.length
+                : 0;
+            const successSnapshot: BookingSuccessSnapshot = {
+                tanggal: bookingDate,
+                jam: selectedJam,
+                rute: selectedRoute,
+                unit: Number(selectedUnit) || 1,
+                total: Math.max(
+                    seatPrice * seatCandidates.length -
+                        Math.max(Number(formDiscount || 0), 0),
+                    0,
+                ),
+                items: seatCandidates.map((seat) => ({
+                    seat,
+                    name: formName,
+                    phone: formPhone,
+                    pickup_point: formPickupPoint,
+                    segment_name: activeSegment()?.rute || selectedRoute || '-',
+                    pembayaran: formPayment,
+                    final_price: Math.max(seatPrice - seatDiscount, 0),
+                })),
+            };
             const newRows = seatCandidates.map((seat, index) => ({
                 id: Number.isFinite(createdIds[index])
                     ? createdIds[index]
@@ -4595,7 +4721,11 @@
                 20,
             );
 
-            await resetBookingForm();
+            bookingSuccessSnapshot = successSnapshot;
+            bookingSuccessFeedback = '';
+            bookingSuccessModalOpen = true;
+            resetBookingForm();
+            await loadSeatDetails();
         } catch (error) {
             formError =
                 error instanceof Error
@@ -5758,6 +5888,105 @@
                 {#if formError}
                     <p class="mt-1 text-sm text-destructive">{formError}</p>
                 {/if}
+            </div>
+        </div>
+    {/if}
+
+    {#if !listOnly && bookingSuccessModalOpen && bookingSuccessSnapshot}
+        <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+            role="dialog"
+            aria-modal="true"
+        >
+            <div
+                class="w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-200/70 bg-background shadow-2xl dark:border-emerald-500/20"
+            >
+                <div class="h-1 bg-linear-to-r from-emerald-400 via-emerald-500 to-lime-400"></div>
+                <div class="p-4 md:p-5">
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
+                        >
+                            <CheckCircle2 class="h-7 w-7" />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300">
+                                Booking sukses
+                            </p>
+                            <h3 class="truncate text-lg font-semibold">
+                                {bookingSuccessSnapshot.items.length} kursi berhasil tersimpan
+                            </h3>
+                            <p class="mt-1 text-sm text-muted-foreground">
+                                {bookingSuccessSnapshot.tanggal} · {normalizeJamToken(
+                                    bookingSuccessSnapshot.jam,
+                                ) || '-'} · Unit {bookingSuccessSnapshot.unit}
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            class="h-8 w-8 shrink-0"
+                            onclick={closeBookingSuccessModal}
+                            aria-label="Tutup popup sukses"
+                        >
+                            <X class="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    <div class="mt-4 rounded-2xl border bg-muted/20 p-4">
+                        <p class="text-xs uppercase tracking-wide text-muted-foreground">
+                            Ringkasan booking
+                        </p>
+                        <div class="mt-2 grid gap-2 text-sm md:grid-cols-2">
+                            <div>
+                                <span class="text-muted-foreground">Rute</span>
+                                <p class="font-medium">{bookingSuccessSnapshot.rute || '-'}</p>
+                            </div>
+                            <div>
+                                <span class="text-muted-foreground">Total</span>
+                                <p class="font-medium">Rp {bookingSuccessSnapshot.total.toLocaleString('id-ID')}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 rounded-xl border bg-background p-3 text-sm">
+                            <p class="text-xs text-muted-foreground">
+                                Kursi tersimpan
+                            </p>
+                            <p class="mt-1 font-semibold">
+                                {bookingSuccessSnapshot.items
+                                    .map((item) => item.seat)
+                                    .join(', ')}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                        <Button
+                            type="button"
+                            class="w-full sm:w-auto"
+                            onclick={() => void copyBookingSuccessDetail()}
+                        >
+                            <Copy class="mr-1.5 h-3.5 w-3.5" />
+                            {bookingSuccessSnapshot.items.length > 1
+                                ? 'Salin Rekap'
+                                : 'Salin Detail'}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="w-full sm:w-auto"
+                            onclick={closeBookingSuccessModal}
+                        >
+                            Tutup
+                        </Button>
+                    </div>
+
+                    {#if bookingSuccessFeedback}
+                        <p class="mt-3 text-sm text-emerald-700 dark:text-emerald-300">
+                            {bookingSuccessFeedback}
+                        </p>
+                    {/if}
+                </div>
             </div>
         </div>
     {/if}
