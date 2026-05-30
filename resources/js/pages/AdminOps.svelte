@@ -126,7 +126,13 @@
         name: string;
         phone: string;
         pickup_point: string | null;
-        address: string | null;
+        gmaps: string | null;
+    };
+    type Pagination = {
+        page: number;
+        per_page: number;
+        total: number;
+        last_page: number;
     };
     type CustomerImportSummary = {
         created: number;
@@ -364,6 +370,12 @@
     let customerImportInput = $state<HTMLInputElement | null>(null);
     let customerImporting = $state(false);
     let customerImportSummary = $state<CustomerImportSummary | null>(null);
+    let customerMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
 
     let routeForm = $state({ id: 0, name: '', origin: '', destination: '' });
     let scheduleForm = $state({
@@ -401,7 +413,7 @@
         name: '',
         phone: '',
         pickup_point: '',
-        address: '',
+        gmaps: '',
     });
     const unitCategoryOptions = ['Minibus', 'Mediumbus', 'Bigbus'] as const;
     type UnitCategory = (typeof unitCategoryOptions)[number];
@@ -1788,18 +1800,31 @@
         }
     };
 
-    const loadCustomers = async () => {
+    const loadCustomers = async (page = customerMeta.page) => {
         try {
             const query = customerSearch.trim();
-            const url =
-                query === ''
-                    ? '/api/admin/customers'
-                    : `/api/admin/customers?q=${encodeURIComponent(query)}`;
+            const params = new URLSearchParams();
+            params.set('page', String(page));
+
+            if (query !== '') {
+                params.set('q', query);
+            }
+
+            const url = `/api/admin/customers?${params.toString()}`;
             const r = await api('GET', url);
             customers = r.customers ?? [];
+            customerMeta = r.pagination ?? customerMeta;
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat customers.';
         }
+    };
+
+    const jumpCustomerPage = async (page: number) => {
+        if (page < 1 || page > customerMeta.last_page) {
+            return;
+        }
+
+        await loadCustomers(page);
     };
 
     const openCustomerImportPicker = () => {
@@ -1846,7 +1871,7 @@
                     : [],
             };
             message = `Import selesai: ${customerImportSummary.created} baru, ${customerImportSummary.updated} diperbarui, ${customerImportSummary.skipped} dilewati.`;
-            await loadCustomers();
+            await loadCustomers(1);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal import customer.';
         } finally {
@@ -1943,7 +1968,7 @@
             }
 
             if (activeTab === 'customers') {
-                await loadCustomers();
+                await loadCustomers(customerMeta.page);
             }
 
             if (activeTab === 'units') {
@@ -2089,7 +2114,7 @@
             name: '',
             phone: '',
             pickup_point: '',
-            address: '',
+            gmaps: '',
         });
     const resetUnitForm = () =>
         (unitForm = {
@@ -2490,7 +2515,7 @@
                         name: customerForm.name,
                         phone: customerForm.phone,
                         pickup_point: customerForm.pickup_point,
-                        address: customerForm.address,
+                        gmaps: customerForm.gmaps,
                     });
                 },
                 {
@@ -2507,7 +2532,7 @@
                 ? 'Customer updated.'
                 : 'Customer created.';
             resetCustomerForm();
-            await loadCustomers();
+            await loadCustomers(customerMeta.page);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan customer.';
@@ -4923,7 +4948,7 @@
                                 >
                                 <Input
                                     placeholder="URL Google Map (opsional)"
-                                    bind:value={customerForm.address}
+                                    bind:value={customerForm.gmaps}
                                 />
                             </label>
                         </div>
@@ -4979,7 +5004,7 @@
                                         variant="secondary"
                                         class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
                                     >
-                                        {customers.length} customer
+                                        {customerMeta.total} customer
                                     </Badge>
                                     <a
                                         href="/api/admin/customers/template"
@@ -5013,7 +5038,7 @@
                                 <Button
                                     type="button"
                                     class="md:min-w-[120px]"
-                                    onclick={() => void loadCustomers()}
+                                    onclick={() => void loadCustomers(1)}
                                     >Search</Button
                                 >
                             </div>
@@ -5121,9 +5146,9 @@
                                             <td
                                                 class="border-b border-r border-border/60 px-4 py-4"
                                             >
-                                                {#if row.address}
+                                                {#if row.gmaps}
                                                     <a
-                                                        href={row.address}
+                                                        href={row.gmaps}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary transition hover:bg-primary/10"
@@ -5173,8 +5198,8 @@
                                                                     pickup_point:
                                                                         row.pickup_point ??
                                                                         '',
-                                                                    address:
-                                                                        row.address ??
+                                                                    gmaps:
+                                                                        row.gmaps ??
                                                                         '',
                                                                 };
                                                                 setFormMode(
@@ -5206,6 +5231,41 @@
                                     {/each}
                                 </tbody>
                             </table>
+                        </div>
+                        <div
+                            class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-5 py-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <p class="text-muted-foreground">
+                                Total {customerMeta.total} customer · halaman
+                                {customerMeta.page} dari
+                                {customerMeta.last_page}
+                            </p>
+                            <div class="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={customerMeta.page <= 1}
+                                    onclick={() =>
+                                        void jumpCustomerPage(
+                                            customerMeta.page - 1,
+                                        )}>Prev</Button
+                                >
+                                <span
+                                    class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-foreground"
+                                >
+                                    {customerMeta.page} / {customerMeta.last_page}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={customerMeta.page >=
+                                        customerMeta.last_page}
+                                    onclick={() =>
+                                        void jumpCustomerPage(
+                                            customerMeta.page + 1,
+                                        )}>Next</Button
+                                >
+                            </div>
                         </div>
                     </div>
                 {/if}

@@ -576,7 +576,7 @@ class AdminOpsApiController extends Controller
         [$page, $perPage] = $this->paginationParams($request);
 
         $query = DB::table('customers')
-            ->select(['id', 'name', 'phone', 'pickup_point', 'address'])
+            ->select(['id', 'name', 'phone', 'pickup_point', 'gmaps'])
             ->orderBy('name');
 
         if ($q !== '') {
@@ -585,7 +585,8 @@ class AdminOpsApiController extends Controller
                 $builder
                     ->where('name', 'like', $qLike)
                     ->orWhere('phone', 'like', $qLike)
-                    ->orWhere('pickup_point', 'like', $qLike);
+                    ->orWhere('pickup_point', 'like', $qLike)
+                    ->orWhere('gmaps', 'like', $qLike);
             });
         }
 
@@ -603,6 +604,7 @@ class AdminOpsApiController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:30'],
             'pickup_point' => ['nullable', 'string', 'max:180'],
+            'gmaps' => ['nullable', 'string'],
             'address' => ['nullable', 'string'],
         ]);
 
@@ -611,7 +613,7 @@ class AdminOpsApiController extends Controller
             'name' => strtoupper(trim((string) $data['name'])),
             'phone' => trim((string) $data['phone']),
             'pickup_point' => $this->nullable($data['pickup_point'] ?? null),
-            'address' => $this->nullable($data['address'] ?? null),
+            'gmaps' => $this->nullable($data['gmaps'] ?? $data['address'] ?? null),
         ];
 
         if ($id > 0) {
@@ -642,7 +644,7 @@ class AdminOpsApiController extends Controller
         return response()->streamDownload(function () {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['name', 'phone', 'pickup_point', 'address']);
+            fputcsv($out, ['name', 'phone', 'pickup_point', 'gmaps']);
             fputcsv($out, ['Customer Contoh Qbus', '081234567890', 'Terminal Kayuringin', 'https://maps.google.com/?q=Terminal+Kayuringin']);
             fclose($out);
         }, 'template-customer-reguler.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
@@ -702,7 +704,7 @@ class AdminOpsApiController extends Controller
             $name = $this->customerImportValue($row, $columns, 'name');
             $phone = $this->customerImportValue($row, $columns, 'phone');
             $pickupPoint = $this->customerImportValue($row, $columns, 'pickup_point');
-            $address = $this->customerImportValue($row, $columns, 'address');
+            $gmaps = $this->customerImportValue($row, $columns, 'gmaps');
 
             if ($name === '' || $phone === '') {
                 $skipped += 1;
@@ -720,7 +722,7 @@ class AdminOpsApiController extends Controller
                 'name' => strtoupper($name),
                 'phone' => $phone,
                 'pickup_point' => $pickupPoint !== '' ? $pickupPoint : null,
-                'address' => $address !== '' ? $address : null,
+                'gmaps' => $gmaps !== '' ? $gmaps : null,
             ];
 
             $existingId = DB::table('customers')->where('phone', $phone)->value('id');
@@ -2952,7 +2954,7 @@ class AdminOpsApiController extends Controller
             'name', 'nama', 'customer', 'customer_name', 'nama_customer' => 'name',
             'phone', 'no_hp', 'nohp', 'nomor_hp', 'hp', 'telepon', 'telp', 'whatsapp', 'wa' => 'phone',
             'pickup_point', 'pickup', 'titik_jemput', 'lokasi_jemput', 'alamat_jemput' => 'pickup_point',
-            'address', 'alamat', 'maps', 'google_maps', 'google_map', 'gmaps', 'link_maps', 'url_maps' => 'address',
+            'gmaps', 'maps', 'google_maps', 'google_map', 'link_maps', 'url_maps', 'address', 'alamat' => 'gmaps',
             default => null,
         };
     }

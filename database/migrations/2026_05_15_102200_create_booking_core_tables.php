@@ -80,12 +80,12 @@ return new class extends Migration
                 $table->id();
                 $table->string('name');
                 $table->string('phone', 50)->unique();
-                $table->text('address')->nullable();
+                $table->text('gmaps')->nullable();
                 $table->string('pickup_point')->nullable();
                 $table->timestamp('created_at')->useCurrent();
             });
         } else {
-            $this->addColumnIfMissing('customers', 'address', fn (Blueprint $table) => $table->text('address')->nullable());
+            $this->addColumnIfMissing('customers', 'gmaps', fn (Blueprint $table) => $table->text('gmaps')->nullable());
             $this->addColumnIfMissing('customers', 'pickup_point', fn (Blueprint $table) => $table->string('pickup_point')->nullable());
             $this->addColumnIfMissing('customers', 'created_at', fn (Blueprint $table) => $table->timestamp('created_at')->nullable());
         }
@@ -160,4 +160,3 @@ return new class extends Migration
         Schema::dropIfExists('routes');
     }
 };
-

@@ -1046,6 +1046,7 @@ class BookingApiController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:50'],
             'pickup_point' => ['nullable', 'string', 'max:255'],
+            'gmaps' => ['nullable', 'string'],
             'address' => ['nullable', 'string'],
             'pembayaran' => ['nullable', 'string', 'max:50'],
             'segment_id' => ['nullable', 'integer', 'min:0'],
@@ -1062,7 +1063,7 @@ class BookingApiController extends Controller
         $name = strtoupper(trim((string) $data['name']));
         $phone = $this->normalizePhone((string) $data['phone']);
         $pickupPoint = trim((string) ($data['pickup_point'] ?? ''));
-        $address = trim((string) ($data['address'] ?? ''));
+        $address = trim((string) ($data['gmaps'] ?? $data['address'] ?? ''));
         $payment = $this->normalizePayment((string) ($data['pembayaran'] ?? 'Belum Lunas'));
         $segmentId = (int) ($data['segment_id'] ?? 0);
         $discount = max(0, (float) ($data['discount'] ?? 0));
@@ -1214,6 +1215,7 @@ class BookingApiController extends Controller
             'name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'pickup_point' => ['nullable', 'string', 'max:255'],
+            'gmaps' => ['nullable', 'string'],
             'address' => ['nullable', 'string'],
             'pembayaran' => ['nullable', 'string', 'max:50'],
             'segment_id' => ['nullable', 'integer', 'min:0'],
@@ -1237,6 +1239,7 @@ class BookingApiController extends Controller
             && ! array_key_exists('name', $payload)
             && ! array_key_exists('phone', $payload)
             && ! array_key_exists('pickup_point', $payload)
+            && ! array_key_exists('gmaps', $payload)
             && ! array_key_exists('address', $payload)
             && ! array_key_exists('segment_id', $payload)
             && ! array_key_exists('discount', $payload);
@@ -1252,7 +1255,7 @@ class BookingApiController extends Controller
         $phone = $this->normalizePhone((string) ($payload['phone'] ?? $current['phone'] ?? ''));
         $seat = $this->normalizeSeat((string) ($payload['seat'] ?? $current['seat'] ?? ''));
         $pickupPoint = trim((string) ($payload['pickup_point'] ?? $current['pickup_point'] ?? ''));
-        $address = trim((string) ($payload['address'] ?? ($current['address'] ?? '')));
+        $address = trim((string) ($payload['gmaps'] ?? $payload['address'] ?? ($current['address'] ?? '')));
         $segmentId = array_key_exists('segment_id', $payload) ? (int) ($payload['segment_id'] ?? 0) : (int) ($current['segment_id'] ?? 0);
         $discount = array_key_exists('discount', $payload) ? max(0, (float) ($payload['discount'] ?? 0)) : (float) ($current['discount'] ?? 0);
         $payment = $this->normalizePayment((string) ($payload['pembayaran'] ?? ($current['pembayaran'] ?? 'Belum Lunas')));
@@ -1477,7 +1480,7 @@ class BookingApiController extends Controller
                     'b.segment_id',
                     'b.price',
                     'b.discount',
-                    DB::raw('c.address as address'),
+                    DB::raw('c.gmaps as address'),
                 ]);
 
             return $row ? (array) $row : null;
@@ -1516,7 +1519,7 @@ class BookingApiController extends Controller
                 'b.segment_id',
                 'b.price',
                 'b.discount',
-                DB::raw('c.address as address'),
+                DB::raw('c.gmaps as address'),
             ]);
 
         return $row ? (array) $row : null;
@@ -2095,10 +2098,10 @@ class BookingApiController extends Controller
                 'name' => $name,
                 'phone' => $phone,
                 'pickup_point' => $pickupPoint,
-                'address' => $address,
+                'gmaps' => $address,
                 'created_at' => now(),
             ],
-        ], ['phone'], ['name', 'pickup_point', 'address']);
+        ], ['phone'], ['name', 'pickup_point', 'gmaps']);
     }
 
     private function normalizePhone(string $phone): string

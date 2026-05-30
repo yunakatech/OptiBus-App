@@ -348,7 +348,7 @@ class BookingController extends Controller
             'b.price',
             'b.discount',
             DB::raw('s.rute as segment_name'),
-            DB::raw('c.address as gmaps'),
+            DB::raw('c.gmaps as gmaps'),
         ];
 
         if ($this->bookingsHasDepartureCode()) {
@@ -500,7 +500,7 @@ class BookingController extends Controller
                 'b.price',
                 'b.discount',
                 DB::raw('s.rute as segment_name'),
-                DB::raw('c.address as gmaps'),
+                DB::raw('c.gmaps as gmaps'),
             ];
 
             if ($this->bookingsHasDepartureCode()) {
