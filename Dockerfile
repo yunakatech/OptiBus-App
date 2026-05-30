@@ -35,8 +35,8 @@ RUN npm ci
 
 COPY . .
 
-RUN APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= npm run build \
-    && APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= php artisan package:discover --ansi \
+RUN APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= php artisan package:discover --ansi \
+    && PHP_BINARY=/usr/local/bin/php APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= npm run build \
     && mkdir -p \
         bootstrap/cache \
         storage/app/public \
@@ -54,6 +54,7 @@ RUN chmod +x /usr/local/bin/start-qbus
 ENV APP_ENV=production \
     APP_DEBUG=false \
     BROWSER_BINARY=/usr/bin/chromium \
+    PHP_BINARY=/usr/local/bin/php \
     LOG_CHANNEL=stack \
     LOG_STACK=stderr \
     PORT=10000
