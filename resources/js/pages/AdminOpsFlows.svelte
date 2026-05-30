@@ -2089,7 +2089,7 @@ params.set('to', filterTo);
 
 <AppHead title={tabTitle(activeTab)} />
 
-<div class="space-y-4 p-4">
+<div class="space-y-4 p-3 pb-28 md:p-4">
     <Card>
         <CardHeader><CardTitle>{tabTitle(activeTab)}</CardTitle></CardHeader>
         <CardContent class="space-y-4">
@@ -2393,7 +2393,7 @@ params.set('to', filterTo);
                         {:else}
                             <div class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
                                 {#each charters as row (row.id)}
-                                    <article class="group rounded-[20px] border border-border/70 bg-card p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-lg hover:shadow-cyan-950/10 md:p-3.5">
+                                    <article class="group rounded-2xl border border-border/70 bg-card p-2.5 shadow-sm transition-all duration-200 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 md:p-3.5">
                                         <div class="mb-2 flex items-start justify-between gap-2">
                                             <div class="min-w-0">
                                                 <p class="truncate text-sm font-semibold leading-tight text-foreground">{row.name}</p>
@@ -2458,31 +2458,32 @@ params.set('to', filterTo);
                                             </div>
                                         </div>
 
-                                        <div class="rounded-2xl border border-border/60 bg-muted/20 px-3 py-2.5">
-                                            <p class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Rute Charter</p>
-                                            <p class="mt-1 break-words text-xs font-semibold text-foreground">{row.pickup_point ?? '-'} - {row.drop_point ?? '-'}</p>
+                                        <div class="rounded-xl border border-border/60 bg-muted/15 px-2.5 py-2">
+                                            <p class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground">Rute Charter</p>
+                                            <p class="mt-0.5 line-clamp-2 break-words text-xs font-semibold leading-snug text-foreground">{row.pickup_point ?? '-'} - {row.drop_point ?? '-'}</p>
                                         </div>
 
-                                        <div class="mt-2 grid gap-2 text-xs md:grid-cols-2">
-                                            <div class="rounded-2xl border border-border/60 bg-background/80 px-3 py-2.5">
-                                                <p class="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Jadwal</p>
-                                                <p class="mt-1 font-semibold text-foreground">{row.start_date}</p>
+                                        <div class="mt-1.5 grid grid-cols-2 gap-1.5 text-xs md:gap-2">
+                                            <div class="order-1 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2">
+                                                <p class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground">Jadwal</p>
+                                                <p class="mt-0.5 font-semibold leading-tight text-foreground">{row.start_date}</p>
                                                 <p class="text-[11px] text-muted-foreground">{row.end_date} • {row.departure_time ? String(row.departure_time).slice(0, 5) : '--:--'}</p>
                                             </div>
-                                            <div class="rounded-2xl border border-border/60 bg-background/80 px-3 py-2.5">
-                                                <p class="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Driver & Armada</p>
-                                                <p class="mt-1 font-semibold text-foreground">{row.driver_name ?? '-'}</p>
-                                                <p class="text-[11px] text-muted-foreground">{[row.unit_category, row.unit_nopol].filter(Boolean).join(' | ') || '-'}</p>
-                                                <p class="text-[11px] text-muted-foreground">{row.armada_nopol ?? '-'}</p>
+                                            <div class="order-3 col-span-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2">
+                                                <p class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground">Driver & Armada</p>
+                                                <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                                    <p class="text-xs font-semibold leading-tight text-foreground">{row.driver_name ?? '-'}</p>
+                                                    <p class="text-[11px] text-muted-foreground">{[row.unit_category, row.unit_nopol, row.armada_nopol].filter(Boolean).join(' | ') || '-'}</p>
+                                                </div>
                                             </div>
-                                            <div class="rounded-2xl border border-border/60 bg-background/80 px-3 py-2.5">
-                                                <p class="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Biaya</p>
-                                                <p class="mt-1 text-xs font-semibold text-foreground">{formatCurrencyId(row.price)}</p>
+                                            <div class="order-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2">
+                                                <p class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground">Biaya</p>
+                                                <p class="mt-0.5 text-xs font-semibold leading-tight text-foreground">{formatCurrencyId(row.price)}</p>
                                                 <p class="text-[11px] text-muted-foreground">DP {formatCurrencyId(row.down_payment ?? 0)}</p>
                                             </div>
                                         </div>
 
-                                        <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
                                             <span class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterPaymentClass(row.payment_status)}`}>
                                                 {row.payment_status ?? '-'}
                                             </span>
@@ -2493,8 +2494,8 @@ params.set('to', filterTo);
                                             {/if}
                                         </div>
 
-                                        <div class="mt-3 flex items-center justify-between border-t border-border/70 pt-2.5">
-                                            <p class="text-[11px] text-muted-foreground">
+                                        <div class="mt-2 flex items-center justify-end border-t border-border/70 pt-2">
+                                            <p class="mr-auto hidden text-[11px] text-muted-foreground sm:block">
                                                 {charterScope === 'history' ? 'Riwayat charter tampil ringkas untuk mobile.' : 'Aksi ada di menu kanan atas kartu.'}
                                             </p>
                                             <Button type="button" size="sm" variant="ghost" class="h-8 rounded-xl px-3 text-[11px]" onclick={() => void openCharterView(row.id)}>
