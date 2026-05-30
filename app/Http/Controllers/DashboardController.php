@@ -453,7 +453,7 @@ class DashboardController extends Controller
                 'b.phone',
                 'b.pickup_point',
                 'b.pembayaran',
-                DB::raw('c.address as gmaps'),
+                DB::raw('c.gmaps as gmaps'),
             ])
             ->orderBy('b.jam')
             ->orderBy('b.rute')

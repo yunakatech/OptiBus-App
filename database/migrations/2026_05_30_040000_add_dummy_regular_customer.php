@@ -21,7 +21,7 @@ return new class extends Migration
             'name' => 'CUSTOMER DUMMY QBUS',
             'phone' => $phone,
             'pickup_point' => 'Terminal Kayuringin',
-            'address' => 'https://maps.google.com/?q=Terminal+Kayuringin',
+            'gmaps' => 'https://maps.google.com/?q=Terminal+Kayuringin',
             'created_at' => now(),
         ]);
     }

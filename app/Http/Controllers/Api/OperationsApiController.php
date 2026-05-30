@@ -91,7 +91,13 @@ class OperationsApiController extends Controller
             $phoneExact = $phoneQuery;
 
             return DB::table('customers')
-                ->select(['name', 'phone', 'pickup_point', 'address'])
+                ->select([
+                    'name',
+                    'phone',
+                    'pickup_point',
+                    'gmaps',
+                    DB::raw('gmaps as address'),
+                ])
                 ->where(function ($query) use ($like, $rawLike, $phoneQuery, $phoneLike) {
                     $query->whereRaw("LOWER(COALESCE(name, '')) LIKE ?", [$like])
                         ->orWhere('phone', 'like', $rawLike)

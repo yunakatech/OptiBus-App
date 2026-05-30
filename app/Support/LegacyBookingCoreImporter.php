@@ -56,14 +56,26 @@ class LegacyBookingCoreImporter
                     ->orderBy('id')
                     ->forPage($page, $chunk)
                     ->get()
-                    ->map(static fn ($row) => (array) $row)
+                    ->map(static function ($row) use ($table) {
+                        $data = (array) $row;
+
+                        if ($table === 'customers') {
+                            if (! array_key_exists('gmaps', $data) || trim((string) ($data['gmaps'] ?? '')) === '') {
+                                $data['gmaps'] = $data['address'] ?? null;
+                            }
+
+                            unset($data['address']);
+                        }
+
+                        return $data;
+                    })
                     ->all();
 
                 if (empty($rows)) {
                     break;
                 }
 
-                $updateColumns = array_values(array_filter($available, static fn ($column) => $column !== 'id'));
+                $updateColumns = array_values(array_filter(array_keys($rows[0]), static fn ($column) => $column !== 'id'));
                 $target->table($table)->upsert($rows, ['id'], $updateColumns);
 
                 $page++;
@@ -114,7 +126,7 @@ class LegacyBookingCoreImporter
                 'id', 'rute', 'dow', 'jam', 'units', 'seats', 'unit_id', 'layout', 'created_at',
             ],
             'customers' => [
-                'id', 'name', 'phone', 'address', 'pickup_point', 'created_at',
+                'id', 'name', 'phone', 'gmaps', 'address', 'pickup_point', 'created_at',
             ],
             'segments' => [
                 'id', 'route_id', 'rute', 'origin', 'destination', 'harga', 'created_at',
