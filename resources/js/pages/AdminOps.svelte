@@ -128,6 +128,12 @@
         pickup_point: string | null;
         address: string | null;
     };
+    type CustomerImportSummary = {
+        created: number;
+        updated: number;
+        skipped: number;
+        errors: string[];
+    };
     type ArmadaRow = {
         id: number;
         merk: string | null;
@@ -355,6 +361,9 @@
     let users = $state<UserRow[]>([]);
     let cancellations = $state<CancellationRow[]>([]);
     let units = $state<UnitRow[]>([]);
+    let customerImportInput = $state<HTMLInputElement | null>(null);
+    let customerImporting = $state(false);
+    let customerImportSummary = $state<CustomerImportSummary | null>(null);
 
     let routeForm = $state({ id: 0, name: '', origin: '', destination: '' });
     let scheduleForm = $state({
@@ -1070,6 +1079,61 @@
         return json;
     };
 
+    const apiForm = async (url: string, formData: FormData) => {
+        const send = async () => {
+            const token = csrfToken() || xsrfTokenFromCookie();
+            formData.set('_token', token);
+
+            return fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'X-XSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData,
+            });
+        };
+
+        let response = await send();
+        if (response.status === 419 && (await refreshCsrfToken())) {
+            response = await send();
+        }
+
+        const json = (await response.json().catch(() => ({}))) as Record<
+            string,
+            any
+        >;
+        const firstValidationError = (() => {
+            const errors = json?.errors;
+
+            if (!errors || typeof errors !== 'object') {
+                return '';
+            }
+
+            for (const value of Object.values(errors)) {
+                if (Array.isArray(value) && value.length > 0) {
+                    return String(value[0] ?? '').trim();
+                }
+            }
+
+            return '';
+        })();
+
+        if (!response.ok || json.success === false) {
+            throw new Error(
+                json.error ||
+                    json.message ||
+                    firstValidationError ||
+                    `Request gagal (${response.status})`,
+            );
+        }
+
+        return json;
+    };
+
     const initDefaultSeatLayout = (): LayoutGrid => {
         const grid: LayoutGrid = [];
         grid.push([
@@ -1735,6 +1799,59 @@
             customers = r.customers ?? [];
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat customers.';
+        }
+    };
+
+    const openCustomerImportPicker = () => {
+        customerImportInput?.click();
+    };
+
+    const importCustomers = async (event: Event) => {
+        const input = event.currentTarget as HTMLInputElement;
+        const file = input.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        message = '';
+        error = '';
+        customerImportSummary = null;
+        customerImporting = true;
+
+        try {
+            let result: Record<string, any> = {};
+            await runWithFeedback(
+                async () => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    result = await apiForm(
+                        '/api/admin/customers/import',
+                        formData,
+                    );
+                },
+                {
+                    loadingMessage: 'Mengimpor customer reguler...',
+                    successMessage: 'Import customer selesai.',
+                    errorMessage: 'Gagal import customer.',
+                },
+            );
+
+            customerImportSummary = {
+                created: Number(result.created ?? 0),
+                updated: Number(result.updated ?? 0),
+                skipped: Number(result.skipped ?? 0),
+                errors: Array.isArray(result.errors)
+                    ? result.errors.map((item: unknown) => String(item))
+                    : [],
+            };
+            message = `Import selesai: ${customerImportSummary.created} baru, ${customerImportSummary.updated} diperbarui, ${customerImportSummary.skipped} dilewati.`;
+            await loadCustomers();
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal import customer.';
+        } finally {
+            customerImporting = false;
+            input.value = '';
         }
     };
 
@@ -4857,12 +4974,36 @@
                                         membaca dan mengedit data lebih cepat.
                                     </p>
                                 </div>
-                                <Badge
-                                    variant="secondary"
-                                    class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
-                                >
-                                    {customers.length} customer
-                                </Badge>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <Badge
+                                        variant="secondary"
+                                        class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
+                                    >
+                                        {customers.length} customer
+                                    </Badge>
+                                    <a
+                                        href="/api/admin/customers/template"
+                                        class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                                    >
+                                        Download Template
+                                    </a>
+                                    <input
+                                        bind:this={customerImportInput}
+                                        type="file"
+                                        accept=".csv,text/csv"
+                                        class="hidden"
+                                        onchange={importCustomers}
+                                    />
+                                    <LoadingButton
+                                        type="button"
+                                        variant="outline"
+                                        loading={customerImporting}
+                                        loadingText="Mengimpor..."
+                                        onclick={openCustomerImportPicker}
+                                    >
+                                        Import Data
+                                    </LoadingButton>
+                                </div>
                             </div>
                             <div class="flex flex-col gap-2 md:flex-row">
                                 <Input
@@ -4876,6 +5017,29 @@
                                     >Search</Button
                                 >
                             </div>
+                            {#if customerImportSummary}
+                                <div
+                                    class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+                                >
+                                    <p class="font-semibold">
+                                        Import selesai:
+                                        {customerImportSummary.created} data
+                                        baru,
+                                        {customerImportSummary.updated}
+                                        diperbarui,
+                                        {customerImportSummary.skipped}
+                                        dilewati.
+                                    </p>
+                                    {#if customerImportSummary.errors.length > 0}
+                                        <p class="mt-1 text-xs text-emerald-700">
+                                            Catatan:
+                                            {customerImportSummary.errors.join(
+                                                ' | ',
+                                            )}
+                                        </p>
+                                    {/if}
+                                </div>
+                            {/if}
                         </div>
                         <div class="overflow-x-auto">
                             <table

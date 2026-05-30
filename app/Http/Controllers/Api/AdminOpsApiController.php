@@ -637,6 +637,116 @@ class AdminOpsApiController extends Controller
         return $this->ok(['message' => 'Customer deleted.']);
     }
 
+    public function customersTemplate(): StreamedResponse
+    {
+        return response()->streamDownload(function () {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['name', 'phone', 'pickup_point', 'address']);
+            fputcsv($out, ['Customer Contoh Qbus', '081234567890', 'Terminal Kayuringin', 'https://maps.google.com/?q=Terminal+Kayuringin']);
+            fclose($out);
+        }, 'template-customer-reguler.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function customersImport(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'file' => ['required', 'file', 'max:5120'],
+        ]);
+
+        $file = $data['file'];
+        $path = $file->getRealPath();
+        if (! $path || ! is_readable($path)) {
+            return $this->error('File import tidak bisa dibaca.', 422);
+        }
+
+        $sampleLine = (string) (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)[0] ?? '');
+        $delimiter = substr_count($sampleLine, ';') > substr_count($sampleLine, ',') ? ';' : ',';
+        $handle = fopen($path, 'r');
+        if (! $handle) {
+            return $this->error('File import tidak bisa dibuka.', 422);
+        }
+
+        $headers = fgetcsv($handle, 0, $delimiter);
+        if (! is_array($headers)) {
+            fclose($handle);
+            return $this->error('Template import kosong atau tidak valid.', 422);
+        }
+
+        $columns = [];
+        foreach ($headers as $index => $header) {
+            $key = $this->normalizeCustomerImportHeader((string) $header);
+            if ($key !== null) {
+                $columns[$key] = $index;
+            }
+        }
+
+        if (! isset($columns['name'], $columns['phone'])) {
+            fclose($handle);
+            return $this->error('Header wajib minimal: name dan phone.', 422);
+        }
+
+        $created = 0;
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
+        $line = 1;
+
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $line += 1;
+
+            if ($this->isBlankCsvRow($row)) {
+                continue;
+            }
+
+            $name = $this->customerImportValue($row, $columns, 'name');
+            $phone = $this->customerImportValue($row, $columns, 'phone');
+            $pickupPoint = $this->customerImportValue($row, $columns, 'pickup_point');
+            $address = $this->customerImportValue($row, $columns, 'address');
+
+            if ($name === '' || $phone === '') {
+                $skipped += 1;
+                $errors[] = "Baris {$line}: name dan phone wajib diisi.";
+                continue;
+            }
+
+            if (mb_strlen($name) > 120 || mb_strlen($phone) > 30 || mb_strlen($pickupPoint) > 180) {
+                $skipped += 1;
+                $errors[] = "Baris {$line}: panjang name/phone/pickup_point melebihi batas.";
+                continue;
+            }
+
+            $payload = [
+                'name' => strtoupper($name),
+                'phone' => $phone,
+                'pickup_point' => $pickupPoint !== '' ? $pickupPoint : null,
+                'address' => $address !== '' ? $address : null,
+            ];
+
+            $existingId = DB::table('customers')->where('phone', $phone)->value('id');
+            if ($existingId) {
+                DB::table('customers')->where('id', (int) $existingId)->update($payload);
+                $updated += 1;
+                continue;
+            }
+
+            DB::table('customers')->insert(array_merge($payload, [
+                'created_at' => now(),
+            ]));
+            $created += 1;
+        }
+
+        fclose($handle);
+
+        return $this->ok([
+            'message' => 'Import customer selesai.',
+            'created' => $created,
+            'updated' => $updated,
+            'skipped' => $skipped,
+            'errors' => array_slice($errors, 0, 10),
+        ]);
+    }
+
     public function cancellationsIndex(Request $request): JsonResponse
     {
         $page = max(1, (int) $request->query('page', 1));
@@ -2829,6 +2939,49 @@ class AdminOpsApiController extends Controller
     {
         $v = trim((string) ($value ?? ''));
         return $v === '' ? null : $v;
+    }
+
+    private function normalizeCustomerImportHeader(string $header): ?string
+    {
+        $normalized = preg_replace('/^\xEF\xBB\xBF/', '', trim($header)) ?? '';
+        $normalized = strtolower($normalized);
+        $normalized = preg_replace('/[\s\-.]+/', '_', $normalized) ?? $normalized;
+        $normalized = trim($normalized, '_');
+
+        return match ($normalized) {
+            'name', 'nama', 'customer', 'customer_name', 'nama_customer' => 'name',
+            'phone', 'no_hp', 'nohp', 'nomor_hp', 'hp', 'telepon', 'telp', 'whatsapp', 'wa' => 'phone',
+            'pickup_point', 'pickup', 'titik_jemput', 'lokasi_jemput', 'alamat_jemput' => 'pickup_point',
+            'address', 'alamat', 'maps', 'google_maps', 'google_map', 'gmaps', 'link_maps', 'url_maps' => 'address',
+            default => null,
+        };
+    }
+
+    /**
+     * @param array<int, string|null> $row
+     * @param array<string, int> $columns
+     */
+    private function customerImportValue(array $row, array $columns, string $key): string
+    {
+        if (! array_key_exists($key, $columns)) {
+            return '';
+        }
+
+        return trim((string) ($row[$columns[$key]] ?? ''));
+    }
+
+    /**
+     * @param array<int, string|null> $row
+     */
+    private function isBlankCsvRow(array $row): bool
+    {
+        foreach ($row as $value) {
+            if (trim((string) $value) !== '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function paginationParams(Request $request): array
