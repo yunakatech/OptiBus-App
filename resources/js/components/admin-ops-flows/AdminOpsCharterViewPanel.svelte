@@ -184,7 +184,6 @@
                     <p class="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Pembayaran</p>
                     <p class="mt-2 text-base font-semibold text-foreground">{charterViewData.payment_status ?? '-'}</p>
                     <p class="mt-1 text-sm text-muted-foreground">DP {formatCurrencyId(charterViewData.down_payment ?? 0)}</p>
-                    <p class="text-sm text-muted-foreground">Status BOP {charterViewData.bop_status ?? '-'}</p>
                 </div>
             </div>
 
