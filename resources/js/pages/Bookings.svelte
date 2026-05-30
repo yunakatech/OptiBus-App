@@ -4290,6 +4290,27 @@
         detailError = '';
     };
 
+    const resetBookingForm = async () => {
+        bookingDate = today;
+        bookingDatePicker?.setDate(today, false, 'Y-m-d');
+        selectedRoute = '';
+        resetScheduleState();
+        formName = '';
+        formPhone = '';
+        formPickupPoint = '';
+        formAddress = '';
+        customerLookupQuery = '';
+        customerSuggestions = [];
+        customerSuggestOpen = false;
+        loadingCustomerLookup = false;
+        formPayment = 'Belum Lunas';
+        formError = '';
+        lastTappedSeat = '';
+        lastSelectedPulseSeat = '';
+
+        await onDateChange();
+    };
+
     const loadRoutesByDate = async () => {
         loadingRoutes = true;
         routeError = '';
@@ -4574,9 +4595,7 @@
                 20,
             );
 
-            selectedSeats = [];
-            formSeat = '';
-            await loadSeatDetails();
+            await resetBookingForm();
         } catch (error) {
             formError =
                 error instanceof Error

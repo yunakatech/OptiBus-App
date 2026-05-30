@@ -11,9 +11,17 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="format-detection" content="telephone=no">
 
-        <link rel="manifest" href="/manifest.json">
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php
+            $faviconVersion = @filemtime(public_path('favicon.ico')) ?: time();
+            $appleTouchVersion = @filemtime(public_path('apple-touch-icon.png')) ?: time();
+            $manifestVersion = @filemtime(public_path('manifest.json')) ?: time();
+        @endphp
+
+        <link rel="manifest" href="/manifest.json?v={{ $manifestVersion }}">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v={{ $faviconVersion }}">
+        <link rel="icon" type="image/x-icon" href="/favicon.ico?v={{ $faviconVersion }}" sizes="any">
+        <link rel="shortcut icon" href="/favicon.ico?v={{ $faviconVersion }}">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v={{ $appleTouchVersion }}">
 
         @fonts
 
