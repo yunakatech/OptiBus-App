@@ -1980,6 +1980,21 @@
             (total, row) => total + Number(row.price || 0),
             0,
         );
+    const bookingRowFinalPrice = (
+        row: BookingGroup['bookings'][number],
+    ) => Math.max(Number(row.price || 0) - Number(row.discount || 0), 0);
+    const groupPaymentTotals = () => {
+        const rows = activeGroupBookings();
+
+        return {
+            lunas: rows
+                .filter((row) => isLunasPayment(row.pembayaran))
+                .reduce((total, row) => total + bookingRowFinalPrice(row), 0),
+            belumLunas: rows
+                .filter((row) => isBelumLunasPayment(row.pembayaran))
+                .reduce((total, row) => total + bookingRowFinalPrice(row), 0),
+        };
+    };
     const normalizeRiturRoute = (value: string | null | undefined) =>
         String(value || '')
             .trim()
@@ -6207,86 +6222,104 @@
                                     Ringkasan Keberangkatan
                                 </p>
                                 <div
-                                    class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-6"
+                                    class="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-3 xl:grid-cols-6"
                                 >
                                     <div
-                                        class="rounded-2xl border border-border/70 bg-background/85 px-3 py-3"
+                                        class="rounded-xl border border-border/70 bg-background/85 px-2.5 py-2"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                            class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
                                         >
                                             Total
                                         </p>
-                                        <p class="mt-1 text-sm font-semibold">
+                                        <p class="mt-1 text-xs font-semibold sm:text-sm">
                                             {openGroupDetail.total}
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-2xl border border-border/70 bg-background/85 px-3 py-3"
+                                        class="rounded-xl border border-border/70 bg-background/85 px-2.5 py-2"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                            class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
                                         >
                                             Aktif
                                         </p>
-                                        <p class="mt-1 text-sm font-semibold">
+                                        <p class="mt-1 text-xs font-semibold sm:text-sm">
                                             {openGroupDetail.active}
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-2xl border border-rose-200/80 bg-rose-50/80 px-3 py-3 dark:border-rose-500/20 dark:bg-rose-950/20"
+                                        class="rounded-xl border border-rose-200/80 bg-rose-50/80 px-2.5 py-2 dark:border-rose-500/20 dark:bg-rose-950/20"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-rose-700 dark:text-rose-300"
+                                            class="text-[9px] uppercase tracking-[0.1em] text-rose-700 dark:text-rose-300"
                                         >
                                             Cancel
                                         </p>
                                         <p
-                                            class="mt-1 text-sm font-semibold text-rose-700 dark:text-rose-200"
+                                            class="mt-1 text-xs font-semibold text-rose-700 dark:text-rose-200 sm:text-sm"
                                         >
                                             {openGroupDetail.canceled}
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-3 py-3 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                                        class="rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-2 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
+                                            class="text-[9px] uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-300"
                                         >
                                             Lunas
                                         </p>
                                         <p
-                                            class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-200"
+                                            class="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-200 sm:text-sm"
                                         >
                                             {openGroupDetail.lunas}
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-2xl border border-sky-200/80 bg-sky-50/80 px-3 py-3 dark:border-sky-500/20 dark:bg-sky-950/20"
+                                        class="rounded-xl border border-sky-200/80 bg-sky-50/80 px-2.5 py-2 dark:border-sky-500/20 dark:bg-sky-950/20"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-sky-700 dark:text-sky-300"
+                                            class="text-[9px] uppercase tracking-[0.1em] text-sky-700 dark:text-sky-300"
                                         >
                                             Refund
                                         </p>
                                         <p
-                                            class="mt-1 text-sm font-semibold text-sky-700 dark:text-sky-200"
+                                            class="mt-1 text-xs font-semibold text-sky-700 dark:text-sky-200 sm:text-sm"
                                         >
                                             {openGroupDetail.refund}
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-2xl border border-amber-200/80 bg-amber-50/80 px-3 py-3 dark:border-amber-500/20 dark:bg-amber-950/20"
+                                        class="rounded-xl border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 dark:border-amber-500/20 dark:bg-amber-950/20"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
+                                            class="text-[9px] uppercase tracking-[0.1em] text-amber-700 dark:text-amber-300"
                                         >
                                             Belum Lunas
                                         </p>
                                         <p
-                                            class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-200"
+                                            class="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-200 sm:text-sm"
                                         >
                                             {openGroupDetail.belum_lunas}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                    <div class="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-950/20">
+                                        <p class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300">
+                                            Total Pembayaran Lunas
+                                        </p>
+                                        <p class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-200">
+                                            Rp {groupPaymentTotals().lunas.toLocaleString('id-ID')}
+                                        </p>
+                                    </div>
+                                    <div class="rounded-2xl border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-950/20">
+                                        <p class="text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
+                                            Total Pembayaran Belum Lunas
+                                        </p>
+                                        <p class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-200">
+                                            Rp {groupPaymentTotals().belumLunas.toLocaleString('id-ID')}
                                         </p>
                                     </div>
                                 </div>
