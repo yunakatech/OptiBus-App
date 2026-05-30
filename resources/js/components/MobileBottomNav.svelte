@@ -43,6 +43,12 @@
     ];
 
     let rememberedActiveHref = $state<string>(toUrl(dashboard()));
+    let isCompact = $state(false);
+    let lastScrollY = 0;
+    let scrollFrameRequested = false;
+
+    const SCROLL_THRESHOLD = 24;
+    const SCROLL_DELTA = 6;
 
     const isMenuPage = $derived(url.isCurrentUrl('/menu', url.currentUrl));
     const activeIndex = $derived.by(() => {
@@ -69,12 +75,64 @@
         return url.isCurrentOrParentUrl(itemHref, url.currentUrl);
     }
 
+    function pageCanScroll(): boolean {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        return document.documentElement.scrollHeight - window.innerHeight > 24;
+    }
+
+    function updateCompactState(): void {
+        const currentScrollY = Math.max(window.scrollY || document.documentElement.scrollTop || 0, 0);
+
+        if (!pageCanScroll() || currentScrollY < SCROLL_THRESHOLD) {
+            isCompact = false;
+            lastScrollY = currentScrollY;
+
+            return;
+        }
+
+        const delta = currentScrollY - lastScrollY;
+
+        if (Math.abs(delta) < SCROLL_DELTA) {
+            return;
+        }
+
+        isCompact = delta > 0;
+        lastScrollY = currentScrollY;
+    }
+
+    function requestCompactUpdate(): void {
+        if (scrollFrameRequested) {
+            return;
+        }
+
+        scrollFrameRequested = true;
+
+        window.requestAnimationFrame(() => {
+            scrollFrameRequested = false;
+            updateCompactState();
+        });
+    }
+
     onMount(() => {
         const stored = window.localStorage.getItem(ACTIVE_NAV_STORAGE_KEY);
 
         if (stored) {
             rememberedActiveHref = stored;
         }
+
+        lastScrollY = Math.max(window.scrollY || document.documentElement.scrollTop || 0, 0);
+        updateCompactState();
+
+        window.addEventListener('scroll', requestCompactUpdate, { passive: true });
+        window.addEventListener('resize', requestCompactUpdate);
+
+        return () => {
+            window.removeEventListener('scroll', requestCompactUpdate);
+            window.removeEventListener('resize', requestCompactUpdate);
+        };
     });
 
     $effect(() => {
@@ -89,22 +147,27 @@ return;
 }
 
         markActive(toUrl(matched.href));
+        isCompact = false;
+
+        if (typeof window !== 'undefined') {
+            lastScrollY = Math.max(window.scrollY || document.documentElement.scrollTop || 0, 0);
+        }
     });
 </script>
 
 <nav
-    class="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 md:hidden"
+    class={`fixed inset-x-0 bottom-0 z-40 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 transition-[padding] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${isCompact ? 'px-14' : 'px-2'}`}
     aria-label="Mobile bottom navigation"
 >
     <div
-        class="mx-auto w-full max-w-xl rounded-[1.75rem] border border-sidebar-border/70 bg-background/85 p-1.5 shadow-[0_18px_40px_-24px_hsl(201_96%_30%_/_0.75)] ring-1 ring-white/10 backdrop-blur-xl"
+        class={`mx-auto w-full border border-sidebar-border/70 bg-background/85 ring-1 ring-white/10 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[17rem] rounded-[1.35rem] p-1 shadow-[0_14px_32px_-24px_hsl(201_96%_30%_/_0.8)]' : 'max-w-xl rounded-[1.75rem] p-1.5 shadow-[0_18px_40px_-24px_hsl(201_96%_30%_/_0.75)]'}`}
     >
-        <div class="relative overflow-hidden rounded-3xl">
+        <div class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1.15rem]' : 'rounded-3xl'}`}>
             <div
-                class="pointer-events-none absolute inset-y-1 left-0 z-0 px-1.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                class={`pointer-events-none absolute left-0 z-0 transition-[transform,padding,inset] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'inset-y-0.5 px-1' : 'inset-y-1 px-1.5'}`}
                 style={`width: ${100 / mainItems.length}%; transform: translateX(${activeIndex * 100}%);`}
             >
-                <div class="h-full rounded-2xl border border-cyan-300/30 bg-linear-to-b from-cyan-500/30 to-sky-500/20 shadow-[0_10px_25px_-12px_hsl(200_95%_45%_/_0.85)]"></div>
+                <div class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/30 to-sky-500/20 shadow-[0_10px_25px_-12px_hsl(200_95%_45%_/_0.85)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-xl' : 'rounded-2xl'}`}></div>
             </div>
 
             <ul class="relative z-10 grid" style={`grid-template-columns: repeat(${mainItems.length}, minmax(0, 1fr));`}>
@@ -115,7 +178,7 @@ return;
                             aria-label={item.title}
                             title={item.title}
                             onclick={() => markActive(toUrl(item.href))}
-                            class="group flex h-14 items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.97] {isNavItemActive(
+                            class="group flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.97] {isCompact ? 'h-10 rounded-xl' : 'h-14 rounded-2xl'} {isNavItemActive(
                                 item.href,
                             )
                                 ? 'text-primary'
@@ -123,7 +186,7 @@ return;
                         >
                             {#if item.icon}
                                 <item.icon
-                                    class="size-5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {isNavItemActive(
+                                    class="shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {isCompact ? 'size-4' : 'size-5'} {isNavItemActive(
                                         item.href,
                                     )
                                         ? '-translate-y-0.5 scale-110'
