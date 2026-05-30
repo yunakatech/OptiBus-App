@@ -820,9 +820,11 @@ class DashboardController extends Controller
 
     private function monthExpression(string $column): string
     {
-        return DB::getDriverName() === 'sqlite'
-            ? "CAST(strftime('%m', {$column}) AS INTEGER)"
-            : "MONTH({$column})";
+        return match (DB::getDriverName()) {
+            'sqlite' => "CAST(strftime('%m', {$column}) AS INTEGER)",
+            'pgsql' => "EXTRACT(MONTH FROM {$column})",
+            default => "MONTH({$column})",
+        };
     }
 
     private function latestActivityDate(): ?Carbon
