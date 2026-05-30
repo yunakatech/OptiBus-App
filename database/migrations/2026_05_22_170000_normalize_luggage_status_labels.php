@@ -6,14 +6,39 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private function changeStatusColumn(string $table, int $length, ?string $default, string $driver): void
+    {
+        if ($driver === 'sqlite') {
+            return;
+        }
+
+        if ($driver === 'pgsql') {
+            DB::statement("ALTER TABLE {$table} ALTER COLUMN status TYPE VARCHAR({$length})");
+            DB::statement("ALTER TABLE {$table} ALTER COLUMN status SET NOT NULL");
+
+            if ($default === null) {
+                DB::statement("ALTER TABLE {$table} ALTER COLUMN status DROP DEFAULT");
+            } else {
+                DB::statement("ALTER TABLE {$table} ALTER COLUMN status SET DEFAULT ".DB::getPdo()->quote($default));
+            }
+
+            return;
+        }
+
+        $definition = "VARCHAR({$length}) NOT NULL";
+        if ($default !== null) {
+            $definition .= ' DEFAULT '.DB::getPdo()->quote($default);
+        }
+
+        DB::statement("ALTER TABLE {$table} MODIFY status {$definition}");
+    }
+
     public function up(): void
     {
         $driver = DB::connection()->getDriverName();
 
         if (Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'status')) {
-            if ($driver !== 'sqlite') {
-                DB::statement("ALTER TABLE luggages MODIFY status VARCHAR(40) NOT NULL DEFAULT 'Barang sudah diterima'");
-            }
+            $this->changeStatusColumn('luggages', 40, 'Barang sudah diterima', $driver);
 
             if (Schema::hasColumn('luggages', 'trip_assignment_id')) {
                 DB::table('luggages')
@@ -32,9 +57,7 @@ return new class extends Migration
         }
 
         if (Schema::hasTable('bagasi_logs') && Schema::hasColumn('bagasi_logs', 'status')) {
-            if ($driver !== 'sqlite') {
-                DB::statement('ALTER TABLE bagasi_logs MODIFY status VARCHAR(40) NOT NULL');
-            }
+            $this->changeStatusColumn('bagasi_logs', 40, null, $driver);
 
             DB::table('bagasi_logs')
                 ->whereIn('status', ['pending', 'done', 'diterima'])
@@ -63,9 +86,7 @@ return new class extends Migration
                 ->where('status', 'Barang sudah tiba')
                 ->update(['status' => 'done']);
 
-            if ($driver !== 'sqlite') {
-                DB::statement('ALTER TABLE bagasi_logs MODIFY status VARCHAR(30) NOT NULL');
-            }
+            $this->changeStatusColumn('bagasi_logs', 30, null, $driver);
         }
 
         if (Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'status')) {
@@ -81,9 +102,7 @@ return new class extends Migration
                 ->where('status', 'Barang sudah tiba')
                 ->update(['status' => 'done']);
 
-            if ($driver !== 'sqlite') {
-                DB::statement("ALTER TABLE luggages MODIFY status VARCHAR(20) NOT NULL DEFAULT 'pending'");
-            }
+            $this->changeStatusColumn('luggages', 20, 'pending', $driver);
         }
     }
 };
