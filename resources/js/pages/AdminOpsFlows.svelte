@@ -2393,7 +2393,7 @@ params.set('to', filterTo);
                         {:else}
                             <div class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
                                 {#each charters as row (row.id)}
-                                    <article class="group rounded-2xl border border-border/70 bg-card p-2.5 shadow-sm transition-all duration-200 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 md:p-3.5">
+                                    <article class="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 svelte-19f8rux">
                                         <div class="mb-2 flex items-start justify-between gap-2">
                                             <div class="min-w-0">
                                                 <p class="truncate text-sm font-semibold leading-tight text-foreground">{row.name}</p>
