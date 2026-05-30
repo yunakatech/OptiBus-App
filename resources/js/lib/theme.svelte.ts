@@ -14,7 +14,11 @@ export type ThemeState = {
     updateDensity: (value: Density) => void;
 };
 
-const appearance = $state<{ value: Appearance }>({ value: 'system' });
+const DEFAULT_APPEARANCE: Appearance = 'light';
+
+const appearance = $state<{ value: Appearance }>({
+    value: DEFAULT_APPEARANCE,
+});
 const density = $state<{ value: Density }>({ value: 'compact' });
 
 let themeChangeMediaQuery: MediaQueryList | null = null;
@@ -64,14 +68,14 @@ const applyDensity = (value: Density): void => {
 
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
-        return 'system';
+        return DEFAULT_APPEARANCE;
     }
 
     const stored = localStorage.getItem('appearance');
 
     return stored === 'light' || stored === 'dark' || stored === 'system'
         ? stored
-        : 'system';
+        : DEFAULT_APPEARANCE;
 };
 
 const getStoredDensity = (): Density => {
@@ -107,9 +111,16 @@ export function initializeTheme(): () => void {
         return () => {};
     }
 
-    if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
+    const storedAppearance = localStorage.getItem('appearance');
+    const hasUserSelectedAppearance =
+        localStorage.getItem('appearance-user-set') === 'true';
+
+    if (
+        !storedAppearance ||
+        (storedAppearance === 'system' && !hasUserSelectedAppearance)
+    ) {
+        localStorage.setItem('appearance', DEFAULT_APPEARANCE);
+        setCookie('appearance', DEFAULT_APPEARANCE);
     }
 
     if (!localStorage.getItem('density')) {
@@ -134,6 +145,7 @@ export function updateAppearance(value: Appearance): void {
 
     if (typeof window !== 'undefined') {
         localStorage.setItem('appearance', value);
+        localStorage.setItem('appearance-user-set', 'true');
     }
 
     setCookie('appearance', value);
