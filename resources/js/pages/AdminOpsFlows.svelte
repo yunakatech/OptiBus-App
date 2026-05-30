@@ -2391,9 +2391,9 @@ params.set('to', filterTo);
                                 Belum ada data carter sesuai filter.
                             </div>
                         {:else}
-                            <div class="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
+                            <div class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
                                 {#each charters as row (row.id)}
-                                    <article class="group rounded-[24px] border border-border/70 bg-card p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-lg hover:shadow-cyan-950/10">
+                                    <article class="group rounded-[20px] border border-border/70 bg-card p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-lg hover:shadow-cyan-950/10 md:p-3.5">
                                         <div class="mb-2 flex items-start justify-between gap-2">
                                             <div class="min-w-0">
                                                 <p class="truncate text-sm font-semibold leading-tight text-foreground">{row.name}</p>
@@ -2477,17 +2477,14 @@ params.set('to', filterTo);
                                             </div>
                                             <div class="rounded-2xl border border-border/60 bg-background/80 px-3 py-2.5">
                                                 <p class="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Biaya</p>
-                                                <p class="mt-1 font-semibold text-foreground">{formatCurrencyId(row.price)}</p>
-                                                <p class="text-[11px] text-muted-foreground">BOP {formatCurrencyId(row.bop_price)} ({row.bop_status ?? '-'})</p>
+                                                <p class="mt-1 text-xs font-semibold text-foreground">{formatCurrencyId(row.price)}</p>
+                                                <p class="text-[11px] text-muted-foreground">DP {formatCurrencyId(row.down_payment ?? 0)}</p>
                                             </div>
                                         </div>
 
-                                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                                        <div class="mt-2 flex flex-wrap items-center gap-1.5">
                                             <span class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterPaymentClass(row.payment_status)}`}>
                                                 {row.payment_status ?? '-'}
-                                            </span>
-                                            <span class="rounded-full border border-border/60 bg-muted/20 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                                                {row.layanan ?? defaultCharterService}
                                             </span>
                                             {#if Number(row.down_payment ?? 0) > 0}
                                                 <span class="rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
@@ -2496,9 +2493,9 @@ params.set('to', filterTo);
                                             {/if}
                                         </div>
 
-                                        <div class="mt-3 flex items-center justify-between border-t border-border/70 pt-3">
+                                        <div class="mt-3 flex items-center justify-between border-t border-border/70 pt-2.5">
                                             <p class="text-[11px] text-muted-foreground">
-                                                {charterScope === 'history' ? 'Aksi dipindahkan ke meatball menu untuk tampilan lebih ringkas.' : 'Kelola charter dari meatball menu di kanan atas kartu.'}
+                                                {charterScope === 'history' ? 'Riwayat charter tampil ringkas untuk mobile.' : 'Aksi ada di menu kanan atas kartu.'}
                                             </p>
                                             <Button type="button" size="sm" variant="ghost" class="h-8 rounded-xl px-3 text-[11px]" onclick={() => void openCharterView(row.id)}>
                                                 Buka Detail
