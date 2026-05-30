@@ -117,6 +117,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('segments', [AdminOpsApiController::class, 'segmentsSave'])->name('segments.save');
         Route::delete('segments/{id}', [AdminOpsApiController::class, 'segmentsDelete'])->name('segments.delete');
 
+        Route::get('customers/template', [AdminOpsApiController::class, 'customersTemplate'])->name('customers.template');
+        Route::post('customers/import', [AdminOpsApiController::class, 'customersImport'])->name('customers.import');
         Route::get('customers', [AdminOpsApiController::class, 'customersIndex'])->name('customers.index');
         Route::post('customers', [AdminOpsApiController::class, 'customersSave'])->name('customers.save');
         Route::delete('customers/{id}', [AdminOpsApiController::class, 'customersDelete'])->name('customers.delete');
