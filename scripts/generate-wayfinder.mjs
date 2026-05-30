@@ -60,7 +60,13 @@ const result = spawnSync(phpBinary, ['artisan', 'wayfinder:generate', '--with-fo
     stdio: 'inherit',
 });
 
+if (result.error) {
+    console.error(`[Wayfinder] Failed to run PHP binary "${phpBinary}": ${result.error.message}`);
+    process.exit(1);
+}
+
 if (result.status !== 0) {
+    console.error(`[Wayfinder] PHP command exited with status ${result.status ?? 'unknown'}.`);
     process.exit(result.status ?? 1);
 }
 

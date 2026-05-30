@@ -36,7 +36,8 @@ RUN npm ci
 COPY . .
 
 RUN APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= php artisan package:discover --ansi \
-    && PHP_BINARY=/usr/local/bin/php APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= npm run build \
+    && PHP_BINARY=/usr/local/bin/php APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= node scripts/generate-wayfinder.mjs --with-form \
+    && SKIP_WAYFINDER_GENERATE=true npm run build \
     && mkdir -p \
         bootstrap/cache \
         storage/app/public \
