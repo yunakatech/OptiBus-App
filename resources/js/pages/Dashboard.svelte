@@ -78,6 +78,7 @@
             phone: string;
             pickup_point: string;
             gmaps: string;
+            status: string;
             pembayaran: string;
         }>;
     };
@@ -170,6 +171,8 @@
 
     const toCurrency = (value: number) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
     const normalizeJam = (value: string) => String(value || '').trim();
+    const isCanceledBooking = (status: string | null | undefined) =>
+        String(status || '').trim().toLowerCase() === 'canceled';
     const formatDepartDateTime = (tanggal: string, jam: string) => {
         const date = new Date(`${tanggal}T00:00:00`);
         const dateLabel = Number.isNaN(date.getTime())
@@ -362,7 +365,10 @@
     const departureCopyKey = (item: DepartureItem) => `${item.rute}-${item.jam}-${item.unit}`;
 
     const departureCopyBlock = (item: DepartureItem) => {
-        const lines = item.bookings.map(
+        const copyableBookings = item.bookings.filter(
+            (row) => !isCanceledBooking(row.status),
+        );
+        const lines = copyableBookings.map(
             (row) =>
                 `- Kursi: ${row.seat || '-'}\n` +
                 `Nama: ${row.name || '-'}\n` +
@@ -376,7 +382,7 @@
         `Info Pemberangkatan\n` +
         `Tanggal & Jam: ${formatDepartDateTime(item.tanggal, item.jam)}\n` +
         `Rute: ${item.rute}\n` +
-        `Total Penumpang: ${item.total_bookings}\n` +
+        `Total Penumpang: ${copyableBookings.length}\n` +
         `Driver: ${item.driver_name || '-'}\n\n` +
         lines.join('\n\n')
         );

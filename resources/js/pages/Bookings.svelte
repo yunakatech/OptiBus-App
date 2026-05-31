@@ -531,8 +531,10 @@
         });
     });
 
+    const isCanceledBooking = (status: string | null | undefined) =>
+        String(status || '').trim().toLowerCase() === 'canceled';
     const statusVariant = (status: string) =>
-        status.toLowerCase() === 'canceled' ? 'secondary' : 'default';
+        isCanceledBooking(status) ? 'secondary' : 'default';
     const paymentVariant = (pembayaran: string) => {
         const normalized = String(pembayaran || '')
             .trim()
@@ -563,7 +565,7 @@
     const isSettledPayment = (pembayaran: string) =>
         isLunasPayment(pembayaran) || isRefundPayment(pembayaran);
     const canRefundCanceledBooking = (row: BookingGroup['bookings'][number]) =>
-        String(row.status || '').toLowerCase() === 'canceled' &&
+        isCanceledBooking(row.status) &&
         !isRefundPayment(row.pembayaran) &&
         !isBelumLunasPayment(row.pembayaran);
     const payableBookingRows = (group: BookingGroup) =>
@@ -1968,11 +1970,11 @@
         normalizeJamToken(jam) || '--:--';
     const activeGroupBookings = () =>
         (openGroupDetail?.bookings ?? []).filter(
-            (row) => String(row.status || '').toLowerCase() !== 'canceled',
+            (row) => !isCanceledBooking(row.status),
         );
     const historyGroupBookings = () =>
         (openGroupDetail?.bookings ?? []).filter(
-            (row) => String(row.status || '').toLowerCase() === 'canceled',
+            (row) => isCanceledBooking(row.status),
         );
     const visibleGroupBookings = () => {
         if (groupPassengerTab === 'history') {
@@ -4160,7 +4162,10 @@
     const copyBookingGroup = async (group: BookingGroup) => {
         try {
             const driverName = await resolveDriverNameForGroup(group);
-            const lines = group.bookings.map(
+            const copyableBookings = group.bookings.filter(
+                (row) => !isCanceledBooking(row.status),
+            );
+            const lines = copyableBookings.map(
                 (row) =>
                     `- Kursi: ${row.seat}\n` +
                     `Nama: ${row.name || '-'}\n` +
@@ -4173,7 +4178,7 @@
                 `Info Pemberangkatan\n` +
                 `Tanggal & Jam: ${formatDepartDateTime(group.tanggal, group.jam)}\n` +
                 `Rute: ${group.rute}\n` +
-                `Total Penumpang: ${group.active}\n` +
+                `Total Penumpang: ${copyableBookings.length}\n` +
                 `Driver: ${driverName}\n\n` +
                 lines.join('\n\n');
 
