@@ -20,6 +20,8 @@ fi
 
 php artisan optimize:clear >/dev/null 2>&1 || true
 php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     attempt=1

@@ -195,7 +195,7 @@ class AdminOpsApiTest extends TestCase
 
         $customerCreate = $this->postJson(route('api.admin.customers.save'), [
             'name' => 'RIDWAN',
-            'phone' => '081234567890',
+            'phone' => '089999000111',
             'pickup_point' => 'Terminal',
             'address' => 'Pinrang',
         ])->assertCreated()->json();
@@ -218,7 +218,7 @@ class AdminOpsApiTest extends TestCase
             'unit' => 1,
             'seat' => 'A1',
             'name' => 'RIDWAN',
-            'phone' => '081234567890',
+            'phone' => '089999000111',
             'pickup_point' => 'Terminal',
             'pembayaran' => 'Lunas',
             'status' => 'canceled',

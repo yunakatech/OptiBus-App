@@ -499,6 +499,12 @@
     let reportToPicker: FlatpickrInstance | null = null;
     let reportSummary = $state<ReportSummary | null>(null);
     let reportRows = $state<ReportRow[]>([]);
+    let reportMeta = $state<Pagination>({
+        page: 1,
+        per_page: 50,
+        total: 0,
+        last_page: 1,
+    });
     let reportLoading = $state(false);
     let layoutEditorBusy = $state(false);
     let layoutEditorMessage = $state('');
@@ -2018,21 +2024,41 @@
         }
     };
 
-    const loadReport = async () => {
+    const loadReport = async (page = 1) => {
         reportLoading = true;
 
         try {
-            const url = `/api/admin/reports/summary?from=${encodeURIComponent(reportFrom)}&to=${encodeURIComponent(reportTo)}&type=${encodeURIComponent(reportType)}`;
+            const url = `/api/admin/reports/summary?from=${encodeURIComponent(reportFrom)}&to=${encodeURIComponent(reportTo)}&type=${encodeURIComponent(reportType)}&page=${encodeURIComponent(String(page))}&per_page=${encodeURIComponent(String(reportMeta.per_page || 50))}`;
             const r = await api('GET', url);
             reportSummary = r.summary ?? null;
             reportRows = Array.isArray(r.rows) ? r.rows : [];
+            reportMeta = r.pagination ?? {
+                page,
+                per_page: reportMeta.per_page || 50,
+                total: reportRows.length,
+                last_page: 1,
+            };
         } catch (e) {
             reportSummary = null;
             reportRows = [];
+            reportMeta = {
+                page: 1,
+                per_page: reportMeta.per_page || 50,
+                total: 0,
+                last_page: 1,
+            };
             error = e instanceof Error ? e.message : 'Gagal memuat report.';
         } finally {
             reportLoading = false;
         }
+    };
+
+    const jumpReportPage = async (page: number) => {
+        if (page < 1 || page > reportMeta.last_page) {
+            return;
+        }
+
+        await loadReport(page);
     };
 
     const resetRouteForm = () =>
@@ -6455,11 +6481,13 @@
                         bind:reportType
                         {reportSummary}
                         {reportRows}
+                        {reportMeta}
                         {reportLoading}
                         bind:reportFromInput
                         bind:reportToInput
                         {formatCurrency}
                         {loadReport}
+                        {jumpReportPage}
                     />
                 {:else}
                     <div

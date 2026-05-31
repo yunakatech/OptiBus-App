@@ -95,8 +95,13 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'search_path' => env('DB_SCHEMA', 'public'),
+            'sslmode' => env('DB_SSLMODE', 'require'),
+            'sslrootcert' => env('DB_SSLROOTCERT'),
+            'application_name' => env('DB_APPLICATION_NAME', Str::slug((string) env('APP_NAME', 'qbus'), '_').'-'.env('APP_ENV', 'production')),
+            'options' => extension_loaded('pdo_pgsql') ? array_filter([
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+            ], static fn ($value): bool => $value !== null) : [],
         ],
 
         'sqlsrv' => [

@@ -2314,9 +2314,15 @@
 
             emptyDepartureOpen = false;
             formSuccess = 'Jadwal tanpa penumpang berhasil dibuat.';
-            router.visit('/bookings', {
+            router.reload({
+                only: [
+                    'totals',
+                    'latestBookings',
+                    'bookingGroups',
+                    'bookingRouteOptions',
+                    'serverNow',
+                ],
                 preserveScroll: true,
-                preserveState: false,
             });
         } catch (error) {
             formError =
