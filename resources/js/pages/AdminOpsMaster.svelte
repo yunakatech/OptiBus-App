@@ -668,25 +668,20 @@ return;
                 {:else}
                     <div class="space-y-4">
                         <div class="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),rgba(8,145,178,0.08))] shadow-sm">
-                            <div class="grid gap-4 border-b border-border/70 px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-5">
+                            <div class="grid gap-4 border-b border-border/70 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(420px,1fr)] md:items-end md:px-5">
                                 <div class="space-y-3">
                                     <div class="space-y-1">
                                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">Master Carter</p>
                                         <h3 class="text-lg font-semibold tracking-tight text-foreground">Preset rute siap pakai untuk form Carter</h3>
                                         <p class="max-w-2xl text-sm text-muted-foreground">Kelola rute, layanan, harga rental, dan BOP agar form Carter bisa auto-fill dengan cepat dan konsisten.</p>
                                     </div>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800">Total {carterRouteMeta.total} preset</span>
-                                        <span class="inline-flex items-center rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">Halaman {carterRouteMeta.page} dari {carterRouteMeta.last_page}</span>
-                                        <span class="inline-flex items-center rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Siap dipakai di form Carter</span>
-                                    </div>
                                 </div>
-                                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
                                     <div class="space-y-1">
                                         <label class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" for="carter-route-search">Cari preset</label>
-                                        <Input id="carter-route-search" class="h-11 rounded-2xl bg-background/90" placeholder="Cari nama, origin, atau destination" bind:value={carterRouteQ} />
+                                        <Input id="carter-route-search" class="h-11 w-full rounded-2xl bg-background/90" placeholder="Cari nama, asal, atau tujuan" bind:value={carterRouteQ} />
                                     </div>
-                                    <div class="flex items-end gap-2">
+                                    <div class="flex flex-wrap gap-2 sm:justify-end">
                                         <Button type="button" class="h-11 rounded-2xl px-4" onclick={() => void loadCarterRoutes(1)}>Cari</Button>
                                         <Button type="button" variant="outline" class="h-11 rounded-2xl px-4" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
                                     </div>
@@ -699,7 +694,8 @@ return;
                                         <thead class="bg-muted/50 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                                             <tr>
                                                 <th class="px-4 py-3 text-left font-semibold">Nama</th>
-                                                <th class="px-4 py-3 text-left font-semibold">Asal / Tujuan</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Asal</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Tujuan</th>
                                                 <th class="px-4 py-3 text-left font-semibold">Layanan</th>
                                                 <th class="px-4 py-3 text-left font-semibold">Harga</th>
                                                 <th class="px-4 py-3 text-left font-semibold">Aksi</th>
@@ -709,16 +705,13 @@ return;
                                             {#each carterRoutes as row (row.id)}
                                                 <tr class="transition-colors hover:bg-muted/30">
                                                     <td class="px-4 py-4 align-top">
-                                                        <div class="space-y-1">
-                                                            <p class="font-semibold text-foreground">{row.name}</p>
-                                                            <p class="text-xs text-muted-foreground">ID #{row.id}</p>
-                                                        </div>
+                                                        <p class="font-semibold text-foreground">{row.name}</p>
                                                     </td>
                                                     <td class="px-4 py-4 align-top">
-                                                        <div class="max-w-[20rem] space-y-1">
-                                                            <p class="font-medium text-foreground">{row.origin ?? '-'}</p>
-                                                            <p class="text-xs text-muted-foreground">-> {row.destination ?? '-'}</p>
-                                                        </div>
+                                                        <p class="font-medium text-foreground">{row.origin ?? '-'}</p>
+                                                    </td>
+                                                    <td class="px-4 py-4 align-top">
+                                                        <p class="font-medium text-foreground">{row.destination ?? '-'}</p>
                                                     </td>
                                                     <td class="px-4 py-4 align-top">
                                                         <span class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-xs font-semibold tracking-wide text-cyan-800">
@@ -783,7 +776,7 @@ return;
                             {/if}
 
                             <div class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5">
-                                <p class="text-sm text-muted-foreground">Menampilkan {carterRoutes.length} dari {carterRouteMeta.total} preset.</p>
+                                <p class="text-sm text-muted-foreground">Menampilkan {carterRoutes.length} data pada halaman ini.</p>
                                 <div class="flex items-center gap-2">
                                     <Button type="button" variant="outline" class="rounded-full" disabled={carterRouteMeta.page <= 1} onclick={() => void jumpPage('rute-carter', carterRouteMeta.page - 1)}>Prev</Button>
                                     <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-sm text-muted-foreground">{carterRouteMeta.page} / {carterRouteMeta.last_page}</span>
