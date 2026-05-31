@@ -38,6 +38,11 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
+    import {
+        formatCurrencyDisplay,
+        formatCurrencyInput as formatSharedCurrencyInput,
+        parseCurrencyInput as parseSharedCurrencyInput,
+    } from '@/lib/currency';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
     type Stats = {
@@ -708,20 +713,9 @@
             })
             .slice(0, 80);
     });
-    const formatCurrency = (value: number) =>
-        `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
-    const parseRupiahInput = (value: string | number | null | undefined) => {
-        if (typeof value === 'number') {
-            return Math.max(0, value);
-        }
-
-        return Number(String(value ?? '').replace(/\D/g, '') || 0);
-    };
-    const formatRupiahInput = (value: string | number | null | undefined) => {
-        const amount = parseRupiahInput(value);
-
-        return amount > 0 ? `Rp ${amount.toLocaleString('id-ID')}` : '';
-    };
+    const formatCurrency = (value: number) => formatCurrencyDisplay(value);
+    const parseRupiahInput = parseSharedCurrencyInput;
+    const formatRupiahInput = formatSharedCurrencyInput;
     const armadaGrossMargin = (row: ArmadaRow) =>
         Number(row.revenue || 0) - Number(row.bop || 0);
     const armadaNetMargin = (row: ArmadaRow) =>
@@ -2199,12 +2193,8 @@
             api_gps: row.api_gps ?? '',
             revenue: '',
             bop: '',
-            fixed_cost:
-                Number(row.fixed_cost || 0) > 0 ? String(row.fixed_cost) : '',
-            target_bulanan:
-                Number(row.target_bulanan || 0) > 0
-                    ? String(row.target_bulanan)
-                    : '',
+            fixed_cost: formatRupiahInput(row.fixed_cost),
+            target_bulanan: formatRupiahInput(row.target_bulanan),
         };
         armadaTemplateSearch = row.nopol ?? '';
         armadaTemplateLookupOpen = false;
@@ -2433,10 +2423,10 @@
                         phone: driverForm.phone,
                         armada_id: Number(driverForm.armada_id) || undefined,
                         armada_nopol: driverUnitSearch.trim() || undefined,
-                        target_revenue_bulanan: Number(
-                            driverForm.target_revenue_bulanan || 0,
+                        target_revenue_bulanan: parseRupiahInput(
+                            driverForm.target_revenue_bulanan,
                         ),
-                        fixed_cost: Number(driverForm.fixed_cost || 0),
+                        fixed_cost: parseRupiahInput(driverForm.fixed_cost),
                     });
                 },
                 {
@@ -2518,7 +2508,7 @@
                         rute: segmentForm.rute,
                         origin: segmentForm.origin,
                         destination: segmentForm.destination,
-                        harga: Number(segmentForm.harga),
+                        harga: parseRupiahInput(segmentForm.harga),
                     });
                 },
                 {
@@ -2641,8 +2631,10 @@
                         ac_type: armadaForm.ac_type,
                         platform_gps: armadaForm.platform_gps,
                         api_gps: armadaForm.api_gps,
-                        fixed_cost: Number(armadaForm.fixed_cost || 0),
-                        target_revenue: Number(armadaForm.target_bulanan || 0),
+                        fixed_cost: parseRupiahInput(armadaForm.fixed_cost),
+                        target_revenue: parseRupiahInput(
+                            armadaForm.target_bulanan,
+                        ),
                     });
                 },
                 {
@@ -3811,11 +3803,20 @@
                                         >Fixed Cost</span
                                     >
                                     <Input
-                                        type="number"
-                                        min="0"
-                                        step="1000"
+                                        type="text"
+                                        inputmode="numeric"
                                         placeholder="Fixed Cost"
-                                        bind:value={driverForm.fixed_cost}
+                                        value={formatRupiahInput(
+                                            driverForm.fixed_cost,
+                                        )}
+                                        oninput={(event) => {
+                                            driverForm.fixed_cost =
+                                                formatRupiahInput(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).value,
+                                                );
+                                        }}
                                     />
                                 </label>
                                 <label class="space-y-1.5">
@@ -3824,13 +3825,20 @@
                                         >Target Revenue</span
                                     >
                                     <Input
-                                        type="number"
-                                        min="0"
-                                        step="1000"
+                                        type="text"
+                                        inputmode="numeric"
                                         placeholder="Target Revenue"
-                                        bind:value={
-                                            driverForm.target_revenue_bulanan
-                                        }
+                                        value={formatRupiahInput(
+                                            driverForm.target_revenue_bulanan,
+                                        )}
+                                        oninput={(event) => {
+                                            driverForm.target_revenue_bulanan =
+                                                formatRupiahInput(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).value,
+                                                );
+                                        }}
                                     />
                                 </label>
                             </div>
@@ -4314,23 +4322,13 @@
                                                                         row.armada_id ??
                                                                         0,
                                                                     fixed_cost:
-                                                                        Number(
-                                                                            row.fixed_cost ||
-                                                                                0,
-                                                                        ) > 0
-                                                                            ? String(
-                                                                                  row.fixed_cost,
-                                                                              )
-                                                                            : '',
+                                                                        formatRupiahInput(
+                                                                            row.fixed_cost,
+                                                                        ),
                                                                     target_revenue_bulanan:
-                                                                        Number(
-                                                                            row.target_revenue_bulanan ||
-                                                                                0,
-                                                                        ) > 0
-                                                                            ? String(
-                                                                                  row.target_revenue_bulanan,
-                                                                              )
-                                                                            : '',
+                                                                        formatRupiahInput(
+                                                                            row.target_revenue_bulanan,
+                                                                        ),
                                                                 };
                                                                 driverUnitSearch =
                                                                     row.nopol ??
@@ -4671,11 +4669,20 @@
                                             >Harga Segment</span
                                         >
                                         <Input
-                                            type="number"
-                                            min="0"
-                                            step="1000"
+                                            type="text"
+                                            inputmode="numeric"
                                             placeholder="Harga segment"
-                                            bind:value={segmentForm.harga}
+                                            value={formatRupiahInput(
+                                                segmentForm.harga,
+                                            )}
+                                            oninput={(event) => {
+                                                segmentForm.harga =
+                                                    parseRupiahInput(
+                                                        (
+                                                            event.currentTarget as HTMLInputElement
+                                                        ).value,
+                                                    );
+                                            }}
                                             required
                                         />
                                     </label>
@@ -5968,13 +5975,20 @@
                                             >Target Revenue</span
                                         >
                                         <Input
-                                            type="number"
-                                            min="0"
-                                            step="1000"
-                                            placeholder="Target Revenue (contoh: 60000000)"
-                                            bind:value={
-                                                armadaForm.target_bulanan
-                                            }
+                                            type="text"
+                                            inputmode="numeric"
+                                            placeholder="Target Revenue (contoh: Rp 60.000.000)"
+                                            value={formatRupiahInput(
+                                                armadaForm.target_bulanan,
+                                            )}
+                                            oninput={(event) => {
+                                                armadaForm.target_bulanan =
+                                                    formatRupiahInput(
+                                                        (
+                                                            event.currentTarget as HTMLInputElement
+                                                        ).value,
+                                                    );
+                                            }}
                                         />
                                     </label>
                                     <label class="space-y-1.5">
@@ -5983,11 +5997,20 @@
                                             >Fixed Cost</span
                                         >
                                         <Input
-                                            type="number"
-                                            min="0"
-                                            step="1000"
+                                            type="text"
+                                            inputmode="numeric"
                                             placeholder="Fixed Cost"
-                                            bind:value={armadaForm.fixed_cost}
+                                            value={formatRupiahInput(
+                                                armadaForm.fixed_cost,
+                                            )}
+                                            oninput={(event) => {
+                                                armadaForm.fixed_cost =
+                                                    formatRupiahInput(
+                                                        (
+                                                            event.currentTarget as HTMLInputElement
+                                                        ).value,
+                                                    );
+                                            }}
                                         />
                                     </label>
                                 </div>
