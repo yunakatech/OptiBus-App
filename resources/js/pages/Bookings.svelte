@@ -332,6 +332,14 @@
     let localBookingRouteOptions = $state<string[]>(
         $state.snapshot(initialBookingRouteOptions()),
     );
+
+    $effect(() => {
+        localTotals = $state.snapshot(totals);
+        localLatestBookings = $state.snapshot(latestBookings);
+        localBookingGroups = $state.snapshot(bookingGroups);
+        localBookingRouteOptions = $state.snapshot(bookingRouteOptions);
+    });
+
     let bookingListScope = $state<'active' | 'history'>('active');
     let bookingListSearch = $state('');
     let bookingListRoute = $state('all');
