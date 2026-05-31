@@ -852,13 +852,12 @@ class BookingController extends Controller
         }
 
         $datePart = substr(trim($tanggal), 0, 10);
-        $timePart = substr(trim($jam), 0, 5);
 
         try {
-            $now = now();
-            $departureAt = Carbon::createFromFormat('Y-m-d H:i', $datePart.' '.$timePart);
+            $today = now()->startOfDay();
+            $departureDate = Carbon::createFromFormat('Y-m-d', $datePart)->startOfDay();
 
-            return $departureAt->lte($now);
+            return $departureDate->lte($today);
         } catch (\Throwable) {
             return false;
         }
