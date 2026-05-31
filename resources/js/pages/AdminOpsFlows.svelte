@@ -54,6 +54,7 @@
     type Pagination = { page: number; per_page: number; total: number; last_page: number };
     type Charter = { id: number; name: string; company_name: string | null; phone: string | null; start_date: string; end_date: string; departure_time: string | null; pickup_point: string | null; drop_point: string | null; unit_id: number | null; unit_nopol: string | null; unit_category: string | null; armada_id: number | null; armada_nopol: string | null; driver_name: string | null; price: number; layanan: string | null; bop_price: number; bop_status: string | null; down_payment: number; payment_status: string | null; status: string | null };
     type CharterCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; company: string | null };
+    type BagasiCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; tipe: string | null };
     type Luggage = { id: number; sender_name: string; sender_phone: string; sender_address: string | null; receiver_name: string; receiver_phone: string; receiver_address: string | null; service_id: number | null; service_name: string | null; rute_id: number | null; rute: string | null; route_name: string | null; tanggal: string | null; unit_id: number | null; trip_assignment_id?: number | null; departure_date?: string | null; departure_time?: string | null; departure_unit?: number | null; departure_driver_name?: string | null; departure_armada_nopol?: string | null; quantity: number; notes: string | null; price: number; status: string | null; payment_status: string | null; kode_resi: string | null; created_at: string | null };
     type Assignment = { id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; nama: string | null };
     type AssignmentConflict = { type: string; message: string; assignment_id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; driver_name: string | null };
@@ -157,6 +158,14 @@
     let charterCustomerSearchTimer: ReturnType<typeof setTimeout> | null = null;
     let charterArmadaSearchTimer: ReturnType<typeof setTimeout> | null = null;
     let luggageForm = $state(newLuggageForm());
+    let luggageSenderLookupOpen = $state(false);
+    let luggageSenderLookupBusy = $state(false);
+    let luggageSenderLookupResults = $state<BagasiCustomer[]>([]);
+    let luggageSenderSearchTimer: ReturnType<typeof setTimeout> | null = null;
+    let luggageReceiverLookupOpen = $state(false);
+    let luggageReceiverLookupBusy = $state(false);
+    let luggageReceiverLookupResults = $state<BagasiCustomer[]>([]);
+    let luggageReceiverSearchTimer: ReturnType<typeof setTimeout> | null = null;
     let assignmentForm = $state({ id: 0, rute: '', tanggal: today, jam: '08:00', unit: 1, driver_id: 0 });
     let charterStartDateInput = $state<HTMLInputElement | null>(null);
     let charterEndDateInput = $state<HTMLInputElement | null>(null);
@@ -1307,6 +1316,174 @@ return 'Selesai';
 
     const resetLuggageFormState = () => {
         luggageForm = newLuggageForm();
+        luggageSenderLookupOpen = false;
+        luggageSenderLookupBusy = false;
+        luggageSenderLookupResults = [];
+        luggageReceiverLookupOpen = false;
+        luggageReceiverLookupBusy = false;
+        luggageReceiverLookupResults = [];
+
+        if (luggageSenderSearchTimer) {
+            clearTimeout(luggageSenderSearchTimer);
+            luggageSenderSearchTimer = null;
+        }
+
+        if (luggageReceiverSearchTimer) {
+            clearTimeout(luggageReceiverSearchTimer);
+            luggageReceiverSearchTimer = null;
+        }
+    };
+
+    const bagasiCustomerLabel = (customer: BagasiCustomer) => `${String(customer.nama ?? '').trim()} · ${String(customer.no_hp ?? '').trim()}`;
+
+    const applyLuggageCustomer = (customer: BagasiCustomer, role: 'sender' | 'receiver') => {
+        if (role === 'sender') {
+            luggageForm.sender_name = customer.nama ?? '';
+            luggageForm.sender_phone = customer.no_hp ?? '';
+            luggageForm.sender_address = customer.alamat ?? '';
+            luggageSenderLookupOpen = false;
+            luggageSenderLookupResults = [];
+
+            return;
+        }
+
+        luggageForm.receiver_name = customer.nama ?? '';
+        luggageForm.receiver_phone = customer.no_hp ?? '';
+        luggageForm.receiver_address = customer.alamat ?? '';
+        luggageReceiverLookupOpen = false;
+        luggageReceiverLookupResults = [];
+    };
+
+    const findExactBagasiCustomer = (keyword: string, customers: BagasiCustomer[]) => {
+        const text = normalizeLookupText(keyword);
+        const phone = normalizeLookupPhone(keyword);
+
+        if (phone.length >= 5) {
+            const phoneMatch = customers.find((customer) => normalizeLookupPhone(customer.no_hp) === phone);
+
+            if (phoneMatch) {
+                return phoneMatch;
+            }
+        }
+
+        if (text.length >= 3) {
+            return customers.find((customer) => normalizeLookupText(customer.nama) === text) ?? null;
+        }
+
+        return null;
+    };
+
+    const closeLuggageCustomerLookup = (role: 'sender' | 'receiver') => {
+        if (role === 'sender') {
+            luggageSenderLookupOpen = false;
+
+            return;
+        }
+
+        luggageReceiverLookupOpen = false;
+    };
+
+    const searchLuggageCustomers = async (keywordRaw: string, role: 'sender' | 'receiver') => {
+        const keyword = keywordRaw.trim();
+        const minLength = 2;
+
+        if (keyword.length < minLength) {
+            closeLuggageCustomerLookup(role);
+
+            if (role === 'sender') {
+                luggageSenderLookupResults = [];
+                luggageSenderLookupBusy = false;
+
+                return;
+            }
+
+            luggageReceiverLookupResults = [];
+            luggageReceiverLookupBusy = false;
+
+            return;
+        }
+
+        if (role === 'sender') {
+            luggageSenderLookupBusy = true;
+        } else {
+            luggageReceiverLookupBusy = true;
+        }
+
+        try {
+            const r = await api('GET', `/api/admin/customer-bagasi?q=${encodeURIComponent(keyword)}&page=1&per_page=8`);
+            const customers = (r.customers ?? []) as BagasiCustomer[];
+            const exactCustomer = findExactBagasiCustomer(keyword, customers);
+
+            if (exactCustomer) {
+                applyLuggageCustomer(exactCustomer, role);
+
+                return;
+            }
+
+            if (role === 'sender') {
+                luggageSenderLookupResults = customers;
+                luggageSenderLookupOpen = true;
+            } else {
+                luggageReceiverLookupResults = customers;
+                luggageReceiverLookupOpen = true;
+            }
+        } catch {
+            if (role === 'sender') {
+                luggageSenderLookupResults = [];
+                luggageSenderLookupOpen = false;
+            } else {
+                luggageReceiverLookupResults = [];
+                luggageReceiverLookupOpen = false;
+            }
+        } finally {
+            if (role === 'sender') {
+                luggageSenderLookupBusy = false;
+            } else {
+                luggageReceiverLookupBusy = false;
+            }
+        }
+    };
+
+    const onLuggageCustomerInput = (value: string, role: 'sender' | 'receiver') => {
+        if (role === 'sender') {
+            luggageForm.sender_name = value;
+
+            if (luggageSenderSearchTimer) {
+                clearTimeout(luggageSenderSearchTimer);
+                luggageSenderSearchTimer = null;
+            }
+
+            luggageSenderSearchTimer = setTimeout(() => {
+                void searchLuggageCustomers(value, role);
+            }, 220);
+
+            return;
+        }
+
+        luggageForm.receiver_name = value;
+
+        if (luggageReceiverSearchTimer) {
+            clearTimeout(luggageReceiverSearchTimer);
+            luggageReceiverSearchTimer = null;
+        }
+
+        luggageReceiverSearchTimer = setTimeout(() => {
+            void searchLuggageCustomers(value, role);
+        }, 220);
+    };
+
+    const onLuggageCustomerFocus = (role: 'sender' | 'receiver') => {
+        const currentValue = role === 'sender' ? luggageForm.sender_name : luggageForm.receiver_name;
+
+        if (currentValue.trim().length >= 2) {
+            void searchLuggageCustomers(currentValue, role);
+        }
+    };
+
+    const onLuggageCustomerBlur = (role: 'sender' | 'receiver') => {
+        setTimeout(() => {
+            closeLuggageCustomerLookup(role);
+        }, 140);
     };
 
     const applyCharterCustomer = (customer: CharterCustomer) => {
@@ -2187,6 +2364,7 @@ params.set('to', filterTo);
         resetCharterCustomerLookup();
         resetCharterArmadaLookup();
         resetCharterFilterLookups();
+        resetLuggageFormState();
     });
 </script>
 
@@ -2657,10 +2835,51 @@ params.set('to', filterTo);
                                 <section class="rounded-2xl border border-border/70 bg-muted/10 p-4">
                                     <div class="mb-3">
                                         <p class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Pengirim</p>
-                                        <p class="text-sm font-medium text-foreground">Identitas asal barang</p>
+                                        <p class="text-sm font-medium text-foreground">Cari customer bagasi pengirim supaya kontak terisi otomatis</p>
                                     </div>
                                     <div class="grid gap-3 md:grid-cols-2">
-                                        <div class="space-y-1"><label for="luggage-sender-name" class="text-xs font-medium text-muted-foreground">Nama Pengirim</label><Input id="luggage-sender-name" class="rounded-xl" bind:value={luggageForm.sender_name} required /></div>
+                                        <div class="space-y-1 md:col-span-2">
+                                            <label for="luggage-sender-name" class="text-xs font-medium text-muted-foreground">Nama Pengirim</label>
+                                            <div class="relative">
+                                                <Input
+                                                    id="luggage-sender-name"
+                                                    class="rounded-xl"
+                                                    type="search"
+                                                    placeholder="Cari nama customer bagasi pengirim"
+                                                    value={luggageForm.sender_name}
+                                                    oninput={(event) => onLuggageCustomerInput((event.currentTarget as HTMLInputElement).value, 'sender')}
+                                                    onfocus={() => onLuggageCustomerFocus('sender')}
+                                                    onblur={() => onLuggageCustomerBlur('sender')}
+                                                    autocomplete="off"
+                                                    required
+                                                />
+                                                {#if luggageSenderLookupOpen}
+                                                    <div class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl">
+                                                        {#if luggageSenderLookupBusy}
+                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Mencari customer bagasi...</div>
+                                                        {:else if luggageSenderLookupResults.length > 0}
+                                                            {#each luggageSenderLookupResults as customer (customer.id)}
+                                                                <button
+                                                                    type="button"
+                                                                    class="flex w-full flex-col gap-1 border-b border-border/60 px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
+                                                                    onmousedown={(event) => event.preventDefault()}
+                                                                    onclick={() => applyLuggageCustomer(customer, 'sender')}
+                                                                >
+                                                                    <span class="flex items-center justify-between gap-2">
+                                                                        <span class="font-medium text-foreground">{customer.nama}</span>
+                                                                        <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{customer.tipe ?? '-'}</span>
+                                                                    </span>
+                                                                    <span class="text-xs text-muted-foreground">{customer.no_hp}</span>
+                                                                    <span class="truncate text-xs text-muted-foreground">{customer.alamat || '-'}</span>
+                                                                </button>
+                                                            {/each}
+                                                        {:else}
+                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Customer bagasi pengirim tidak ditemukan.</div>
+                                                        {/if}
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        </div>
                                         <div class="space-y-1"><label for="luggage-sender-phone" class="text-xs font-medium text-muted-foreground">No HP Pengirim</label><Input id="luggage-sender-phone" class="rounded-xl" bind:value={luggageForm.sender_phone} required /></div>
                                         <div class="space-y-1 md:col-span-2"><label for="luggage-sender-address" class="text-xs font-medium text-muted-foreground">Alamat Pengirim</label><Input id="luggage-sender-address" class="rounded-xl" bind:value={luggageForm.sender_address} /></div>
                                     </div>
@@ -2669,10 +2888,51 @@ params.set('to', filterTo);
                                 <section class="rounded-2xl border border-border/70 bg-muted/10 p-4">
                                     <div class="mb-3">
                                         <p class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Penerima</p>
-                                        <p class="text-sm font-medium text-foreground">Tujuan dan kontak penerima</p>
+                                        <p class="text-sm font-medium text-foreground">Cari customer bagasi penerima supaya kontak terisi otomatis</p>
                                     </div>
                                     <div class="grid gap-3 md:grid-cols-2">
-                                        <div class="space-y-1"><label for="luggage-receiver-name" class="text-xs font-medium text-muted-foreground">Nama Penerima</label><Input id="luggage-receiver-name" class="rounded-xl" bind:value={luggageForm.receiver_name} required /></div>
+                                        <div class="space-y-1 md:col-span-2">
+                                            <label for="luggage-receiver-name" class="text-xs font-medium text-muted-foreground">Nama Penerima</label>
+                                            <div class="relative">
+                                                <Input
+                                                    id="luggage-receiver-name"
+                                                    class="rounded-xl"
+                                                    type="search"
+                                                    placeholder="Cari nama customer bagasi penerima"
+                                                    value={luggageForm.receiver_name}
+                                                    oninput={(event) => onLuggageCustomerInput((event.currentTarget as HTMLInputElement).value, 'receiver')}
+                                                    onfocus={() => onLuggageCustomerFocus('receiver')}
+                                                    onblur={() => onLuggageCustomerBlur('receiver')}
+                                                    autocomplete="off"
+                                                    required
+                                                />
+                                                {#if luggageReceiverLookupOpen}
+                                                    <div class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl">
+                                                        {#if luggageReceiverLookupBusy}
+                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Mencari customer bagasi...</div>
+                                                        {:else if luggageReceiverLookupResults.length > 0}
+                                                            {#each luggageReceiverLookupResults as customer (customer.id)}
+                                                                <button
+                                                                    type="button"
+                                                                    class="flex w-full flex-col gap-1 border-b border-border/60 px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
+                                                                    onmousedown={(event) => event.preventDefault()}
+                                                                    onclick={() => applyLuggageCustomer(customer, 'receiver')}
+                                                                >
+                                                                    <span class="flex items-center justify-between gap-2">
+                                                                        <span class="font-medium text-foreground">{customer.nama}</span>
+                                                                        <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{customer.tipe ?? '-'}</span>
+                                                                    </span>
+                                                                    <span class="text-xs text-muted-foreground">{customer.no_hp}</span>
+                                                                    <span class="truncate text-xs text-muted-foreground">{customer.alamat || '-'}</span>
+                                                                </button>
+                                                            {/each}
+                                                        {:else}
+                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Customer bagasi penerima tidak ditemukan.</div>
+                                                        {/if}
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        </div>
                                         <div class="space-y-1"><label for="luggage-receiver-phone" class="text-xs font-medium text-muted-foreground">No HP Penerima</label><Input id="luggage-receiver-phone" class="rounded-xl" bind:value={luggageForm.receiver_phone} required /></div>
                                         <div class="space-y-1 md:col-span-2"><label for="luggage-receiver-address" class="text-xs font-medium text-muted-foreground">Alamat Penerima</label><Input id="luggage-receiver-address" class="rounded-xl" bind:value={luggageForm.receiver_address} /></div>
                                     </div>
@@ -2753,11 +3013,13 @@ params.set('to', filterTo);
                                             <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Pengirim</p>
                                             <p class="mt-1 font-semibold">{luggageForm.sender_name || 'Nama pengirim belum diisi'}</p>
                                             <p class="truncate text-slate-300">{luggageForm.sender_phone || '-'}</p>
+                                            <p class="truncate text-slate-300">{luggageForm.sender_address || '-'}</p>
                                         </div>
                                         <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
                                             <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Penerima</p>
                                             <p class="mt-1 font-semibold">{luggageForm.receiver_name || 'Nama penerima belum diisi'}</p>
                                             <p class="truncate text-slate-300">{luggageForm.receiver_phone || '-'}</p>
+                                            <p class="truncate text-slate-300">{luggageForm.receiver_address || '-'}</p>
                                         </div>
                                         <div class="grid grid-cols-2 gap-2 text-xs">
                                             <div class="rounded-xl border border-white/10 bg-white/5 p-2.5">
@@ -2916,6 +3178,7 @@ params.set('to', filterTo);
                                                     {@const lockedLuggageActions = [luggagePickedUpStatus, luggageArrivedStatus].includes(normalizedLuggageStatus)}
                                                     {#if !lockedLuggageActions}
                                                         <DropdownMenuItem onclick={() => {
+                                                            resetLuggageFormState();
                                                             luggageForm = {
                                                                 id: row.id,
                                                                 sender_name: row.sender_name ?? '',
