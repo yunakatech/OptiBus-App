@@ -174,14 +174,6 @@
         return 'border-slate-200 bg-slate-50 text-slate-700';
     };
 
-    const averageRevenue = (summary: ReportSummary | null) => {
-        if (!summary || summary.total_rows <= 0) {
-            return 0;
-        }
-
-        return summary.revenue_total / summary.total_rows;
-    };
-
     const exportHref = (type: ReportKind, from: string, to: string) => {
         const encodedFrom = encodeURIComponent(from);
         const encodedTo = encodeURIComponent(to);
@@ -364,7 +356,7 @@
 
             {#if reportSummary}
                 <div
-                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-3"
+                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-2"
                 >
                     <div class="rounded-2xl bg-muted/20 px-4 py-3">
                         <p
@@ -399,25 +391,6 @@
                         <p class="mt-1 text-xs text-muted-foreground">
                             {resolvedMeta(reportSummary, reportType).dataLabel}
                             cocok dengan filter tanggal
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
-                        <p
-                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-                        >
-                            Rata-rata Nilai
-                        </p>
-                        <p
-                            class="mt-2 text-2xl font-semibold tracking-tight tabular-nums"
-                        >
-                            {formatCurrency(averageRevenue(reportSummary))}
-                        </p>
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            Per
-                            {resolvedMeta(reportSummary, reportType).itemLabel}
-                            |
-                            {reportSummary.from} s.d. {reportSummary.to}
                         </p>
                     </div>
                 </div>
