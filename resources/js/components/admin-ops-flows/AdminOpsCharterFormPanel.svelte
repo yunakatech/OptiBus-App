@@ -329,7 +329,7 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Operasional & Pembayaran</p>
                     <p class="text-sm font-medium text-foreground">Mapping armada, driver, dan nilai transaksi</p>
                 </div>
-                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
                     <div class="relative space-y-1 xl:col-span-2">
                         <label for="charter-unit" class="text-xs font-medium text-muted-foreground">Kategori Armada</label>
                         <Input
@@ -468,18 +468,15 @@
                             </div>
                         {/if}
                     </div>
-                    <div class="space-y-1">
+                    <div class="space-y-1 xl:col-span-2">
                         <label for="charter-payment-status" class="text-xs font-medium text-muted-foreground">Payment Status</label>
                         <select id="charter-payment-status" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={charterForm.payment_status}>
-                            {#if charterForm.payment_status && !charterPaymentStatusOptions.includes(charterForm.payment_status)}
-                                <option value={charterForm.payment_status}>{charterForm.payment_status} (data lama)</option>
-                            {/if}
                             {#each charterPaymentStatusOptions as paymentStatus (paymentStatus)}
                                 <option value={paymentStatus}>{paymentStatus}</option>
                             {/each}
                         </select>
                     </div>
-                    <div class="space-y-1">
+                    <div class="space-y-1 xl:col-span-2">
                         <label for="charter-price" class="text-xs font-medium text-muted-foreground">Harga Charter</label>
                         <Input
                             id="charter-price"
@@ -494,7 +491,23 @@
                             }}
                         />
                     </div>
-                    <div class="space-y-1">
+                    <div class="space-y-1 xl:col-span-2">
+                        <label for="charter-down-payment" class="text-xs font-medium text-muted-foreground">Nominal DP</label>
+                        <Input
+                            id="charter-down-payment"
+                            class="rounded-xl"
+                            type="text"
+                            inputmode="numeric"
+                            placeholder="Rp 0"
+                            value={formatCurrencyInput(charterForm.down_payment)}
+                            oninput={(event) => {
+                                const target = event.currentTarget as HTMLInputElement;
+                                charterForm.down_payment = parseCurrencyInput(target.value);
+                            }}
+                        />
+                        <p class="text-[11px] leading-snug text-muted-foreground">Isi jika customer sudah membayar uang muka. Status pembayaran tetap Lunas atau Belum Lunas.</p>
+                    </div>
+                    <div class="space-y-1 md:col-span-2 xl:col-span-2">
                         <label for="charter-bop-price" class="text-xs font-medium text-muted-foreground">Nominal BOP</label>
                         <Input
                             id="charter-bop-price"
@@ -509,21 +522,6 @@
                             }}
                         />
                     </div>
-                    {#if charterForm.payment_status === 'DP'}
-                        <div class="space-y-1 md:col-span-2 xl:col-span-2">
-                            <label for="charter-down-payment" class="text-xs font-medium text-muted-foreground">Nominal Pembayaran DP</label>
-                            <Input
-                                id="charter-down-payment"
-                                class="rounded-xl"
-                                placeholder="Rp 0"
-                                value={formatCurrencyInput(charterForm.down_payment)}
-                                oninput={(event) => {
-                                    const target = event.currentTarget as HTMLInputElement;
-                                    charterForm.down_payment = parseCurrencyInput(target.value);
-                                }}
-                            />
-                        </div>
-                    {/if}
                 </div>
             </section>
         </div>
@@ -573,7 +571,7 @@
                             <span class="text-cyan-100">Nominal BOP</span>
                             <span class="font-semibold">{formatCurrencyId(charterForm.bop_price)}</span>
                         </div>
-                        {#if charterForm.payment_status === 'DP'}
+                        {#if Number(charterForm.down_payment || 0) > 0}
                             <div class="mt-1 flex items-center justify-between gap-2">
                                 <span class="text-cyan-100">DP Masuk</span>
                                 <span class="font-semibold">{formatCurrencyId(Number(charterForm.down_payment || 0))}</span>

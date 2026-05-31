@@ -267,11 +267,11 @@
             trend: metricTrend(activeSummaryStats.total_bookings, activeSummaryComparison.total_bookings, formatCompactNumber),
             compareBars: metricBars(activeSummaryStats.total_bookings, activeSummaryComparison.total_bookings),
             icon: BusFront,
-            shellClass: 'border-cyan-200/80 bg-[linear-gradient(135deg,rgba(236,254,255,0.98),rgba(224,242,254,0.92))]',
-            iconClass: 'border-cyan-200/70 bg-cyan-500/12 text-cyan-700',
-            valueClass: 'text-cyan-950',
+            shellClass: 'border-cyan-200/80 bg-[linear-gradient(135deg,rgba(236,254,255,0.98),rgba(224,242,254,0.92))] dark:border-cyan-400/25 dark:bg-[linear-gradient(135deg,rgba(8,47,73,0.74),rgba(15,23,42,0.94))]',
+            iconClass: 'border-cyan-200/70 bg-cyan-500/12 text-cyan-700 dark:border-cyan-300/25 dark:bg-cyan-300/10 dark:text-cyan-100',
+            valueClass: 'text-cyan-950 dark:text-cyan-50',
             barClass: 'bg-cyan-500/75',
-            noteClass: 'text-cyan-700/80',
+            noteClass: 'text-cyan-700/80 dark:text-cyan-100/90',
         },
         {
             key: 'booking-revenue',
@@ -284,11 +284,11 @@
             trend: metricTrend(activeSummaryStats.revenue_booking, activeSummaryComparison.revenue_booking, toCurrency),
             compareBars: metricBars(activeSummaryStats.revenue_booking, activeSummaryComparison.revenue_booking),
             icon: Ticket,
-            shellClass: 'border-emerald-200/80 bg-[linear-gradient(135deg,rgba(240,253,244,0.98),rgba(220,252,231,0.92))]',
-            iconClass: 'border-emerald-200/70 bg-emerald-500/12 text-emerald-700',
-            valueClass: 'text-emerald-950',
+            shellClass: 'border-emerald-200/80 bg-[linear-gradient(135deg,rgba(240,253,244,0.98),rgba(220,252,231,0.92))] dark:border-emerald-400/25 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.72),rgba(15,23,42,0.94))]',
+            iconClass: 'border-emerald-200/70 bg-emerald-500/12 text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-300/10 dark:text-emerald-100',
+            valueClass: 'text-emerald-950 dark:text-emerald-50',
             barClass: 'bg-emerald-500/75',
-            noteClass: 'text-emerald-700/80',
+            noteClass: 'text-emerald-700/80 dark:text-emerald-100/90',
         },
         {
             key: 'charter-revenue',
@@ -301,11 +301,11 @@
             trend: metricTrend(activeSummaryStats.revenue_charter, activeSummaryComparison.revenue_charter, toCurrency),
             compareBars: metricBars(activeSummaryStats.revenue_charter, activeSummaryComparison.revenue_charter),
             icon: Wallet,
-            shellClass: 'border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98),rgba(254,243,199,0.92))]',
-            iconClass: 'border-amber-200/70 bg-amber-500/12 text-amber-700',
-            valueClass: 'text-amber-950',
+            shellClass: 'border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98),rgba(254,243,199,0.92))] dark:border-amber-400/25 dark:bg-[linear-gradient(135deg,rgba(120,53,15,0.62),rgba(15,23,42,0.94))]',
+            iconClass: 'border-amber-200/70 bg-amber-500/12 text-amber-700 dark:border-amber-300/25 dark:bg-amber-300/10 dark:text-amber-100',
+            valueClass: 'text-amber-950 dark:text-amber-50',
             barClass: 'bg-amber-500/75',
-            noteClass: 'text-amber-700/80',
+            noteClass: 'text-amber-700/80 dark:text-amber-100/90',
         },
         {
             key: 'luggage-revenue',
@@ -318,11 +318,11 @@
             trend: metricTrend(activeSummaryStats.revenue_luggage, activeSummaryComparison.revenue_luggage, toCurrency),
             compareBars: metricBars(activeSummaryStats.revenue_luggage, activeSummaryComparison.revenue_luggage),
             icon: Package,
-            shellClass: 'border-fuchsia-200/80 bg-[linear-gradient(135deg,rgba(253,244,255,0.98),rgba(250,232,255,0.92))]',
-            iconClass: 'border-fuchsia-200/70 bg-fuchsia-500/12 text-fuchsia-700',
-            valueClass: 'text-fuchsia-950',
-            barClass: 'bg-fuchsia-500/75',
-            noteClass: 'text-fuchsia-700/80',
+            shellClass: 'border-sky-200/80 bg-[linear-gradient(135deg,rgba(240,249,255,0.98),rgba(224,242,254,0.92))] dark:border-sky-400/25 dark:bg-[linear-gradient(135deg,rgba(12,74,110,0.68),rgba(15,23,42,0.94))]',
+            iconClass: 'border-sky-200/70 bg-sky-500/12 text-sky-700 dark:border-sky-300/25 dark:bg-sky-300/10 dark:text-sky-100',
+            valueClass: 'text-sky-950 dark:text-sky-50',
+            barClass: 'bg-sky-500/75',
+            noteClass: 'text-sky-700/80 dark:text-sky-100/90',
         },
     ];
 
@@ -403,17 +403,17 @@
 
 <div class="flex h-full flex-1 flex-col gap-2 overflow-x-hidden rounded-xl p-2.5 md:gap-3 md:p-4">
     <div class="space-y-2">
-        <div class="flex flex-col gap-2 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-3 py-2.5 shadow-sm md:flex-row md:items-end md:justify-between md:rounded-3xl md:px-4 md:py-3">
+        <div class="flex flex-col gap-2 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-3 py-2.5 shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.9))] md:flex-row md:items-end md:justify-between md:rounded-3xl md:px-4 md:py-3">
             <div class="space-y-0.5 md:space-y-1">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:text-[11px]">Ringkasan Dashboard</p>
                 <h2 class="text-base font-semibold tracking-tight text-foreground md:text-lg">Performa Booking dan Pendapatan</h2>
             </div>
             <div class="flex flex-col gap-2 md:items-end">
-                <div class="hidden items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground sm:flex md:self-auto">
+                <div class="hidden items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground dark:border-slate-700/70 dark:bg-slate-900/70 sm:flex md:self-auto">
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                     Perbandingan vs {activeSummaryPeriod.previous_label}
                 </div>
-                <div class="inline-flex rounded-2xl border border-border/70 bg-white/80 p-0.5 shadow-sm md:p-1">
+                <div class="inline-flex rounded-2xl border border-border/70 bg-white/80 p-0.5 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 md:p-1">
                     {#each [
                         { key: 'day', label: 'Hari Ini' },
                         { key: 'month', label: 'Bulan Ini' },
@@ -452,23 +452,23 @@
                                 <div class={`flex h-9 w-9 items-center justify-center rounded-xl border backdrop-blur sm:h-11 sm:w-11 sm:rounded-2xl ${metric.iconClass}`}>
                                     <MetricIcon class="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
-                                <div class="hidden rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:block">
+                                <div class="hidden rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 sm:block">
                                     {metric.periodLabel}
                                 </div>
                             </div>
 
                             <div class="space-y-0.5 sm:space-y-1">
-                                <CardDescription class="line-clamp-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 sm:text-[11px] sm:tracking-[0.14em]">
+                                <CardDescription class="line-clamp-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300 sm:text-[11px] sm:tracking-[0.14em]">
                                     {metric.title}
                                 </CardDescription>
-                                <p class="hidden text-[11px] leading-relaxed text-slate-600 sm:line-clamp-1">{metric.subtitle}</p>
+                                <p class="hidden text-[11px] leading-relaxed text-slate-600 dark:text-slate-400 sm:line-clamp-1">{metric.subtitle}</p>
                                 <CardTitle class={`break-words pt-0 text-[15px] leading-tight tracking-tight sm:text-xl md:text-2xl ${metric.valueClass}`}>
                                     {metric.value}
                                 </CardTitle>
                             </div>
 
                             <div class="hidden gap-2 sm:grid md:grid-cols-[1.15fr_0.85fr]">
-                                <div class="rounded-2xl border border-white/70 bg-white/60 px-3 py-2">
+                                <div class="rounded-2xl border border-white/70 bg-white/60 px-3 py-2 dark:border-white/10 dark:bg-slate-950/35">
                                     <div class={`mb-1.5 flex items-center gap-2 text-[11px] font-semibold ${metric.noteClass}`}>
                                         <TrendIcon class="h-3.5 w-3.5" />
                                         <span>{metric.trend.label}</span>
@@ -476,23 +476,23 @@
                                     <p class={`text-[11px] font-semibold ${metric.noteClass}`}>{metric.trend.detail}</p>
                                 </div>
 
-                                <div class="rounded-2xl border border-white/70 bg-white/55 px-3 py-2">
+                                <div class="rounded-2xl border border-white/70 bg-white/55 px-3 py-2 dark:border-white/10 dark:bg-slate-950/35">
                                     <div class="space-y-2">
                                         <div>
-                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500">
+                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
                                                 <span class="truncate">{activeSummaryPeriod.previous_label}</span>
                                                 <span>{metric.compareBars.previous}%</span>
                                             </div>
-                                            <div class="h-1.5 rounded-full bg-white/80">
-                                                <div class="h-1.5 rounded-full bg-slate-300/90" style={`width:${metric.compareBars.previous}%`}></div>
+                                            <div class="h-1.5 rounded-full bg-white/80 dark:bg-slate-800/80">
+                                                <div class="h-1.5 rounded-full bg-slate-300/90 dark:bg-slate-600/80" style={`width:${metric.compareBars.previous}%`}></div>
                                             </div>
                                         </div>
                                         <div>
-                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500">
+                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
                                                 <span>{activeSummaryPeriod.current_label}</span>
                                                 <span>{metric.compareBars.current}%</span>
                                             </div>
-                                            <div class="h-1.5 rounded-full bg-white/80">
+                                            <div class="h-1.5 rounded-full bg-white/80 dark:bg-slate-800/80">
                                                 <div class={`h-1.5 rounded-full ${metric.barClass}`} style={`width:${metric.compareBars.current}%`}></div>
                                             </div>
                                         </div>
@@ -500,7 +500,7 @@
                                 </div>
                             </div>
 
-                            <div class="hidden items-center justify-between border-t border-white/60 pt-1 text-[10px] font-medium text-slate-600 sm:flex md:text-[11px]">
+                            <div class="hidden items-center justify-between border-t border-white/60 pt-1 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:text-slate-300 sm:flex md:text-[11px]">
                                 <span>{metric.cta}</span>
                                 <ArrowRight class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                             </div>
@@ -528,7 +528,7 @@
                                 </div>
                                 <button
                                     type="button"
-                                    class="rounded-full border border-primary/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground"
+                                    class="rounded-full border border-primary/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground dark:bg-slate-900/80"
                                     onclick={() => (selectedDailyKey = '')}
                                 >
                                     Tutup
@@ -536,7 +536,7 @@
                             </div>
                             <div class="grid gap-2 sm:grid-cols-3">
                                 {#each trendBreakdown(selectedDaily) as item (`selected-daily-panel-${item.label}`)}
-                                    <div class="rounded-xl border border-primary/10 bg-white/80 px-2.5 py-2">
+                                    <div class="rounded-xl border border-primary/10 bg-white/80 px-2.5 py-2 dark:bg-slate-900/80">
                                         <p class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{item.label}</p>
                                         <p class="mt-1 font-semibold text-foreground">{toCurrency(item.value)}</p>
                                     </div>
@@ -560,7 +560,7 @@
                                         class="w-full rounded-sm bg-primary/75 transition-opacity group-hover:opacity-90"
                                         style={`height:${Math.max(6, Math.round((Number(row.revenue || 0) / maxDaily) * 100))}%`}
                                     ></div>
-                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
+                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg dark:bg-slate-900 md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
                                         <p>{row.label} {row.date ?? ''}</p>
                                         <p class="text-muted-foreground">Total {toCurrency(row.revenue)}</p>
                                         {#each trendBreakdown(row) as item (`daily-breakdown-${row.label}-${item.label}`)}
@@ -593,7 +593,7 @@
                                 </div>
                                 <button
                                     type="button"
-                                    class="rounded-full border border-emerald-500/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground"
+                                    class="rounded-full border border-emerald-500/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground dark:bg-slate-900/80"
                                     onclick={() => (selectedMonthlyKey = '')}
                                 >
                                     Tutup
@@ -601,7 +601,7 @@
                             </div>
                             <div class="grid gap-2 sm:grid-cols-3">
                                 {#each trendBreakdown(selectedMonthly) as item (`selected-monthly-panel-${item.label}`)}
-                                    <div class="rounded-xl border border-emerald-500/10 bg-white/80 px-2.5 py-2">
+                                    <div class="rounded-xl border border-emerald-500/10 bg-white/80 px-2.5 py-2 dark:bg-slate-900/80">
                                         <p class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{item.label}</p>
                                         <p class="mt-1 font-semibold text-foreground">{toCurrency(item.value)}</p>
                                     </div>
@@ -625,7 +625,7 @@
                                         class="w-full rounded-sm bg-emerald-500/75 transition-opacity group-hover:opacity-90"
                                         style={`height:${Math.max(6, Math.round((Number(row.revenue || 0) / maxMonthly) * 100))}%`}
                                     ></div>
-                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
+                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg dark:bg-slate-900 md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
                                         <p>{row.name ?? row.label}</p>
                                         <p class="text-muted-foreground">Total {toCurrency(row.revenue)}</p>
                                         {#each trendBreakdown(row) as item (`monthly-breakdown-${row.label}-${item.label}`)}
@@ -697,7 +697,7 @@
                         {#each upcomingCharterReminder.items as item (`upcoming-charter-${item.id}`)}
                             <a
                                 href={`/charters/view/${item.id}`}
-                                class="block rounded-xl border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-3 transition hover:border-cyan-300/70 hover:shadow-sm"
+                                class="block rounded-xl border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-3 transition hover:border-cyan-300/70 hover:shadow-sm dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(8,47,73,0.65))]"
                             >
                                 <div class="mb-2 flex items-start justify-between gap-2">
                                     <div class="min-w-0">

@@ -34,7 +34,6 @@
         charterStatusLabel,
         charterPaymentClass,
         openCharterInvoice,
-        openCharterInvoicePdf,
         charterCanMarkDone,
         markCharterAsDone,
         charterCanEdit,
@@ -51,7 +50,6 @@
         charterStatusLabel: (status: string | null | undefined) => string;
         charterPaymentClass: (status: string | null | undefined) => string;
         openCharterInvoice: (id: number) => void;
-        openCharterInvoicePdf: (id: number) => void;
         charterCanMarkDone: (row: Charter | null | undefined) => boolean;
         markCharterAsDone: (row: Charter) => void | Promise<void>;
         charterCanEdit: (row: Charter | null | undefined) => boolean;
@@ -114,18 +112,6 @@
                     >
                         <Printer class="mr-2 h-4 w-4" />
                         Cetak Invoice
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                        onclick={() => {
-                            if (charterViewData) {
-                                openCharterInvoicePdf(charterViewData.id);
-                            }
-                        }}
-                    >
-                        Download PDF
                     </Button>
                     <Button
                         type="button"

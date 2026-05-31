@@ -257,7 +257,7 @@
         <section class="hero">
             <div class="brand-block">
                 @if(!empty($invoice['logo_data_uri']))
-                    <img class="brand-logo" src="{{ $invoice['logo_data_uri'] }}" alt="CabooQ">
+                    <img class="brand-logo" src="{{ $invoice['logo_data_uri'] }}" alt="Qbus">
                 @endif
                 <div class="brand-copy">
                     <div class="eyebrow">Invoice Carter</div>
@@ -320,10 +320,6 @@
                             <th>Status Bayar</th>
                             <td>{{ $invoice['payment_status'] ?? '-' }}</td>
                         </tr>
-                        <tr>
-                            <th>Status BOP</th>
-                            <td>{{ $invoice['bop_status'] ?? '-' }}</td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -337,10 +333,6 @@
                     <div class="total-row">
                         <span>Down Payment</span>
                         <strong>Rp {{ number_format((float) ($invoice['down_payment'] ?? 0), 0, ',', '.') }}</strong>
-                    </div>
-                    <div class="total-row">
-                        <span>Biaya Operasional</span>
-                        <strong>Rp {{ number_format((float) ($invoice['bop_price'] ?? 0), 0, ',', '.') }}</strong>
                     </div>
                     <div class="total-row grand">
                         <span>Sisa Pembayaran</span>
@@ -363,7 +355,7 @@
         @endif
 
         <div class="doc-footer">
-            <div>Dicetak dari sistem CabooQ</div>
+            <div>Dicetak dari sistem Qbus</div>
             <div>{{ $invoice['invoice_code'] ?? '-' }}</div>
         </div>
     </div>
