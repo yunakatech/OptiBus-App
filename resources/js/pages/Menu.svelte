@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { Link } from '@inertiajs/svelte';
+    import { Link, page } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CalendarDays from 'lucide-svelte/icons/calendar-days';
@@ -27,6 +27,7 @@
     import Users from 'lucide-svelte/icons/users';
     import AppHead from '@/components/AppHead.svelte';
     import MobileBottomNav from '@/components/MobileBottomNav.svelte';
+    import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
 
@@ -35,36 +36,48 @@
         {
             label: 'Customer',
             items: [
-                { title: 'Reguler', href: '/admin-ops/customers', icon: Users },
-                { title: 'Bagasi', href: '/admin-ops/master/customer-bagasi', icon: Briefcase },
-                { title: 'Carter', href: '/admin-ops/master/customer-charter', icon: BusFront },
+                { title: 'Reguler', href: '/admin-ops/customers', icon: Users, permission: 'customer.view' },
+                { title: 'Bagasi', href: '/admin-ops/master/customer-bagasi', icon: Briefcase, permission: 'customer.view' },
+                { title: 'Carter', href: '/admin-ops/master/customer-charter', icon: BusFront, permission: 'customer.view' },
             ],
         },
         {
             label: 'Pengaturan',
             items: [
-                { title: 'Laporan', href: '/report', icon: ChartColumn },
-                { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays },
-                { title: 'Logs', href: '/admin-ops/cancellations', icon: History },
-                { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route },
-                { title: 'Pool', href: '/admin-ops/pools', icon: Route },
-                { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned },
-                { title: 'Segment', href: '/admin-ops/segments', icon: Shuffle },
-                { title: 'Tarif Bagasi', href: '/admin-ops/services', icon: Package },
-                { title: 'Kategori Armada', href: '/admin-ops/units', icon: Truck },
-                { title: 'Armada', href: '/admin-ops/armadas', icon: CarFront },
-                { title: 'Driver', href: '/admin-ops/drivers', icon: IdCard },
-                { title: 'Users', href: '/admin-ops/users', icon: UserCog },
+                { title: 'Laporan', href: '/report', icon: ChartColumn, permission: 'report.view' },
+                { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
+                { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
+                { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },
+                { title: 'Pool', href: '/admin-ops/pools', icon: Route, permission: 'pool.manage' },
+                { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned, permission: 'master.view' },
+                { title: 'Segment', href: '/admin-ops/segments', icon: Shuffle, permission: 'master.view' },
+                { title: 'Tarif Bagasi', href: '/admin-ops/services', icon: Package, permission: 'master.view' },
+                { title: 'Kategori Armada', href: '/admin-ops/units', icon: Truck, permission: 'master.view' },
+                { title: 'Armada', href: '/admin-ops/armadas', icon: CarFront, permission: 'armada.view' },
+                { title: 'Driver', href: '/admin-ops/drivers', icon: IdCard, permission: 'driver.view' },
+                { title: 'Users', href: '/admin-ops/users', icon: UserCog, permission: 'user.manage' },
             ],
         },
     ] as const;
+
+    const permissions = $derived(page.props.auth?.permissions ?? []);
+    const visibleMenuSections = $derived(
+        menuSections
+            .map((section) => ({
+                ...section,
+                items: section.items.filter((item) =>
+                    hasPermission(permissions, item.permission),
+                ),
+            }))
+            .filter((section) => section.items.length > 0),
+    );
 </script>
 
 <AppHead title="Menu" />
 
 <div class="min-h-full w-full bg-background px-3 pt-3 pb-6 md:px-4">
     <div class="mx-auto w-full max-w-6xl space-y-6">
-        {#each menuSections as section (section.label)}
+        {#each visibleMenuSections as section (section.label)}
             <section class="space-y-3">
                 <h2 class="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{section.label}</h2>
                 <div class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">

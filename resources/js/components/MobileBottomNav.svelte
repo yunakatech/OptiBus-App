@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { Link } from '@inertiajs/svelte';
+    import { Link, page } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import BusFront from 'lucide-svelte/icons/bus-front';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import Monitor from 'lucide-svelte/icons/monitor';
     import Tickets from 'lucide-svelte/icons/tickets';
     import { onMount } from 'svelte';
+    import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
@@ -19,29 +20,39 @@
             title: 'Dashboard',
             href: dashboard(),
             icon: LayoutGrid,
+            permission: 'dashboard.view',
         },
         {
             title: 'Keberangkatan',
             href: '/bookings',
             icon: Tickets,
+            permission: 'booking.view',
         },
         {
             title: 'Console',
             href: '/booking-console',
             icon: Monitor,
+            permission: 'booking.view',
         },
         {
             title: 'Carter',
             href: '/charters',
             icon: BusFront,
+            permission: 'charter.view',
         },
         {
             title: 'Bagasi',
             href: '/luggages',
             icon: Briefcase,
+            permission: 'luggage.view',
         },
     ];
 
+    const permissions = $derived(page.props.auth?.permissions ?? []);
+    const visibleMainItems = $derived(
+        mainItems.filter((item) => hasPermission(permissions, item.permission)),
+    );
+    const navCount = $derived(Math.max(visibleMainItems.length, 1));
     let rememberedActiveHref = $state<string>(toUrl(dashboard()));
     let isCompact = $state(false);
     let lastScrollY = 0;
@@ -52,7 +63,9 @@
 
     const isMenuPage = $derived(url.isCurrentUrl('/menu', url.currentUrl));
     const activeIndex = $derived.by(() => {
-        const matchedIndex = mainItems.findIndex((item) => isNavItemActive(item.href));
+        const matchedIndex = visibleMainItems.findIndex((item) =>
+            isNavItemActive(item.href),
+        );
 
         return matchedIndex >= 0 ? matchedIndex : 0;
     });
@@ -140,7 +153,9 @@
 return;
 }
 
-        const matched = mainItems.find((item) => url.isCurrentOrParentUrl(item.href, url.currentUrl));
+        const matched = visibleMainItems.find((item) =>
+            url.isCurrentOrParentUrl(item.href, url.currentUrl),
+        );
 
         if (!matched) {
 return;
@@ -165,13 +180,13 @@ return;
         <div class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1.15rem]' : 'rounded-3xl'}`}>
             <div
                 class={`pointer-events-none absolute left-0 z-0 transition-[transform,padding,inset] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'inset-y-0.5 px-1' : 'inset-y-1 px-1.5'}`}
-                style={`width: ${100 / mainItems.length}%; transform: translateX(${activeIndex * 100}%);`}
+                style={`width: ${100 / navCount}%; transform: translateX(${activeIndex * 100}%);`}
             >
                 <div class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/30 to-sky-500/20 shadow-[0_10px_25px_-12px_hsl(200_95%_45%_/_0.85)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-xl' : 'rounded-2xl'}`}></div>
             </div>
 
-            <ul class="relative z-10 grid" style={`grid-template-columns: repeat(${mainItems.length}, minmax(0, 1fr));`}>
-                {#each mainItems as item (toUrl(item.href))}
+            <ul class="relative z-10 grid" style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}>
+                {#each visibleMainItems as item (toUrl(item.href))}
                     <li>
                         <Link
                             href={toUrl(item.href)}

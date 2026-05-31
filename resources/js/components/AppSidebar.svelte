@@ -1,5 +1,5 @@
 ﻿<script lang="ts">
-    import { Link } from '@inertiajs/svelte';
+    import { Link, page } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CalendarDays from 'lucide-svelte/icons/calendar-days';
@@ -27,6 +27,7 @@
         SidebarMenuButton,
         SidebarMenuItem,
     } from '@/components/ui/sidebar';
+    import { hasPermission } from '@/lib/access';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
     import type { NavItem } from '@/types';
@@ -48,26 +49,31 @@
             title: 'Dashboard',
             href: dashboard(),
             icon: LayoutGrid,
+            permission: 'dashboard.view',
         },
         {
             title: 'Data Keberangkatan',
             href: '/bookings',
             icon: Tickets,
+            permission: 'booking.view',
         },
         {
             title: 'Carter',
             href: '/charters',
             icon: BusFront,
+            permission: 'charter.view',
         },
         {
             title: 'Bagasi',
             href: '/luggages',
             icon: Briefcase,
+            permission: 'luggage.view',
         },
         {
             title: 'Laporan',
             href: '/report',
             icon: ChartColumn,
+            permission: 'report.view',
         },
     ];
 
@@ -76,16 +82,19 @@
             title: 'Reguler',
             href: '/admin-ops/customers',
             icon: Users,
+            permission: 'customer.view',
         },
         {
             title: 'Bagasi',
             href: '/admin-ops/master/customer-bagasi',
             icon: Briefcase,
+            permission: 'customer.view',
         },
         {
             title: 'Carter',
             href: '/admin-ops/master/customer-charter',
             icon: BusFront,
+            permission: 'customer.view',
         },
     ];
 
@@ -94,56 +103,67 @@
             title: 'Jadwal',
             href: '/admin-ops/schedules',
             icon: CalendarDays,
+            permission: 'master.view',
         },
         {
             title: 'Logs',
             href: '/admin-ops/cancellations',
             icon: History,
+            permission: 'logs.view',
         },
         {
             title: 'Rute Induk',
             href: '/admin-ops/routes',
             icon: Route,
+            permission: 'master.view',
         },
         {
             title: 'Pool',
             href: '/admin-ops/pools',
             icon: Route,
+            permission: 'pool.manage',
         },
         {
             title: 'Master Carter',
             href: '/admin-ops/master/rute-carter',
             icon: BusFront,
+            permission: 'master.view',
         },
         {
             title: 'Segment',
             href: '/admin-ops/segments',
             icon: Shuffle,
+            permission: 'master.view',
         },
         {
             title: 'Tarif Bagasi',
             href: '/admin-ops/services',
             icon: Package,
+            permission: 'master.view',
         },
         {
             title: 'Driver',
             href: '/admin-ops/drivers',
             icon: IdCard,
+            permission: 'driver.view',
         },
         {
             title: 'Kategori Armada',
             href: '/admin-ops/units',
             icon: Truck,
+            permission: 'master.view',
         },
         {
             title: 'Armada',
             href: '/admin-ops/armadas',
             icon: CarFront,
+            permission: 'armada.view',
         },
         {
             title: 'Users',
             href: '/admin-ops/users',
             icon: UserCog,
+            permission: 'user.manage',
         },
     ];
 
@@ -167,6 +187,18 @@
             items: settingsNavItems,
         },
     ];
+
+    const permissions = $derived(page.props.auth?.permissions ?? []);
+    const visibleSections = $derived(
+        mainSections
+            .map((section) => ({
+                ...section,
+                items: section.items.filter((item) =>
+                    hasPermission(permissions, item.permission),
+                ),
+            }))
+            .filter((section) => section.items.length > 0),
+    );
 </script>
 
 <Sidebar collapsible="icon" variant="inset">
@@ -195,7 +227,7 @@
     <SidebarContent
         class="gap-3 px-1 py-2 group-data-[collapsible=icon]:!overflow-visible"
     >
-        <NavMain label="Navigasi" sections={mainSections} />
+        <NavMain label="Navigasi" sections={visibleSections} />
     </SidebarContent>
 </Sidebar>
 {@render children?.()}

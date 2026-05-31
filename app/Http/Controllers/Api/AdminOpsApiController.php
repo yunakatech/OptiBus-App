@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
@@ -3016,7 +3017,7 @@ class AdminOpsApiController extends Controller
 
     public function poolsSave(Request $request): JsonResponse
     {
-        if ($response = $this->requireSuperAdmin()) {
+        if ($response = $this->requirePermission('pool.manage')) {
             return $response;
         }
 
@@ -3111,7 +3112,7 @@ class AdminOpsApiController extends Controller
 
     public function poolsDelete(int $id): JsonResponse
     {
-        if ($response = $this->requireSuperAdmin()) {
+        if ($response = $this->requirePermission('pool.manage')) {
             return $response;
         }
 
@@ -3158,12 +3159,14 @@ class AdminOpsApiController extends Controller
             $item['is_super_admin'] = (bool) ($item['is_super_admin'] ?? false);
             $item['pool_ids'] = [];
             $item['pool_names'] = [];
+            $item['role_ids'] = [];
+            $item['role_names'] = [];
 
             return $item;
         })->values();
+        $userIds = $users->pluck('id')->map(static fn ($id) => (int) $id)->all();
 
         if ($this->poolTablesReady() && $users->isNotEmpty()) {
-            $userIds = $users->pluck('id')->map(static fn ($id) => (int) $id)->all();
             $poolRows = DB::table('pool_user as pu')
                 ->join('pools as p', 'pu.pool_id', '=', 'p.id')
                 ->whereIn('pu.user_id', $userIds)
@@ -3187,15 +3190,40 @@ class AdminOpsApiController extends Controller
             })->values();
         }
 
+        if (AccessControl::tablesReady() && $users->isNotEmpty()) {
+            $roleRows = DB::table('user_role as ur')
+                ->join('roles as r', 'ur.role_id', '=', 'r.id')
+                ->whereIn('ur.user_id', $userIds)
+                ->orderBy('r.name')
+                ->get(['ur.user_id', 'r.id', 'r.name']);
+
+            $roleMap = [];
+            foreach ($roleRows as $role) {
+                $userId = (int) ($role->user_id ?? 0);
+                $roleMap[$userId] ??= ['ids' => [], 'names' => []];
+                $roleMap[$userId]['ids'][] = (int) ($role->id ?? 0);
+                $roleMap[$userId]['names'][] = (string) ($role->name ?? '');
+            }
+
+            $users = $users->map(function (array $user) use ($roleMap): array {
+                $mapped = $roleMap[(int) ($user['id'] ?? 0)] ?? ['ids' => [], 'names' => []];
+                $user['role_ids'] = $mapped['ids'];
+                $user['role_names'] = $mapped['names'];
+
+                return $user;
+            })->values();
+        }
+
         return $this->ok([
             'users' => $users,
+            'roles' => AccessControl::rolesForSelect(),
             'pagination' => $result['meta'],
         ]);
     }
 
     public function usersSave(Request $request): JsonResponse
     {
-        if ($response = $this->requireSuperAdmin()) {
+        if ($response = $this->requirePermission('user.manage')) {
             return $response;
         }
 
@@ -3212,6 +3240,8 @@ class AdminOpsApiController extends Controller
             'is_super_admin' => ['nullable', 'boolean'],
             'pool_ids' => ['nullable', 'array'],
             'pool_ids.*' => ['integer', 'min:1'],
+            'role_ids' => ['nullable', 'array'],
+            'role_ids.*' => ['integer', 'min:1'],
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -3225,9 +3255,20 @@ class AdminOpsApiController extends Controller
             $payload['password'] = Hash::make($password);
         }
 
+        $roleIds = collect($data['role_ids'] ?? [])
+            ->map(static fn ($value) => (int) $value)
+            ->filter(static fn ($value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+        $superAdminRoleId = AccessControl::tablesReady()
+            ? (int) (DB::table('roles')->where('slug', 'super-admin')->value('id') ?? 0)
+            : 0;
+        $keepsSuperAdminRole = $superAdminRoleId > 0 && in_array($superAdminRoleId, $roleIds, true);
+
         if (Schema::hasColumn('users', 'is_super_admin')) {
             $wantsSuperAdmin = (bool) ($data['is_super_admin'] ?? false);
-            if ($id > 0 && ! $wantsSuperAdmin && $this->isUserSuperAdmin($id) && $this->superAdminCount() <= 1) {
+            if ($id > 0 && ! $wantsSuperAdmin && ! $keepsSuperAdminRole && $this->isUserSuperAdmin($id) && $this->superAdminCount() <= 1) {
                 return $this->error('Minimal harus ada satu Super Admin.', 409);
             }
             $payload['is_super_admin'] = $wantsSuperAdmin;
@@ -3247,9 +3288,17 @@ class AdminOpsApiController extends Controller
             }
         }
 
+        if (AccessControl::tablesReady() && $roleIds !== []) {
+            $validRoleIds = DB::table('roles')->whereIn('id', $roleIds)->pluck('id')->map(static fn ($value) => (int) $value)->all();
+            if (count($validRoleIds) !== count($roleIds)) {
+                return $this->error('Ada role yang tidak ditemukan.', 422);
+            }
+        }
+
         if ($id > 0) {
             DB::table('users')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
             $this->syncUserPools($id, $poolIds);
+            $this->syncUserRoles($id, $roleIds);
             return $this->ok(['message' => 'User updated.', 'id' => $id]);
         }
 
@@ -3263,6 +3312,7 @@ class AdminOpsApiController extends Controller
             'updated_at' => now(),
         ]));
         $this->syncUserPools((int) $newId, $poolIds);
+        $this->syncUserRoles((int) $newId, $roleIds);
 
         return $this->ok(['message' => 'User created.', 'id' => $newId], 201);
     }
@@ -3287,6 +3337,9 @@ class AdminOpsApiController extends Controller
         if ($this->poolTablesReady()) {
             DB::table('pool_user')->where('user_id', $id)->delete();
         }
+        if (AccessControl::tablesReady()) {
+            DB::table('user_role')->where('user_id', $id)->delete();
+        }
         DB::table('users')->where('id', $id)->delete();
 
         return $this->ok(['message' => 'User deleted.']);
@@ -3302,19 +3355,9 @@ class AdminOpsApiController extends Controller
 
     private function currentUserIsSuperAdmin(): bool
     {
-        if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'is_super_admin')) {
-            return true;
-        }
-
         $userId = (int) (auth()->id() ?? 0);
-        if ($userId <= 0) {
-            return false;
-        }
 
-        return (bool) DB::table('users')
-            ->where('id', $userId)
-            ->where('is_super_admin', true)
-            ->exists();
+        return AccessControl::userIsSuperAdmin($userId);
     }
 
     private function requireSuperAdmin(): ?JsonResponse
@@ -3326,25 +3369,53 @@ class AdminOpsApiController extends Controller
         return $this->error('Hanya Super Admin yang bisa mengubah konfigurasi ini.', 403);
     }
 
-    private function isUserSuperAdmin(int $userId): bool
+    private function requirePermission(string $permission): ?JsonResponse
     {
-        if ($userId <= 0 || ! Schema::hasColumn('users', 'is_super_admin')) {
-            return false;
+        $userId = (int) (auth()->id() ?? 0);
+        if (AccessControl::can($userId, $permission)) {
+            return null;
         }
 
-        return (bool) DB::table('users')
-            ->where('id', $userId)
-            ->where('is_super_admin', true)
-            ->exists();
+        return $this->error('Anda tidak memiliki akses untuk aksi ini.', 403);
+    }
+
+    private function isUserSuperAdmin(int $userId): bool
+    {
+        return AccessControl::userIsSuperAdmin($userId);
     }
 
     private function superAdminCount(): int
     {
-        if (! Schema::hasColumn('users', 'is_super_admin')) {
+        if (! Schema::hasTable('users')) {
+            return 0;
+        }
+
+        if (! AccessControl::tablesReady() && ! Schema::hasColumn('users', 'is_super_admin')) {
             return (int) DB::table('users')->count();
         }
 
-        return (int) DB::table('users')->where('is_super_admin', true)->count();
+        $query = DB::table('users')->select('users.id');
+
+        if (Schema::hasColumn('users', 'is_super_admin')) {
+            $query->where('users.is_super_admin', true);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        if (AccessControl::tablesReady()) {
+            $roleUserIds = DB::table('user_role')
+                ->join('roles', 'user_role.role_id', '=', 'roles.id')
+                ->where('roles.slug', 'super-admin')
+                ->pluck('user_role.user_id')
+                ->map(static fn ($value) => (int) $value)
+                ->all();
+
+            if ($roleUserIds !== []) {
+                $query->orWhereIn('users.id', $roleUserIds);
+            }
+        }
+
+        return (int) $query->distinct()->count('users.id');
     }
 
     /**
@@ -3407,6 +3478,45 @@ class AdminOpsApiController extends Controller
 
         if ($rows !== []) {
             DB::table('pool_user')->insert($rows);
+        }
+    }
+
+    /**
+     * @param array<int, int> $roleIds
+     */
+    private function syncUserRoles(int $userId, array $roleIds): void
+    {
+        if (! AccessControl::tablesReady() || $userId <= 0) {
+            return;
+        }
+
+        if ($roleIds === []) {
+            DB::table('user_role')->where('user_id', $userId)->delete();
+
+            return;
+        }
+
+        DB::table('user_role')->where('user_id', $userId)->whereNotIn('role_id', $roleIds)->delete();
+
+        $existingRoleIds = DB::table('user_role')
+            ->where('user_id', $userId)
+            ->pluck('role_id')
+            ->map(static fn ($value) => (int) $value)
+            ->all();
+
+        $now = now();
+        $rows = [];
+        foreach (array_diff($roleIds, $existingRoleIds) as $roleId) {
+            $rows[] = [
+                'user_id' => $userId,
+                'role_id' => (int) $roleId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($rows !== []) {
+            DB::table('user_role')->insert($rows);
         }
     }
 
