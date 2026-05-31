@@ -10,6 +10,12 @@
         total_rows: number;
         revenue_total: number;
     };
+    type Pagination = {
+        page: number;
+        per_page: number;
+        total: number;
+        last_page: number;
+    };
     type BookingReportRow = {
         id: number;
         tanggal: string;
@@ -208,22 +214,26 @@
         reportType = $bindable<ReportKind>('booking'),
         reportSummary = null,
         reportRows = [],
+        reportMeta = { page: 1, per_page: 50, total: 0, last_page: 1 },
         reportLoading = false,
         reportFromInput = $bindable<HTMLInputElement | null>(null),
         reportToInput = $bindable<HTMLInputElement | null>(null),
         formatCurrency,
         loadReport,
+        jumpReportPage,
     }: {
         reportFrom?: string;
         reportTo?: string;
         reportType?: ReportKind;
         reportSummary?: ReportSummary | null;
         reportRows?: ReportRow[];
+        reportMeta?: Pagination;
         reportLoading?: boolean;
         reportFromInput?: HTMLInputElement | null;
         reportToInput?: HTMLInputElement | null;
         formatCurrency: (value: number) => string;
-        loadReport: () => void | Promise<void>;
+        loadReport: (page?: number) => void | Promise<void>;
+        jumpReportPage: (page: number) => void | Promise<void>;
     } = $props();
 </script>
 
@@ -296,7 +306,7 @@
                     <select
                         class="h-11 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                         bind:value={reportType}
-                        onchange={() => void loadReport()}
+                        onchange={() => void loadReport(1)}
                     >
                         <option value="booking">Booking</option>
                         <option value="charter">Carter</option>
@@ -342,7 +352,7 @@
                     <Button
                         type="button"
                         class="h-11 w-full rounded-2xl px-5 xl:min-w-[188px]"
-                        onclick={() => void loadReport()}
+                        onclick={() => void loadReport(1)}
                         disabled={reportLoading}
                     >
                         {reportLoading
@@ -782,6 +792,43 @@
                             </tbody>
                         </table>
                     {/if}
+                </div>
+                <div
+                    class="flex flex-col gap-3 border-t border-border/70 px-5 py-4 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-6"
+                >
+                    <span>
+                        Menampilkan halaman {reportMeta.page} dari
+                        {reportMeta.last_page} ({reportMeta.total}
+                        {resolvedMeta(reportSummary, reportType).dataLabel})
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="h-9 rounded-xl px-3 text-xs"
+                            disabled={reportLoading || reportMeta.page <= 1}
+                            onclick={() =>
+                                void jumpReportPage(reportMeta.page - 1)}
+                        >
+                            Prev
+                        </Button>
+                        <span
+                            class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-foreground"
+                        >
+                            {reportMeta.page} / {reportMeta.last_page}
+                        </span>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="h-9 rounded-xl px-3 text-xs"
+                            disabled={reportLoading ||
+                                reportMeta.page >= reportMeta.last_page}
+                            onclick={() =>
+                                void jumpReportPage(reportMeta.page + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
                 </div>
             {:else}
                 <div class="px-5 py-8 md:px-6">

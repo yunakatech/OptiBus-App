@@ -29,43 +29,24 @@ class BookingController extends Controller
 
     public function __invoke(Request $request): Response
     {
-        $totals = [
-            'bookings' => 0,
-            'customers' => 0,
-            'routes' => 0,
-            'schedules' => 0,
-        ];
-
-        if (Schema::hasTable('bookings')) {
-            $totals['bookings'] = DB::table('bookings')->count();
-        }
-
-        if (Schema::hasTable('customers')) {
-            $totals['customers'] = DB::table('customers')->count();
-        }
-
-        if (Schema::hasTable('routes')) {
-            $totals['routes'] = DB::table('routes')->count();
-        }
-
-        if (Schema::hasTable('schedules')) {
-            $totals['schedules'] = DB::table('schedules')->count();
-        }
-
-        $latestBookings = $this->latestBookings();
-
         $component = $request->routeIs('booking-console.index') ? 'BookingConsole' : 'Bookings';
         $isGroupDetailPage = $request->routeIs('bookings.detail');
         $listOnly = $request->routeIs('bookings.index') || $isGroupDetailPage;
         $groupDetailKey = $isGroupDetailPage ? (string) $request->route('groupKey', '') : '';
-        $bookingGroups = $listOnly ? $this->buildBookingGroups() : [];
-        $bookingRouteOptions = $listOnly ? $this->bookingRouteOptions($bookingGroups) : [];
+        $bookingGroups = null;
+        $resolveBookingGroups = function () use ($listOnly, &$bookingGroups): array {
+            if (! $listOnly) {
+                return [];
+            }
+
+            return $bookingGroups ??= $this->buildBookingGroups();
+        };
 
         return Inertia::render($component, [
-            'totals' => $totals,
-            'latestBookings' => $latestBookings,
-            'bookingGroups' => $bookingGroups,
-            'bookingRouteOptions' => $bookingRouteOptions,
+            'totals' => fn (): array => $this->bookingTotals(),
+            'latestBookings' => fn (): array => $this->latestBookings(),
+            'bookingGroups' => fn (): array => $resolveBookingGroups(),
+            'bookingRouteOptions' => fn (): array => $listOnly ? $this->bookingRouteOptions($resolveBookingGroups()) : [],
             'listOnly' => $listOnly,
             'groupDetailPage' => $isGroupDetailPage,
             'groupDetailKey' => $groupDetailKey,
@@ -413,6 +394,21 @@ class BookingController extends Controller
             'armada_nopol' => $assignmentMeta['armada_nopol'],
             'logo_data_uri' => $this->brandingLogoDataUri(),
         ];
+    }
+
+    /**
+     * @return array{bookings: int, customers: int, routes: int, schedules: int}
+     */
+    private function bookingTotals(): array
+    {
+        return Cache::remember('bookings:totals', now()->addSeconds(30), function (): array {
+            return [
+                'bookings' => Schema::hasTable('bookings') ? DB::table('bookings')->count() : 0,
+                'customers' => Schema::hasTable('customers') ? DB::table('customers')->count() : 0,
+                'routes' => Schema::hasTable('routes') ? DB::table('routes')->count() : 0,
+                'schedules' => Schema::hasTable('schedules') ? DB::table('schedules')->count() : 0,
+            ];
+        });
     }
 
     /**

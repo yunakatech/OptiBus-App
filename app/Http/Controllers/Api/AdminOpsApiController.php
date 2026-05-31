@@ -785,38 +785,50 @@ class AdminOpsApiController extends Controller
         $from = $validated['from'] ?? now()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
         $type = $validated['type'] ?? 'booking';
+        [$page, $perPage] = $this->paginationParams($request);
         $rangeKey = implode(':', [
             $type,
             $from,
             $to,
+            $page,
+            $perPage,
             $this->reportCacheSignatureForType($type),
         ]);
 
-        $report = Cache::remember("admin-ops:reports-summary:{$rangeKey}", now()->addSeconds(30), function () use ($type, $from, $to): array {
-            return $this->buildTypedReport($type, $from, $to);
+        $report = Cache::remember("admin-ops:reports-summary:{$rangeKey}", now()->addSeconds(30), function () use ($type, $from, $to, $page, $perPage): array {
+            return $this->buildTypedReport($type, $from, $to, $page, $perPage);
         });
 
         return $this->ok($report);
     }
 
-    private function buildTypedReport(string $type, string $from, string $to): array
+    private function buildTypedReport(string $type, string $from, string $to, int $page, int $perPage): array
     {
         return match ($type) {
-            'charter' => $this->buildCharterReport($from, $to),
-            'bagasi' => $this->buildLuggageReport($from, $to),
-            default => $this->buildBookingReport($from, $to),
+            'charter' => $this->buildCharterReport($from, $to, $page, $perPage),
+            'bagasi' => $this->buildLuggageReport($from, $to, $page, $perPage),
+            default => $this->buildBookingReport($from, $to, $page, $perPage),
         };
     }
 
-    private function buildBookingReport(string $from, string $to): array
+    private function buildBookingReport(string $from, string $to, int $page, int $perPage): array
     {
-        $rows = DB::table('bookings as b')
+        $baseQuery = DB::table('bookings as b')
             ->where('b.status', '!=', 'canceled')
             ->whereIn('b.pembayaran', ['Lunas', 'Redbus', 'Traveloka'])
-            ->whereBetween('b.tanggal', [$from, $to])
+            ->whereBetween('b.tanggal', [$from, $to]);
+
+        $summaryRow = (clone $baseQuery)
+            ->selectRaw('COUNT(*) as total_rows')
+            ->selectRaw('COALESCE(SUM(COALESCE(b.price, 0) - COALESCE(b.discount, 0)), 0) as revenue_total')
+            ->first();
+        $pagination = $this->paginationMeta((int) ($summaryRow->total_rows ?? 0), $page, $perPage);
+
+        $rows = (clone $baseQuery)
             ->orderByDesc('b.tanggal')
             ->orderByDesc('b.jam')
             ->orderByDesc('b.id')
+            ->forPage($pagination['page'], $pagination['per_page'])
             ->get([
                 'b.id',
                 'b.tanggal',
@@ -855,14 +867,15 @@ class AdminOpsApiController extends Controller
                 'from' => $from,
                 'to' => $to,
                 'type' => 'booking',
-                'total_rows' => count($rows),
-                'revenue_total' => (float) collect($rows)->sum('total'),
+                'total_rows' => (int) ($summaryRow->total_rows ?? 0),
+                'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
             ],
             'rows' => $rows,
+            'pagination' => $pagination,
         ];
     }
 
-    private function buildCharterReport(string $from, string $to): array
+    private function buildCharterReport(string $from, string $to, int $page, int $perPage): array
     {
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
@@ -891,12 +904,21 @@ class AdminOpsApiController extends Controller
             $select[] = DB::raw('NULL as armada_nopol');
         }
 
-        $rows = DB::table('charters as c')
-            ->leftJoin('units as u', 'c.unit_id', '=', 'u.id')
+        $baseQuery = DB::table('charters as c')
             ->where('c.bop_status', 'done')
-            ->whereBetween('c.start_date', [$from, $to])
+            ->whereBetween('c.start_date', [$from, $to]);
+
+        $summaryRow = (clone $baseQuery)
+            ->selectRaw('COUNT(*) as total_rows')
+            ->selectRaw('COALESCE(SUM(COALESCE(c.price, 0)), 0) as revenue_total')
+            ->first();
+        $pagination = $this->paginationMeta((int) ($summaryRow->total_rows ?? 0), $page, $perPage);
+
+        $rows = (clone $baseQuery)
+            ->leftJoin('units as u', 'c.unit_id', '=', 'u.id')
             ->orderByDesc('c.start_date')
             ->orderByDesc('c.id')
+            ->forPage($pagination['page'], $pagination['per_page'])
             ->get($select)
             ->map(fn ($row): array => [
                 'id' => (int) $row->id,
@@ -924,23 +946,33 @@ class AdminOpsApiController extends Controller
                 'from' => $from,
                 'to' => $to,
                 'type' => 'charter',
-                'total_rows' => count($rows),
-                'revenue_total' => (float) collect($rows)->sum('total'),
+                'total_rows' => (int) ($summaryRow->total_rows ?? 0),
+                'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
             ],
             'rows' => $rows,
+            'pagination' => $pagination,
         ];
     }
 
-    private function buildLuggageReport(string $from, string $to): array
+    private function buildLuggageReport(string $from, string $to, int $page, int $perPage): array
     {
         [$createdFrom, $createdTo] = $this->dateTimeRange($from, $to);
 
-        $rows = DB::table('luggages as l')
-            ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id')
+        $baseQuery = DB::table('luggages as l')
             ->where('l.status', '!=', 'canceled')
-            ->whereBetween('l.created_at', [$createdFrom, $createdTo])
+            ->whereBetween('l.created_at', [$createdFrom, $createdTo]);
+
+        $summaryRow = (clone $baseQuery)
+            ->selectRaw('COUNT(*) as total_rows')
+            ->selectRaw('COALESCE(SUM(COALESCE(l.price, 0)), 0) as revenue_total')
+            ->first();
+        $pagination = $this->paginationMeta((int) ($summaryRow->total_rows ?? 0), $page, $perPage);
+
+        $rows = (clone $baseQuery)
+            ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id')
             ->orderByDesc('l.created_at')
             ->orderByDesc('l.id')
+            ->forPage($pagination['page'], $pagination['per_page'])
             ->get([
                 'l.id',
                 DB::raw('DATE(l.created_at) as tanggal'),
@@ -979,10 +1011,11 @@ class AdminOpsApiController extends Controller
                 'from' => $from,
                 'to' => $to,
                 'type' => 'bagasi',
-                'total_rows' => count($rows),
-                'revenue_total' => (float) collect($rows)->sum('total'),
+                'total_rows' => (int) ($summaryRow->total_rows ?? 0),
+                'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
             ],
             'rows' => $rows,
+            'pagination' => $pagination,
         ];
     }
 
@@ -4025,21 +4058,32 @@ class AdminOpsApiController extends Controller
     private function paginateQuery(Builder $query, int $page, int $perPage): array
     {
         $total = (clone $query)->count();
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = min($page, $lastPage);
+        $meta = $this->paginationMeta($total, $page, $perPage);
 
         $data = $query
-            ->forPage($page, $perPage)
+            ->forPage($meta['page'], $meta['per_page'])
             ->get();
 
         return [
             'data' => $data,
-            'meta' => [
-                'page' => $page,
-                'per_page' => $perPage,
-                'total' => $total,
-                'last_page' => $lastPage,
-            ],
+            'meta' => $meta,
+        ];
+    }
+
+    /**
+     * @return array{page: int, per_page: int, total: int, last_page: int}
+     */
+    private function paginationMeta(int $total, int $page, int $perPage): array
+    {
+        $perPage = max(1, $perPage);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, $page), $lastPage);
+
+        return [
+            'page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'last_page' => $lastPage,
         ];
     }
 

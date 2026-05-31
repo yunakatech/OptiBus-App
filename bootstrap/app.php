@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request as HttpRequest;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,7 +15,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        $trustedProxies = (string) env('TRUSTED_PROXIES', '*');
+
+        $middleware->trustProxies(
+            at: $trustedProxies !== '' ? $trustedProxies : '*',
+            headers: HttpRequest::HEADER_X_FORWARDED_FOR
+                | HttpRequest::HEADER_X_FORWARDED_HOST
+                | HttpRequest::HEADER_X_FORWARDED_PORT
+                | HttpRequest::HEADER_X_FORWARDED_PROTO
+                | HttpRequest::HEADER_X_FORWARDED_PREFIX
+                | HttpRequest::HEADER_X_FORWARDED_AWS_ELB,
+        );
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
