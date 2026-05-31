@@ -131,7 +131,7 @@
     let charterViewBusy = $state(false);
     let charterScope = $state<CharterScope>('active');
 
-    const charterPaymentStatusOptions = ['Belum Lunas', 'Lunas', 'DP'];
+    const charterPaymentStatusOptions = ['Belum Lunas', 'Lunas'];
     const luggageReceivedStatus = 'Diterima';
     const luggagePickedUpStatus = 'Dalam Perjalanan';
     const luggageArrivedStatus = 'Tiba di Tujuan';
@@ -465,9 +465,16 @@ return '/admin-ops/flows/assignments';
             charterStartDatePicker = flatpickr(charterStartDateInput, {
                 dateFormat: 'Y-m-d',
                 disableMobile: true,
+                minDate: today,
                 defaultDate: charterForm.start_date || today,
                 onChange: (_selectedDates, dateStr) => {
                     charterForm.start_date = dateStr || today;
+                    charterEndDatePicker?.set('minDate', charterForm.start_date || today);
+
+                    if (!charterForm.end_date || charterForm.end_date < charterForm.start_date) {
+                        charterForm.end_date = charterForm.start_date;
+                        charterEndDatePicker?.setDate(charterForm.end_date, false, 'Y-m-d');
+                    }
                 },
             });
         }
@@ -476,6 +483,7 @@ return '/admin-ops/flows/assignments';
             charterEndDatePicker = flatpickr(charterEndDateInput, {
                 dateFormat: 'Y-m-d',
                 disableMobile: true,
+                minDate: charterForm.start_date || today,
                 defaultDate: charterForm.end_date || today,
                 onChange: (_selectedDates, dateStr) => {
                     charterForm.end_date = dateStr || charterForm.start_date || today;
@@ -499,6 +507,8 @@ return '/admin-ops/flows/assignments';
     };
 
     const syncCharterPickerValues = () => {
+        charterStartDatePicker?.set('minDate', today);
+        charterEndDatePicker?.set('minDate', charterForm.start_date || today);
         charterStartDatePicker?.setDate(charterForm.start_date || today, false, 'Y-m-d');
         charterEndDatePicker?.setDate(charterForm.end_date || charterForm.start_date || today, false, 'Y-m-d');
         charterDepartureTimePicker?.setDate(charterForm.departure_time || '08:00', false, 'H:i');
@@ -1266,7 +1276,9 @@ return 'Selesai';
         bop_price: Number(row.bop_price ?? 0),
         bop_status: row.bop_status ?? 'pending',
         down_payment: Number(row.down_payment ?? 0),
-        payment_status: row.payment_status ?? 'Belum Lunas',
+        payment_status: charterPaymentStatusOptions.includes(String(row.payment_status ?? ''))
+            ? String(row.payment_status)
+            : 'Belum Lunas',
     });
 
     const resetCharterCustomerLookup = () => {
@@ -1585,7 +1597,7 @@ await loadAssignments(assignmentMeta.page);
                     layanan: charterForm.layanan,
                     bop_price: parseCurrencyInput(charterForm.bop_price),
                     bop_status: charterForm.bop_status,
-                    down_payment: charterForm.payment_status === 'DP' ? parseCurrencyInput(charterForm.down_payment) : 0,
+                    down_payment: parseCurrencyInput(charterForm.down_payment),
                     payment_status: charterForm.payment_status,
                 });
             }, {
@@ -1843,14 +1855,6 @@ return;
         window.open(`/charters/${id}/invoice/print?auto_print=1`, '_blank', 'noopener,noreferrer');
     };
 
-    const openCharterInvoicePdf = (id: number) => {
-        if (id <= 0) {
-return;
-}
-
-        window.open(`/charters/${id}/invoice/pdf`, '_blank', 'noopener,noreferrer');
-    };
-
     const bulkDeleteAssignments = async () => {
         if (selectedAssignmentIds.length === 0) {
 return;
@@ -2028,12 +2032,6 @@ params.set('to', filterTo);
                 }
             }
         });
-    });
-
-    $effect(() => {
-        if (charterForm.payment_status !== 'DP' && parseCurrencyInput(charterForm.down_payment) !== 0) {
-            charterForm.down_payment = 0;
-        }
     });
 
     onMount(async () => {
@@ -2292,7 +2290,6 @@ params.set('to', filterTo);
                             charterStatusLabel={charterStatusLabel}
                             charterPaymentClass={charterPaymentClass}
                             openCharterInvoice={openCharterInvoice}
-                            openCharterInvoicePdf={openCharterInvoicePdf}
                             charterCanMarkDone={charterCanMarkDone}
                             markCharterAsDone={markCharterAsDone}
                             charterCanEdit={charterCanEdit}
@@ -2445,9 +2442,6 @@ params.set('to', filterTo);
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem onclick={() => openCharterInvoice(row.id)}>
                                                             Cetak Invoice
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onclick={() => openCharterInvoicePdf(row.id)}>
-                                                            Download PDF Invoice
                                                         </DropdownMenuItem>
                                                         {#if charterCanEdit(row)}
                                                             <DropdownMenuItem onclick={() => openCharterEditor(row)}>
