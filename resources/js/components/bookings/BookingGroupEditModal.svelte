@@ -1,6 +1,10 @@
 <script lang="ts">
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
+    import {
+        formatCurrencyInput,
+        parseCurrencyInput,
+    } from '@/lib/currency';
 
     type LayoutCell = {
         kind: 'seat' | 'driver' | 'empty';
@@ -131,7 +135,17 @@
                 </div>
                 <div>
                     <label for="group-edit-discount" class="mb-1 block text-xs font-medium text-muted-foreground">Diskon</label>
-                    <Input id="group-edit-discount" class="h-9 rounded-xl" type="number" min="0" step="1000" bind:value={groupEditDiscount} />
+                    <Input
+                        id="group-edit-discount"
+                        class="h-9 rounded-xl"
+                        type="text"
+                        inputmode="numeric"
+                        placeholder="Rp 0"
+                        value={formatCurrencyInput(groupEditDiscount)}
+                        oninput={(event) => {
+                            groupEditDiscount = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
+                        }}
+                    />
                 </div>
             </div>
 

@@ -17,6 +17,11 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
+    import {
+        formatCurrencyDisplay,
+        formatCurrencyInput,
+        parseCurrencyInput,
+    } from '@/lib/currency';
 
     type TabName = 'customer-bagasi' | 'customer-charter' | 'rute-carter';
     type ViewMode = 'data' | 'form';
@@ -286,8 +291,8 @@ carterRouteForm = { id: 0, name: '', origin: '', destination: '', duration: 'Reg
                     origin: carterRouteForm.origin,
                     destination: carterRouteForm.destination,
                     duration: carterRouteForm.duration,
-                    rental_price: Number(carterRouteForm.rental_price),
-                    bop_price: Number(carterRouteForm.bop_price),
+                    rental_price: parseCurrencyInput(carterRouteForm.rental_price),
+                    bop_price: parseCurrencyInput(carterRouteForm.bop_price),
                     notes: carterRouteForm.notes,
                 });
             }, {
@@ -523,8 +528,24 @@ return;
                         <Input placeholder="Origin" bind:value={carterRouteForm.origin} />
                         <Input placeholder="Destination" bind:value={carterRouteForm.destination} />
                         <Input placeholder="Durasi (Regular/VIP/...)" bind:value={carterRouteForm.duration} />
-                        <Input type="number" min="0" step="1000" placeholder="Harga rental" bind:value={carterRouteForm.rental_price} />
-                        <Input type="number" min="0" step="1000" placeholder="BOP" bind:value={carterRouteForm.bop_price} />
+                        <Input
+                            type="text"
+                            inputmode="numeric"
+                            placeholder="Harga rental"
+                            value={formatCurrencyInput(carterRouteForm.rental_price)}
+                            oninput={(event) => {
+                                carterRouteForm.rental_price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
+                            }}
+                        />
+                        <Input
+                            type="text"
+                            inputmode="numeric"
+                            placeholder="BOP"
+                            value={formatCurrencyInput(carterRouteForm.bop_price)}
+                            oninput={(event) => {
+                                carterRouteForm.bop_price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
+                            }}
+                        />
                         <Input class="md:col-span-2" placeholder="Catatan" bind:value={carterRouteForm.notes} />
                         <div class="flex gap-2">
                             <LoadingButton type="submit" loading={isSubmitActive('carter-route')} loadingText={carterRouteForm.id ? 'Menyimpan...' : 'Membuat...'}>{carterRouteForm.id ? 'Update' : 'Create'}</LoadingButton>
@@ -546,7 +567,7 @@ return;
                                         <td class="px-3 py-2">{row.name}</td>
                                         <td class="px-3 py-2">{row.origin ?? '-'} -> {row.destination ?? '-'}</td>
                                         <td class="px-3 py-2">{row.duration ?? '-'}</td>
-                                        <td class="px-3 py-2">Sewa: Rp {Number(row.rental_price).toLocaleString('id-ID')}<br />BOP: Rp {Number(row.bop_price).toLocaleString('id-ID')}</td>
+                                        <td class="px-3 py-2">Sewa: {formatCurrencyDisplay(row.rental_price)}<br />BOP: {formatCurrencyDisplay(row.bop_price)}</td>
                                         <td class="space-x-2 px-3 py-2">
                                             <Button type="button" size="sm" variant="outline" onclick={() => {
  carterRouteForm = { id: row.id, name: row.name, origin: row.origin ?? '', destination: row.destination ?? '', duration: row.duration ?? 'Regular', rental_price: Number(row.rental_price), bop_price: Number(row.bop_price), notes: row.notes ?? '' }; setFormMode('form'); 

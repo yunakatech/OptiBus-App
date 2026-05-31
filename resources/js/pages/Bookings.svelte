@@ -53,6 +53,11 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { runWithFeedback } from '@/lib/action-feedback';
+    import {
+        formatCurrencyDisplay,
+        formatCurrencyInput,
+        parseCurrencyInput,
+    } from '@/lib/currency';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
     type Totals = {
@@ -669,7 +674,7 @@
         segments.find((item) => item.id === Number(formSegmentId)) ?? null;
     const selectedTotal = () => {
         const price = Number(activeSegment()?.harga ?? 0);
-        const discount = Math.max(Number(formDiscount || 0), 0);
+        const discount = parseCurrencyInput(formDiscount);
 
         return Math.max(price * selectedCount() - discount, 0);
     };
@@ -1417,7 +1422,7 @@
         const pembayaran = String(detailEditPayment || 'Belum Lunas').trim();
         const segmentId =
             Number(detailEditSegmentId) > 0 ? Number(detailEditSegmentId) : 0;
-        const discount = Math.max(Number(detailEditDiscount || 0), 0);
+        const discount = parseCurrencyInput(detailEditDiscount);
 
         if (seat === '' || name === '' || phone === '' || pickupPoint === '') {
             formError = 'Seat, nama, telepon, dan jemput wajib diisi.';
@@ -1813,8 +1818,7 @@
 
     const normalizeJamToken = (value: string) =>
         String(value || '').slice(0, 5);
-    const formatCurrency = (value: number) =>
-        `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+    const formatCurrency = (value: number) => formatCurrencyDisplay(value);
     const parseGroupDateTime = (tanggal: string, jam: string) => {
         const datePart = String(tanggal || '').slice(0, 10);
         const timePart = normalizeJamToken(jam) || '00:00';
@@ -3374,7 +3378,7 @@
         const phone = normalizePhoneForBooking(groupEditPhone);
         const pickupPoint = String(groupEditPickupPoint || '').trim();
         const pembayaran = String(groupEditPayment || 'Belum Lunas').trim();
-        const discount = Math.max(Number(groupEditDiscount || 0), 0);
+        const discount = parseCurrencyInput(groupEditDiscount);
 
         if (seat === '' || name === '' || phone === '' || pickupPoint === '') {
             formError = 'Seat, nama, telepon, dan jemput wajib diisi.';
@@ -4655,7 +4659,7 @@
                     Number(formSegmentId) > 0
                         ? Number(formSegmentId)
                         : undefined,
-                discount: Math.max(Number(formDiscount || 0), 0),
+                discount: parseCurrencyInput(formDiscount),
                 seats: seatCandidates,
             };
             const json = await runWithFeedback(
@@ -4699,8 +4703,9 @@
                 createdRecords.map((item) => [item.seat, item]),
             );
             const seatPrice = Math.max(Number(activeSegment()?.harga ?? 0), 0);
+            const totalDiscount = parseCurrencyInput(formDiscount);
             const seatDiscount = seatCandidates.length > 0
-                ? Math.max(Number(formDiscount || 0), 0) / seatCandidates.length
+                ? totalDiscount / seatCandidates.length
                 : 0;
             const successSnapshot: BookingSuccessSnapshot = {
                 tanggal: bookingDate,
@@ -4708,8 +4713,7 @@
                 rute: selectedRoute,
                 unit: Number(selectedUnit) || 1,
                 total: Math.max(
-                    seatPrice * seatCandidates.length -
-                        Math.max(Number(formDiscount || 0), 0),
+                    seatPrice * seatCandidates.length - totalDiscount,
                     0,
                 ),
                 items: seatCandidates.map((seat) => ({
@@ -5437,11 +5441,17 @@
                                 </select>
                                 <Input
                                     class="h-11 rounded-xl"
-                                    type="number"
-                                    min="0"
-                                    step="1000"
+                                    type="text"
+                                    inputmode="numeric"
                                     placeholder="Potongan harga"
-                                    bind:value={formDiscount}
+                                    value={formatCurrencyInput(formDiscount)}
+                                    oninput={(event) => {
+                                        formDiscount = parseCurrencyInput(
+                                            (
+                                                event.currentTarget as HTMLInputElement
+                                            ).value,
+                                        );
+                                    }}
                                 />
                                 <Input
                                     class="h-11 rounded-xl md:col-span-2"
@@ -5786,11 +5796,17 @@
                         </select>
                         <Input
                             class="h-10 rounded-xl sm:h-11"
-                            type="number"
-                            min="0"
-                            step="1000"
+                            type="text"
+                            inputmode="numeric"
                             placeholder="Diskon"
-                            bind:value={detailEditDiscount}
+                            value={formatCurrencyInput(detailEditDiscount)}
+                            oninput={(event) => {
+                                detailEditDiscount = parseCurrencyInput(
+                                    (
+                                        event.currentTarget as HTMLInputElement
+                                    ).value,
+                                );
+                            }}
                         />
                         <select
                             class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:col-span-2 sm:h-11"

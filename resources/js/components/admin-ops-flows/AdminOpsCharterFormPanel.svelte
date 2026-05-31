@@ -481,11 +481,33 @@
                     </div>
                     <div class="space-y-1">
                         <label for="charter-price" class="text-xs font-medium text-muted-foreground">Harga Charter</label>
-                        <Input id="charter-price" class="rounded-xl" type="number" min="0" step="1000" bind:value={charterForm.price} />
+                        <Input
+                            id="charter-price"
+                            class="rounded-xl"
+                            type="text"
+                            inputmode="numeric"
+                            placeholder="Rp 0"
+                            value={formatCurrencyInput(charterForm.price)}
+                            oninput={(event) => {
+                                const target = event.currentTarget as HTMLInputElement;
+                                charterForm.price = parseCurrencyInput(target.value);
+                            }}
+                        />
                     </div>
                     <div class="space-y-1">
                         <label for="charter-bop-price" class="text-xs font-medium text-muted-foreground">Nominal BOP</label>
-                        <Input id="charter-bop-price" class="rounded-xl" type="number" min="0" step="1000" bind:value={charterForm.bop_price} />
+                        <Input
+                            id="charter-bop-price"
+                            class="rounded-xl"
+                            type="text"
+                            inputmode="numeric"
+                            placeholder="Rp 0"
+                            value={formatCurrencyInput(charterForm.bop_price)}
+                            oninput={(event) => {
+                                const target = event.currentTarget as HTMLInputElement;
+                                charterForm.bop_price = parseCurrencyInput(target.value);
+                            }}
+                        />
                     </div>
                     {#if charterForm.payment_status === 'DP'}
                         <div class="space-y-1 md:col-span-2 xl:col-span-2">
@@ -545,11 +567,11 @@
                     <div class="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-3 text-xs">
                         <div class="flex items-center justify-between gap-2">
                             <span class="text-cyan-100">Harga Charter</span>
-                            <span class="font-semibold">{formatCurrencyId(Number(charterForm.price || 0))}</span>
+                            <span class="font-semibold">{formatCurrencyId(charterForm.price)}</span>
                         </div>
                         <div class="mt-1 flex items-center justify-between gap-2">
                             <span class="text-cyan-100">Nominal BOP</span>
-                            <span class="font-semibold">{formatCurrencyId(Number(charterForm.bop_price || 0))}</span>
+                            <span class="font-semibold">{formatCurrencyId(charterForm.bop_price)}</span>
                         </div>
                         {#if charterForm.payment_status === 'DP'}
                             <div class="mt-1 flex items-center justify-between gap-2">

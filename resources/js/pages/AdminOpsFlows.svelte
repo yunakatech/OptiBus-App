@@ -19,6 +19,11 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
+    import {
+        formatCurrencyDisplay,
+        formatCurrencyInput,
+        parseCurrencyInput,
+    } from '@/lib/currency';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
     type TabName = 'charters' | 'luggages' | 'assignments' | 'export';
@@ -676,9 +681,8 @@ q.set('q', filterQuery.trim());
         return q.toString();
     };
 
-    const formatCurrencyId = (value: number | string | null | undefined) => {
-        return `Rp ${Number(value ?? 0).toLocaleString('id-ID')}`;
-    };
+    const formatCurrencyId = (value: number | string | null | undefined) =>
+        formatCurrencyDisplay(value);
 
     const charterStatusClass = (status: string | null | undefined) => {
         const normalized = String(status ?? 'active').toLowerCase();
@@ -724,26 +728,6 @@ return 'Selesai';
         }
 
         return 'bg-amber-100 text-amber-700 border border-amber-200';
-    };
-
-    const parseCurrencyInput = (value: string | number | null | undefined) => {
-        const numeric = String(value ?? '').replace(/[^\d]/g, '');
-
-        if (numeric === '') {
-return 0;
-}
-
-        return Number(numeric);
-    };
-
-    const formatCurrencyInput = (value: number | string | null | undefined) => {
-        const parsed = Number(value ?? 0);
-
-        if (!Number.isFinite(parsed) || parsed <= 0) {
-            return '';
-        }
-
-        return `Rp ${parsed.toLocaleString('id-ID')}`;
     };
 
     const charterUnitLabel = (unit: Unit | null | undefined) => {
@@ -1597,11 +1581,11 @@ await loadAssignments(assignmentMeta.page);
                     armada_id: charterForm.armada_id || undefined,
                     armada_nopol: charterForm.armada_nopol || undefined,
                     driver_name: charterForm.driver_name,
-                    price: Number(charterForm.price),
+                    price: parseCurrencyInput(charterForm.price),
                     layanan: charterForm.layanan,
-                    bop_price: Number(charterForm.bop_price),
+                    bop_price: parseCurrencyInput(charterForm.bop_price),
                     bop_status: charterForm.bop_status,
-                    down_payment: charterForm.payment_status === 'DP' ? Number(charterForm.down_payment || 0) : 0,
+                    down_payment: charterForm.payment_status === 'DP' ? parseCurrencyInput(charterForm.down_payment) : 0,
                     payment_status: charterForm.payment_status,
                 });
             }, {
@@ -1642,7 +1626,7 @@ await loadAssignments(assignmentMeta.page);
                     tanggal: luggageForm.tanggal,
                     quantity: Number(luggageForm.quantity || 1),
                     notes: luggageForm.notes,
-                    price: Number(luggageForm.price || 0),
+                    price: parseCurrencyInput(luggageForm.price),
                     status: luggageForm.id ? luggageForm.status : luggageReceivedStatus,
                     payment_status: luggageForm.payment_status,
                 });
@@ -2047,7 +2031,7 @@ params.set('to', filterTo);
     });
 
     $effect(() => {
-        if (charterForm.payment_status !== 'DP' && Number(charterForm.down_payment || 0) !== 0) {
+        if (charterForm.payment_status !== 'DP' && parseCurrencyInput(charterForm.down_payment) !== 0) {
             charterForm.down_payment = 0;
         }
     });
@@ -2647,7 +2631,17 @@ params.set('to', filterTo);
                                         </div>
                                         <div class="space-y-1">
                                             <label for="luggage-price" class="text-xs font-medium text-muted-foreground">Biaya Bagasi</label>
-                                            <Input id="luggage-price" class="rounded-xl" type="number" min="0" step="1000" bind:value={luggageForm.price} />
+                                            <Input
+                                                id="luggage-price"
+                                                class="rounded-xl"
+                                                type="text"
+                                                inputmode="numeric"
+                                                placeholder="Rp 0"
+                                                value={formatCurrencyInput(luggageForm.price)}
+                                                oninput={(event) => {
+                                                    luggageForm.price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
+                                                }}
+                                            />
                                         </div>
                                         <div class="space-y-1">
                                             <label for="luggage-payment-status" class="text-xs font-medium text-muted-foreground">Status Pembayaran</label>
@@ -2704,7 +2698,7 @@ params.set('to', filterTo);
                                             </div>
                                             <div class="mt-1 flex items-center justify-between gap-2">
                                                 <span class="text-emerald-100">Biaya</span>
-                                                <span class="font-semibold">{formatCurrencyId(Number(luggageForm.price || 0))}</span>
+                                                <span class="font-semibold">{formatCurrencyId(luggageForm.price)}</span>
                                             </div>
                                         </div>
                                     </div>
