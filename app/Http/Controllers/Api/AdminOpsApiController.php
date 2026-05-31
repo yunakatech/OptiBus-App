@@ -32,12 +32,19 @@ class AdminOpsApiController extends Controller
     private ?bool $driversHasArmadaId = null;
     private ?bool $driversHasArmadaNopol = null;
     private ?bool $routesHasBopColumn = null;
+    private ?bool $routesHasTargetRevenueColumn = null;
+    private ?bool $routesHasFixedCostColumn = null;
+    private ?bool $poolsHasFixedCostColumn = null;
     private ?bool $driversHasRevenueColumn = null;
     private ?bool $driversHasBopColumn = null;
     private ?bool $driversHasFixedCostColumn = null;
 
     public function routesIndex(): JsonResponse
     {
+        $monthStart = now()->startOfMonth()->toDateString();
+        $monthEnd = now()->endOfMonth()->toDateString();
+        $financials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
+
         $query = DB::table('routes')
             ->orderBy('name');
         $this->applyRouteScopeToQuery($query, 'routes.id', 'routes.name');
@@ -48,7 +55,11 @@ class AdminOpsApiController extends Controller
                 'origin',
                 'destination',
                 $this->hasRoutesBopColumn() ? 'bop' : DB::raw('0 as bop'),
-            ]);
+                $this->hasRoutesTargetRevenueColumn() ? 'target_revenue' : DB::raw('0 as target_revenue'),
+                $this->hasRoutesFixedCostColumn() ? 'fixed_cost' : DB::raw('0 as fixed_cost'),
+            ])
+            ->map(fn ($row) => $this->withRouteFinancials($row, $financials))
+            ->values();
 
         return $this->ok(['routes' => $rows]);
     }
@@ -61,6 +72,8 @@ class AdminOpsApiController extends Controller
             'origin' => ['nullable', 'string', 'max:120'],
             'destination' => ['nullable', 'string', 'max:120'],
             'bop' => ['nullable', 'numeric', 'min:0'],
+            'target_revenue' => ['nullable', 'numeric', 'min:0'],
+            'fixed_cost' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -70,8 +83,16 @@ class AdminOpsApiController extends Controller
             'destination' => $this->nullable($data['destination'] ?? null),
         ];
 
-        if ($this->hasRoutesBopColumn()) {
+        if ($this->hasRoutesBopColumn() && array_key_exists('bop', $data)) {
             $payload['bop'] = (float) ($data['bop'] ?? 0);
+        }
+
+        if ($this->hasRoutesTargetRevenueColumn() && array_key_exists('target_revenue', $data)) {
+            $payload['target_revenue'] = (float) ($data['target_revenue'] ?? 0);
+        }
+
+        if ($this->hasRoutesFixedCostColumn() && array_key_exists('fixed_cost', $data)) {
+            $payload['fixed_cost'] = (float) ($data['fixed_cost'] ?? 0);
         }
 
         if ($id > 0) {
@@ -2677,6 +2698,21 @@ class AdminOpsApiController extends Controller
         return $this->routesHasBopColumn ??= Schema::hasTable('routes') && Schema::hasColumn('routes', 'bop');
     }
 
+    private function hasRoutesTargetRevenueColumn(): bool
+    {
+        return $this->routesHasTargetRevenueColumn ??= Schema::hasTable('routes') && Schema::hasColumn('routes', 'target_revenue');
+    }
+
+    private function hasRoutesFixedCostColumn(): bool
+    {
+        return $this->routesHasFixedCostColumn ??= Schema::hasTable('routes') && Schema::hasColumn('routes', 'fixed_cost');
+    }
+
+    private function hasPoolsFixedCostColumn(): bool
+    {
+        return $this->poolsHasFixedCostColumn ??= Schema::hasTable('pools') && Schema::hasColumn('pools', 'fixed_cost');
+    }
+
     private function hasDriversRevenueColumn(): bool
     {
         return $this->driversHasRevenueColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'revenue');
@@ -2944,9 +2980,21 @@ class AdminOpsApiController extends Controller
 
         $canManage = $this->currentUserIsSuperAdmin();
         $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
+        $monthStart = now()->startOfMonth()->toDateString();
+        $monthEnd = now()->endOfMonth()->toDateString();
+        $routeFinancials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
 
         $poolQuery = DB::table('pools')
-            ->select(['id', 'name', 'code', 'target_revenue', 'status', 'notes', 'created_at'])
+            ->select([
+                'id',
+                'name',
+                'code',
+                'target_revenue',
+                $this->hasPoolsFixedCostColumn() ? 'fixed_cost' : DB::raw('0 as fixed_cost'),
+                'status',
+                'notes',
+                'created_at',
+            ])
             ->orderBy('name');
 
         if (! $canManage) {
@@ -2976,15 +3024,24 @@ class AdminOpsApiController extends Controller
             }
         }
 
-        $rows = $pools->map(function ($pool) use ($routesByPool): array {
+        $rows = $pools->map(function ($pool) use ($routesByPool, $routeFinancials): array {
             $poolId = (int) ($pool->id ?? 0);
             $routes = $routesByPool[$poolId] ?? ['ids' => [], 'names' => []];
+            $financials = $this->sumRouteFinancials($routes['ids'], $routeFinancials);
 
             return [
                 'id' => $poolId,
                 'name' => (string) ($pool->name ?? ''),
                 'code' => (string) ($pool->code ?? ''),
                 'target_revenue' => (float) ($pool->target_revenue ?? 0),
+                'fixed_cost' => (float) ($pool->fixed_cost ?? 0),
+                'charter_revenue' => (float) ($financials['charter_revenue'] ?? 0),
+                'departure_revenue' => (float) ($financials['departure_revenue'] ?? 0),
+                'luggage_revenue' => (float) ($financials['luggage_revenue'] ?? 0),
+                'revenue' => (float) ($financials['revenue'] ?? 0),
+                'charter_bop' => (float) ($financials['charter_bop'] ?? 0),
+                'departure_bop' => (float) ($financials['departure_bop'] ?? 0),
+                'bop' => (float) ($financials['bop'] ?? 0),
                 'status' => (string) ($pool->status ?? 'active'),
                 'notes' => (string) ($pool->notes ?? ''),
                 'created_at' => (string) ($pool->created_at ?? ''),
@@ -3031,6 +3088,7 @@ class AdminOpsApiController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'code' => ['nullable', 'string', 'max:40', Rule::unique('pools', 'code')->ignore($id)],
             'target_revenue' => ['nullable', 'numeric', 'min:0'],
+            'fixed_cost' => ['nullable', 'numeric', 'min:0'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
             'notes' => ['nullable', 'string'],
             'route_ids' => ['nullable', 'array'],
@@ -3063,6 +3121,10 @@ class AdminOpsApiController extends Controller
             'status' => (string) ($data['status'] ?? 'active'),
             'notes' => $this->nullable($data['notes'] ?? null),
         ];
+
+        if ($this->hasPoolsFixedCostColumn()) {
+            $payload['fixed_cost'] = (float) ($data['fixed_cost'] ?? 0);
+        }
 
         return DB::transaction(function () use ($id, $payload, $routeIds): JsonResponse {
             if ($id > 0) {
@@ -4480,6 +4542,268 @@ class AdminOpsApiController extends Controller
 
             return $map;
         });
+    }
+
+    /**
+     * @return array{luggage_revenue: float, departure_revenue: float, charter_revenue: float, revenue: float, departure_bop: float, charter_bop: float, bop: float}
+     */
+    private function emptyFinancialBucket(): array
+    {
+        return [
+            'luggage_revenue' => 0.0,
+            'departure_revenue' => 0.0,
+            'charter_revenue' => 0.0,
+            'revenue' => 0.0,
+            'departure_bop' => 0.0,
+            'charter_bop' => 0.0,
+            'bop' => 0.0,
+        ];
+    }
+
+    /**
+     * @return array<int, array{luggage_revenue: float, departure_revenue: float, charter_revenue: float, revenue: float, departure_bop: float, charter_bop: float, bop: float}>
+     */
+    private function routeFinancialsForMonth(string $monthStart, string $monthEnd): array
+    {
+        if (! Schema::hasTable('routes')) {
+            return [];
+        }
+
+        $routes = DB::table('routes')->get(['id', 'name', 'origin', 'destination']);
+        $financials = [];
+        $nameMap = [];
+        $routeProfiles = [];
+
+        foreach ($routes as $route) {
+            $routeId = (int) ($route->id ?? 0);
+            if ($routeId <= 0) {
+                continue;
+            }
+
+            $financials[$routeId] = $this->emptyFinancialBucket();
+            $routeProfiles[$routeId] = [
+                'name' => $this->normalizeRouteName((string) ($route->name ?? '')),
+                'origin' => $this->normalizeRouteName((string) ($route->origin ?? '')),
+                'destination' => $this->normalizeRouteName((string) ($route->destination ?? '')),
+            ];
+
+            foreach (['name', 'origin', 'destination'] as $field) {
+                $key = $routeProfiles[$routeId][$field];
+                if ($key === '') {
+                    continue;
+                }
+
+                $nameMap[$key] ??= [];
+                $nameMap[$key][] = $routeId;
+            }
+        }
+
+        $routeIdsForName = static fn (string $name) => $nameMap[$name] ?? [];
+
+        if (Schema::hasTable('bookings')) {
+            $bookingRows = DB::table('bookings')
+                ->select(['rute'])
+                ->selectRaw('SUM(CASE WHEN COALESCE(price, 0) - COALESCE(discount, 0) > 0 THEN COALESCE(price, 0) - COALESCE(discount, 0) ELSE 0 END) as net_revenue')
+                ->where('status', '!=', 'canceled')
+                ->whereBetween('tanggal', [$monthStart, $monthEnd])
+                ->groupBy('rute')
+                ->get();
+
+            foreach ($bookingRows as $booking) {
+                foreach ($routeIdsForName($this->normalizeRouteName((string) ($booking->rute ?? ''))) as $routeId) {
+                    $financials[$routeId]['departure_revenue'] += (float) ($booking->net_revenue ?? 0);
+                }
+            }
+        }
+
+        if (Schema::hasTable('trip_assignments')) {
+            $scheduleBopMap = $this->scheduleBopMap();
+            $assignmentRows = DB::table('trip_assignments')
+                ->whereBetween('tanggal', [$monthStart, $monthEnd])
+                ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
+                    $query->where(function (Builder $statusQuery) {
+                        $statusQuery
+                            ->whereNull('status')
+                            ->orWhere('status', '!=', 'canceled');
+                    });
+                })
+                ->get(['rute', 'tanggal', 'jam']);
+
+            foreach ($assignmentRows as $assignment) {
+                $tanggal = trim((string) ($assignment->tanggal ?? ''));
+                if ($tanggal === '') {
+                    continue;
+                }
+
+                try {
+                    $dow = Carbon::parse($tanggal)->dayOfWeek;
+                } catch (\Throwable) {
+                    continue;
+                }
+
+                $scheduleKey = $this->driverScheduleBopKey(
+                    (string) ($assignment->rute ?? ''),
+                    $dow,
+                    (string) ($assignment->jam ?? ''),
+                );
+                $bop = (float) ($scheduleBopMap[$scheduleKey] ?? 0);
+                foreach ($routeIdsForName($this->normalizeRouteName((string) ($assignment->rute ?? ''))) as $routeId) {
+                    $financials[$routeId]['departure_bop'] += $bop;
+                }
+            }
+        }
+
+        if (Schema::hasTable('luggages')) {
+            $luggageRows = DB::table('luggages')
+                ->select([
+                    Schema::hasColumn('luggages', 'rute_id') ? 'rute_id' : DB::raw('NULL as rute_id'),
+                    'rute',
+                    'price',
+                ])
+                ->whereBetween(DB::raw('COALESCE(tanggal, DATE(created_at))'), [$monthStart, $monthEnd])
+                ->where(function (Builder $query) {
+                    $this->applyLuggageStatusFilter($query, 'status', $this->luggageRevenueStatuses());
+                })
+                ->get();
+
+            foreach ($luggageRows as $luggage) {
+                $mappedRouteIds = [];
+                $routeId = (int) ($luggage->rute_id ?? 0);
+                if ($routeId > 0 && isset($financials[$routeId])) {
+                    $mappedRouteIds[] = $routeId;
+                }
+
+                if ($mappedRouteIds === []) {
+                    $mappedRouteIds = $routeIdsForName($this->normalizeRouteName((string) ($luggage->rute ?? '')));
+                }
+
+                foreach (array_unique($mappedRouteIds) as $mappedRouteId) {
+                    $financials[$mappedRouteId]['luggage_revenue'] += (float) ($luggage->price ?? 0);
+                }
+            }
+        }
+
+        if (Schema::hasTable('charters')) {
+            $hasStatus = $this->chartersHasStatusColumn();
+            $charterRows = DB::table('charters')
+                ->whereBetween('start_date', [$monthStart, $monthEnd])
+                ->get([
+                    'pickup_point',
+                    'drop_point',
+                    'price',
+                    'bop_price',
+                    'payment_status',
+                    'bop_status',
+                    $hasStatus ? 'status' : DB::raw('NULL as status'),
+                ]);
+
+            foreach ($charterRows as $charter) {
+                $status = strtolower(trim((string) ($charter->status ?? '')));
+                $paymentStatus = strtolower(trim((string) ($charter->payment_status ?? '')));
+                $bopStatus = strtolower(trim((string) ($charter->bop_status ?? '')));
+
+                if ($status === 'canceled' || $paymentStatus === 'canceled' || $bopStatus === 'canceled') {
+                    continue;
+                }
+
+                $matchedRouteIds = $this->matchRouteIdsForCharter(
+                    (string) ($charter->pickup_point ?? ''),
+                    (string) ($charter->drop_point ?? ''),
+                    $routeProfiles,
+                    $nameMap,
+                );
+
+                foreach ($matchedRouteIds as $routeId) {
+                    $financials[$routeId]['charter_revenue'] += (float) ($charter->price ?? 0);
+                    $financials[$routeId]['charter_bop'] += (float) ($charter->bop_price ?? 0);
+                }
+            }
+        }
+
+        foreach ($financials as $routeId => $bucket) {
+            $financials[$routeId]['revenue'] = (float) ($bucket['departure_revenue'] ?? 0)
+                + (float) ($bucket['luggage_revenue'] ?? 0)
+                + (float) ($bucket['charter_revenue'] ?? 0);
+            $financials[$routeId]['bop'] = (float) ($bucket['departure_bop'] ?? 0)
+                + (float) ($bucket['charter_bop'] ?? 0);
+        }
+
+        return $financials;
+    }
+
+    /**
+     * @param array<int, array{name: string, origin: string, destination: string}> $routeProfiles
+     * @param array<string, array<int, int>> $nameMap
+     * @return array<int, int>
+     */
+    private function matchRouteIdsForCharter(string $pickupPoint, string $dropPoint, array $routeProfiles, array $nameMap): array
+    {
+        $pickup = $this->normalizeRouteName($pickupPoint);
+        $drop = $this->normalizeRouteName($dropPoint);
+        $matches = [];
+
+        foreach ($routeProfiles as $routeId => $profile) {
+            $name = $profile['name'];
+            $origin = $profile['origin'];
+            $destination = $profile['destination'];
+
+            $sameDirection = $origin !== '' && $destination !== '' && $pickup === $origin && $drop === $destination;
+            $reverseDirection = $origin !== '' && $destination !== '' && $pickup === $destination && $drop === $origin;
+            $routeNameMatch = $name !== '' && ($pickup === $name || $drop === $name);
+
+            if ($sameDirection || $reverseDirection || $routeNameMatch) {
+                $matches[] = $routeId;
+            }
+        }
+
+        if ($matches === []) {
+            foreach ([$pickup, $drop] as $label) {
+                foreach ($nameMap[$label] ?? [] as $routeId) {
+                    $matches[] = $routeId;
+                }
+            }
+        }
+
+        return array_values(array_unique(array_map(static fn ($id) => (int) $id, $matches)));
+    }
+
+    /**
+     * @param array<int, int> $routeIds
+     * @param array<int, array<string, float>> $financials
+     * @return array{luggage_revenue: float, departure_revenue: float, charter_revenue: float, revenue: float, departure_bop: float, charter_bop: float, bop: float}
+     */
+    private function sumRouteFinancials(array $routeIds, array $financials): array
+    {
+        $bucket = $this->emptyFinancialBucket();
+
+        foreach (array_unique(array_map(static fn ($id) => (int) $id, $routeIds)) as $routeId) {
+            $item = $financials[$routeId] ?? [];
+            foreach (array_keys($bucket) as $key) {
+                $bucket[$key] += (float) ($item[$key] ?? 0);
+            }
+        }
+
+        return $bucket;
+    }
+
+    /**
+     * @param array<int, array<string, float>> $financials
+     */
+    private function withRouteFinancials(object $row, array $financials): object
+    {
+        $bucket = $financials[(int) ($row->id ?? 0)] ?? [];
+
+        $row->target_revenue = (float) ($row->target_revenue ?? 0);
+        $row->fixed_cost = (float) ($row->fixed_cost ?? 0);
+        $row->luggage_revenue = (float) ($bucket['luggage_revenue'] ?? 0);
+        $row->departure_revenue = (float) ($bucket['departure_revenue'] ?? 0);
+        $row->charter_revenue = (float) ($bucket['charter_revenue'] ?? 0);
+        $row->revenue = (float) ($bucket['revenue'] ?? 0);
+        $row->departure_bop = (float) ($bucket['departure_bop'] ?? 0);
+        $row->charter_bop = (float) ($bucket['charter_bop'] ?? 0);
+        $row->bop = (float) ($bucket['bop'] ?? 0);
+
+        return $row;
     }
 
     /**
