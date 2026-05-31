@@ -7645,10 +7645,7 @@
                 {groupEditDate}
                 {groupEditJam}
                 {groupEditUnit}
-                {groupEditCurrentSeat}
                 {groupEditSeatOptions}
-                {groupEditBookedSeatTokens}
-                {groupEditLayoutRows}
                 {paymentOptions}
                 {loadingGroupEditSeats}
                 {savingGroupRowEdit}
@@ -7657,10 +7654,6 @@
                 {formatGroupTimeLabel}
                 {groupEditSeatLabel}
                 {groupEditSeatHelpText}
-                {groupEditSeatStatus}
-                {groupEditSeatButtonClass}
-                {selectGroupEditSeat}
-                {normalizeSeatToken}
                 {closeGroupRowEdit}
                 {saveGroupRowEdit}
             />
@@ -7696,8 +7689,6 @@
                 {groupRescheduleCurrentSeat}
                 {groupRescheduleSchedules}
                 {groupRescheduleSeatOptions}
-                {groupRescheduleBookedSeatTokens}
-                {groupRescheduleLayoutRows}
                 {loadingGroupRescheduleSchedules}
                 {loadingGroupRescheduleSeats}
                 {savingGroupReschedule}
@@ -7707,10 +7698,6 @@
                 {groupRescheduleUnitOptions}
                 {groupRescheduleSeatLabel}
                 {groupRescheduleSeatHelpText}
-                {groupRescheduleSeatStatus}
-                {groupRescheduleSeatButtonClass}
-                {selectGroupRescheduleSeat}
-                {normalizeSeatToken}
                 {onGroupRescheduleDateChange}
                 {onGroupRescheduleScheduleChange}
                 {loadGroupRescheduleSeatOptions}
