@@ -1,6 +1,7 @@
 ﻿<script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
+    import Building2 from 'lucide-svelte/icons/building-2';
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CalendarDays from 'lucide-svelte/icons/calendar-days';
     import CarFront from 'lucide-svelte/icons/car-front';
@@ -120,7 +121,7 @@
         {
             title: 'Pool',
             href: '/admin-ops/pools',
-            icon: Route,
+            icon: Building2,
             permission: 'pool.manage',
         },
         {

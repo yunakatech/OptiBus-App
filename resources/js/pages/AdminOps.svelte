@@ -63,6 +63,14 @@
         origin: string | null;
         destination: string | null;
         bop: number;
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        fixed_cost: number;
+        target_revenue: number;
     };
     type UnitRow = {
         id: number;
@@ -196,6 +204,14 @@
         created_at: string;
         route_ids: number[];
         route_names: string[];
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        bop: number;
+        fixed_cost: number;
     };
     type CancellationRow = {
         tag: string;
@@ -484,7 +500,14 @@
         last_page: 1,
     });
 
-    let routeForm = $state({ id: 0, name: '', origin: '', destination: '' });
+    let routeForm = $state({
+        id: 0,
+        name: '',
+        origin: '',
+        destination: '',
+        target_revenue: '',
+        fixed_cost: '',
+    });
     let scheduleForm = $state({
         id: 0,
         rute: '',
@@ -584,6 +607,7 @@
         name: '',
         code: '',
         target_revenue: '',
+        fixed_cost: '',
         status: 'active',
         notes: '',
         route_ids: [] as number[],
@@ -895,36 +919,50 @@
     const formatCurrency = (value: number) => formatCurrencyDisplay(value);
     const parseRupiahInput = parseSharedCurrencyInput;
     const formatRupiahInput = formatSharedCurrencyInput;
+    type FinancialRow = {
+        revenue: number;
+        bop: number;
+        fixed_cost: number;
+        target_revenue?: number;
+        target_bulanan?: number;
+        target_revenue_bulanan?: number;
+    };
+    const financialGrossMargin = (row: FinancialRow) =>
+        Number(row.revenue || 0) - Number(row.bop || 0);
+    const financialNetMargin = (row: FinancialRow) =>
+        financialGrossMargin(row) - Number(row.fixed_cost || 0);
+    const financialTarget = (row: FinancialRow) =>
+        Number(
+            row.target_revenue ??
+                row.target_bulanan ??
+                row.target_revenue_bulanan ??
+                0,
+        );
+    const financialAchievement = (row: FinancialRow) => {
+        const target = financialTarget(row);
+
+        if (target <= 0) {
+            return 0;
+        }
+
+        return (Number(row.revenue || 0) / target) * 100;
+    };
+    const financialStatus = (row: FinancialRow) =>
+        financialAchievement(row) >= 100 ? 'Tercapai' : 'Kurang';
     const armadaGrossMargin = (row: ArmadaRow) =>
-        Number(row.revenue || 0) - Number(row.bop || 0);
+        financialGrossMargin(row);
     const armadaNetMargin = (row: ArmadaRow) =>
-        armadaGrossMargin(row) - Number(row.fixed_cost || 0);
-    const armadaAchievement = (row: ArmadaRow) => {
-        const target = Number(row.target_bulanan || 0);
-
-        if (target <= 0) {
-            return 0;
-        }
-
-        return (Number(row.revenue || 0) / target) * 100;
-    };
+        financialNetMargin(row);
+    const armadaAchievement = (row: ArmadaRow) => financialAchievement(row);
     const armadaStatus = (row: ArmadaRow) =>
-        armadaAchievement(row) >= 100 ? 'Tercapai' : 'Kurang';
+        financialStatus(row);
     const driverGrossMargin = (row: DriverRow) =>
-        Number(row.revenue || 0) - Number(row.bop || 0);
+        financialGrossMargin(row);
     const driverNetMargin = (row: DriverRow) =>
-        driverGrossMargin(row) - Number(row.fixed_cost || 0);
-    const driverAchievement = (row: DriverRow) => {
-        const target = Number(row.target_revenue_bulanan || 0);
-
-        if (target <= 0) {
-            return 0;
-        }
-
-        return (Number(row.revenue || 0) / target) * 100;
-    };
+        financialNetMargin(row);
+    const driverAchievement = (row: DriverRow) => financialAchievement(row);
     const driverStatus = (row: DriverRow) =>
-        driverAchievement(row) >= 100 ? 'Tercapai' : 'Kurang';
+        financialStatus(row);
     const selectDriverUnit = (armada: ArmadaRow) => {
         driverForm.armada_id = Number(armada.id);
         driverUnitSearch = String(armada.nopol ?? '');
@@ -2272,7 +2310,14 @@
     };
 
     const resetRouteForm = () =>
-        (routeForm = { id: 0, name: '', origin: '', destination: '' });
+        (routeForm = {
+            id: 0,
+            name: '',
+            origin: '',
+            destination: '',
+            target_revenue: '',
+            fixed_cost: '',
+        });
     const buildDefaultUnitLabels = (count: number, existing: string[] = []) => {
         const total = Math.max(1, Number(count || 1));
 
@@ -2444,6 +2489,7 @@
             name: '',
             code: '',
             target_revenue: '',
+            fixed_cost: '',
             status: 'active',
             notes: '',
             route_ids: [],
@@ -2473,6 +2519,10 @@
                         name: routeForm.name,
                         origin: routeForm.origin,
                         destination: routeForm.destination,
+                        target_revenue: parseRupiahInput(
+                            routeForm.target_revenue,
+                        ),
+                        fixed_cost: parseRupiahInput(routeForm.fixed_cost),
                     });
                 },
                 {
@@ -2909,6 +2959,7 @@
                         target_revenue: parseRupiahInput(
                             poolForm.target_revenue,
                         ),
+                        fixed_cost: parseRupiahInput(poolForm.fixed_cost),
                         status: poolForm.status,
                         notes: poolForm.notes,
                         route_ids: poolForm.route_ids,
@@ -3301,6 +3352,42 @@
                                     bind:value={routeForm.destination}
                                 />
                             </label>
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Target Revenue</span
+                                >
+                                <Input
+                                    placeholder="Rp 0"
+                                    bind:value={routeForm.target_revenue}
+                                    oninput={(event) => {
+                                        routeForm.target_revenue =
+                                            formatRupiahInput(
+                                                (
+                                                    event.currentTarget as HTMLInputElement
+                                                ).value,
+                                            );
+                                    }}
+                                />
+                            </label>
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Fixed Cost</span
+                                >
+                                <Input
+                                    placeholder="Rp 0"
+                                    bind:value={routeForm.fixed_cost}
+                                    oninput={(event) => {
+                                        routeForm.fixed_cost =
+                                            formatRupiahInput(
+                                                (
+                                                    event.currentTarget as HTMLInputElement
+                                                ).value,
+                                            );
+                                    }}
+                                />
+                            </label>
                         </div>
                         <div
                             class="flex flex-wrap gap-2 border-t border-border/70 bg-muted/20 p-5"
@@ -3355,33 +3442,119 @@
                         </div>
                         <div class="overflow-x-auto">
                             <table
-                                class="min-w-[820px] w-full border-separate border-spacing-0 text-sm"
+                                class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm"
                             >
-                                <thead
-                                    class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
-                                >
-                                    <tr>
+                                <thead>
+                                    <tr
+                                        class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground"
+                                    >
                                         <th
-                                            class="w-[30%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            rowspan="2"
+                                            class="sticky left-0 z-30 w-[220px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
                                             >Rute Induk</th
                                         >
                                         <th
-                                            class="w-[54%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            rowspan="2"
+                                            class="sticky left-[220px] z-30 w-[300px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
                                             >Arah Perjalanan</th
                                         >
                                         <th
-                                            class="w-[16%] border-b border-border/70 px-4 py-3 text-center font-semibold"
+                                            colspan="4"
+                                            class="border-b border-r border-border/70 bg-emerald-50/70 px-3 py-3 text-center font-semibold text-emerald-800"
+                                            >Revenue</th
+                                        >
+                                        <th
+                                            colspan="3"
+                                            class="border-b border-r border-border/70 bg-amber-50/80 px-3 py-3 text-center font-semibold text-amber-800"
+                                            >BOP</th
+                                        >
+                                        <th
+                                            colspan="3"
+                                            class="border-b border-r border-border/70 bg-sky-50/80 px-3 py-3 text-center font-semibold text-sky-800"
+                                            >Margin</th
+                                        >
+                                        <th
+                                            colspan="2"
+                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-3 text-center font-semibold text-slate-700"
+                                            >Target</th
+                                        >
+                                        <th
+                                            rowspan="2"
+                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-4 text-center font-semibold text-slate-700"
+                                            >Status</th
+                                        >
+                                        <th
+                                            rowspan="2"
+                                            class="sticky right-0 z-30 w-[92px] border-b border-l border-border/70 bg-background px-3 py-4 text-center font-semibold"
                                             >Aksi</th
+                                        >
+                                    </tr>
+                                    <tr
+                                        class="bg-muted/20 text-[11px] font-semibold text-foreground/80"
+                                    >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Charter</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Keberangkatan</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Bagasi</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Total Revenue</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Charter</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Keberangkatan</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Total BOP</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Gross</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Fixed Cost</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Net Margin</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Target Revenue</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Achievement</th
                                         >
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {#each routes as row (row.id)}
+                                        {@const gross =
+                                            financialGrossMargin(row)}
+                                        {@const net = financialNetMargin(row)}
+                                        {@const achievement =
+                                            financialAchievement(row)}
+                                        {@const status = financialStatus(row)}
                                         <tr
                                             class="group transition hover:bg-muted/15"
                                         >
                                             <td
-                                                class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                                class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
                                             >
                                                 <div
                                                     class="font-semibold text-foreground"
@@ -3396,7 +3569,7 @@
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-4 py-4"
+                                                class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
                                             >
                                                 <div
                                                     class="flex flex-wrap items-center gap-2"
@@ -3426,7 +3599,146 @@
                                                 </div>
                                             </td>
                                             <td
-                                                class="relative border-b border-border/60 px-4 py-4 text-center"
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.charter_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.departure_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.luggage_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class="text-sm font-semibold text-emerald-800 tabular-nums"
+                                                >
+                                                    {formatCurrency(
+                                                        Number(
+                                                            row.revenue || 0,
+                                                        ),
+                                                    )}
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80"
+                                                >
+                                                    Total
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.charter_bop || 0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.departure_bop || 0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class="text-sm font-semibold text-amber-800 tabular-nums"
+                                                >
+                                                    {formatCurrency(
+                                                        Number(row.bop || 0),
+                                                    )}
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80"
+                                                >
+                                                    Total
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(gross)}</td
+                                            >
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(row.fixed_cost || 0),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}
+                                                >
+                                                    {formatCurrency(net)}
+                                                </div>
+                                                <div
+                                                    class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}
+                                                >
+                                                    {net >= 0
+                                                        ? 'Positif'
+                                                        : 'Minus'}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.target_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class="text-sm font-semibold tabular-nums"
+                                                >
+                                                    {achievement.toFixed(1)}%
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Pencapaian
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-4 text-center"
+                                            >
+                                                <span
+                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                                                        status === 'Tercapai'
+                                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                            : 'border-amber-200 bg-amber-50 text-amber-700'
+                                                    }`}
+                                                >
+                                                    {status}
+                                                </span>
+                                            </td>
+                                            <td
+                                                class="sticky right-0 z-20 border-b border-l border-border/60 bg-background px-3 py-4 text-center group-hover:bg-muted/15"
                                             >
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger
@@ -3463,6 +3775,14 @@
                                                                     destination:
                                                                         row.destination ??
                                                                         '',
+                                                                    target_revenue:
+                                                                        formatRupiahInput(
+                                                                            row.target_revenue,
+                                                                        ),
+                                                                    fixed_cost:
+                                                                        formatRupiahInput(
+                                                                            row.fixed_cost,
+                                                                        ),
                                                                 };
                                                                 setFormMode(
                                                                     'form',
@@ -6385,6 +6705,25 @@
                             <label class="space-y-1.5">
                                 <span
                                     class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Fixed Cost</span
+                                >
+                                <Input
+                                    placeholder="Rp 0"
+                                    bind:value={poolForm.fixed_cost}
+                                    oninput={(event) => {
+                                        poolForm.fixed_cost =
+                                            formatRupiahInput(
+                                                (
+                                                    event.currentTarget as HTMLInputElement
+                                                ).value,
+                                            );
+                                    }}
+                                    disabled={!canManagePools}
+                                />
+                            </label>
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Status</span
                                 >
                                 <select
@@ -6511,36 +6850,115 @@
                         </div>
                         <div class="overflow-x-auto">
                             <table
-                                class="min-w-[1080px] w-full border-separate border-spacing-0 text-sm"
+                                class="min-w-[2060px] w-full border-separate border-spacing-0 text-sm"
                             >
-                                <thead
-                                    class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
-                                >
-                                    <tr>
+                                <thead>
+                                    <tr
+                                        class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground"
+                                    >
                                         <th
-                                            class="sticky left-0 z-20 w-[240px] border-b border-r border-border/70 bg-background px-4 py-3 text-left font-semibold"
+                                            rowspan="2"
+                                            class="sticky left-0 z-30 w-[240px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
                                             >Pool</th
                                         >
                                         <th
-                                            class="w-[360px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            rowspan="2"
+                                            class="sticky left-[240px] z-30 w-[320px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
                                             >Rute</th
                                         >
                                         <th
-                                            class="w-[180px] border-b border-r border-border/70 px-4 py-3 text-right font-semibold"
+                                            colspan="4"
+                                            class="border-b border-r border-border/70 bg-emerald-50/70 px-3 py-3 text-center font-semibold text-emerald-800"
+                                            >Revenue</th
+                                        >
+                                        <th
+                                            colspan="3"
+                                            class="border-b border-r border-border/70 bg-amber-50/80 px-3 py-3 text-center font-semibold text-amber-800"
+                                            >BOP</th
+                                        >
+                                        <th
+                                            colspan="3"
+                                            class="border-b border-r border-border/70 bg-sky-50/80 px-3 py-3 text-center font-semibold text-sky-800"
+                                            >Margin</th
+                                        >
+                                        <th
+                                            colspan="2"
+                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-3 text-center font-semibold text-slate-700"
                                             >Target</th
                                         >
                                         <th
-                                            class="w-[140px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            rowspan="2"
+                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-4 text-center font-semibold text-slate-700"
                                             >Status</th
                                         >
                                         <th
-                                            class="sticky right-0 z-20 w-[90px] border-b border-l border-border/70 bg-background px-4 py-3 text-center font-semibold"
+                                            rowspan="2"
+                                            class="sticky right-0 z-30 w-[92px] border-b border-l border-border/70 bg-background px-3 py-4 text-center font-semibold"
                                             >Aksi</th
+                                        >
+                                    </tr>
+                                    <tr
+                                        class="bg-muted/20 text-[11px] font-semibold text-foreground/80"
+                                    >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Charter</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Keberangkatan</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Bagasi</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Total Revenue</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Charter</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Keberangkatan</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Total BOP</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Gross</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Fixed Cost</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Net Margin</th
+                                        >
+                                        <th
+                                            class="border-b border-border/70 px-3 py-3 text-right"
+                                            >Target Revenue</th
+                                        >
+                                        <th
+                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
+                                            >Achievement</th
                                         >
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {#each pools as row (row.id)}
+                                        {@const gross =
+                                            financialGrossMargin(row)}
+                                        {@const net = financialNetMargin(row)}
+                                        {@const achievement =
+                                            financialAchievement(row)}
+                                        {@const healthStatus =
+                                            financialStatus(row)}
                                         <tr
                                             class="group transition hover:bg-muted/15"
                                         >
@@ -6557,9 +6975,16 @@
                                                 >
                                                     {row.code || 'Tanpa kode'}
                                                 </div>
+                                                <span
+                                                    class={`mt-3 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
+                                                >
+                                                    {row.status === 'active'
+                                                        ? 'Aktif'
+                                                        : 'Nonaktif'}
+                                                </span>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                                class="sticky left-[240px] z-10 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
                                             >
                                                 <div
                                                     class="line-clamp-2 text-sm text-foreground"
@@ -6568,23 +6993,147 @@
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-4 py-4 text-right font-semibold tabular-nums"
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.charter_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
                                             >
-                                                {formatCurrency(row.target_revenue)}
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.departure_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.luggage_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class="text-sm font-semibold text-emerald-800 tabular-nums"
+                                                >
+                                                    {formatCurrency(
+                                                        Number(
+                                                            row.revenue || 0,
+                                                        ),
+                                                    )}
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80"
+                                                >
+                                                    Total
+                                                </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-4 py-4"
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.charter_bop || 0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.departure_bop || 0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class="text-sm font-semibold text-amber-800 tabular-nums"
+                                                >
+                                                    {formatCurrency(
+                                                        Number(row.bop || 0),
+                                                    )}
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80"
+                                                >
+                                                    Total
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(gross)}</td
+                                            >
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(row.fixed_cost || 0),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}
+                                                >
+                                                    {formatCurrency(net)}
+                                                </div>
+                                                <div
+                                                    class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}
+                                                >
+                                                    {net >= 0
+                                                        ? 'Positif'
+                                                        : 'Minus'}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
+                                                >{formatCurrency(
+                                                    Number(
+                                                        row.target_revenue ||
+                                                            0,
+                                                    ),
+                                                )}</td
+                                            >
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
+                                            >
+                                                <div
+                                                    class="text-sm font-semibold tabular-nums"
+                                                >
+                                                    {achievement.toFixed(1)}%
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Pencapaian
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-4 text-center"
                                             >
                                                 <span
-                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
+                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                                                        healthStatus ===
+                                                        'Tercapai'
+                                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                            : 'border-amber-200 bg-amber-50 text-amber-700'
+                                                    }`}
                                                 >
-                                                    {row.status === 'active'
-                                                        ? 'Aktif'
-                                                        : 'Nonaktif'}
+                                                    {healthStatus}
                                                 </span>
                                             </td>
                                             <td
-                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-4 py-4 text-center group-hover:bg-muted/15"
+                                                class="relative sticky right-0 z-20 border-b border-l border-border/60 bg-background px-3 py-4 text-center group-hover:bg-muted/15"
                                             >
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger
@@ -6619,6 +7168,10 @@
                                                                     target_revenue:
                                                                         formatRupiahInput(
                                                                             row.target_revenue,
+                                                                        ),
+                                                                    fixed_cost:
+                                                                        formatRupiahInput(
+                                                                            row.fixed_cost,
                                                                         ),
                                                                     status:
                                                                         row.status ||

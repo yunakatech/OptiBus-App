@@ -12,6 +12,7 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
+    import Building2 from 'lucide-svelte/icons/building-2';
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CalendarDays from 'lucide-svelte/icons/calendar-days';
     import CarFront from 'lucide-svelte/icons/car-front';
@@ -48,7 +49,7 @@
                 { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
                 { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
                 { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },
-                { title: 'Pool', href: '/admin-ops/pools', icon: Route, permission: 'pool.manage' },
+                { title: 'Pool', href: '/admin-ops/pools', icon: Building2, permission: 'pool.manage' },
                 { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned, permission: 'master.view' },
                 { title: 'Segment', href: '/admin-ops/segments', icon: Shuffle, permission: 'master.view' },
                 { title: 'Tarif Bagasi', href: '/admin-ops/services', icon: Package, permission: 'master.view' },
