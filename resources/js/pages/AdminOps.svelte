@@ -479,8 +479,8 @@
     let driverUnitSearch = $state('');
     let armadaSearch = $state('');
     let armadaCategories = $state<string[]>([]);
-    let armadaLayoutSearch = $state('');
-    let armadaLayoutChoice = $state('');
+    let armadaTemplateSearch = $state('');
+    let armadaTemplateLookupOpen = $state(false);
     let armadaViewId = $state<number>(0);
     let layoutUnitId = $state<number>(0);
     let layoutTemplateSearch = $state('');
@@ -632,29 +632,24 @@
 
         return categories;
     });
-    const armadaLayoutOptions = $derived.by<UnitRow[]>(() => {
-        const keyword = armadaLayoutSearch.trim().toLowerCase();
-        const rows = units;
+    const filteredArmadaTemplateOptions = $derived.by<UnitRow[]>(() => {
+        const keyword = armadaTemplateSearch.trim().toLowerCase();
 
-        if (keyword === '') {
-            return rows.slice(0, 80);
-        }
-
-        return rows
+        return units
             .filter((unit) => {
                 const nopol = String(unit.nopol ?? '').toLowerCase();
                 const category = String(unit.category ?? '').toLowerCase();
                 const merek = String(unit.merek ?? '').toLowerCase();
                 const type = String(unit.type ?? '').toLowerCase();
 
-                return (
-                    nopol.includes(keyword) ||
-                    category.includes(keyword) ||
-                    merek.includes(keyword) ||
-                    type.includes(keyword)
-                );
+                return keyword === ''
+                    ? true
+                    : nopol.includes(keyword) ||
+                          category.includes(keyword) ||
+                          merek.includes(keyword) ||
+                          type.includes(keyword);
             })
-            .slice(0, 80);
+            .slice(0, 12);
     });
     const driverUnitOptions = $derived.by<ArmadaRow[]>(() => {
         const keyword = driverUnitSearch.trim().toLowerCase();
@@ -2181,7 +2176,8 @@
             fixed_cost: '',
             target_bulanan: '',
         };
-        resetArmadaLayoutPicker();
+        armadaTemplateSearch = '';
+        armadaTemplateLookupOpen = false;
     };
     const openArmadaView = (id: number) => {
         router.visit(`/admin-ops/armadas/view/${id}`, {
@@ -2210,24 +2206,30 @@
                     ? String(row.target_bulanan)
                     : '',
         };
+        armadaTemplateSearch = row.nopol ?? '';
+        armadaTemplateLookupOpen = false;
         setFormMode('form');
     };
-    const resetArmadaLayoutPicker = () => {
-        armadaLayoutSearch = '';
-        armadaLayoutChoice = '';
-    };
-    const applyArmadaLayoutChoice = (value: string) => {
-        armadaLayoutChoice = value;
-        const selectedId = Number(value || 0);
-        const selectedUnit = units.find((unit) => unit.id === selectedId);
+    const selectArmadaTemplate = (unit: UnitRow) => {
+        const selected = normalizeUnitCategory(unit.category);
 
-        if (!selectedUnit) {
+        if (selected === '') {
             return;
         }
 
-        const selectedCategory = normalizeUnitCategory(selectedUnit.category);
+        armadaForm.kategori = selected;
+        armadaTemplateSearch = unit.nopol ?? selected;
+        armadaTemplateLookupOpen = false;
+    };
 
-        armadaForm.kategori = selectedCategory;
+    const queueArmadaTemplateSearch = () => {
+        armadaTemplateLookupOpen = true;
+    };
+
+    const onArmadaTemplateBlur = () => {
+        setTimeout(() => {
+            armadaTemplateLookupOpen = false;
+        }, 120);
     };
     const resetUserForm = () =>
         (userForm = { id: 0, name: '', email: '', password: '' });
@@ -5837,42 +5839,61 @@
                                             bind:value={armadaForm.warna}
                                         />
                                     </label>
-                                    <label class="space-y-1.5">
+                                    <label class="space-y-1.5 relative">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Cari Template Kategori Armada</span
+                                            >Cari Nama Layout Armada</span
                                         >
                                         <Input
-                                            placeholder="Search kategori armada (nama/model)"
-                                            bind:value={armadaLayoutSearch}
+                                            placeholder="Cari nama template layout dari menu Kategori Armada"
+                                            bind:value={armadaTemplateSearch}
+                                            oninput={queueArmadaTemplateSearch}
+                                            onfocus={() => {
+                                                armadaTemplateLookupOpen = true;
+                                            }}
+                                            onblur={onArmadaTemplateBlur}
                                         />
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Data Dari Kategori Armada</span
-                                        >
-                                        <select
-                                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                            bind:value={armadaLayoutChoice}
-                                            onchange={(event) =>
-                                                applyArmadaLayoutChoice(
-                                                    (
-                                                        event.currentTarget as HTMLSelectElement
-                                                    ).value,
-                                                )}
-                                        >
-                                            <option value=""
-                                                >Pilih data dari Kategori Armada</option
+                                        {#if armadaTemplateLookupOpen}
+                                            <div
+                                                class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
                                             >
-                                            {#each armadaLayoutOptions as unit (unit.id)}
-                                                <option value={unit.id}>
-                                                    {normalizeUnitCategory(
-                                                        unit.category,
-                                                    )} - {unit.nopol}
-                                                </option>
-                                            {/each}
-                                        </select>
+                                                {#if filteredArmadaTemplateOptions.length === 0}
+                                                    <p
+                                                        class="px-2 py-2 text-xs text-muted-foreground"
+                                                    >
+                                                        Template layout armada tidak ditemukan.
+                                                    </p>
+                                                {:else}
+                                                    <div class="space-y-1">
+                                                        {#each filteredArmadaTemplateOptions as unit (unit.id)}
+                                                            <button
+                                                                type="button"
+                                                                class="flex w-full items-start justify-between rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70 dark:hover:border-cyan-500/20 dark:hover:bg-cyan-950/20"
+                                                                onmousedown={(
+                                                                    event,
+                                                                ) => {
+                                                                    event.preventDefault();
+                                                                    selectArmadaTemplate(
+                                                                        unit,
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <span>
+                                                                    <span
+                                                                        class="block text-sm font-semibold text-foreground"
+                                                                        >{unit.nopol}</span
+                                                                    >
+                                                                    <span
+                                                                        class="block text-[11px] text-muted-foreground"
+                                                                        >{normalizeUnitCategory(unit.category)} · {unitSeatCount(unit.layout)} kursi</span
+                                                                    >
+                                                                </span>
+                                                            </button>
+                                                        {/each}
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        {/if}
                                     </label>
                                     <label class="space-y-1.5">
                                         <span
