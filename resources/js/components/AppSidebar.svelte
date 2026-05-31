@@ -106,6 +106,11 @@
             icon: Route,
         },
         {
+            title: 'Pool',
+            href: '/admin-ops/pools',
+            icon: Route,
+        },
+        {
             title: 'Master Carter',
             href: '/admin-ops/master/rute-carter',
             icon: BusFront,

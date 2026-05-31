@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin-ops/units/layout/{id}', AdminOpsController::class)->defaults('tab', 'units')->defaults('mode', 'layout')->defaults('locked', true)->name('admin-ops.units.layout');
     Route::get('admin-ops/armadas', AdminOpsController::class)->defaults('tab', 'armadas')->defaults('locked', true)->name('admin-ops.armadas');
     Route::get('admin-ops/armadas/view/{id}', AdminOpsController::class)->defaults('tab', 'armadas')->defaults('mode', 'view')->defaults('locked', true)->name('admin-ops.armadas.view');
+    Route::get('admin-ops/pools', AdminOpsController::class)->defaults('tab', 'pools')->defaults('locked', true)->name('admin-ops.pools');
     Route::get('admin-ops/users', AdminOpsController::class)->defaults('tab', 'users')->defaults('locked', true)->name('admin-ops.users');
     Route::get('admin-ops/cancellations', AdminOpsController::class)->defaults('tab', 'cancellations')->defaults('locked', true)->name('admin-ops.cancellations');
     Route::get('admin-ops/reports', AdminOpsController::class)->defaults('tab', 'reports')->defaults('locked', true)->name('admin-ops.reports');
@@ -177,6 +178,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('armadas/{id}', [AdminOpsApiController::class, 'armadasShow'])->name('armadas.show');
         Route::post('armadas', [AdminOpsApiController::class, 'armadasSave'])->name('armadas.save');
         Route::delete('armadas/{id}', [AdminOpsApiController::class, 'armadasDelete'])->name('armadas.delete');
+
+        Route::get('pools', [AdminOpsApiController::class, 'poolsIndex'])->name('pools.index');
+        Route::post('pools', [AdminOpsApiController::class, 'poolsSave'])->name('pools.save');
+        Route::delete('pools/{id}', [AdminOpsApiController::class, 'poolsDelete'])->name('pools.delete');
 
         Route::get('users', [AdminOpsApiController::class, 'usersIndex'])->name('users.index');
         Route::post('users', [AdminOpsApiController::class, 'usersSave'])->name('users.save');

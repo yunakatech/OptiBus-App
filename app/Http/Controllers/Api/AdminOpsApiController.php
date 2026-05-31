@@ -37,9 +37,11 @@ class AdminOpsApiController extends Controller
 
     public function routesIndex(): JsonResponse
     {
-        $rows = DB::table('routes')
-            ->orderBy('name')
-            ->get([
+        $query = DB::table('routes')
+            ->orderBy('name');
+        $this->applyRouteScopeToQuery($query, 'routes.id', 'routes.name');
+
+        $rows = $query->get([
                 'id',
                 'name',
                 'origin',
@@ -135,6 +137,7 @@ class AdminOpsApiController extends Controller
         if ($dow !== null && $dow !== '') {
             $query->where('s.dow', (int) $dow);
         }
+        $this->applyRouteScopeToQuery($query, $hasRouteId ? 's.route_id' : '', 's.rute');
 
         $rows = $query->get()->map(function ($row) {
             $row->jam = substr((string) $row->jam, 0, 5);
@@ -529,6 +532,7 @@ class AdminOpsApiController extends Controller
         if ($routeId > 0) {
             $query->where('s.route_id', $routeId);
         }
+        $this->applyRouteScopeToQuery($query, 's.route_id', 's.rute');
 
         return $this->ok(['segments' => $query->get()]);
     }
@@ -780,43 +784,48 @@ class AdminOpsApiController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
             'type' => ['nullable', Rule::in(['booking', 'charter', 'bagasi'])],
+            'pool_id' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $from = $validated['from'] ?? now()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
         $type = $validated['type'] ?? 'booking';
+        $poolId = (int) ($validated['pool_id'] ?? 0);
         [$from, $to] = $this->normalizeDateRange($from, $to);
         [$page, $perPage] = $this->paginationParams($request);
         $rangeKey = implode(':', [
             $type,
             $from,
             $to,
+            $poolId,
+            (int) (auth()->id() ?? 0),
             $page,
             $perPage,
             $this->reportCacheSignatureForType($type),
         ]);
 
-        $report = Cache::remember("admin-ops:reports-summary:{$rangeKey}", now()->addSeconds(30), function () use ($type, $from, $to, $page, $perPage): array {
-            return $this->buildTypedReport($type, $from, $to, $page, $perPage);
+        $report = Cache::remember("admin-ops:reports-summary:{$rangeKey}", now()->addSeconds(30), function () use ($type, $from, $to, $page, $perPage, $poolId): array {
+            return $this->buildTypedReport($type, $from, $to, $page, $perPage, $poolId);
         });
 
         return $this->ok($report);
     }
 
-    private function buildTypedReport(string $type, string $from, string $to, int $page, int $perPage): array
+    private function buildTypedReport(string $type, string $from, string $to, int $page, int $perPage, int $poolId = 0): array
     {
         return match ($type) {
-            'charter' => $this->buildCharterReport($from, $to, $page, $perPage),
-            'bagasi' => $this->buildLuggageReport($from, $to, $page, $perPage),
-            default => $this->buildBookingReport($from, $to, $page, $perPage),
+            'charter' => $this->buildCharterReport($from, $to, $page, $perPage, $poolId),
+            'bagasi' => $this->buildLuggageReport($from, $to, $page, $perPage, $poolId),
+            default => $this->buildBookingReport($from, $to, $page, $perPage, $poolId),
         };
     }
 
-    private function buildBookingReport(string $from, string $to, int $page, int $perPage): array
+    private function buildBookingReport(string $from, string $to, int $page, int $perPage, int $poolId = 0): array
     {
         $baseQuery = DB::table('bookings as b')
             ->whereBetween('b.tanggal', [$from, $to]);
         $this->applyNotCanceledFilter($baseQuery, 'b.status');
+        $this->applyRouteScopeToQuery($baseQuery, '', 'b.rute', $poolId);
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -869,13 +878,13 @@ class AdminOpsApiController extends Controller
                 'type' => 'booking',
                 'total_rows' => (int) ($summaryRow->total_rows ?? 0),
                 'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
-            ],
+            ] + $this->routeScopeReportMeta($poolId),
             'rows' => $rows,
             'pagination' => $pagination,
         ];
     }
 
-    private function buildCharterReport(string $from, string $to, int $page, int $perPage): array
+    private function buildCharterReport(string $from, string $to, int $page, int $perPage, int $poolId = 0): array
     {
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
@@ -907,6 +916,7 @@ class AdminOpsApiController extends Controller
         $baseQuery = DB::table('charters as c')
             ->whereBetween('c.start_date', [$from, $to]);
         $this->applyActiveCharterReportFilter($baseQuery);
+        $this->applyCharterPoolScope($baseQuery, $poolId);
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -948,19 +958,20 @@ class AdminOpsApiController extends Controller
                 'type' => 'charter',
                 'total_rows' => (int) ($summaryRow->total_rows ?? 0),
                 'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
-            ],
+            ] + $this->routeScopeReportMeta($poolId),
             'rows' => $rows,
             'pagination' => $pagination,
         ];
     }
 
-    private function buildLuggageReport(string $from, string $to, int $page, int $perPage): array
+    private function buildLuggageReport(string $from, string $to, int $page, int $perPage, int $poolId = 0): array
     {
         [$createdFrom, $createdTo] = $this->dateTimeRange($from, $to);
 
         $baseQuery = DB::table('luggages as l')
             ->whereBetween('l.created_at', [$createdFrom, $createdTo]);
         $this->applyNotCanceledFilter($baseQuery, 'l.status');
+        $this->applyRouteScopeToQuery($baseQuery, Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '', 'l.rute', $poolId);
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -1013,7 +1024,7 @@ class AdminOpsApiController extends Controller
                 'type' => 'bagasi',
                 'total_rows' => (int) ($summaryRow->total_rows ?? 0),
                 'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
-            ],
+            ] + $this->routeScopeReportMeta($poolId),
             'rows' => $rows,
             'pagination' => $pagination,
         ];
@@ -1021,14 +1032,17 @@ class AdminOpsApiController extends Controller
 
     private function reportCacheSignatureForType(string $type): string
     {
+        $poolTables = $this->poolTablesReady() ? ['pools', 'pool_route', 'pool_user'] : [];
+
         return match ($type) {
             'charter' => $this->buildTablesMutationSignature(array_values(array_filter([
                 'charters',
                 'units',
                 $this->chartersHasArmadaNopolColumn() ? 'armadas' : null,
+                ...$poolTables,
             ]))),
-            'bagasi' => $this->buildTablesMutationSignature(['luggages', 'luggage_services']),
-            default => $this->buildTablesMutationSignature(['bookings']),
+            'bagasi' => $this->buildTablesMutationSignature(array_merge(['luggages', 'luggage_services'], $poolTables)),
+            default => $this->buildTablesMutationSignature(array_merge(['bookings'], $poolTables)),
         };
     }
 
@@ -1037,10 +1051,12 @@ class AdminOpsApiController extends Controller
         $validated = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
+            'pool_id' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $from = $validated['from'] ?? now()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
+        $poolId = (int) ($validated['pool_id'] ?? 0);
         [$from, $to] = $this->normalizeDateRange($from, $to);
         $filename = "bookings-report-{$from}-to-{$to}.csv";
 
@@ -1050,6 +1066,7 @@ class AdminOpsApiController extends Controller
             ->orderBy('jam')
             ->orderBy('rute');
         $this->applyNotCanceledFilter($query, 'status');
+        $this->applyRouteScopeToQuery($query, '', 'rute', $poolId);
 
         $rows = $query->get([
                 'id',
@@ -1099,12 +1116,14 @@ class AdminOpsApiController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
             'type' => ['nullable', 'in:reguler,bagasi,charter'],
+            'pool_id' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $from = $validated['from'] ?? now()->startOfMonth()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
         [$from, $to] = $this->normalizeDateRange($from, $to);
         $type = $validated['type'] ?? 'reguler';
+        $poolId = (int) ($validated['pool_id'] ?? 0);
 
         $filename = "report-{$type}-{$from}-to-{$to}.csv";
 
@@ -1115,6 +1134,7 @@ class AdminOpsApiController extends Controller
                 ->whereBetween('l.created_at', [$createdFrom, $createdTo])
                 ->orderByDesc('l.created_at');
             $this->applyNotCanceledFilter($query, 'l.status');
+            $this->applyRouteScopeToQuery($query, Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '', 'l.rute', $poolId);
 
             $rows = $query->get([
                     DB::raw('date(l.created_at) as tanggal'),
@@ -1141,18 +1161,19 @@ class AdminOpsApiController extends Controller
         }
 
         if ($type === 'charter') {
-            $query = DB::table('charters')
-                ->whereBetween('start_date', [$from, $to])
-                ->orderByDesc('start_date');
-            $this->applyActiveCharterReportFilter($query, '');
+            $query = DB::table('charters as c')
+                ->whereBetween('c.start_date', [$from, $to])
+                ->orderByDesc('c.start_date');
+            $this->applyActiveCharterReportFilter($query, 'c');
+            $this->applyCharterPoolScope($query, $poolId);
 
             $rows = $query->get([
-                    DB::raw('start_date as tanggal'),
-                    'name',
-                    'phone',
-                    'pickup_point',
-                    'drop_point',
-                    DB::raw('price as final_price'),
+                    DB::raw('c.start_date as tanggal'),
+                    'c.name',
+                    'c.phone',
+                    'c.pickup_point',
+                    'c.drop_point',
+                    DB::raw('c.price as final_price'),
                 ]);
 
             return response()->streamDownload(function () use ($rows) {
@@ -1176,6 +1197,7 @@ class AdminOpsApiController extends Controller
             ->whereBetween('b.tanggal', [$from, $to])
             ->orderByDesc('b.tanggal');
         $this->applyNotCanceledFilter($query, 'b.status');
+        $this->applyRouteScopeToQuery($query, '', 'b.rute', $poolId);
 
         $rows = $query->get([
                 'b.tanggal',
@@ -1329,6 +1351,7 @@ class AdminOpsApiController extends Controller
                 });
             }
         }
+        $this->applyCharterPoolScope($query);
 
         $result = $this->paginateQuery($query, $page, $perPage);
         return $this->ok([
@@ -1351,6 +1374,7 @@ class AdminOpsApiController extends Controller
         if ($canJoinArmadas) {
             $query->leftJoin('armadas as a', 'c.armada_id', '=', 'a.id');
         }
+        $this->applyCharterPoolScope($query);
 
         $select = [
             'c.id',
@@ -1830,6 +1854,7 @@ class AdminOpsApiController extends Controller
                 }
             });
         }
+        $this->applyRouteScopeToQuery($query, Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '', 'l.rute');
 
         $result = $this->paginateQuery($query, $page, $perPage);
         $rows = collect($result['data'])
@@ -2169,6 +2194,7 @@ class AdminOpsApiController extends Controller
         if ($rute !== '') {
             $query->where('t.rute', $rute);
         }
+        $this->applyRouteScopeToQuery($query, '', 't.rute');
 
         $result = $this->paginateQuery($query, $page, $perPage);
         return $this->ok([
@@ -2903,13 +2929,218 @@ class AdminOpsApiController extends Controller
         return $this->ok(['armada' => $this->withArmadaFinancials($row, $financials)]);
     }
 
+    public function poolsIndex(Request $request): JsonResponse
+    {
+        if (! $this->poolTablesReady()) {
+            return $this->ok([
+                'pools' => [],
+                'routes' => Schema::hasTable('routes')
+                    ? DB::table('routes')->orderBy('name')->get(['id', 'name', 'origin', 'destination'])
+                    : [],
+                'can_manage' => true,
+            ]);
+        }
+
+        $canManage = $this->currentUserIsSuperAdmin();
+        $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
+
+        $poolQuery = DB::table('pools')
+            ->select(['id', 'name', 'code', 'target_revenue', 'status', 'notes', 'created_at'])
+            ->orderBy('name');
+
+        if (! $canManage) {
+            if ($allowedPoolIds === []) {
+                return $this->ok(['pools' => [], 'routes' => [], 'can_manage' => false]);
+            }
+
+            $poolQuery->whereIn('id', $allowedPoolIds)->where('status', 'active');
+        }
+
+        $pools = $poolQuery->get();
+        $poolIds = $pools->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        $routesByPool = [];
+
+        if ($poolIds !== []) {
+            $routeRows = DB::table('pool_route as pr')
+                ->join('routes as r', 'pr.route_id', '=', 'r.id')
+                ->whereIn('pr.pool_id', $poolIds)
+                ->orderBy('r.name')
+                ->get(['pr.pool_id', 'r.id', 'r.name']);
+
+            foreach ($routeRows as $row) {
+                $poolId = (int) ($row->pool_id ?? 0);
+                $routesByPool[$poolId] ??= ['ids' => [], 'names' => []];
+                $routesByPool[$poolId]['ids'][] = (int) ($row->id ?? 0);
+                $routesByPool[$poolId]['names'][] = (string) ($row->name ?? '');
+            }
+        }
+
+        $rows = $pools->map(function ($pool) use ($routesByPool): array {
+            $poolId = (int) ($pool->id ?? 0);
+            $routes = $routesByPool[$poolId] ?? ['ids' => [], 'names' => []];
+
+            return [
+                'id' => $poolId,
+                'name' => (string) ($pool->name ?? ''),
+                'code' => (string) ($pool->code ?? ''),
+                'target_revenue' => (float) ($pool->target_revenue ?? 0),
+                'status' => (string) ($pool->status ?? 'active'),
+                'notes' => (string) ($pool->notes ?? ''),
+                'created_at' => (string) ($pool->created_at ?? ''),
+                'route_ids' => array_values(array_filter($routes['ids'], static fn ($id) => (int) $id > 0)),
+                'route_names' => array_values(array_filter($routes['names'], static fn ($name) => trim((string) $name) !== '')),
+            ];
+        })->values();
+
+        $routeQuery = DB::table('routes')->orderBy('name');
+        if (! $canManage) {
+            $routeIds = [];
+            foreach ($rows as $pool) {
+                $routeIds = array_merge($routeIds, $pool['route_ids']);
+            }
+            $routeIds = array_values(array_unique(array_map(static fn ($id) => (int) $id, $routeIds)));
+
+            if ($routeIds === []) {
+                $routeQuery->whereRaw('1 = 0');
+            } else {
+                $routeQuery->whereIn('id', $routeIds);
+            }
+        }
+
+        return $this->ok([
+            'pools' => $rows,
+            'routes' => $routeQuery->get(['id', 'name', 'origin', 'destination']),
+            'can_manage' => $canManage,
+        ]);
+    }
+
+    public function poolsSave(Request $request): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        if (! $this->poolTablesReady()) {
+            return $this->error('Tabel pool belum tersedia. Jalankan migration terlebih dahulu.', 409);
+        }
+
+        $id = (int) $request->input('id', 0);
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'min:1'],
+            'name' => ['required', 'string', 'max:120'],
+            'code' => ['nullable', 'string', 'max:40', Rule::unique('pools', 'code')->ignore($id)],
+            'target_revenue' => ['nullable', 'numeric', 'min:0'],
+            'status' => ['nullable', Rule::in(['active', 'inactive'])],
+            'notes' => ['nullable', 'string'],
+            'route_ids' => ['nullable', 'array'],
+            'route_ids.*' => ['integer', 'min:1'],
+        ]);
+
+        $routeIds = collect($data['route_ids'] ?? [])
+            ->map(static fn ($value) => (int) $value)
+            ->filter(static fn ($value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($routeIds !== []) {
+            $validRouteIds = DB::table('routes')
+                ->whereIn('id', $routeIds)
+                ->pluck('id')
+                ->map(static fn ($value) => (int) $value)
+                ->all();
+
+            if (count($validRouteIds) !== count($routeIds)) {
+                return $this->error('Ada rute yang tidak ditemukan.', 422);
+            }
+        }
+
+        $payload = [
+            'name' => strtoupper(trim((string) $data['name'])),
+            'code' => $this->nullable($data['code'] ?? null),
+            'target_revenue' => (float) ($data['target_revenue'] ?? 0),
+            'status' => (string) ($data['status'] ?? 'active'),
+            'notes' => $this->nullable($data['notes'] ?? null),
+        ];
+
+        return DB::transaction(function () use ($id, $payload, $routeIds): JsonResponse {
+            if ($id > 0) {
+                DB::table('pools')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
+                $poolId = $id;
+            } else {
+                $poolId = (int) DB::table('pools')->insertGetId(array_merge($payload, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]));
+            }
+
+            if ($routeIds === []) {
+                DB::table('pool_route')->where('pool_id', $poolId)->delete();
+            } else {
+                DB::table('pool_route')->where('pool_id', $poolId)->whereNotIn('route_id', $routeIds)->delete();
+                DB::table('pool_route')->whereIn('route_id', $routeIds)->where('pool_id', '!=', $poolId)->delete();
+
+                $existingRouteIds = DB::table('pool_route')
+                    ->where('pool_id', $poolId)
+                    ->pluck('route_id')
+                    ->map(static fn ($value) => (int) $value)
+                    ->all();
+
+                $now = now();
+                $rows = [];
+                foreach (array_diff($routeIds, $existingRouteIds) as $routeId) {
+                    $rows[] = [
+                        'pool_id' => $poolId,
+                        'route_id' => (int) $routeId,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+
+                if ($rows !== []) {
+                    DB::table('pool_route')->insert($rows);
+                }
+            }
+
+            return $this->ok([
+                'message' => $id > 0 ? 'Pool updated.' : 'Pool created.',
+                'id' => $poolId,
+            ], $id > 0 ? 200 : 201);
+        });
+    }
+
+    public function poolsDelete(int $id): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        if (! $this->poolTablesReady()) {
+            return $this->error('Tabel pool belum tersedia.', 409);
+        }
+
+        DB::transaction(function () use ($id): void {
+            DB::table('pool_user')->where('pool_id', $id)->delete();
+            DB::table('pool_route')->where('pool_id', $id)->delete();
+            DB::table('pools')->where('id', $id)->delete();
+        });
+
+        return $this->ok(['message' => 'Pool deleted.']);
+    }
+
     public function usersIndex(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
+        $select = ['id', 'name', 'email', 'email_verified_at', 'created_at'];
+        if (Schema::hasColumn('users', 'is_super_admin')) {
+            $select[] = 'is_super_admin';
+        } else {
+            $select[] = DB::raw('0 as is_super_admin');
+        }
 
         $query = DB::table('users')
-            ->select(['id', 'name', 'email', 'email_verified_at', 'created_at'])
+            ->select($select)
             ->orderBy('name');
 
         if ($q !== '') {
@@ -2922,15 +3153,52 @@ class AdminOpsApiController extends Controller
         }
 
         $result = $this->paginateQuery($query, $page, $perPage);
+        $users = collect($result['data'])->map(function ($row): array {
+            $item = (array) $row;
+            $item['is_super_admin'] = (bool) ($item['is_super_admin'] ?? false);
+            $item['pool_ids'] = [];
+            $item['pool_names'] = [];
+
+            return $item;
+        })->values();
+
+        if ($this->poolTablesReady() && $users->isNotEmpty()) {
+            $userIds = $users->pluck('id')->map(static fn ($id) => (int) $id)->all();
+            $poolRows = DB::table('pool_user as pu')
+                ->join('pools as p', 'pu.pool_id', '=', 'p.id')
+                ->whereIn('pu.user_id', $userIds)
+                ->orderBy('p.name')
+                ->get(['pu.user_id', 'p.id', 'p.name']);
+
+            $poolMap = [];
+            foreach ($poolRows as $pool) {
+                $userId = (int) ($pool->user_id ?? 0);
+                $poolMap[$userId] ??= ['ids' => [], 'names' => []];
+                $poolMap[$userId]['ids'][] = (int) ($pool->id ?? 0);
+                $poolMap[$userId]['names'][] = (string) ($pool->name ?? '');
+            }
+
+            $users = $users->map(function (array $user) use ($poolMap): array {
+                $mapped = $poolMap[(int) ($user['id'] ?? 0)] ?? ['ids' => [], 'names' => []];
+                $user['pool_ids'] = $mapped['ids'];
+                $user['pool_names'] = $mapped['names'];
+
+                return $user;
+            })->values();
+        }
 
         return $this->ok([
-            'users' => $result['data'],
+            'users' => $users,
             'pagination' => $result['meta'],
         ]);
     }
 
     public function usersSave(Request $request): JsonResponse
     {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
             'name' => ['required', 'string', 'max:255'],
@@ -2941,6 +3209,9 @@ class AdminOpsApiController extends Controller
                 Rule::unique('users', 'email')->ignore((int) $request->input('id', 0)),
             ],
             'password' => ['nullable', 'string', 'min:8', 'max:255'],
+            'is_super_admin' => ['nullable', 'boolean'],
+            'pool_ids' => ['nullable', 'array'],
+            'pool_ids.*' => ['integer', 'min:1'],
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -2954,8 +3225,31 @@ class AdminOpsApiController extends Controller
             $payload['password'] = Hash::make($password);
         }
 
+        if (Schema::hasColumn('users', 'is_super_admin')) {
+            $wantsSuperAdmin = (bool) ($data['is_super_admin'] ?? false);
+            if ($id > 0 && ! $wantsSuperAdmin && $this->isUserSuperAdmin($id) && $this->superAdminCount() <= 1) {
+                return $this->error('Minimal harus ada satu Super Admin.', 409);
+            }
+            $payload['is_super_admin'] = $wantsSuperAdmin;
+        }
+
+        $poolIds = collect($data['pool_ids'] ?? [])
+            ->map(static fn ($value) => (int) $value)
+            ->filter(static fn ($value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($this->poolTablesReady() && $poolIds !== []) {
+            $validPoolIds = DB::table('pools')->whereIn('id', $poolIds)->pluck('id')->map(static fn ($value) => (int) $value)->all();
+            if (count($validPoolIds) !== count($poolIds)) {
+                return $this->error('Ada pool yang tidak ditemukan.', 422);
+            }
+        }
+
         if ($id > 0) {
-            DB::table('users')->where('id', $id)->update($payload);
+            DB::table('users')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
+            $this->syncUserPools($id, $poolIds);
             return $this->ok(['message' => 'User updated.', 'id' => $id]);
         }
 
@@ -2968,6 +3262,7 @@ class AdminOpsApiController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]));
+        $this->syncUserPools((int) $newId, $poolIds);
 
         return $this->ok(['message' => 'User created.', 'id' => $newId], 201);
     }
@@ -2985,9 +3280,300 @@ class AdminOpsApiController extends Controller
             return $this->error('Minimal harus ada satu user admin.', 409);
         }
 
+        if ($this->isUserSuperAdmin($id) && $this->superAdminCount() <= 1) {
+            return $this->error('Minimal harus ada satu Super Admin.', 409);
+        }
+
+        if ($this->poolTablesReady()) {
+            DB::table('pool_user')->where('user_id', $id)->delete();
+        }
         DB::table('users')->where('id', $id)->delete();
 
         return $this->ok(['message' => 'User deleted.']);
+    }
+
+    private function poolTablesReady(): bool
+    {
+        return Schema::hasTable('pools')
+            && Schema::hasTable('pool_route')
+            && Schema::hasTable('pool_user')
+            && Schema::hasTable('routes');
+    }
+
+    private function currentUserIsSuperAdmin(): bool
+    {
+        if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'is_super_admin')) {
+            return true;
+        }
+
+        $userId = (int) (auth()->id() ?? 0);
+        if ($userId <= 0) {
+            return false;
+        }
+
+        return (bool) DB::table('users')
+            ->where('id', $userId)
+            ->where('is_super_admin', true)
+            ->exists();
+    }
+
+    private function requireSuperAdmin(): ?JsonResponse
+    {
+        if ($this->currentUserIsSuperAdmin()) {
+            return null;
+        }
+
+        return $this->error('Hanya Super Admin yang bisa mengubah konfigurasi ini.', 403);
+    }
+
+    private function isUserSuperAdmin(int $userId): bool
+    {
+        if ($userId <= 0 || ! Schema::hasColumn('users', 'is_super_admin')) {
+            return false;
+        }
+
+        return (bool) DB::table('users')
+            ->where('id', $userId)
+            ->where('is_super_admin', true)
+            ->exists();
+    }
+
+    private function superAdminCount(): int
+    {
+        if (! Schema::hasColumn('users', 'is_super_admin')) {
+            return (int) DB::table('users')->count();
+        }
+
+        return (int) DB::table('users')->where('is_super_admin', true)->count();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function currentUserPoolIds(): array
+    {
+        if (! $this->poolTablesReady()) {
+            return [];
+        }
+
+        $userId = (int) (auth()->id() ?? 0);
+        if ($userId <= 0) {
+            return [];
+        }
+
+        return DB::table('pool_user as pu')
+            ->join('pools as p', 'pu.pool_id', '=', 'p.id')
+            ->where('pu.user_id', $userId)
+            ->where('p.status', 'active')
+            ->pluck('pu.pool_id')
+            ->map(static fn ($value) => (int) $value)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param array<int, int> $poolIds
+     */
+    private function syncUserPools(int $userId, array $poolIds): void
+    {
+        if (! $this->poolTablesReady() || $userId <= 0) {
+            return;
+        }
+
+        if ($poolIds === []) {
+            DB::table('pool_user')->where('user_id', $userId)->delete();
+
+            return;
+        }
+
+        DB::table('pool_user')->where('user_id', $userId)->whereNotIn('pool_id', $poolIds)->delete();
+
+        $existingPoolIds = DB::table('pool_user')
+            ->where('user_id', $userId)
+            ->pluck('pool_id')
+            ->map(static fn ($value) => (int) $value)
+            ->all();
+
+        $now = now();
+        $rows = [];
+        foreach (array_diff($poolIds, $existingPoolIds) as $poolId) {
+            $rows[] = [
+                'user_id' => $userId,
+                'pool_id' => (int) $poolId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($rows !== []) {
+            DB::table('pool_user')->insert($rows);
+        }
+    }
+
+    /**
+     * @return array{all: bool, pool_ids: array<int, int>, route_ids: array<int, int>, route_names: array<int, string>, labels: array<int, string>, pool_name: string, target_revenue: float}
+     */
+    private function routeScopeForCurrentUser(int $poolId = 0): array
+    {
+        $fallback = [
+            'all' => true,
+            'pool_ids' => [],
+            'route_ids' => [],
+            'route_names' => [],
+            'labels' => [],
+            'pool_name' => 'Semua Pool',
+            'target_revenue' => 0.0,
+        ];
+
+        if (! $this->poolTablesReady()) {
+            return $fallback;
+        }
+
+        $poolCount = (int) DB::table('pools')->count();
+        if ($poolCount === 0) {
+            return $fallback;
+        }
+
+        $isSuperAdmin = $this->currentUserIsSuperAdmin();
+        if ($isSuperAdmin && $poolId <= 0) {
+            return $fallback;
+        }
+
+        $poolQuery = DB::table('pools')
+            ->where('status', 'active')
+            ->orderBy('name');
+
+        if ($poolId > 0) {
+            $poolQuery->where('id', $poolId);
+        }
+
+        if (! $isSuperAdmin) {
+            $userPoolIds = $this->currentUserPoolIds();
+            if ($userPoolIds === []) {
+                return [
+                    'all' => false,
+                    'pool_ids' => [],
+                    'route_ids' => [],
+                    'route_names' => [],
+                    'labels' => [],
+                    'pool_name' => 'Belum Ada Pool',
+                    'target_revenue' => 0.0,
+                ];
+            }
+
+            $poolQuery->whereIn('id', $userPoolIds);
+        }
+
+        $pools = $poolQuery->get(['id', 'name', 'target_revenue']);
+        $poolIds = $pools->pluck('id')->map(static fn ($value) => (int) $value)->values()->all();
+
+        if ($poolIds === []) {
+            return [
+                'all' => false,
+                'pool_ids' => [],
+                'route_ids' => [],
+                'route_names' => [],
+                'labels' => [],
+                'pool_name' => 'Pool Tidak Tersedia',
+                'target_revenue' => 0.0,
+            ];
+        }
+
+        $routes = DB::table('pool_route as pr')
+            ->join('routes as r', 'pr.route_id', '=', 'r.id')
+            ->whereIn('pr.pool_id', $poolIds)
+            ->get(['r.id', 'r.name', 'r.origin', 'r.destination']);
+
+        $labels = [];
+        foreach ($routes as $route) {
+            foreach (['name', 'origin', 'destination'] as $field) {
+                $value = trim((string) ($route->{$field} ?? ''));
+                if ($value !== '') {
+                    $labels[] = $value;
+                }
+            }
+        }
+
+        $poolName = $pools->count() === 1
+            ? (string) ($pools->first()->name ?? 'Pool')
+            : 'Pool Saya';
+
+        return [
+            'all' => false,
+            'pool_ids' => $poolIds,
+            'route_ids' => $routes->pluck('id')->map(static fn ($value) => (int) $value)->unique()->values()->all(),
+            'route_names' => $routes->pluck('name')->map(static fn ($value) => (string) $value)->filter(static fn ($value) => trim($value) !== '')->unique()->values()->all(),
+            'labels' => collect($labels)->unique()->values()->all(),
+            'pool_name' => $poolName,
+            'target_revenue' => (float) $pools->sum('target_revenue'),
+        ];
+    }
+
+    private function applyRouteScopeToQuery(Builder $query, string $routeIdColumn = '', string $routeNameColumn = '', int $poolId = 0): void
+    {
+        $scope = $this->routeScopeForCurrentUser($poolId);
+        if ($scope['all']) {
+            return;
+        }
+
+        $routeIds = $scope['route_ids'];
+        $routeNames = $scope['route_names'];
+        if (($routeIdColumn === '' || $routeIds === []) && ($routeNameColumn === '' || $routeNames === [])) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $builder) use ($routeIdColumn, $routeNameColumn, $routeIds, $routeNames): void {
+            $hasClause = false;
+            if ($routeIdColumn !== '' && $routeIds !== []) {
+                $builder->whereIn($routeIdColumn, $routeIds);
+                $hasClause = true;
+            }
+
+            if ($routeNameColumn !== '' && $routeNames !== []) {
+                if ($hasClause) {
+                    $builder->orWhereIn($routeNameColumn, $routeNames);
+                } else {
+                    $builder->whereIn($routeNameColumn, $routeNames);
+                }
+            }
+        });
+    }
+
+    private function applyCharterPoolScope(Builder $query, int $poolId = 0): void
+    {
+        $scope = $this->routeScopeForCurrentUser($poolId);
+        if ($scope['all']) {
+            return;
+        }
+
+        $labels = $scope['labels'];
+        if ($labels === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $builder) use ($labels): void {
+            $builder
+                ->whereIn('c.pickup_point', $labels)
+                ->orWhereIn('c.drop_point', $labels);
+        });
+    }
+
+    /**
+     * @return array{pool_id: int, pool_name: string, target_revenue: float}
+     */
+    private function routeScopeReportMeta(int $poolId = 0): array
+    {
+        $scope = $this->routeScopeForCurrentUser($poolId);
+
+        return [
+            'pool_id' => $poolId,
+            'pool_name' => (string) $scope['pool_name'],
+            'target_revenue' => (float) $scope['target_revenue'],
+        ];
     }
 
     private function nullable(?string $value): ?string

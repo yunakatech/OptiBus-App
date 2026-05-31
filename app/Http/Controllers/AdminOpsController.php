@@ -26,6 +26,7 @@ class AdminOpsController extends Controller
                 'customers' => 'admin-ops.customers',
                 'units' => 'admin-ops.units',
                 'armadas' => 'admin-ops.armadas',
+                'pools' => 'admin-ops.pools',
                 'users' => 'admin-ops.users',
                 'cancellations' => 'admin-ops.cancellations',
                 'reports' => 'report.index',
@@ -40,7 +41,7 @@ class AdminOpsController extends Controller
             }
         }
 
-        $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'users', 'cancellations', 'reports'];
+        $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users', 'cancellations', 'reports'];
         $requestedTab = (string) ($request->route('tab') ?? '');
         $initialTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : null;
         $initialMode = trim((string) ($request->route('mode') ?? ''));
@@ -54,6 +55,7 @@ class AdminOpsController extends Controller
             'segments' => 0,
             'customers' => 0,
             'armadas' => 0,
+            'pools' => 0,
             'cancellations' => 0,
         ];
 
@@ -66,6 +68,7 @@ class AdminOpsController extends Controller
                 'segments' => Schema::hasTable('segments') ? DB::table('segments')->count() : 0,
                 'customers' => Schema::hasTable('customers') ? DB::table('customers')->count() : 0,
                 'armadas' => Schema::hasTable('armadas') ? DB::table('armadas')->count() : 0,
+                'pools' => Schema::hasTable('pools') ? DB::table('pools')->count() : 0,
                 'cancellations' => ActivityLog::count(),
             ];
         }
@@ -81,6 +84,7 @@ class AdminOpsController extends Controller
                 'customers' => 'CustomerReguler',
                 'units' => 'PengaturanKategoriArmada',
                 'armadas' => 'PengaturanArmada',
+                'pools' => 'PengaturanPool',
                 'users' => 'PengaturanUsers',
                 'cancellations' => 'PengaturanLogs',
             ];

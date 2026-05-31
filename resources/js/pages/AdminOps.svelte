@@ -53,6 +53,7 @@
         segments: number;
         customers: number;
         armadas: number;
+        pools: number;
         cancellations: number;
     };
     type RouteRow = {
@@ -172,6 +173,20 @@
         email: string;
         email_verified_at: string | null;
         created_at: string | null;
+        is_super_admin: boolean;
+        pool_ids: number[];
+        pool_names: string[];
+    };
+    type PoolRow = {
+        id: number;
+        name: string;
+        code: string;
+        target_revenue: number;
+        status: string;
+        notes: string;
+        created_at: string;
+        route_ids: number[];
+        route_names: string[];
     };
     type CancellationRow = {
         tag: string;
@@ -187,6 +202,9 @@
         type: ReportKind;
         total_rows: number;
         revenue_total: number;
+        pool_id?: number;
+        pool_name?: string;
+        target_revenue?: number;
     };
     type BookingReportRow = {
         id: number;
@@ -291,6 +309,7 @@
         'customers',
         'units',
         'armadas',
+        'pools',
         'users',
         'cancellations',
         'reports',
@@ -328,6 +347,10 @@
 
         if (tab === 'armadas') {
             return 'Armada';
+        }
+
+        if (tab === 'pools') {
+            return 'Pool';
         }
 
         if (tab === 'users') {
@@ -369,6 +392,7 @@
                 { tab: 'drivers', label: 'Driver' },
                 { tab: 'units', label: 'Kategori Armada' },
                 { tab: 'armadas', label: 'Armada' },
+                { tab: 'pools', label: 'Pool' },
                 { tab: 'users', label: 'Users' },
             ],
         },
@@ -415,6 +439,8 @@
     let segments = $state<SegmentRow[]>([]);
     let customers = $state<CustomerRow[]>([]);
     let armadas = $state<ArmadaRow[]>([]);
+    let pools = $state<PoolRow[]>([]);
+    let canManagePools = $state(true);
     let users = $state<UserRow[]>([]);
     let cancellations = $state<CancellationRow[]>([]);
     let units = $state<UnitRow[]>([]);
@@ -523,7 +549,23 @@
         fixed_cost: '',
         target_bulanan: '',
     });
-    let userForm = $state({ id: 0, name: '', email: '', password: '' });
+    let poolForm = $state({
+        id: 0,
+        name: '',
+        code: '',
+        target_revenue: '',
+        status: 'active',
+        notes: '',
+        route_ids: [] as number[],
+    });
+    let userForm = $state({
+        id: 0,
+        name: '',
+        email: '',
+        password: '',
+        is_super_admin: false,
+        pool_ids: [] as number[],
+    });
 
     let customerSearch = $state('');
     let driverUnitSearch = $state('');
@@ -541,6 +583,7 @@
     let reportFrom = $state(today);
     let reportTo = $state(today);
     let reportType = $state<ReportKind>('booking');
+    let reportPoolId = $state(0);
     let scheduleTimeInput = $state<HTMLInputElement | null>(null);
     let scheduleTimePicker: FlatpickrInstance | null = null;
     let reportFromInput = $state<HTMLInputElement | null>(null);
@@ -665,6 +708,49 @@
         routes.find((route) => route.id === Number(selectedSegmentRouteId)) ??
             null,
     );
+    const poolOptions = $derived(
+        pools.filter((pool) => String(pool.status ?? 'active') === 'active'),
+    );
+    const selectedPoolReport = $derived(
+        pools.find((pool) => pool.id === Number(reportPoolId)) ?? null,
+    );
+    const formatPoolRoutes = (pool: PoolRow) => {
+        const names = Array.isArray(pool.route_names) ? pool.route_names : [];
+
+        return names.length > 0 ? names.join(', ') : 'Belum ada rute';
+    };
+    const togglePoolRoute = (routeId: number, checked: boolean) => {
+        const id = Number(routeId || 0);
+        if (id <= 0) {
+            return;
+        }
+
+        const current = Array.isArray(poolForm.route_ids)
+            ? poolForm.route_ids
+            : [];
+        poolForm = {
+            ...poolForm,
+            route_ids: checked
+                ? Array.from(new Set([...current, id]))
+                : current.filter((item) => Number(item) !== id),
+        };
+    };
+    const toggleUserPool = (poolId: number, checked: boolean) => {
+        const id = Number(poolId || 0);
+        if (id <= 0) {
+            return;
+        }
+
+        const current = Array.isArray(userForm.pool_ids)
+            ? userForm.pool_ids
+            : [];
+        userForm = {
+            ...userForm,
+            pool_ids: checked
+                ? Array.from(new Set([...current, id]))
+                : current.filter((item) => Number(item) !== id),
+        };
+    };
     const armadaCategoryOptions = $derived.by<string[]>(() => {
         const categories = [...unitCategoryOptions];
 
@@ -904,6 +990,10 @@
 
         if (activeTab === 'armadas') {
             resetArmadaForm();
+        }
+
+        if (activeTab === 'pools') {
+            resetPoolForm();
         }
 
         if (activeTab === 'users') {
@@ -1940,8 +2030,13 @@
                 query === ''
                     ? '/api/admin/users'
                     : `/api/admin/users?q=${encodeURIComponent(query)}`;
-            const r = await api('GET', url);
-            users = r.users ?? [];
+            const [userResponse, poolResponse] = await Promise.all([
+                api('GET', url),
+                api('GET', '/api/admin/pools'),
+            ]);
+            users = userResponse.users ?? [];
+            pools = poolResponse.pools ?? [];
+            canManagePools = Boolean(poolResponse.can_manage ?? true);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat users.';
         }
@@ -1988,6 +2083,13 @@
 
         const r = await api('GET', `/api/admin/armadas/${id}`);
         armadaDetail = r.armada ?? null;
+    };
+
+    const loadPools = async () => {
+        const r = await api('GET', '/api/admin/pools');
+        pools = r.pools ?? [];
+        routes = r.routes ?? routes;
+        canManagePools = Boolean(r.can_manage ?? true);
     };
 
     const loadCancellations = async () => {
@@ -2040,6 +2142,10 @@
                 await loadArmadaDetail(armadaViewId);
             }
 
+            if (activeTab === 'pools') {
+                await loadPools();
+            }
+
             if (activeTab === 'users') {
                 await loadUsers();
             }
@@ -2049,6 +2155,7 @@
             }
 
             if (activeTab === 'reports') {
+                await loadPools();
                 await loadReport();
             }
         } catch (e) {
@@ -2062,7 +2169,7 @@
         reportLoading = true;
 
         try {
-            const url = `/api/admin/reports/summary?from=${encodeURIComponent(reportFrom)}&to=${encodeURIComponent(reportTo)}&type=${encodeURIComponent(reportType)}&page=${encodeURIComponent(String(page))}&per_page=${encodeURIComponent(String(reportMeta.per_page || 50))}`;
+            const url = `/api/admin/reports/summary?from=${encodeURIComponent(reportFrom)}&to=${encodeURIComponent(reportTo)}&type=${encodeURIComponent(reportType)}&pool_id=${encodeURIComponent(String(reportPoolId || 0))}&page=${encodeURIComponent(String(page))}&per_page=${encodeURIComponent(String(reportMeta.per_page || 50))}`;
             const r = await api('GET', url);
             reportSummary = r.summary ?? null;
             reportRows = Array.isArray(r.rows) ? r.rows : [];
@@ -2266,8 +2373,25 @@
             armadaTemplateLookupOpen = false;
         }, 120);
     };
+    const resetPoolForm = () =>
+        (poolForm = {
+            id: 0,
+            name: '',
+            code: '',
+            target_revenue: '',
+            status: 'active',
+            notes: '',
+            route_ids: [],
+        });
     const resetUserForm = () =>
-        (userForm = { id: 0, name: '', email: '', password: '' });
+        (userForm = {
+            id: 0,
+            name: '',
+            email: '',
+            password: '',
+            is_super_admin: false,
+            pool_ids: [],
+        });
 
     const saveRoute = async (event: SubmitEvent) => {
         event.preventDefault();
@@ -2703,6 +2827,48 @@
         }
     };
 
+    const savePool = async (event: SubmitEvent) => {
+        event.preventDefault();
+        message = '';
+        error = '';
+        setSubmitKey('pool');
+
+        try {
+            await runWithFeedback(
+                async () => {
+                    await api('POST', '/api/admin/pools', {
+                        id: poolForm.id || undefined,
+                        name: poolForm.name,
+                        code: poolForm.code,
+                        target_revenue: parseRupiahInput(
+                            poolForm.target_revenue,
+                        ),
+                        status: poolForm.status,
+                        notes: poolForm.notes,
+                        route_ids: poolForm.route_ids,
+                    });
+                },
+                {
+                    loadingMessage: poolForm.id
+                        ? 'Memperbarui pool...'
+                        : 'Menyimpan pool...',
+                    successMessage: poolForm.id
+                        ? 'Pool berhasil diperbarui.'
+                        : 'Pool berhasil dibuat.',
+                    errorMessage: 'Gagal simpan pool.',
+                },
+            );
+            message = poolForm.id ? 'Pool updated.' : 'Pool created.';
+            resetPoolForm();
+            await loadPools();
+            activeMode = 'data';
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal simpan pool.';
+        } finally {
+            clearSubmitKey('pool');
+        }
+    };
+
     const saveUser = async (event: SubmitEvent) => {
         event.preventDefault();
         message = '';
@@ -2717,6 +2883,8 @@
                         name: userForm.name,
                         email: userForm.email,
                         password: userForm.password,
+                        is_super_admin: userForm.is_super_admin,
+                        pool_ids: userForm.pool_ids,
                     });
                 },
                 {
@@ -2921,6 +3089,10 @@
                     <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
                         <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Armada</p>
                         <p class="mt-1 text-lg font-semibold">{stats.armadas}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Pool</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.pools}</p>
                     </div>
                     <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
                         <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Logs</p>
@@ -6067,6 +6239,361 @@
                 {/if}
             {/if}
 
+            {#if activeTab === 'pools'}
+                {#if activeMode === 'form'}
+                    <form
+                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        onsubmit={savePool}
+                    >
+                        <div
+                            class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.10),rgba(15,23,42,0.03))] px-5 py-4"
+                        >
+                            <p
+                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                            >
+                                Form Pool
+                            </p>
+                            <h3 class="mt-1 text-lg font-semibold">
+                                {poolForm.id
+                                    ? 'Perbarui pool operasional'
+                                    : 'Tambah pool operasional'}
+                            </h3>
+                            <p
+                                class="mt-1 max-w-2xl text-sm text-muted-foreground"
+                            >
+                                Mapping pool menentukan rute yang bisa dilihat
+                                user dan menjadi filter laporan per cabang atau
+                                area operasional.
+                            </p>
+                        </div>
+                        <div
+                            class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4"
+                        >
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Nama Pool</span
+                                >
+                                <Input
+                                    placeholder="Contoh: Pool Makassar"
+                                    bind:value={poolForm.name}
+                                    required
+                                    disabled={!canManagePools}
+                                />
+                            </label>
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Kode</span
+                                >
+                                <Input
+                                    placeholder="MKS"
+                                    bind:value={poolForm.code}
+                                    disabled={!canManagePools}
+                                />
+                            </label>
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Target Revenue</span
+                                >
+                                <Input
+                                    placeholder="Rp 0"
+                                    bind:value={poolForm.target_revenue}
+                                    oninput={(event) => {
+                                        poolForm.target_revenue =
+                                            formatRupiahInput(
+                                                (
+                                                    event.currentTarget as HTMLInputElement
+                                                ).value,
+                                            );
+                                    }}
+                                    disabled={!canManagePools}
+                                />
+                            </label>
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Status</span
+                                >
+                                <select
+                                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/20"
+                                    bind:value={poolForm.status}
+                                    disabled={!canManagePools}
+                                >
+                                    <option value="active">Aktif</option>
+                                    <option value="inactive">Nonaktif</option>
+                                </select>
+                            </label>
+                            <label class="space-y-1.5 md:col-span-2 xl:col-span-4">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Catatan</span
+                                >
+                                <Input
+                                    placeholder="Catatan internal pool"
+                                    bind:value={poolForm.notes}
+                                    disabled={!canManagePools}
+                                />
+                            </label>
+                        </div>
+                        <div class="border-t border-border/70 p-5">
+                            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    <p
+                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >
+                                        Rute Yang Dikelola
+                                    </p>
+                                    <p class="mt-1 text-sm text-muted-foreground">
+                                        Pilih satu atau beberapa rute induk untuk
+                                        pool ini.
+                                    </p>
+                                </div>
+                                <Badge variant="secondary" class="rounded-full">
+                                    {poolForm.route_ids.length} rute
+                                </Badge>
+                            </div>
+                            <div
+                                class="grid max-h-[320px] gap-2 overflow-auto rounded-2xl border border-border/70 bg-muted/10 p-3 md:grid-cols-2 xl:grid-cols-3"
+                            >
+                                {#each routes as route (route.id)}
+                                    <label
+                                        class="flex items-start gap-3 rounded-xl border border-border/70 bg-background/80 p-3 text-sm transition hover:border-cyan-300/60"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            class="mt-1"
+                                            checked={poolForm.route_ids.includes(
+                                                route.id,
+                                            )}
+                                            onchange={(event) =>
+                                                togglePoolRoute(
+                                                    route.id,
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).checked,
+                                                )}
+                                            disabled={!canManagePools}
+                                        />
+                                        <span>
+                                            <span class="block font-semibold">
+                                                {route.name}
+                                            </span>
+                                            <span class="mt-1 block text-xs text-muted-foreground">
+                                                {route.origin || '-'} - {route.destination ||
+                                                    '-'}
+                                            </span>
+                                        </span>
+                                    </label>
+                                {/each}
+                            </div>
+                        </div>
+                        <div
+                            class="flex flex-wrap gap-2 border-t border-border/70 bg-muted/20 p-5"
+                        >
+                            <LoadingButton
+                                type="submit"
+                                loading={isSubmitActive('pool')}
+                                loadingText="Menyimpan..."
+                                disabled={!canManagePools}
+                                >{poolForm.id
+                                    ? 'Update Pool'
+                                    : 'Tambah Pool'}</LoadingButton
+                            >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onclick={resetPoolForm}>Reset</Button
+                            >
+                        </div>
+                    </form>
+                {:else}
+                    <div
+                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                    >
+                        <div
+                            class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
+                        >
+                            <div>
+                                <p
+                                    class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                >
+                                    Pool
+                                </p>
+                                <h3 class="mt-1 text-lg font-semibold">
+                                    Area operasional dan rute terkelola
+                                </h3>
+                                <p
+                                    class="mt-1 max-w-3xl text-sm text-muted-foreground"
+                                >
+                                    Pool menjadi pagar akses data untuk user dan
+                                    filter laporan per area.
+                                </p>
+                            </div>
+                            <Badge
+                                variant="secondary"
+                                class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
+                            >
+                                {pools.length} pool
+                            </Badge>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table
+                                class="min-w-[1080px] w-full border-separate border-spacing-0 text-sm"
+                            >
+                                <thead
+                                    class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
+                                >
+                                    <tr>
+                                        <th
+                                            class="sticky left-0 z-20 w-[240px] border-b border-r border-border/70 bg-background px-4 py-3 text-left font-semibold"
+                                            >Pool</th
+                                        >
+                                        <th
+                                            class="w-[360px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            >Rute</th
+                                        >
+                                        <th
+                                            class="w-[180px] border-b border-r border-border/70 px-4 py-3 text-right font-semibold"
+                                            >Target</th
+                                        >
+                                        <th
+                                            class="w-[140px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            >Status</th
+                                        >
+                                        <th
+                                            class="sticky right-0 z-20 w-[90px] border-b border-l border-border/70 bg-background px-4 py-3 text-center font-semibold"
+                                            >Aksi</th
+                                        >
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#each pools as row (row.id)}
+                                        <tr
+                                            class="group transition hover:bg-muted/15"
+                                        >
+                                            <td
+                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
+                                            >
+                                                <div
+                                                    class="font-semibold text-foreground"
+                                                >
+                                                    {row.name}
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[11px] text-muted-foreground"
+                                                >
+                                                    {row.code || 'Tanpa kode'}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                            >
+                                                <div
+                                                    class="line-clamp-2 text-sm text-foreground"
+                                                >
+                                                    {formatPoolRoutes(row)}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-4 py-4 text-right font-semibold tabular-nums"
+                                            >
+                                                {formatCurrency(row.target_revenue)}
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-4 py-4"
+                                            >
+                                                <span
+                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
+                                                >
+                                                    {row.status === 'active'
+                                                        ? 'Aktif'
+                                                        : 'Nonaktif'}
+                                                </span>
+                                            </td>
+                                            <td
+                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-4 py-4 text-center group-hover:bg-muted/15"
+                                            >
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="h-8 w-8 rounded-full border border-border/70"
+                                                        >
+                                                            <MoreHorizontal
+                                                                class="h-4 w-4"
+                                                            />
+                                                            <span
+                                                                class="sr-only"
+                                                                >Aksi pool</span
+                                                            >
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        sideOffset={8}
+                                                        class="z-[120] w-44"
+                                                    >
+                                                        <DropdownMenuItem
+                                                            onclick={() => {
+                                                                poolForm = {
+                                                                    id: row.id,
+                                                                    name: row.name,
+                                                                    code: row.code,
+                                                                    target_revenue:
+                                                                        formatRupiahInput(
+                                                                            row.target_revenue,
+                                                                        ),
+                                                                    status:
+                                                                        row.status ||
+                                                                        'active',
+                                                                    notes:
+                                                                        row.notes ||
+                                                                        '',
+                                                                    route_ids: [
+                                                                        ...(row.route_ids ??
+                                                                            []),
+                                                                    ],
+                                                                };
+                                                                setFormMode(
+                                                                    'form',
+                                                                );
+                                                            }}
+                                                        >
+                                                            <Pencil
+                                                                class="mr-2 h-3.5 w-3.5"
+                                                            />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void removeItem(
+                                                                    `/api/admin/pools/${row.id}`,
+                                                                    'Pool deleted.',
+                                                                )}
+                                                        >
+                                                            <Trash2
+                                                                class="mr-2 h-3.5 w-3.5"
+                                                            />
+                                                            Hapus
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {/if}
+            {/if}
+
             {#if activeTab === 'users'}
                 {#if activeMode === 'form'}
                     <form
@@ -6132,6 +6659,86 @@
                                     bind:value={userForm.password}
                                 />
                             </label>
+                            <label
+                                class="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/10 p-4"
+                            >
+                                <input
+                                    type="checkbox"
+                                    class="mt-1"
+                                    bind:checked={userForm.is_super_admin}
+                                    disabled={!canManagePools}
+                                />
+                                <span>
+                                    <span class="block text-sm font-semibold">
+                                        Super Admin
+                                    </span>
+                                    <span
+                                        class="mt-1 block text-xs leading-5 text-muted-foreground"
+                                    >
+                                        Bisa melihat semua pool dan mengelola
+                                        akses user.
+                                    </span>
+                                </span>
+                            </label>
+                            <div
+                                class="space-y-2 rounded-2xl border border-border/70 bg-muted/10 p-4 md:col-span-2"
+                            >
+                                <div
+                                    class="flex items-center justify-between gap-2"
+                                >
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >
+                                        Pool Yang Dikelola
+                                    </span>
+                                    <Badge
+                                        variant="secondary"
+                                        class="rounded-full"
+                                    >
+                                        {userForm.pool_ids.length} pool
+                                    </Badge>
+                                </div>
+                                <div
+                                    class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3"
+                                >
+                                    {#each poolOptions as pool (pool.id)}
+                                        <label
+                                            class="flex items-start gap-2 rounded-xl border border-border/70 bg-background/80 p-3 text-sm"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                class="mt-1"
+                                                checked={userForm.pool_ids.includes(
+                                                    pool.id,
+                                                )}
+                                                onchange={(event) =>
+                                                    toggleUserPool(
+                                                        pool.id,
+                                                        (
+                                                            event.currentTarget as HTMLInputElement
+                                                        ).checked,
+                                                    )}
+                                                disabled={!canManagePools ||
+                                                    userForm.is_super_admin}
+                                            />
+                                            <span>
+                                                <span class="font-semibold">
+                                                    {pool.name}
+                                                </span>
+                                                <span
+                                                    class="mt-1 block text-xs text-muted-foreground"
+                                                >
+                                                    {pool.code || 'Tanpa kode'}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    {/each}
+                                </div>
+                                <p class="text-xs text-muted-foreground">
+                                    Jika user bukan Super Admin dan tidak punya
+                                    pool, data route-based tidak akan terlihat.
+                                </p>
+                            </div>
                         </div>
                         <div
                             class="flex flex-wrap gap-2 border-t border-border/70 bg-muted/20 p-5"
@@ -6203,7 +6810,7 @@
                         </div>
                         <div class="overflow-x-auto">
                             <table
-                                class="min-w-[980px] w-full border-separate border-spacing-0 text-sm"
+                                class="min-w-[1160px] w-full border-separate border-spacing-0 text-sm"
                             >
                                 <thead
                                     class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
@@ -6220,6 +6827,10 @@
                                         <th
                                             class="w-[190px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
                                             >Verified</th
+                                        >
+                                        <th
+                                            class="w-[260px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            >Pool</th
                                         >
                                         <th
                                             class="sticky right-0 z-20 w-[90px] border-b border-l border-border/70 bg-background px-4 py-3 text-center font-semibold"
@@ -6243,7 +6854,9 @@
                                                 <div
                                                     class="mt-1 text-[11px] text-muted-foreground"
                                                 >
-                                                    User panel admin
+                                                    {row.is_super_admin
+                                                        ? 'Super Admin'
+                                                        : 'User Pool'}
                                                 </div>
                                             </td>
                                             <td
@@ -6270,6 +6883,30 @@
                                                         ? 'Sudah diverifikasi'
                                                         : 'Belum diverifikasi'}
                                                 </span>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                            >
+                                                <div
+                                                    class="text-sm font-medium text-foreground"
+                                                >
+                                                    {row.is_super_admin
+                                                        ? 'Semua Pool'
+                                                        : (row.pool_names ?? [])
+                                                                .length
+                                                          ? (
+                                                                row.pool_names ??
+                                                                []
+                                                            ).join(
+                                                                ', ',
+                                                            )
+                                                          : 'Belum dimapping'}
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[11px] text-muted-foreground"
+                                                >
+                                                    Akses data operasional
+                                                </div>
                                             </td>
                                             <td
                                                 class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-4 py-4 text-center group-hover:bg-muted/15"
@@ -6306,6 +6943,14 @@
                                                                     email: row.email,
                                                                     password:
                                                                         '',
+                                                                    is_super_admin:
+                                                                        Boolean(
+                                                                            row.is_super_admin,
+                                                                        ),
+                                                                    pool_ids: [
+                                                                        ...(row.pool_ids ??
+                                                                            []),
+                                                                    ],
                                                                 };
                                                                 setFormMode(
                                                                     'form',
@@ -6482,6 +7127,8 @@
                         {reportRows}
                         {reportMeta}
                         {reportLoading}
+                        {pools}
+                        bind:reportPoolId
                         bind:reportFromInput
                         bind:reportToInput
                         {formatCurrency}
