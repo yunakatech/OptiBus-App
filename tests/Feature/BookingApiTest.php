@@ -228,6 +228,53 @@ class BookingApiTest extends TestCase
         ]);
     }
 
+    public function test_same_day_departure_can_be_marked_arrived_after_driver_and_nopol_are_set(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 5, 31, 8, 0, 0));
+
+        try {
+            $user = User::factory()->create();
+            $this->actingAs($user);
+
+            $tanggal = now()->format('Y-m-d');
+            $driverId = DB::table('drivers')->insertGetId([
+                'nama' => 'DRIVER HARI INI',
+                'phone' => '081200000004',
+                'created_at' => now(),
+            ]);
+
+            $assignmentId = DB::table('trip_assignments')->insertGetId([
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $tanggal,
+                'jam' => '23:59:00',
+                'unit' => 1,
+                'driver_id' => $driverId,
+                'armada_nopol' => 'DD 5555 TT',
+                'status' => 'active',
+                'created_at' => now(),
+            ]);
+
+            $response = $this->postJson(route('api.bookings.arrive-departure'), [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $tanggal,
+                'jam' => '23:59',
+                'unit' => 1,
+            ]);
+
+            $response->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('id', $assignmentId)
+                ->assertJsonPath('status', 'arrived');
+
+            $this->assertDatabaseHas('trip_assignments', [
+                'id' => $assignmentId,
+                'status' => 'arrived',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     public function test_departure_cannot_be_marked_arrived_without_driver_and_nopol(): void
     {
         $user = User::factory()->create();

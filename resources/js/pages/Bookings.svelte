@@ -1859,24 +1859,22 @@
         String(group?.departure_status || '')
             .trim()
             .toLowerCase() === 'canceled';
-    const hasDepartureTimePassed = (group: BookingGroup | null | undefined) => {
+    const hasDepartureDateReached = (
+        group: BookingGroup | null | undefined,
+    ) => {
         if (!group) {
             return false;
         }
 
         const datePart = String(group.tanggal || '').slice(0, 10);
-        const timePart = normalizeJamToken(group.jam);
 
-        if (
-            !/^\d{4}-\d{2}-\d{2}$/.test(datePart) ||
-            !/^\d{2}:\d{2}$/.test(timePart)
-        ) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
             return false;
         }
 
-        const currentClock = currentClockKey();
+        const today = currentClockKey().slice(0, 10);
 
-        return `${datePart} ${timePart}` <= currentClock;
+        return datePart <= today;
     };
     const hasMeaningfulAssignmentValue = (value: string | null | undefined) => {
         const normalized = String(value || '')
@@ -1918,12 +1916,12 @@
             return false;
         }
 
-        if (typeof group.departure_can_arrive === 'boolean') {
-            return group.departure_can_arrive;
-        }
-
-        return hasDepartureTimePassed(group);
+        return hasDepartureDateReached(group);
     };
+    const hasSavedGroupDriverMapping = () =>
+        !!openGroupDetail &&
+        hasMeaningfulAssignmentValue(openGroupDetail.driver_name) &&
+        hasMeaningfulAssignmentValue(openGroupDetail.armada_nopol);
     const isReadonlyHistoryGroup = (group: BookingGroup | null | undefined) => {
         return !!group && isHistoryGroup(group);
     };
@@ -3799,14 +3797,23 @@
                           ...group,
                           driver_name: groupDriverName,
                           armada_nopol: groupArmadaNopol,
+                          departure_can_arrive:
+                              hasDepartureDateReached(group) &&
+                              !isCanceledDeparture(group) &&
+                              !isArrivedDeparture(group),
                       }
                     : group,
             );
-            openGroupDetail = {
+            const updatedGroupDetail = {
                 ...openGroupDetail,
                 driver_name: groupDriverName,
                 armada_nopol: groupArmadaNopol,
+                departure_can_arrive:
+                    hasDepartureDateReached(openGroupDetail) &&
+                    !isCanceledDeparture(openGroupDetail) &&
+                    !isArrivedDeparture(openGroupDetail),
             };
+            openGroupDetail = updatedGroupDetail;
             formSuccess = 'Mapping driver dan armada berhasil disimpan.';
             formError = '';
         } catch (error) {
@@ -6508,38 +6515,48 @@
                                                 )}
                                         >
                                             {savingGroupDriver
-                                                ? 'Menyimpan...'
-                                                : 'Simpan'}
+                                                ? hasSavedGroupDriverMapping()
+                                                    ? 'Mengedit...'
+                                                    : 'Menyimpan...'
+                                                : hasSavedGroupDriverMapping()
+                                                  ? 'Edit'
+                                                  : 'Simpan'}
                                         </Button>
                                     </div>
                                 </div>
 
-                                <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                {#if canMarkDepartureArrived(openGroupDetail)}
                                     <div
-                                        class="rounded-2xl border border-border/70 bg-background/85 px-3 py-3"
+                                        class="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-200/70 bg-emerald-50/70 p-3 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                     >
-                                        <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                        <Button
+                                            type="button"
+                                            class="h-10 rounded-xl bg-emerald-600 px-4 text-white hover:bg-emerald-700"
+                                            onclick={() =>
+                                                openGroupDetail &&
+                                                void markDepartureArrived(
+                                                    openGroupDetail,
+                                                )}
+                                            disabled={cancelingDepartureKey ===
+                                                openGroupDetail?.key}
                                         >
-                                            Driver Terpasang
-                                        </p>
-                                        <p class="mt-1 text-sm font-semibold">
-                                            {groupDriverName || '-'}
+                                            <CheckCircle2
+                                                class="mr-1.5 h-4 w-4"
+                                            />
+                                            {cancelingDepartureKey ===
+                                            openGroupDetail?.key
+                                                ? 'Memproses...'
+                                                : 'Armada Sudah Tiba'}
+                                        </Button>
+                                        <p
+                                            class="text-xs leading-relaxed text-emerald-800 dark:text-emerald-100"
+                                        >
+                                            Aksi tersedia untuk keberangkatan
+                                            hari ini atau sebelumnya setelah
+                                            driver dan nopol dipilih.
                                         </p>
                                     </div>
-                                    <div
-                                        class="rounded-2xl border border-border/70 bg-background/85 px-3 py-3"
-                                    >
-                                        <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                        >
-                                            Armada Terpasang
-                                        </p>
-                                        <p class="mt-1 text-sm font-semibold">
-                                            {groupArmadaNopol || '-'}
-                                        </p>
-                                    </div>
-                                </div>
+                                {/if}
                             </div>
                         </div>
 
