@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\AccessControl;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,6 +37,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $userId = (int) ($user?->id ?? 0);
 
         return [
             ...parent::share($request),
@@ -49,7 +51,9 @@ class HandleInertiaRequests extends Middleware
                     'email_verified_at' => $user->email_verified_at,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
+                    'is_super_admin' => AccessControl::userIsSuperAdmin($userId),
                 ] : null,
+                'permissions' => $userId > 0 ? AccessControl::userPermissions($userId) : [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

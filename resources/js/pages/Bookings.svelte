@@ -2333,7 +2333,7 @@
                     'serverNow',
                 ],
                 preserveScroll: true,
-            });
+            } as Parameters<typeof router.reload>[0] & { preserveScroll: boolean });
         } catch (error) {
             formError =
                 error instanceof Error

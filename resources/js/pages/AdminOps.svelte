@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { router } from '@inertiajs/svelte';
+    import { page, router } from '@inertiajs/svelte';
     import {
         Armchair,
         Eye,
@@ -38,6 +38,7 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
+    import { hasPermission } from '@/lib/access';
     import {
         formatCurrencyDisplay,
         formatCurrencyInput as formatSharedCurrencyInput,
@@ -176,6 +177,14 @@
         is_super_admin: boolean;
         pool_ids: number[];
         pool_names: string[];
+        role_ids: number[];
+        role_names: string[];
+    };
+    type RoleOption = {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
     };
     type PoolRow = {
         id: number;
@@ -370,6 +379,7 @@
         tabs: Array<{
             tab: TabName;
             label: string;
+            permission: string | string[];
         }>;
     };
 
@@ -378,37 +388,56 @@
             title: 'Master Data',
             description: 'Referensi utama yang dipakai oleh jadwal dan operasional harian.',
             tabs: [
-                { tab: 'routes', label: 'Rute Induk' },
-                { tab: 'schedules', label: 'Jadwal' },
-                { tab: 'segments', label: 'Segment' },
-                { tab: 'services', label: 'Tarif Bagasi' },
-                { tab: 'customers', label: 'Reguler' },
+                { tab: 'routes', label: 'Rute Induk', permission: 'master.view' },
+                { tab: 'schedules', label: 'Jadwal', permission: 'master.view' },
+                { tab: 'segments', label: 'Segment', permission: 'master.view' },
+                { tab: 'services', label: 'Tarif Bagasi', permission: 'master.view' },
+                { tab: 'customers', label: 'Reguler', permission: 'customer.view' },
             ],
         },
         {
             title: 'Armada & Akses',
             description: 'Kelola driver, kategori armada, unit, armada, dan akun pengguna.',
             tabs: [
-                { tab: 'drivers', label: 'Driver' },
-                { tab: 'units', label: 'Kategori Armada' },
-                { tab: 'armadas', label: 'Armada' },
-                { tab: 'pools', label: 'Pool' },
-                { tab: 'users', label: 'Users' },
+                { tab: 'drivers', label: 'Driver', permission: 'driver.view' },
+                { tab: 'units', label: 'Kategori Armada', permission: 'master.view' },
+                { tab: 'armadas', label: 'Armada', permission: 'armada.view' },
+                { tab: 'pools', label: 'Pool', permission: 'pool.manage' },
+                { tab: 'users', label: 'Users', permission: 'user.manage' },
             ],
         },
         {
             title: 'Audit & Rekap',
             description: 'Pantau log aktivitas, pembatalan, dan ringkasan laporan.',
             tabs: [
-                { tab: 'cancellations', label: 'Logs' },
-                { tab: 'reports', label: 'Laporan' },
+                { tab: 'cancellations', label: 'Logs', permission: 'logs.view' },
+                { tab: 'reports', label: 'Laporan', permission: 'report.view' },
             ],
         },
     ];
 
+    const permissions = $derived(page.props.auth?.permissions ?? []);
+    const visibleTabGroups = $derived(
+        tabGroups
+            .map((group) => ({
+                ...group,
+                tabs: group.tabs.filter((item) =>
+                    hasPermission(permissions, item.permission),
+                ),
+            }))
+            .filter((group) => group.tabs.length > 0),
+    );
     const tabGroupFor = (tab: TabName) =>
+        visibleTabGroups.find((group) =>
+            group.tabs.some((item) => item.tab === tab),
+        ) ??
         tabGroups.find((group) => group.tabs.some((item) => item.tab === tab)) ??
         tabGroups[0];
+    const canOpenTab = (tab: TabName) =>
+        visibleTabGroups.some((group) =>
+            group.tabs.some((item) => item.tab === tab),
+        );
+    const firstVisibleTab = () => visibleTabGroups[0]?.tabs[0]?.tab ?? 'routes';
 
     let activeTab = $state<TabName>('routes');
     let activeMode = $state<ViewMode>('data');
@@ -442,6 +471,7 @@
     let pools = $state<PoolRow[]>([]);
     let canManagePools = $state(true);
     let users = $state<UserRow[]>([]);
+    let roles = $state<RoleOption[]>([]);
     let cancellations = $state<CancellationRow[]>([]);
     let units = $state<UnitRow[]>([]);
     let customerImportInput = $state<HTMLInputElement | null>(null);
@@ -565,6 +595,7 @@
         password: '',
         is_super_admin: false,
         pool_ids: [] as number[],
+        role_ids: [] as number[],
     });
 
     let customerSearch = $state('');
@@ -711,6 +742,7 @@
     const poolOptions = $derived(
         pools.filter((pool) => String(pool.status ?? 'active') === 'active'),
     );
+    const roleOptions = $derived(roles);
     const selectedPoolReport = $derived(
         pools.find((pool) => pool.id === Number(reportPoolId)) ?? null,
     );
@@ -747,6 +779,22 @@
         userForm = {
             ...userForm,
             pool_ids: checked
+                ? Array.from(new Set([...current, id]))
+                : current.filter((item) => Number(item) !== id),
+        };
+    };
+    const toggleUserRole = (roleId: number, checked: boolean) => {
+        const id = Number(roleId || 0);
+        if (id <= 0) {
+            return;
+        }
+
+        const current = Array.isArray(userForm.role_ids)
+            ? userForm.role_ids
+            : [];
+        userForm = {
+            ...userForm,
+            role_ids: checked
                 ? Array.from(new Set([...current, id]))
                 : current.filter((item) => Number(item) !== id),
         };
@@ -919,6 +967,10 @@
     };
 
     const setTab = async (tab: TabName) => {
+        if (!canOpenTab(tab)) {
+            return;
+        }
+
         activeTab = tab;
         activeMode = 'data';
         syncTabQuery(tab);
@@ -927,6 +979,22 @@
 
     const hasFormTab = (tab: TabName) =>
         !['cancellations', 'reports'].includes(tab);
+    const tabWritePermission: Record<TabName, string | string[] | null> = {
+        routes: 'master.manage',
+        schedules: 'master.manage',
+        drivers: 'driver.manage',
+        services: 'master.manage',
+        segments: 'master.manage',
+        customers: ['customer.create', 'customer.update'],
+        units: 'master.manage',
+        armadas: 'armada.manage',
+        pools: 'pool.manage',
+        users: 'user.manage',
+        cancellations: null,
+        reports: null,
+    };
+    const canWriteTab = (tab: TabName) =>
+        hasPermission(permissions, tabWritePermission[tab]);
     const setFormMode = (mode: ViewMode) => {
         if (
             activeTab === 'armadas' &&
@@ -2035,6 +2103,7 @@
                 api('GET', '/api/admin/pools'),
             ]);
             users = userResponse.users ?? [];
+            roles = userResponse.roles ?? [];
             pools = poolResponse.pools ?? [];
             canManagePools = Boolean(poolResponse.can_manage ?? true);
         } catch (e) {
@@ -2355,10 +2424,6 @@
     const selectArmadaTemplate = (unit: UnitRow) => {
         const selected = normalizeUnitCategory(unit.category);
 
-        if (selected === '') {
-            return;
-        }
-
         armadaForm.kategori = selected;
         armadaTemplateSearch = unit.nopol ?? selected;
         armadaTemplateLookupOpen = false;
@@ -2391,6 +2456,7 @@
             password: '',
             is_super_admin: false,
             pool_ids: [],
+            role_ids: [],
         });
 
     const saveRoute = async (event: SubmitEvent) => {
@@ -2885,6 +2951,7 @@
                         password: userForm.password,
                         is_super_admin: userForm.is_super_admin,
                         pool_ids: userForm.pool_ids,
+                        role_ids: userForm.role_ids,
                     });
                 },
                 {
@@ -3025,6 +3092,10 @@
             }
         }
 
+        if (!canOpenTab(activeTab)) {
+            activeTab = firstVisibleTab();
+        }
+
         void loadActiveTab();
     });
 
@@ -3103,7 +3174,7 @@
         </div>
 
         <div class="grid gap-4 xl:grid-cols-3">
-            {#each tabGroups as group}
+            {#each visibleTabGroups as group}
                 <Card class={group.tabs.some((item) => item.tab === activeTab) ? 'border-cyan-300/60 shadow-md shadow-cyan-950/5' : 'border-border/70 shadow-sm'}>
                     <CardHeader class="space-y-1 pb-3">
                         <CardTitle class="text-sm font-semibold">{group.title}</CardTitle>
@@ -3151,7 +3222,7 @@
                 </p>{/if}
             {#if error}<p class="text-sm text-red-600">{error}</p>{/if}
             {#if message}<p class="text-sm text-emerald-600">{message}</p>{/if}
-            {#if hasFormTab(activeTab)}
+            {#if hasFormTab(activeTab) && canWriteTab(activeTab)}
                 <div class="flex items-center gap-2">
                     {#if activeMode === 'data'}
                         <Button type="button" size="sm" onclick={openCreateForm}
@@ -6689,6 +6760,65 @@
                                     <span
                                         class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                                     >
+                                        Role Hak Akses
+                                    </span>
+                                    <Badge
+                                        variant="secondary"
+                                        class="rounded-full"
+                                    >
+                                        {userForm.role_ids.length} role
+                                    </Badge>
+                                </div>
+                                <div
+                                    class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3"
+                                >
+                                    {#each roleOptions as role (role.id)}
+                                        <label
+                                            class="flex items-start gap-2 rounded-xl border border-border/70 bg-background/80 p-3 text-sm"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                class="mt-1"
+                                                checked={userForm.role_ids.includes(
+                                                    role.id,
+                                                )}
+                                                onchange={(event) =>
+                                                    toggleUserRole(
+                                                        role.id,
+                                                        (
+                                                            event.currentTarget as HTMLInputElement
+                                                        ).checked,
+                                                    )}
+                                            />
+                                            <span>
+                                                <span class="font-semibold">
+                                                    {role.name}
+                                                </span>
+                                                <span
+                                                    class="mt-1 block text-xs leading-5 text-muted-foreground"
+                                                >
+                                                    {role.description ||
+                                                        'Hak akses custom'}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    {/each}
+                                </div>
+                                <p class="text-xs text-muted-foreground">
+                                    Role menentukan menu dan aksi yang boleh
+                                    dibuka. Pool tetap membatasi data yang
+                                    terlihat.
+                                </p>
+                            </div>
+                            <div
+                                class="space-y-2 rounded-2xl border border-border/70 bg-muted/10 p-4 md:col-span-2"
+                            >
+                                <div
+                                    class="flex items-center justify-between gap-2"
+                                >
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >
                                         Pool Yang Dikelola
                                     </span>
                                     <Badge
@@ -6810,7 +6940,7 @@
                         </div>
                         <div class="overflow-x-auto">
                             <table
-                                class="min-w-[1160px] w-full border-separate border-spacing-0 text-sm"
+                                class="min-w-[1380px] w-full border-separate border-spacing-0 text-sm"
                             >
                                 <thead
                                     class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
@@ -6827,6 +6957,10 @@
                                         <th
                                             class="w-[190px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
                                             >Verified</th
+                                        >
+                                        <th
+                                            class="w-[260px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            >Role</th
                                         >
                                         <th
                                             class="w-[260px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
@@ -6883,6 +7017,26 @@
                                                         ? 'Sudah diverifikasi'
                                                         : 'Belum diverifikasi'}
                                                 </span>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                            >
+                                                <div
+                                                    class="text-sm font-medium text-foreground"
+                                                >
+                                                    {(row.role_names ?? [])
+                                                        .length
+                                                        ? (
+                                                              row.role_names ??
+                                                              []
+                                                          ).join(', ')
+                                                        : 'Belum ada role'}
+                                                </div>
+                                                <div
+                                                    class="mt-1 text-[11px] text-muted-foreground"
+                                                >
+                                                    Hak akses menu dan aksi
+                                                </div>
                                             </td>
                                             <td
                                                 class="border-b border-r border-border/60 px-4 py-4 align-top"
@@ -6949,6 +7103,10 @@
                                                                         ),
                                                                     pool_ids: [
                                                                         ...(row.pool_ids ??
+                                                                            []),
+                                                                    ],
+                                                                    role_ids: [
+                                                                        ...(row.role_ids ??
                                                                             []),
                                                                     ],
                                                                 };
