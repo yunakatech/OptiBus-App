@@ -531,82 +531,265 @@ return;
 
             {#if activeTab === 'rute-carter' && !busy}
                 {#if activeMode === 'form'}
-                    <div class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2">
-                        <p class="text-xs font-medium text-muted-foreground">{carterRouteForm.id ? 'Halaman Edit Master Carter' : 'Halaman Tambah Master Carter Baru'}</p>
+                    <div class="flex items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/20 px-3 py-2">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Form Master Carter</p>
+                            <p class="text-xs text-muted-foreground">{carterRouteForm.id ? 'Edit preset layanan yang sudah ada.' : 'Tambah preset baru untuk dipakai otomatis di form Carter.'}</p>
+                        </div>
                         <Button type="button" size="sm" variant="outline" class="h-8 rounded-lg text-xs" onclick={() => setFormMode('data')}>Kembali ke Data</Button>
                     </div>
-                    <form class="grid gap-3 md:grid-cols-4" onsubmit={saveCarterRoute}>
-                        <Input placeholder="Nama rute carter" bind:value={carterRouteForm.name} required />
-                        <Input placeholder="Origin" bind:value={carterRouteForm.origin} />
-                        <Input placeholder="Destination" bind:value={carterRouteForm.destination} />
-                        <div class="space-y-1.5">
-                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Layanan</span>
-                            <select class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" bind:value={carterRouteForm.duration}>
-                                {#if carterRouteForm.duration && !masterCarterServiceOptions.includes(carterRouteForm.duration)}
-                                    <option value={carterRouteForm.duration}>{carterRouteForm.duration} (data lama)</option>
-                                {/if}
-                                {#each masterCarterServiceOptions as service (service)}
-                                    <option value={service}>{service}</option>
-                                {/each}
-                            </select>
-                        </div>
-                        <Input
-                            type="text"
-                            inputmode="numeric"
-                            placeholder="Harga rental"
-                            value={formatCurrencyInput(carterRouteForm.rental_price)}
-                            oninput={(event) => {
-                                carterRouteForm.rental_price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
-                            }}
-                        />
-                        <Input
-                            type="text"
-                            inputmode="numeric"
-                            placeholder="BOP"
-                            value={formatCurrencyInput(carterRouteForm.bop_price)}
-                            oninput={(event) => {
-                                carterRouteForm.bop_price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
-                            }}
-                        />
-                        <Input class="md:col-span-2" placeholder="Catatan" bind:value={carterRouteForm.notes} />
-                        <div class="flex gap-2">
-                            <LoadingButton type="submit" loading={isSubmitActive('carter-route')} loadingText={carterRouteForm.id ? 'Menyimpan...' : 'Membuat...'}>{carterRouteForm.id ? 'Update' : 'Create'}</LoadingButton>
-                            <Button type="button" variant="outline" onclick={() => (carterRouteForm = newCarterRouteForm())}>Reset</Button>
-                        </div>
-                    </form>
+                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.75fr)]">
+                        <form class="overflow-hidden rounded-[28px] border border-border/70 bg-card shadow-sm" onsubmit={saveCarterRoute}>
+                            <div class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),rgba(8,145,178,0.08))] px-4 py-4 md:px-5">
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">Master Carter</p>
+                                <h3 class="mt-1 text-lg font-semibold tracking-tight text-foreground">Atur layanan, rute, dan biaya preset</h3>
+                                <p class="mt-1 text-sm text-muted-foreground">Preset ini akan dipakai otomatis oleh form Carter agar pengisian lebih cepat dan konsisten.</p>
+                            </div>
+                            <div class="space-y-4 p-4 md:p-5">
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    <div class="space-y-1.5 md:col-span-2">
+                                        <label class="text-xs font-medium text-muted-foreground" for="carter-route-name">Nama Rute</label>
+                                        <Input id="carter-route-name" class="rounded-xl" placeholder="Contoh: MAKASSAR - PINRANG" bind:value={carterRouteForm.name} required />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="text-xs font-medium text-muted-foreground" for="carter-route-origin">Origin</label>
+                                        <Input id="carter-route-origin" class="rounded-xl" placeholder="Titik jemput" bind:value={carterRouteForm.origin} />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="text-xs font-medium text-muted-foreground" for="carter-route-destination">Destination</label>
+                                        <Input id="carter-route-destination" class="rounded-xl" placeholder="Titik antar" bind:value={carterRouteForm.destination} />
+                                    </div>
+                                    <div class="space-y-1.5 md:col-span-2">
+                                        <label class="text-xs font-medium text-muted-foreground" for="carter-route-duration">Layanan</label>
+                                        <select id="carter-route-duration" class="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none" bind:value={carterRouteForm.duration}>
+                                            {#if carterRouteForm.duration && !masterCarterServiceOptions.includes(carterRouteForm.duration)}
+                                                <option value={carterRouteForm.duration}>{carterRouteForm.duration} (data lama)</option>
+                                            {/if}
+                                            {#each masterCarterServiceOptions as service (service)}
+                                                <option value={service}>{service}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    <div class="space-y-1.5 rounded-2xl border border-border/60 bg-muted/20 p-3">
+                                        <label class="text-xs font-medium text-muted-foreground" for="carter-route-rental">Harga Rental</label>
+                                        <Input
+                                            id="carter-route-rental"
+                                            class="rounded-xl bg-background"
+                                            type="text"
+                                            inputmode="numeric"
+                                            placeholder="Rp 0"
+                                            value={formatCurrencyInput(carterRouteForm.rental_price)}
+                                            oninput={(event) => {
+                                                carterRouteForm.rental_price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
+                                            }}
+                                        />
+                                    </div>
+                                    <div class="space-y-1.5 rounded-2xl border border-border/60 bg-muted/20 p-3">
+                                        <label class="text-xs font-medium text-muted-foreground" for="carter-route-bop">BOP</label>
+                                        <Input
+                                            id="carter-route-bop"
+                                            class="rounded-xl bg-background"
+                                            type="text"
+                                            inputmode="numeric"
+                                            placeholder="Rp 0"
+                                            value={formatCurrencyInput(carterRouteForm.bop_price)}
+                                            oninput={(event) => {
+                                                carterRouteForm.bop_price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-medium text-muted-foreground" for="carter-route-notes">Catatan</label>
+                                    <textarea
+                                        id="carter-route-notes"
+                                        rows="4"
+                                        class="min-h-28 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                        placeholder="Catatan tambahan, misalnya tipe layanan, pola harga, atau keterangan operasional"
+                                        bind:value={carterRouteForm.notes}
+                                    ></textarea>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-2 border-t border-border/70 pt-3">
+                                    <LoadingButton type="submit" loading={isSubmitActive('carter-route')} loadingText={carterRouteForm.id ? 'Menyimpan...' : 'Membuat...'}>{carterRouteForm.id ? 'Simpan Perubahan' : 'Simpan Preset'}</LoadingButton>
+                                    <Button type="button" variant="outline" onclick={() => (carterRouteForm = newCarterRouteForm())}>Reset</Button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <aside class="space-y-4">
+                            <div class="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(8,145,178,0.16))] p-4 text-slate-50 shadow-sm md:p-5">
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">Preview</p>
+                                <div class="mt-3 space-y-3">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-[0.1em] text-slate-200/70">Nama Rute</p>
+                                        <p class="mt-1 text-lg font-semibold tracking-tight">{carterRouteForm.name || 'Nama master belum diisi'}</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+                                            <p class="uppercase tracking-[0.08em] text-slate-200/70">Origin</p>
+                                            <p class="mt-1 font-medium">{carterRouteForm.origin || '-'}</p>
+                                        </div>
+                                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+                                            <p class="uppercase tracking-[0.08em] text-slate-200/70">Destination</p>
+                                            <p class="mt-1 font-medium">{carterRouteForm.destination || '-'}</p>
+                                        </div>
+                                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+                                            <p class="uppercase tracking-[0.08em] text-slate-200/70">Layanan</p>
+                                            <p class="mt-1 font-medium">{carterRouteForm.duration || '-'}</p>
+                                        </div>
+                                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+                                            <p class="uppercase tracking-[0.08em] text-slate-200/70">Harga</p>
+                                            <p class="mt-1 font-medium">{formatCurrencyDisplay(carterRouteForm.rental_price || 0)}</p>
+                                        </div>
+                                    </div>
+                                    <div class="rounded-2xl border border-cyan-200/20 bg-cyan-400/10 p-3 text-xs text-cyan-50">
+                                        <p class="uppercase tracking-[0.08em] text-cyan-100/80">BOP</p>
+                                        <p class="mt-1 text-base font-semibold">{formatCurrencyDisplay(carterRouteForm.bop_price || 0)}</p>
+                                    </div>
+                                    <p class="text-xs leading-relaxed text-slate-200/80">
+                                        Preset ini akan muncul di form Carter dan membantu auto-fill rute, layanan, harga, serta biaya operasional.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="rounded-[28px] border border-border/70 bg-muted/15 p-4 md:p-5">
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tips singkat</p>
+                                <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
+                                    <li class="rounded-xl border border-border/60 bg-background/80 px-3 py-2">Gunakan nama rute yang konsisten agar mudah dicari dari form Carter.</li>
+                                    <li class="rounded-xl border border-border/60 bg-background/80 px-3 py-2">Layanan yang sama akan memudahkan preset dipakai ulang saat input reservasi.</li>
+                                </ul>
+                            </div>
+                        </aside>
+                    </div>
                 {:else}
-                    <div class="flex flex-wrap gap-2">
-                        <Input placeholder="Cari nama/origin/destination" bind:value={carterRouteQ} />
-                        <Button type="button" onclick={() => void loadCarterRoutes(1)}>Search</Button>
-                        <Button type="button" variant="outline" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
-                    </div>
-                    <div class="overflow-x-auto rounded-md border">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-muted/50"><tr><th class="px-3 py-2 text-left">Nama</th><th class="px-3 py-2 text-left">Asal/Tujuan</th><th class="px-3 py-2 text-left">Layanan</th><th class="px-3 py-2 text-left">Harga</th><th class="px-3 py-2 text-left">Aksi</th></tr></thead>
-                            <tbody>
-                                {#each carterRoutes as row (row.id)}
-                                    <tr class="border-t">
-                                        <td class="px-3 py-2">{row.name}</td>
-                                        <td class="px-3 py-2">{row.origin ?? '-'} -> {row.destination ?? '-'}</td>
-                                        <td class="px-3 py-2">{row.duration ?? '-'}</td>
-                                        <td class="px-3 py-2">Sewa: {formatCurrencyDisplay(row.rental_price)}<br />BOP: {formatCurrencyDisplay(row.bop_price)}</td>
-                                        <td class="space-x-2 px-3 py-2">
-                                            <Button type="button" size="sm" variant="outline" onclick={() => {
- carterRouteForm = { id: row.id, name: row.name, origin: row.origin ?? '', destination: row.destination ?? '', duration: row.duration ?? defaultMasterCarterService, rental_price: Number(row.rental_price), bop_price: Number(row.bop_price), notes: row.notes ?? '' }; setFormMode('form'); 
-}}>Edit</Button>
-                                            <Button type="button" size="sm" variant="outline" disabled={pendingDeleteKey === `/api/admin/charter-routes/${row.id}`} onclick={() => void removeRow(`/api/admin/charter-routes/${row.id}`, 'Rute carter deleted.')}>{pendingDeleteKey === `/api/admin/charter-routes/${row.id}` ? 'Menghapus...' : 'Delete'}</Button>
-                                        </td>
-                                    </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-muted-foreground">Total: {carterRouteMeta.total}</p>
-                        <div class="flex gap-2">
-                            <Button type="button" variant="outline" disabled={carterRouteMeta.page <= 1} onclick={() => void jumpPage('rute-carter', carterRouteMeta.page - 1)}>Prev</Button>
-                            <span class="px-2 py-1 text-sm">{carterRouteMeta.page} / {carterRouteMeta.last_page}</span>
-                            <Button type="button" variant="outline" disabled={carterRouteMeta.page >= carterRouteMeta.last_page} onclick={() => void jumpPage('rute-carter', carterRouteMeta.page + 1)}>Next</Button>
+                    <div class="space-y-4">
+                        <div class="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),rgba(8,145,178,0.08))] shadow-sm">
+                            <div class="grid gap-4 border-b border-border/70 px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-5">
+                                <div class="space-y-3">
+                                    <div class="space-y-1">
+                                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">Master Carter</p>
+                                        <h3 class="text-lg font-semibold tracking-tight text-foreground">Preset rute siap pakai untuk form Carter</h3>
+                                        <p class="max-w-2xl text-sm text-muted-foreground">Kelola rute, layanan, harga rental, dan BOP agar form Carter bisa auto-fill dengan cepat dan konsisten.</p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800">Total {carterRouteMeta.total} preset</span>
+                                        <span class="inline-flex items-center rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">Halaman {carterRouteMeta.page} dari {carterRouteMeta.last_page}</span>
+                                        <span class="inline-flex items-center rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Siap dipakai di form Carter</span>
+                                    </div>
+                                </div>
+                                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" for="carter-route-search">Cari preset</label>
+                                        <Input id="carter-route-search" class="h-11 rounded-2xl bg-background/90" placeholder="Cari nama, origin, atau destination" bind:value={carterRouteQ} />
+                                    </div>
+                                    <div class="flex items-end gap-2">
+                                        <Button type="button" class="h-11 rounded-2xl px-4" onclick={() => void loadCarterRoutes(1)}>Cari</Button>
+                                        <Button type="button" variant="outline" class="h-11 rounded-2xl px-4" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {#if carterRoutes.length > 0}
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead class="bg-muted/50 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left font-semibold">Nama</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Asal / Tujuan</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Layanan</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Harga</th>
+                                                <th class="px-4 py-3 text-left font-semibold">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-border/60 bg-background/80">
+                                            {#each carterRoutes as row (row.id)}
+                                                <tr class="transition-colors hover:bg-muted/30">
+                                                    <td class="px-4 py-4 align-top">
+                                                        <div class="space-y-1">
+                                                            <p class="font-semibold text-foreground">{row.name}</p>
+                                                            <p class="text-xs text-muted-foreground">ID #{row.id}</p>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 align-top">
+                                                        <div class="max-w-[20rem] space-y-1">
+                                                            <p class="font-medium text-foreground">{row.origin ?? '-'}</p>
+                                                            <p class="text-xs text-muted-foreground">-> {row.destination ?? '-'}</p>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 align-top">
+                                                        <span class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-xs font-semibold tracking-wide text-cyan-800">
+                                                            {row.duration ?? '-'}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-4 py-4 align-top">
+                                                        <div class="space-y-1">
+                                                            <p class="text-sm font-semibold text-foreground">{formatCurrencyDisplay(row.rental_price)}</p>
+                                                            <p class="text-xs text-muted-foreground">BOP {formatCurrencyDisplay(row.bop_price)}</p>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 align-top">
+                                                        <div class="flex flex-wrap gap-2">
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                class="rounded-full px-4"
+                                                                onclick={() => {
+                                                                    carterRouteForm = {
+                                                                        id: row.id,
+                                                                        name: row.name,
+                                                                        origin: row.origin ?? '',
+                                                                        destination: row.destination ?? '',
+                                                                        duration: row.duration ?? defaultMasterCarterService,
+                                                                        rental_price: Number(row.rental_price),
+                                                                        bop_price: Number(row.bop_price),
+                                                                        notes: row.notes ?? '',
+                                                                    };
+                                                                    setFormMode('form');
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                class="rounded-full px-4"
+                                                                disabled={pendingDeleteKey === `/api/admin/charter-routes/${row.id}`}
+                                                                onclick={() => void removeRow(`/api/admin/charter-routes/${row.id}`, 'Rute carter deleted.')}
+                                                            >
+                                                                {pendingDeleteKey === `/api/admin/charter-routes/${row.id}` ? 'Menghapus...' : 'Delete'}
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {/each}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {:else}
+                                <div class="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
+                                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/30 text-lg">*</div>
+                                    <div class="space-y-1">
+                                        <p class="text-base font-semibold text-foreground">Belum ada preset master carter</p>
+                                        <p class="max-w-md text-sm text-muted-foreground">Tambahkan preset baru supaya form Carter bisa langsung mengisi rute, layanan, harga, dan BOP secara otomatis.</p>
+                                    </div>
+                                    <Button type="button" variant="outline" class="rounded-full px-4" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
+                                </div>
+                            {/if}
+
+                            <div class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5">
+                                <p class="text-sm text-muted-foreground">Menampilkan {carterRoutes.length} dari {carterRouteMeta.total} preset.</p>
+                                <div class="flex items-center gap-2">
+                                    <Button type="button" variant="outline" class="rounded-full" disabled={carterRouteMeta.page <= 1} onclick={() => void jumpPage('rute-carter', carterRouteMeta.page - 1)}>Prev</Button>
+                                    <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-sm text-muted-foreground">{carterRouteMeta.page} / {carterRouteMeta.last_page}</span>
+                                    <Button type="button" variant="outline" class="rounded-full" disabled={carterRouteMeta.page >= carterRouteMeta.last_page} onclick={() => void jumpPage('rute-carter', carterRouteMeta.page + 1)}>Next</Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 {/if}
