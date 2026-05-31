@@ -32,6 +32,15 @@
         alamat: string | null;
         company: string | null;
     };
+    type CharterRoute = {
+        id: number;
+        name: string;
+        origin: string | null;
+        destination: string | null;
+        duration: string | null;
+        rental_price: number;
+        bop_price: number;
+    };
     type Unit = {
         id: number;
         nopol: string;
@@ -82,6 +91,8 @@
         charterCustomerLookupOpen = false,
         charterCustomerResults = [],
         charterServiceOptions = [],
+        charterRouteSearch = $bindable(''),
+        charterRouteLookupOpen = $bindable(false),
         charterStartDateInput = $bindable<HTMLInputElement | null>(null),
         charterEndDateInput = $bindable<HTMLInputElement | null>(null),
         charterDepartureTimeInput = $bindable<HTMLInputElement | null>(null),
@@ -97,6 +108,11 @@
         savingCharter = false,
         onCharterCustomerQueryInput,
         applyCharterCustomer,
+        onCharterRouteBlur,
+        filteredCharterRoutes,
+        selectCharterRoute,
+        charterRouteLabel,
+        charterRouteMeta,
         onCharterUnitBlur,
         filteredCharterUnits,
         selectCharterUnit,
@@ -125,6 +141,8 @@
         charterCustomerLookupOpen?: boolean;
         charterCustomerResults?: CharterCustomer[];
         charterServiceOptions?: string[];
+        charterRouteSearch?: string;
+        charterRouteLookupOpen?: boolean;
         charterStartDateInput?: HTMLInputElement | null;
         charterEndDateInput?: HTMLInputElement | null;
         charterDepartureTimeInput?: HTMLInputElement | null;
@@ -140,6 +158,11 @@
         savingCharter?: boolean;
         onCharterCustomerQueryInput: (value: string) => void;
         applyCharterCustomer: (customer: CharterCustomer) => void;
+        onCharterRouteBlur: () => void;
+        filteredCharterRoutes: () => CharterRoute[];
+        selectCharterRoute: (route: CharterRoute) => void;
+        charterRouteLabel: (route: CharterRoute | null | undefined) => string;
+        charterRouteMeta: (route: CharterRoute | null | undefined) => string;
         onCharterUnitBlur: () => void;
         filteredCharterUnits: () => Unit[];
         selectCharterUnit: (unit: Unit) => void;
@@ -275,6 +298,51 @@
                     <p class="text-sm font-medium text-foreground">Atur tanggal, jam, dan rute charter</p>
                 </div>
                 <div class="grid gap-3 md:grid-cols-6">
+                    <div class="relative space-y-1 md:col-span-6">
+                        <label for="charter-route-master" class="text-xs font-medium text-muted-foreground">Master Carter</label>
+                        <Input
+                            id="charter-route-master"
+                            class="rounded-xl"
+                            placeholder="Cari rute dari Master Carter untuk auto isi rute, durasi, harga, dan BOP"
+                            bind:value={charterRouteSearch}
+                            onfocus={() => {
+                                charterRouteLookupOpen = true;
+                            }}
+                            oninput={() => {
+                                charterRouteLookupOpen = true;
+                            }}
+                            onblur={onCharterRouteBlur}
+                        />
+                        {#if charterRouteLookupOpen}
+                            <div class="absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl">
+                                {#if filteredCharterRoutes().length === 0}
+                                    <p class="px-2 py-2 text-xs text-muted-foreground">Master Carter belum ditemukan. Data rute baru akan ikut disimpan saat Carter disimpan.</p>
+                                {:else}
+                                    <div class="space-y-1">
+                                        {#each filteredCharterRoutes() as route (`charter-route-${route.id}`)}
+                                            <button
+                                                type="button"
+                                                class="flex w-full items-start justify-between gap-3 rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70 dark:hover:border-cyan-500/30 dark:hover:bg-cyan-950/25"
+                                                onmousedown={(event) => {
+                                                    event.preventDefault();
+                                                    selectCharterRoute(route);
+                                                }}
+                                            >
+                                                <span class="min-w-0">
+                                                    <span class="block truncate text-sm font-semibold text-foreground">{charterRouteLabel(route)}</span>
+                                                    <span class="block truncate text-[11px] text-muted-foreground">{charterRouteMeta(route)}</span>
+                                                </span>
+                                                <span class="shrink-0 rounded-full border border-cyan-200/70 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/40 dark:text-cyan-100">
+                                                    Pakai
+                                                </span>
+                                            </button>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+                        <p class="text-[11px] text-muted-foreground">Pilih master untuk mengisi titik jemput, titik antar, durasi/layanan, harga rental, dan BOP secara otomatis.</p>
+                    </div>
                     <div class="space-y-1 md:col-span-2">
                         <label for="charter-start-date" class="text-xs font-medium text-muted-foreground">Tanggal Mulai</label>
                         <input

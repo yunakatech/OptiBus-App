@@ -57,6 +57,7 @@
     type Luggage = { id: number; sender_name: string; sender_phone: string; sender_address: string | null; receiver_name: string; receiver_phone: string; receiver_address: string | null; service_id: number | null; service_name: string | null; rute_id: number | null; rute: string | null; route_name: string | null; tanggal: string | null; unit_id: number | null; trip_assignment_id?: number | null; departure_date?: string | null; departure_time?: string | null; departure_unit?: number | null; departure_driver_name?: string | null; departure_armada_nopol?: string | null; quantity: number; notes: string | null; price: number; status: string | null; payment_status: string | null; kode_resi: string | null; created_at: string | null };
     type Assignment = { id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; nama: string | null };
     type AssignmentConflict = { type: string; message: string; assignment_id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; driver_name: string | null };
+    type CharterRoute = { id: number; name: string; origin: string | null; destination: string | null; duration: string | null; rental_price: number; bop_price: number };
 
     let {
         initialTab = null,
@@ -90,6 +91,7 @@
     let armadas = $state<Armada[]>([]);
     let drivers = $state<Driver[]>([]);
     let services = $state<Service[]>([]);
+    let charterRoutes = $state<CharterRoute[]>([]);
 
     let charters = $state<Charter[]>([]);
     let luggages = $state<Luggage[]>([]);
@@ -150,6 +152,8 @@
     let charterCustomerBusy = $state(false);
     let charterCustomerResults = $state<CharterCustomer[]>([]);
     let charterCustomerLookupOpen = $state(false);
+    let charterRouteSearch = $state('');
+    let charterRouteLookupOpen = $state(false);
     let charterCustomerSearchTimer: ReturnType<typeof setTimeout> | null = null;
     let charterArmadaSearchTimer: ReturnType<typeof setTimeout> | null = null;
     let luggageForm = $state(newLuggageForm());
@@ -1296,6 +1300,7 @@ return 'Selesai';
     const resetCharterFormState = () => {
         charterForm = newCharterForm();
         resetCharterCustomerLookup();
+        syncCharterRouteLookupFromForm();
         resetCharterArmadaLookup();
         syncCharterDriverLookupFromForm();
     };
@@ -1341,6 +1346,82 @@ return 'Selesai';
         }
 
         return null;
+    };
+
+    const charterRouteLabel = (route: CharterRoute | null | undefined) => {
+        if (!route) {
+            return '';
+        }
+
+        const name = String(route.name ?? '').trim();
+        if (name !== '') {
+            return name;
+        }
+
+        return [route.origin, route.destination].filter(Boolean).join(' - ');
+    };
+
+    const charterRouteMeta = (route: CharterRoute | null | undefined) => {
+        if (!route) {
+            return '';
+        }
+
+        return [
+            [route.origin, route.destination].filter(Boolean).join(' -> '),
+            route.duration,
+            `Harga ${formatCurrencyId(route.rental_price ?? 0)}`,
+            `BOP ${formatCurrencyId(route.bop_price ?? 0)}`,
+        ].filter(Boolean).join(' | ');
+    };
+
+    const filteredCharterRoutes = () => {
+        const keyword = normalizeLookupText(charterRouteSearch);
+        const source = keyword === ''
+            ? charterRoutes
+            : charterRoutes.filter((route) => {
+                const haystack = [
+                    route.name,
+                    route.origin,
+                    route.destination,
+                    route.duration,
+                ].map((value) => normalizeLookupText(value)).join(' ');
+
+                return haystack.includes(keyword);
+            });
+
+        return source.slice(0, 12);
+    };
+
+    const syncCharterRouteLookupFromForm = () => {
+        const origin = normalizeLookupText(charterForm.pickup_point);
+        const destination = normalizeLookupText(charterForm.drop_point);
+
+        const exactRoute = charterRoutes.find((route) =>
+            origin !== ''
+            && destination !== ''
+            && normalizeLookupText(route.origin) === origin
+            && normalizeLookupText(route.destination) === destination
+        );
+
+        charterRouteSearch = exactRoute
+            ? charterRouteLabel(exactRoute)
+            : [charterForm.pickup_point, charterForm.drop_point].filter(Boolean).join(' - ');
+    };
+
+    const selectCharterRoute = (route: CharterRoute) => {
+        charterRouteSearch = charterRouteLabel(route);
+        charterRouteLookupOpen = false;
+        charterForm.pickup_point = route.origin ?? '';
+        charterForm.drop_point = route.destination ?? '';
+        charterForm.layanan = route.duration ?? defaultCharterService;
+        charterForm.price = Number(route.rental_price ?? 0);
+        charterForm.bop_price = Number(route.bop_price ?? 0);
+    };
+
+    const onCharterRouteBlur = () => {
+        setTimeout(() => {
+            charterRouteLookupOpen = false;
+        }, 120);
     };
 
     const searchCharterCustomers = async (keywordRaw: string) => {
@@ -1392,16 +1473,19 @@ return 'Selesai';
     };
 
     const loadMasters = async () => {
-        const [r, u, d, s] = await Promise.all([
+        const [r, u, d, s, cr] = await Promise.all([
             api('GET', '/api/admin/routes'),
             api('GET', '/api/admin/units'),
             api('GET', '/api/admin/drivers'),
             api('GET', '/api/admin/luggage-services'),
+            api('GET', '/api/master/charter-routes'),
         ]);
         routes = r.routes ?? [];
         units = u.units ?? [];
         drivers = d.drivers ?? [];
         services = s.services ?? [];
+        charterRoutes = cr.routes ?? [];
+        syncCharterRouteLookupFromForm();
         syncCharterArmadaLookupsFromForm();
         syncCharterDriverLookupFromForm();
         syncCharterFilterLookups();
@@ -1471,6 +1555,7 @@ return;
     const openCharterEditor = (row: Charter) => {
         charterForm = toCharterFormFromRow(row);
         resetCharterCustomerLookup();
+        syncCharterRouteLookupFromForm();
         syncCharterArmadaLookupsFromForm();
         syncCharterDriverLookupFromForm();
         setFormMode('form');
@@ -1608,6 +1693,7 @@ await loadAssignments(assignmentMeta.page);
             message = charterForm.id ? 'Charter updated.' : 'Charter created.';
             resetCharterFormState();
             await loadCharters(charterMeta.page);
+            await loadMasters();
             setFormMode('data');
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan charter.';
@@ -2314,6 +2400,8 @@ params.set('to', filterTo);
                             charterCustomerLookupOpen={charterCustomerLookupOpen}
                             charterCustomerResults={charterCustomerResults}
                             charterServiceOptions={charterServiceOptions}
+                            bind:charterRouteSearch
+                            bind:charterRouteLookupOpen
                             bind:charterStartDateInput
                             bind:charterEndDateInput
                             bind:charterDepartureTimeInput
@@ -2329,6 +2417,11 @@ params.set('to', filterTo);
                             savingCharter={savingCharter}
                             onCharterCustomerQueryInput={onCharterCustomerQueryInput}
                             applyCharterCustomer={applyCharterCustomer}
+                            onCharterRouteBlur={onCharterRouteBlur}
+                            filteredCharterRoutes={filteredCharterRoutes}
+                            selectCharterRoute={selectCharterRoute}
+                            charterRouteLabel={charterRouteLabel}
+                            charterRouteMeta={charterRouteMeta}
                             onCharterUnitBlur={onCharterUnitBlur}
                             filteredCharterUnits={filteredCharterUnits}
                             selectCharterUnit={selectCharterUnit}
@@ -2492,7 +2585,10 @@ params.set('to', filterTo);
                                             <div class="order-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2">
                                                 <p class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground">Biaya</p>
                                                 <p class="mt-0.5 text-xs font-semibold leading-tight text-foreground">{formatCurrencyId(row.price)}</p>
-                                                <p class="text-[11px] text-muted-foreground">DP {formatCurrencyId(row.down_payment ?? 0)}</p>
+                                                <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] leading-tight text-muted-foreground">
+                                                    <span>DP {formatCurrencyId(row.down_payment ?? 0)}</span>
+                                                    <span>BOP {formatCurrencyId(row.bop_price ?? 0)}</span>
+                                                </div>
                                             </div>
                                         </div>
 

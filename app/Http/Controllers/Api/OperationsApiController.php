@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class OperationsApiController extends Controller
 {
@@ -157,6 +159,7 @@ class OperationsApiController extends Controller
             'bop_price' => (float) ($data['bop_price'] ?? 0),
             'created_at' => now(),
         ]);
+        $this->syncMasterCarterFromCharterPayload($data);
 
         return $this->ok([
             'message' => 'Charter submitted successfully',
@@ -253,6 +256,55 @@ class OperationsApiController extends Controller
     {
         $v = trim((string) ($value ?? ''));
         return $v === '' ? null : $v;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function syncMasterCarterFromCharterPayload(array $payload): void
+    {
+        if (! Schema::hasTable('master_carter')) {
+            return;
+        }
+
+        $origin = trim((string) ($payload['pickup_point'] ?? ''));
+        $destination = trim((string) ($payload['drop_point'] ?? ''));
+
+        if ($origin === '' || $destination === '') {
+            return;
+        }
+
+        $duration = trim((string) ($payload['layanan'] ?? '')) ?: 'Regular';
+        $routePayload = [
+            'name' => strtoupper($origin.' - '.$destination),
+            'origin' => $origin,
+            'destination' => $destination,
+            'duration' => $duration,
+            'rental_price' => (float) ($payload['price'] ?? 0),
+            'bop_price' => (float) ($payload['bop_price'] ?? 0),
+        ];
+
+        try {
+            $existingId = (int) (DB::table('master_carter')
+                ->whereRaw("UPPER(COALESCE(origin, '')) = ?", [strtoupper($origin)])
+                ->whereRaw("UPPER(COALESCE(destination, '')) = ?", [strtoupper($destination)])
+                ->whereRaw("UPPER(COALESCE(duration, '')) = ?", [strtoupper($duration)])
+                ->value('id') ?? 0);
+
+            if ($existingId > 0) {
+                DB::table('master_carter')->where('id', $existingId)->update($routePayload);
+
+                return;
+            }
+
+            if (Schema::hasColumn('master_carter', 'created_at')) {
+                $routePayload['created_at'] = now();
+            }
+
+            DB::table('master_carter')->insert($routePayload);
+        } catch (QueryException) {
+            // Master Carter is only a reusable preset, so charter submission should still succeed.
+        }
     }
 
     private function normalizePhone(string $value): string
