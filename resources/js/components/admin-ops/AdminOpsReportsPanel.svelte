@@ -9,6 +9,16 @@
         type: ReportKind;
         total_rows: number;
         revenue_total: number;
+        pool_id?: number;
+        pool_name?: string;
+        target_revenue?: number;
+    };
+    type PoolOption = {
+        id: number;
+        name: string;
+        code: string;
+        target_revenue: number;
+        status: string;
     };
     type Pagination = {
         page: number;
@@ -174,17 +184,26 @@
         return 'border-slate-200 bg-slate-50 text-slate-700';
     };
 
-    const exportHref = (type: ReportKind, from: string, to: string) => {
+    const exportHref = (
+        type: ReportKind,
+        from: string,
+        to: string,
+        poolId: number,
+    ) => {
         const encodedFrom = encodeURIComponent(from);
         const encodedTo = encodeURIComponent(to);
+        const poolSuffix =
+            Number(poolId || 0) > 0
+                ? `&pool_id=${encodeURIComponent(String(poolId))}`
+                : '';
 
         if (type === 'booking') {
-            return `/api/admin/reports/bookings-csv?from=${encodedFrom}&to=${encodedTo}`;
+            return `/api/admin/reports/bookings-csv?from=${encodedFrom}&to=${encodedTo}${poolSuffix}`;
         }
 
         const revenueType = type === 'bagasi' ? 'bagasi' : 'charter';
 
-        return `/api/admin/reports/revenue-csv?from=${encodedFrom}&to=${encodedTo}&type=${revenueType}`;
+        return `/api/admin/reports/revenue-csv?from=${encodedFrom}&to=${encodedTo}&type=${revenueType}${poolSuffix}`;
     };
 
     const exportLabel = (type: ReportKind) =>
@@ -208,6 +227,8 @@
         reportRows = [],
         reportMeta = { page: 1, per_page: 50, total: 0, last_page: 1 },
         reportLoading = false,
+        pools = [],
+        reportPoolId = $bindable(0),
         reportFromInput = $bindable<HTMLInputElement | null>(null),
         reportToInput = $bindable<HTMLInputElement | null>(null),
         formatCurrency,
@@ -221,6 +242,8 @@
         reportRows?: ReportRow[];
         reportMeta?: Pagination;
         reportLoading?: boolean;
+        pools?: PoolOption[];
+        reportPoolId?: number;
         reportFromInput?: HTMLInputElement | null;
         reportToInput?: HTMLInputElement | null;
         formatCurrency: (value: number) => string;
@@ -276,6 +299,7 @@
                             resolvedReportType(reportSummary, reportType),
                             reportFrom,
                             reportTo,
+                            reportPoolId,
                         )}
                         class="inline-flex h-11 items-center justify-center rounded-2xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition hover:bg-muted/25"
                     >
@@ -287,7 +311,7 @@
             </div>
 
             <div
-                class={`grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-[200px_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`}
+                class={`grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-[190px_minmax(180px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`}
             >
                 <label class="flex flex-col gap-1.5">
                     <span
@@ -303,6 +327,26 @@
                         <option value="booking">Booking</option>
                         <option value="charter">Carter</option>
                         <option value="bagasi">Bagasi</option>
+                    </select>
+                </label>
+
+                <label class="flex flex-col gap-1.5">
+                    <span
+                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                    >
+                        Pool
+                    </span>
+                    <select
+                        class="h-11 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        bind:value={reportPoolId}
+                        onchange={() => void loadReport(1)}
+                    >
+                        <option value={0}>Semua Pool</option>
+                        {#each pools as pool (pool.id)}
+                            <option value={pool.id}>
+                                {pool.name}{pool.code ? ` (${pool.code})` : ''}
+                            </option>
+                        {/each}
                     </select>
                 </label>
 
@@ -356,7 +400,7 @@
 
             {#if reportSummary}
                 <div
-                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-2"
+                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-3"
                 >
                     <div class="rounded-2xl bg-muted/20 px-4 py-3">
                         <p
@@ -391,6 +435,23 @@
                         <p class="mt-1 text-xs text-muted-foreground">
                             {resolvedMeta(reportSummary, reportType).dataLabel}
                             cocok dengan filter tanggal
+                        </p>
+                    </div>
+
+                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
+                        <p
+                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        >
+                            Pool
+                        </p>
+                        <p
+                            class="mt-2 text-lg font-semibold tracking-tight"
+                        >
+                            {reportSummary.pool_name || 'Semua Pool'}
+                        </p>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Target:
+                            {formatCurrency(reportSummary.target_revenue ?? 0)}
                         </p>
                     </div>
                 </div>

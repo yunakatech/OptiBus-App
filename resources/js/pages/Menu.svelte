@@ -47,6 +47,7 @@
                 { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays },
                 { title: 'Logs', href: '/admin-ops/cancellations', icon: History },
                 { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route },
+                { title: 'Pool', href: '/admin-ops/pools', icon: Route },
                 { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned },
                 { title: 'Segment', href: '/admin-ops/segments', icon: Shuffle },
                 { title: 'Tarif Bagasi', href: '/admin-ops/services', icon: Package },
