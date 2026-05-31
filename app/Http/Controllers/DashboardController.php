@@ -452,6 +452,7 @@ class DashboardController extends Controller
                 'b.name',
                 'b.phone',
                 'b.pickup_point',
+                'b.status',
                 'b.pembayaran',
                 DB::raw('c.gmaps as gmaps'),
             ])
@@ -475,6 +476,7 @@ class DashboardController extends Controller
                 'phone' => (string) ($row->phone ?? '-'),
                 'pickup_point' => (string) ($row->pickup_point ?? '-'),
                 'gmaps' => (string) ($row->gmaps ?? ''),
+                'status' => (string) ($row->status ?? ''),
                 'pembayaran' => (string) ($row->pembayaran ?? '-'),
             ];
         }
