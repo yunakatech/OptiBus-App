@@ -5502,17 +5502,6 @@
                                 )}
                             </p>
                         </div>
-                        <LoadingButton
-                            type="button"
-                            class="w-full sm:w-auto"
-                            onclick={() => void submitBooking()}
-                            disabled={submittingBooking ||
-                                selectedCount() === 0}
-                            loading={submittingBooking}
-                            loadingText="Menyimpan..."
-                        >
-                            Konfirmasi
-                        </LoadingButton>
                     </div>
 
                     <div class="rounded-xl border bg-muted/20 p-3">
@@ -5616,9 +5605,7 @@
                                 )}
                             </p>
                         </div>
-                        <div
-                            class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center"
-                        >
+                        <div class="grid w-full gap-2 sm:flex sm:w-auto sm:items-center">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -5627,17 +5614,6 @@
                             >
                                 Lihat Rekap
                             </Button>
-                            <LoadingButton
-                                type="button"
-                                class="w-full sm:w-auto"
-                                onclick={() => void submitBooking()}
-                                disabled={submittingBooking ||
-                                    selectedCount() === 0}
-                                loading={submittingBooking}
-                                loadingText="Menyimpan..."
-                            >
-                                Konfirmasi
-                            </LoadingButton>
                         </div>
                     </div>
                 </div>
