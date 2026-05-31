@@ -635,6 +635,38 @@ class AdminOpsApiTest extends TestCase
             'layanan' => 'VIP',
             'payment_status' => 'DP',
         ]);
+        $this->assertDatabaseHas('customer_charter', [
+            'nama' => 'ROMBONGAN TEST',
+            'no_hp' => '08129999',
+            'alamat' => 'Pinrang',
+            'company' => 'PT TEST',
+        ]);
+
+        $this->postJson(route('api.admin.charters.save'), [
+            'id' => $charterId,
+            'name' => 'ROMBONGAN TEST UPDATE',
+            'company_name' => 'PT TEST UPDATE',
+            'phone' => '08129999',
+            'start_date' => '2026-05-20',
+            'end_date' => '2026-05-20',
+            'departure_time' => '09:00',
+            'pickup_point' => 'Terminal Pinrang',
+            'drop_point' => 'Makassar',
+            'unit_id' => $unitId,
+            'driver_name' => 'DRIVER BARU',
+            'price' => 3000000,
+            'layanan' => 'VIP',
+            'bop_price' => 500000,
+            'bop_status' => 'pending',
+            'payment_status' => 'DP',
+        ])->assertOk();
+        $this->assertSame(1, DB::table('customer_charter')->where('no_hp', '08129999')->count());
+        $this->assertDatabaseHas('customer_charter', [
+            'nama' => 'ROMBONGAN TEST UPDATE',
+            'no_hp' => '08129999',
+            'alamat' => 'Terminal Pinrang',
+            'company' => 'PT TEST UPDATE',
+        ]);
 
         $luggage = $this->postJson(route('api.admin.luggages.save'), [
             'sender_name' => 'A',

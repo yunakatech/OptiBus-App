@@ -232,11 +232,24 @@
                     </div>
                     <div class="space-y-1 xl:col-span-2">
                         <label for="charter-name" class="text-xs font-medium text-muted-foreground">Nama Charter</label>
-                        <Input id="charter-name" class="rounded-xl" placeholder="Nama customer / PIC" bind:value={charterForm.name} required />
+                        <Input
+                            id="charter-name"
+                            class="rounded-xl"
+                            placeholder="Nama customer / PIC"
+                            bind:value={charterForm.name}
+                            oninput={(event) => onCharterCustomerQueryInput((event.currentTarget as HTMLInputElement).value)}
+                            required
+                        />
                     </div>
                     <div class="space-y-1">
                         <label for="charter-phone" class="text-xs font-medium text-muted-foreground">Telepon</label>
-                        <Input id="charter-phone" class="rounded-xl" placeholder="Nomor telepon" bind:value={charterForm.phone} />
+                        <Input
+                            id="charter-phone"
+                            class="rounded-xl"
+                            placeholder="Nomor telepon"
+                            bind:value={charterForm.phone}
+                            oninput={(event) => onCharterCustomerQueryInput((event.currentTarget as HTMLInputElement).value)}
+                        />
                     </div>
                     <div class="space-y-1">
                         <label for="charter-company" class="text-xs font-medium text-muted-foreground">Company</label>

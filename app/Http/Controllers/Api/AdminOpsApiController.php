@@ -1529,6 +1529,7 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('charters')->where('id', $id)->update($payload);
+            $this->syncCustomerCharterFromCharterPayload($payload);
             ActivityLog::write(
                 'CHARTER',
                 'Carter '.$this->charterIdentityLabel($payload + $before).' diperbarui',
@@ -1544,6 +1545,7 @@ class AdminOpsApiController extends Controller
         }
 
         $newId = DB::table('charters')->insertGetId(array_merge($payload, ['created_at' => now()]));
+        $this->syncCustomerCharterFromCharterPayload($payload);
         ActivityLog::write(
             'CHARTER',
             'Carter baru: '.$this->charterIdentityLabel($payload),
@@ -2390,6 +2392,7 @@ class AdminOpsApiController extends Controller
     public function customerCharterIndex(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
+        $qPhone = preg_replace('/\D+/', '', $q) ?? '';
         [$page, $perPage] = $this->paginationParams($request);
 
         $query = DB::table('customer_charter')
@@ -2398,12 +2401,21 @@ class AdminOpsApiController extends Controller
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
-            $query->where(function ($builder) use ($qLike) {
+            $qLowerLike = '%'.strtolower($q).'%';
+            $phoneLike = '%'.$qPhone.'%';
+            $query->where(function ($builder) use ($qLike, $qLowerLike, $qPhone, $phoneLike) {
                 $builder
-                    ->where('nama', 'like', $qLike)
+                    ->whereRaw("LOWER(COALESCE(nama, '')) LIKE ?", [$qLowerLike])
                     ->orWhere('no_hp', 'like', $qLike)
-                    ->orWhere('alamat', 'like', $qLike)
-                    ->orWhere('company', 'like', $qLike);
+                    ->orWhereRaw("LOWER(COALESCE(alamat, '')) LIKE ?", [$qLowerLike])
+                    ->orWhereRaw("LOWER(COALESCE(company, '')) LIKE ?", [$qLowerLike]);
+
+                if ($qPhone !== '') {
+                    $builder->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(no_hp, ''), ' ', ''), '-', ''), '+', ''), '.', '') LIKE ?",
+                        [$phoneLike],
+                    );
+                }
             });
         }
 
@@ -4240,6 +4252,62 @@ class AdminOpsApiController extends Controller
         }
 
         return $this->driversHasArmadaNopol;
+    }
+
+    /**
+     * Keep the charter reservation flow connected to the Customer Carter master data.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function syncCustomerCharterFromCharterPayload(array $payload): void
+    {
+        if (! Schema::hasTable('customer_charter')) {
+            return;
+        }
+
+        $name = strtoupper(trim((string) ($payload['name'] ?? '')));
+        $phone = trim((string) ($payload['phone'] ?? ''));
+
+        if ($name === '' || $phone === '') {
+            return;
+        }
+
+        $customerPayload = [
+            'nama' => $name,
+            'no_hp' => $phone,
+            'alamat' => $this->nullable($payload['pickup_point'] ?? null),
+            'company' => $this->nullable($payload['company_name'] ?? null),
+        ];
+
+        $existingId = (int) (DB::table('customer_charter')->where('no_hp', $phone)->value('id') ?? 0);
+
+        if ($existingId > 0) {
+            $updatePayload = [
+                'nama' => $customerPayload['nama'],
+            ];
+
+            if ($customerPayload['alamat'] !== null) {
+                $updatePayload['alamat'] = $customerPayload['alamat'];
+            }
+
+            if ($customerPayload['company'] !== null) {
+                $updatePayload['company'] = $customerPayload['company'];
+            }
+
+            DB::table('customer_charter')->where('id', $existingId)->update($updatePayload);
+
+            return;
+        }
+
+        try {
+            DB::table('customer_charter')->insert(array_merge($customerPayload, ['created_at' => now()]));
+        } catch (QueryException) {
+            DB::table('customer_charter')->where('no_hp', $phone)->update([
+                'nama' => $customerPayload['nama'],
+                'alamat' => $customerPayload['alamat'],
+                'company' => $customerPayload['company'],
+            ]);
+        }
     }
 
     private function ok(array $data = [], int $status = 200): JsonResponse
