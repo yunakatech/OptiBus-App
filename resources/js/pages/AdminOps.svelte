@@ -341,6 +341,51 @@
         return 'Laporan';
     };
 
+    type TabGroup = {
+        title: string;
+        description: string;
+        tabs: Array<{
+            tab: TabName;
+            label: string;
+        }>;
+    };
+
+    const tabGroups: TabGroup[] = [
+        {
+            title: 'Master Data',
+            description: 'Referensi utama yang dipakai oleh jadwal dan operasional harian.',
+            tabs: [
+                { tab: 'routes', label: 'Rute Induk' },
+                { tab: 'schedules', label: 'Jadwal' },
+                { tab: 'segments', label: 'Segment' },
+                { tab: 'services', label: 'Tarif Bagasi' },
+                { tab: 'customers', label: 'Reguler' },
+            ],
+        },
+        {
+            title: 'Armada & Akses',
+            description: 'Kelola driver, kategori armada, unit, armada, dan akun pengguna.',
+            tabs: [
+                { tab: 'drivers', label: 'Driver' },
+                { tab: 'units', label: 'Kategori Armada' },
+                { tab: 'armadas', label: 'Armada' },
+                { tab: 'users', label: 'Users' },
+            ],
+        },
+        {
+            title: 'Audit & Rekap',
+            description: 'Pantau log aktivitas, pembatalan, dan ringkasan laporan.',
+            tabs: [
+                { tab: 'cancellations', label: 'Logs' },
+                { tab: 'reports', label: 'Laporan' },
+            ],
+        },
+    ];
+
+    const tabGroupFor = (tab: TabName) =>
+        tabGroups.find((group) => group.tabs.some((item) => item.tab === tab)) ??
+        tabGroups[0];
+
     let activeTab = $state<TabName>('routes');
     let activeMode = $state<ViewMode>('data');
     let lockedMenuView = $state(false);
@@ -2821,204 +2866,114 @@
     });
 </script>
 
-<AppHead title={tabTitle(activeTab)} />
+<AppHead title={`Admin Ops • ${tabTitle(activeTab)}`} />
 
 <div class="space-y-4 p-4">
     {#if !lockedMenuView}
-        <div class="grid gap-4 md:grid-cols-4 xl:grid-cols-8">
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Routes <Badge>{stats.routes}</Badge></CardTitle
-                    ></CardHeader
-                ></Card
-            >
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Schedules <Badge>{stats.schedules}</Badge></CardTitle
-                    ></CardHeader
-                ></Card
-            >
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Drivers <Badge>{stats.drivers}</Badge></CardTitle
-                    ></CardHeader
-                ></Card
-            >
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Luggage <Badge>{stats.luggage_services}</Badge
-                        ></CardTitle
-                    ></CardHeader
-                ></Card
-            >
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Segments <Badge>{stats.segments}</Badge></CardTitle
-                    ></CardHeader
-                ></Card
-            >
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Customers <Badge>{stats.customers}</Badge></CardTitle
-                    ></CardHeader
-                ></Card
-            >
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Armada <Badge>{stats.armadas}</Badge></CardTitle
-                    ></CardHeader
-                ></Card
-            >
-            <Card
-                ><CardHeader
-                    ><CardTitle class="text-sm font-medium"
-                        >Cancels <Badge>{stats.cancellations}</Badge></CardTitle
-                    ></CardHeader
-                ></Card
-            >
+        <div class="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(8,145,178,0.12))] shadow-sm">
+            <div class="grid gap-4 p-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:items-end">
+                <div class="space-y-4 text-slate-50">
+                    <div class="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                        Admin Operations
+                    </div>
+                    <div class="space-y-2">
+                        <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">
+                            {tabTitle(activeTab)}
+                        </h2>
+                        <p class="max-w-2xl text-sm leading-relaxed text-slate-200/80">
+                            {tabGroupFor(activeTab).description}
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-slate-100">
+                            {tabGroupFor(activeTab).title}
+                        </span>
+                        <span class="inline-flex items-center rounded-full border border-emerald-200/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-100">
+                            Kelola data inti dari satu panel
+                        </span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Rute</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.routes}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Jadwal</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.schedules}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Driver</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.drivers}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Bagasi</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.luggage_services}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Segment</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.segments}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Reguler</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.customers}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Armada</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.armadas}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50">
+                        <p class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70">Logs</p>
+                        <p class="mt-1 text-lg font-semibold">{stats.cancellations}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid gap-4 xl:grid-cols-3">
+            {#each tabGroups as group}
+                <Card class={group.tabs.some((item) => item.tab === activeTab) ? 'border-cyan-300/60 shadow-md shadow-cyan-950/5' : 'border-border/70 shadow-sm'}>
+                    <CardHeader class="space-y-1 pb-3">
+                        <CardTitle class="text-sm font-semibold">{group.title}</CardTitle>
+                        <p class="text-xs text-muted-foreground">{group.description}</p>
+                    </CardHeader>
+                    <CardContent class="flex flex-wrap gap-2 pt-0">
+                        {#each group.tabs as item (item.tab)}
+                            <Button
+                                type="button"
+                                variant={activeTab === item.tab ? 'default' : 'ghost'}
+                                class={activeTab === item.tab
+                                    ? 'shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'}
+                                onclick={() => void setTab(item.tab)}
+                            >
+                                {item.label}
+                            </Button>
+                        {/each}
+                    </CardContent>
+                </Card>
+            {/each}
         </div>
     {/if}
 
-    <Card>
-        <CardHeader>
-            <CardTitle>{tabTitle(activeTab)}</CardTitle>
+    <Card class="overflow-hidden border-border/70 shadow-sm">
+        <CardHeader class="space-y-2 border-b border-border/70 bg-muted/20">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="space-y-1">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {tabGroupFor(activeTab).title}
+                    </p>
+                    <CardTitle>{tabTitle(activeTab)}</CardTitle>
+                    <p class="max-w-3xl text-sm text-muted-foreground">
+                        {tabGroupFor(activeTab).description}
+                    </p>
+                </div>
+                <Badge variant="secondary" class="rounded-full px-3 py-1">
+                    {lockedMenuView ? 'Locked View' : 'Active'}
+                </Badge>
+            </div>
         </CardHeader>
         <CardContent class="space-y-4 pt-6">
-            {#if !lockedMenuView}
-                <div class="overflow-x-auto pb-1">
-                    <div
-                        class="flex min-w-max gap-2 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.035),rgba(148,163,184,0.05))] p-2 shadow-sm"
-                    >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'routes'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'routes'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('routes')}
-                            >Rute Induk</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'schedules'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'schedules'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('schedules')}
-                            >Jadwal</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'drivers'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'drivers'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('drivers')}
-                            >Driver</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'services'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'services'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('services')}
-                            >Tarif Bagasi</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'segments'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'segments'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('segments')}
-                            >Segment</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'customers'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'customers'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('customers')}
-                            >Reguler</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'units'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'units'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('units')}
-                            >Kategori Armada</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'armadas'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'armadas'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('armadas')}
-                            >Armada</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'users'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'users'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('users')}>Users</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'cancellations'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'cancellations'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('cancellations')}
-                            >Logs</Button
-                        >
-                        <Button
-                            type="button"
-                            variant={activeTab === 'reports'
-                                ? 'default'
-                                : 'ghost'}
-                            class={activeTab === 'reports'
-                                ? 'shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'}
-                            onclick={() => void setTab('reports')}
-                            >Laporan</Button
-                        >
-                    </div>
-                </div>
-            {/if}
             {#if busy}<p class="text-sm text-muted-foreground">
                     Memuat data...
                 </p>{/if}
