@@ -83,7 +83,19 @@
 
     let bagasiForm = $state({ id: 0, nama: '', no_hp: '', alamat: '', tipe: 'pengirim' });
     let charterForm = $state({ id: 0, nama: '', no_hp: '', alamat: '', company: '' });
-    let carterRouteForm = $state({ id: 0, name: '', origin: '', destination: '', duration: 'Regular', rental_price: 0, bop_price: 0, notes: '' });
+    const masterCarterServiceOptions = ['DROPOFF', 'FULLDAY', 'HALFDAY', '2D1N', '3D2N', '4D3N', '5D4N'];
+    const defaultMasterCarterService = masterCarterServiceOptions[0];
+    const newCarterRouteForm = () => ({
+        id: 0,
+        name: '',
+        origin: '',
+        destination: '',
+        duration: defaultMasterCarterService,
+        rental_price: 0,
+        bop_price: 0,
+        notes: '',
+    });
+    let carterRouteForm = $state(newCarterRouteForm());
 
     const masterTabs: TabName[] = ['customer-bagasi', 'customer-charter', 'rute-carter'];
     const masterTabTitle = (tab: TabName) => {
@@ -221,7 +233,7 @@ charterForm = { id: 0, nama: '', no_hp: '', alamat: '', company: '' };
 }
 
         if (activeTab === 'rute-carter') {
-carterRouteForm = { id: 0, name: '', origin: '', destination: '', duration: 'Regular', rental_price: 0, bop_price: 0, notes: '' };
+carterRouteForm = newCarterRouteForm();
 }
 
         activeMode = 'form';
@@ -301,7 +313,7 @@ carterRouteForm = { id: 0, name: '', origin: '', destination: '', duration: 'Reg
                 errorMessage: 'Gagal simpan rute carter.',
             });
             message = carterRouteForm.id ? 'Rute carter updated.' : 'Rute carter created.';
-            carterRouteForm = { id: 0, name: '', origin: '', destination: '', duration: 'Regular', rental_price: 0, bop_price: 0, notes: '' };
+            carterRouteForm = newCarterRouteForm();
             await loadCarterRoutes(carterRouteMeta.page);
             activeMode = 'data';
         } catch (e) {
@@ -527,7 +539,17 @@ return;
                         <Input placeholder="Nama rute carter" bind:value={carterRouteForm.name} required />
                         <Input placeholder="Origin" bind:value={carterRouteForm.origin} />
                         <Input placeholder="Destination" bind:value={carterRouteForm.destination} />
-                        <Input placeholder="Durasi (Regular/VIP/...)" bind:value={carterRouteForm.duration} />
+                        <div class="space-y-1.5">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Layanan</span>
+                            <select class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" bind:value={carterRouteForm.duration}>
+                                {#if carterRouteForm.duration && !masterCarterServiceOptions.includes(carterRouteForm.duration)}
+                                    <option value={carterRouteForm.duration}>{carterRouteForm.duration} (data lama)</option>
+                                {/if}
+                                {#each masterCarterServiceOptions as service (service)}
+                                    <option value={service}>{service}</option>
+                                {/each}
+                            </select>
+                        </div>
                         <Input
                             type="text"
                             inputmode="numeric"
@@ -549,7 +571,7 @@ return;
                         <Input class="md:col-span-2" placeholder="Catatan" bind:value={carterRouteForm.notes} />
                         <div class="flex gap-2">
                             <LoadingButton type="submit" loading={isSubmitActive('carter-route')} loadingText={carterRouteForm.id ? 'Menyimpan...' : 'Membuat...'}>{carterRouteForm.id ? 'Update' : 'Create'}</LoadingButton>
-                            <Button type="button" variant="outline" onclick={() => (carterRouteForm = { id: 0, name: '', origin: '', destination: '', duration: 'Regular', rental_price: 0, bop_price: 0, notes: '' })}>Reset</Button>
+                            <Button type="button" variant="outline" onclick={() => (carterRouteForm = newCarterRouteForm())}>Reset</Button>
                         </div>
                     </form>
                 {:else}
@@ -560,7 +582,7 @@ return;
                     </div>
                     <div class="overflow-x-auto rounded-md border">
                         <table class="min-w-full text-sm">
-                            <thead class="bg-muted/50"><tr><th class="px-3 py-2 text-left">Nama</th><th class="px-3 py-2 text-left">Asal/Tujuan</th><th class="px-3 py-2 text-left">Durasi</th><th class="px-3 py-2 text-left">Harga</th><th class="px-3 py-2 text-left">Aksi</th></tr></thead>
+                            <thead class="bg-muted/50"><tr><th class="px-3 py-2 text-left">Nama</th><th class="px-3 py-2 text-left">Asal/Tujuan</th><th class="px-3 py-2 text-left">Layanan</th><th class="px-3 py-2 text-left">Harga</th><th class="px-3 py-2 text-left">Aksi</th></tr></thead>
                             <tbody>
                                 {#each carterRoutes as row (row.id)}
                                     <tr class="border-t">
@@ -570,7 +592,7 @@ return;
                                         <td class="px-3 py-2">Sewa: {formatCurrencyDisplay(row.rental_price)}<br />BOP: {formatCurrencyDisplay(row.bop_price)}</td>
                                         <td class="space-x-2 px-3 py-2">
                                             <Button type="button" size="sm" variant="outline" onclick={() => {
- carterRouteForm = { id: row.id, name: row.name, origin: row.origin ?? '', destination: row.destination ?? '', duration: row.duration ?? 'Regular', rental_price: Number(row.rental_price), bop_price: Number(row.bop_price), notes: row.notes ?? '' }; setFormMode('form'); 
+ carterRouteForm = { id: row.id, name: row.name, origin: row.origin ?? '', destination: row.destination ?? '', duration: row.duration ?? defaultMasterCarterService, rental_price: Number(row.rental_price), bop_price: Number(row.bop_price), notes: row.notes ?? '' }; setFormMode('form'); 
 }}>Edit</Button>
                                             <Button type="button" size="sm" variant="outline" disabled={pendingDeleteKey === `/api/admin/charter-routes/${row.id}`} onclick={() => void removeRow(`/api/admin/charter-routes/${row.id}`, 'Rute carter deleted.')}>{pendingDeleteKey === `/api/admin/charter-routes/${row.id}` ? 'Menghapus...' : 'Delete'}</Button>
                                         </td>
