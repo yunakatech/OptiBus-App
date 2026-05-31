@@ -1322,6 +1322,31 @@ return 0;
         charterCustomerLookupOpen = false;
     };
 
+    const normalizeLookupText = (value: string | null | undefined) =>
+        (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+    const normalizeLookupPhone = (value: string | null | undefined) =>
+        (value ?? '').replace(/\D+/g, '');
+
+    const findExactCharterCustomer = (keyword: string, customers: CharterCustomer[]) => {
+        const text = normalizeLookupText(keyword);
+        const phone = normalizeLookupPhone(keyword);
+
+        if (phone.length >= 5) {
+            const phoneMatch = customers.find((customer) => normalizeLookupPhone(customer.no_hp) === phone);
+
+            if (phoneMatch) {
+                return phoneMatch;
+            }
+        }
+
+        if (text.length >= 3) {
+            return customers.find((customer) => normalizeLookupText(customer.nama) === text) ?? null;
+        }
+
+        return null;
+    };
+
     const searchCharterCustomers = async (keywordRaw: string) => {
         const keyword = keywordRaw.trim();
 
@@ -1337,7 +1362,17 @@ return 0;
 
         try {
             const r = await api('GET', `/api/admin/customer-charter?q=${encodeURIComponent(keyword)}&page=1&per_page=8`);
-            charterCustomerResults = (r.customers ?? []) as CharterCustomer[];
+            const customers = (r.customers ?? []) as CharterCustomer[];
+            const exactCustomer = findExactCharterCustomer(keyword, customers);
+
+            charterCustomerResults = customers;
+
+            if (exactCustomer) {
+                applyCharterCustomer(exactCustomer);
+
+                return;
+            }
+
             charterCustomerLookupOpen = true;
         } catch {
             charterCustomerResults = [];
