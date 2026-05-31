@@ -785,6 +785,7 @@ class AdminOpsApiController extends Controller
         $from = $validated['from'] ?? now()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
         $type = $validated['type'] ?? 'booking';
+        [$from, $to] = $this->normalizeDateRange($from, $to);
         [$page, $perPage] = $this->paginationParams($request);
         $rangeKey = implode(':', [
             $type,
@@ -814,9 +815,8 @@ class AdminOpsApiController extends Controller
     private function buildBookingReport(string $from, string $to, int $page, int $perPage): array
     {
         $baseQuery = DB::table('bookings as b')
-            ->where('b.status', '!=', 'canceled')
-            ->whereIn('b.pembayaran', ['Lunas', 'Redbus', 'Traveloka'])
             ->whereBetween('b.tanggal', [$from, $to]);
+        $this->applyNotCanceledFilter($baseQuery, 'b.status');
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -905,8 +905,8 @@ class AdminOpsApiController extends Controller
         }
 
         $baseQuery = DB::table('charters as c')
-            ->where('c.bop_status', 'done')
             ->whereBetween('c.start_date', [$from, $to]);
+        $this->applyActiveCharterReportFilter($baseQuery);
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -959,8 +959,8 @@ class AdminOpsApiController extends Controller
         [$createdFrom, $createdTo] = $this->dateTimeRange($from, $to);
 
         $baseQuery = DB::table('luggages as l')
-            ->where('l.status', '!=', 'canceled')
             ->whereBetween('l.created_at', [$createdFrom, $createdTo]);
+        $this->applyNotCanceledFilter($baseQuery, 'l.status');
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -1041,14 +1041,17 @@ class AdminOpsApiController extends Controller
 
         $from = $validated['from'] ?? now()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
+        [$from, $to] = $this->normalizeDateRange($from, $to);
         $filename = "bookings-report-{$from}-to-{$to}.csv";
 
-        $rows = DB::table('bookings')
+        $query = DB::table('bookings')
             ->whereBetween('tanggal', [$from, $to])
             ->orderBy('tanggal')
             ->orderBy('jam')
-            ->orderBy('rute')
-            ->get([
+            ->orderBy('rute');
+        $this->applyNotCanceledFilter($query, 'status');
+
+        $rows = $query->get([
                 'id',
                 'rute',
                 'tanggal',
@@ -1100,18 +1103,20 @@ class AdminOpsApiController extends Controller
 
         $from = $validated['from'] ?? now()->startOfMonth()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
+        [$from, $to] = $this->normalizeDateRange($from, $to);
         $type = $validated['type'] ?? 'reguler';
 
         $filename = "report-{$type}-{$from}-to-{$to}.csv";
 
         if ($type === 'bagasi') {
             [$createdFrom, $createdTo] = $this->dateTimeRange($from, $to);
-            $rows = DB::table('luggages as l')
+            $query = DB::table('luggages as l')
                 ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id')
-                ->where('l.status', '!=', 'canceled')
                 ->whereBetween('l.created_at', [$createdFrom, $createdTo])
-                ->orderByDesc('l.created_at')
-                ->get([
+                ->orderByDesc('l.created_at');
+            $this->applyNotCanceledFilter($query, 'l.status');
+
+            $rows = $query->get([
                     DB::raw('date(l.created_at) as tanggal'),
                     DB::raw('l.sender_name as name'),
                     DB::raw('l.receiver_name as phone'),
@@ -1136,11 +1141,12 @@ class AdminOpsApiController extends Controller
         }
 
         if ($type === 'charter') {
-            $rows = DB::table('charters')
-                ->where('bop_status', 'done')
+            $query = DB::table('charters')
                 ->whereBetween('start_date', [$from, $to])
-                ->orderByDesc('start_date')
-                ->get([
+                ->orderByDesc('start_date');
+            $this->applyActiveCharterReportFilter($query, '');
+
+            $rows = $query->get([
                     DB::raw('start_date as tanggal'),
                     'name',
                     'phone',
@@ -1166,18 +1172,18 @@ class AdminOpsApiController extends Controller
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
-        $rows = DB::table('bookings as b')
-            ->where('b.status', '!=', 'canceled')
-            ->whereIn('b.pembayaran', ['Lunas', 'Redbus', 'Traveloka'])
+        $query = DB::table('bookings as b')
             ->whereBetween('b.tanggal', [$from, $to])
-            ->orderByDesc('b.tanggal')
-            ->get([
+            ->orderByDesc('b.tanggal');
+        $this->applyNotCanceledFilter($query, 'b.status');
+
+        $rows = $query->get([
                 'b.tanggal',
                 'b.name',
                 'b.phone',
                 'b.rute',
                 DB::raw('COALESCE(b.discount, 0) as discount'),
-                DB::raw('(b.price - COALESCE(b.discount, 0)) as final_price'),
+                DB::raw('(COALESCE(b.price, 0) - COALESCE(b.discount, 0)) as final_price'),
             ]);
 
         return response()->streamDownload(function () use ($rows) {
@@ -4108,6 +4114,47 @@ class AdminOpsApiController extends Controller
             Carbon::createFromFormat('Y-m-d', $from)->startOfDay()->toDateTimeString(),
             Carbon::createFromFormat('Y-m-d', $to)->endOfDay()->toDateTimeString(),
         ];
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function normalizeDateRange(string $from, string $to): array
+    {
+        $fromDate = Carbon::createFromFormat('Y-m-d', $from)->startOfDay();
+        $toDate = Carbon::createFromFormat('Y-m-d', $to)->startOfDay();
+
+        if ($fromDate->gt($toDate)) {
+            [$fromDate, $toDate] = [$toDate, $fromDate];
+        }
+
+        return [$fromDate->toDateString(), $toDate->toDateString()];
+    }
+
+    private function applyNotCanceledFilter(Builder $query, string $column): void
+    {
+        $query->where(function (Builder $builder) use ($column) {
+            $builder
+                ->whereNull($column)
+                ->orWhereRaw('LOWER('.$column.') <> ?', ['canceled']);
+        });
+    }
+
+    private function applyActiveCharterReportFilter(Builder $query, string $alias = 'c'): void
+    {
+        $prefix = $alias !== '' ? $alias.'.' : '';
+
+        if ($this->chartersHasStatusColumn()) {
+            $this->applyNotCanceledFilter($query, $prefix.'status');
+
+            return;
+        }
+
+        $query->where(function (Builder $builder) use ($prefix) {
+            $builder
+                ->whereNull($prefix.'payment_status')
+                ->orWhereRaw('LOWER('.$prefix.'payment_status) <> ?', ['canceled']);
+        });
     }
 
     /**

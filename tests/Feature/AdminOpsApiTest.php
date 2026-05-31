@@ -282,6 +282,139 @@ class AdminOpsApiTest extends TestCase
         $this->deleteJson(route('api.admin.customers.delete', ['id' => $customerId]))->assertOk();
     }
 
+    public function test_reports_include_active_unpaid_booking_pending_charter_and_luggage(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $today = now()->toDateString();
+
+        DB::table('bookings')->insert([
+            [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $today,
+                'jam' => '08:00:00',
+                'unit' => 1,
+                'seat' => 'A1',
+                'name' => 'BOOKING LUNAS',
+                'phone' => '08110001',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Lunas',
+                'status' => 'active',
+                'price' => 120000,
+                'discount' => 10000,
+                'created_at' => now(),
+            ],
+            [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $today,
+                'jam' => '08:00:00',
+                'unit' => 1,
+                'seat' => 'A2',
+                'name' => 'BOOKING BELUM LUNAS',
+                'phone' => '08110002',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Belum Lunas',
+                'status' => 'active',
+                'price' => 100000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+            [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $today,
+                'jam' => '08:00:00',
+                'unit' => 1,
+                'seat' => 'A3',
+                'name' => 'BOOKING CANCEL',
+                'phone' => '08110003',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Lunas',
+                'status' => 'canceled',
+                'price' => 90000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $charterPayload = [
+            'name' => 'CARTER AKTIF',
+            'phone' => '08220001',
+            'start_date' => $today,
+            'end_date' => $today,
+            'departure_time' => '09:00:00',
+            'pickup_point' => 'PINRANG',
+            'drop_point' => 'MAKASSAR',
+            'price' => 350000,
+            'bop_status' => 'pending',
+            'payment_status' => 'Belum Bayar',
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('charters', 'status')) {
+            $charterPayload['status'] = 'active';
+        }
+        DB::table('charters')->insert($charterPayload);
+
+        $canceledCharterPayload = array_merge($charterPayload, [
+            'name' => 'CARTER CANCEL',
+            'phone' => '08220002',
+            'price' => 500000,
+            'payment_status' => 'Canceled',
+        ]);
+        if (Schema::hasColumn('charters', 'status')) {
+            $canceledCharterPayload['status'] = 'canceled';
+        }
+        DB::table('charters')->insert($canceledCharterPayload);
+
+        DB::table('luggages')->insert([
+            [
+                'sender_name' => 'BAGASI AKTIF',
+                'sender_phone' => '08330001',
+                'receiver_name' => 'PENERIMA',
+                'receiver_phone' => '08330002',
+                'quantity' => 1,
+                'price' => 50000,
+                'status' => 'Barang sudah diterima',
+                'payment_status' => 'Belum Bayar',
+                'created_at' => now(),
+            ],
+            [
+                'sender_name' => 'BAGASI CANCEL',
+                'sender_phone' => '08330003',
+                'receiver_name' => 'PENERIMA',
+                'receiver_phone' => '08330004',
+                'quantity' => 1,
+                'price' => 75000,
+                'status' => 'canceled',
+                'payment_status' => 'Lunas',
+                'created_at' => now(),
+            ],
+        ]);
+
+        $bookingReport = $this->getJson(route('api.admin.reports.summary', [
+            'from' => $today,
+            'to' => $today,
+            'type' => 'booking',
+        ]))->assertOk()->json();
+        $this->assertSame(2, $bookingReport['summary']['total_rows'] ?? null);
+        $this->assertEquals(210000.0, $bookingReport['summary']['revenue_total'] ?? 0);
+
+        $charterReport = $this->getJson(route('api.admin.reports.summary', [
+            'from' => $today,
+            'to' => $today,
+            'type' => 'charter',
+        ]))->assertOk()->json();
+        $this->assertSame(1, $charterReport['summary']['total_rows'] ?? null);
+        $this->assertEquals(350000.0, $charterReport['summary']['revenue_total'] ?? 0);
+
+        $luggageReport = $this->getJson(route('api.admin.reports.summary', [
+            'from' => $today,
+            'to' => $today,
+            'type' => 'bagasi',
+        ]))->assertOk()->json();
+        $this->assertSame(1, $luggageReport['summary']['total_rows'] ?? null);
+        $this->assertEquals(50000.0, $luggageReport['summary']['revenue_total'] ?? 0);
+    }
+
     public function test_driver_and_armada_revenue_include_luggage_revenue_in_totals(): void
     {
         $this->actingAs(User::factory()->create());
