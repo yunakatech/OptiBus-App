@@ -564,6 +564,10 @@ class BookingController extends Controller
 
                 $status = strtolower((string) $row->status);
                 $payment = strtolower((string) $row->pembayaran);
+                if ($this->shouldHideDeparturePassenger($status, $payment)) {
+                    continue;
+                }
+
                 $grouped[$tripKey]['total'] += 1;
                 if ($status === 'canceled') {
                     $grouped[$tripKey]['canceled'] += 1;
@@ -756,6 +760,12 @@ class BookingController extends Controller
                 );
             }
 
+            $grouped = array_filter(
+                $grouped,
+                static fn (array $item): bool => (int) ($item['total'] ?? 0) > 0
+                    || (int) ($item['assignment_id'] ?? 0) > 0,
+            );
+
             return array_values($grouped);
         });
     }
@@ -872,6 +882,12 @@ class BookingController extends Controller
             && $normalizedDriverName !== '-'
             && $normalizedArmadaNopol !== ''
             && $normalizedArmadaNopol !== '-';
+    }
+
+    private function shouldHideDeparturePassenger(string $status, string $payment): bool
+    {
+        return strtolower(trim($status)) === 'canceled'
+            && strtolower(trim($payment)) === 'belum lunas';
     }
 
     /**

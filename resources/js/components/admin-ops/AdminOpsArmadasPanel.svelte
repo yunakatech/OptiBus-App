@@ -63,6 +63,8 @@
         removeArmada: (id: number) => void | Promise<void>;
         goBackToData: () => void;
     } = $props();
+
+    let armadaFiltersExpanded = $state(false);
 </script>
 
 {#if activeMode === 'view'}
@@ -104,7 +106,19 @@
         <Button type="button" variant="outline" onclick={goBackToData}>Kembali</Button>
     {/if}
 {:else}
-    <div class="flex gap-2">
+    <div class="flex justify-end md:hidden">
+        <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            class="h-8 rounded-lg text-xs"
+            onclick={() => (armadaFiltersExpanded = !armadaFiltersExpanded)}
+            aria-expanded={armadaFiltersExpanded}
+        >
+            {armadaFiltersExpanded ? 'Sembunyikan Filter' : 'Tampilkan Filter'}
+        </Button>
+    </div>
+    <div class={armadaFiltersExpanded ? 'flex flex-col gap-2 md:flex-row' : 'hidden md:flex md:gap-2'}>
         <Input placeholder="Cari merk / nopol / kategori / platform GPS" bind:value={armadaSearch} />
         <Button type="button" onclick={() => void loadArmadas()}>Search</Button>
     </div>

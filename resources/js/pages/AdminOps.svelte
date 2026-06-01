@@ -623,6 +623,7 @@
     });
 
     let customerSearch = $state('');
+    let customerFiltersExpanded = $state(false);
     let driverUnitSearch = $state('');
     let armadaSearch = $state('');
     let armadaCategories = $state<string[]>([]);
@@ -634,6 +635,7 @@
     let layoutTemplateChoice = $state('');
     let armadaDetail = $state<ArmadaRow | null>(null);
     let userSearch = $state('');
+    let userFiltersExpanded = $state(false);
     const today = new Date().toISOString().slice(0, 10);
     let reportFrom = $state(today);
     let reportTo = $state(today);
@@ -5596,7 +5598,25 @@
                                     </LoadingButton>
                                 </div>
                             </div>
-                            <div class="flex flex-col gap-2 md:flex-row">
+                            <div class="flex justify-end md:hidden">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    class="h-8 rounded-lg text-xs"
+                                    onclick={() =>
+                                        (customerFiltersExpanded =
+                                            !customerFiltersExpanded)}
+                                    aria-expanded={customerFiltersExpanded}
+                                >
+                                    {customerFiltersExpanded
+                                        ? 'Sembunyikan Filter'
+                                        : 'Tampilkan Filter'}
+                                </Button>
+                            </div>
+                            <div class={customerFiltersExpanded
+                                ? 'flex flex-col gap-2 md:flex-row'
+                                : 'hidden md:flex md:flex-row'}>
                                 <Input
                                     placeholder="Cari nama, phone, atau pickup point"
                                     bind:value={customerSearch}
@@ -7478,7 +7498,25 @@
                                     {users.length} akun
                                 </Badge>
                             </div>
-                            <div class="flex flex-col gap-2 md:flex-row">
+                            <div class="flex justify-end md:hidden">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    class="h-8 rounded-lg text-xs"
+                                    onclick={() =>
+                                        (userFiltersExpanded =
+                                            !userFiltersExpanded)}
+                                    aria-expanded={userFiltersExpanded}
+                                >
+                                    {userFiltersExpanded
+                                        ? 'Sembunyikan Filter'
+                                        : 'Tampilkan Filter'}
+                                </Button>
+                            </div>
+                            <div class={userFiltersExpanded
+                                ? 'flex flex-col gap-2 md:flex-row'
+                                : 'hidden md:flex md:flex-row'}>
                                 <Input
                                     placeholder="Cari nama atau email"
                                     bind:value={userSearch}

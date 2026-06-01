@@ -80,6 +80,7 @@
     let bagasiQ = $state('');
     let charterQ = $state('');
     let carterRouteQ = $state('');
+    let masterFiltersExpanded = $state(false);
 
     let bagasiForm = $state({ id: 0, nama: '', no_hp: '', alamat: '', tipe: 'pengirim' });
     let charterForm = $state({ id: 0, nama: '', no_hp: '', alamat: '', company: '' });
@@ -443,7 +444,24 @@ return;
                         <div><LoadingButton type="submit" loading={isSubmitActive('bagasi-customer')} loadingText={bagasiForm.id ? 'Menyimpan...' : 'Membuat...'}>{bagasiForm.id ? 'Update' : 'Create'}</LoadingButton></div>
                     </form>
                 {:else}
-                    <div class="flex flex-wrap gap-2">
+                    <div class="flex justify-end md:hidden">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="h-8 rounded-lg text-xs"
+                            onclick={() =>
+                                (masterFiltersExpanded = !masterFiltersExpanded)}
+                            aria-expanded={masterFiltersExpanded}
+                        >
+                            {masterFiltersExpanded
+                                ? 'Sembunyikan Filter'
+                                : 'Tampilkan Filter'}
+                        </Button>
+                    </div>
+                    <div class={masterFiltersExpanded
+                        ? 'mt-2 flex flex-wrap gap-2'
+                        : 'mt-2 hidden md:flex md:flex-wrap md:gap-2'}>
                         <Input placeholder="Cari nama/no hp/alamat" bind:value={bagasiQ} />
                         <Button type="button" onclick={() => void loadBagasiCustomers(1)}>Search</Button>
                         <Button type="button" variant="outline" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
@@ -493,7 +511,24 @@ return;
                         <div><LoadingButton type="submit" loading={isSubmitActive('charter-customer')} loadingText={charterForm.id ? 'Menyimpan...' : 'Membuat...'}>{charterForm.id ? 'Update' : 'Create'}</LoadingButton></div>
                     </form>
                 {:else}
-                    <div class="flex flex-wrap gap-2">
+                    <div class="flex justify-end md:hidden">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="h-8 rounded-lg text-xs"
+                            onclick={() =>
+                                (masterFiltersExpanded = !masterFiltersExpanded)}
+                            aria-expanded={masterFiltersExpanded}
+                        >
+                            {masterFiltersExpanded
+                                ? 'Sembunyikan Filter'
+                                : 'Tampilkan Filter'}
+                        </Button>
+                    </div>
+                    <div class={masterFiltersExpanded
+                        ? 'mt-2 flex flex-wrap gap-2'
+                        : 'mt-2 hidden md:flex md:flex-wrap md:gap-2'}>
                         <Input placeholder="Cari nama/no hp/company" bind:value={charterQ} />
                         <Button type="button" onclick={() => void loadCharterCustomers(1)}>Search</Button>
                         <Button type="button" variant="outline" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
@@ -676,14 +711,33 @@ return;
                                         <p class="max-w-2xl text-sm text-muted-foreground">Kelola rute, layanan, harga rental, dan BOP agar form Carter bisa auto-fill dengan cepat dan konsisten.</p>
                                     </div>
                                 </div>
-                                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                                    <div class="space-y-1">
-                                        <label class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" for="carter-route-search">Cari preset</label>
-                                        <Input id="carter-route-search" class="h-11 w-full rounded-2xl bg-background/90" placeholder="Cari nama, asal, atau tujuan" bind:value={carterRouteQ} />
+                                <div class="space-y-2">
+                                    <div class="flex justify-end md:hidden">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-8 rounded-lg text-xs"
+                                            onclick={() =>
+                                                (masterFiltersExpanded = !masterFiltersExpanded)}
+                                            aria-expanded={masterFiltersExpanded}
+                                        >
+                                            {masterFiltersExpanded
+                                                ? 'Sembunyikan Filter'
+                                                : 'Tampilkan Filter'}
+                                        </Button>
                                     </div>
-                                    <div class="flex flex-wrap gap-2 sm:justify-end">
-                                        <Button type="button" class="h-11 rounded-2xl px-4" onclick={() => void loadCarterRoutes(1)}>Cari</Button>
-                                        <Button type="button" variant="outline" class="h-11 rounded-2xl px-4" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
+                                    <div class={masterFiltersExpanded
+                                        ? 'grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end'
+                                        : 'hidden md:grid md:gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end'}>
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" for="carter-route-search">Cari preset</label>
+                                            <Input id="carter-route-search" class="h-11 w-full rounded-2xl bg-background/90" placeholder="Cari nama, asal, atau tujuan" bind:value={carterRouteQ} />
+                                        </div>
+                                        <div class="flex flex-wrap gap-2 sm:justify-end">
+                                            <Button type="button" class="h-11 rounded-2xl px-4" onclick={() => void loadCarterRoutes(1)}>Cari</Button>
+                                            <Button type="button" variant="outline" class="h-11 rounded-2xl px-4" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

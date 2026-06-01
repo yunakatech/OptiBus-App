@@ -250,6 +250,8 @@
         loadReport: (page?: number) => void | Promise<void>;
         jumpReportPage: (page: number) => void | Promise<void>;
     } = $props();
+
+    let reportFiltersExpanded = $state(false);
 </script>
 
 <div
@@ -310,8 +312,25 @@
                 </div>
             </div>
 
+            <div class="flex justify-end md:hidden">
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    class="h-8 rounded-lg text-xs"
+                    onclick={() =>
+                        (reportFiltersExpanded = !reportFiltersExpanded)}
+                    aria-expanded={reportFiltersExpanded}
+                >
+                    {reportFiltersExpanded
+                        ? 'Sembunyikan Filter'
+                        : 'Tampilkan Filter'}
+                </Button>
+            </div>
             <div
-                class={`grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-[190px_minmax(180px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`}
+                class={reportFiltersExpanded
+                    ? `grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-[190px_minmax(180px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`
+                    : `hidden rounded-[24px] border p-3 md:grid md:grid-cols-2 xl:grid-cols-[190px_minmax(180px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`}
             >
                 <label class="flex flex-col gap-1.5">
                     <span

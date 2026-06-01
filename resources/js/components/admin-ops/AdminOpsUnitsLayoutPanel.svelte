@@ -79,6 +79,8 @@
         saveUnitLayout: () => void | Promise<void>;
         goBackToData: () => void;
     } = $props();
+
+    let layoutFiltersExpanded = $state(false);
 </script>
 
 {#if layoutUnit}
@@ -157,7 +159,25 @@
                         <h4 class="text-sm font-semibold">Duplikasi Dari Kategori Lain</h4>
                         <p class="text-xs text-muted-foreground">Pilih kategori/model lain jika ingin menjadikannya template awal tanpa membuka popup terpisah.</p>
                     </div>
-                    <div class="mt-3 space-y-2">
+                    <div class="mt-3 flex justify-end md:hidden">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="h-8 rounded-lg text-xs"
+                            onclick={() =>
+                                (layoutFiltersExpanded =
+                                    !layoutFiltersExpanded)}
+                            aria-expanded={layoutFiltersExpanded}
+                        >
+                            {layoutFiltersExpanded
+                                ? 'Sembunyikan Filter'
+                                : 'Tampilkan Filter'}
+                        </Button>
+                    </div>
+                    <div class={layoutFiltersExpanded
+                        ? 'mt-3 space-y-2'
+                        : 'mt-3 hidden space-y-2 md:block'}>
                         <Input placeholder="Cari kategori/model referensi" bind:value={layoutTemplateSearch} />
                         <select class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" bind:value={layoutTemplateChoice}>
                             <option value="">Pilih template layout referensi</option>
