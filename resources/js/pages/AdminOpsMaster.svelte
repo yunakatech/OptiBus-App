@@ -212,6 +212,7 @@ await loadCarterRoutes(carterRouteMeta.page);
     const setTab = async (tab: TabName) => {
         activeTab = tab;
         activeMode = 'data';
+        masterFiltersExpanded = false;
         syncTabQuery(tab);
         message = '';
         error = '';

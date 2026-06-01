@@ -1810,6 +1810,7 @@ await loadAssignments(assignmentMeta.page);
     const setTab = async (tab: TabName) => {
         activeTab = tab;
         activeMode = 'data';
+        mobileFiltersExpanded = false;
 
         if (tab === 'charters') {
             charterScope = 'active';

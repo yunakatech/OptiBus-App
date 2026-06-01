@@ -448,6 +448,29 @@
     let groupEditPickupPoint = $state('');
     let groupEditPayment = $state('Belum Lunas');
     let groupEditDiscount = $state<string | number>('');
+
+    let lastBookingListPageMode: boolean | null = null;
+    let lastBookingListDetailMode: boolean | null = null;
+
+    $effect(() => {
+        if (
+            lastBookingListPageMode === null &&
+            lastBookingListDetailMode === null
+        ) {
+            lastBookingListPageMode = listOnly;
+            lastBookingListDetailMode = groupDetailPage;
+            return;
+        }
+
+        if (
+            lastBookingListPageMode !== listOnly ||
+            lastBookingListDetailMode !== groupDetailPage
+        ) {
+            bookingListFiltersExpanded = false;
+            lastBookingListPageMode = listOnly;
+            lastBookingListDetailMode = groupDetailPage;
+        }
+    });
     let groupEditRoute = $state('');
     let groupEditDate = $state('');
     let groupEditJam = $state('');
