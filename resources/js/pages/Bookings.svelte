@@ -2006,9 +2006,9 @@
             (row) => !isCanceledBooking(row.status),
         ));
     const historyGroupBookings = () =>
-        visibleGroupBookingRows((openGroupDetail?.bookings ?? []).filter(
-            (row) => isCanceledBooking(row.status),
-        ));
+        (openGroupDetail?.bookings ?? []).filter((row) =>
+            isCanceledBooking(row.status),
+        );
     const visibleGroupBookings = () => {
         if (groupPassengerTab === 'history') {
             return historyGroupBookings();
