@@ -759,7 +759,12 @@
                                     <Badge variant="secondary">{item.total_bookings} booking</Badge>
                                 </div>
                                 <div class="flex items-end justify-between gap-2">
-                                    <p class="text-xs text-muted-foreground">{item.rute}</p>
+                                    <div class="min-w-0 space-y-0.5">
+                                        <p class="truncate text-xs text-muted-foreground">{item.rute}</p>
+                                        <p class="truncate text-[11px] text-muted-foreground">
+                                            Driver: {item.driver_name || '-'}
+                                        </p>
+                                    </div>
                                     <Button
                                         type="button"
                                         size="sm"
