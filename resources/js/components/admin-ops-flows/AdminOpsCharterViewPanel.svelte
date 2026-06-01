@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Printer } from 'lucide-svelte';
+    import { Copy, Printer } from 'lucide-svelte';
     import { Button } from '@/components/ui/button';
 
     type Charter = {
@@ -34,6 +34,7 @@
         charterStatusLabel,
         charterPaymentClass,
         openCharterInvoice,
+        copyCharterData,
         charterCanMarkDone,
         markCharterAsDone,
         charterCanEdit,
@@ -50,6 +51,7 @@
         charterStatusLabel: (status: string | null | undefined) => string;
         charterPaymentClass: (status: string | null | undefined) => string;
         openCharterInvoice: (id: number) => void;
+        copyCharterData: (row: Charter) => void | Promise<void>;
         charterCanMarkDone: (row: Charter | null | undefined) => boolean;
         markCharterAsDone: (row: Charter) => void | Promise<void>;
         charterCanEdit: (row: Charter | null | undefined) => boolean;
@@ -100,6 +102,19 @@
                 </div>
 
                 <div class="relative z-10 flex flex-wrap gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+                        onclick={() => {
+                            if (charterViewData) {
+                                void copyCharterData(charterViewData);
+                            }
+                        }}
+                    >
+                        <Copy class="mr-2 h-4 w-4" />
+                        Copy Data
+                    </Button>
                     <Button
                         type="button"
                         variant="outline"

@@ -2110,6 +2110,80 @@ return;
         window.open(`/luggages/${id}/print?auto_print=1`, '_blank', 'noopener,noreferrer');
     };
 
+    const copyText = async (text: string) => {
+        if (
+            typeof navigator !== 'undefined' &&
+            navigator.clipboard &&
+            typeof navigator.clipboard.writeText === 'function' &&
+            window.isSecureContext
+        ) {
+            await navigator.clipboard.writeText(text);
+
+            return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', 'true');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        textarea.style.pointerEvents = 'none';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        if (!copied) {
+            throw new Error('copy_failed');
+        }
+    };
+
+    const charterCopyText = (row: Charter) => {
+        const schedule = [
+            row.start_date || '-',
+            row.end_date || '-',
+            row.departure_time ? String(row.departure_time).slice(0, 5) : '--:--',
+        ].join(' • ');
+        const totalPrice = formatCurrencyId(row.price ?? 0);
+        const bopPrice = formatCurrencyId(row.bop_price ?? 0);
+        const downPayment = formatCurrencyId(row.down_payment ?? 0);
+        const remaining = formatCurrencyId(charterPaymentRemaining(row));
+
+        return [
+            'DATA CARTER',
+            '',
+            `Nama: ${row.name || '-'}`,
+            `Company: ${row.company_name || '-'}`,
+            `Kontak: ${row.phone || '-'}`,
+            `Jadwal: ${schedule}`,
+            `Rute: ${row.pickup_point || '-'} → ${row.drop_point || '-'}`,
+            `Driver: ${row.driver_name || '-'}`,
+            `Armada: ${row.armada_nopol || row.unit_nopol || '-'}`,
+            `Layanan: ${row.layanan || defaultCharterService}`,
+            `Harga: ${totalPrice}`,
+            `BOP: ${bopPrice}`,
+            `DP: ${downPayment}`,
+            `Sisa: ${remaining}`,
+            `Status Bayar: ${row.payment_status || '-'}`,
+            `Status Perjalanan: ${charterStatusLabel(row.status)}`,
+        ].join('\n');
+    };
+
+    const copyCharterData = async (row: Charter) => {
+        if (!row || row.id <= 0) {
+            return;
+        }
+
+        try {
+            await copyText(charterCopyText(row));
+            message = 'Data charter berhasil disalin.';
+            error = '';
+        } catch {
+            error = 'Gagal menyalin data charter.';
+        }
+    };
+
     const openCharterInvoice = (id: number) => {
         if (id <= 0) {
 return;
@@ -2554,6 +2628,7 @@ params.set('to', filterTo);
                             charterStatusLabel={charterStatusLabel}
                             charterPaymentClass={charterPaymentClass}
                             openCharterInvoice={openCharterInvoice}
+                            copyCharterData={copyCharterData}
                             charterCanMarkDone={charterCanMarkDone}
                             markCharterAsDone={markCharterAsDone}
                             charterCanEdit={charterCanEdit}
@@ -2710,6 +2785,9 @@ params.set('to', filterTo);
                                                     <DropdownMenuContent align="end" class="w-48">
                                                         <DropdownMenuItem onclick={() => void openCharterView(row.id)}>
                                                             View Detail
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onclick={() => void copyCharterData(row)}>
+                                                            Copy Data
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem onclick={() => openCharterInvoice(row.id)}>
                                                             Cetak Invoice
