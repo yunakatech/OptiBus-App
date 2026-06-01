@@ -564,22 +564,22 @@ class BookingController extends Controller
 
                 $status = strtolower((string) $row->status);
                 $payment = strtolower((string) $row->pembayaran);
-                if ($this->shouldHideDeparturePassenger($status, $payment)) {
-                    continue;
-                }
+                $hideFromDepartureTotals = $this->shouldHideDeparturePassenger($status, $payment);
 
-                $grouped[$tripKey]['total'] += 1;
-                if ($status === 'canceled') {
-                    $grouped[$tripKey]['canceled'] += 1;
-                } else {
-                    $grouped[$tripKey]['active'] += 1;
-                }
-                if ($payment === 'lunas') {
-                    $grouped[$tripKey]['lunas'] += 1;
-                } elseif ($payment === 'refund') {
-                    $grouped[$tripKey]['refund'] += 1;
-                } else {
-                    $grouped[$tripKey]['belum_lunas'] += 1;
+                if (! $hideFromDepartureTotals) {
+                    $grouped[$tripKey]['total'] += 1;
+                    if ($status === 'canceled') {
+                        $grouped[$tripKey]['canceled'] += 1;
+                    } else {
+                        $grouped[$tripKey]['active'] += 1;
+                    }
+                    if ($payment === 'lunas') {
+                        $grouped[$tripKey]['lunas'] += 1;
+                    } elseif ($payment === 'refund') {
+                        $grouped[$tripKey]['refund'] += 1;
+                    } else {
+                        $grouped[$tripKey]['belum_lunas'] += 1;
+                    }
                 }
 
                 $grouped[$tripKey]['bookings'][] = [

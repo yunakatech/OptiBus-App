@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Link, page } from '@inertiajs/svelte';
+    import { page, router } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import BusFront from 'lucide-svelte/icons/bus-front';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
@@ -55,6 +55,7 @@
     const navCount = $derived(Math.max(visibleMainItems.length, 1));
     let rememberedActiveHref = $state<string>(toUrl(dashboard()));
     let isCompact = $state(false);
+    let pendingHref = $state('');
     let lastScrollY = 0;
     let scrollFrameRequested = false;
 
@@ -76,6 +77,35 @@
         if (typeof window !== 'undefined') {
             window.localStorage.setItem(ACTIVE_NAV_STORAGE_KEY, href);
         }
+    }
+
+    function prepareNavPress(href: string): void {
+        markActive(href);
+        isCompact = false;
+    }
+
+    function visitNavItem(event: MouseEvent, href: string): void {
+        event.preventDefault();
+        prepareNavPress(href);
+
+        if (url.isCurrentUrl(href, url.currentUrl)) {
+            return;
+        }
+
+        if (pendingHref === href) {
+            return;
+        }
+
+        pendingHref = href;
+        router.visit(href, {
+            preserveScroll: false,
+            preserveState: false,
+            onFinish: () => {
+                if (pendingHref === href) {
+                    pendingHref = '';
+                }
+            },
+        });
     }
 
     function isNavItemActive(itemHref: NonNullable<NavItem['href']>): boolean {
@@ -187,13 +217,16 @@ return;
 
             <ul class="relative z-10 grid" style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}>
                 {#each visibleMainItems as item (toUrl(item.href))}
+                    {@const itemHref = toUrl(item.href)}
                     <li>
-                        <Link
-                            href={toUrl(item.href)}
+                        <a
+                            href={itemHref}
                             aria-label={item.title}
                             title={item.title}
-                            onclick={() => markActive(toUrl(item.href))}
-                            class="group flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.97] {isCompact ? 'h-10 rounded-xl' : 'h-14 rounded-2xl'} {isNavItemActive(
+                            aria-busy={pendingHref === itemHref}
+                            onpointerdown={() => prepareNavPress(itemHref)}
+                            onclick={(event) => visitNavItem(event, itemHref)}
+                            class="group flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {isCompact ? 'h-10 rounded-xl' : 'h-14 rounded-2xl'} {isNavItemActive(
                                 item.href,
                             )
                                 ? 'text-primary'
@@ -208,7 +241,7 @@ return;
                                         : 'group-hover:-translate-y-0.5'}"
                                 />
                             {/if}
-                        </Link>
+                        </a>
                     </li>
                 {/each}
             </ul>
