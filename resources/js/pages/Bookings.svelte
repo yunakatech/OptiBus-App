@@ -345,6 +345,7 @@
     let bookingListRoute = $state('all');
     let bookingListDate = $state('');
     let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>('all');
+    let bookingListFiltersExpanded = $state(false);
     let emptyDepartureOpen = $state(false);
     let emptyDepartureDate = $state(today);
     let emptyDepartureRoute = $state('');
@@ -430,6 +431,7 @@
     let groupRiturFilter = $state<
         'all' | 'same_route' | 'same_date' | 'same_route_date'
     >('all');
+    let groupRiturFiltersExpanded = $state(false);
     let groupMappedRiturs = $state<GroupRiturRow[]>([]);
     let groupAvailableRiturs = $state<GroupRiturRow[]>([]);
     let groupEditModalOpen = $state(false);
@@ -562,6 +564,12 @@
         String(pembayaran || '')
             .trim()
             .toLowerCase() === 'belum lunas';
+    const isHiddenCanceledUnpaidBooking = (
+        row: BookingGroup['bookings'][number],
+    ) => isCanceledBooking(row.status) && isBelumLunasPayment(row.pembayaran);
+    const visibleGroupBookingRows = (
+        rows: BookingGroup['bookings'],
+    ) => rows.filter((row) => !isHiddenCanceledUnpaidBooking(row));
     const isSettledPayment = (pembayaran: string) =>
         isLunasPayment(pembayaran) || isRefundPayment(pembayaran);
     const canRefundCanceledBooking = (row: BookingGroup['bookings'][number]) =>
@@ -569,7 +577,9 @@
         !isRefundPayment(row.pembayaran) &&
         !isBelumLunasPayment(row.pembayaran);
     const payableBookingRows = (group: BookingGroup) =>
-        group.bookings.filter((row) => !isSettledPayment(row.pembayaran));
+        visibleGroupBookingRows(group.bookings).filter(
+            (row) => !isSettledPayment(row.pembayaran),
+        );
 
     const bookedSeats = () =>
         Object.entries(seatDetailsMap)
@@ -1969,13 +1979,13 @@
     const formatGroupTimeLabel = (jam: string) =>
         normalizeJamToken(jam) || '--:--';
     const activeGroupBookings = () =>
-        (openGroupDetail?.bookings ?? []).filter(
+        visibleGroupBookingRows((openGroupDetail?.bookings ?? []).filter(
             (row) => !isCanceledBooking(row.status),
-        );
+        ));
     const historyGroupBookings = () =>
-        (openGroupDetail?.bookings ?? []).filter(
+        visibleGroupBookingRows((openGroupDetail?.bookings ?? []).filter(
             (row) => isCanceledBooking(row.status),
-        );
+        ));
     const visibleGroupBookings = () => {
         if (groupPassengerTab === 'history') {
             return historyGroupBookings();
@@ -2485,18 +2495,19 @@
     };
 
     const recalculateGroupSummary = (group: BookingGroup): BookingGroup => {
-        const total = group.bookings.length;
-        const active = group.bookings.filter(
+        const visibleRows = visibleGroupBookingRows(group.bookings);
+        const total = visibleRows.length;
+        const active = visibleRows.filter(
             (row) => String(row.status || '').toLowerCase() !== 'canceled',
         ).length;
         const canceled = total - active;
-        const lunas = group.bookings.filter((row) =>
+        const lunas = visibleRows.filter((row) =>
             isLunasPayment(row.pembayaran),
         ).length;
-        const refund = group.bookings.filter((row) =>
+        const refund = visibleRows.filter((row) =>
             isRefundPayment(row.pembayaran),
         ).length;
-        const belumLunas = group.bookings.filter(
+        const belumLunas = visibleRows.filter(
             (row) => !isSettledPayment(row.pembayaran),
         ).length;
 
@@ -6869,106 +6880,126 @@
                                         keberangkatan lain.
                                     </p>
                                 </div>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    class="rounded-full"
-                                    onclick={() =>
-                                        void loadGroupRiturs(
-                                            openGroupDetail!,
-                                            groupRiturSearch,
-                                        )}
-                                    disabled={loadingGroupRiturs}
-                                >
-                                    {loadingGroupRiturs
-                                        ? 'Memuat...'
-                                        : 'Refresh'}
-                                </Button>
-                            </div>
-
-                            <div class="mb-3">
-                                <div class="relative">
-                                    <Search
-                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                    />
-                                    <Input
-                                        bind:value={groupRiturSearch}
-                                        class="h-10 rounded-xl !pl-9 text-sm"
-                                        placeholder="Cari resi, pengirim, penerima, nomor HP, atau rute"
-                                        oninput={queueGroupRiturSearch}
-                                    />
+                                <div class="flex items-center gap-2">
+                                    <div class="flex md:hidden">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-8 rounded-full px-3 text-xs"
+                                            onclick={() =>
+                                                (groupRiturFiltersExpanded =
+                                                    !groupRiturFiltersExpanded)}
+                                            aria-expanded={groupRiturFiltersExpanded}
+                                        >
+                                            {groupRiturFiltersExpanded
+                                                ? 'Sembunyikan Filter'
+                                                : 'Tampilkan Filter'}
+                                        </Button>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        class="rounded-full"
+                                        onclick={() =>
+                                            void loadGroupRiturs(
+                                                openGroupDetail!,
+                                                groupRiturSearch,
+                                            )}
+                                        disabled={loadingGroupRiturs}
+                                    >
+                                        {loadingGroupRiturs
+                                            ? 'Memuat...'
+                                            : 'Refresh'}
+                                    </Button>
                                 </div>
                             </div>
 
-                            <div class="mb-3 flex flex-wrap gap-2">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={groupRiturFilter === 'all'
-                                        ? 'default'
-                                        : 'outline'}
-                                    class="rounded-full"
-                                    onclick={() => (groupRiturFilter = 'all')}
-                                >
-                                    Semua
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={groupRiturFilter === 'same_route'
-                                        ? 'default'
-                                        : 'outline'}
-                                    class="rounded-full"
-                                    onclick={() =>
-                                        (groupRiturFilter = 'same_route')}
-                                >
-                                    Rute Sama
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={groupRiturFilter === 'same_date'
-                                        ? 'default'
-                                        : 'outline'}
-                                    class="rounded-full"
-                                    onclick={() =>
-                                        (groupRiturFilter = 'same_date')}
-                                >
-                                    Tanggal Sama
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={groupRiturFilter ===
-                                    'same_route_date'
-                                        ? 'default'
-                                        : 'outline'}
-                                    class="rounded-full"
-                                    onclick={() =>
-                                        (groupRiturFilter = 'same_route_date')}
-                                >
-                                    Rute + Tanggal
-                                </Button>
-                            </div>
+                            <div class={groupRiturFiltersExpanded ? 'block' : 'hidden md:block'}>
+                                <div class="mb-3">
+                                    <div class="relative">
+                                        <Search
+                                            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        />
+                                        <Input
+                                            bind:value={groupRiturSearch}
+                                            class="h-10 rounded-xl !pl-9 text-sm"
+                                            placeholder="Cari resi, pengirim, penerima, nomor HP, atau rute"
+                                            oninput={queueGroupRiturSearch}
+                                        />
+                                    </div>
+                                </div>
 
-                            <div
-                                class="mb-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
-                            >
-                                <Badge
-                                    variant="secondary"
-                                    class="rounded-full px-2.5 py-0.5 text-[11px]"
+                                <div class="mb-3 flex flex-wrap gap-2">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={groupRiturFilter === 'all'
+                                            ? 'default'
+                                            : 'outline'}
+                                        class="rounded-full"
+                                        onclick={() => (groupRiturFilter = 'all')}
+                                    >
+                                        Semua
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={groupRiturFilter === 'same_route'
+                                            ? 'default'
+                                            : 'outline'}
+                                        class="rounded-full"
+                                        onclick={() =>
+                                            (groupRiturFilter = 'same_route')}
+                                    >
+                                        Rute Sama
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={groupRiturFilter === 'same_date'
+                                            ? 'default'
+                                            : 'outline'}
+                                        class="rounded-full"
+                                        onclick={() =>
+                                            (groupRiturFilter = 'same_date')}
+                                    >
+                                        Tanggal Sama
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={groupRiturFilter ===
+                                        'same_route_date'
+                                            ? 'default'
+                                            : 'outline'}
+                                        class="rounded-full"
+                                        onclick={() =>
+                                            (groupRiturFilter = 'same_route_date')}
+                                    >
+                                        Rute + Tanggal
+                                    </Button>
+                                </div>
+
+                                <div
+                                    class="mb-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
                                 >
-                                    Rute {openGroupDetail.rute}
-                                </Badge>
-                                <Badge
-                                    variant="secondary"
-                                    class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                >
-                                    Tanggal {formatGroupDateLabel(
-                                        openGroupDetail.tanggal,
-                                    )}
-                                </Badge>
+                                    <Badge
+                                        variant="secondary"
+                                        class="rounded-full px-2.5 py-0.5 text-[11px]"
+                                    >
+                                        Rute {openGroupDetail.rute}
+                                    </Badge>
+                                    <Badge
+                                        variant="secondary"
+                                        class="rounded-full px-2.5 py-0.5 text-[11px]"
+                                    >
+                                        Tanggal {formatGroupDateLabel(
+                                            openGroupDetail.tanggal,
+                                        )}
+                                    </Badge>
+                                </div>
                             </div>
 
                             {#if filteredAvailableRiturs().length === 0}
@@ -7826,57 +7857,77 @@
                                 </Button>
                             </div>
                         </div>
-                        <div class="grid gap-2 md:grid-cols-5">
-                            <div class="relative md:col-span-2">
-                                <Search
-                                    class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                />
-                                <Input
-                                    type="text"
-                                    placeholder="Cari kode, rute, nama, telepon, jam, unit"
-                                    bind:value={bookingListSearch}
-                                    class="h-9 rounded-xl !pl-9 md:!pl-9 text-sm"
-                                />
-                            </div>
-                            <select
-                                class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
-                                bind:value={bookingListRoute}
-                            >
-                                <option value="all">Semua Rute</option>
-                                {#each bookingListRoutes() as route (`booking-route-filter-${route}`)}
-                                    <option value={route}>{route}</option>
-                                {/each}
-                            </select>
-                            <input
-                                bind:this={bookingListDateInput}
-                                type="text"
-                                value={bookingListDate}
-                                readonly
-                                autocomplete="off"
-                                placeholder="Pilih tanggal"
-                                class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                            />
-                            <select
-                                class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
-                                bind:value={bookingListPayment}
-                            >
-                                <option value="all">Semua Pembayaran</option>
-                                <option value="lunas">Lunas Semua</option>
-                                <option value="belum_lunas"
-                                    >Masih Belum Lunas</option
-                                >
-                            </select>
-                        </div>
-                        <div class="mt-2 flex justify-end">
+                        <div class="mt-2 flex justify-end md:hidden">
                             <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
                                 class="h-8 rounded-full px-3 text-xs"
-                                onclick={resetBookingListFilters}
+                                onclick={() =>
+                                    (bookingListFiltersExpanded =
+                                        !bookingListFiltersExpanded)}
+                                aria-expanded={bookingListFiltersExpanded}
                             >
-                                Reset
+                                {bookingListFiltersExpanded
+                                    ? 'Sembunyikan Filter'
+                                    : 'Tampilkan Filter'}
                             </Button>
+                        </div>
+                        <div class={bookingListFiltersExpanded
+                            ? 'mt-2 block'
+                            : 'mt-2 hidden md:block'}>
+                            <div class="grid gap-2 md:grid-cols-5">
+                                <div class="relative md:col-span-2">
+                                    <Search
+                                        class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                    />
+                                    <Input
+                                        type="text"
+                                        placeholder="Cari kode, rute, nama, telepon, jam, unit"
+                                        bind:value={bookingListSearch}
+                                        class="h-9 rounded-xl !pl-9 md:!pl-9 text-sm"
+                                    />
+                                </div>
+                                <select
+                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                                    bind:value={bookingListRoute}
+                                >
+                                    <option value="all">Semua Rute</option>
+                                    {#each bookingListRoutes() as route (`booking-route-filter-${route}`)}
+                                        <option value={route}>{route}</option>
+                                    {/each}
+                                </select>
+                                <input
+                                    bind:this={bookingListDateInput}
+                                    type="text"
+                                    value={bookingListDate}
+                                    readonly
+                                    autocomplete="off"
+                                    placeholder="Pilih tanggal"
+                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                                <select
+                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                                    bind:value={bookingListPayment}
+                                >
+                                    <option value="all">Semua Pembayaran</option>
+                                    <option value="lunas">Lunas Semua</option>
+                                    <option value="belum_lunas"
+                                        >Masih Belum Lunas</option
+                                    >
+                                </select>
+                            </div>
+                            <div class="mt-2 flex justify-end">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    class="h-8 rounded-full px-3 text-xs"
+                                    onclick={resetBookingListFilters}
+                                >
+                                    Reset
+                                </Button>
+                            </div>
                         </div>
                         {#if emptyDepartureOpen}
                             <div

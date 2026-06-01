@@ -116,6 +116,7 @@
     let charterFilterArmadaSearchTimer: ReturnType<typeof setTimeout> | null = null;
     let exportType = $state<'reguler' | 'bagasi' | 'charter'>('reguler');
     let filterPerPage = $state(20);
+    let mobileFiltersExpanded = $state(false);
     let charterFilterDateInput = $state<HTMLInputElement | null>(null);
     let charterFilterDatePicker: FlatpickrInstance | null = null;
     let luggageFilterDateInput = $state<HTMLInputElement | null>(null);
@@ -2449,9 +2450,25 @@ params.set('to', filterTo);
         <CardHeader><CardTitle>{tabTitle(activeTab)}</CardTitle></CardHeader>
         <CardContent class="space-y-4">
             <div class="sticky top-0 z-10 space-y-3 border-b bg-background pb-3">
-                {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view') || activeTab === 'export')}
-                    {#if activeTab === 'charters'}
-                        <div class="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_260px_240px_auto_auto]">
+                {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}
+                    <div class="flex justify-end md:hidden">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="h-8 rounded-full px-3 text-xs"
+                            onclick={() =>
+                                (mobileFiltersExpanded = !mobileFiltersExpanded)}
+                            aria-expanded={mobileFiltersExpanded}
+                        >
+                            {mobileFiltersExpanded
+                                ? 'Sembunyikan Filter'
+                                : 'Tampilkan Filter'}
+                        </Button>
+                    </div>
+                    <div class={mobileFiltersExpanded ? 'block' : 'hidden md:block'}>
+                        {#if activeTab === 'charters'}
+                            <div class="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_260px_240px_auto_auto]">
                             <input
                                 bind:this={charterFilterDateInput}
                                 type="text"
@@ -2550,8 +2567,8 @@ params.set('to', filterTo);
                             <Button type="button" onclick={() => void applyFilters()}>Apply Filters</Button>
                             <Button type="button" variant="outline" onclick={() => void resetCharterFilters()}>Reset</Button>
                         </div>
-                    {:else if activeTab === 'luggages'}
-                        <div class="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto_auto]">
+                        {:else if activeTab === 'luggages'}
+                            <div class="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto_auto]">
                             <input
                                 bind:this={luggageFilterDateInput}
                                 type="text"
@@ -2569,8 +2586,8 @@ params.set('to', filterTo);
                             <Button type="button" onclick={() => void applyFilters()}>Cari Data</Button>
                             <Button type="button" variant="outline" onclick={() => void resetLuggageFilters()}>Reset</Button>
                         </div>
-                    {:else}
-                        <div class="grid gap-3 md:grid-cols-5">
+                        {:else}
+                            <div class="grid gap-3 md:grid-cols-5">
                             <input
                                 bind:this={exportFromDateInput}
                                 type="text"
@@ -2593,7 +2610,8 @@ params.set('to', filterTo);
                             <Input type="number" min="10" max="100" bind:value={filterPerPage} />
                             <Button type="button" onclick={() => void applyFilters()}>Apply Filters</Button>
                         </div>
-                    {/if}
+                        {/if}
+                    </div>
                 {/if}
 
                 {#if !lockedMenuView}
@@ -3395,7 +3413,9 @@ params.set('to', filterTo);
             {/if}
 
             {#if activeTab === 'export' && !busy}
-                <div class="grid gap-3 md:grid-cols-4">
+                <div class={mobileFiltersExpanded
+                    ? 'grid gap-3 md:grid-cols-4'
+                    : 'hidden md:grid md:grid-cols-4'}>
                     <input
                         bind:this={exportFromDateInput}
                         type="text"
