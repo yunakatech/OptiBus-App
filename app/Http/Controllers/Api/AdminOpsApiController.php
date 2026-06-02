@@ -1311,10 +1311,7 @@ class AdminOpsApiController extends Controller
             $select[] = DB::raw('NULL as armada_nopol');
         }
 
-        $query
-            ->select($select)
-            ->orderByDesc('c.start_date')
-            ->orderByDesc('c.id');
+        $query->select($select);
 
         if ($from !== '' && $to !== '') {
             $query->whereBetween('c.start_date', [$from, $to]);
@@ -1374,12 +1371,36 @@ class AdminOpsApiController extends Controller
             }
         }
         $this->applyCharterPoolScope($query);
+        $this->orderChartersByNearestDeparture($query, $scope);
 
         $result = $this->paginateQuery($query, $page, $perPage);
         return $this->ok([
             'charters' => $result['data'],
             'pagination' => $result['meta'],
         ]);
+    }
+
+    private function orderChartersByNearestDeparture(Builder $query, string $scope): void
+    {
+        if ($scope === 'history') {
+            $query
+                ->orderByDesc('c.start_date')
+                ->orderByRaw('c.departure_time IS NULL')
+                ->orderByDesc('c.departure_time')
+                ->orderByDesc('c.id');
+
+            return;
+        }
+
+        $today = Carbon::today()->toDateString();
+
+        $query
+            ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$today])
+            ->orderByRaw('CASE WHEN c.start_date >= ? THEN c.start_date ELSE NULL END ASC', [$today])
+            ->orderByRaw('CASE WHEN c.start_date < ? THEN c.start_date ELSE NULL END DESC', [$today])
+            ->orderByRaw('c.departure_time IS NULL')
+            ->orderBy('c.departure_time')
+            ->orderBy('c.id');
     }
 
     public function chartersShow(int $id): JsonResponse
