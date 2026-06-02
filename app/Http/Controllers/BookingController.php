@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Support\BookingCode;
 use App\Support\Code39;
 use App\Support\HeadlessPdf;
+use App\Support\PoolScope;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -340,7 +342,7 @@ class BookingController extends Controller
             $select[] = 'b.ticket_code';
         }
 
-        $booking = DB::table('bookings as b')
+        $booking = $this->scopedBookingQuery('bookings as b', 'b.rute')
             ->leftJoin('segments as s', 's.id', '=', 'b.segment_id')
             ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
             ->select($select)
@@ -401,14 +403,52 @@ class BookingController extends Controller
      */
     private function bookingTotals(): array
     {
-        return Cache::remember('bookings:totals', now()->addSeconds(30), function (): array {
+        return Cache::remember('bookings:totals:'.PoolScope::cacheKey(), now()->addSeconds(30), function (): array {
             return [
-                'bookings' => Schema::hasTable('bookings') ? DB::table('bookings')->count() : 0,
-                'customers' => Schema::hasTable('customers') ? DB::table('customers')->count() : 0,
-                'routes' => Schema::hasTable('routes') ? DB::table('routes')->count() : 0,
-                'schedules' => Schema::hasTable('schedules') ? DB::table('schedules')->count() : 0,
+                'bookings' => Schema::hasTable('bookings') ? $this->scopedBookingQuery()->count() : 0,
+                'customers' => Schema::hasTable('customers') ? $this->scopedCustomersCount() : 0,
+                'routes' => Schema::hasTable('routes') ? $this->scopedRoutesQuery()->count() : 0,
+                'schedules' => Schema::hasTable('schedules') ? $this->scopedScheduleQuery()->count() : 0,
             ];
         });
+    }
+
+    private function scopedBookingQuery(string $table = 'bookings', string $routeNameColumn = 'rute'): Builder
+    {
+        $query = DB::table($table);
+        PoolScope::applyRouteScope($query, '', $routeNameColumn);
+
+        return $query;
+    }
+
+    private function scopedRoutesQuery(): Builder
+    {
+        $query = DB::table('routes');
+        PoolScope::applyRouteScope($query, 'routes.id', 'routes.name');
+
+        return $query;
+    }
+
+    private function scopedScheduleQuery(string $table = 'schedules', string $alias = ''): Builder
+    {
+        $query = DB::table($table);
+        $prefix = $alias !== '' ? $alias.'.' : '';
+
+        PoolScope::applyRouteScope(
+            $query,
+            Schema::hasColumn('schedules', 'route_id') ? $prefix.'route_id' : '',
+            $prefix.'rute',
+        );
+
+        return $query;
+    }
+
+    private function scopedCustomersCount(): int
+    {
+        $query = DB::table('customers');
+        PoolScope::applyCustomerScope($query, 'customers');
+
+        return (int) $query->count();
     }
 
     /**
@@ -428,7 +468,7 @@ class BookingController extends Controller
             $select[] = 'ticket_code';
         }
 
-        return DB::table('bookings')
+        return $this->scopedBookingQuery()
             ->select($select)
             ->orderByDesc('tanggal')
             ->orderByDesc('jam')
@@ -471,14 +511,14 @@ class BookingController extends Controller
             return [];
         }
 
-        $signature = DB::table('bookings')
+        $signature = $this->scopedBookingQuery()
             ->selectRaw('COALESCE(MAX(id), 0) as max_id, COUNT(*) as total_rows')
             ->first();
         $maxId = (int) ($signature->max_id ?? 0);
         $totalRows = (int) ($signature->total_rows ?? 0);
         $schedulesSignature = $this->buildTableMutationSignature('schedules');
         $assignmentsSignature = $this->buildTableMutationSignature('trip_assignments');
-        $cacheKey = "bookings:list-groups:v10:{$maxId}:{$totalRows}:{$schedulesSignature}:{$assignmentsSignature}";
+        $cacheKey = "bookings:list-groups:v10:".PoolScope::cacheKey().":{$maxId}:{$totalRows}:{$schedulesSignature}:{$assignmentsSignature}";
 
         return Cache::remember($cacheKey, now()->addSeconds(20), function (): array {
             $select = [
@@ -507,7 +547,7 @@ class BookingController extends Controller
                 $select[] = 'b.ticket_code';
             }
 
-            $rows = DB::table('bookings as b')
+            $rows = $this->scopedBookingQuery('bookings as b', 'b.rute')
                 ->leftJoin('segments as s', 's.id', '=', 'b.segment_id')
                 ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
                 ->select($select)
@@ -624,7 +664,7 @@ class BookingController extends Controller
                     $assignmentSelect[] = 't.armada_nopol';
                 }
 
-                $assignmentRows = DB::table('trip_assignments as t')
+                $assignmentRows = $this->scopedBookingQuery('trip_assignments as t', 't.rute')
                     ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id')
                     ->when($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas'), static function ($query) {
                         $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
@@ -794,7 +834,7 @@ class BookingController extends Controller
             return $this->sortBookingRouteLabels(array_values($groupRoutes));
         }
 
-        $masterRoutes = DB::table('routes')
+        $masterRoutes = $this->scopedRoutesQuery()
             ->orderBy('name')
             ->pluck('name')
             ->map(static fn ($value): string => trim((string) $value))

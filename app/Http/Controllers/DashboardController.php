@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\ActivityLog;
+use App\Support\PoolScope;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -97,16 +98,16 @@ class DashboardController extends Controller
         ];
 
         if (Schema::hasTable('bookings')) {
-            $activeBookings = DB::table('bookings')
+            $activeBookings = $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', '>=', $today->toDateString());
 
             $futureCount = (clone $activeBookings)->count();
             if ($futureCount === 0) {
-                $activeBookings = DB::table('bookings')->where('status', '!=', 'canceled');
+                $activeBookings = $this->scopedBookingQuery()->where('status', '!=', 'canceled');
             }
 
-            $stats['total_bookings'] = (int) DB::table('bookings')
+            $stats['total_bookings'] = (int) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$monthStart->toDateString(), $monthEnd->toDateString()])
                 ->count();
@@ -118,15 +119,15 @@ class DashboardController extends Controller
             $stats['confirmed'] = (clone $activeBookings)
                 ->whereIn('pembayaran', ['Lunas', 'Redbus', 'Traveloka'])
                 ->count();
-            $stats['canceled'] = DB::table('bookings')
+            $stats['canceled'] = $this->scopedBookingQuery()
                 ->where('status', 'canceled')
                 ->count();
 
             $fleetDate = $futureCount === 0
-                ? DB::table('bookings')->where('status', '!=', 'canceled')->max('tanggal')
+                ? $this->scopedBookingQuery()->where('status', '!=', 'canceled')->max('tanggal')
                 : $today->toDateString();
             if ($fleetDate) {
-                $stats['live_fleet'] = DB::table('bookings')
+                $stats['live_fleet'] = $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', $fleetDate)
                 ->select(['rute', 'jam', 'unit'])
@@ -135,66 +136,66 @@ class DashboardController extends Controller
                 ->count();
             }
 
-            $bookingRevenueToday = (float) DB::table('bookings')
+            $bookingRevenueToday = (float) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', $today->toDateString())
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
                 ->value('total');
             $stats['revenue_today'] = $bookingRevenueToday;
             if ($stats['revenue_today'] <= 0 && $fleetDate) {
-                $stats['revenue_today'] = (float) DB::table('bookings')
+                $stats['revenue_today'] = (float) $this->scopedBookingQuery()
                     ->where('status', '!=', 'canceled')
                     ->whereDate('tanggal', $fleetDate)
                     ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
                     ->value('total');
             }
 
-            $stats['revenue_booking_month'] = (float) DB::table('bookings')
+            $stats['revenue_booking_month'] = (float) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$monthStart->toDateString(), $monthEnd->toDateString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
                 ->value('total');
-            $statsComparison['total_bookings'] = (int) DB::table('bookings')
+            $statsComparison['total_bookings'] = (int) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()])
                 ->count();
-            $statsComparison['revenue_booking_month'] = (float) DB::table('bookings')
+            $statsComparison['revenue_booking_month'] = (float) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
                 ->value('total');
-            $summaryStatsByScope['day']['total_bookings'] = (int) DB::table('bookings')
+            $summaryStatsByScope['day']['total_bookings'] = (int) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', $today->toDateString())
                 ->count();
             $summaryStatsByScope['month']['total_bookings'] = (int) $stats['total_bookings'];
-            $summaryStatsByScope['year']['total_bookings'] = (int) DB::table('bookings')
+            $summaryStatsByScope['year']['total_bookings'] = (int) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$yearStart->toDateString(), $yearEnd->toDateString()])
                 ->count();
-            $summaryComparisonByScope['day']['total_bookings'] = (int) DB::table('bookings')
+            $summaryComparisonByScope['day']['total_bookings'] = (int) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', $yesterday->toDateString())
                 ->count();
             $summaryComparisonByScope['month']['total_bookings'] = (int) $statsComparison['total_bookings'];
-            $summaryComparisonByScope['year']['total_bookings'] = (int) DB::table('bookings')
+            $summaryComparisonByScope['year']['total_bookings'] = (int) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$previousYearStart->toDateString(), $previousYearEnd->toDateString()])
                 ->count();
             $summaryStatsByScope['day']['revenue_booking'] = (float) $bookingRevenueToday;
             $summaryStatsByScope['month']['revenue_booking'] = (float) $stats['revenue_booking_month'];
-            $summaryStatsByScope['year']['revenue_booking'] = (float) DB::table('bookings')
+            $summaryStatsByScope['year']['revenue_booking'] = (float) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$yearStart->toDateString(), $yearEnd->toDateString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
                 ->value('total');
-            $summaryComparisonByScope['day']['revenue_booking'] = (float) DB::table('bookings')
+            $summaryComparisonByScope['day']['revenue_booking'] = (float) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', $yesterday->toDateString())
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
                 ->value('total');
             $summaryComparisonByScope['month']['revenue_booking'] = (float) $statsComparison['revenue_booking_month'];
-            $summaryComparisonByScope['year']['revenue_booking'] = (float) DB::table('bookings')
+            $summaryComparisonByScope['year']['revenue_booking'] = (float) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$previousYearStart->toDateString(), $previousYearEnd->toDateString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
@@ -212,7 +213,7 @@ class DashboardController extends Controller
         }
 
         if (Schema::hasTable('charters')) {
-            $charterRevenueQuery = DB::table('charters')
+            $charterRevenueQuery = $this->scopedCharterQuery()
                 ->whereBetween('start_date', [$monthStart->toDateString(), $monthEnd->toDateString()]);
 
             if (Schema::hasColumn('charters', 'status')) {
@@ -227,7 +228,7 @@ class DashboardController extends Controller
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
 
-            $previousCharterRevenueQuery = DB::table('charters')
+            $previousCharterRevenueQuery = $this->scopedCharterQuery()
                 ->whereBetween('start_date', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()]);
 
             if (Schema::hasColumn('charters', 'status')) {
@@ -242,9 +243,9 @@ class DashboardController extends Controller
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
 
-            $charterRevenueTodayQuery = DB::table('charters')
+            $charterRevenueTodayQuery = $this->scopedCharterQuery()
                 ->whereDate('start_date', $today->toDateString());
-            $charterRevenueYearQuery = DB::table('charters')
+            $charterRevenueYearQuery = $this->scopedCharterQuery()
                 ->whereBetween('start_date', [$yearStart->toDateString(), $yearEnd->toDateString()]);
 
             if (Schema::hasColumn('charters', 'status')) {
@@ -272,9 +273,9 @@ class DashboardController extends Controller
             $summaryStatsByScope['year']['revenue_charter'] = (float) (clone $charterRevenueYearQuery)
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
-            $charterRevenueYesterdayQuery = DB::table('charters')
+            $charterRevenueYesterdayQuery = $this->scopedCharterQuery()
                 ->whereDate('start_date', $yesterday->toDateString());
-            $charterRevenuePreviousYearQuery = DB::table('charters')
+            $charterRevenuePreviousYearQuery = $this->scopedCharterQuery()
                 ->whereBetween('start_date', [$previousYearStart->toDateString(), $previousYearEnd->toDateString()]);
             if (Schema::hasColumn('charters', 'status')) {
                 $charterRevenueYesterdayQuery->where('status', '!=', 'canceled');
@@ -297,52 +298,52 @@ class DashboardController extends Controller
         }
 
         if (Schema::hasTable('luggages')) {
-            $stats['revenue_luggage_month'] = (float) DB::table('luggages')
+            $stats['revenue_luggage_month'] = (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereBetween('created_at', [$monthStart->toDateTimeString(), $monthEnd->copy()->endOfDay()->toDateTimeString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
-            $statsComparison['revenue_luggage_month'] = (float) DB::table('luggages')
+            $statsComparison['revenue_luggage_month'] = (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereBetween('created_at', [$previousMonthStart->toDateTimeString(), $previousMonthEnd->copy()->endOfDay()->toDateTimeString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
 
-            $stats['revenue_total_today'] += (float) DB::table('luggages')
+            $stats['revenue_total_today'] += (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereDate('created_at', $today->toDateString())
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
-            $stats['revenue_total_year'] += (float) DB::table('luggages')
+            $stats['revenue_total_year'] += (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereBetween('created_at', [$yearStart->toDateTimeString(), $yearEnd->copy()->endOfDay()->toDateTimeString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
-            $summaryStatsByScope['day']['revenue_luggage'] = (float) DB::table('luggages')
+            $summaryStatsByScope['day']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereDate('created_at', $today->toDateString())
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
             $summaryStatsByScope['month']['revenue_luggage'] = (float) $stats['revenue_luggage_month'];
-            $summaryStatsByScope['year']['revenue_luggage'] = (float) DB::table('luggages')
+            $summaryStatsByScope['year']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereBetween('created_at', [$yearStart->toDateTimeString(), $yearEnd->copy()->endOfDay()->toDateTimeString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
-            $summaryComparisonByScope['day']['revenue_luggage'] = (float) DB::table('luggages')
+            $summaryComparisonByScope['day']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereDate('created_at', $yesterday->toDateString())
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
                 ->value('total');
             $summaryComparisonByScope['month']['revenue_luggage'] = (float) $statsComparison['revenue_luggage_month'];
-            $summaryComparisonByScope['year']['revenue_luggage'] = (float) DB::table('luggages')
+            $summaryComparisonByScope['year']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
                 ->where('status', '!=', 'canceled')
                 ->where('payment_status', 'Lunas')
                 ->whereBetween('created_at', [$previousYearStart->toDateTimeString(), $previousYearEnd->copy()->endOfDay()->toDateTimeString()])
@@ -355,7 +356,7 @@ class DashboardController extends Controller
             + (float) $stats['revenue_charter_month']
             + (float) $stats['revenue_luggage_month'];
         if (Schema::hasTable('bookings')) {
-            $stats['revenue_total_year'] += (float) DB::table('bookings')
+            $stats['revenue_total_year'] += (float) $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$yearStart->toDateString(), $yearEnd->toDateString()])
                 ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
@@ -411,7 +412,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        $groupRows = DB::table('bookings')
+        $groupRows = $this->scopedBookingQuery()
             ->where('status', '!=', 'canceled')
             ->whereDate('tanggal', $today->toDateString())
             ->selectRaw('rute, jam, unit, COUNT(*) as total_bookings')
@@ -442,7 +443,7 @@ class DashboardController extends Controller
             ];
         }
 
-        $bookingRows = DB::table('bookings as b')
+        $bookingRows = $this->scopedBookingQuery('bookings as b', 'b.rute')
             ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
             ->where('b.status', '!=', 'canceled')
             ->whereDate('b.tanggal', $today->toDateString())
@@ -490,7 +491,7 @@ class DashboardController extends Controller
             )));
 
             if ($routes !== []) {
-                $assignmentRows = DB::table('trip_assignments as t')
+                $assignmentRows = $this->scopedBookingQuery('trip_assignments as t', 't.rute')
                     ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id')
                     ->whereDate('t.tanggal', $today->toDateString())
                     ->whereIn('t.rute', $routes)
@@ -535,7 +536,7 @@ class DashboardController extends Controller
         }
 
         $endDate = $today->copy()->addDays(7)->toDateString();
-        $query = DB::table('charters')
+        $query = $this->scopedCharterQuery()
             ->whereBetween('start_date', [$today->toDateString(), $endDate]);
 
         if (Schema::hasColumn('charters', 'status')) {
@@ -608,7 +609,7 @@ class DashboardController extends Controller
     private function dailyTrend(Carbon $anchorDate): array
     {
         return Cache::remember(
-            'dashboard:daily-trend:'.$anchorDate->toDateString(),
+            'dashboard:daily-trend:'.$anchorDate->toDateString().':'.PoolScope::cacheKey(),
             now()->addMinutes(2),
             function () use ($anchorDate): array {
                 $rows = [];
@@ -642,7 +643,7 @@ class DashboardController extends Controller
     private function monthlyTrend(Carbon $yearAnchor): array
     {
         return Cache::remember(
-            'dashboard:monthly-trend:'.$yearAnchor->format('Y-m'),
+            'dashboard:monthly-trend:'.$yearAnchor->format('Y-m').':'.PoolScope::cacheKey(),
             now()->addMinutes(2),
             function () use ($yearAnchor): array {
                 $rows = [];
@@ -685,7 +686,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        return DB::table('bookings')
+        return $this->scopedBookingQuery()
             ->where('status', '!=', 'canceled')
             ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
             ->selectRaw('tanggal as period, COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) as total')
@@ -704,7 +705,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        $query = DB::table('charters')
+        $query = $this->scopedCharterQuery()
             ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw('start_date as period, COALESCE(SUM(COALESCE(price, 0)), 0) as total')
             ->groupBy('start_date');
@@ -727,7 +728,7 @@ class DashboardController extends Controller
 
         $dateExpression = $this->dateExpression('created_at');
 
-        return DB::table('luggages')
+        return $this->scopedLuggageQuery()
             ->where('status', '!=', 'canceled')
             ->where('payment_status', 'Lunas')
             ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()])
@@ -749,7 +750,7 @@ class DashboardController extends Controller
 
         $monthExpression = $this->monthExpression('tanggal');
 
-        return DB::table('bookings')
+        return $this->scopedBookingQuery()
             ->where('status', '!=', 'canceled')
             ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
             ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) as total")
@@ -769,7 +770,7 @@ class DashboardController extends Controller
         }
 
         $monthExpression = $this->monthExpression('start_date');
-        $query = DB::table('charters')
+        $query = $this->scopedCharterQuery()
             ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(price, 0)), 0) as total")
             ->groupBy(DB::raw($monthExpression));
@@ -792,7 +793,7 @@ class DashboardController extends Controller
 
         $monthExpression = $this->monthExpression('created_at');
 
-        return DB::table('luggages')
+        return $this->scopedLuggageQuery()
             ->where('status', '!=', 'canceled')
             ->where('payment_status', 'Lunas')
             ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()])
@@ -816,6 +817,37 @@ class DashboardController extends Controller
         });
     }
 
+    private function scopedBookingQuery(string $table = 'bookings', string $routeNameColumn = 'rute'): Builder
+    {
+        $query = DB::table($table);
+        PoolScope::applyRouteScope($query, '', $routeNameColumn);
+
+        return $query;
+    }
+
+    private function scopedCharterQuery(string $table = 'charters', string $alias = ''): Builder
+    {
+        $query = DB::table($table);
+        PoolScope::applyCharterScope($query, $alias);
+
+        return $query;
+    }
+
+    private function scopedLuggageQuery(string $table = 'luggages', string $alias = ''): Builder
+    {
+        $query = DB::table($table);
+        $prefix = $alias !== '' ? $alias.'.' : '';
+
+        PoolScope::applyPoolOrRouteScope(
+            $query,
+            Schema::hasColumn('luggages', 'pool_id') ? $prefix.'pool_id' : '',
+            Schema::hasColumn('luggages', 'rute_id') ? $prefix.'rute_id' : '',
+            $prefix.'rute',
+        );
+
+        return $query;
+    }
+
     private function dateExpression(string $column): string
     {
         return DB::getDriverName() === 'sqlite'
@@ -837,19 +869,19 @@ class DashboardController extends Controller
         $dates = [];
 
         if (Schema::hasTable('bookings')) {
-            $value = DB::table('bookings')->max('tanggal');
+            $value = $this->scopedBookingQuery()->max('tanggal');
             if ($value) {
                 $dates[] = Carbon::parse((string) $value)->startOfDay();
             }
         }
         if (Schema::hasTable('charters')) {
-            $value = DB::table('charters')->max('start_date');
+            $value = $this->scopedCharterQuery()->max('start_date');
             if ($value) {
                 $dates[] = Carbon::parse((string) $value)->startOfDay();
             }
         }
         if (Schema::hasTable('luggages')) {
-            $value = DB::table('luggages')->max('created_at');
+            $value = $this->scopedLuggageQuery()->max('created_at');
             if ($value) {
                 $dates[] = Carbon::parse((string) $value)->startOfDay();
             }

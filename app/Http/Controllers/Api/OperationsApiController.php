@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
+use App\Support\PoolScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,7 @@ class OperationsApiController extends Controller
         if ($routeName !== '') {
             $query->where('r.name', $routeName);
         }
+        PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
 
         $segments = $query->orderBy('s.rute')->get();
         return $this->ok(['segments' => $segments]);
@@ -44,7 +46,11 @@ class OperationsApiController extends Controller
             'id' => ['required', 'integer', 'min:1'],
         ]);
 
-        $price = DB::table('segments')->where('id', $validated['id'])->value('harga');
+        $query = DB::table('segments as s')
+            ->where('s.id', $validated['id']);
+        PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
+
+        $price = $query->value('s.harga');
         return $this->ok(['price' => (float) ($price ?? 0)]);
     }
 
@@ -83,7 +89,7 @@ class OperationsApiController extends Controller
             return $this->ok(['customers' => []]);
         }
 
-        $cacheKey = 'ops:customer-search:'.md5(mb_strtolower($q));
+        $cacheKey = 'ops:customer-search:'.PoolScope::cacheKey().':'.md5(mb_strtolower($q));
         $customers = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($q) {
             $phoneQuery = preg_replace('/\D+/', '', $q) ?? '';
             $qLower = mb_strtolower($q);
@@ -92,14 +98,17 @@ class OperationsApiController extends Controller
             $phoneLike = $phoneQuery !== '' ? '%'.$phoneQuery.'%' : '';
             $phoneExact = $phoneQuery;
 
-            return DB::table('customers')
+            $query = DB::table('customers')
                 ->select([
                     'name',
                     'phone',
                     'pickup_point',
                     'gmaps',
                     DB::raw('gmaps as address'),
-                ])
+                ]);
+            PoolScope::applyCustomerScope($query, 'customers');
+
+            return $query
                 ->where(function ($query) use ($like, $rawLike, $phoneQuery, $phoneLike) {
                     $query->whereRaw("LOWER(COALESCE(name, '')) LIKE ?", [$like])
                         ->orWhere('phone', 'like', $rawLike)

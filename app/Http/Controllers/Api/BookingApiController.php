@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
 use App\Support\BookingCode;
+use App\Support\PoolScope;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -37,12 +38,19 @@ class BookingApiController extends Controller
         ]);
 
         $date = $validated['tanggal'];
-        $cacheKey = 'booking:routes-by-date:'.$date;
+        $cacheKey = 'booking:routes-by-date:'.$date.':'.PoolScope::cacheKey();
         $routes = Cache::remember($cacheKey, now()->addSeconds(30), function () use ($date) {
             $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
 
-            return DB::table('schedules')
-                ->where('dow', $dow)
+            $query = DB::table('schedules')
+                ->where('dow', $dow);
+            PoolScope::applyRouteScope(
+                $query,
+                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+                'rute',
+            );
+
+            return $query
                 ->distinct()
                 ->orderBy('rute')
                 ->pluck('rute')
@@ -62,7 +70,11 @@ class BookingApiController extends Controller
 
         $rute = $validated['rute'];
         $date = $validated['tanggal'];
-        $cacheKey = 'booking:schedules:v2:'.md5($rute.'|'.$date);
+        if (! PoolScope::canAccessRouteName($rute)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
+        $cacheKey = 'booking:schedules:v2:'.PoolScope::cacheKey().':'.md5($rute.'|'.$date);
         $rows = Cache::remember($cacheKey, now()->addSeconds(30), function () use ($rute, $date) {
             $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
             $select = [
@@ -82,11 +94,17 @@ class BookingApiController extends Controller
                 $select[] = DB::raw('0 as bop');
             }
 
-            return DB::table('schedules as s')
+            $query = DB::table('schedules as s')
                 ->where('s.rute', $rute)
                 ->where('s.dow', $dow)
-                ->orderBy('s.jam')
-                ->get($select);
+                ->orderBy('s.jam');
+            PoolScope::applyRouteScope(
+                $query,
+                Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+                's.rute',
+            );
+
+            return $query->get($select);
         });
 
         $optionsBySchedule = [];
@@ -237,14 +255,20 @@ class BookingApiController extends Controller
         $jamSql = $this->normalizeTime($validated['jam']);
         $unit = (int) ($validated['unit'] ?? 1);
 
-        $rows = DB::table('bookings as b')
+        if (! PoolScope::canAccessRouteName((string) $validated['rute'])) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
+        $query = DB::table('bookings as b')
             ->leftJoin('segments as s', 'b.segment_id', '=', 's.id')
             ->where('b.rute', $validated['rute'])
             ->where('b.tanggal', $validated['tanggal'])
             ->where('b.jam', $jamSql)
             ->where('b.unit', $unit)
-            ->where('b.status', '!=', 'canceled')
-            ->get([
+            ->where('b.status', '!=', 'canceled');
+        PoolScope::applyRouteScope($query, '', 'b.rute');
+
+        $rows = $query->get([
                 'b.id',
                 'b.seat',
                 'b.name',
@@ -295,12 +319,22 @@ class BookingApiController extends Controller
         $bookingId = (int) ($validated['booking_id'] ?? 0);
         $dow = Carbon::createFromFormat('Y-m-d', $tanggal)->dayOfWeek;
 
-        $scheduleRows = DB::table('schedules as s')
+        if (! PoolScope::canAccessRouteName($rute)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
+        $scheduleQuery = DB::table('schedules as s')
             ->where('s.rute', $rute)
             ->where('s.dow', $dow)
             ->where('s.jam', $jamSql)
-            ->orderBy('s.id')
-            ->get([
+            ->orderBy('s.id');
+        PoolScope::applyRouteScope(
+            $scheduleQuery,
+            Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+            's.rute',
+        );
+
+        $scheduleRows = $scheduleQuery->get([
                 's.id',
                 's.rute',
                 's.dow',
@@ -396,9 +430,11 @@ class BookingApiController extends Controller
 
         $currentSeat = $this->normalizeSeat((string) ($validated['current_seat'] ?? ''));
         if ($bookingId > 0) {
-            $bookingRow = DB::table('bookings')
+            $bookingQuery = DB::table('bookings')
                 ->where('id', $bookingId)
-                ->first(['seat']);
+                ->where('rute', $rute);
+            PoolScope::applyRouteScope($bookingQuery, '', 'rute');
+            $bookingRow = $bookingQuery->first(['seat']);
 
             if ($bookingRow !== null) {
                 $currentSeat = $this->normalizeSeat((string) ($bookingRow->seat ?? ''));
@@ -420,13 +456,14 @@ class BookingApiController extends Controller
         }
 
         if (($resolvedUnitId <= 0 || empty($layout)) && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('trip_assignments') && Schema::hasTable('armadas')) {
-            $assignment = DB::table('trip_assignments as t')
+            $assignmentQuery = DB::table('trip_assignments as t')
                 ->leftJoin('armadas as a', 't.armada_id', '=', 'a.id')
                 ->where('t.rute', $rute)
                 ->where('t.tanggal', $tanggal)
                 ->where('t.jam', $jamSql)
-                ->where('t.unit', $unit)
-                ->first([
+                ->where('t.unit', $unit);
+            PoolScope::applyRouteScope($assignmentQuery, '', 't.rute');
+            $assignment = $assignmentQuery->first([
                     't.armada_id',
                     DB::raw('a.nopol as armada_nopol'),
                     DB::raw('a.kategori as armada_kategori'),
@@ -480,7 +517,7 @@ class BookingApiController extends Controller
             usort($layoutSeatTokens, [$this, 'compareSeatTokens']);
         }
 
-        $bookedSeatTokens = DB::table('bookings')
+        $bookedSeatQuery = DB::table('bookings')
             ->where('rute', $rute)
             ->where('tanggal', $tanggal)
             ->where('jam', $jamSql)
@@ -488,7 +525,10 @@ class BookingApiController extends Controller
             ->where('status', '!=', 'canceled')
             ->when($bookingId > 0, static function ($query) use ($bookingId) {
                 $query->where('id', '!=', $bookingId);
-            })
+            });
+        PoolScope::applyRouteScope($bookedSeatQuery, '', 'rute');
+
+        $bookedSeatTokens = $bookedSeatQuery
             ->pluck('seat')
             ->map(fn ($seat) => $this->normalizeSeat((string) $seat))
             ->filter(static fn ($seat) => $seat !== '')
@@ -544,6 +584,9 @@ class BookingApiController extends Controller
         $schedule = $this->findScheduleForDeparture((string) $data['rute'], (string) $data['tanggal'], (string) $data['jam']);
         if (! $schedule) {
             return $this->error('Jadwal tidak ditemukan.', 422);
+        }
+        if (! PoolScope::canAccessRouteName((string) ($schedule->rute ?? $data['rute']))) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
         $unit = (int) $data['unit'];
@@ -611,6 +654,9 @@ class BookingApiController extends Controller
 
         $schedule = $this->findScheduleForDeparture((string) $data['rute'], (string) $data['tanggal'], (string) $data['jam']);
         $routeName = (string) ($schedule->rute ?? $data['rute']);
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
         $unit = (int) $data['unit'];
 
         $payload = [
@@ -687,6 +733,9 @@ class BookingApiController extends Controller
 
         $schedule = $this->findScheduleForDeparture((string) $data['rute'], (string) $data['tanggal'], (string) $data['jam']);
         $routeName = (string) ($schedule->rute ?? $data['rute']);
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
         $unit = (int) $data['unit'];
 
         $payload = [
@@ -779,6 +828,9 @@ class BookingApiController extends Controller
         $jam = (string) $data['jam'];
         $unit = (int) $data['unit'];
         $query = trim((string) ($data['q'] ?? ''));
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
         $assignment = Schema::hasTable('trip_assignments')
             ? $this->findTripAssignment($routeName, $tanggal, $jam, $unit)
             : null;
@@ -799,10 +851,12 @@ class BookingApiController extends Controller
 
         $mappedRows = collect();
         if ($assignmentIds !== []) {
-            $mappedRows = DB::table('luggages')
+            $mappedQuery = DB::table('luggages')
                 ->whereIn('trip_assignment_id', $assignmentIds)
-                ->orderByDesc('id')
-                ->get([
+                ->orderByDesc('id');
+            $this->applyLuggagePoolScope($mappedQuery);
+
+            $mappedRows = $mappedQuery->get([
                     'id',
                     'kode_resi',
                     'sender_name',
@@ -831,6 +885,7 @@ class BookingApiController extends Controller
                 $this->applyLuggageStatusFilter($builder, 'status', $this->luggageReceivedStatuses());
             })
             ->whereNull('trip_assignment_id');
+        $this->applyLuggagePoolScope($availableQuery);
 
         if ($query !== '') {
             $like = '%'.$query.'%';
@@ -895,7 +950,13 @@ class BookingApiController extends Controller
             return $this->error('Fitur mapping bagasi belum siap. Jalankan migrasi terlebih dahulu.', 422);
         }
 
-        $luggage = DB::table('luggages')->where('id', (int) $data['luggage_id'])->first([
+        if (! PoolScope::canAccessRouteName((string) $data['rute'])) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
+        $luggageQuery = DB::table('luggages')->where('id', (int) $data['luggage_id']);
+        $this->applyLuggagePoolScope($luggageQuery);
+        $luggage = $luggageQuery->first([
             'id',
             'kode_resi',
             'sender_name',
@@ -980,6 +1041,10 @@ class BookingApiController extends Controller
             return $this->error('Fitur mapping bagasi belum siap. Jalankan migrasi terlebih dahulu.', 422);
         }
 
+        if (! PoolScope::canAccessRouteName((string) $data['rute'])) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
         $assignment = Schema::hasTable('trip_assignments')
             ? $this->findTripAssignment((string) $data['rute'], (string) $data['tanggal'], (string) $data['jam'], (int) $data['unit'])
             : null;
@@ -988,7 +1053,9 @@ class BookingApiController extends Controller
             return $this->error('Keberangkatan belum punya mapping bagasi.', 404);
         }
 
-        $luggage = DB::table('luggages')->where('id', (int) $data['luggage_id'])->first([
+        $luggageQuery = DB::table('luggages')->where('id', (int) $data['luggage_id']);
+        $this->applyLuggagePoolScope($luggageQuery);
+        $luggage = $luggageQuery->first([
             'id',
             'kode_resi',
             'sender_name',
@@ -1068,6 +1135,10 @@ class BookingApiController extends Controller
         $segmentId = (int) ($data['segment_id'] ?? 0);
         $discount = max(0, (float) ($data['discount'] ?? 0));
         $price = $this->segmentPrice($segmentId);
+
+        if (! PoolScope::canAccessRouteName($rute)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
 
         $seats = $data['seats'] ?? null;
         if (! is_array($seats)) {
@@ -1259,6 +1330,10 @@ class BookingApiController extends Controller
         $segmentId = array_key_exists('segment_id', $payload) ? (int) ($payload['segment_id'] ?? 0) : (int) ($current['segment_id'] ?? 0);
         $discount = array_key_exists('discount', $payload) ? max(0, (float) ($payload['discount'] ?? 0)) : (float) ($current['discount'] ?? 0);
         $payment = $this->normalizePayment((string) ($payload['pembayaran'] ?? ($current['pembayaran'] ?? 'Belum Lunas')));
+
+        if (! PoolScope::canAccessRouteName($targetRoute)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
 
         if ($isCanceled && ! $paymentOnlyUpdate) {
             return $this->error('Booking cancel hanya bisa diubah status pembayarannya.', 422);
@@ -1462,10 +1537,12 @@ class BookingApiController extends Controller
     {
         $bookingId = (int) ($payload['booking_id'] ?? $payload['id'] ?? 0);
         if ($bookingId > 0) {
-            $row = DB::table('bookings as b')
+            $query = DB::table('bookings as b')
                 ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
-                ->where('b.id', $bookingId)
-                ->first([
+                ->where('b.id', $bookingId);
+            PoolScope::applyRouteScope($query, '', 'b.rute');
+
+            $row = $query->first([
                     'b.id',
                     'b.seat',
                     'b.rute',
@@ -1497,14 +1574,16 @@ class BookingApiController extends Controller
             return null;
         }
 
-        $row = DB::table('bookings as b')
+        $query = DB::table('bookings as b')
             ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
             ->where('b.rute', $rute)
             ->where('b.tanggal', $tanggal)
             ->where('b.jam', $this->normalizeTime($jam))
             ->where('b.unit', $unit)
-            ->where('b.seat', $lookupSeat)
-            ->first([
+            ->where('b.seat', $lookupSeat);
+        PoolScope::applyRouteScope($query, '', 'b.rute');
+
+        $row = $query->first([
                 'b.id',
                 'b.seat',
                 'b.rute',
@@ -1704,6 +1783,16 @@ class BookingApiController extends Controller
         return $this->tripAssignmentsHasStatus;
     }
 
+    private function applyLuggagePoolScope(Builder $query): void
+    {
+        PoolScope::applyPoolOrRouteScope(
+            $query,
+            Schema::hasColumn('luggages', 'pool_id') ? 'pool_id' : '',
+            Schema::hasColumn('luggages', 'rute_id') ? 'rute_id' : '',
+            'rute',
+        );
+    }
+
     private function findScheduleForDeparture(string $rute, string $tanggal, string $jam): ?object
     {
         if (! Schema::hasTable('schedules')) {
@@ -1715,11 +1804,17 @@ class BookingApiController extends Controller
         $select = ['id', 'rute', 'dow', 'jam', 'units'];
         $select[] = $this->schedulesHasBopColumn() ? 'bop' : DB::raw('0 as bop');
 
-        $rows = DB::table('schedules')
+        $query = DB::table('schedules')
             ->where('dow', $dow)
             ->where('jam', $this->normalizeTime($jam))
-            ->orderBy('id')
-            ->get($select);
+            ->orderBy('id');
+        PoolScope::applyRouteScope(
+            $query,
+            Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+            'rute',
+        );
+
+        $rows = $query->get($select);
 
         return $rows->first(fn ($row) => $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute);
     }
@@ -1745,7 +1840,7 @@ class BookingApiController extends Controller
             $select[] = DB::raw('a.nopol as armada_nopol_fallback');
         }
 
-        $rows = DB::table('trip_assignments as t')
+        $query = DB::table('trip_assignments as t')
             ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id')
             ->when(
                 $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas'),
@@ -1755,8 +1850,10 @@ class BookingApiController extends Controller
             )
             ->where('tanggal', $tanggal)
             ->where('t.jam', $this->normalizeTime($jam))
-            ->where('t.unit', $unit)
-            ->get($select);
+            ->where('t.unit', $unit);
+        PoolScope::applyRouteScope($query, '', 't.rute');
+
+        $rows = $query->get($select);
 
         return $rows->first(fn ($row) => $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute);
     }
@@ -1770,11 +1867,13 @@ class BookingApiController extends Controller
         }
 
         $targetRoute = $this->normalizeRouteName($rute);
-        $rows = DB::table('trip_assignments')
+        $query = DB::table('trip_assignments')
             ->where('tanggal', $tanggal)
             ->where('jam', $this->normalizeTime($jam))
-            ->where('unit', $unit)
-            ->get(['id', 'rute']);
+            ->where('unit', $unit);
+        PoolScope::applyRouteScope($query, '', 'rute');
+
+        $rows = $query->get(['id', 'rute']);
 
         foreach ($rows as $row) {
             if ($this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute) {
@@ -1795,6 +1894,11 @@ class BookingApiController extends Controller
 
         $schedule = $this->findScheduleForDeparture($rute, $tanggal, $jam);
         $routeName = (string) ($schedule->rute ?? $rute);
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            throw ValidationException::withMessages([
+                'rute' => 'Anda tidak memiliki akses ke rute ini.',
+            ]);
+        }
         $existing = $this->findTripAssignment($routeName, $tanggal, $jam, $unit);
         $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
         if ($existingStatus === 'canceled') {
