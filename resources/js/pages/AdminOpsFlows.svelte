@@ -52,10 +52,11 @@
     type Driver = { id: number; nama: string; phone?: string | null };
     type Service = { id: number; name: string };
     type Pagination = { page: number; per_page: number; total: number; last_page: number };
-    type Charter = { id: number; name: string; company_name: string | null; phone: string | null; start_date: string; end_date: string; departure_time: string | null; pickup_point: string | null; drop_point: string | null; unit_id: number | null; unit_nopol: string | null; unit_category: string | null; armada_id: number | null; armada_nopol: string | null; driver_name: string | null; price: number; layanan: string | null; bop_price: number; bop_status: string | null; down_payment: number; payment_status: string | null; status: string | null };
+    type PoolOption = { id: number; name: string; code?: string | null; status?: string | null; route_ids?: number[] };
+    type Charter = { id: number; pool_id: number | null; master_carter_id: number | null; name: string; company_name: string | null; phone: string | null; start_date: string; end_date: string; departure_time: string | null; pickup_point: string | null; drop_point: string | null; unit_id: number | null; unit_nopol: string | null; unit_category: string | null; armada_id: number | null; armada_nopol: string | null; driver_name: string | null; price: number; layanan: string | null; bop_price: number; bop_status: string | null; down_payment: number; payment_status: string | null; status: string | null };
     type CharterCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; company: string | null };
     type BagasiCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; tipe: string | null };
-    type Luggage = { id: number; sender_name: string; sender_phone: string; sender_address: string | null; receiver_name: string; receiver_phone: string; receiver_address: string | null; service_id: number | null; service_name: string | null; rute_id: number | null; rute: string | null; route_name: string | null; tanggal: string | null; unit_id: number | null; trip_assignment_id?: number | null; departure_date?: string | null; departure_time?: string | null; departure_unit?: number | null; departure_driver_name?: string | null; departure_armada_nopol?: string | null; quantity: number; notes: string | null; price: number; status: string | null; payment_status: string | null; kode_resi: string | null; created_at: string | null };
+    type Luggage = { id: number; pool_id: number | null; sender_name: string; sender_phone: string; sender_address: string | null; receiver_name: string; receiver_phone: string; receiver_address: string | null; service_id: number | null; service_name: string | null; rute_id: number | null; rute: string | null; route_name: string | null; tanggal: string | null; unit_id: number | null; trip_assignment_id?: number | null; departure_date?: string | null; departure_time?: string | null; departure_unit?: number | null; departure_driver_name?: string | null; departure_armada_nopol?: string | null; quantity: number; notes: string | null; price: number; status: string | null; payment_status: string | null; kode_resi: string | null; created_at: string | null };
     type Assignment = { id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; nama: string | null };
     type AssignmentConflict = { type: string; message: string; assignment_id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; driver_name: string | null };
     type CharterRoute = { id: number; name: string; origin: string | null; destination: string | null; duration: string | null; rental_price: number; bop_price: number };
@@ -93,6 +94,7 @@
     let drivers = $state<Driver[]>([]);
     let services = $state<Service[]>([]);
     let charterRoutes = $state<CharterRoute[]>([]);
+    let pools = $state<PoolOption[]>([]);
 
     let charters = $state<Charter[]>([]);
     let luggages = $state<Luggage[]>([]);
@@ -140,8 +142,8 @@
     const luggagePickedUpStatus = 'Dalam Perjalanan';
     const luggageArrivedStatus = 'Tiba di Tujuan';
     const luggagePaymentStatusOptions = ['Belum Bayar', 'Lunas'];
-    const newCharterForm = () => ({ id: 0, name: '', company_name: '', phone: '', start_date: today, end_date: today, departure_time: '08:00', pickup_point: '', drop_point: '', unit_id: 0, armada_id: 0, armada_nopol: '', driver_name: '', price: 0, layanan: defaultCharterService, bop_price: 0, bop_status: 'pending', down_payment: 0, payment_status: 'Belum Lunas' });
-    const newLuggageForm = () => ({ id: 0, sender_name: '', sender_phone: '', sender_address: '', receiver_name: '', receiver_phone: '', receiver_address: '', service_id: 0, rute_id: 0, tanggal: today, quantity: 1, notes: '', price: 0, status: luggageReceivedStatus, payment_status: 'Belum Bayar' });
+    const newCharterForm = () => ({ id: 0, pool_id: 0, master_carter_id: 0, name: '', company_name: '', phone: '', start_date: today, end_date: today, departure_time: '08:00', pickup_point: '', drop_point: '', unit_id: 0, armada_id: 0, armada_nopol: '', driver_name: '', price: 0, layanan: defaultCharterService, bop_price: 0, bop_status: 'pending', down_payment: 0, payment_status: 'Belum Lunas' });
+    const newLuggageForm = () => ({ id: 0, pool_id: 0, sender_name: '', sender_phone: '', sender_address: '', receiver_name: '', receiver_phone: '', receiver_address: '', service_id: 0, rute_id: 0, tanggal: today, quantity: 1, notes: '', price: 0, status: luggageReceivedStatus, payment_status: 'Belum Bayar' });
     let charterForm = $state(newCharterForm());
     let charterUnitSearch = $state('');
     let charterUnitLookupOpen = $state(false);
@@ -708,6 +710,69 @@ q.set('q', filterQuery.trim());
     const formatCurrencyId = (value: number | string | null | undefined) =>
         formatCurrencyDisplay(value);
 
+    const activePools = () => pools.filter((pool) => String(pool.status ?? 'active').toLowerCase() === 'active');
+
+    const defaultPoolId = () => {
+        const options = activePools();
+
+        return options.length === 1 ? Number(options[0].id || 0) : 0;
+    };
+
+    const poolLabel = (pool: PoolOption | null | undefined) => {
+        if (!pool) {
+            return '';
+        }
+
+        return [pool.name, pool.code ? `(${pool.code})` : ''].filter(Boolean).join(' ');
+    };
+
+    const poolNameById = (poolId: number | null | undefined) => {
+        const id = Number(poolId || 0);
+        const pool = pools.find((item) => Number(item.id || 0) === id);
+
+        return poolLabel(pool) || '-';
+    };
+
+    const poolForRouteId = (routeId: number | null | undefined) => {
+        const id = Number(routeId || 0);
+
+        if (id <= 0) {
+            return null;
+        }
+
+        return activePools().find((pool) => Array.isArray(pool.route_ids) && pool.route_ids.map(Number).includes(id)) ?? null;
+    };
+
+    const applyDefaultPoolToForms = () => {
+        const id = defaultPoolId();
+
+        if (id <= 0) {
+            return;
+        }
+
+        if (Number(charterForm.pool_id || 0) <= 0) {
+            charterForm.pool_id = id;
+        }
+
+        if (Number(luggageForm.pool_id || 0) <= 0) {
+            luggageForm.pool_id = id;
+        }
+    };
+
+    const syncLuggagePoolFromRoute = () => {
+        const pool = poolForRouteId(Number(luggageForm.rute_id || 0));
+
+        if (pool) {
+            luggageForm.pool_id = pool.id;
+
+            return;
+        }
+
+        if (Number(luggageForm.pool_id || 0) <= 0) {
+            luggageForm.pool_id = defaultPoolId();
+        }
+    };
+
     const charterStatusClass = (status: string | null | undefined) => {
         const normalized = String(status ?? 'active').toLowerCase();
 
@@ -1273,6 +1338,8 @@ return 'Selesai';
 
     const toCharterFormFromRow = (row: Charter) => ({
         id: row.id,
+        pool_id: row.pool_id ?? defaultPoolId(),
+        master_carter_id: row.master_carter_id ?? 0,
         name: row.name,
         company_name: row.company_name ?? '',
         phone: row.phone ?? '',
@@ -1309,6 +1376,7 @@ return 'Selesai';
 
     const resetCharterFormState = () => {
         charterForm = newCharterForm();
+        charterForm.pool_id = defaultPoolId();
         resetCharterCustomerLookup();
         syncCharterRouteLookupFromForm();
         resetCharterArmadaLookup();
@@ -1317,6 +1385,7 @@ return 'Selesai';
 
     const resetLuggageFormState = () => {
         luggageForm = newLuggageForm();
+        luggageForm.pool_id = defaultPoolId();
         luggageSenderLookupOpen = false;
         luggageSenderLookupBusy = false;
         luggageSenderLookupResults = [];
@@ -1584,11 +1653,13 @@ return 'Selesai';
         charterRouteSearch = exactRoute
             ? charterRouteLabel(exactRoute)
             : [charterForm.pickup_point, charterForm.drop_point].filter(Boolean).join(' - ');
+        charterForm.master_carter_id = exactRoute ? exactRoute.id : Number(charterForm.master_carter_id || 0);
     };
 
     const selectCharterRoute = (route: CharterRoute) => {
         charterRouteSearch = charterRouteLabel(route);
         charterRouteLookupOpen = false;
+        charterForm.master_carter_id = route.id;
         charterForm.pickup_point = route.origin ?? '';
         charterForm.drop_point = route.destination ?? '';
         charterForm.layanan = route.duration ?? defaultCharterService;
@@ -1651,18 +1722,21 @@ return 'Selesai';
     };
 
     const loadMasters = async () => {
-        const [r, u, d, s, cr] = await Promise.all([
+        const [r, u, d, s, cr, p] = await Promise.all([
             api('GET', '/api/admin/routes'),
             api('GET', '/api/admin/units'),
             api('GET', '/api/admin/drivers'),
             api('GET', '/api/admin/luggage-services'),
             api('GET', '/api/master/charter-routes'),
+            api('GET', '/api/admin/pools'),
         ]);
         routes = r.routes ?? [];
         units = u.units ?? [];
         drivers = d.drivers ?? [];
         services = s.services ?? [];
         charterRoutes = cr.routes ?? [];
+        pools = p.pools ?? [];
+        applyDefaultPoolToForms();
         syncCharterRouteLookupFromForm();
         syncCharterArmadaLookupsFromForm();
         syncCharterDriverLookupFromForm();
@@ -1845,6 +1919,8 @@ await loadAssignments(assignmentMeta.page);
             await runWithFeedback(async () => {
                 await api('POST', '/api/admin/charters', {
                     id: charterForm.id || undefined,
+                    pool_id: Number(charterForm.pool_id || 0) || undefined,
+                    master_carter_id: Number(charterForm.master_carter_id || 0) || undefined,
                     name: charterForm.name,
                     company_name: charterForm.company_name,
                     phone: charterForm.phone,
@@ -1891,6 +1967,7 @@ await loadAssignments(assignmentMeta.page);
             await runWithFeedback(async () => {
                 await api('POST', '/api/admin/luggages', {
                     id: luggageForm.id || undefined,
+                    pool_id: Number(luggageForm.pool_id || 0) || undefined,
                     sender_name: luggageForm.sender_name,
                     sender_phone: luggageForm.sender_phone,
                     sender_address: luggageForm.sender_address,
@@ -2686,6 +2763,9 @@ params.set('to', filterTo);
                             bind:charterDriverSearch
                             bind:charterDriverLookupOpen
                             charterPaymentStatusOptions={charterPaymentStatusOptions}
+                            activePools={activePools}
+                            poolLabel={poolLabel}
+                            poolNameById={poolNameById}
                             savingCharter={savingCharter}
                             onCharterCustomerQueryInput={onCharterCustomerQueryInput}
                             applyCharterCustomer={applyCharterCustomer}
@@ -3042,6 +3122,16 @@ params.set('to', filterTo);
                                     </div>
                                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                                         <div class="space-y-1 xl:col-span-2">
+                                            <label for="luggage-pool" class="text-xs font-medium text-muted-foreground">Perwakilan / Pool</label>
+                                            <select id="luggage-pool" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={luggageForm.pool_id} required={activePools().length > 0}>
+                                                <option value={0}>Pilih pool</option>
+                                                {#each activePools() as pool (pool.id)}
+                                                    <option value={pool.id}>{poolLabel(pool)}</option>
+                                                {/each}
+                                            </select>
+                                            <p class="text-[11px] text-muted-foreground">Dipakai untuk akses user dan laporan pool.</p>
+                                        </div>
+                                        <div class="space-y-1 xl:col-span-2">
                                             <label for="luggage-service" class="text-xs font-medium text-muted-foreground">Layanan</label>
                                             <select id="luggage-service" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={luggageForm.service_id}>
                                                 <option value={0}>Pilih layanan</option>
@@ -3052,7 +3142,12 @@ params.set('to', filterTo);
                                         </div>
                                         <div class="space-y-1 xl:col-span-2">
                                             <label for="luggage-route" class="text-xs font-medium text-muted-foreground">Rute</label>
-                                            <select id="luggage-route" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={luggageForm.rute_id}>
+                                            <select
+                                                id="luggage-route"
+                                                class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                                                bind:value={luggageForm.rute_id}
+                                                onchange={syncLuggagePoolFromRoute}
+                                            >
                                                 <option value={0}>Pilih rute</option>
                                                 {#each routes as route (route.id)}
                                                     <option value={route.id}>{route.name}</option>
@@ -3278,6 +3373,7 @@ params.set('to', filterTo);
                                                             resetLuggageFormState();
                                                             luggageForm = {
                                                                 id: row.id,
+                                                                pool_id: row.pool_id ?? defaultPoolId(),
                                                                 sender_name: row.sender_name ?? '',
                                                                 sender_phone: row.sender_phone ?? '',
                                                                 sender_address: row.sender_address ?? '',

@@ -26,6 +26,9 @@ class AdminOpsApiController extends Controller
     private ?bool $chartersHasStatusColumn = null;
     private ?bool $chartersHasArmadaIdColumn = null;
     private ?bool $chartersHasArmadaNopolColumn = null;
+    private ?bool $chartersHasPoolIdColumn = null;
+    private ?bool $chartersHasMasterCarterIdColumn = null;
+    private ?bool $luggagesHasPoolIdColumn = null;
     private ?bool $tripAssignmentsHasArmadaId = null;
     private ?bool $tripAssignmentsHasArmadaNopol = null;
     private ?bool $tripAssignmentsHasStatus = null;
@@ -993,7 +996,13 @@ class AdminOpsApiController extends Controller
         $baseQuery = DB::table('luggages as l')
             ->whereBetween('l.created_at', [$createdFrom, $createdTo]);
         $this->applyNotCanceledFilter($baseQuery, 'l.status');
-        $this->applyRouteScopeToQuery($baseQuery, Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '', 'l.rute', $poolId);
+        $this->applyPoolOrRouteScopeToQuery(
+            $baseQuery,
+            $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+            Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+            'l.rute',
+            $poolId,
+        );
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -1156,7 +1165,13 @@ class AdminOpsApiController extends Controller
                 ->whereBetween('l.created_at', [$createdFrom, $createdTo])
                 ->orderByDesc('l.created_at');
             $this->applyNotCanceledFilter($query, 'l.status');
-            $this->applyRouteScopeToQuery($query, Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '', 'l.rute', $poolId);
+            $this->applyPoolOrRouteScopeToQuery(
+                $query,
+                $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                'l.rute',
+                $poolId,
+            );
 
             $rows = $query->get([
                     DB::raw('date(l.created_at) as tanggal'),
@@ -1262,6 +1277,8 @@ class AdminOpsApiController extends Controller
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaIdColumn = $this->chartersHasArmadaIdColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
+        $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
+        $hasMasterCarterIdColumn = $this->chartersHasMasterCarterIdColumn();
         $canJoinArmadas = $hasArmadaIdColumn && Schema::hasTable('armadas');
 
         $query = DB::table('charters as c')
@@ -1294,6 +1311,9 @@ class AdminOpsApiController extends Controller
             DB::raw('u.nopol as unit_nopol'),
             DB::raw('u.category as unit_category'),
         ];
+
+        $select[] = $hasPoolIdColumn ? 'c.pool_id' : DB::raw('NULL as pool_id');
+        $select[] = $hasMasterCarterIdColumn ? 'c.master_carter_id' : DB::raw('NULL as master_carter_id');
 
         if ($hasArmadaIdColumn) {
             $select[] = 'c.armada_id';
@@ -1408,6 +1428,8 @@ class AdminOpsApiController extends Controller
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaIdColumn = $this->chartersHasArmadaIdColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
+        $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
+        $hasMasterCarterIdColumn = $this->chartersHasMasterCarterIdColumn();
         $canJoinArmadas = $hasArmadaIdColumn && Schema::hasTable('armadas');
 
         $query = DB::table('charters as c')
@@ -1443,6 +1465,9 @@ class AdminOpsApiController extends Controller
             DB::raw('u.category as unit_category'),
         ];
 
+        $select[] = $hasPoolIdColumn ? 'c.pool_id' : DB::raw('NULL as pool_id');
+        $select[] = $hasMasterCarterIdColumn ? 'c.master_carter_id' : DB::raw('NULL as master_carter_id');
+
         if ($hasArmadaIdColumn) {
             $select[] = 'c.armada_id';
         } else {
@@ -1472,6 +1497,8 @@ class AdminOpsApiController extends Controller
     {
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
+            'master_carter_id' => ['nullable', 'integer', 'min:1'],
             'name' => ['required', 'string', 'max:120'],
             'company_name' => ['nullable', 'string', 'max:180'],
             'phone' => ['nullable', 'string', 'max:30'],
@@ -1497,6 +1524,8 @@ class AdminOpsApiController extends Controller
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaIdColumn = $this->chartersHasArmadaIdColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
+        $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
+        $hasMasterCarterIdColumn = $this->chartersHasMasterCarterIdColumn();
         $before = [];
         if ($id > 0) {
             $existing = DB::table('charters')
@@ -1506,6 +1535,10 @@ class AdminOpsApiController extends Controller
                 return $this->error('Charter not found.', 404);
             }
             $before = (array) $existing;
+
+            if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['pickup_point'] ?? '', $before['drop_point'] ?? ''])) {
+                return $this->error('Anda tidak memiliki akses ke data charter ini.', 403);
+            }
 
             $isDone = $hasStatusColumn
                 ? strtolower(trim((string) ($existing->status ?? ''))) === 'done'
@@ -1588,6 +1621,33 @@ class AdminOpsApiController extends Controller
             'payment_status' => $this->nullable($data['payment_status'] ?? null) ?? 'Belum Bayar',
         ];
 
+        $masterCarterId = (int) ($data['master_carter_id'] ?? 0);
+        if (
+            $masterCarterId > 0
+            && (! Schema::hasTable('master_carter') || ! DB::table('master_carter')->where('id', $masterCarterId)->exists())
+        ) {
+            return $this->error('Master Carter tidak ditemukan.', 422);
+        }
+
+        if ($hasPoolIdColumn) {
+            $poolId = $this->resolveTransactionPoolId(
+                (int) ($data['pool_id'] ?? 0),
+                0,
+                [$payload['pickup_point'] ?? '', $payload['drop_point'] ?? ''],
+                (int) ($before['pool_id'] ?? 0),
+            );
+
+            if ($poolId < 0) {
+                return $this->error($this->transactionPoolErrorMessage($poolId), 422);
+            }
+
+            $payload['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
+        if ($hasMasterCarterIdColumn) {
+            $payload['master_carter_id'] = $masterCarterId > 0 ? $masterCarterId : null;
+        }
+
         if ($hasArmadaIdColumn) {
             $payload['armada_id'] = $armadaId > 0 ? $armadaId : null;
         }
@@ -1634,6 +1694,13 @@ class AdminOpsApiController extends Controller
     public function chartersDelete(int $id): JsonResponse
     {
         $before = (array) (DB::table('charters')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Charter not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['pickup_point'] ?? '', $before['drop_point'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data charter ini.', 403);
+        }
 
         if ($this->chartersHasStatusColumn()) {
             $updated = DB::table('charters')
@@ -1684,16 +1751,21 @@ class AdminOpsApiController extends Controller
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'min:1'],
         ]);
+        $ids = collect($data['ids'])->map(static fn ($value) => (int) $value)->unique()->values()->all();
+        $allowedIds = $this->accessibleCharterIds($ids);
+        if (count($allowedIds) !== count($ids)) {
+            return $this->error('Ada data charter di luar akses pool user.', 403);
+        }
 
         if ($this->chartersHasStatusColumn()) {
             $updated = DB::table('charters')
-                ->whereIn('id', $data['ids'])
+                ->whereIn('id', $allowedIds)
                 ->update(['status' => 'canceled']);
             return $this->ok(['message' => 'Bulk cancel charters done.', 'updated' => $updated]);
         }
 
         $updated = DB::table('charters')
-            ->whereIn('id', $data['ids'])
+            ->whereIn('id', $allowedIds)
             ->update(['payment_status' => 'Canceled']);
         return $this->ok(['message' => 'Bulk cancel charters done.', 'updated' => $updated]);
     }
@@ -1701,6 +1773,13 @@ class AdminOpsApiController extends Controller
     public function chartersMarkBopDone(int $id): JsonResponse
     {
         $before = (array) (DB::table('charters')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Charter not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['pickup_point'] ?? '', $before['drop_point'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data charter ini.', 403);
+        }
         $updated = DB::table('charters')->where('id', $id)->update(['bop_status' => 'done']);
         if ($updated === 0) {
             return $this->error('Charter not found.', 404);
@@ -1721,6 +1800,13 @@ class AdminOpsApiController extends Controller
     public function chartersMarkPaid(int $id): JsonResponse
     {
         $before = (array) (DB::table('charters')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Charter not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['pickup_point'] ?? '', $before['drop_point'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data charter ini.', 403);
+        }
         $updated = DB::table('charters')->where('id', $id)->update(['payment_status' => 'Lunas']);
         if ($updated === 0) {
             return $this->error('Charter not found.', 404);
@@ -1745,6 +1831,10 @@ class AdminOpsApiController extends Controller
             ->first();
         if (! $row) {
             return $this->error('Charter not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($row->pool_id ?? 0), [$row->pickup_point ?? '', $row->drop_point ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data charter ini.', 403);
         }
 
         $paymentStatus = strtolower(trim((string) ($row->payment_status ?? '')));
@@ -1816,6 +1906,7 @@ class AdminOpsApiController extends Controller
         $query
             ->select([
                 'l.id',
+                $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : DB::raw('NULL as pool_id'),
                 'l.sender_name',
                 'l.sender_phone',
                 'l.sender_address',
@@ -1897,7 +1988,12 @@ class AdminOpsApiController extends Controller
                 }
             });
         }
-        $this->applyRouteScopeToQuery($query, Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '', 'l.rute');
+        $this->applyPoolOrRouteScopeToQuery(
+            $query,
+            $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+            Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+            'l.rute',
+        );
 
         $result = $this->paginateQuery($query, $page, $perPage);
         $rows = collect($result['data'])
@@ -1923,6 +2019,7 @@ class AdminOpsApiController extends Controller
     {
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
             'sender_name' => ['required', 'string', 'max:120'],
             'sender_phone' => ['required', 'string', 'max:30'],
             'sender_address' => ['nullable', 'string'],
@@ -1944,6 +2041,13 @@ class AdminOpsApiController extends Controller
         $id = (int) ($data['id'] ?? 0);
         $serviceId = (int) ($data['service_id'] ?? $data['layanan_id'] ?? 0);
         $routeId = (int) ($data['rute_id'] ?? 0);
+        $before = $id > 0 ? (array) (DB::table('luggages')->where('id', $id)->first() ?? []) : [];
+        if ($id > 0 && $before === []) {
+            return $this->error('Luggage not found.', 404);
+        }
+        if ($id > 0 && ! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
 
         $senderPhone = $this->normalizePhone((string) $data['sender_phone']);
         $receiverPhone = $this->normalizePhone((string) $data['receiver_phone']);
@@ -1982,8 +2086,23 @@ class AdminOpsApiController extends Controller
             'penerima_id' => $penerimaId > 0 ? $penerimaId : null,
         ];
 
+        if ($this->luggagesHasPoolIdColumn()) {
+            $poolId = $this->resolveTransactionPoolId(
+                (int) ($data['pool_id'] ?? 0),
+                $routeId,
+                [$routeName],
+                (int) ($before['pool_id'] ?? 0),
+            );
+
+            if ($poolId < 0) {
+                return $this->error($this->transactionPoolErrorMessage($poolId), 422);
+            }
+
+            $payload['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
         if ($id > 0) {
-            $previous = DB::table('luggages')->where('id', $id)->first();
+            $previous = (object) $before;
             DB::table('luggages')->where('id', $id)->update($payload);
             if ($previous) {
                 $this->appendLuggageLogByResi(
@@ -2006,6 +2125,15 @@ class AdminOpsApiController extends Controller
 
     public function luggagesDelete(int $id): JsonResponse
     {
+        $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
+
         DB::table('luggages')->where('id', $id)->delete();
         return $this->ok(['message' => 'Luggage deleted.']);
     }
@@ -2016,8 +2144,13 @@ class AdminOpsApiController extends Controller
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'min:1'],
         ]);
+        $ids = collect($data['ids'])->map(static fn ($value) => (int) $value)->unique()->values()->all();
+        $allowedIds = $this->accessibleLuggageIds($ids);
+        if (count($allowedIds) !== count($ids)) {
+            return $this->error('Ada data bagasi di luar akses pool user.', 403);
+        }
 
-        $deleted = DB::table('luggages')->whereIn('id', $data['ids'])->delete();
+        $deleted = DB::table('luggages')->whereIn('id', $allowedIds)->delete();
         return $this->ok(['message' => 'Bulk delete luggages done.', 'deleted' => $deleted]);
     }
 
@@ -2029,6 +2162,11 @@ class AdminOpsApiController extends Controller
             'status' => ['required', 'string', 'max:40'],
             'payment_status' => ['nullable', 'string', 'max:30'],
         ]);
+        $ids = collect($data['ids'])->map(static fn ($value) => (int) $value)->unique()->values()->all();
+        $allowedIds = $this->accessibleLuggageIds($ids);
+        if (count($allowedIds) !== count($ids)) {
+            return $this->error('Ada data bagasi di luar akses pool user.', 403);
+        }
 
         $payload = ['status' => $this->normalizeLuggageStatus($data['status'] ?? null)];
         if (isset($data['payment_status'])) {
@@ -2036,16 +2174,16 @@ class AdminOpsApiController extends Controller
         }
 
         $beforeRows = DB::table('luggages')
-            ->whereIn('id', $data['ids'])
+            ->whereIn('id', $allowedIds)
             ->get()
             ->mapWithKeys(fn ($row) => [(int) $row->id => (array) $row]);
 
         $updated = DB::table('luggages')
-            ->whereIn('id', $data['ids'])
+            ->whereIn('id', $allowedIds)
             ->update($payload);
 
         if ($updated > 0) {
-            $rows = DB::table('luggages')->whereIn('id', $data['ids'])->get(['id', 'kode_resi']);
+            $rows = DB::table('luggages')->whereIn('id', $allowedIds)->get(['id', 'kode_resi']);
             foreach ($rows as $row) {
                 $before = $beforeRows->get((int) $row->id, []);
                 $resi = $row->kode_resi ?: $this->ensureLuggageResi((int) $row->id);
@@ -2066,6 +2204,13 @@ class AdminOpsApiController extends Controller
     public function luggagesMarkPaid(int $id): JsonResponse
     {
         $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
         $updated = DB::table('luggages')->where('id', $id)->update(['payment_status' => 'Lunas']);
         if ($updated === 0) {
             return $this->error('Luggage not found.', 404);
@@ -2081,6 +2226,13 @@ class AdminOpsApiController extends Controller
     public function luggagesMarkActive(int $id): JsonResponse
     {
         $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
         $status = $this->luggagePickedUpStatus();
         $updated = DB::table('luggages')->where('id', $id)->update(['status' => $status]);
         if ($updated === 0) {
@@ -2097,6 +2249,13 @@ class AdminOpsApiController extends Controller
     public function luggagesMarkDone(int $id): JsonResponse
     {
         $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
         $status = $this->luggageArrivedStatus();
         $updated = DB::table('luggages')->where('id', $id)->update(['status' => $status]);
         if ($updated === 0) {
@@ -2113,6 +2272,13 @@ class AdminOpsApiController extends Controller
     public function luggagesMarkCanceled(int $id): JsonResponse
     {
         $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        if ($before === []) {
+            return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
         $updated = DB::table('luggages')->where('id', $id)->update(['status' => 'canceled']);
         if ($updated === 0) {
             return $this->error('Luggage not found.', 404);
@@ -3734,6 +3900,72 @@ class AdminOpsApiController extends Controller
         });
     }
 
+    private function applyPoolOrRouteScopeToQuery(
+        Builder $query,
+        string $poolColumn = '',
+        string $routeIdColumn = '',
+        string $routeNameColumn = '',
+        int $poolId = 0,
+    ): void {
+        $scope = $this->routeScopeForCurrentUser($poolId);
+        if ($scope['all']) {
+            return;
+        }
+
+        $poolIds = $scope['pool_ids'];
+        $routeIds = $scope['route_ids'];
+        $routeNames = $scope['route_names'];
+
+        if (
+            ($poolColumn === '' || $poolIds === [])
+            && ($routeIdColumn === '' || $routeIds === [])
+            && ($routeNameColumn === '' || $routeNames === [])
+        ) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $builder) use ($poolColumn, $poolIds, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames): void {
+            if ($poolColumn !== '' && $poolIds !== []) {
+                $builder->whereIn($poolColumn, $poolIds);
+
+                if (($routeIdColumn !== '' && $routeIds !== []) || ($routeNameColumn !== '' && $routeNames !== [])) {
+                    $builder->orWhere(function (Builder $legacy) use ($poolColumn, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames): void {
+                        $legacy->whereNull($poolColumn);
+                        $this->appendRouteScopeClauses($legacy, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames);
+                    });
+                }
+
+                return;
+            }
+
+            $this->appendRouteScopeClauses($builder, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames);
+        });
+    }
+
+    /**
+     * @param array<int, int> $routeIds
+     * @param array<int, string> $routeNames
+     */
+    private function appendRouteScopeClauses(Builder $builder, string $routeIdColumn, array $routeIds, string $routeNameColumn, array $routeNames): void
+    {
+        $builder->where(function (Builder $routeBuilder) use ($routeIdColumn, $routeIds, $routeNameColumn, $routeNames): void {
+            $hasClause = false;
+
+            if ($routeIdColumn !== '' && $routeIds !== []) {
+                $routeBuilder->whereIn($routeIdColumn, $routeIds);
+                $hasClause = true;
+            }
+
+            if ($routeNameColumn !== '' && $routeNames !== []) {
+                $hasClause
+                    ? $routeBuilder->orWhereIn($routeNameColumn, $routeNames)
+                    : $routeBuilder->whereIn($routeNameColumn, $routeNames);
+            }
+        });
+    }
+
     private function applyCharterPoolScope(Builder $query, int $poolId = 0): void
     {
         $scope = $this->routeScopeForCurrentUser($poolId);
@@ -3741,18 +3973,220 @@ class AdminOpsApiController extends Controller
             return;
         }
 
+        $poolIds = $scope['pool_ids'];
         $labels = $scope['labels'];
-        if ($labels === []) {
-            $query->whereRaw('1 = 0');
+        if (($this->chartersHasPoolIdColumn() && $poolIds !== []) || $labels !== []) {
+            $query->where(function (Builder $builder) use ($poolIds, $labels): void {
+                $hasClause = false;
+
+                if ($this->chartersHasPoolIdColumn() && $poolIds !== []) {
+                    $builder->whereIn('c.pool_id', $poolIds);
+                    $hasClause = true;
+                }
+
+                if ($labels !== []) {
+                    if ($hasClause && $this->chartersHasPoolIdColumn()) {
+                        $builder->orWhere(function (Builder $legacy) use ($labels): void {
+                            $legacy
+                                ->whereNull('c.pool_id')
+                                ->where(function (Builder $routeBuilder) use ($labels): void {
+                                    $routeBuilder
+                                        ->whereIn('c.pickup_point', $labels)
+                                        ->orWhereIn('c.drop_point', $labels);
+                                });
+                        });
+                    } elseif ($hasClause) {
+                        $builder->orWhere(function (Builder $routeBuilder) use ($labels): void {
+                            $routeBuilder
+                                ->whereIn('c.pickup_point', $labels)
+                                ->orWhereIn('c.drop_point', $labels);
+                        });
+                    } else {
+                        $builder
+                            ->whereIn('c.pickup_point', $labels)
+                            ->orWhereIn('c.drop_point', $labels);
+                    }
+                }
+            });
 
             return;
         }
 
-        $query->where(function (Builder $builder) use ($labels): void {
-            $builder
-                ->whereIn('c.pickup_point', $labels)
-                ->orWhereIn('c.drop_point', $labels);
-        });
+        $query->whereRaw('1 = 0');
+    }
+
+    private function resolveTransactionPoolId(int $requestedPoolId = 0, int $routeId = 0, array $labels = [], int $existingPoolId = 0): int
+    {
+        if (! $this->poolTablesReady() || (int) DB::table('pools')->count() === 0) {
+            return 0;
+        }
+
+        $scope = $this->routeScopeForCurrentUser();
+        $allPoolIds = DB::table('pools')
+            ->where('status', 'active')
+            ->pluck('id')
+            ->map(static fn ($value) => (int) $value)
+            ->values()
+            ->all();
+        $allowedPoolIds = $scope['all'] ? $allPoolIds : $scope['pool_ids'];
+
+        if ($allowedPoolIds === []) {
+            return -1;
+        }
+
+        $isAllowed = static fn (int $poolId): bool => $poolId > 0 && in_array($poolId, $allowedPoolIds, true);
+        $mappedPoolId = $this->poolIdForRouteId($routeId);
+
+        if ($requestedPoolId > 0) {
+            if (! $isAllowed($requestedPoolId)) {
+                return -1;
+            }
+
+            if ($mappedPoolId > 0 && $mappedPoolId !== $requestedPoolId) {
+                return -3;
+            }
+
+            return $requestedPoolId;
+        }
+
+        if ($mappedPoolId > 0) {
+            return $isAllowed($mappedPoolId) ? $mappedPoolId : -1;
+        }
+
+        if ($existingPoolId > 0) {
+            return $isAllowed($existingPoolId) ? $existingPoolId : -1;
+        }
+
+        foreach ($labels as $label) {
+            $labelPoolId = $this->poolIdForRouteLabel((string) $label);
+
+            if ($labelPoolId > 0) {
+                return $isAllowed($labelPoolId) ? $labelPoolId : -1;
+            }
+        }
+
+        if (count($allowedPoolIds) === 1) {
+            return (int) $allowedPoolIds[0];
+        }
+
+        return -2;
+    }
+
+    private function transactionPoolErrorMessage(int $code): string
+    {
+        return match ($code) {
+            -1 => 'Pool tidak sesuai dengan akses user.',
+            -3 => 'Rute yang dipilih sudah dimapping ke pool lain.',
+            default => 'Pilih Perwakilan/Pool untuk data ini.',
+        };
+    }
+
+    private function transactionPoolSnapshotAccessible(int $poolId = 0, array $labels = []): bool
+    {
+        $scope = $this->routeScopeForCurrentUser();
+        if ($scope['all']) {
+            return true;
+        }
+
+        if ($poolId > 0 && in_array($poolId, $scope['pool_ids'], true)) {
+            return true;
+        }
+
+        if ($poolId > 0) {
+            return false;
+        }
+
+        $allowedLabels = array_map(fn (string $value): string => $this->normalizeRouteLabel($value), $scope['labels']);
+        foreach ($labels as $label) {
+            if (in_array($this->normalizeRouteLabel((string) $label), $allowedLabels, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<int, int> $ids
+     * @return array<int, int>
+     */
+    private function accessibleCharterIds(array $ids): array
+    {
+        $ids = array_values(array_filter(array_unique(array_map(static fn ($id) => (int) $id, $ids)), static fn ($id) => $id > 0));
+        if ($ids === []) {
+            return [];
+        }
+
+        $query = DB::table('charters as c')->whereIn('c.id', $ids);
+        $this->applyCharterPoolScope($query);
+
+        return $query
+            ->pluck('c.id')
+            ->map(static fn ($value) => (int) $value)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param array<int, int> $ids
+     * @return array<int, int>
+     */
+    private function accessibleLuggageIds(array $ids): array
+    {
+        $ids = array_values(array_filter(array_unique(array_map(static fn ($id) => (int) $id, $ids)), static fn ($id) => $id > 0));
+        if ($ids === []) {
+            return [];
+        }
+
+        $query = DB::table('luggages as l')->whereIn('l.id', $ids);
+        $this->applyPoolOrRouteScopeToQuery(
+            $query,
+            $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+            Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+            'l.rute',
+        );
+
+        return $query
+            ->pluck('l.id')
+            ->map(static fn ($value) => (int) $value)
+            ->values()
+            ->all();
+    }
+
+    private function poolIdForRouteId(int $routeId): int
+    {
+        if ($routeId <= 0 || ! $this->poolTablesReady()) {
+            return 0;
+        }
+
+        return (int) (DB::table('pool_route')->where('route_id', $routeId)->value('pool_id') ?? 0);
+    }
+
+    private function poolIdForRouteLabel(string $label): int
+    {
+        $normalized = $this->normalizeRouteLabel($label);
+        if ($normalized === '' || ! $this->poolTablesReady()) {
+            return 0;
+        }
+
+        $routes = DB::table('pool_route as pr')
+            ->join('routes as r', 'pr.route_id', '=', 'r.id')
+            ->get(['pr.pool_id', 'r.name', 'r.origin', 'r.destination']);
+
+        foreach ($routes as $route) {
+            foreach (['name', 'origin', 'destination'] as $field) {
+                if ($this->normalizeRouteLabel((string) ($route->{$field} ?? '')) === $normalized) {
+                    return (int) ($route->pool_id ?? 0);
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private function normalizeRouteLabel(string $value): string
+    {
+        return preg_replace('/\s+/', ' ', mb_strtolower(trim($value))) ?? '';
     }
 
     /**
@@ -5297,6 +5731,33 @@ class AdminOpsApiController extends Controller
         }
 
         return $this->chartersHasArmadaNopolColumn;
+    }
+
+    private function chartersHasPoolIdColumn(): bool
+    {
+        if ($this->chartersHasPoolIdColumn === null) {
+            $this->chartersHasPoolIdColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'pool_id');
+        }
+
+        return $this->chartersHasPoolIdColumn;
+    }
+
+    private function chartersHasMasterCarterIdColumn(): bool
+    {
+        if ($this->chartersHasMasterCarterIdColumn === null) {
+            $this->chartersHasMasterCarterIdColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'master_carter_id');
+        }
+
+        return $this->chartersHasMasterCarterIdColumn;
+    }
+
+    private function luggagesHasPoolIdColumn(): bool
+    {
+        if ($this->luggagesHasPoolIdColumn === null) {
+            $this->luggagesHasPoolIdColumn = Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'pool_id');
+        }
+
+        return $this->luggagesHasPoolIdColumn;
     }
 
     private function tripAssignmentsHasArmadaId(): bool
