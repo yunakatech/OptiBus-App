@@ -6,6 +6,8 @@
     type ViewMode = 'data' | 'form' | 'view';
     type CharterForm = {
         id: number;
+        pool_id: number;
+        master_carter_id: number;
         name: string;
         company_name: string;
         phone: string;
@@ -41,6 +43,7 @@
         rental_price: number;
         bop_price: number;
     };
+    type PoolOption = { id: number; name: string; code?: string | null; status?: string | null; route_ids?: number[] };
     type Unit = {
         id: number;
         nopol: string;
@@ -64,6 +67,8 @@
 
     const fallbackCharterForm: CharterForm = {
         id: 0,
+        pool_id: 0,
+        master_carter_id: 0,
         name: '',
         company_name: '',
         phone: '',
@@ -106,6 +111,9 @@
         charterDriverLookupOpen = $bindable(false),
         charterPaymentStatusOptions = [],
         savingCharter = false,
+        activePools,
+        poolLabel,
+        poolNameById,
         onCharterCustomerQueryInput,
         applyCharterCustomer,
         onCharterRouteBlur,
@@ -156,6 +164,9 @@
         charterDriverLookupOpen?: boolean;
         charterPaymentStatusOptions?: string[];
         savingCharter?: boolean;
+        activePools: () => PoolOption[];
+        poolLabel: (pool: PoolOption | null | undefined) => string;
+        poolNameById: (poolId: number | null | undefined) => string;
         onCharterCustomerQueryInput: (value: string) => void;
         applyCharterCustomer: (customer: CharterCustomer) => void;
         onCharterRouteBlur: () => void;
@@ -383,11 +394,11 @@
                     </div>
                     <div class="space-y-1 md:col-span-3">
                         <label for="charter-pickup" class="text-xs font-medium text-muted-foreground">Titik Jemput</label>
-                        <Input id="charter-pickup" class="rounded-xl" placeholder="Pickup point" bind:value={charterForm.pickup_point} />
+                        <Input id="charter-pickup" class="rounded-xl" placeholder="Pickup point" bind:value={charterForm.pickup_point} oninput={() => (charterForm.master_carter_id = 0)} />
                     </div>
                     <div class="space-y-1 md:col-span-3">
                         <label for="charter-drop" class="text-xs font-medium text-muted-foreground">Titik Antar</label>
-                        <Input id="charter-drop" class="rounded-xl" placeholder="Drop point" bind:value={charterForm.drop_point} />
+                        <Input id="charter-drop" class="rounded-xl" placeholder="Drop point" bind:value={charterForm.drop_point} oninput={() => (charterForm.master_carter_id = 0)} />
                     </div>
                 </div>
             </section>
@@ -398,6 +409,16 @@
                     <p class="text-sm font-medium text-foreground">Mapping armada, driver, dan nilai transaksi</p>
                 </div>
                 <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+                    <div class="space-y-1 xl:col-span-2">
+                        <label for="charter-pool" class="text-xs font-medium text-muted-foreground">Perwakilan / Pool</label>
+                        <select id="charter-pool" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={charterForm.pool_id} required={activePools().length > 0}>
+                            <option value={0}>Pilih pool</option>
+                            {#each activePools() as pool (pool.id)}
+                                <option value={pool.id}>{poolLabel(pool)}</option>
+                            {/each}
+                        </select>
+                        <p class="text-[11px] leading-snug text-muted-foreground">Dipakai untuk akses user dan laporan. Tidak ditampilkan di card Carter.</p>
+                    </div>
                     <div class="relative space-y-1 xl:col-span-2">
                         <label for="charter-unit" class="text-xs font-medium text-muted-foreground">Kategori Armada</label>
                         <Input
@@ -625,6 +646,7 @@
                         <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Operasional</p>
                         <div class="mt-2 space-y-1.5">
                             <div class="flex items-center justify-between gap-2"><span class="text-slate-300">Kategori Armada</span><span class="font-medium text-right">{charterUnitLabel(selectedCharterUnit()) || '-'}</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="text-slate-300">Pool</span><span class="font-medium text-right">{poolNameById(charterForm.pool_id)}</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="text-slate-300">Nopol</span><span class="font-medium text-right">{charterForm.armada_nopol || '-'}</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="text-slate-300">Driver</span><span class="font-medium text-right">{charterForm.driver_name || '-'}</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="text-slate-300">Status Bayar</span><span class="font-medium text-right">{charterForm.payment_status || '-'}</span></div>
