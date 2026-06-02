@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
+use App\Support\PoolScope;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
@@ -607,6 +608,7 @@ class AdminOpsApiController extends Controller
         $query = DB::table('customers')
             ->select(['id', 'name', 'phone', 'pickup_point', 'gmaps'])
             ->orderBy('name');
+        PoolScope::applyCustomerScope($query, 'customers');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -2573,6 +2575,7 @@ class AdminOpsApiController extends Controller
         $query = DB::table('customer_bagasi')
             ->select(['id', 'nama', 'no_hp', 'alamat', 'tipe'])
             ->orderBy('nama');
+        PoolScope::applyCustomerBagasiScope($query, 'customer_bagasi');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -2641,6 +2644,7 @@ class AdminOpsApiController extends Controller
         $query = DB::table('customer_charter')
             ->select(['id', 'nama', 'no_hp', 'alamat', 'company'])
             ->orderBy('nama');
+        PoolScope::applyCustomerCharterScope($query, 'customer_charter');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -3392,6 +3396,21 @@ class AdminOpsApiController extends Controller
         $query = DB::table('users')
             ->select($select)
             ->orderBy('name');
+
+        if (! $this->currentUserIsSuperAdmin() && $this->poolTablesReady()) {
+            $poolIds = $this->currentUserPoolIds();
+            if ($poolIds === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereExists(function (Builder $exists) use ($poolIds): void {
+                    $exists
+                        ->selectRaw('1')
+                        ->from('pool_user as scoped_pool_user')
+                        ->whereColumn('scoped_pool_user.user_id', 'users.id')
+                        ->whereIn('scoped_pool_user.pool_id', $poolIds);
+                });
+            }
+        }
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
