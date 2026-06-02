@@ -20,13 +20,15 @@ class DashboardController extends Controller
         $trendAnchor = $latestActivityDate && $latestActivityDate->lt($today->copy()->subDays(6))
             ? $latestActivityDate->copy()
             : $today->copy();
-        $trendYearAnchor = $latestActivityDate ?? $today->copy();
-        $monthStart = $trendYearAnchor->copy()->startOfMonth();
-        $monthEnd = $trendYearAnchor->copy()->endOfMonth();
+        // Summary cards must stay on the current running period, even when future trips are added early.
+        $periodAnchor = $today->copy();
+        $trendYearAnchor = $periodAnchor->copy();
+        $monthStart = $periodAnchor->copy()->startOfMonth();
+        $monthEnd = $periodAnchor->copy()->endOfMonth();
         $previousMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
         $previousMonthEnd = $previousMonthStart->copy()->endOfMonth();
-        $yearStart = $trendYearAnchor->copy()->startOfYear();
-        $yearEnd = $trendYearAnchor->copy()->endOfYear();
+        $yearStart = $periodAnchor->copy()->startOfYear();
+        $yearEnd = $periodAnchor->copy()->endOfYear();
         $yesterday = $today->copy()->subDay();
         $previousYearStart = $yearStart->copy()->subYear()->startOfYear();
         $previousYearEnd = $previousYearStart->copy()->endOfYear();
@@ -567,6 +569,7 @@ class DashboardController extends Controller
                 'status',
             ])
             ->orderBy('start_date')
+            ->orderByRaw('departure_time IS NULL')
             ->orderBy('departure_time')
             ->orderBy('id')
             ->limit($visibleCount)
