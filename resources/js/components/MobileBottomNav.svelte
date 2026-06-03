@@ -14,6 +14,7 @@
 
     const url = currentUrlState();
     const ACTIVE_NAV_STORAGE_KEY = 'cabooq_mobile_bottom_active';
+    const NAV_PREFETCH_CACHE_MS = 30_000;
 
     const mainItems: NavItem[] = [
         {
@@ -56,6 +57,7 @@
     let rememberedActiveHref = $state<string>(toUrl(dashboard()));
     let isCompact = $state(false);
     let pendingHref = $state('');
+    let prefetchedHrefs = new Set<string>();
     let lastScrollY = 0;
     let scrollFrameRequested = false;
 
@@ -80,8 +82,34 @@
     }
 
     function prepareNavPress(href: string): void {
+        prefetchNavItem(href);
         markActive(href);
         isCompact = false;
+    }
+
+    function prefetchNavItem(href: string): void {
+        if (typeof window === 'undefined' || url.isCurrentUrl(href, url.currentUrl) || prefetchedHrefs.has(href)) {
+            return;
+        }
+
+        prefetchedHrefs = new Set(prefetchedHrefs).add(href);
+
+        try {
+            router.prefetch(
+                href,
+                {
+                    preserveScroll: false,
+                    preserveState: false,
+                },
+                {
+                    cacheFor: NAV_PREFETCH_CACHE_MS,
+                    cacheTags: ['navigation'],
+                },
+            );
+        } catch {
+            prefetchedHrefs.delete(href);
+            prefetchedHrefs = new Set(prefetchedHrefs);
+        }
     }
 
     function visitNavItem(event: MouseEvent, href: string): void {
@@ -224,7 +252,9 @@ return;
                             aria-label={item.title}
                             title={item.title}
                             aria-busy={pendingHref === itemHref}
+                            onpointerenter={() => prefetchNavItem(itemHref)}
                             onpointerdown={() => prepareNavPress(itemHref)}
+                            onfocus={() => prefetchNavItem(itemHref)}
                             onclick={(event) => visitNavItem(event, itemHref)}
                             class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref === itemHref ? 'opacity-70' : ''} {isCompact ? 'h-10 rounded-xl' : 'h-14 rounded-2xl'} {isNavItemActive(
                                 item.href,

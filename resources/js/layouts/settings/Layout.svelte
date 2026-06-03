@@ -59,7 +59,7 @@
                         asChild
                     >
                         {#snippet children(props)}
-                            <Link href={toUrl(item.href)} class={props.class}>
+                            <Link href={toUrl(item.href)} class={props.class} prefetch cacheFor={30000}>
                                 {item.title}
                             </Link>
                         {/snippet}

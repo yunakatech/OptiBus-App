@@ -141,6 +141,8 @@
                                             {...props}
                                             href={toUrl(item.href)}
                                             class={props.class}
+                                            prefetch={['hover', 'click']}
+                                            cacheFor={30000}
                                         >
                                             {#if item.icon}
                                                 <item.icon class="size-3.5 shrink-0" />
@@ -162,6 +164,8 @@
                             {#each section.items as item (toUrl(item.href))}
                                 <Link
                                     href={toUrl(item.href)}
+                                    prefetch={['hover', 'click']}
+                                    cacheFor={30000}
                                     class={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isItemActive(item.href) ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : ''}`}
                                 >
                                     {#if item.icon}
