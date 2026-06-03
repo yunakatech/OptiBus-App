@@ -1404,6 +1404,30 @@ return 'Selesai';
         }
     };
 
+    const openLuggageEditor = (row: Luggage) => {
+        const normalizedLuggageStatus = normalizeLuggageStatus(row.status);
+        resetLuggageFormState();
+        luggageForm = {
+            id: row.id,
+            pool_id: row.pool_id ?? defaultPoolId(),
+            sender_name: row.sender_name ?? '',
+            sender_phone: row.sender_phone ?? '',
+            sender_address: row.sender_address ?? '',
+            receiver_name: row.receiver_name ?? '',
+            receiver_phone: row.receiver_phone ?? '',
+            receiver_address: row.receiver_address ?? '',
+            service_id: row.service_id ?? 0,
+            rute_id: row.rute_id ?? 0,
+            tanggal: row.tanggal ?? today,
+            quantity: Number(row.quantity ?? 1),
+            notes: row.notes ?? '',
+            price: Number(row.price ?? 0),
+            status: normalizedLuggageStatus,
+            payment_status: row.payment_status ?? 'Belum Bayar',
+        };
+        setFormMode('form');
+    };
+
     const bagasiCustomerLabel = (customer: BagasiCustomer) => `${String(customer.nama ?? '').trim()} · ${String(customer.no_hp ?? '').trim()}`;
 
     const applyLuggageCustomer = (customer: BagasiCustomer, role: 'sender' | 'receiver') => {
@@ -3273,7 +3297,134 @@ params.set('to', filterTo);
                             </Button>
                         </div>
                     </div>
-                    <div class="overflow-x-auto rounded-[24px] border border-border/70 bg-card shadow-sm">
+                    <div class="grid gap-3 md:hidden">
+                        {#if luggages.length === 0}
+                            <div class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground">
+                                Belum ada data bagasi yang cocok dengan filter saat ini.
+                            </div>
+                        {:else}
+                            {#each luggages as row (row.id)}
+                                {@const normalizedLuggageStatus = normalizeLuggageStatus(row.status)}
+                                {@const departureInfo = luggageDepartureInfo(row)}
+                                {@const lockedLuggageActions = [luggagePickedUpStatus, luggageArrivedStatus].includes(normalizedLuggageStatus)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">
+                                                {row.kode_resi ?? `Bagasi #${row.id}`}
+                                            </p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {row.service_name ?? '-'} / {row.quantity} barang
+                                            </p>
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-1.5">
+                                            <span class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggageStatusClass(row.status)}`}>
+                                                {luggageStatusLabel(row.status)}
+                                            </span>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    {#snippet children(props)}
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            class="h-8 rounded-full border-border/70 px-2.5"
+                                                            onclick={props.onclick}
+                                                            aria-expanded={props['aria-expanded']}
+                                                            data-state={props['data-state']}
+                                                        >
+                                                            <MoreHorizontal class="h-4 w-4" />
+                                                        </Button>
+                                                    {/snippet}
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" class="w-52">
+                                                    {#if !lockedLuggageActions}
+                                                        <DropdownMenuItem onclick={() => openLuggageEditor(row)}>
+                                                            Edit Data
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if normalizedLuggageStatus === luggageReceivedStatus}
+                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-active`} onclick={() => void luggageAction(row, 'active')}>
+                                                            {pendingLuggageActionKey === `action-${row.id}-active` ? 'Memproses...' : 'Tandai Dalam Perjalanan'}
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if row.payment_status !== 'Lunas'}
+                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-paid`} onclick={() => void luggageAction(row, 'paid')}>
+                                                            {pendingLuggageActionKey === `action-${row.id}-paid` ? 'Memproses...' : 'Tandai Lunas'}
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    <DropdownMenuItem onclick={() => openLuggagePrint(row.id)}>
+                                                        Print Resi
+                                                    </DropdownMenuItem>
+                                                    {#if !lockedLuggageActions}
+                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-canceled`} onclick={() => void luggageAction(row, 'canceled')}>
+                                                            {pendingLuggageActionKey === `action-${row.id}-canceled` ? 'Memproses...' : 'Batalkan Pengiriman'}
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pengirim</p>
+                                            <p class="mt-1 truncate font-semibold text-foreground">{row.sender_name || '-'}</p>
+                                            <p class="mt-0.5 truncate text-[11px] text-muted-foreground">{row.sender_phone || '-'}</p>
+                                        </div>
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Penerima</p>
+                                            <p class="mt-1 truncate font-semibold text-foreground">{row.receiver_name || '-'}</p>
+                                            <p class="mt-0.5 truncate text-[11px] text-muted-foreground">{row.receiver_phone || '-'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2 rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute</p>
+                                        <p class="mt-1 font-semibold text-foreground">
+                                            {row.route_name ?? row.rute ?? routes.find((route) => route.id === Number(row.rute_id || 0))?.name ?? '-'}
+                                        </p>
+                                        <p class="mt-0.5 text-[11px] text-muted-foreground">{row.tanggal || '-'}</p>
+                                    </div>
+
+                                    <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+                                        <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Biaya</p>
+                                            <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">{formatCurrencyId(row.price)}</p>
+                                        </div>
+                                        <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">Pembayaran</p>
+                                            <p class="mt-1">
+                                                <span class={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggagePaymentClass(row.payment_status)}`}>
+                                                    {row.payment_status ?? '-'}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Keberangkatan</p>
+                                        {#if departureInfo}
+                                            <p class="mt-1 font-semibold text-foreground">{departureInfo.primary}</p>
+                                            <p class="mt-0.5 text-[11px] text-muted-foreground">{departureInfo.secondary}</p>
+                                        {:else if normalizedLuggageStatus === luggageReceivedStatus}
+                                            <p class="mt-1 text-[11px] text-muted-foreground">Belum dimapping ke keberangkatan</p>
+                                        {:else}
+                                            <p class="mt-1 text-[11px] text-muted-foreground">-</p>
+                                        {/if}
+                                    </div>
+
+                                    {#if row.notes}
+                                        <p class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+                                            {row.notes}
+                                        </p>
+                                    {/if}
+                                </article>
+                            {/each}
+                        {/if}
+                    </div>
+
+                    <div class="hidden overflow-x-auto rounded-[24px] border border-border/70 bg-card shadow-sm md:block">
                         <table class="min-w-full text-[12px] leading-snug">
                             <thead class="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
                                 <tr>
@@ -3361,28 +3512,7 @@ params.set('to', filterTo);
                                                 <DropdownMenuContent align="end" class="w-52">
                                                     {@const lockedLuggageActions = [luggagePickedUpStatus, luggageArrivedStatus].includes(normalizedLuggageStatus)}
                                                     {#if !lockedLuggageActions}
-                                                        <DropdownMenuItem onclick={() => {
-                                                            resetLuggageFormState();
-                                                            luggageForm = {
-                                                                id: row.id,
-                                                                pool_id: row.pool_id ?? defaultPoolId(),
-                                                                sender_name: row.sender_name ?? '',
-                                                                sender_phone: row.sender_phone ?? '',
-                                                                sender_address: row.sender_address ?? '',
-                                                                receiver_name: row.receiver_name ?? '',
-                                                                receiver_phone: row.receiver_phone ?? '',
-                                                                receiver_address: row.receiver_address ?? '',
-                                                                service_id: row.service_id ?? 0,
-                                                                rute_id: row.rute_id ?? 0,
-                                                                tanggal: row.tanggal ?? today,
-                                                                quantity: Number(row.quantity ?? 1),
-                                                                notes: row.notes ?? '',
-                                                                price: Number(row.price ?? 0),
-                                                                status: normalizedLuggageStatus,
-                                                                payment_status: row.payment_status ?? 'Belum Bayar',
-                                                            };
-                                                            setFormMode('form');
-                                                        }}>
+                                                        <DropdownMenuItem onclick={() => openLuggageEditor(row)}>
                                                             Edit Data
                                                         </DropdownMenuItem>
                                                     {/if}

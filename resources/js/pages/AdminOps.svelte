@@ -5273,7 +5273,91 @@
                                 {services.length} layanan
                             </Badge>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#if services.length === 0}
+                                <div class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground">
+                                    Belum ada layanan bagasi.
+                                </div>
+                            {/if}
+                            {#each services as row (row.id)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">
+                                                {row.name}
+                                            </p>
+                                            <p class="mt-0.5 text-xs text-muted-foreground">
+                                                Referensi tarif dan layanan bagasi operasional.
+                                            </p>
+                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                >
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi service</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                sideOffset={8}
+                                                class="z-[120] w-44"
+                                            >
+                                                <DropdownMenuItem
+                                                    onclick={() => {
+                                                        serviceForm = {
+                                                            id: row.id,
+                                                            name: row.name,
+                                                        };
+                                                        setFormMode('form');
+                                                    }}
+                                                >
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    disabled={pendingDeleteKey ===
+                                                        `service-${row.id}`}
+                                                    onclick={() =>
+                                                        void removeItem(
+                                                            `/api/admin/luggage-services/${row.id}`,
+                                                            'Service deleted.',
+                                                            {
+                                                                confirmMessage:
+                                                                    'Yakin ingin menghapus konfigurasi tarif bagasi ini?',
+                                                                loadingMessage:
+                                                                    'Menghapus konfigurasi tarif bagasi...',
+                                                                errorMessage:
+                                                                    'Gagal menghapus konfigurasi tarif bagasi.',
+                                                                pendingKey: `service-${row.id}`,
+                                                            },
+                                                        )}
+                                                >
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    {pendingDeleteKey ===
+                                                    `service-${row.id}`
+                                                        ? 'Menghapus...'
+                                                        : 'Hapus'}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <div class="mt-3 rounded-xl bg-emerald-50/70 px-3 py-2 text-xs dark:bg-emerald-950/25">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                                            Dipakai Untuk
+                                        </p>
+                                        <p class="mt-1 font-medium text-emerald-800 dark:text-emerald-200">
+                                            Form transaksi dan laporan bagasi.
+                                        </p>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+                        <div class="hidden overflow-x-auto md:block">
                             <table
                                 class="min-w-[720px] w-full border-separate border-spacing-0 text-sm"
                             >
