@@ -610,22 +610,22 @@ class DashboardController extends Controller
         $driver = DB::connection()->getDriverName();
 
         $distanceExpression = match ($driver) {
-            'pgsql' => 'ABS(c.start_date::date - ?::date)',
-            'sqlite' => 'ABS(julianday(c.start_date) - julianday(?))',
-            'mysql', 'mariadb' => 'ABS(DATEDIFF(c.start_date, ?))',
+            'pgsql' => 'ABS(start_date::date - ?::date)',
+            'sqlite' => 'ABS(julianday(start_date) - julianday(?))',
+            'mysql', 'mariadb' => 'ABS(DATEDIFF(start_date, ?))',
             default => null,
         };
 
         if ($distanceExpression !== null) {
             $query
                 ->orderByRaw($distanceExpression.' ASC', [$todayValue])
-                ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$todayValue])
-                ->orderBy('c.start_date');
+                ->orderByRaw('CASE WHEN start_date >= ? THEN 0 ELSE 1 END', [$todayValue])
+                ->orderBy('start_date');
         } else {
             $query
-                ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$todayValue])
-                ->orderByRaw('CASE WHEN c.start_date >= ? THEN c.start_date ELSE NULL END ASC', [$todayValue])
-                ->orderByRaw('CASE WHEN c.start_date < ? THEN c.start_date ELSE NULL END DESC', [$todayValue]);
+                ->orderByRaw('CASE WHEN start_date >= ? THEN 0 ELSE 1 END', [$todayValue])
+                ->orderByRaw('CASE WHEN start_date >= ? THEN start_date ELSE NULL END ASC', [$todayValue])
+                ->orderByRaw('CASE WHEN start_date < ? THEN start_date ELSE NULL END DESC', [$todayValue]);
         }
 
         $query
