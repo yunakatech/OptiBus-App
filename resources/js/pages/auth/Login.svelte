@@ -10,25 +10,14 @@
     import AppHead from '@/components/AppHead.svelte';
     import InputError from '@/components/InputError.svelte';
     import PasswordInput from '@/components/PasswordInput.svelte';
-    import TextLink from '@/components/TextLink.svelte';
     import { Button } from '@/components/ui/button';
     import { Checkbox } from '@/components/ui/checkbox';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import { Spinner } from '@/components/ui/spinner';
-    import { register } from '@/routes';
     import { store } from '@/routes/login';
-    import { request } from '@/routes/password';
 
-    let {
-        status = '',
-        canResetPassword,
-        canRegister,
-    }: {
-        status?: string;
-        canResetPassword: boolean;
-        canRegister: boolean;
-    } = $props();
+    let { status = '' }: { status?: string } = $props();
 </script>
 
 <AppHead title="Log in" />
@@ -60,14 +49,7 @@
             </div>
 
             <div class="grid gap-2">
-                <div class="flex items-center justify-between">
-                    <Label for="password">Password</Label>
-                    {#if canResetPassword}
-                        <TextLink href={request()} class="text-sm">
-                            Forgot password?
-                        </TextLink>
-                    {/if}
-                </div>
+                <Label for="password">Password</Label>
                 <PasswordInput
                     id="password"
                     name="password"
@@ -78,7 +60,7 @@
                 <InputError message={errors.password} />
             </div>
 
-            <div class="flex items-center justify-between">
+            <div class="flex items-center">
                 <Label for="remember" class="flex items-center space-x-3">
                     <Checkbox id="remember" name="remember" />
                     <span>Remember me</span>
@@ -95,12 +77,5 @@
                 Log in
             </Button>
         </div>
-
-        {#if canRegister}
-            <div class="text-center text-sm text-muted-foreground">
-                Don't have an account?
-                <TextLink href={register()}>Sign up</TextLink>
-            </div>
-        {/if}
     {/snippet}
 </Form>
