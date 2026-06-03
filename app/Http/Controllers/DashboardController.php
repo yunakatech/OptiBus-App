@@ -363,11 +363,10 @@ class DashboardController extends Controller
                 ->value('total');
         }
 
-        $dailyTrend = $this->dailyTrend($trendAnchor);
-        $monthlyTrend = $this->monthlyTrend($trendYearAnchor);
-        $recentActivity = $this->recentActivity();
-        $departuresToday = $this->departuresToday($today);
-        $upcomingCharterReminder = $this->upcomingCharterReminder($today);
+        $recentActivity = null;
+        $resolveRecentActivity = function () use (&$recentActivity): array {
+            return $recentActivity ??= $this->recentActivity();
+        };
 
         return Inertia::render('Dashboard', [
             'todayLabel' => strtoupper($trendAnchor->translatedFormat('l, d F Y')),
@@ -396,13 +395,13 @@ class DashboardController extends Controller
                     'subtitle_label' => 'tahun ini',
                 ],
             ],
-            'dailyTrend' => $dailyTrend,
-            'monthlyTrend' => $monthlyTrend,
-            'recentActivity' => $recentActivity['items'],
-            'recentActivityTotal' => $recentActivity['total'],
-            'recentActivityVisibleCount' => $recentActivity['visible_count'],
-            'departuresToday' => $departuresToday,
-            'upcomingCharterReminder' => $upcomingCharterReminder,
+            'dailyTrend' => Inertia::defer(fn (): array => $this->dailyTrend($trendAnchor), 'dashboard-trends'),
+            'monthlyTrend' => Inertia::defer(fn (): array => $this->monthlyTrend($trendYearAnchor), 'dashboard-trends'),
+            'recentActivity' => Inertia::defer(fn (): array => $resolveRecentActivity()['items'], 'dashboard-supporting'),
+            'recentActivityTotal' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['total'], 'dashboard-supporting'),
+            'recentActivityVisibleCount' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['visible_count'], 'dashboard-supporting'),
+            'departuresToday' => Inertia::defer(fn (): array => $this->departuresToday($today), 'dashboard-supporting'),
+            'upcomingCharterReminder' => Inertia::defer(fn (): array => $this->upcomingCharterReminder($today), 'dashboard-supporting'),
         ]);
     }
 

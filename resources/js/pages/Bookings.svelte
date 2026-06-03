@@ -241,7 +241,7 @@
 
     let {
         totals,
-        latestBookings,
+        latestBookings = [],
         bookingGroups = [],
         bookingRouteOptions = [],
         bookingListReady = false,
