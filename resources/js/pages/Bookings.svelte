@@ -52,6 +52,7 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
+    import { Skeleton } from '@/components/ui/skeleton';
     import { runWithFeedback } from '@/lib/action-feedback';
     import {
         formatCurrencyDisplay,
@@ -243,6 +244,7 @@
         latestBookings,
         bookingGroups = [],
         bookingRouteOptions = [],
+        bookingListReady = false,
         migrationChecklist,
         consoleOnly = false,
         listOnly = false,
@@ -254,6 +256,7 @@
         latestBookings: BookingRow[];
         bookingGroups?: BookingGroup[];
         bookingRouteOptions?: string[];
+        bookingListReady?: boolean;
         migrationChecklist: string[];
         consoleOnly?: boolean;
         listOnly?: boolean;
@@ -332,12 +335,21 @@
     let localBookingRouteOptions = $state<string[]>(
         $state.snapshot(initialBookingRouteOptions()),
     );
+    let bookingListHydrated = $state(false);
 
     $effect(() => {
         localTotals = $state.snapshot(totals);
         localLatestBookings = $state.snapshot(latestBookings);
         localBookingGroups = $state.snapshot(bookingGroups);
         localBookingRouteOptions = $state.snapshot(bookingRouteOptions);
+
+        if (!listOnly) {
+            bookingListHydrated = true;
+        } else if (bookingListReady) {
+            bookingListHydrated = true;
+        } else {
+            bookingListHydrated = false;
+        }
     });
 
     let bookingListScope = $state<'active' | 'history'>('active');
@@ -532,8 +544,11 @@
     let bookingDatePicker: FlatpickrInstance | null = null;
     let bookingListDatePicker: FlatpickrInstance | null = null;
     const API_TIMEOUT_MS = 15000;
+    const bookingListSkeletonRows = Array.from({ length: 6 });
+    const bookingListSkeletonStats = Array.from({ length: 6 });
 
     const bookingDateLabel = $derived(formatDateHuman(bookingDate));
+    const bookingListLoading = $derived(listOnly && !bookingListHydrated);
     const quickDatePresets = $derived.by(() => {
         const base = new Date();
         const presets = [
@@ -2193,7 +2208,7 @@
                 .includes(q),
         );
     };
-    const bookingListRoutes = () =>
+    const bookingListRoutesMemo = $derived.by(() =>
         localBookingRouteOptions.length > 0
             ? localBookingRouteOptions
             : Array.from(
@@ -2202,8 +2217,10 @@
                           .map((group) => String(group.rute || '').trim())
                           .filter((route) => route !== ''),
                   ),
-              ).sort((a, b) => a.localeCompare(b, 'id-ID'));
-    const filteredBookingGroups = () => {
+              ).sort((a, b) => a.localeCompare(b, 'id-ID')),
+    );
+    const bookingListRoutes = () => bookingListRoutesMemo;
+    const filteredBookingGroupsMemo = $derived.by(() => {
         const q = bookingListSearch.trim().toLowerCase();
         const filtered = localBookingGroups.filter((group) => {
             if (bookingListScope === 'active' && isHistoryGroup(group)) {
@@ -2269,7 +2286,8 @@
 
             return ta - tb;
         });
-    };
+    });
+    const filteredBookingGroups = () => filteredBookingGroupsMemo;
     const resetBookingListFilters = () => {
         bookingListScope = 'active';
         bookingListSearch = '';
@@ -2413,6 +2431,7 @@
                     'latestBookings',
                     'bookingGroups',
                     'bookingRouteOptions',
+                    'bookingListReady',
                     'serverNow',
                 ],
                 preserveScroll: true,
@@ -8315,7 +8334,38 @@
                         {/if}
                     </div>
 
-                    {#if filteredBookingGroups().length === 0}
+                    {#if bookingListLoading}
+                        <div
+                            class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-2"
+                            aria-label="Memuat data keberangkatan"
+                        >
+                            {#each bookingListSkeletonRows as _row, index (`booking-list-skeleton-${index}`)}
+                                <div
+                                    class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                    aria-hidden="true"
+                                >
+                                    <div class="mb-3 flex items-center justify-between gap-3">
+                                        <Skeleton class="h-4 w-32 rounded-full" />
+                                        <Skeleton class="h-7 w-16 rounded-full" />
+                                    </div>
+                                    <div class="rounded-xl border border-cyan-100/70 bg-cyan-50/35 px-3 py-3 dark:border-cyan-500/15 dark:bg-cyan-950/10">
+                                        <Skeleton class="h-3 w-44 rounded-full" />
+                                        <Skeleton class="mt-3 h-5 w-56 rounded-full" />
+                                        <div class="mt-4 grid gap-2 sm:grid-cols-3">
+                                            <Skeleton class="h-3.5 rounded-full" />
+                                            <Skeleton class="h-3.5 rounded-full" />
+                                            <Skeleton class="h-3.5 rounded-full" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+                                        {#each bookingListSkeletonStats as _stat, statIndex (`booking-list-skeleton-stat-${index}-${statIndex}`)}
+                                            <Skeleton class="h-7 rounded-md" />
+                                        {/each}
+                                    </div>
+                                </div>
+                            {/each}
+                        </div>
+                    {:else if filteredBookingGroups().length === 0}
                         <p class="text-sm text-muted-foreground">
                             Tidak ada data keberangkatan yang cocok dengan
                             filter.

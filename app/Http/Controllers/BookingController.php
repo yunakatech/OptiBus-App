@@ -34,6 +34,7 @@ class BookingController extends Controller
         $component = $request->routeIs('booking-console.index') ? 'BookingConsole' : 'Bookings';
         $isGroupDetailPage = $request->routeIs('bookings.detail');
         $listOnly = $request->routeIs('bookings.index') || $isGroupDetailPage;
+        $deferBookingList = $request->routeIs('bookings.index');
         $groupDetailKey = $isGroupDetailPage ? (string) $request->route('groupKey', '') : '';
         $bookingGroups = null;
         $resolveBookingGroups = function () use ($listOnly, &$bookingGroups): array {
@@ -47,8 +48,15 @@ class BookingController extends Controller
         return Inertia::render($component, [
             'totals' => fn (): array => $this->bookingTotals(),
             'latestBookings' => fn (): array => $this->latestBookings(),
-            'bookingGroups' => fn (): array => $resolveBookingGroups(),
-            'bookingRouteOptions' => fn (): array => $listOnly ? $this->bookingRouteOptions($resolveBookingGroups()) : [],
+            'bookingGroups' => $deferBookingList
+                ? Inertia::defer(fn (): array => $resolveBookingGroups(), 'booking-list')
+                : fn (): array => $resolveBookingGroups(),
+            'bookingRouteOptions' => $deferBookingList
+                ? Inertia::defer(fn (): array => $this->bookingRouteOptions($resolveBookingGroups()), 'booking-list')
+                : fn (): array => $listOnly ? $this->bookingRouteOptions($resolveBookingGroups()) : [],
+            'bookingListReady' => $deferBookingList
+                ? Inertia::defer(fn (): bool => true, 'booking-list')
+                : true,
             'listOnly' => $listOnly,
             'groupDetailPage' => $isGroupDetailPage,
             'groupDetailKey' => $groupDetailKey,
