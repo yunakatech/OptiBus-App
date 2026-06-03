@@ -1732,7 +1732,7 @@
                     .trim()
                     .toLowerCase() === 'belum lunas'
             ) {
-                lines.push('*Opsi Pembayaran: Transfer / QRIS / Tunai');
+                lines.push('_*Opsi Pembayaran: Transfer / QRIS / Tunai_');
             }
 
             return lines.join('\n');
@@ -4301,7 +4301,7 @@
         lines.push('', `Harga: Rp ${finalPrice.toLocaleString('id-ID')}`);
 
         if (includePaymentOptions) {
-            lines.push('*Opsi Pembayaran: Transfer / QRIS / Tunai');
+            lines.push('_*Opsi Pembayaran: Transfer / QRIS / Tunai_');
         }
 
         try {
