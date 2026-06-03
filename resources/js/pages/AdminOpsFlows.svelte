@@ -983,7 +983,7 @@ return 'Selesai';
 
         try {
             const suffix = params.toString();
-            const r = await api('GET', `/api/admin/armadas${suffix ? `?${suffix}` : ''}`);
+            const r = await api('GET', `/api/master/armadas${suffix ? `?${suffix}` : ''}`);
             armadas = (r.armadas ?? []) as Armada[];
         } catch {
             armadas = [];
@@ -1009,7 +1009,7 @@ return 'Selesai';
 
         try {
             const suffix = params.toString();
-            const r = await api('GET', `/api/admin/armadas${suffix ? `?${suffix}` : ''}`);
+            const r = await api('GET', `/api/master/armadas${suffix ? `?${suffix}` : ''}`);
             charterFilterArmadas = (r.armadas ?? []) as Armada[];
         } catch {
             charterFilterArmadas = [];
@@ -1745,26 +1745,48 @@ return 'Selesai';
         }, 250);
     };
 
-    const loadMasters = async () => {
-        const [r, u, d, s, cr, p] = await Promise.all([
-            api('GET', '/api/admin/routes'),
-            api('GET', '/api/admin/units'),
-            api('GET', '/api/admin/drivers'),
-            api('GET', '/api/admin/luggage-services'),
-            api('GET', '/api/master/charter-routes'),
-            api('GET', '/api/admin/pools'),
-        ]);
-        routes = r.routes ?? [];
-        units = u.units ?? [];
-        drivers = d.drivers ?? [];
-        services = s.services ?? [];
-        charterRoutes = cr.routes ?? [];
-        pools = p.pools ?? [];
+    const syncMasterLookups = () => {
         applyDefaultPoolToForms();
         syncCharterRouteLookupFromForm();
         syncCharterArmadaLookupsFromForm();
         syncCharterDriverLookupFromForm();
         syncCharterFilterLookups();
+    };
+
+    const loadMasters = async () => {
+        if (activeTab === 'charters') {
+            const [u, d, cr, p] = await Promise.all([
+                api('GET', '/api/master/units'),
+                api('GET', '/api/master/drivers'),
+                api('GET', '/api/master/charter-routes'),
+                api('GET', '/api/admin/pools'),
+            ]);
+            units = u.units ?? [];
+            drivers = d.drivers ?? [];
+            charterRoutes = cr.routes ?? [];
+            pools = p.pools ?? [];
+            syncMasterLookups();
+
+            return;
+        }
+
+        if (activeTab === 'luggages') {
+            const [s, p] = await Promise.all([
+                api('GET', '/api/master/luggage-services'),
+                api('GET', '/api/admin/pools'),
+            ]);
+            services = s.services ?? [];
+            routes = p.routes ?? [];
+            pools = p.pools ?? [];
+            applyDefaultPoolToForms();
+
+            return;
+        }
+
+        if (activeTab === 'assignments') {
+            const d = await api('GET', '/api/admin/drivers');
+            drivers = d.drivers ?? [];
+        }
     };
 
     const loadCharters = async (page = 1) => {
@@ -1921,6 +1943,7 @@ await loadAssignments(assignmentMeta.page);
         error = '';
 
         if (tab !== 'export') {
+            await loadMasters();
             await loadActiveTab();
         }
     };
