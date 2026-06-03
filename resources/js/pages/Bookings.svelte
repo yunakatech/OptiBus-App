@@ -5916,15 +5916,15 @@
 
     {#if !listOnly && detailModalOpen && detailSeat}
         <div
-            class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/55 p-3 sm:items-center sm:p-4"
+            class="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-4"
             role="dialog"
             aria-modal="true"
         >
             <div
-                class="w-full max-w-2xl overflow-hidden rounded-2xl border bg-background shadow-xl"
+                class="flex max-h-[calc(100svh-0.75rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-xl sm:max-h-[calc(100svh-2rem)] sm:rounded-2xl"
             >
                 <div
-                    class="sticky top-0 z-10 mb-4 flex items-start justify-between gap-3 border-b bg-background/95 px-3 pb-3 pt-3 backdrop-blur md:px-5"
+                    class="flex shrink-0 items-start justify-between gap-3 border-b bg-background/95 px-3 py-3 backdrop-blur md:px-5"
                 >
                     <div class="min-w-0 space-y-1">
                         <div class="flex flex-wrap items-center gap-1.5">
@@ -5965,219 +5965,228 @@
                     </Button>
                 </div>
 
-                <div class="max-h-[calc(100vh-9rem)] overflow-y-auto px-3 pb-3 md:px-5 md:pb-5">
-                {#if !detailEditMode}
-                    <div class="grid gap-2.5 text-sm sm:grid-cols-2">
-                        <div
-                            class="rounded-xl border bg-muted/20 p-2.5 sm:col-span-2 sm:p-3"
-                        >
-                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                Ringkasan Harga
-                            </p>
+                <div class="min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-5 md:py-4">
+                    {#if !detailEditMode}
+                        <div class="grid gap-2.5 text-sm sm:grid-cols-2">
                             <div
-                                class="mt-1 flex flex-wrap items-center justify-between gap-2"
+                                class="rounded-xl border border-primary/15 bg-primary/5 p-3 sm:col-span-2"
                             >
-                                <p class="text-sm font-semibold sm:text-base">
-                                    Rp {Math.max(
-                                        Number(detailSeat.price || 0) -
-                                            Number(detailSeat.discount || 0),
-                                        0,
-                                    ).toLocaleString('id-ID')}
+                                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                                    Ringkasan Harga
                                 </p>
-                                <p class="text-[11px] text-muted-foreground sm:text-xs">
-                                    Diskon: Rp {Number(
-                                        detailSeat.discount || 0,
-                                    ).toLocaleString('id-ID')}
+                                <div
+                                    class="mt-1 flex flex-wrap items-end justify-between gap-2"
+                                >
+                                    <p class="text-xl font-semibold text-foreground sm:text-2xl">
+                                        Rp {Math.max(
+                                            Number(detailSeat.price || 0) -
+                                                Number(detailSeat.discount || 0),
+                                            0,
+                                        ).toLocaleString('id-ID')}
+                                    </p>
+                                    <p class="text-[11px] text-muted-foreground sm:text-xs">
+                                        Diskon Rp {Number(
+                                            detailSeat.discount || 0,
+                                        ).toLocaleString('id-ID')}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
+                                    Nama
+                                </p>
+                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
+                                    {detailSeat.name || '-'}
+                                </p>
+                            </div>
+                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
+                                    Telepon
+                                </p>
+                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
+                                    {detailSeat.phone || '-'}
+                                </p>
+                            </div>
+                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
+                                    Segment
+                                </p>
+                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
+                                    {detailSeat.segment_name || '-'}
+                                </p>
+                            </div>
+                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
+                                    Pembayaran
+                                </p>
+                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
+                                    {detailSeat.pembayaran || '-'}
+                                </p>
+                            </div>
+                            <div
+                                class="rounded-xl border bg-muted/20 p-2.5 sm:col-span-2 sm:p-3"
+                            >
+                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
+                                    Pickup Point
+                                </p>
+                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
+                                    {detailSeat.pickup_point || '-'}
                                 </p>
                             </div>
                         </div>
-                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                Nama
-                            </p>
-                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
-                                {detailSeat.name || '-'}
-                            </p>
-                        </div>
-                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                Telepon
-                            </p>
-                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
-                                {detailSeat.phone || '-'}
-                            </p>
-                        </div>
-                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                Segment
-                            </p>
-                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
-                                {detailSeat.segment_name || '-'}
-                            </p>
-                        </div>
-                        <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                Pembayaran
-                            </p>
-                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
-                                {detailSeat.pembayaran || '-'}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-xl border bg-muted/20 p-2.5 sm:col-span-2 sm:p-3"
-                        >
-                            <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                Pickup Point
-                            </p>
-                            <p class="mt-1 text-sm font-semibold sm:text-[15px]">
-                                {detailSeat.pickup_point || '-'}
-                            </p>
-                        </div>
-                    </div>
-                {:else}
-                    <div class="grid gap-2.5 sm:grid-cols-2">
-                        <Input
-                            class="h-10 rounded-xl sm:h-11"
-                            placeholder="Seat"
-                            bind:value={detailEditSeat}
-                        />
-                        <Input
-                            class="h-10 rounded-xl sm:h-11"
-                            placeholder="Nama"
-                            bind:value={detailEditName}
-                        />
-                        <Input
-                            class="h-10 rounded-xl sm:h-11"
-                            placeholder="Telepon"
-                            bind:value={detailEditPhone}
-                        />
-                        <Input
-                            class="h-10 rounded-xl sm:h-11"
-                            placeholder="Pickup Point"
-                            bind:value={detailEditPickupPoint}
-                        />
-                        <select
-                            class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
-                            bind:value={detailEditPayment}
-                        >
-                            {#each paymentOptions as option (option)}
-                                <option value={option}>{option}</option>
-                            {/each}
-                        </select>
-                        <Input
-                            class="h-10 rounded-xl sm:h-11"
-                            type="text"
-                            inputmode="numeric"
-                            placeholder="Diskon"
-                            value={formatCurrencyInput(detailEditDiscount)}
-                            oninput={(event) => {
-                                detailEditDiscount = parseCurrencyInput(
-                                    (
-                                        event.currentTarget as HTMLInputElement
-                                    ).value,
-                                );
-                            }}
-                        />
-                        <select
-                            class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:col-span-2 sm:h-11"
-                            bind:value={detailEditSegmentId}
-                        >
-                            <option value={0}
-                                >{segments.length === 0
-                                    ? detailSeat.segment_name || 'Tanpa Segment'
-                                    : 'Pilih segment rute'}</option
-                            >
-                            {#each segments as segment (`detail-segment-${segment.id}`)}
-                                <option value={segment.id}>
-                                    {segment.rute} (Rp {Number(
-                                        segment.harga,
-                                    ).toLocaleString('id-ID')})
-                                </option>
-                            {/each}
-                        </select>
-                    </div>
-                {/if}
-
-                <div class="mt-4 flex flex-wrap gap-2 border-t pt-3">
-                    {#if detailEditMode}
-                        <Button
-                            type="button"
-                            onclick={() => void saveDetailEdit()}
-                            disabled={savingDetailEdit}
-                        >
-                            <Save class="mr-1.5 h-3.5 w-3.5" />
-                            {savingDetailEdit
-                                ? 'Menyimpan...'
-                                : 'Simpan Perubahan'}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onclick={cancelDetailEdit}
-                            disabled={savingDetailEdit}
-                        >
-                            Batal Edit
-                        </Button>
                     {:else}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onclick={startDetailEdit}
-                        >
-                            <Pencil class="mr-1.5 h-3.5 w-3.5" />
-                            Edit
-                        </Button>
-
-                        {#if !isLunasPayment(detailSeat.pembayaran)}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                                onclick={() => void markDetailAsPaid()}
-                                disabled={markingPaidSeatId === detailSeat.id ||
-                                    cancelingSeatId === detailSeat.id}
+                        <div class="grid gap-2.5 sm:grid-cols-2">
+                            <Input
+                                class="h-10 rounded-xl sm:h-11"
+                                placeholder="Seat"
+                                bind:value={detailEditSeat}
+                            />
+                            <Input
+                                class="h-10 rounded-xl sm:h-11"
+                                placeholder="Nama"
+                                bind:value={detailEditName}
+                            />
+                            <Input
+                                class="h-10 rounded-xl sm:h-11"
+                                placeholder="Telepon"
+                                bind:value={detailEditPhone}
+                            />
+                            <Input
+                                class="h-10 rounded-xl sm:h-11"
+                                placeholder="Pickup Point"
+                                bind:value={detailEditPickupPoint}
+                            />
+                            <select
+                                class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
+                                bind:value={detailEditPayment}
                             >
-                                <WalletCards class="mr-1.5 h-3.5 w-3.5" />
-                                {markingPaidSeatId === detailSeat.id
-                                    ? 'Memproses...'
-                                    : 'Tandai Lunas'}
-                            </Button>
-                        {/if}
+                                {#each paymentOptions as option (option)}
+                                    <option value={option}>{option}</option>
+                                {/each}
+                            </select>
+                            <Input
+                                class="h-10 rounded-xl sm:h-11"
+                                type="text"
+                                inputmode="numeric"
+                                placeholder="Diskon"
+                                value={formatCurrencyInput(detailEditDiscount)}
+                                oninput={(event) => {
+                                    detailEditDiscount = parseCurrencyInput(
+                                        (
+                                            event.currentTarget as HTMLInputElement
+                                        ).value,
+                                    );
+                                }}
+                            />
+                            <select
+                                class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:col-span-2 sm:h-11"
+                                bind:value={detailEditSegmentId}
+                            >
+                                <option value={0}
+                                    >{segments.length === 0
+                                        ? detailSeat.segment_name || 'Tanpa Segment'
+                                        : 'Pilih segment rute'}</option
+                                >
+                                {#each segments as segment (`detail-segment-${segment.id}`)}
+                                    <option value={segment.id}>
+                                        {segment.rute} (Rp {Number(
+                                            segment.harga,
+                                        ).toLocaleString('id-ID')})
+                                    </option>
+                                {/each}
+                            </select>
+                        </div>
+                    {/if}
 
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onclick={addCurrentDetailToRekap}
-                            >Tambah ke Rekap</Button
-                        >
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onclick={() => void copyCurrentDetail()}
-                        >
-                            <Copy class="mr-1.5 h-3.5 w-3.5" />
-                            Salin Detail
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            class="border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30"
-                            onclick={() => void cancelSeat(detailSeat!.id)}
-                            disabled={cancelingSeatId === detailSeat!.id ||
-                                markingPaidSeatId === detailSeat.id}
-                        >
-                            {cancelingSeatId === detailSeat.id
-                                ? 'Membatalkan...'
-                                : 'Cancel Booking'}
-                        </Button>
+                    {#if formSuccess}
+                        <p class="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">{formSuccess}</p>
+                    {/if}
+                    {#if formError}
+                        <p class="mt-3 rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
                     {/if}
                 </div>
 
-                    {#if formSuccess}
-                        <p class="mt-2 text-sm text-green-600">{formSuccess}</p>
-                    {/if}
-                    {#if formError}
-                        <p class="mt-1 text-sm text-destructive">{formError}</p>
+                <div class="shrink-0 border-t bg-background/95 px-3 py-3 backdrop-blur md:px-5">
+                    {#if detailEditMode}
+                        <div class="grid grid-cols-2 gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-10"
+                                onclick={cancelDetailEdit}
+                                disabled={savingDetailEdit}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="button"
+                                class="h-10"
+                                onclick={() => void saveDetailEdit()}
+                                disabled={savingDetailEdit}
+                            >
+                                <Save class="mr-1.5 h-3.5 w-3.5" />
+                                {savingDetailEdit ? 'Menyimpan...' : 'Simpan'}
+                            </Button>
+                        </div>
+                    {:else}
+                        <div class="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto_auto]">
+                            <Button
+                                type="button"
+                                class="h-10 sm:col-span-1"
+                                onclick={() => void copyCurrentDetail()}
+                            >
+                                <Copy class="mr-1.5 h-3.5 w-3.5" />
+                                Salin Detail
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-10 sm:col-span-1"
+                                onclick={addCurrentDetailToRekap}
+                            >
+                                <Plus class="mr-1.5 h-3.5 w-3.5" />
+                                Tambah Rekap
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-10"
+                                onclick={startDetailEdit}
+                            >
+                                <Pencil class="mr-1.5 h-3.5 w-3.5" />
+                                Edit
+                            </Button>
+
+                            {#if !isLunasPayment(detailSeat.pembayaran)}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-10 border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                                    onclick={() => void markDetailAsPaid()}
+                                    disabled={markingPaidSeatId === detailSeat.id ||
+                                        cancelingSeatId === detailSeat.id}
+                                >
+                                    <WalletCards class="mr-1.5 h-3.5 w-3.5" />
+                                    {markingPaidSeatId === detailSeat.id
+                                        ? 'Proses'
+                                        : 'Lunas'}
+                                </Button>
+                            {/if}
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-10 border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30"
+                                onclick={() => void cancelSeat(detailSeat!.id)}
+                                disabled={cancelingSeatId === detailSeat!.id ||
+                                    markingPaidSeatId === detailSeat.id}
+                            >
+                                <X class="mr-1.5 h-3.5 w-3.5" />
+                                {cancelingSeatId === detailSeat.id
+                                    ? 'Proses'
+                                    : 'Cancel'}
+                            </Button>
+                        </div>
                     {/if}
                 </div>
             </div>
