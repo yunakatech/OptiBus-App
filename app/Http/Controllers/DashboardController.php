@@ -553,6 +553,8 @@ class DashboardController extends Controller
         $visibleCount = 4;
         $total = (clone $query)->count();
 
+        $this->orderChartersByNearestDeparture($query, $today);
+
         $items = (clone $query)
             ->select([
                 'id',
@@ -569,10 +571,6 @@ class DashboardController extends Controller
                 'layanan',
                 'status',
             ])
-            ->orderBy('start_date')
-            ->orderByRaw('departure_time IS NULL')
-            ->orderBy('departure_time')
-            ->orderBy('id')
             ->limit($visibleCount)
             ->get()
             ->map(function ($row) use ($today) {
@@ -604,6 +602,37 @@ class DashboardController extends Controller
             'visible_count' => count($items),
             'items' => $items,
         ];
+    }
+
+    private function orderChartersByNearestDeparture(Builder $query, Carbon $today): void
+    {
+        $todayValue = $today->toDateString();
+        $driver = DB::connection()->getDriverName();
+
+        $distanceExpression = match ($driver) {
+            'pgsql' => 'ABS(c.start_date::date - ?::date)',
+            'sqlite' => 'ABS(julianday(c.start_date) - julianday(?))',
+            'mysql', 'mariadb' => 'ABS(DATEDIFF(c.start_date, ?))',
+            default => null,
+        };
+
+        if ($distanceExpression !== null) {
+            $query
+                ->orderByRaw($distanceExpression.' ASC', [$todayValue])
+                ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$todayValue])
+                ->orderBy('c.start_date');
+        } else {
+            $query
+                ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$todayValue])
+                ->orderByRaw('CASE WHEN c.start_date >= ? THEN c.start_date ELSE NULL END ASC', [$todayValue])
+                ->orderByRaw('CASE WHEN c.start_date < ? THEN c.start_date ELSE NULL END DESC', [$todayValue]);
+        }
+
+        $query
+            ->orderByRaw('departure_time IS NULL')
+            ->orderBy('departure_time')
+            ->orderBy('id');
+
     }
 
     private function dailyTrend(Carbon $anchorDate): array

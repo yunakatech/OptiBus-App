@@ -1416,6 +1416,26 @@ class AdminOpsApiController extends Controller
         }
 
         $today = Carbon::today()->toDateString();
+        $driver = DB::connection()->getDriverName();
+
+        $distanceExpression = match ($driver) {
+            'pgsql' => 'ABS(c.start_date::date - ?::date)',
+            'sqlite' => 'ABS(julianday(c.start_date) - julianday(?))',
+            'mysql', 'mariadb' => 'ABS(DATEDIFF(c.start_date, ?))',
+            default => null,
+        };
+
+        if ($distanceExpression !== null) {
+            $query
+                ->orderByRaw($distanceExpression.' ASC', [$today])
+                ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$today])
+                ->orderBy('c.start_date')
+                ->orderByRaw('c.departure_time IS NULL')
+                ->orderBy('c.departure_time')
+                ->orderBy('c.id');
+
+            return;
+        }
 
         $query
             ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$today])
