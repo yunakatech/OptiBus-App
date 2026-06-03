@@ -136,6 +136,9 @@
     let charterViewData = $state<Charter | null>(null);
     let charterViewBusy = $state(false);
     let charterScope = $state<CharterScope>('active');
+    let charterMastersLoaded = $state(false);
+    let luggageMastersLoaded = $state(false);
+    let assignmentMastersLoaded = $state(false);
 
     const charterPaymentStatusOptions = ['Belum Lunas', 'Lunas'];
     const luggageReceivedStatus = 'Diterima';
@@ -1753,8 +1756,16 @@ return 'Selesai';
         syncCharterFilterLookups();
     };
 
-    const loadMasters = async () => {
+    const loadMasters = async (options: { force?: boolean } = {}) => {
+        const force = Boolean(options.force);
+
         if (activeTab === 'charters') {
+            if (charterMastersLoaded && !force) {
+                syncMasterLookups();
+
+                return;
+            }
+
             const [u, d, cr, p] = await Promise.all([
                 api('GET', '/api/master/units'),
                 api('GET', '/api/master/drivers'),
@@ -1765,12 +1776,19 @@ return 'Selesai';
             drivers = d.drivers ?? [];
             charterRoutes = cr.routes ?? [];
             pools = p.pools ?? [];
+            charterMastersLoaded = true;
             syncMasterLookups();
 
             return;
         }
 
         if (activeTab === 'luggages') {
+            if (luggageMastersLoaded && !force) {
+                applyDefaultPoolToForms();
+
+                return;
+            }
+
             const [s, p] = await Promise.all([
                 api('GET', '/api/master/luggage-services'),
                 api('GET', '/api/admin/pools'),
@@ -1778,14 +1796,20 @@ return 'Selesai';
             services = s.services ?? [];
             routes = p.routes ?? [];
             pools = p.pools ?? [];
+            luggageMastersLoaded = true;
             applyDefaultPoolToForms();
 
             return;
         }
 
         if (activeTab === 'assignments') {
+            if (assignmentMastersLoaded && !force) {
+                return;
+            }
+
             const d = await api('GET', '/api/admin/drivers');
             drivers = d.drivers ?? [];
+            assignmentMastersLoaded = true;
         }
     };
 
@@ -1995,7 +2019,6 @@ await loadAssignments(assignmentMeta.page);
             message = charterForm.id ? 'Charter updated.' : 'Charter created.';
             resetCharterFormState();
             await loadCharters(charterMeta.page);
-            await loadMasters();
             setFormMode('data');
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan charter.';

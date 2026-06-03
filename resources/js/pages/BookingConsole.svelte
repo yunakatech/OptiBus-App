@@ -34,7 +34,7 @@
 
     let {
         totals,
-        latestBookings,
+        latestBookings = [],
         migrationChecklist,
         serverNow = '',
         listOnly = false,
