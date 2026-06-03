@@ -5652,7 +5652,101 @@
                                 </div>
                             {/if}
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#each customers as row (row.id)}
+                                <article
+                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                >
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">
+                                                {row.name}
+                                            </p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {row.phone}
+                                            </p>
+                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                >
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi customer</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                sideOffset={8}
+                                                class="z-[120] w-44"
+                                            >
+                                                <DropdownMenuItem
+                                                    onclick={() => {
+                                                        customerForm = {
+                                                            id: row.id,
+                                                            name: row.name,
+                                                            phone: row.phone,
+                                                            pickup_point:
+                                                                row.pickup_point ?? '',
+                                                            gmaps: row.gmaps ?? '',
+                                                        };
+                                                        setFormMode('form');
+                                                    }}
+                                                >
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onclick={() =>
+                                                        void removeItem(
+                                                            `/api/admin/customers/${row.id}`,
+                                                            'Customer deleted.',
+                                                        )}
+                                                >
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+
+                                    <div class="mt-3 grid gap-2 text-xs">
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                Pickup Point
+                                            </p>
+                                            <p class="mt-1 break-words font-medium text-foreground">
+                                                {row.pickup_point ?? '-'}
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2 rounded-xl bg-muted/30 px-3 py-2">
+                                            <div class="min-w-0">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    Google Maps
+                                                </p>
+                                                <p class="mt-1 truncate font-medium text-foreground">
+                                                    {row.gmaps ? 'Link tersedia' : 'Belum ada link'}
+                                                </p>
+                                            </div>
+                                            {#if row.gmaps}
+                                                <a
+                                                    href={row.gmaps}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 text-[11px] font-semibold text-primary"
+                                                >
+                                                    Maps
+                                                </a>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+                        <div class="hidden overflow-x-auto md:block">
                             <table
                                 class="min-w-[1180px] w-full border-separate border-spacing-0 text-sm"
                             >
@@ -6868,7 +6962,81 @@
                                 {pools.length} pool
                             </Badge>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="grid gap-3 p-3 lg:hidden">
+                            {#each pools as row (row.id)}
+                                {@const net = financialNetMargin(row)}
+                                {@const achievement = financialAchievement(row)}
+                                {@const healthStatus = financialStatus(row)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">{row.name}</p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">{row.code || 'Tanpa kode'}</p>
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-1.5">
+                                            <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                                                {row.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                        <MoreHorizontal class="h-4 w-4" />
+                                                        <span class="sr-only">Aksi pool</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                    <DropdownMenuItem onclick={() => {
+                                                        poolForm = {
+                                                            id: row.id,
+                                                            name: row.name,
+                                                            code: row.code,
+                                                            target_revenue: formatRupiahInput(row.target_revenue),
+                                                            fixed_cost: formatRupiahInput(row.fixed_cost),
+                                                            status: row.status || 'active',
+                                                            notes: row.notes || '',
+                                                            route_ids: [...(row.route_ids ?? [])],
+                                                        };
+                                                        setFormMode('form');
+                                                    }}>
+                                                        <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onclick={() => void removeItem(`/api/admin/pools/${row.id}`, 'Pool deleted.')}>
+                                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                        Hapus
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute</p>
+                                        <p class="mt-1 line-clamp-2 font-medium text-foreground">{formatPoolRoutes(row)}</p>
+                                    </div>
+
+                                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                                        <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Revenue</p>
+                                            <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">{formatCurrency(Number(row.revenue || 0))}</p>
+                                        </div>
+                                        <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">BOP</p>
+                                            <p class="mt-1 font-semibold text-amber-800 dark:text-amber-200">{formatCurrency(Number(row.bop || 0))}</p>
+                                        </div>
+                                        <div class="rounded-xl bg-sky-50/80 px-3 py-2 dark:bg-sky-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">Net Margin</p>
+                                            <p class={`mt-1 font-semibold ${net >= 0 ? 'text-sky-800 dark:text-sky-200' : 'text-rose-700 dark:text-rose-300'}`}>{formatCurrency(net)}</p>
+                                        </div>
+                                        <div class="rounded-xl bg-muted/40 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Target</p>
+                                            <p class="mt-1 font-semibold text-foreground">{achievement.toFixed(1)}% · {healthStatus}</p>
+                                        </div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+                        <div class="hidden overflow-x-auto lg:block">
                             <table
                                 class="min-w-[2060px] w-full border-separate border-spacing-0 text-sm"
                             >
@@ -7529,7 +7697,76 @@
                                 >
                             </div>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#each users as row (row.id)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">{row.name}</p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">{row.email}</p>
+                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 shrink-0 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi user</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                <DropdownMenuItem onclick={() => {
+                                                    userForm = {
+                                                        id: row.id,
+                                                        name: row.name,
+                                                        email: row.email,
+                                                        password: '',
+                                                        is_super_admin: Boolean(row.is_super_admin),
+                                                        pool_ids: [...(row.pool_ids ?? [])],
+                                                        role_ids: [...(row.role_ids ?? [])],
+                                                    };
+                                                    setFormMode('form');
+                                                }}>
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/users/${row.id}`, 'User deleted.')}>
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+
+                                    <div class="mt-3 flex flex-wrap gap-1.5">
+                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                                            {row.email_verified_at ? 'Verified' : 'Belum Verified'}
+                                        </span>
+                                        <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-foreground">
+                                            {row.is_super_admin ? 'Super Admin' : 'User Pool'}
+                                        </span>
+                                    </div>
+
+                                    <div class="mt-3 grid gap-2 text-xs">
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Role</p>
+                                            <p class="mt-1 break-words font-medium text-foreground">
+                                                {(row.role_names ?? []).length ? (row.role_names ?? []).join(', ') : 'Belum ada role'}
+                                            </p>
+                                        </div>
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pool</p>
+                                            <p class="mt-1 break-words font-medium text-foreground">
+                                                {row.is_super_admin
+                                                    ? 'Semua Pool'
+                                                    : (row.pool_names ?? []).length
+                                                      ? (row.pool_names ?? []).join(', ')
+                                                      : 'Belum dimapping'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+                        <div class="hidden overflow-x-auto md:block">
                             <table
                                 class="min-w-[1380px] w-full border-separate border-spacing-0 text-sm"
                             >
@@ -7766,7 +8003,32 @@
                             {cancellations.length} aktivitas
                         </Badge>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="grid gap-3 p-3 md:hidden">
+                        {#each cancellations as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
+                            <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="line-clamp-2 text-sm font-semibold text-foreground">{row.title || '-'}</p>
+                                        <p class="mt-1 truncate text-xs text-muted-foreground">{row.created_at || '-'}</p>
+                                    </div>
+                                    <span class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                        {row.tag || '-'}
+                                    </span>
+                                </div>
+                                <div class="mt-3 grid gap-2 text-xs">
+                                    <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Detail</p>
+                                        <p class="mt-1 break-words font-medium text-foreground">{row.meta || '-'}</p>
+                                    </div>
+                                    <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Aktor</p>
+                                        <p class="mt-1 break-words font-medium text-foreground">{row.actor || '-'}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        {/each}
+                    </div>
+                    <div class="hidden overflow-x-auto md:block">
                         <table
                             class="min-w-[1180px] w-full border-separate border-spacing-0 text-sm"
                         >

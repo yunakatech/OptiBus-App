@@ -10,10 +10,17 @@
 </script>
 
 <script lang="ts">
+    import { MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
     import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuTrigger,
+    } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
@@ -467,7 +474,52 @@ return;
                         <Button type="button" onclick={() => void loadBagasiCustomers(1)}>Search</Button>
                         <Button type="button" variant="outline" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
                     </div>
-                    <div class="overflow-x-auto rounded-md border">
+                    <div class="grid gap-3 md:hidden">
+                        {#each bagasiCustomers as row (row.id)}
+                            <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-semibold text-foreground">{row.nama}</p>
+                                        <p class="mt-0.5 truncate text-xs text-muted-foreground">{row.no_hp}</p>
+                                    </div>
+                                    <div class="flex shrink-0 items-center gap-1.5">
+                                        <span class="rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300">
+                                            {row.tipe ?? '-'}
+                                        </span>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi customer bagasi</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                <DropdownMenuItem onclick={() => {
+                                                    bagasiForm = { id: row.id, nama: row.nama, no_hp: row.no_hp, alamat: row.alamat ?? '', tipe: row.tipe ?? 'pengirim' };
+                                                    setFormMode('form');
+                                                }}>
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onclick={() => void removeRow(`/api/admin/customer-bagasi/${row.id}`, 'Customer bagasi deleted.')}
+                                                    disabled={pendingDeleteKey === `/api/admin/customer-bagasi/${row.id}`}
+                                                >
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    {pendingDeleteKey === `/api/admin/customer-bagasi/${row.id}` ? 'Menghapus...' : 'Hapus'}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                                <div class="mt-3 rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Alamat</p>
+                                    <p class="mt-1 break-words font-medium text-foreground">{row.alamat ?? '-'}</p>
+                                </div>
+                            </article>
+                        {/each}
+                    </div>
+                    <div class="hidden overflow-x-auto rounded-md border md:block">
                         <table class="min-w-full text-sm">
                             <thead class="bg-muted/50"><tr><th class="px-3 py-2 text-left">Nama</th><th class="px-3 py-2 text-left">No HP</th><th class="px-3 py-2 text-left">Tipe</th><th class="px-3 py-2 text-left">Aksi</th></tr></thead>
                             <tbody>
@@ -487,9 +539,9 @@ return;
                             </tbody>
                         </table>
                     </div>
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <p class="text-sm text-muted-foreground">Total: {bagasiMeta.total}</p>
-                        <div class="flex gap-2">
+                        <div class="flex items-center justify-between gap-2 sm:justify-end">
                             <Button type="button" variant="outline" disabled={bagasiMeta.page <= 1} onclick={() => void jumpPage('customer-bagasi', bagasiMeta.page - 1)}>Prev</Button>
                             <span class="px-2 py-1 text-sm">{bagasiMeta.page} / {bagasiMeta.last_page}</span>
                             <Button type="button" variant="outline" disabled={bagasiMeta.page >= bagasiMeta.last_page} onclick={() => void jumpPage('customer-bagasi', bagasiMeta.page + 1)}>Next</Button>
@@ -534,7 +586,53 @@ return;
                         <Button type="button" onclick={() => void loadCharterCustomers(1)}>Search</Button>
                         <Button type="button" variant="outline" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
                     </div>
-                    <div class="overflow-x-auto rounded-md border">
+                    <div class="grid gap-3 md:hidden">
+                        {#each charterCustomers as row (row.id)}
+                            <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-semibold text-foreground">{row.nama}</p>
+                                        <p class="mt-0.5 truncate text-xs text-muted-foreground">{row.no_hp}</p>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 shrink-0 rounded-full border border-border/70">
+                                                <MoreHorizontal class="h-4 w-4" />
+                                                <span class="sr-only">Aksi customer carter</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                            <DropdownMenuItem onclick={() => {
+                                                charterForm = { id: row.id, nama: row.nama, no_hp: row.no_hp, alamat: row.alamat ?? '', company: row.company ?? '' };
+                                                setFormMode('form');
+                                            }}>
+                                                <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onclick={() => void removeRow(`/api/admin/customer-charter/${row.id}`, 'Customer charter deleted.')}
+                                                disabled={pendingDeleteKey === `/api/admin/customer-charter/${row.id}`}
+                                            >
+                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                {pendingDeleteKey === `/api/admin/customer-charter/${row.id}` ? 'Menghapus...' : 'Hapus'}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                                <div class="mt-3 grid gap-2 text-xs">
+                                    <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Company</p>
+                                        <p class="mt-1 break-words font-medium text-foreground">{row.company ?? '-'}</p>
+                                    </div>
+                                    <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Alamat</p>
+                                        <p class="mt-1 break-words font-medium text-foreground">{row.alamat ?? '-'}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        {/each}
+                    </div>
+                    <div class="hidden overflow-x-auto rounded-md border md:block">
                         <table class="min-w-full text-sm">
                             <thead class="bg-muted/50"><tr><th class="px-3 py-2 text-left">Nama</th><th class="px-3 py-2 text-left">No HP</th><th class="px-3 py-2 text-left">Company</th><th class="px-3 py-2 text-left">Aksi</th></tr></thead>
                             <tbody>
@@ -554,9 +652,9 @@ return;
                             </tbody>
                         </table>
                     </div>
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <p class="text-sm text-muted-foreground">Total: {charterMeta.total}</p>
-                        <div class="flex gap-2">
+                        <div class="flex items-center justify-between gap-2 sm:justify-end">
                             <Button type="button" variant="outline" disabled={charterMeta.page <= 1} onclick={() => void jumpPage('customer-charter', charterMeta.page - 1)}>Prev</Button>
                             <span class="px-2 py-1 text-sm">{charterMeta.page} / {charterMeta.last_page}</span>
                             <Button type="button" variant="outline" disabled={charterMeta.page >= charterMeta.last_page} onclick={() => void jumpPage('customer-charter', charterMeta.page + 1)}>Next</Button>
