@@ -34,21 +34,15 @@ export function initializeInertiaLoading(): void {
             .replace(/^https?:\/\/[^/]+/i, '')
             .split('?')[0]
             .replace(/^\/+/, '');
-        const pageName = cleanUrl === '' ? 'Dashboard' : cleanUrl
-            .split('/')
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((segment) => segment.replace(/-/g, ' '))
-            .join(' / ');
 
         navigationTimer = setTimeout(() => {
             navigationToken = startLoading({
                 id: 'inertia-navigation',
-                message: pageName ? `Memuat ${pageName}...` : 'Memuat halaman...',
+                message: cleanUrl === '' ? 'Memuat dashboard...' : 'Memuat halaman...',
                 scope: 'navigation',
                 blocking: false,
             });
-        }, 80);
+        }, 280);
     });
 
     router.on('finish', finishNavigationLoading);
