@@ -2320,6 +2320,17 @@
             target_revenue: '',
             fixed_cost: '',
         });
+    const editRoute = (row: RouteRow) => {
+        routeForm = {
+            id: row.id,
+            name: row.name,
+            origin: row.origin ?? '',
+            destination: row.destination ?? '',
+            target_revenue: formatRupiahInput(row.target_revenue),
+            fixed_cost: formatRupiahInput(row.fixed_cost),
+        };
+        setFormMode('form');
+    };
     const buildDefaultUnitLabels = (count: number, existing: string[] = []) => {
         const total = Math.max(1, Number(count || 1));
 
@@ -2394,6 +2405,20 @@
             fixed_cost: '',
         })
     );
+    const editDriver = (row: DriverRow) => {
+        driverForm = {
+            id: row.id,
+            nama: row.nama,
+            phone: row.phone ?? '',
+            armada_id: row.armada_id ?? 0,
+            fixed_cost: formatRupiahInput(row.fixed_cost),
+            target_revenue_bulanan: formatRupiahInput(
+                row.target_revenue_bulanan,
+            ),
+        };
+        driverUnitSearch = row.nopol ?? '';
+        setFormMode('form');
+    };
     const resetServiceForm = () => (serviceForm = { id: 0, name: '' });
     const resetSegmentForm = () =>
         (segmentForm = {
@@ -2404,6 +2429,18 @@
             destination: '',
             harga: 0,
         });
+    const editSegment = (row: SegmentRow) => {
+        selectedSegmentRouteId = row.route_id;
+        segmentForm = {
+            id: row.id,
+            route_id: row.route_id,
+            rute: row.rute,
+            origin: row.origin ?? '',
+            destination: row.destination ?? '',
+            harga: Number(row.harga),
+        };
+        setFormMode('form');
+    };
     const resetCustomerForm = () =>
         (customerForm = {
             id: 0,
@@ -3442,7 +3479,163 @@
                                 {routes.length} rute aktif
                             </Badge>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#if routes.length === 0}
+                                <div class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground">
+                                    Belum ada rute induk.
+                                </div>
+                            {/if}
+                            {#each routes as row (row.id)}
+                                {@const gross = financialGrossMargin(row)}
+                                {@const net = financialNetMargin(row)}
+                                {@const achievement = financialAchievement(row)}
+                                {@const status = financialStatus(row)}
+                                <article
+                                    class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-sm"
+                                >
+                                    <div
+                                        class="bg-[linear-gradient(135deg,rgba(249,115,22,0.10),rgba(15,23,42,0.02))] p-3"
+                                    >
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <p class="truncate text-sm font-semibold text-foreground">
+                                                    {row.name}
+                                                </p>
+                                                <p class="mt-0.5 text-xs text-muted-foreground">
+                                                    Rute master jadwal dan segment
+                                                </p>
+                                            </div>
+                                            <div class="flex shrink-0 items-center gap-1.5">
+                                                <span
+                                                    class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                                        status === 'Tercapai'
+                                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
+                                                            : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
+                                                    }`}
+                                                >
+                                                    {status}
+                                                </span>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="h-8 w-8 rounded-full border border-border/70 bg-background/80"
+                                                        >
+                                                            <MoreHorizontal class="h-4 w-4" />
+                                                            <span class="sr-only">Aksi rute induk</span>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        sideOffset={8}
+                                                        class="z-[120] w-44"
+                                                    >
+                                                        <DropdownMenuItem onclick={() => editRoute(row)}>
+                                                            <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void removeItem(
+                                                                    `/api/admin/routes/${row.id}`,
+                                                                    'Route deleted.',
+                                                                )}
+                                                        >
+                                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                            Hapus
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3 flex items-center gap-2 text-xs">
+                                            <span class="min-w-0 truncate rounded-full border border-border/70 bg-background/80 px-2.5 py-1 font-medium">
+                                                {row.origin ?? 'Origin belum diatur'}
+                                            </span>
+                                            <span class="shrink-0 text-muted-foreground">→</span>
+                                            <span class="min-w-0 truncate rounded-full border border-border/70 bg-background/80 px-2.5 py-1 font-medium">
+                                                {row.destination ?? 'Destination belum diatur'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2 p-3 text-xs">
+                                        <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                                                Revenue
+                                            </p>
+                                            <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">
+                                                {formatCurrency(Number(row.revenue || 0))}
+                                            </p>
+                                        </div>
+                                        <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                                                BOP
+                                            </p>
+                                            <p class="mt-1 font-semibold text-amber-800 dark:text-amber-200">
+                                                {formatCurrency(Number(row.bop || 0))}
+                                            </p>
+                                        </div>
+                                        <div class="rounded-xl bg-sky-50/80 px-3 py-2 dark:bg-sky-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                                                Net Margin
+                                            </p>
+                                            <p
+                                                class={`mt-1 font-semibold ${net >= 0 ? 'text-sky-800 dark:text-sky-200' : 'text-rose-700 dark:text-rose-300'}`}
+                                            >
+                                                {formatCurrency(net)}
+                                            </p>
+                                        </div>
+                                        <div class="rounded-xl bg-muted/40 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                Achievement
+                                            </p>
+                                            <p class="mt-1 font-semibold text-foreground">
+                                                {achievement.toFixed(1)}%
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <details class="border-t border-border/70 px-3 py-2 text-xs">
+                                        <summary class="cursor-pointer select-none py-1 font-semibold text-muted-foreground">
+                                            Detail breakdown
+                                        </summary>
+                                        <div class="mt-2 grid gap-2">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Charter</p>
+                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.charter_revenue || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Keberangkatan</p>
+                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.departure_revenue || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Bagasi</p>
+                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.luggage_revenue || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Gross</p>
+                                                    <p class="mt-1 font-semibold">{formatCurrency(gross)}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Fixed Cost</p>
+                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.fixed_cost || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Target</p>
+                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.target_revenue || 0))}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </details>
+                                </article>
+                            {/each}
+                        </div>
+                        <div class="hidden overflow-x-auto md:block">
                             <table
                                 class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm"
                             >
@@ -3767,29 +3960,8 @@
                                                         class="z-[120] w-44"
                                                     >
                                                         <DropdownMenuItem
-                                                            onclick={() => {
-                                                                routeForm = {
-                                                                    id: row.id,
-                                                                    name: row.name,
-                                                                    origin:
-                                                                        row.origin ??
-                                                                        '',
-                                                                    destination:
-                                                                        row.destination ??
-                                                                        '',
-                                                                    target_revenue:
-                                                                        formatRupiahInput(
-                                                                            row.target_revenue,
-                                                                        ),
-                                                                    fixed_cost:
-                                                                        formatRupiahInput(
-                                                                            row.fixed_cost,
-                                                                        ),
-                                                                };
-                                                                setFormMode(
-                                                                    'form',
-                                                                );
-                                                            }}
+                                                            onclick={() =>
+                                                                editRoute(row)}
                                                         >
                                                             <Pencil
                                                                 class="mr-2 h-3.5 w-3.5"
@@ -4510,7 +4682,154 @@
                             </Badge>
                         </div>
 
-                        <div class="overflow-x-auto">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#if drivers.length === 0}
+                                <div class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground">
+                                    Belum ada driver aktif.
+                                </div>
+                            {/if}
+                            {#each drivers as row (row.id)}
+                                {@const gross = driverGrossMargin(row)}
+                                {@const net = driverNetMargin(row)}
+                                {@const achievement = driverAchievement(row)}
+                                {@const status = driverStatus(row)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">
+                                                {row.nama}
+                                            </p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {row.phone ?? 'Kontak belum diatur'}
+                                            </p>
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-1.5">
+                                            <span
+                                                class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                                    status === 'Tercapai'
+                                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
+                                                        : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
+                                                }`}
+                                            >
+                                                {status}
+                                            </span>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-8 w-8 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal class="h-4 w-4" />
+                                                        <span class="sr-only">Aksi driver</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem onclick={() => editDriver(row)}>
+                                                        <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void removeItem(
+                                                                `/api/admin/drivers/${row.id}`,
+                                                                'Driver deleted.',
+                                                            )}
+                                                    >
+                                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                        Hapus
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                            Armada Terpasang
+                                        </p>
+                                        <p class="mt-1 font-semibold text-foreground">
+                                            {row.nopol ?? '-'}
+                                        </p>
+                                    </div>
+
+                                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                                        <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                                                Revenue
+                                            </p>
+                                            <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">
+                                                {formatCurrency(Number(row.revenue || 0))}
+                                            </p>
+                                        </div>
+                                        <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                                                BOP
+                                            </p>
+                                            <p class="mt-1 font-semibold text-amber-800 dark:text-amber-200">
+                                                {formatCurrency(Number(row.bop || 0))}
+                                            </p>
+                                        </div>
+                                        <div class="rounded-xl bg-sky-50/80 px-3 py-2 dark:bg-sky-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                                                Net Margin
+                                            </p>
+                                            <p
+                                                class={`mt-1 font-semibold ${net >= 0 ? 'text-sky-800 dark:text-sky-200' : 'text-rose-700 dark:text-rose-300'}`}
+                                            >
+                                                {formatCurrency(net)}
+                                            </p>
+                                        </div>
+                                        <div class="rounded-xl bg-muted/40 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                Achievement
+                                            </p>
+                                            <p class="mt-1 font-semibold text-foreground">
+                                                {achievement.toFixed(1)}%
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <details class="mt-3 border-t border-border/70 pt-2 text-xs">
+                                        <summary class="cursor-pointer select-none py-1 font-semibold text-muted-foreground">
+                                            Detail revenue dan biaya
+                                        </summary>
+                                        <div class="mt-2 grid grid-cols-2 gap-2">
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Charter</p>
+                                                <p class="mt-1 font-semibold">{formatCurrency(Number(row.charter_revenue || 0))}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Keberangkatan</p>
+                                                <p class="mt-1 font-semibold">{formatCurrency(Number(row.departure_revenue || 0))}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Bagasi</p>
+                                                <p class="mt-1 font-semibold">{formatCurrency(Number(row.luggage_revenue || 0))}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Gross</p>
+                                                <p class="mt-1 font-semibold">{formatCurrency(gross)}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Fixed Cost</p>
+                                                <p class="mt-1 font-semibold">{formatCurrency(Number(row.fixed_cost || 0))}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Target</p>
+                                                <p class="mt-1 font-semibold">{formatCurrency(Number(row.target_revenue_bulanan || 0))}</p>
+                                            </div>
+                                        </div>
+                                    </details>
+                                </article>
+                            {/each}
+                        </div>
+                        <div class="hidden overflow-x-auto md:block">
                             <table
                                 class="min-w-[1900px] w-full border-separate border-spacing-0 text-sm"
                             >
@@ -4831,32 +5150,8 @@
                                                         class="z-[120] w-44"
                                                     >
                                                         <DropdownMenuItem
-                                                            onclick={() => {
-                                                                driverForm = {
-                                                                    id: row.id,
-                                                                    nama: row.nama,
-                                                                    phone:
-                                                                        row.phone ??
-                                                                        '',
-                                                                    armada_id:
-                                                                        row.armada_id ??
-                                                                        0,
-                                                                    fixed_cost:
-                                                                        formatRupiahInput(
-                                                                            row.fixed_cost,
-                                                                        ),
-                                                                    target_revenue_bulanan:
-                                                                        formatRupiahInput(
-                                                                            row.target_revenue_bulanan,
-                                                                        ),
-                                                                };
-                                                                driverUnitSearch =
-                                                                    row.nopol ??
-                                                                    '';
-                                                                setFormMode(
-                                                                    'form',
-                                                                );
-                                                            }}
+                                                            onclick={() =>
+                                                                editDriver(row)}
                                                         >
                                                             <Pencil
                                                                 class="mr-2 h-3.5 w-3.5"
@@ -5267,7 +5562,80 @@
                                     {segments.length} segment aktif
                                 </Badge>
                             </div>
-                            <div class="overflow-x-auto">
+                            <div class="grid gap-3 p-3 md:hidden">
+                                {#if segments.length === 0}
+                                    <div class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground">
+                                        Belum ada segment untuk rute ini.
+                                    </div>
+                                {/if}
+                                {#each segments as row (row.id)}
+                                    <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <p class="truncate text-sm font-semibold text-foreground">
+                                                    {row.rute}
+                                                </p>
+                                                <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                    {row.route_name ?? selectedSegmentRoute.name}
+                                                </p>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal class="h-4 w-4" />
+                                                        <span class="sr-only">Aksi segment</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem onclick={() => editSegment(row)}>
+                                                        <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void removeItem(
+                                                                `/api/admin/segments/${row.id}`,
+                                                                'Segment deleted.',
+                                                            )}
+                                                    >
+                                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                        Hapus
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+
+                                        <div class="mt-3 rounded-xl bg-amber-50/80 px-3 py-2 text-xs dark:bg-amber-950/25">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                                                Harga Segment
+                                            </p>
+                                            <p class="mt-1 text-base font-semibold text-amber-800 dark:text-amber-200">
+                                                {formatCurrency(Number(row.harga || 0))}
+                                            </p>
+                                        </div>
+
+                                        <div class="mt-3 flex items-center gap-2 text-xs">
+                                            <span class="min-w-0 truncate rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 font-medium">
+                                                {row.origin ?? 'Origin belum diatur'}
+                                            </span>
+                                            <span class="shrink-0 text-muted-foreground">→</span>
+                                            <span class="min-w-0 truncate rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 font-medium">
+                                                {row.destination ?? 'Destination belum diatur'}
+                                            </span>
+                                        </div>
+                                    </article>
+                                {/each}
+                            </div>
+                            <div class="hidden overflow-x-auto md:block">
                                 <table
                                     class="min-w-[920px] w-full border-separate border-spacing-0 text-sm"
                                 >
@@ -5392,29 +5760,10 @@
                                                                 class="z-[120] w-44"
                                                             >
                                                                 <DropdownMenuItem
-                                                                    onclick={() => {
-                                                                        selectedSegmentRouteId =
-                                                                            row.route_id;
-                                                                        segmentForm =
-                                                                            {
-                                                                                id: row.id,
-                                                                                route_id:
-                                                                                    row.route_id,
-                                                                                rute: row.rute,
-                                                                                origin:
-                                                                                    row.origin ??
-                                                                                    '',
-                                                                                destination:
-                                                                                    row.destination ??
-                                                                                    '',
-                                                                                harga: Number(
-                                                                                    row.harga,
-                                                                                ),
-                                                                            };
-                                                                        setFormMode(
-                                                                            'form',
-                                                                        );
-                                                                    }}
+                                                                    onclick={() =>
+                                                                        editSegment(
+                                                                            row,
+                                                                        )}
                                                                 >
                                                                     <Pencil
                                                                         class="mr-2 h-3.5 w-3.5"

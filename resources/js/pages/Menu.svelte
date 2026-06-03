@@ -71,7 +71,9 @@
                 ...section,
                 items: section.items.filter((item) =>
                     hasPermission(permissions, item.permission) &&
-                    (!item.superAdminOnly || isSuperAdmin),
+                    (!('superAdminOnly' in item) ||
+                        !item.superAdminOnly ||
+                        isSuperAdmin),
                 ),
             }))
             .filter((section) => section.items.length > 0),

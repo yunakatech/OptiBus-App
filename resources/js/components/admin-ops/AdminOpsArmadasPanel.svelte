@@ -136,7 +136,126 @@
             </Badge>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="grid gap-3 p-3 md:hidden">
+            {#if armadas.length === 0}
+                <div class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground">
+                    Belum ada armada tercatat.
+                </div>
+            {/if}
+            {#each armadas as row (row.id)}
+                {@const gross = armadaGrossMargin(row)}
+                {@const net = armadaNetMargin(row)}
+                {@const achievement = armadaAchievement(row)}
+                {@const status = armadaStatus(row)}
+                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-foreground">{row.nopol}</p>
+                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                {row.merk ?? 'Armada tanpa merek'}
+                            </p>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-1.5">
+                            <span
+                                class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                    status === 'Tercapai'
+                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
+                                        : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
+                                }`}
+                            >
+                                {status}
+                            </span>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                        <MoreHorizontal class="h-4 w-4" />
+                                        <span class="sr-only">Aksi armada</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                    <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
+                                        <Eye class="mr-2 h-3.5 w-3.5" />
+                                        Lihat Detail
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
+                                        <Pencil class="mr-2 h-3.5 w-3.5" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                        Hapus
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${categoryTone(row.kategori)}`}>
+                            {normalizeUnitCategory(row.kategori)}
+                        </span>
+                        <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                            {row.ac_type}
+                        </span>
+                        <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                            {row.warna ?? '-'} / {row.tahun ?? '-'}
+                        </span>
+                    </div>
+
+                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Revenue</p>
+                            <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">{formatCurrency(Number(row.revenue || 0))}</p>
+                        </div>
+                        <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">BOP</p>
+                            <p class="mt-1 font-semibold text-amber-800 dark:text-amber-200">{formatCurrency(Number(row.bop || 0))}</p>
+                        </div>
+                        <div class="rounded-xl bg-sky-50/80 px-3 py-2 dark:bg-sky-950/25">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">Fixed Cost</p>
+                            <p class="mt-1 font-semibold text-sky-800 dark:text-sky-200">{formatCurrency(Number(row.fixed_cost || 0))}</p>
+                        </div>
+                        <div class="rounded-xl bg-muted/40 px-3 py-2">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Achievement</p>
+                            <p class="mt-1 font-semibold text-foreground">{achievement.toFixed(1)}%</p>
+                        </div>
+                    </div>
+
+                    <details class="mt-3 border-t border-border/70 pt-2 text-xs">
+                        <summary class="cursor-pointer select-none py-1 font-semibold text-muted-foreground">
+                            Detail teknis dan margin
+                        </summary>
+                        <div class="mt-2 grid gap-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Net Margin</p>
+                                    <p class={`mt-1 font-semibold ${net >= 0 ? 'text-sky-800 dark:text-sky-200' : 'text-rose-700 dark:text-rose-300'}`}>{formatCurrency(net)}</p>
+                                </div>
+                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Gross</p>
+                                    <p class="mt-1 font-semibold">{formatCurrency(gross)}</p>
+                                </div>
+                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Target</p>
+                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.target_bulanan || 0))}</p>
+                                </div>
+                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">No. Rangka</p>
+                                    <p class="mt-1 break-words font-semibold">{row.nomor_rangka ?? '-'}</p>
+                                </div>
+                            </div>
+                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">GPS</p>
+                                <p class="mt-1 break-words font-semibold">{row.platform_gps ?? '-'}</p>
+                                <p class="mt-1 break-all text-[11px] text-muted-foreground">{row.api_gps ?? 'API GPS belum diatur'}</p>
+                            </div>
+                        </div>
+                    </details>
+                </article>
+            {/each}
+        </div>
+
+        <div class="hidden overflow-x-auto md:block">
             <table class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm">
                 <thead>
                     <tr class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">

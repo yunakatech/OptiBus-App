@@ -512,7 +512,51 @@
             {#if reportRows.length > 0}
                 <div class="max-h-[70vh] overflow-auto">
                     {#if reportSummary.type === 'booking'}
-                        <table class="min-w-full text-sm">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#each asBookingRows(reportRows) as row (row.id)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">
+                                                {row.name || '-'}
+                                            </p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {row.tanggal || '-'} / {shortTime(row.jam)}
+                                            </p>
+                                        </div>
+                                        <p class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                                            {formatCurrency(row.total)}
+                                        </p>
+                                    </div>
+                                    <div class="mt-3 flex flex-wrap gap-1.5">
+                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.pembayaran)}`}>
+                                            {row.pembayaran || '-'}
+                                        </span>
+                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}>
+                                            {row.status || '-'}
+                                        </span>
+                                    </div>
+                                    <div class="mt-3 grid gap-2 text-xs">
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute</p>
+                                            <p class="mt-1 font-medium text-foreground">{row.rute || '-'}</p>
+                                            <p class="mt-1 text-[11px] text-muted-foreground">{row.pickup_point || '-'}</p>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Unit / Seat</p>
+                                                <p class="mt-1 font-medium text-foreground">{row.unit || '-'} / {row.seat || '-'}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Potongan</p>
+                                                <p class="mt-1 font-medium text-foreground">{formatCurrency(row.discount)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+                        <table class="hidden min-w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
@@ -620,7 +664,54 @@
                             </tbody>
                         </table>
                     {:else if reportSummary.type === 'charter'}
-                        <table class="min-w-full text-sm">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#each asCharterRows(reportRows) as row (row.id)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">
+                                                {row.name || '-'}
+                                            </p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {row.start_date || '-'} / {shortTime(row.departure_time)}
+                                            </p>
+                                        </div>
+                                        <p class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                                            {formatCurrency(row.total)}
+                                        </p>
+                                    </div>
+                                    <div class="mt-3 flex flex-wrap gap-1.5">
+                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}>
+                                            {row.payment_status || '-'}
+                                        </span>
+                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status || row.bop_status)}`}>
+                                            {row.status || row.bop_status || '-'}
+                                        </span>
+                                    </div>
+                                    <div class="mt-3 grid gap-2 text-xs">
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute Carter</p>
+                                            <p class="mt-1 font-medium text-foreground">{routeLabel(row.pickup_point, row.drop_point)}</p>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Driver</p>
+                                                <p class="mt-1 font-medium text-foreground">{row.driver_name || '-'}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Armada</p>
+                                                <p class="mt-1 font-medium text-foreground">{charterVehicle(row)}</p>
+                                            </div>
+                                        </div>
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
+                                            <p class="mt-1 font-medium text-foreground">{row.layanan || '-'}</p>
+                                        </div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+                        <table class="hidden min-w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
@@ -735,7 +826,52 @@
                             </tbody>
                         </table>
                     {:else}
-                        <table class="min-w-full text-sm">
+                        <div class="grid gap-3 p-3 md:hidden">
+                            {#each asLuggageRows(reportRows) as row (row.id)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-foreground">
+                                                {row.kode_resi || '-'}
+                                            </p>
+                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {row.tanggal || row.created_at || '-'}
+                                            </p>
+                                        </div>
+                                        <p class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                                            {formatCurrency(row.total)}
+                                        </p>
+                                    </div>
+                                    <div class="mt-3 flex flex-wrap gap-1.5">
+                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}>
+                                            {row.status || '-'}
+                                        </span>
+                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}>
+                                            {row.payment_status || '-'}
+                                        </span>
+                                    </div>
+                                    <div class="mt-3 grid gap-2 text-xs">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pengirim</p>
+                                                <p class="mt-1 font-medium text-foreground">{row.sender_name || '-'}</p>
+                                                <p class="mt-1 text-[11px] text-muted-foreground">{row.sender_phone || '-'}</p>
+                                            </div>
+                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Penerima</p>
+                                                <p class="mt-1 font-medium text-foreground">{row.receiver_name || '-'}</p>
+                                                <p class="mt-1 text-[11px] text-muted-foreground">{row.receiver_phone || '-'}</p>
+                                            </div>
+                                        </div>
+                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
+                                            <p class="mt-1 font-medium text-foreground">{row.service_name || '-'} / {row.quantity} item</p>
+                                        </div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+                        <table class="hidden min-w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
