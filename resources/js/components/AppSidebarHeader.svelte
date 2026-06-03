@@ -76,7 +76,7 @@
             class="h-9 gap-2 rounded-full px-4"
         >
             {#snippet children(props)}
-                <Link {...props} href={toUrl('/booking-console')}>
+                <Link {...props} href={toUrl('/booking-console')} prefetch cacheFor={30000}>
                     <Monitor class="size-4" />
                     <span>Booking Console</span>
                 </Link>

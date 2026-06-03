@@ -48,6 +48,8 @@
             {#if isBookingConsolePage}
                 <Link
                     href={toUrl(dashboard())}
+                    prefetch
+                    cacheFor={30000}
                     class="hidden items-center gap-x-2 md:flex"
                 >
                     <AppLogo />
@@ -55,6 +57,8 @@
             {:else}
                 <Link
                     href={toUrl(dashboard())}
+                    prefetch
+                    cacheFor={30000}
                     class="flex items-center gap-x-2"
                 >
                     <AppLogo />
@@ -79,6 +83,8 @@
                                         '',
                                     ) ?? ''} h-9 cursor-pointer px-4"
                                     href={toUrl(item.href)}
+                                    prefetch={['hover', 'click']}
+                                    cacheFor={30000}
                                 >
                                     {#if item.icon}
                                         <item.icon class="mr-2 h-4 w-4" />

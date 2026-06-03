@@ -226,6 +226,8 @@
                             {...props}
                             href={toUrl(dashboard())}
                             class={`${props.class} justify-center`}
+                            prefetch
+                            cacheFor={30000}
                         >
                             <AppLogo />
                         </Link>

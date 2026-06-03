@@ -42,7 +42,7 @@ export function initializeInertiaLoading(): void {
                 scope: 'navigation',
                 blocking: false,
             });
-        }, 280);
+        }, 120);
     });
 
     router.on('finish', finishNavigationLoading);

@@ -16,6 +16,8 @@
 
 <Link
     href={toUrl('/menu')}
+    prefetch
+    cacheFor={30000}
     aria-label="Buka menu pengaturan"
     class={`inline-flex size-9 items-center justify-center rounded-md border border-input bg-background transition-colors hover:bg-accent hover:text-accent-foreground md:hidden ${
         isActive ? 'border-primary/40 bg-primary/10 text-primary' : 'text-foreground'
