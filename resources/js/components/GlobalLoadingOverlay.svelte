@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { Navigation, Sparkles } from 'lucide-svelte';
+    import { Sparkles } from 'lucide-svelte';
     import { Spinner } from '@/components/ui/spinner';
+    import { Skeleton } from '@/components/ui/skeleton';
     import { globalLoading } from '@/lib/loading';
 
     const loadingState = globalLoading;
+    const skeletonRows = Array.from({ length: 6 });
     const navigationEntry = $derived(
         $loadingState.entries.find((entry) => entry.scope === 'navigation') ??
             null,
@@ -21,26 +23,44 @@
     </div>
 
     <div
-        class="pointer-events-none fixed inset-x-3 bottom-[calc(5.2rem+env(safe-area-inset-bottom))] z-[90] flex justify-center md:hidden"
+        class="pointer-events-none fixed inset-x-3 top-[calc(4.4rem+env(safe-area-inset-top))] z-[70] md:top-20"
         role="status"
         aria-live="polite"
         aria-busy="true"
     >
         <div
-            class="flex max-w-[22rem] items-center gap-3 rounded-2xl border border-cyan-200/70 bg-background/95 px-3 py-2.5 text-foreground shadow-[0_18px_50px_-26px_rgba(8,145,178,0.85)] ring-1 ring-white/20 backdrop-blur-xl dark:border-cyan-900/70"
+            class="mx-auto w-full max-w-5xl overflow-hidden rounded-[24px] border border-border/70 bg-background/88 shadow-[0_22px_70px_-42px_rgba(15,23,42,0.55)] ring-1 ring-white/15 backdrop-blur-xl dark:bg-slate-950/78"
         >
-            <div
-                class="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/12 text-cyan-700 dark:text-cyan-200"
-            >
-                <Navigation class="size-4 animate-pulse" />
+            <span class="sr-only">{navigationEntry.message || 'Memuat halaman...'}</span>
+            <div class="border-b border-border/60 bg-muted/20 px-4 py-3">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="min-w-0 flex-1 space-y-2">
+                        <Skeleton class="h-3 w-24 rounded-full bg-cyan-500/18" />
+                        <Skeleton class="h-4 w-full max-w-sm rounded-full" />
+                    </div>
+                    <Skeleton class="hidden h-8 w-24 rounded-full md:block" />
+                </div>
             </div>
-            <div class="min-w-0">
-                <p class="text-xs font-black uppercase tracking-wide text-cyan-700 dark:text-cyan-200">
-                    Pindah Menu
-                </p>
-                <p class="truncate text-sm font-semibold">
-                    {navigationEntry.message || 'Memuat halaman...'}
-                </p>
+            <div class="space-y-2 p-3">
+                <div class="grid grid-cols-[1.2fr_0.9fr_0.8fr] gap-3 px-2 md:grid-cols-[1.3fr_0.9fr_0.8fr_0.7fr_0.5fr]">
+                    <Skeleton class="h-3 rounded-full" />
+                    <Skeleton class="h-3 rounded-full" />
+                    <Skeleton class="h-3 rounded-full" />
+                    <Skeleton class="hidden h-3 rounded-full md:block" />
+                    <Skeleton class="hidden h-3 rounded-full md:block" />
+                </div>
+                {#each skeletonRows as _, index}
+                    <div
+                        class="grid grid-cols-[1.2fr_0.9fr_0.8fr] gap-3 rounded-2xl border border-border/45 bg-card/62 px-3 py-3 md:grid-cols-[1.3fr_0.9fr_0.8fr_0.7fr_0.5fr]"
+                        style={`animation: qbus-skeleton-rise 420ms ease-out both; animation-delay: ${index * 45}ms;`}
+                    >
+                        <Skeleton class="h-4 rounded-full" />
+                        <Skeleton class="h-4 rounded-full" />
+                        <Skeleton class="h-4 rounded-full" />
+                        <Skeleton class="hidden h-4 rounded-full md:block" />
+                        <Skeleton class="hidden h-4 rounded-full md:block" />
+                    </div>
+                {/each}
             </div>
         </div>
     </div>
@@ -82,6 +102,18 @@
 
         100% {
             transform: translateX(230%) scaleX(0.55);
+        }
+    }
+
+    @keyframes -global-qbus-skeleton-rise {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 </style>
