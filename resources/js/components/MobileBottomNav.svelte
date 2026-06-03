@@ -226,12 +226,17 @@ return;
                             aria-busy={pendingHref === itemHref}
                             onpointerdown={() => prepareNavPress(itemHref)}
                             onclick={(event) => visitNavItem(event, itemHref)}
-                            class="group flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {isCompact ? 'h-10 rounded-xl' : 'h-14 rounded-2xl'} {isNavItemActive(
+                            class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref === itemHref ? 'opacity-70' : ''} {isCompact ? 'h-10 rounded-xl' : 'h-14 rounded-2xl'} {isNavItemActive(
                                 item.href,
                             )
                                 ? 'text-primary'
                                 : 'text-muted-foreground/90'}"
                         >
+                            {#if pendingHref === itemHref}
+                                <span
+                                    class="absolute right-2 top-2 size-1.5 rounded-full bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.9)] motion-safe:animate-ping"
+                                ></span>
+                            {/if}
                             {#if item.icon}
                                 <item.icon
                                     class="shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {isCompact ? 'size-4' : 'size-5'} {isNavItemActive(
