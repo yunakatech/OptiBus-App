@@ -22,6 +22,7 @@
     import MapPinned from 'lucide-svelte/icons/map-pinned';
     import Package from 'lucide-svelte/icons/package';
     import Route from 'lucide-svelte/icons/route';
+    import ShieldCheck from 'lucide-svelte/icons/shield-check';
     import Shuffle from 'lucide-svelte/icons/shuffle';
     import Truck from 'lucide-svelte/icons/truck';
     import UserCog from 'lucide-svelte/icons/user-cog';
@@ -57,17 +58,20 @@
                 { title: 'Armada', href: '/admin-ops/armadas', icon: CarFront, permission: 'armada.view' },
                 { title: 'Driver', href: '/admin-ops/drivers', icon: IdCard, permission: 'driver.view' },
                 { title: 'Users', href: '/admin-ops/users', icon: UserCog, permission: 'user.manage' },
+                { title: 'Role & Hak Akses', href: '/admin-ops/roles', icon: ShieldCheck, permission: 'role.manage', superAdminOnly: true },
             ],
         },
     ] as const;
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
+    const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
     const visibleMenuSections = $derived(
         menuSections
             .map((section) => ({
                 ...section,
                 items: section.items.filter((item) =>
-                    hasPermission(permissions, item.permission),
+                    hasPermission(permissions, item.permission) &&
+                    (!item.superAdminOnly || isSuperAdmin),
                 ),
             }))
             .filter((section) => section.items.length > 0),

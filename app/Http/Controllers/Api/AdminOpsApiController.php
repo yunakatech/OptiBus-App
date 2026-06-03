@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -3380,6 +3381,241 @@ class AdminOpsApiController extends Controller
         });
 
         return $this->ok(['message' => 'Pool deleted.']);
+    }
+
+    public function rolesIndex(): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        if (! AccessControl::tablesReady()) {
+            return $this->error('Tabel role dan permission belum tersedia. Jalankan migration terlebih dahulu.', 503);
+        }
+
+        $permissions = DB::table('permissions')
+            ->orderBy('group')
+            ->orderBy('name')
+            ->get(['id', 'slug', 'name', 'group'])
+            ->map(static fn ($permission): array => [
+                'id' => (int) $permission->id,
+                'slug' => (string) $permission->slug,
+                'name' => (string) $permission->name,
+                'group' => (string) ($permission->group ?? 'Lainnya'),
+            ])
+            ->values();
+
+        $permissionRows = DB::table('role_permission as rp')
+            ->join('permissions as p', 'rp.permission_id', '=', 'p.id')
+            ->get(['rp.role_id', 'p.id', 'p.slug']);
+
+        $permissionMap = [];
+        foreach ($permissionRows as $row) {
+            $roleId = (int) ($row->role_id ?? 0);
+            $permissionMap[$roleId] ??= ['ids' => [], 'slugs' => []];
+            $permissionMap[$roleId]['ids'][] = (int) ($row->id ?? 0);
+            $permissionMap[$roleId]['slugs'][] = (string) ($row->slug ?? '');
+        }
+
+        $userCounts = DB::table('user_role')
+            ->select('role_id', DB::raw('count(*) as total'))
+            ->groupBy('role_id')
+            ->pluck('total', 'role_id');
+
+        $roles = DB::table('roles')
+            ->orderByDesc('is_system')
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug', 'description', 'is_system', 'created_at', 'updated_at'])
+            ->map(function ($role) use ($permissionMap, $userCounts): array {
+                $roleId = (int) $role->id;
+                $mapped = $permissionMap[$roleId] ?? ['ids' => [], 'slugs' => []];
+                $slug = (string) $role->slug;
+
+                return [
+                    'id' => $roleId,
+                    'name' => (string) $role->name,
+                    'slug' => $slug,
+                    'description' => (string) ($role->description ?? ''),
+                    'is_system' => (bool) ($role->is_system ?? false),
+                    'is_locked' => $slug === 'super-admin',
+                    'permission_ids' => array_values(array_unique($mapped['ids'])),
+                    'permission_slugs' => array_values(array_filter(array_unique($mapped['slugs']))),
+                    'user_count' => (int) ($userCounts[$roleId] ?? 0),
+                    'created_at' => $role->created_at,
+                    'updated_at' => $role->updated_at,
+                ];
+            })
+            ->values();
+
+        $groups = $permissions
+            ->groupBy('group')
+            ->map(static fn ($items, string $group): array => [
+                'group' => $group,
+                'permissions' => $items->values()->all(),
+            ])
+            ->values();
+
+        return $this->ok([
+            'roles' => $roles,
+            'permissions' => $permissions,
+            'permission_groups' => $groups,
+        ]);
+    }
+
+    public function rolesSave(Request $request): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        if (! AccessControl::tablesReady()) {
+            return $this->error('Tabel role dan permission belum tersedia. Jalankan migration terlebih dahulu.', 503);
+        }
+
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'min:1'],
+            'name' => ['required', 'string', 'max:120'],
+            'slug' => ['nullable', 'string', 'max:80'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'permission_ids' => ['nullable', 'array'],
+            'permission_ids.*' => ['integer', 'min:1'],
+        ]);
+
+        $id = (int) ($data['id'] ?? 0);
+        $existing = $id > 0
+            ? DB::table('roles')->where('id', $id)->first(['id', 'slug', 'is_system'])
+            : null;
+
+        if ($id > 0 && ! $existing) {
+            return $this->error('Role tidak ditemukan.', 404);
+        }
+
+        $existingSlug = (string) ($existing?->slug ?? '');
+        $slug = $id > 0 && (bool) ($existing?->is_system ?? false)
+            ? $existingSlug
+            : Str::slug((string) ($data['slug'] ?? '') !== '' ? (string) $data['slug'] : (string) $data['name']);
+
+        if ($slug === '') {
+            return $this->error('Slug role tidak valid.', 422);
+        }
+
+        $duplicateSlug = DB::table('roles')
+            ->where('slug', $slug)
+            ->when($id > 0, static fn (Builder $query) => $query->where('id', '!=', $id))
+            ->exists();
+
+        if ($duplicateSlug) {
+            return $this->error('Slug role sudah digunakan.', 422);
+        }
+
+        $permissionIds = collect($data['permission_ids'] ?? [])
+            ->map(static fn ($value) => (int) $value)
+            ->filter(static fn ($value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        $allPermissionIds = DB::table('permissions')
+            ->pluck('id')
+            ->map(static fn ($value) => (int) $value)
+            ->values()
+            ->all();
+
+        if ($slug === 'super-admin') {
+            $permissionIds = $allPermissionIds;
+        }
+
+        $validPermissionCount = $permissionIds === []
+            ? 0
+            : DB::table('permissions')->whereIn('id', $permissionIds)->count();
+
+        if ($validPermissionCount !== count($permissionIds)) {
+            return $this->error('Ada permission yang tidak ditemukan.', 422);
+        }
+
+        $now = now();
+        $payload = [
+            'name' => trim((string) $data['name']),
+            'slug' => $slug,
+            'description' => $this->nullable($data['description'] ?? null),
+            'updated_at' => $now,
+        ];
+
+        $newId = $id;
+        DB::transaction(function () use ($id, $payload, $permissionIds, $now, &$newId): void {
+            if ($id > 0) {
+                DB::table('roles')->where('id', $id)->update($payload);
+                $roleId = $id;
+            } else {
+                $roleId = (int) DB::table('roles')->insertGetId(array_merge($payload, [
+                    'is_system' => false,
+                    'created_at' => $now,
+                ]));
+            }
+
+            DB::table('role_permission')->where('role_id', $roleId)->delete();
+
+            $rows = array_map(static fn (int $permissionId): array => [
+                'role_id' => $roleId,
+                'permission_id' => $permissionId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ], $permissionIds);
+
+            if ($rows !== []) {
+                DB::table('role_permission')->insert($rows);
+            }
+
+            $newId = $roleId;
+        });
+
+        ActivityLog::write($id > 0 ? 'role.updated' : 'role.created', $id > 0 ? 'Role hak akses diperbarui' : 'Role hak akses dibuat', '', null, [
+            'role_id' => (int) ($newId ?? $id),
+            'role_slug' => $slug,
+            'permission_count' => count($permissionIds),
+        ]);
+
+        return $this->ok([
+            'message' => $id > 0 ? 'Role updated.' : 'Role created.',
+            'id' => (int) ($newId ?? $id),
+        ], $id > 0 ? 200 : 201);
+    }
+
+    public function rolesDelete(int $id): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        if (! AccessControl::tablesReady()) {
+            return $this->error('Tabel role dan permission belum tersedia. Jalankan migration terlebih dahulu.', 503);
+        }
+
+        $role = DB::table('roles')->where('id', $id)->first(['id', 'name', 'slug', 'is_system']);
+        if (! $role) {
+            return $this->error('Role tidak ditemukan.', 404);
+        }
+
+        if ((bool) ($role->is_system ?? false)) {
+            return $this->error('Role sistem tidak bisa dihapus.', 409);
+        }
+
+        $userCount = (int) DB::table('user_role')->where('role_id', $id)->count();
+        if ($userCount > 0) {
+            return $this->error('Role masih digunakan oleh user. Lepaskan role dari user terlebih dahulu.', 409);
+        }
+
+        DB::transaction(function () use ($id): void {
+            DB::table('role_permission')->where('role_id', $id)->delete();
+            DB::table('roles')->where('id', $id)->delete();
+        });
+
+        ActivityLog::write('role.deleted', 'Role hak akses dihapus', '', null, [
+            'role_id' => $id,
+            'role_slug' => (string) ($role->slug ?? ''),
+        ]);
+
+        return $this->ok(['message' => 'Role deleted.']);
     }
 
     public function usersIndex(Request $request): JsonResponse

@@ -16,4 +16,5 @@ export type NavItem = {
     icon?: NavIcon;
     isActive?: boolean;
     permission?: string | string[];
+    superAdminOnly?: boolean;
 };

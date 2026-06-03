@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\ActivityLog;
+use App\Support\AccessControl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class AdminOpsController extends Controller
                 'armadas' => 'admin-ops.armadas',
                 'pools' => 'admin-ops.pools',
                 'users' => 'admin-ops.users',
+                'roles' => 'admin-ops.roles',
                 'cancellations' => 'admin-ops.cancellations',
                 'reports' => 'report.index',
             ];
@@ -41,9 +43,14 @@ class AdminOpsController extends Controller
             }
         }
 
-        $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users', 'cancellations', 'reports'];
+        $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users', 'roles', 'cancellations', 'reports'];
         $requestedTab = (string) ($request->route('tab') ?? '');
         $initialTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : null;
+
+        if ($initialTab === 'roles' && ! AccessControl::userIsSuperAdmin((int) ($request->user()?->id ?? 0))) {
+            abort(403, 'Hanya Super Admin yang bisa mengakses halaman role.');
+        }
+
         $initialMode = trim((string) ($request->route('mode') ?? ''));
         $recordId = (int) ($request->route('id') ?? 0);
 
@@ -86,6 +93,7 @@ class AdminOpsController extends Controller
                 'armadas' => 'PengaturanArmada',
                 'pools' => 'PengaturanPool',
                 'users' => 'PengaturanUsers',
+                'roles' => 'PengaturanRoles',
                 'cancellations' => 'PengaturanLogs',
             ];
             if (is_string($initialTab) && isset($componentMap[$initialTab])) {

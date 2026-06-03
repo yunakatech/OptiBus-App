@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin-ops/armadas/view/{id}', AdminOpsController::class)->middleware('permission:armada.view')->defaults('tab', 'armadas')->defaults('mode', 'view')->defaults('locked', true)->name('admin-ops.armadas.view');
     Route::get('admin-ops/pools', AdminOpsController::class)->middleware('permission:pool.manage')->defaults('tab', 'pools')->defaults('locked', true)->name('admin-ops.pools');
     Route::get('admin-ops/users', AdminOpsController::class)->middleware('permission:user.manage')->defaults('tab', 'users')->defaults('locked', true)->name('admin-ops.users');
+    Route::get('admin-ops/roles', AdminOpsController::class)->middleware('permission:role.manage')->defaults('tab', 'roles')->defaults('locked', true)->name('admin-ops.roles');
     Route::get('admin-ops/cancellations', AdminOpsController::class)->middleware('permission:logs.view')->defaults('tab', 'cancellations')->defaults('locked', true)->name('admin-ops.cancellations');
     Route::get('admin-ops/reports', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('admin-ops.reports');
 
@@ -186,6 +187,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('users', [AdminOpsApiController::class, 'usersIndex'])->middleware('permission:user.manage')->name('users.index');
         Route::post('users', [AdminOpsApiController::class, 'usersSave'])->middleware('permission:user.manage')->name('users.save');
         Route::delete('users/{id}', [AdminOpsApiController::class, 'usersDelete'])->middleware('permission:user.manage')->name('users.delete');
+
+        Route::get('roles', [AdminOpsApiController::class, 'rolesIndex'])->middleware('permission:role.manage')->name('roles.index');
+        Route::post('roles', [AdminOpsApiController::class, 'rolesSave'])->middleware('permission:role.manage')->name('roles.save');
+        Route::delete('roles/{id}', [AdminOpsApiController::class, 'rolesDelete'])->middleware('permission:role.manage')->name('roles.delete');
     });
 });
 
