@@ -358,6 +358,7 @@
     let selectedRoute = $state('');
     let selectedJam = $state('');
     let selectedUnit = $state(1);
+    let mobileBookingStep = $state<1 | 2 | 3>(1);
 
     let availableRoutes = $state<string[]>([]);
     let schedules = $state<ScheduleItem[]>([]);
@@ -801,6 +802,53 @@
                     .filter((item) => item !== ''),
             ),
         );
+
+    const mobileStepItems = [
+        { step: 1, label: 'Jadwal' },
+        { step: 2, label: 'Kursi' },
+        { step: 3, label: 'Data' },
+    ] as const;
+    const mobileTripSummary = () =>
+        [
+            bookingDate || '-',
+            selectedRoute || 'Rute belum dipilih',
+            normalizeJamToken(selectedJam) || 'Jam belum dipilih',
+            `Unit ${Number(selectedUnit || 1) || 1}`,
+        ].join(' • ');
+    const mobileScheduleReady = () =>
+        Boolean(bookingDate && selectedRoute && selectedJam && selectedUnit);
+    const goMobileScheduleNext = () => {
+        formError = '';
+
+        if (!mobileScheduleReady()) {
+            formError = 'Lengkapi tanggal, rute, jam, dan unit dulu.';
+
+            return;
+        }
+
+        mobileBookingStep = 2;
+    };
+    const goMobileSeatNext = () => {
+        formError = '';
+
+        if (!mobileScheduleReady()) {
+            formError = 'Lengkapi jadwal terlebih dahulu.';
+            mobileBookingStep = 1;
+
+            return;
+        }
+
+        const requestedSeats =
+            selectedSeats.length > 0 ? selectedSeats : parseSeatInput(formSeat);
+
+        if (requestedSeats.length === 0) {
+            formError = 'Pilih minimal 1 kursi kosong sebelum isi data.';
+
+            return;
+        }
+
+        mobileBookingStep = 3;
+    };
 
     const syncFormSeatFromSelected = () => {
         formSeat = selectedSeats.join(', ');
@@ -4804,6 +4852,7 @@
             bookingSuccessFeedback = '';
             bookingSuccessModalOpen = true;
             resetBookingForm();
+            mobileBookingStep = 2;
             await loadSeatDetails();
         } catch (error) {
             formError =
@@ -4982,8 +5031,50 @@
                 </CardHeader>
             {/if}
             <CardContent class="space-y-5 p-4 md:p-5">
+                <div class="space-y-3 md:hidden">
+                    <div
+                        class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
+                    >
+                        <div class="grid grid-cols-3 gap-1.5">
+                            {#each mobileStepItems as item (item.step)}
+                                <button
+                                    type="button"
+                                    class={`rounded-xl border px-2 py-2 text-center transition ${mobileBookingStep === item.step ? 'border-cyan-500 bg-cyan-600 text-white shadow-sm' : mobileBookingStep > item.step ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-border bg-background text-muted-foreground'}`}
+                                    onclick={() => {
+                                        if (item.step === 1) {
+                                            mobileBookingStep = 1;
+                                        } else if (item.step === 2) {
+                                            goMobileScheduleNext();
+                                        } else {
+                                            goMobileSeatNext();
+                                        }
+                                    }}
+                                >
+                                    <span
+                                        class="block text-[10px] font-black uppercase tracking-wide"
+                                        >Tab {item.step}</span
+                                    >
+                                    <span class="block text-xs font-semibold"
+                                        >{item.label}</span
+                                    >
+                                </button>
+                            {/each}
+                        </div>
+                        <div class="mt-3 rounded-xl bg-background/75 px-3 py-2">
+                            <p
+                                class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                            >
+                                Ringkasan Jadwal
+                            </p>
+                            <p class="truncate text-xs font-semibold text-foreground">
+                                {mobileTripSummary()}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div
-                    class="grid gap-3 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)]"
+                    class={`gap-3 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)] ${mobileBookingStep === 1 ? 'grid' : 'hidden md:grid'}`}
                 >
                     <div>
                         <div
@@ -5124,6 +5215,21 @@
                     </div>
                 </div>
 
+                {#if mobileBookingStep === 1}
+                    <div
+                        class="sticky bottom-3 z-20 rounded-2xl border border-border/80 bg-background/95 p-3 shadow-lg backdrop-blur md:hidden"
+                    >
+                        <Button
+                            type="button"
+                            class="h-11 w-full rounded-xl"
+                            onclick={goMobileScheduleNext}
+                            disabled={!mobileScheduleReady()}
+                        >
+                            Next: Pilih Kursi
+                        </Button>
+                    </div>
+                {/if}
+
                 {#if routeError}
                     <p class="text-sm text-destructive">{routeError}</p>
                 {/if}
@@ -5133,12 +5239,19 @@
                 {#if detailError}
                     <p class="text-sm text-destructive">{detailError}</p>
                 {/if}
+                {#if formError}
+                    <p class="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive md:hidden">
+                        {formError}
+                    </p>
+                {/if}
                 <p class="sr-only" aria-live="polite">{formSuccess}</p>
                 <p class="sr-only" aria-live="assertive">{formError}</p>
 
-                <div class="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
+                <div
+                    class={`gap-4 xl:grid-cols-[1.3fr_1fr] ${mobileBookingStep === 1 ? 'hidden md:grid' : 'grid'}`}
+                >
                     <div
-                        class="space-y-3 rounded-2xl border border-border/70 bg-linear-to-b from-background to-cyan-500/[0.03] p-4 shadow-sm"
+                        class={`space-y-3 rounded-2xl border border-border/70 bg-linear-to-b from-background to-cyan-500/[0.03] p-4 shadow-sm ${mobileBookingStep === 2 ? 'block' : 'hidden md:block'}`}
                     >
                         <div class="flex items-center justify-between">
                             <div>
@@ -5366,9 +5479,111 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div
+                            class="space-y-3 rounded-2xl border bg-background/90 p-3 shadow-sm md:hidden"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-2"
+                            >
+                                <div>
+                                    <h3 class="text-sm font-semibold">
+                                        Rekap Sesi
+                                    </h3>
+                                    <p class="text-xs text-muted-foreground">
+                                        {grandCount()} kursi • Total Rp {grandTotal().toLocaleString(
+                                            'id-ID',
+                                        )}
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onclick={() => void copyRekap()}
+                                    disabled={rekapItems.length === 0}
+                                >
+                                    Salin
+                                </Button>
+                            </div>
+
+                            {#if rekapItems.length === 0}
+                                <p
+                                    class="rounded-xl border border-dashed bg-muted/20 px-3 py-3 text-sm text-muted-foreground"
+                                >
+                                    Belum ada item rekap. Tap kursi terisi lalu
+                                    pilih Tambah ke Rekap.
+                                </p>
+                            {:else}
+                                <div class="max-h-56 space-y-2 overflow-auto">
+                                    {#each rekapItems as item (item.booking_id)}
+                                        <div
+                                            class="rounded-xl border bg-card px-3 py-2"
+                                        >
+                                            <div
+                                                class="flex items-start justify-between gap-2"
+                                            >
+                                                <div class="min-w-0">
+                                                    <p
+                                                        class="truncate text-sm font-semibold"
+                                                    >
+                                                        Kursi {item.seat} • {item.name}
+                                                    </p>
+                                                    <p
+                                                        class="truncate text-xs text-muted-foreground"
+                                                    >
+                                                        {item.segment_name}
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    class="h-8 shrink-0 px-2"
+                                                    onclick={() =>
+                                                        removeRekapItem(
+                                                            item.booking_id,
+                                                        )}
+                                                >
+                                                    Hapus
+                                                </Button>
+                                            </div>
+                                            <p
+                                                class="mt-1 text-xs font-semibold text-foreground"
+                                            >
+                                                Rp {item.final_price.toLocaleString(
+                                                    'id-ID',
+                                                )}
+                                            </p>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {/if}
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-11 rounded-xl"
+                                    onclick={() => (mobileBookingStep = 1)}
+                                >
+                                    Back
+                                </Button>
+                                <Button
+                                    type="button"
+                                    class="h-11 rounded-xl"
+                                    onclick={goMobileSeatNext}
+                                    disabled={selectedCount() === 0}
+                                >
+                                    Next: Isi Data
+                                </Button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="space-y-3">
+                    <div
+                        class={`space-y-3 ${mobileBookingStep === 3 ? 'block' : 'hidden md:block'}`}
+                    >
                         <div
                             class="space-y-3 rounded-2xl border bg-background/80 p-4 shadow-sm"
                         >
@@ -5526,6 +5741,14 @@
                             <div
                                 class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3"
                             >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-11 w-full rounded-xl md:hidden"
+                                    onclick={() => (mobileBookingStep = 2)}
+                                >
+                                    Back
+                                </Button>
                                 <LoadingButton
                                     class="h-11 w-full rounded-xl px-5 text-sm sm:w-auto"
                                     onclick={() => void submitBooking()}
@@ -5556,7 +5779,7 @@
 
         {#if selectedRoute && selectedJam}
             {#if consoleOnly}
-                <div class="space-y-3 rounded-xl border bg-background/95 p-3">
+                <div class="hidden space-y-3 rounded-xl border bg-background/95 p-3 md:block">
                     <div
                         class="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center"
                     >
@@ -5658,7 +5881,7 @@
                 </div>
             {:else}
                 <div
-                    class="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur"
+                    class="fixed inset-x-0 bottom-0 z-50 hidden border-t bg-background/95 backdrop-blur md:block"
                 >
                     <div
                         class="mx-auto flex w-full max-w-7xl flex-col items-stretch justify-between gap-3 px-4 py-3 sm:flex-row sm:items-center"
