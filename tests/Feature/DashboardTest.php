@@ -10,6 +10,14 @@ class DashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function actingAsSuperAdmin(): User
+    {
+        $user = User::factory()->create(['is_super_admin' => true]);
+        $this->actingAs($user);
+
+        return $user;
+    }
+
     public function test_guests_are_redirected_to_the_login_page()
     {
         $response = $this->get(route('dashboard'));
@@ -30,8 +38,7 @@ class DashboardTest extends TestCase
 
     public function test_authenticated_users_can_visit_the_dashboard()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $response = $this->get(route('dashboard'));
         $response->assertOk();
@@ -51,8 +58,7 @@ class DashboardTest extends TestCase
 
     public function test_legacy_tab_urls_redirect_to_new_per_menu_routes(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $this->get('/admin-ops?tab=units')
             ->assertRedirect(route('admin-ops.units'));

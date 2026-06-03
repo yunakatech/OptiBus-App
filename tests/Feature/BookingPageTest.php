@@ -12,10 +12,17 @@ class BookingPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function actingAsSuperAdmin(): User
+    {
+        $user = User::factory()->create(['is_super_admin' => true]);
+        $this->actingAs($user);
+
+        return $user;
+    }
+
     public function test_canceled_departure_is_rendered_with_empty_assignment_meta(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $driverId = DB::table('drivers')->insertGetId([
             'nama' => 'DRIVER HISTORY',
@@ -47,8 +54,7 @@ class BookingPageTest extends TestCase
 
     public function test_booking_route_filter_follows_master_routes_and_refund_is_counted_separately(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         DB::table('routes')->insert([
             'name' => 'PINRANG - MAKASSAR',
