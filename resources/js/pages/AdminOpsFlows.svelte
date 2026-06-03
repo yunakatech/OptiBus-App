@@ -2225,9 +2225,6 @@ return;
             row.departure_time ? String(row.departure_time).slice(0, 5) : '--:--',
         ].join(' • ');
         const totalPrice = formatCurrencyId(row.price ?? 0);
-        const bopPrice = formatCurrencyId(row.bop_price ?? 0);
-        const downPayment = formatCurrencyId(row.down_payment ?? 0);
-        const remaining = formatCurrencyId(charterPaymentRemaining(row));
 
         return [
             'DATA CARTER',
@@ -2241,11 +2238,6 @@ return;
             `Armada: ${row.armada_nopol || row.unit_nopol || '-'}`,
             `Layanan: ${row.layanan || defaultCharterService}`,
             `Harga: ${totalPrice}`,
-            `BOP: ${bopPrice}`,
-            `DP: ${downPayment}`,
-            `Sisa: ${remaining}`,
-            `Status Bayar: ${row.payment_status || '-'}`,
-            `Status Perjalanan: ${charterStatusLabel(row.status)}`,
         ].join('\n');
     };
 
