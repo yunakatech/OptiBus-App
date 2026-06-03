@@ -12,6 +12,7 @@
     import Package from 'lucide-svelte/icons/package';
     import Route from 'lucide-svelte/icons/route';
     import Settings2 from 'lucide-svelte/icons/settings-2';
+    import ShieldCheck from 'lucide-svelte/icons/shield-check';
     import Shuffle from 'lucide-svelte/icons/shuffle';
     import Tickets from 'lucide-svelte/icons/tickets';
     import Truck from 'lucide-svelte/icons/truck';
@@ -166,6 +167,13 @@
             icon: UserCog,
             permission: 'user.manage',
         },
+        {
+            title: 'Role & Hak Akses',
+            href: '/admin-ops/roles',
+            icon: ShieldCheck,
+            permission: 'role.manage',
+            superAdminOnly: true,
+        },
     ];
 
     const mainSections: NavSection[] = [
@@ -190,12 +198,14 @@
     ];
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
+    const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
     const visibleSections = $derived(
         mainSections
             .map((section) => ({
                 ...section,
                 items: section.items.filter((item) =>
-                    hasPermission(permissions, item.permission),
+                    hasPermission(permissions, item.permission) &&
+                    (!item.superAdminOnly || isSuperAdmin),
                 ),
             }))
             .filter((section) => section.items.length > 0),

@@ -1,0 +1,935 @@
+<script module lang="ts">
+    export const layout = {
+        breadcrumbs: [
+            {
+                title: 'Role & Hak Akses',
+                href: '/admin-ops/roles',
+            },
+        ],
+    };
+</script>
+
+<script lang="ts">
+    import { Link, page } from '@inertiajs/svelte';
+    import {
+        CheckCircle2,
+        LockKeyhole,
+        Pencil,
+        Plus,
+        RefreshCw,
+        Search,
+        ShieldCheck,
+        Trash2,
+        Users,
+    } from 'lucide-svelte';
+    import AppHead from '@/components/AppHead.svelte';
+    import { Badge } from '@/components/ui/badge';
+    import { Button } from '@/components/ui/button';
+    import {
+        Card,
+        CardContent,
+        CardHeader,
+        CardTitle,
+    } from '@/components/ui/card';
+    import { Input } from '@/components/ui/input';
+    import { LoadingButton } from '@/components/ui/loading-button';
+    import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
+    import { cn } from '@/lib/utils';
+
+    type Permission = {
+        id: number;
+        slug: string;
+        name: string;
+        group: string;
+    };
+
+    type PermissionGroup = {
+        group: string;
+        permissions: Permission[];
+    };
+
+    type RoleRow = {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
+        is_system: boolean;
+        is_locked: boolean;
+        permission_ids: number[];
+        permission_slugs: string[];
+        user_count: number;
+        created_at: string | null;
+        updated_at: string | null;
+    };
+
+    type RoleForm = {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
+        permission_ids: number[];
+    };
+
+    let roles = $state<RoleRow[]>([]);
+    let permissions = $state<Permission[]>([]);
+    let permissionGroups = $state<PermissionGroup[]>([]);
+    let form = $state<RoleForm>({
+        id: 0,
+        name: '',
+        slug: '',
+        description: '',
+        permission_ids: [],
+    });
+    let search = $state('');
+    let loading = $state(false);
+    let saving = $state(false);
+    let deletingId = $state(0);
+    let message = $state('');
+    let error = $state('');
+
+    const isSuperAdmin = $derived(
+        Boolean(page.props.auth?.user?.is_super_admin),
+    );
+    const isEditing = $derived(form.id > 0);
+    const isSuperAdminRole = $derived(form.slug === 'super-admin');
+    const allPermissionIds = $derived(permissions.map((item) => item.id));
+    const selectedCount = $derived(form.permission_ids.length);
+    const filteredRoles = $derived.by(() => {
+        const keyword = search.trim().toLowerCase();
+
+        if (keyword === '') {
+            return roles;
+        }
+
+        return roles.filter((role) => {
+            const haystack = [
+                role.name,
+                role.slug,
+                role.description,
+                role.permission_slugs.join(' '),
+            ]
+                .join(' ')
+                .toLowerCase();
+
+            return haystack.includes(keyword);
+        });
+    });
+
+    const csrfToken = () => {
+        if (typeof document === 'undefined') {
+            return '';
+        }
+
+        return (
+            document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                ?.content ?? ''
+        );
+    };
+
+    const xsrfTokenFromCookie = () => {
+        if (typeof document === 'undefined') {
+            return '';
+        }
+
+        const part = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('XSRF-TOKEN='));
+
+        if (!part) {
+            return '';
+        }
+
+        try {
+            return decodeURIComponent(part.split('=')[1] ?? '');
+        } catch {
+            return '';
+        }
+    };
+
+    const refreshCsrfToken = async () => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'GET',
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: {
+                    Accept: 'text/html',
+                },
+            });
+            const html = await response.text();
+            const match = html.match(
+                /<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i,
+            );
+
+            if (!match?.[1]) {
+                return false;
+            }
+
+            let node = document.querySelector(
+                'meta[name="csrf-token"]',
+            ) as HTMLMetaElement | null;
+
+            if (!node) {
+                node = document.createElement('meta');
+                node.name = 'csrf-token';
+                document.head.appendChild(node);
+            }
+
+            node.content = match[1];
+
+            return true;
+        } catch {
+            return false;
+        }
+    };
+
+    const sendApiRequest = async (
+        method: 'GET' | 'POST' | 'DELETE',
+        url: string,
+        body?: Record<string, unknown>,
+    ) => {
+        const token = csrfToken() || xsrfTokenFromCookie();
+        const isDelete = method === 'DELETE';
+        const requestMethod = isDelete ? 'POST' : method;
+        const payload =
+            method === 'GET'
+                ? body
+                : {
+                      ...(body ?? {}),
+                      ...(isDelete ? { _method: 'DELETE' } : {}),
+                      _token: token,
+                  };
+
+        return fetch(url, {
+            method: requestMethod,
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'X-XSRF-TOKEN': token,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: payload ? JSON.stringify(payload) : undefined,
+        });
+    };
+
+    const api = async (
+        method: 'GET' | 'POST' | 'DELETE',
+        url: string,
+        body?: Record<string, unknown>,
+    ) => {
+        let response = await sendApiRequest(method, url, body);
+
+        if (
+            response.status === 419 &&
+            method !== 'GET' &&
+            (await refreshCsrfToken())
+        ) {
+            response = await sendApiRequest(method, url, body);
+        }
+
+        const json = await response.json().catch(() => ({}));
+        const firstValidationError = (() => {
+            const errors = json?.errors;
+
+            if (!errors || typeof errors !== 'object') {
+                return '';
+            }
+
+            for (const value of Object.values(errors)) {
+                if (Array.isArray(value) && value.length > 0) {
+                    return String(value[0] ?? '').trim();
+                }
+            }
+
+            return '';
+        })();
+
+        if (!response.ok || json.success === false) {
+            throw new Error(
+                json.error ||
+                    json.message ||
+                    firstValidationError ||
+                    `Request gagal (${response.status})`,
+            );
+        }
+
+        return json;
+    };
+
+    const loadRoles = async () => {
+        loading = true;
+        message = '';
+        error = '';
+
+        try {
+            const result = await api('GET', '/api/admin/roles');
+            roles = result.roles ?? [];
+            permissions = result.permissions ?? [];
+            permissionGroups = result.permission_groups ?? [];
+
+            if (form.id > 0) {
+                const updatedRole = roles.find((role) => role.id === form.id);
+                if (updatedRole) {
+                    editRole(updatedRole, false);
+                }
+            }
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal memuat role.';
+        } finally {
+            loading = false;
+        }
+    };
+
+    const resetForm = () => {
+        form = {
+            id: 0,
+            name: '',
+            slug: '',
+            description: '',
+            permission_ids: [],
+        };
+        message = '';
+        error = '';
+    };
+
+    const editRole = (role: RoleRow, scrollIntoForm = true) => {
+        form = {
+            id: role.id,
+            name: role.name,
+            slug: role.slug,
+            description: role.description,
+            permission_ids:
+                role.slug === 'super-admin'
+                    ? [...allPermissionIds]
+                    : [...role.permission_ids],
+        };
+        message = '';
+        error = '';
+
+        if (scrollIntoForm && typeof window !== 'undefined') {
+            window.requestAnimationFrame(() => {
+                document
+                    .getElementById('role-editor')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    };
+
+    const hasPermissionId = (permissionId: number) =>
+        form.permission_ids.includes(permissionId);
+
+    const togglePermission = (permissionId: number, checked: boolean) => {
+        if (isSuperAdminRole) {
+            return;
+        }
+
+        form = {
+            ...form,
+            permission_ids: checked
+                ? Array.from(new Set([...form.permission_ids, permissionId]))
+                : form.permission_ids.filter((id) => id !== permissionId),
+        };
+    };
+
+    const groupPermissionIds = (group: PermissionGroup) =>
+        group.permissions.map((permission) => permission.id);
+
+    const groupAllSelected = (group: PermissionGroup) => {
+        const ids = groupPermissionIds(group);
+
+        return ids.length > 0 && ids.every((id) => hasPermissionId(id));
+    };
+
+    const groupSomeSelected = (group: PermissionGroup) => {
+        const ids = groupPermissionIds(group);
+
+        return ids.some((id) => hasPermissionId(id));
+    };
+
+    const toggleGroup = (group: PermissionGroup, checked: boolean) => {
+        if (isSuperAdminRole) {
+            return;
+        }
+
+        const ids = groupPermissionIds(group);
+        form = {
+            ...form,
+            permission_ids: checked
+                ? Array.from(new Set([...form.permission_ids, ...ids]))
+                : form.permission_ids.filter((id) => !ids.includes(id)),
+        };
+    };
+
+    const selectAll = () => {
+        if (isSuperAdminRole) {
+            return;
+        }
+
+        form = { ...form, permission_ids: [...allPermissionIds] };
+    };
+
+    const clearAll = () => {
+        if (isSuperAdminRole) {
+            return;
+        }
+
+        form = { ...form, permission_ids: [] };
+    };
+
+    const saveRole = async (event: SubmitEvent) => {
+        event.preventDefault();
+        saving = true;
+        message = '';
+        error = '';
+
+        try {
+            await runWithFeedback(
+                async () => {
+                    await api('POST', '/api/admin/roles', {
+                        id: form.id || undefined,
+                        name: form.name,
+                        slug: form.slug,
+                        description: form.description,
+                        permission_ids: isSuperAdminRole
+                            ? allPermissionIds
+                            : form.permission_ids,
+                    });
+                },
+                {
+                    loadingMessage: isEditing
+                        ? 'Memperbarui role...'
+                        : 'Menyimpan role baru...',
+                    successMessage: isEditing
+                        ? 'Role berhasil diperbarui.'
+                        : 'Role berhasil dibuat.',
+                    errorMessage: 'Gagal menyimpan role.',
+                },
+            );
+            message = isEditing ? 'Role updated.' : 'Role created.';
+            await loadRoles();
+            resetForm();
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal menyimpan role.';
+        } finally {
+            saving = false;
+        }
+    };
+
+    const deleteRole = async (role: RoleRow) => {
+        deletingId = role.id;
+        message = '';
+        error = '';
+
+        try {
+            const result = await confirmAndRun(
+                `Hapus role "${role.name}"? Role yang sudah dipakai user tidak dapat dihapus.`,
+                async () => api('DELETE', `/api/admin/roles/${role.id}`),
+                {
+                    loadingMessage: 'Menghapus role...',
+                    successMessage: 'Role berhasil dihapus.',
+                    errorMessage: 'Gagal menghapus role.',
+                },
+            );
+
+            if (result) {
+                if (form.id === role.id) {
+                    resetForm();
+                }
+
+                await loadRoles();
+            }
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal menghapus role.';
+        } finally {
+            deletingId = 0;
+        }
+    };
+
+    $effect(() => {
+        if (isSuperAdminRole && allPermissionIds.length > 0) {
+            form = { ...form, permission_ids: [...allPermissionIds] };
+        }
+    });
+
+    $effect(() => {
+        if (isSuperAdmin) {
+            void loadRoles();
+        }
+    });
+</script>
+
+<AppHead title="Role & Hak Akses" />
+
+<div class="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.10),transparent_32rem),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted))/0.45)] px-3 py-4 md:px-6 md:py-6">
+    <div class="mx-auto w-full max-w-7xl space-y-5">
+        <section
+            class="overflow-hidden rounded-3xl border border-cyan-200/50 bg-card/95 shadow-sm shadow-cyan-950/5 dark:border-cyan-900/40 dark:bg-card/90"
+        >
+            <div
+                class="grid gap-4 bg-[linear-gradient(135deg,rgba(8,145,178,0.14),rgba(15,23,42,0.02))] p-4 md:grid-cols-[1.2fr_0.8fr] md:p-6"
+            >
+                <div class="space-y-3">
+                    <Badge
+                        variant="outline"
+                        class="border-cyan-300/70 bg-cyan-50/70 text-cyan-800 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-100"
+                    >
+                        <ShieldCheck class="size-3.5" />
+                        Super Admin Console
+                    </Badge>
+                    <div class="space-y-1">
+                        <h1
+                            class="text-2xl font-black tracking-tight text-foreground md:text-3xl"
+                        >
+                            Role & Hak Akses
+                        </h1>
+                        <p class="max-w-2xl text-sm text-muted-foreground">
+                            Buat role baru, atur permission per menu, dan jaga
+                            akses operasional Qbus tetap rapi per tim.
+                        </p>
+                    </div>
+                </div>
+                <div
+                    class="grid grid-cols-3 gap-2 rounded-2xl border border-border/70 bg-background/70 p-3 text-center backdrop-blur"
+                >
+                    <div>
+                        <p class="text-xl font-black text-foreground">
+                            {roles.length}
+                        </p>
+                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            Role
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xl font-black text-foreground">
+                            {permissions.length}
+                        </p>
+                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            Permission
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xl font-black text-foreground">
+                            {permissionGroups.length}
+                        </p>
+                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            Grup
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {#if !isSuperAdmin}
+            <Card class="border-destructive/30">
+                <CardContent class="space-y-3 p-5">
+                    <div class="flex items-start gap-3">
+                        <LockKeyhole class="mt-1 size-5 text-destructive" />
+                        <div class="space-y-1">
+                            <h2 class="font-bold text-foreground">
+                                Akses dibatasi untuk Super Admin
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                Halaman ini hanya bisa digunakan oleh akun
+                                super-admin.
+                            </p>
+                        </div>
+                    </div>
+                    <Button asChild variant="outline">
+                        {#snippet children(props)}
+                            <Link {...props} href="/menu">Kembali ke Menu</Link>
+                        {/snippet}
+                    </Button>
+                </CardContent>
+            </Card>
+        {:else}
+            <div class="grid gap-5 lg:grid-cols-[360px_1fr]">
+                <aside class="space-y-3">
+                    <Card class="overflow-hidden border-border/80 bg-card/95">
+                        <CardHeader class="space-y-3 p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <CardTitle class="text-base">
+                                    Daftar Role
+                                </CardTitle>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onclick={() => void loadRoles()}
+                                    disabled={loading}
+                                >
+                                    <RefreshCw
+                                        class={cn(
+                                            'size-4',
+                                            loading && 'animate-spin',
+                                        )}
+                                    />
+                                </Button>
+                            </div>
+                            <label class="relative block">
+                                <Search
+                                    class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                                />
+                                <Input
+                                    bind:value={search}
+                                    placeholder="Cari role atau permission"
+                                    class="pl-9"
+                                />
+                            </label>
+                        </CardHeader>
+                        <CardContent class="space-y-2 p-4 pt-0">
+                            {#if loading}
+                                <div
+                                    class="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground"
+                                >
+                                    Memuat role...
+                                </div>
+                            {:else if filteredRoles.length === 0}
+                                <div
+                                    class="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground"
+                                >
+                                    Role tidak ditemukan.
+                                </div>
+                            {:else}
+                                {#each filteredRoles as role (role.id)}
+                                    <article
+                                        class={cn(
+                                            'rounded-2xl border bg-background/80 p-3 transition-all hover:border-cyan-300/70 hover:shadow-sm',
+                                            form.id === role.id &&
+                                                'border-cyan-400 bg-cyan-50/60 dark:bg-cyan-950/25',
+                                        )}
+                                    >
+                                        <div
+                                            class="flex items-start justify-between gap-3"
+                                        >
+                                            <button
+                                                type="button"
+                                                class="min-w-0 flex-1 text-left"
+                                                onclick={() => editRole(role)}
+                                            >
+                                                <div
+                                                    class="flex flex-wrap items-center gap-2"
+                                                >
+                                                    <h3
+                                                        class="truncate text-sm font-black text-foreground"
+                                                    >
+                                                        {role.name}
+                                                    </h3>
+                                                    {#if role.is_system}
+                                                        <Badge
+                                                            variant="secondary"
+                                                            class="text-[10px]"
+                                                        >
+                                                            Sistem
+                                                        </Badge>
+                                                    {/if}
+                                                    {#if role.is_locked}
+                                                        <LockKeyhole
+                                                            class="size-3.5 text-cyan-700 dark:text-cyan-300"
+                                                        />
+                                                    {/if}
+                                                </div>
+                                                <p
+                                                    class="mt-1 truncate text-xs text-muted-foreground"
+                                                >
+                                                    {role.slug}
+                                                </p>
+                                            </button>
+                                            <div class="flex shrink-0 gap-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    class="h-8 w-8 p-0"
+                                                    onclick={() => editRole(role)}
+                                                >
+                                                    <Pencil class="size-3.5" />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    class="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                                    disabled={role.is_system || deletingId === role.id}
+                                                    onclick={() =>
+                                                        void deleteRole(role)}
+                                                >
+                                                    <Trash2 class="size-3.5" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
+                                        >
+                                            <span
+                                                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+                                            >
+                                                <CheckCircle2
+                                                    class="size-3.5 text-cyan-700 dark:text-cyan-300"
+                                                />
+                                                {role.permission_ids.length}
+                                                akses
+                                            </span>
+                                            <span
+                                                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+                                            >
+                                                <Users class="size-3.5" />
+                                                {role.user_count} user
+                                            </span>
+                                        </div>
+                                    </article>
+                                {/each}
+                            {/if}
+                        </CardContent>
+                    </Card>
+                </aside>
+
+                <section id="role-editor" class="space-y-4">
+                    <Card class="border-border/80 bg-card/95">
+                        <CardHeader class="gap-3 p-4 md:p-5">
+                            <div
+                                class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
+                            >
+                                <div>
+                                    <CardTitle class="text-lg">
+                                        {isEditing
+                                            ? 'Edit Role'
+                                            : 'Buat Role Baru'}
+                                    </CardTitle>
+                                    <p class="mt-1 text-sm text-muted-foreground">
+                                        Pilih permission yang boleh digunakan
+                                        role ini. Permission super-admin dikunci
+                                        penuh.
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onclick={resetForm}
+                                    >
+                                        <Plus class="size-4" />
+                                        Role Baru
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onclick={selectAll}
+                                        disabled={isSuperAdminRole}
+                                    >
+                                        Pilih Semua
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onclick={clearAll}
+                                        disabled={isSuperAdminRole}
+                                    >
+                                        Kosongkan
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent class="p-4 pt-0 md:p-5 md:pt-0">
+                            <form class="space-y-5" onsubmit={saveRole}>
+                                <div
+                                    class="grid gap-3 rounded-2xl border border-border/80 bg-background/70 p-3 md:grid-cols-2"
+                                >
+                                    <label class="space-y-1.5">
+                                        <span
+                                            class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                                        >
+                                            Nama Role
+                                        </span>
+                                        <Input
+                                            bind:value={form.name}
+                                            required
+                                            maxlength="120"
+                                            placeholder="Contoh: Operator Pool Baru"
+                                        />
+                                    </label>
+                                    <label class="space-y-1.5">
+                                        <span
+                                            class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                                        >
+                                            Slug
+                                        </span>
+                                        <Input
+                                            bind:value={form.slug}
+                                            maxlength="80"
+                                            disabled={isEditing}
+                                            placeholder="otomatis dari nama role"
+                                        />
+                                    </label>
+                                    <label class="space-y-1.5 md:col-span-2">
+                                        <span
+                                            class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                                        >
+                                            Deskripsi
+                                        </span>
+                                        <textarea
+                                            bind:value={form.description}
+                                            rows="3"
+                                            maxlength="1000"
+                                            class="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                            placeholder="Ringkas tujuan role ini agar mudah dipahami admin."
+                                        ></textarea>
+                                    </label>
+                                </div>
+
+                                <div
+                                    class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-200/60 bg-cyan-50/60 px-3 py-2 text-sm dark:border-cyan-900/50 dark:bg-cyan-950/20"
+                                >
+                                    <div class="flex items-center gap-2">
+                                        <ShieldCheck
+                                            class="size-4 text-cyan-700 dark:text-cyan-300"
+                                        />
+                                        <span class="font-bold text-foreground">
+                                            {selectedCount} dari
+                                            {permissions.length} permission
+                                        </span>
+                                    </div>
+                                    {#if isSuperAdminRole}
+                                        <Badge
+                                            variant="outline"
+                                            class="border-cyan-300 text-cyan-800 dark:border-cyan-800 dark:text-cyan-100"
+                                        >
+                                            Super Admin selalu akses penuh
+                                        </Badge>
+                                    {/if}
+                                </div>
+
+                                <div class="grid gap-3 xl:grid-cols-2">
+                                    {#each permissionGroups as group (group.group)}
+                                        <article
+                                            class="overflow-hidden rounded-2xl border border-border/80 bg-background/75"
+                                        >
+                                            <header
+                                                class="flex items-center justify-between gap-3 border-b border-border/70 bg-muted/40 px-3 py-2"
+                                            >
+                                                <div>
+                                                    <h3
+                                                        class="text-sm font-black text-foreground"
+                                                    >
+                                                        {group.group}
+                                                    </h3>
+                                                    <p
+                                                        class="text-[11px] text-muted-foreground"
+                                                    >
+                                                        {group.permissions.length}
+                                                        permission
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    class={cn(
+                                                        'rounded-full border px-3 py-1 text-[11px] font-bold transition',
+                                                        groupAllSelected(group)
+                                                            ? 'border-cyan-300 bg-cyan-100 text-cyan-900 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-100'
+                                                            : groupSomeSelected(group)
+                                                              ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100'
+                                                              : 'border-border bg-card text-muted-foreground',
+                                                    )}
+                                                    disabled={isSuperAdminRole}
+                                                    onclick={() =>
+                                                        toggleGroup(
+                                                            group,
+                                                            !groupAllSelected(
+                                                                group,
+                                                            ),
+                                                        )}
+                                                >
+                                                    {groupAllSelected(group)
+                                                        ? 'Semua aktif'
+                                                        : groupSomeSelected(group)
+                                                          ? 'Sebagian'
+                                                          : 'Pilih grup'}
+                                                </button>
+                                            </header>
+                                            <div class="grid gap-2 p-3">
+                                                {#each group.permissions as permission (permission.id)}
+                                                    <label
+                                                        class="flex cursor-pointer items-start gap-3 rounded-xl border border-transparent px-2 py-2 transition hover:border-cyan-200 hover:bg-cyan-50/50 dark:hover:border-cyan-900 dark:hover:bg-cyan-950/20"
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={hasPermissionId(
+                                                                permission.id,
+                                                            )}
+                                                            disabled={isSuperAdminRole}
+                                                            onchange={(event) =>
+                                                                togglePermission(
+                                                                    permission.id,
+                                                                    (
+                                                                        event.currentTarget as HTMLInputElement
+                                                                    ).checked,
+                                                                )}
+                                                            class="mt-0.5 size-4 shrink-0 rounded-lg border border-input accent-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        />
+                                                        <span class="min-w-0">
+                                                            <span
+                                                                class="block text-sm font-semibold text-foreground"
+                                                            >
+                                                                {permission.name}
+                                                            </span>
+                                                            <span
+                                                                class="block truncate text-[11px] text-muted-foreground"
+                                                            >
+                                                                {permission.slug}
+                                                            </span>
+                                                        </span>
+                                                    </label>
+                                                {/each}
+                                            </div>
+                                        </article>
+                                    {/each}
+                                </div>
+
+                                {#if error}
+                                    <div
+                                        class="rounded-2xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                                    >
+                                        {error}
+                                    </div>
+                                {/if}
+
+                                {#if message}
+                                    <div
+                                        class="rounded-2xl border border-emerald-300/50 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100"
+                                    >
+                                        {message}
+                                    </div>
+                                {/if}
+
+                                <div
+                                    class="flex flex-col-reverse gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-end"
+                                >
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onclick={resetForm}
+                                    >
+                                        Reset
+                                    </Button>
+                                    <LoadingButton
+                                        type="submit"
+                                        loading={saving}
+                                        loadingText="Menyimpan..."
+                                        disabled={form.name.trim() === ''}
+                                    >
+                                        Simpan Role
+                                    </LoadingButton>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </section>
+            </div>
+        {/if}
+    </div>
+</div>
