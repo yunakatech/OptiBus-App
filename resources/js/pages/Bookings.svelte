@@ -1437,7 +1437,7 @@
         ];
 
         if (includePaymentOptions) {
-            lines.push('*Opsi Pembayaran: Transfer / QRIS / Tunai');
+            lines.push('_*Opsi Pembayaran: Transfer / QRIS / Tunai_');
         }
 
         const text = lines.join('\n');
