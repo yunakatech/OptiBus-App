@@ -12,6 +12,7 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
     import {
+        ArrowLeft,
         CheckCircle2,
         LockKeyhole,
         Pencil,
@@ -86,6 +87,7 @@
     let deletingId = $state(0);
     let message = $state('');
     let error = $state('');
+    let roleView = $state<'data' | 'form'>('data');
 
     const isSuperAdmin = $derived(
         Boolean(page.props.auth?.user?.is_super_admin),
@@ -286,6 +288,18 @@
         }
     };
 
+    const scrollToRoleSection = (id: string) => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            document
+                .getElementById(id)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    };
+
     const resetForm = () => {
         form = {
             id: 0,
@@ -296,6 +310,18 @@
         };
         message = '';
         error = '';
+    };
+
+    const openCreateRole = () => {
+        resetForm();
+        roleView = 'form';
+        scrollToRoleSection('role-editor');
+    };
+
+    const showRoleData = () => {
+        resetForm();
+        roleView = 'data';
+        scrollToRoleSection('role-data');
     };
 
     const editRole = (role: RoleRow, scrollIntoForm = true) => {
@@ -311,13 +337,10 @@
         };
         message = '';
         error = '';
+        roleView = 'form';
 
-        if (scrollIntoForm && typeof window !== 'undefined') {
-            window.requestAnimationFrame(() => {
-                document
-                    .getElementById('role-editor')
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
+        if (scrollIntoForm) {
+            scrollToRoleSection('role-editor');
         }
     };
 
@@ -414,6 +437,7 @@
             message = isEditing ? 'Role updated.' : 'Role created.';
             await loadRoles();
             resetForm();
+            roleView = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal menyimpan role.';
         } finally {
@@ -548,28 +572,77 @@
                 </CardContent>
             </Card>
         {:else}
-            <div class="grid gap-5 lg:grid-cols-[360px_1fr]">
-                <aside class="space-y-3">
+            <div class="space-y-5">
+                <div
+                    class="flex flex-col gap-3 rounded-3xl border border-border/70 bg-card/95 p-3 shadow-sm md:flex-row md:items-center md:justify-between md:p-4"
+                >
+                    <div class="space-y-1">
+                        <p class="text-sm font-black text-foreground">
+                            {roleView === 'data'
+                                ? 'Data Role'
+                                : isEditing
+                                  ? 'Form Edit Role'
+                                  : 'Form Tambah Role'}
+                        </p>
+                        <p class="text-xs text-muted-foreground">
+                            {roleView === 'data'
+                                ? 'Pilih role untuk diedit, atau buat role baru dari tombol tambah.'
+                                : 'Isi detail role dan permission tanpa keluar dari menu Role & Hak Akses.'}
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            type="button"
+                            variant={roleView === 'data' ? 'default' : 'outline'}
+                            onclick={showRoleData}
+                        >
+                            Data Role
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={roleView === 'form' && !isEditing
+                                ? 'default'
+                                : 'outline'}
+                            onclick={openCreateRole}
+                        >
+                            <Plus class="size-4" />
+                            Tambah Role
+                        </Button>
+                    </div>
+                </div>
+
+                {#if roleView === 'data'}
+                <aside id="role-data" class="space-y-3">
                     <Card class="overflow-hidden border-border/80 bg-card/95">
                         <CardHeader class="space-y-3 p-4">
                             <div class="flex items-center justify-between gap-3">
                                 <CardTitle class="text-base">
                                     Daftar Role
                                 </CardTitle>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onclick={() => void loadRoles()}
-                                    disabled={loading}
-                                >
-                                    <RefreshCw
-                                        class={cn(
-                                            'size-4',
-                                            loading && 'animate-spin',
-                                        )}
-                                    />
-                                </Button>
+                                <div class="flex shrink-0 gap-2">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onclick={openCreateRole}
+                                    >
+                                        <Plus class="size-4" />
+                                        Tambah Role
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onclick={() => void loadRoles()}
+                                        disabled={loading}
+                                    >
+                                        <RefreshCw
+                                            class={cn(
+                                                'size-4',
+                                                loading && 'animate-spin',
+                                            )}
+                                        />
+                                    </Button>
+                                </div>
                             </div>
                             <label class="relative block">
                                 <Search
@@ -582,7 +655,14 @@
                                 />
                             </label>
                         </CardHeader>
-                        <CardContent class="space-y-2 p-4 pt-0">
+                        <CardContent class="space-y-3 p-4 pt-0">
+                            {#if error}
+                                <div
+                                    class="rounded-2xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                                >
+                                    {error}
+                                </div>
+                            {/if}
                             {#if loading}
                                 <div
                                     class="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground"
@@ -689,6 +769,7 @@
                     </Card>
                 </aside>
 
+                {:else}
                 <section id="role-editor" class="space-y-4">
                     <Card class="border-border/80 bg-card/95">
                         <CardHeader class="gap-3 p-4 md:p-5">
@@ -696,10 +777,20 @@
                                 class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
                             >
                                 <div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        class="-ml-2 mb-2 h-8 px-2 text-muted-foreground"
+                                        onclick={showRoleData}
+                                    >
+                                        <ArrowLeft class="size-4" />
+                                        Kembali ke Data
+                                    </Button>
                                     <CardTitle class="text-lg">
                                         {isEditing
                                             ? 'Edit Role'
-                                            : 'Buat Role Baru'}
+                                            : 'Tambah Role Baru'}
                                     </CardTitle>
                                     <p class="mt-1 text-sm text-muted-foreground">
                                         Pilih permission yang boleh digunakan
@@ -711,10 +802,10 @@
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onclick={resetForm}
+                                        onclick={openCreateRole}
                                     >
                                         <Plus class="size-4" />
-                                        Role Baru
+                                        Tambah Role
                                     </Button>
                                     <Button
                                         type="button"
@@ -912,9 +1003,9 @@
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onclick={resetForm}
+                                        onclick={showRoleData}
                                     >
-                                        Reset
+                                        Kembali ke Data
                                     </Button>
                                     <LoadingButton
                                         type="submit"
@@ -929,6 +1020,7 @@
                         </CardContent>
                     </Card>
                 </section>
+                {/if}
             </div>
         {/if}
     </div>
