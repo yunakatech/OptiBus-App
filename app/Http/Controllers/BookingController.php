@@ -44,10 +44,16 @@ class BookingController extends Controller
 
             return $bookingGroups ??= $this->buildBookingGroups();
         };
+        $emptyTotals = [
+            'bookings' => 0,
+            'customers' => 0,
+            'routes' => 0,
+            'schedules' => 0,
+        ];
 
         return Inertia::render($component, [
-            'totals' => fn (): array => $this->bookingTotals(),
-            'latestBookings' => fn (): array => $this->latestBookings(),
+            'totals' => $listOnly ? $emptyTotals : fn (): array => $this->bookingTotals(),
+            'latestBookings' => $listOnly ? [] : fn (): array => $this->latestBookings(),
             'bookingGroups' => $deferBookingList
                 ? Inertia::defer(fn (): array => $resolveBookingGroups(), 'booking-list')
                 : fn (): array => $resolveBookingGroups(),
