@@ -87,6 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('segments', [OperationsApiController::class, 'segments'])->middleware('permission:booking.view,master.view')->name('segments');
         Route::get('segment-price', [OperationsApiController::class, 'segmentPrice'])->middleware('permission:booking.view,master.view')->name('segment-price');
         Route::get('units', [OperationsApiController::class, 'units'])->middleware('permission:booking.view,charter.view,master.view,armada.view')->name('units');
+        Route::get('armadas', [OperationsApiController::class, 'armadas'])->middleware('permission:charter.view,armada.view,master.view')->name('armadas');
         Route::get('drivers', [OperationsApiController::class, 'drivers'])->middleware('permission:charter.view,driver.view')->name('drivers');
         Route::get('luggage-services', [OperationsApiController::class, 'luggageServices'])->middleware('permission:luggage.view,master.view')->name('luggage-services');
         Route::get('customers/search', [OperationsApiController::class, 'searchCustomers'])->middleware('permission:customer.view,booking.view,charter.view,luggage.view')->name('customers.search');

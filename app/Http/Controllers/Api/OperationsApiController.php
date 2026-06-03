@@ -56,12 +56,68 @@ class OperationsApiController extends Controller
 
     public function units(): JsonResponse
     {
-        $units = DB::table('units')
-            ->where('status', 'Aktif')
-            ->orderBy('nopol')
-            ->get(['id', 'nopol', 'merek', 'type', 'kapasitas']);
+        if (! Schema::hasTable('units')) {
+            return $this->ok(['units' => []]);
+        }
+
+        $columns = ['id', 'nopol'];
+        foreach (['merek', 'type', 'kapasitas', 'category', 'status', 'layout'] as $column) {
+            if (Schema::hasColumn('units', $column)) {
+                $columns[] = $column;
+            }
+        }
+
+        $query = DB::table('units')->orderBy('nopol');
+        if (Schema::hasColumn('units', 'status')) {
+            $query->where('status', 'Aktif');
+        }
+
+        $units = $query->get($columns);
 
         return $this->ok(['units' => $units]);
+    }
+
+    public function armadas(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('armadas')) {
+            return $this->ok(['armadas' => []]);
+        }
+
+        $q = trim((string) $request->query('q', ''));
+        $kategori = trim((string) $request->query('kategori', ''));
+        $columns = ['id', 'nopol'];
+        foreach (['merk', 'tahun', 'warna', 'kategori', 'ac_type', 'nomor_rangka'] as $column) {
+            if (Schema::hasColumn('armadas', $column)) {
+                $columns[] = $column;
+            }
+        }
+
+        $query = DB::table('armadas')->select($columns)->orderBy('nopol');
+        $availableColumns = array_flip($columns);
+
+        if ($q !== '') {
+            $qLike = '%'.$q.'%';
+            $query->where(function ($builder) use ($qLike, $availableColumns): void {
+                $hasClause = false;
+
+                foreach (['nopol', 'nomor_rangka', 'merk', 'kategori'] as $column) {
+                    if (! isset($availableColumns[$column])) {
+                        continue;
+                    }
+
+                    $hasClause
+                        ? $builder->orWhere($column, 'like', $qLike)
+                        : $builder->where($column, 'like', $qLike);
+                    $hasClause = true;
+                }
+            });
+        }
+
+        if ($kategori !== '' && isset($availableColumns['kategori'])) {
+            $query->where('kategori', $kategori);
+        }
+
+        return $this->ok(['armadas' => $query->get()]);
     }
 
     public function drivers(): JsonResponse
@@ -150,9 +206,10 @@ class OperationsApiController extends Controller
             'price' => ['nullable', 'numeric', 'min:0'],
             'layanan' => ['nullable', 'string', 'max:120'],
             'bop_price' => ['nullable', 'numeric', 'min:0'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $id = DB::table('charters')->insertGetId([
+        $payload = [
             'name' => strtoupper(trim((string) $data['name'])),
             'company_name' => $this->nullableString($data['company_name'] ?? null),
             'phone' => $this->nullableString($data['phone'] ?? null),
@@ -167,7 +224,27 @@ class OperationsApiController extends Controller
             'layanan' => $this->nullableString($data['layanan'] ?? null) ?? 'Regular',
             'bop_price' => (float) ($data['bop_price'] ?? 0),
             'created_at' => now(),
-        ]);
+        ];
+
+        if (Schema::hasColumn('charters', 'pool_id')) {
+            $poolId = $this->resolveCharterPoolId(
+                (int) ($data['pool_id'] ?? 0),
+                (string) ($data['pickup_point'] ?? ''),
+                (string) ($data['drop_point'] ?? ''),
+            );
+
+            if ($poolId < 0) {
+                return $this->error($this->charterPoolErrorMessage($poolId), 422);
+            }
+
+            $payload['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
+        if (Schema::hasColumn('charters', 'status')) {
+            $payload['status'] = 'active';
+        }
+
+        $id = DB::table('charters')->insertGetId($payload);
         $this->syncMasterCarterFromCharterPayload($data);
 
         return $this->ok([
@@ -265,6 +342,82 @@ class OperationsApiController extends Controller
     {
         $v = trim((string) ($value ?? ''));
         return $v === '' ? null : $v;
+    }
+
+    private function resolveCharterPoolId(int $requestedPoolId, string $pickupPoint, string $dropPoint): int
+    {
+        if (! PoolScope::tablesReady() || (int) DB::table('pools')->count() === 0) {
+            return 0;
+        }
+
+        $scope = PoolScope::forCurrentUser();
+        $allowedPoolIds = $scope['all']
+            ? DB::table('pools')
+                ->where('status', 'active')
+                ->pluck('id')
+                ->map(static fn ($value) => (int) $value)
+                ->values()
+                ->all()
+            : $scope['pool_ids'];
+
+        if ($allowedPoolIds === []) {
+            return -1;
+        }
+
+        $isAllowed = static fn (int $poolId): bool => $poolId > 0 && in_array($poolId, $allowedPoolIds, true);
+
+        if ($requestedPoolId > 0) {
+            return $isAllowed($requestedPoolId) ? $requestedPoolId : -1;
+        }
+
+        foreach ([$pickupPoint, $dropPoint] as $label) {
+            $poolId = $this->poolIdForCharterLabel($label);
+
+            if ($poolId > 0) {
+                return $isAllowed($poolId) ? $poolId : -1;
+            }
+        }
+
+        if (count($allowedPoolIds) === 1) {
+            return (int) $allowedPoolIds[0];
+        }
+
+        return $scope['all'] ? 0 : -2;
+    }
+
+    private function poolIdForCharterLabel(string $label): int
+    {
+        $normalized = $this->normalizeCharterLabel($label);
+        if ($normalized === '' || ! PoolScope::tablesReady()) {
+            return 0;
+        }
+
+        $routes = DB::table('pool_route as pr')
+            ->join('routes as r', 'pr.route_id', '=', 'r.id')
+            ->get(['pr.pool_id', 'r.name', 'r.origin', 'r.destination']);
+
+        foreach ($routes as $route) {
+            foreach (['name', 'origin', 'destination'] as $field) {
+                if ($this->normalizeCharterLabel((string) ($route->{$field} ?? '')) === $normalized) {
+                    return (int) ($route->pool_id ?? 0);
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private function normalizeCharterLabel(string $value): string
+    {
+        return preg_replace('/\s+/', ' ', mb_strtolower(trim($value))) ?? '';
+    }
+
+    private function charterPoolErrorMessage(int $code): string
+    {
+        return match ($code) {
+            -1 => 'Pool tidak sesuai dengan akses user.',
+            default => 'Pilih Perwakilan/Pool atau rute yang sesuai dengan akses user.',
+        };
     }
 
     /**
@@ -387,5 +540,13 @@ class OperationsApiController extends Controller
     private function ok(array $data = [], int $status = 200): JsonResponse
     {
         return response()->json(array_merge(['success' => true], $data), $status);
+    }
+
+    private function error(string $message, int $status = 400): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'error' => $message,
+        ], $status);
     }
 }
