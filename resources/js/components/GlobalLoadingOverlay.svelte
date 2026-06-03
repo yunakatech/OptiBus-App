@@ -1,10 +1,50 @@
 <script lang="ts">
-    import { Sparkles } from 'lucide-svelte';
+    import { Navigation, Sparkles } from 'lucide-svelte';
     import { Spinner } from '@/components/ui/spinner';
     import { globalLoading } from '@/lib/loading';
 
     const loadingState = globalLoading;
+    const navigationEntry = $derived(
+        $loadingState.entries.find((entry) => entry.scope === 'navigation') ??
+            null,
+    );
 </script>
+
+{#if navigationEntry}
+    <div
+        class="pointer-events-none fixed inset-x-0 top-0 z-[130] h-1 overflow-hidden bg-cyan-950/10"
+        aria-hidden="true"
+    >
+        <div
+            class="h-full w-1/2 origin-left animate-[qbus-nav-bar_1.05s_ease-in-out_infinite] rounded-r-full bg-linear-to-r from-cyan-400 via-sky-500 to-emerald-300 shadow-[0_0_24px_rgba(14,165,233,0.65)]"
+        ></div>
+    </div>
+
+    <div
+        class="pointer-events-none fixed inset-x-3 bottom-[calc(5.2rem+env(safe-area-inset-bottom))] z-[90] flex justify-center md:hidden"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+    >
+        <div
+            class="flex max-w-[22rem] items-center gap-3 rounded-2xl border border-cyan-200/70 bg-background/95 px-3 py-2.5 text-foreground shadow-[0_18px_50px_-26px_rgba(8,145,178,0.85)] ring-1 ring-white/20 backdrop-blur-xl dark:border-cyan-900/70"
+        >
+            <div
+                class="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/12 text-cyan-700 dark:text-cyan-200"
+            >
+                <Navigation class="size-4 animate-pulse" />
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-black uppercase tracking-wide text-cyan-700 dark:text-cyan-200">
+                    Pindah Menu
+                </p>
+                <p class="truncate text-sm font-semibold">
+                    {navigationEntry.message || 'Memuat halaman...'}
+                </p>
+            </div>
+        </div>
+    </div>
+{/if}
 
 {#if $loadingState.active && $loadingState.blocking}
     <div class="pointer-events-auto fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/48 p-4 backdrop-blur-[2px]" role="status" aria-live="polite" aria-busy="true">
@@ -29,3 +69,19 @@
         </div>
     </div>
 {/if}
+
+<style>
+    @keyframes -global-qbus-nav-bar {
+        0% {
+            transform: translateX(-120%) scaleX(0.45);
+        }
+
+        42% {
+            transform: translateX(35%) scaleX(0.9);
+        }
+
+        100% {
+            transform: translateX(230%) scaleX(0.55);
+        }
+    }
+</style>
