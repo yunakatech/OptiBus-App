@@ -357,6 +357,8 @@
     let bookingListRoute = $state('all');
     let bookingListDate = $state('');
     let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>('all');
+    let bookingListVisibleCount = $state(24);
+    let lastBookingListFilterSignature = $state('');
     let bookingListFiltersExpanded = $state(false);
     let emptyDepartureOpen = $state(false);
     let emptyDepartureDate = $state(today);
@@ -544,8 +546,10 @@
     let bookingDatePicker: FlatpickrInstance | null = null;
     let bookingListDatePicker: FlatpickrInstance | null = null;
     const API_TIMEOUT_MS = 15000;
+    const BOOKING_LIST_PAGE_SIZE = 24;
     const bookingListSkeletonRows = Array.from({ length: 6 });
     const bookingListSkeletonStats = Array.from({ length: 6 });
+    const bookingGroupSearchTextCache = new WeakMap<BookingGroup, string>();
 
     const bookingDateLabel = $derived(formatDateHuman(bookingDate));
     const bookingListLoading = $derived(listOnly && !bookingListHydrated);
@@ -2220,6 +2224,32 @@
               ).sort((a, b) => a.localeCompare(b, 'id-ID')),
     );
     const bookingListRoutes = () => bookingListRoutesMemo;
+    const bookingGroupSearchText = (group: BookingGroup) => {
+        const cached = bookingGroupSearchTextCache.get(group);
+        if (typeof cached === 'string') {
+            return cached;
+        }
+
+        const text = [
+            group.rute,
+            group.driver_name,
+            group.armada_nopol,
+            group.departure_code,
+            group.tanggal,
+            normalizeJamToken(group.jam),
+            `unit ${group.unit}`,
+            ...group.bookings.map(
+                (row) =>
+                    `${row.ticket_code} ${row.name} ${row.phone} ${row.pickup_point}`,
+            ),
+        ]
+            .join(' ')
+            .toLowerCase();
+
+        bookingGroupSearchTextCache.set(group, text);
+
+        return text;
+    };
     const filteredBookingGroupsMemo = $derived.by(() => {
         const q = bookingListSearch.trim().toLowerCase();
         const filtered = localBookingGroups.filter((group) => {
@@ -2257,23 +2287,7 @@
                 return true;
             }
 
-            const searchable = [
-                group.rute,
-                group.driver_name,
-                group.armada_nopol,
-                group.departure_code,
-                group.tanggal,
-                normalizeJamToken(group.jam),
-                `unit ${group.unit}`,
-                ...group.bookings.map(
-                    (row) =>
-                        `${row.ticket_code} ${row.name} ${row.phone} ${row.pickup_point}`,
-                ),
-            ]
-                .join(' ')
-                .toLowerCase();
-
-            return searchable.includes(q);
+            return bookingGroupSearchText(group).includes(q);
         });
 
         return filtered.sort((a, b) => {
@@ -2288,6 +2302,32 @@
         });
     });
     const filteredBookingGroups = () => filteredBookingGroupsMemo;
+    const visibleBookingGroupsMemo = $derived(
+        filteredBookingGroupsMemo.slice(0, bookingListVisibleCount),
+    );
+    const visibleBookingGroups = () => visibleBookingGroupsMemo;
+    const remainingBookingGroupsCount = $derived(
+        Math.max(filteredBookingGroupsMemo.length - visibleBookingGroupsMemo.length, 0),
+    );
+    const bookingListFilterSignature = $derived(
+        [
+            bookingListScope,
+            bookingListSearch.trim(),
+            bookingListRoute,
+            bookingListDate,
+            bookingListPayment,
+            localBookingGroups.length,
+        ].join('|'),
+    );
+
+    $effect(() => {
+        if (lastBookingListFilterSignature === bookingListFilterSignature) {
+            return;
+        }
+
+        lastBookingListFilterSignature = bookingListFilterSignature;
+        bookingListVisibleCount = BOOKING_LIST_PAGE_SIZE;
+    });
     const resetBookingListFilters = () => {
         bookingListScope = 'active';
         bookingListSearch = '';
@@ -8372,7 +8412,7 @@
                         </p>
                     {:else}
                         <div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-2">
-                            {#each filteredBookingGroups() as group (group.key)}
+                            {#each visibleBookingGroups() as group (group.key)}
                                 <div
                                     class={`group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 hover:border-rose-300/90 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
                                 >
@@ -8636,6 +8676,25 @@
                                 </div>
                             {/each}
                         </div>
+                        {#if remainingBookingGroupsCount > 0}
+                            <div class="mt-4 flex justify-center">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    class="rounded-full px-4 text-xs"
+                                    onclick={() =>
+                                        (bookingListVisibleCount +=
+                                            BOOKING_LIST_PAGE_SIZE)}
+                                >
+                                    Tampilkan {Math.min(
+                                        BOOKING_LIST_PAGE_SIZE,
+                                        remainingBookingGroupsCount,
+                                    )}
+                                    jadwal lagi
+                                </Button>
+                            </div>
+                        {/if}
                     {/if}
                 {:else if localLatestBookings.length === 0}
                     <p class="text-sm text-muted-foreground">
