@@ -547,6 +547,16 @@
     let bookingListDatePicker: FlatpickrInstance | null = null;
     const API_TIMEOUT_MS = 15000;
     const BOOKING_LIST_PAGE_SIZE = 24;
+    const BOOKING_LIST_DATA_PROPS = [
+        'bookingGroups',
+        'bookingRouteOptions',
+        'bookingListReady',
+    ];
+    const BOOKING_LIST_STATE_PROPS = [
+        'listOnly',
+        'groupDetailPage',
+        'groupDetailKey',
+    ];
     const bookingListSkeletonRows = Array.from({ length: 6 });
     const bookingListSkeletonStats = Array.from({ length: 6 });
     const bookingGroupSearchTextCache = new WeakMap<BookingGroup, string>();
@@ -2328,6 +2338,16 @@
         lastBookingListFilterSignature = bookingListFilterSignature;
         bookingListVisibleCount = BOOKING_LIST_PAGE_SIZE;
     });
+    const reloadBookingListData = () => {
+        bookingListHydrated = false;
+        router.reload({
+            only: [...BOOKING_LIST_DATA_PROPS],
+            preserveScroll: true,
+        } as Parameters<typeof router.reload>[0] & {
+            only: string[];
+            preserveScroll: boolean;
+        });
+    };
     const resetBookingListFilters = () => {
         bookingListScope = 'active';
         bookingListSearch = '';
@@ -2465,17 +2485,7 @@
 
             emptyDepartureOpen = false;
             formSuccess = 'Jadwal tanpa penumpang berhasil dibuat.';
-            router.reload({
-                only: [
-                    'totals',
-                    'latestBookings',
-                    'bookingGroups',
-                    'bookingRouteOptions',
-                    'bookingListReady',
-                    'serverNow',
-                ],
-                preserveScroll: true,
-            } as Parameters<typeof router.reload>[0] & { preserveScroll: boolean });
+            reloadBookingListData();
         } catch (error) {
             formError =
                 error instanceof Error
@@ -4226,16 +4236,28 @@
     };
 
     const navigateToGroupDetail = (group: BookingGroup) => {
+        void showGroupDetail(group);
         router.visit(`/bookings/detail/${encodeURIComponent(group.key)}`, {
+            only: [...BOOKING_LIST_STATE_PROPS],
             preserveScroll: true,
-            preserveState: false,
+            preserveState: true,
+        } as Parameters<typeof router.visit>[1] & {
+            only: string[];
+            preserveScroll: boolean;
+            preserveState: boolean;
         });
     };
 
     const navigateBackToBookingList = () => {
+        openGroupDetail = null;
         router.visit('/bookings', {
+            only: [...BOOKING_LIST_STATE_PROPS],
             preserveScroll: true,
-            preserveState: false,
+            preserveState: true,
+        } as Parameters<typeof router.visit>[1] & {
+            only: string[];
+            preserveScroll: boolean;
+            preserveState: boolean;
         });
     };
 
