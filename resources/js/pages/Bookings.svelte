@@ -8398,7 +8398,7 @@
 
                     {#if bookingListLoading}
                         <div
-                            class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-2"
+                            class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4"
                             aria-label="Memuat data keberangkatan"
                         >
                             {#each bookingListSkeletonRows as _row, index (`booking-list-skeleton-${index}`)}
@@ -8433,7 +8433,7 @@
                             filter.
                         </p>
                     {:else}
-                        <div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-2">
+                        <div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
                             {#each visibleBookingGroups() as group (group.key)}
                                 <div
                                     class={`group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 hover:border-rose-300/90 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
