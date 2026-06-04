@@ -521,6 +521,8 @@
     let customerLookupQuery = $state('');
     let customerSuggestions = $state<CustomerLookupItem[]>([]);
     let customerSuggestOpen = $state(false);
+    let customerLookupMessage = $state('');
+    let customerSearchRequestId = 0;
     let customerSearchTimer: ReturnType<typeof setTimeout> | null = null;
     let groupDriverLookupTimer: ReturnType<typeof setTimeout> | null = null;
     let groupArmadaLookupTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1839,6 +1841,13 @@
     };
 
     const applyCustomerLookup = (item: CustomerLookupItem) => {
+        customerSearchRequestId += 1;
+
+        if (customerSearchTimer) {
+            clearTimeout(customerSearchTimer);
+            customerSearchTimer = null;
+        }
+
         formName = normalizeNameForBooking(item.name || '');
         formPhone = normalizePhoneForBooking(item.phone || '');
         formPickupPoint = item.pickup_point || '';
@@ -1846,6 +1855,8 @@
         customerLookupQuery = `${item.name} (${item.phone})`;
         customerSuggestOpen = false;
         customerSuggestions = [];
+        customerLookupMessage = '';
+        loadingCustomerLookup = false;
         formError = '';
     };
 
@@ -1857,13 +1868,10 @@
         formPhone = normalizePhoneForBooking(formPhone);
     };
 
-    const searchCustomers = async (query: string) => {
+    const searchCustomers = async (query: string, requestId: number) => {
         const q = query.trim();
 
-        if (q.length < 2) {
-            customerSuggestions = [];
-            customerSuggestOpen = false;
-
+        if (q.length < 2 || requestId !== customerSearchRequestId) {
             return;
         }
 
@@ -1871,31 +1879,74 @@
 
         try {
             const json = await apiGet('/api/master/customers/search', { q });
+
+            if (requestId !== customerSearchRequestId) {
+                return;
+            }
+
             const rows = Array.isArray(json.customers) ? json.customers : [];
             customerSuggestions = rows
-                .slice(0, 8)
+                .slice(0, 20)
                 .map((row: Record<string, unknown>) => ({
                     name: String(row.name ?? ''),
                     phone: String(row.phone ?? ''),
                     pickup_point: String(row.pickup_point ?? ''),
-                    address: String(row.address ?? ''),
+                    address: String(row.address ?? row.gmaps ?? ''),
                 }));
             customerSuggestOpen = customerSuggestions.length > 0;
+            const scopeName = String(json.scope_name ?? '').trim();
+            const scopeSuffix =
+                Boolean(json.scope_limited) && scopeName
+                    ? ` pada ${scopeName}`
+                    : '';
+
+            if (customerSuggestions.length === 0) {
+                customerLookupMessage = `Customer tidak ditemukan${scopeSuffix}.`;
+            } else if (json.has_more) {
+                customerLookupMessage =
+                    'Menampilkan 20 hasil teratas. Tambahkan nama atau nomor telepon agar lebih spesifik.';
+            } else if (scopeSuffix) {
+                customerLookupMessage = `Hasil pencarian dibatasi${scopeSuffix}.`;
+            } else {
+                customerLookupMessage = '';
+            }
         } catch {
+            if (requestId !== customerSearchRequestId) {
+                return;
+            }
+
             customerSuggestions = [];
             customerSuggestOpen = false;
+            customerLookupMessage = 'Pencarian customer gagal dimuat.';
         } finally {
-            loadingCustomerLookup = false;
+            if (requestId === customerSearchRequestId) {
+                loadingCustomerLookup = false;
+            }
         }
     };
 
     const onCustomerLookupInput = () => {
         if (customerSearchTimer) {
             clearTimeout(customerSearchTimer);
+            customerSearchTimer = null;
+        }
+
+        customerSearchRequestId += 1;
+        const requestId = customerSearchRequestId;
+        const query = customerLookupQuery.trim();
+        customerSuggestions = [];
+        customerSuggestOpen = false;
+        customerLookupMessage =
+            query.length === 1 ? 'Ketik minimal 2 karakter untuk mencari.' : '';
+        loadingCustomerLookup = false;
+
+        if (query.length < 2) {
+            return;
         }
 
         customerSearchTimer = setTimeout(() => {
-            void searchCustomers(customerLookupQuery);
+            customerSearchTimer = null;
+            void searchCustomers(customerLookupQuery, requestId);
         }, 220);
     };
 
@@ -4601,6 +4652,13 @@
     };
 
     const resetBookingForm = () => {
+        customerSearchRequestId += 1;
+
+        if (customerSearchTimer) {
+            clearTimeout(customerSearchTimer);
+            customerSearchTimer = null;
+        }
+
         selectedSeats = [];
         formSeat = '';
         formName = '';
@@ -4610,6 +4668,7 @@
         customerLookupQuery = '';
         customerSuggestions = [];
         customerSuggestOpen = false;
+        customerLookupMessage = '';
         loadingCustomerLookup = false;
         formSegmentId = 0;
         formDiscount = '';
@@ -5691,6 +5750,13 @@
                                             class="mt-1 text-xs text-muted-foreground"
                                         >
                                             Mencari customer...
+                                        </p>
+                                    {:else if customerLookupMessage}
+                                        <p
+                                            class="mt-1 text-xs text-muted-foreground"
+                                            role="status"
+                                        >
+                                            {customerLookupMessage}
                                         </p>
                                     {/if}
                                     {#if customerSuggestOpen}
