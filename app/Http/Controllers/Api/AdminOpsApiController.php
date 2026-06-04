@@ -748,9 +748,11 @@ class AdminOpsApiController extends Controller
             'pickup_point' => $this->nullable($data['pickup_point'] ?? null),
             'gmaps' => $this->nullable($data['gmaps'] ?? $data['address'] ?? null),
         ];
+        $poolId = $this->defaultCustomerPoolId();
 
         if ($id > 0) {
             DB::table('customers')->where('id', $id)->update($payload);
+            $this->assignCustomerPoolIfMissing($id, $poolId);
 
             return $this->ok(['message' => 'Customer updated.', 'id' => $id]);
         }
@@ -758,11 +760,12 @@ class AdminOpsApiController extends Controller
         $existing = DB::table('customers')->where('phone', $payload['phone'])->value('id');
         if ($existing) {
             DB::table('customers')->where('id', (int) $existing)->update($payload);
+            $this->assignCustomerPoolIfMissing((int) $existing, $poolId);
 
             return $this->ok(['message' => 'Customer updated by phone.', 'id' => (int) $existing]);
         }
 
-        $newId = DB::table('customers')->insertGetId(array_merge($payload, [
+        $newId = DB::table('customers')->insertGetId(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], [
             'created_at' => now(),
         ]));
 
@@ -832,6 +835,7 @@ class AdminOpsApiController extends Controller
         $skipped = 0;
         $errors = [];
         $line = 1;
+        $poolId = $this->defaultCustomerPoolId();
 
         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
             $line += 1;
@@ -869,12 +873,13 @@ class AdminOpsApiController extends Controller
             $existingId = DB::table('customers')->where('phone', $phone)->value('id');
             if ($existingId) {
                 DB::table('customers')->where('id', (int) $existingId)->update($payload);
+                $this->assignCustomerPoolIfMissing((int) $existingId, $poolId);
                 $updated += 1;
 
                 continue;
             }
 
-            DB::table('customers')->insert(array_merge($payload, [
+            DB::table('customers')->insert(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], [
                 'created_at' => now(),
             ]));
             $created += 1;
@@ -4002,6 +4007,27 @@ class AdminOpsApiController extends Controller
             && Schema::hasTable('pool_route')
             && Schema::hasTable('pool_user')
             && Schema::hasTable('routes');
+    }
+
+    private function defaultCustomerPoolId(): int
+    {
+        if (! Schema::hasTable('customers') || ! Schema::hasColumn('customers', 'pool_id')) {
+            return 0;
+        }
+
+        return PoolScope::customerPoolId();
+    }
+
+    private function assignCustomerPoolIfMissing(int $customerId, int $poolId): void
+    {
+        if ($customerId <= 0 || $poolId <= 0 || ! Schema::hasColumn('customers', 'pool_id')) {
+            return;
+        }
+
+        DB::table('customers')
+            ->where('id', $customerId)
+            ->whereNull('pool_id')
+            ->update(['pool_id' => $poolId]);
     }
 
     private function currentUserIsSuperAdmin(): bool

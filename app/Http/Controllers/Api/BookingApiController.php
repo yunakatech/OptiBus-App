@@ -1248,7 +1248,7 @@ class BookingApiController extends Controller
                     ];
                 }
 
-                $this->upsertCustomer($name, $phone, $pickupPoint, $address);
+                $this->upsertCustomer($name, $phone, $pickupPoint, $address, $routeId);
 
                 return ['ids' => $ids, 'records' => $records, 'departure_code' => $departureCode];
             }, 3);
@@ -1437,7 +1437,7 @@ class BookingApiController extends Controller
             ->where('status', '!=', 'canceled')
             ->update($updatePayload);
 
-        $this->upsertCustomer($name, $phone, $pickupPoint, $address);
+        $this->upsertCustomer($name, $phone, $pickupPoint, $address, $targetRouteId);
 
         $changeSummary = $this->bookingChangeSummary($current, [
             'rute' => $targetRoute,
@@ -2218,17 +2218,30 @@ class BookingApiController extends Controller
         return $this->schedulesHasBopColumn;
     }
 
-    private function upsertCustomer(string $name, string $phone, string $pickupPoint, string $address = ''): void
+    private function upsertCustomer(string $name, string $phone, string $pickupPoint, string $address = '', int $routeId = 0): void
     {
-        DB::table('customers')->upsert([
-            [
-                'name' => $name,
-                'phone' => $phone,
-                'pickup_point' => $pickupPoint,
-                'gmaps' => $address,
-                'created_at' => now(),
-            ],
-        ], ['phone'], ['name', 'pickup_point', 'gmaps']);
+        $customer = [
+            'name' => $name,
+            'phone' => $phone,
+            'pickup_point' => $pickupPoint,
+            'gmaps' => $address,
+            'created_at' => now(),
+        ];
+        $poolId = 0;
+
+        if (Schema::hasColumn('customers', 'pool_id')) {
+            $poolId = PoolScope::customerPoolId($routeId);
+            $customer['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
+        DB::table('customers')->upsert([$customer], ['phone'], ['name', 'pickup_point', 'gmaps']);
+
+        if ($poolId > 0) {
+            DB::table('customers')
+                ->where('phone', $phone)
+                ->whereNull('pool_id')
+                ->update(['pool_id' => $poolId]);
+        }
     }
 
     private function normalizePhone(string $phone): string

@@ -167,11 +167,26 @@ class OperationsApiTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        DB::table('pool_route')->insert([
-            'pool_id' => $poolId,
-            'route_id' => $routeId,
+        $outsidePoolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL MAKASSAR',
+            'code' => 'MKS',
+            'status' => 'active',
             'created_at' => now(),
             'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            [
+                'pool_id' => $poolId,
+                'route_id' => $routeId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'pool_id' => $outsidePoolId,
+                'route_id' => $outsideRouteId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         $operator = User::factory()->create(['is_super_admin' => false]);
@@ -190,26 +205,37 @@ class OperationsApiTest extends TestCase
 
         DB::table('customers')->insert([
             [
+                'pool_id' => null,
                 'name' => 'CUSTOMER LEGACY ROUTE',
                 'phone' => '081200000001',
                 'pickup_point' => 'Pinrang',
                 'created_at' => now(),
             ],
             [
+                'pool_id' => null,
                 'name' => 'CUSTOMER ROUTE ID',
                 'phone' => '081200000002',
                 'pickup_point' => 'Pinrang',
                 'created_at' => now(),
             ],
             [
+                'pool_id' => null,
                 'name' => 'CUSTOMER LUAR POOL',
                 'phone' => '081200000003',
                 'pickup_point' => 'Makassar',
                 'created_at' => now(),
             ],
             [
+                'pool_id' => null,
                 'name' => 'CUSTOMER ROUTE ID SALAH',
                 'phone' => '081200000004',
+                'pickup_point' => 'Pinrang',
+                'created_at' => now(),
+            ],
+            [
+                'pool_id' => $poolId,
+                'name' => 'CUSTOMER TANPA BOOKING',
+                'phone' => '081200000005',
                 'pickup_point' => 'Pinrang',
                 'created_at' => now(),
             ],
@@ -252,7 +278,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
-                'route_id' => $outsideRouteId,
+                'route_id' => $routeId,
                 'rute' => 'Pinrang - Makassar',
                 'tanggal' => '2026-06-05',
                 'jam' => '12:00:00',
@@ -264,6 +290,9 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
         ]);
+        DB::table('customers')
+            ->where('phone', '081200000004')
+            ->update(['pool_id' => $outsidePoolId]);
 
         $this->actingAs($operator);
 
@@ -271,11 +300,12 @@ class OperationsApiTest extends TestCase
 
         $this->getJson(route('api.master.customers.search', ['q' => 'customer']))
             ->assertOk()
-            ->assertJsonCount(2, 'customers')
+            ->assertJsonCount(3, 'customers')
             ->assertJsonPath('scope_limited', true)
             ->assertJsonPath('scope_name', 'POOL PINRANG')
             ->assertJsonFragment(['name' => 'CUSTOMER LEGACY ROUTE'])
             ->assertJsonFragment(['name' => 'CUSTOMER ROUTE ID'])
+            ->assertJsonFragment(['name' => 'CUSTOMER TANPA BOOKING'])
             ->assertJsonMissing(['name' => 'CUSTOMER LUAR POOL'])
             ->assertJsonMissing(['name' => 'CUSTOMER ROUTE ID SALAH']);
     }
