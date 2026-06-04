@@ -10,6 +10,7 @@
 </script>
 
 <script lang="ts">
+    import { router } from '@inertiajs/svelte';
     import { MoreHorizontal } from 'lucide-svelte';
     import { onDestroy, onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -60,17 +61,36 @@
     type Assignment = { id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; nama: string | null };
     type AssignmentConflict = { type: string; message: string; assignment_id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; driver_name: string | null };
     type CharterRoute = { id: number; name: string; origin: string | null; destination: string | null; duration: string | null; rental_price: number; bop_price: number };
+    type FlowDataPayload = {
+        tab: 'charters' | 'luggages';
+        charters?: Charter[];
+        luggages?: Luggage[];
+        pagination?: Pagination;
+    };
+    type FlowMastersPayload = {
+        tab: 'charters' | 'luggages';
+        units?: Unit[];
+        drivers?: Driver[];
+        charterRoutes?: CharterRoute[];
+        services?: Service[];
+        pools?: PoolOption[];
+        routes?: RouteRow[];
+    };
 
     let {
         initialTab = null,
         initialMode = null,
         initialCharterId = null,
         lockedMenuView: lockedFromServer = false,
+        flowData = null,
+        flowMasters = null,
     }: {
         initialTab?: TabName | null;
         initialMode?: ViewMode | null;
         initialCharterId?: number | null;
         lockedMenuView?: boolean;
+        flowData?: FlowDataPayload | null;
+        flowMasters?: FlowMastersPayload | null;
     } = $props();
 
     const today = new Date().toISOString().slice(0, 10);
@@ -708,6 +728,41 @@ q.set('q', filterQuery.trim());
 }
 
         return q.toString();
+    };
+    const usesInertiaFlowData = () =>
+        lockedMenuView &&
+        (activeTab === 'charters' || activeTab === 'luggages');
+    const reloadFlowDataWithInertia = (page: number) => {
+        if (typeof window === 'undefined' || !usesInertiaFlowData()) {
+            return false;
+        }
+
+        const query =
+            activeTab === 'charters'
+                ? charterQueryString(page)
+                : luggageQueryString(page);
+
+        busy = true;
+        error = '';
+
+        router.get(
+            window.location.pathname,
+            Object.fromEntries(new URLSearchParams(query)),
+            {
+                only: ['flowData'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onError: () => {
+                    error = 'Gagal memuat data terbaru.';
+                },
+                onFinish: () => {
+                    busy = false;
+                },
+            },
+        );
+
+        return true;
     };
 
     const formatCurrencyId = (value: number | string | null | undefined) =>
@@ -1756,6 +1811,54 @@ return 'Selesai';
         syncCharterFilterLookups();
     };
 
+    $effect(() => {
+        const payload = flowData;
+        if (!payload) {
+            return;
+        }
+
+        if (payload.tab === 'charters') {
+            charters = Array.isArray(payload.charters) ? payload.charters : [];
+            charterMeta = payload.pagination ?? charterMeta;
+        } else {
+            luggages = Array.isArray(payload.luggages)
+                ? payload.luggages.map((row) => ({
+                      ...row,
+                      status: normalizeLuggageStatus(row.status),
+                  }))
+                : [];
+            luggageMeta = payload.pagination ?? luggageMeta;
+        }
+
+        busy = false;
+    });
+
+    $effect(() => {
+        const payload = flowMasters;
+        if (!payload) {
+            return;
+        }
+
+        pools = Array.isArray(payload.pools) ? payload.pools : [];
+
+        if (payload.tab === 'charters') {
+            units = Array.isArray(payload.units) ? payload.units : [];
+            drivers = Array.isArray(payload.drivers) ? payload.drivers : [];
+            charterRoutes = Array.isArray(payload.charterRoutes)
+                ? payload.charterRoutes
+                : [];
+            charterMastersLoaded = true;
+            syncMasterLookups();
+
+            return;
+        }
+
+        services = Array.isArray(payload.services) ? payload.services : [];
+        routes = Array.isArray(payload.routes) ? payload.routes : [];
+        luggageMastersLoaded = true;
+        applyDefaultPoolToForms();
+    });
+
     const loadMasters = async (options: { force?: boolean } = {}) => {
         const force = Boolean(options.force);
 
@@ -1928,6 +2031,11 @@ await loadAssignments(assignmentMeta.page);
         charterMeta.page = 1;
         luggageMeta.page = 1;
         assignmentMeta.page = 1;
+
+        if (reloadFlowDataWithInertia(1)) {
+            return;
+        }
+
         await loadActiveTab();
     };
 
@@ -1939,6 +2047,11 @@ await loadAssignments(assignmentMeta.page);
         charterMeta.page = 1;
         resetCharterFilterLookups();
         charterFilterDatePicker?.clear();
+
+        if (reloadFlowDataWithInertia(1)) {
+            return;
+        }
+
         await loadActiveTab();
     };
 
@@ -1948,6 +2061,11 @@ await loadAssignments(assignmentMeta.page);
         filterQuery = '';
         luggageMeta.page = 1;
         luggageFilterDatePicker?.clear();
+
+        if (reloadFlowDataWithInertia(1)) {
+            return;
+        }
+
         await loadActiveTab();
     };
 
@@ -2216,10 +2334,15 @@ await loadAssignments(assignmentMeta.page);
     const setCharterScope = async (scope: CharterScope) => {
         if (charterScope === scope) {
 return;
-}
+        }
 
         charterScope = scope;
         charterMeta.page = 1;
+
+        if (reloadFlowDataWithInertia(1)) {
+            return;
+        }
+
         await loadCharters(1);
     };
 
@@ -2344,6 +2467,13 @@ return;
     };
 
     const jumpPage = async (target: number, type: 'charter' | 'luggage' | 'assignment') => {
+        if (
+            (type === 'charter' || type === 'luggage') &&
+            reloadFlowDataWithInertia(target)
+        ) {
+            return;
+        }
+
         if (type === 'charter') {
 await loadCharters(target);
 }
@@ -2535,10 +2665,23 @@ params.set('to', filterTo);
             const params = new URLSearchParams(window.location.search);
             const routeTab = params.get('tab');
             const routeMode = params.get('mode');
+            const perPage = Number(params.get('per_page') || 0);
 
             if (isFlowTab(routeTab)) {
                 activeTab = routeTab;
                 lockedMenuView = true;
+            }
+
+            filterFrom = params.get('from') ?? '';
+            filterTo = params.get('to') ?? '';
+            filterQuery = params.get('q') ?? '';
+            charterScope =
+                params.get('scope') === 'history' ? 'history' : 'active';
+            charterFilterUnitId = Number(params.get('unit_id') || 0);
+            charterFilterArmadaId = Number(params.get('armada_id') || 0);
+
+            if (perPage >= 10 && perPage <= 100) {
+                filterPerPage = perPage;
             }
 
             const viewMatch = window.location.pathname.match(/^\/charters\/view\/(\d+)$/);
@@ -2553,11 +2696,13 @@ params.set('to', filterTo);
             }
         }
 
-        busy = true;
+        busy = !usesInertiaFlowData() || (activeMode === 'data' && !flowData);
 
         try {
-            await loadMasters();
-            await loadActiveTab();
+            if (!usesInertiaFlowData()) {
+                await loadMasters();
+                await loadActiveTab();
+            }
 
             if (activeTab === 'charters' && activeMode === 'view' && charterViewId && charterViewId > 0) {
                 await loadCharterView(charterViewId);
@@ -2565,7 +2710,9 @@ params.set('to', filterTo);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat data awal.';
         } finally {
-            busy = false;
+            if (!usesInertiaFlowData() || activeMode !== 'data' || flowData) {
+                busy = false;
+            }
         }
     });
 
