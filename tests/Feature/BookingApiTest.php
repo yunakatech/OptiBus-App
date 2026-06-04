@@ -12,10 +12,14 @@ class BookingApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function actingAsSuperAdmin(): void
+    {
+        $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+    }
+
     public function test_authenticated_user_can_get_schedules(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $date = '2026-05-15';
         $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
@@ -55,8 +59,7 @@ class BookingApiTest extends TestCase
 
     public function test_submit_booking_and_detect_conflict(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $routeId = DB::table('routes')->insertGetId([
             'name' => 'PINRANG - MAKASSAR',
@@ -107,8 +110,7 @@ class BookingApiTest extends TestCase
 
     public function test_cancel_booking_marks_status_canceled(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $bookingId = DB::table('bookings')->insertGetId([
             'rute' => 'PINRANG - MAKASSAR',
@@ -143,8 +145,7 @@ class BookingApiTest extends TestCase
 
     public function test_cancel_departure_clears_assignment_meta(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $driverId = DB::table('drivers')->insertGetId([
             'nama' => 'DRIVER BATAL',
@@ -189,8 +190,7 @@ class BookingApiTest extends TestCase
 
     public function test_past_departure_can_be_marked_arrived(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $tanggal = now()->subDay()->format('Y-m-d');
         $driverId = DB::table('drivers')->insertGetId([
@@ -233,8 +233,7 @@ class BookingApiTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 5, 31, 8, 0, 0));
 
         try {
-            $user = User::factory()->create();
-            $this->actingAs($user);
+            $this->actingAsSuperAdmin();
 
             $tanggal = now()->format('Y-m-d');
             $driverId = DB::table('drivers')->insertGetId([
@@ -277,8 +276,7 @@ class BookingApiTest extends TestCase
 
     public function test_departure_cannot_be_marked_arrived_without_driver_and_nopol(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $tanggal = now()->subDay()->format('Y-m-d');
 

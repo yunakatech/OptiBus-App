@@ -20,11 +20,11 @@ class PasswordResetTest extends TestCase
         $this->skipUnlessFortifyHas(Features::resetPasswords());
     }
 
-    public function test_reset_password_link_screen_can_be_rendered()
+    public function test_reset_password_link_screen_redirects_to_login()
     {
         $response = $this->get(route('password.request'));
 
-        $response->assertOk();
+        $response->assertRedirect(route('login'));
     }
 
     public function test_reset_password_link_can_be_requested()
@@ -38,7 +38,7 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class);
     }
 
-    public function test_reset_password_screen_can_be_rendered()
+    public function test_reset_password_screen_redirects_to_login()
     {
         Notification::fake();
 
@@ -49,7 +49,7 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
             $response = $this->get(route('password.reset', $notification->token));
 
-            $response->assertOk();
+            $response->assertRedirect(route('login'));
 
             return true;
         });
