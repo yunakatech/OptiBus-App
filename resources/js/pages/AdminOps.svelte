@@ -11,13 +11,7 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import {
-        Armchair,
-        Eye,
-        MoreHorizontal,
-        Pencil,
-        Trash2,
-    } from 'lucide-svelte';
+    import { Armchair, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
     import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -37,14 +31,15 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
-    import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import { hasPermission } from '@/lib/access';
+    import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import {
         formatCurrencyDisplay,
         formatCurrencyInput as formatSharedCurrencyInput,
         parseCurrencyInput as parseSharedCurrencyInput,
     } from '@/lib/currency';
-    import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
+    import { loadFlatpickr } from '@/lib/flatpickr';
+    import type { FlatpickrInstance } from '@/lib/flatpickr';
 
     type Stats = {
         routes: number;
@@ -148,6 +143,38 @@
         per_page: number;
         total: number;
         last_page: number;
+    };
+    type SettingsQuery = {
+        q?: string;
+        page?: number;
+        per_page?: number;
+        route_id?: number;
+        rute?: string;
+    };
+    type SettingsDataPayload = {
+        tab?: string;
+        schedules?: ScheduleRow[];
+        drivers?: DriverRow[];
+        segments?: SegmentRow[];
+        armadas?: ArmadaRow[];
+        pools?: PoolRow[];
+        users?: UserRow[];
+        roles?: RoleOption[];
+        routes?: RouteRow[];
+        can_manage?: boolean;
+        pagination?: Pagination;
+        route_id?: number;
+        rute?: string;
+    };
+    type SettingsMastersPayload = {
+        tab?: string;
+        routes?: RouteRow[];
+        units?: UnitRow[];
+        armadas?: ArmadaRow[];
+        pools?: PoolRow[];
+        roles?: RoleOption[];
+        categories?: string[];
+        can_manage_pools?: boolean;
     };
     type CustomerImportSummary = {
         created: number;
@@ -308,12 +335,18 @@
         lockedMenuView: lockedFromServer = false,
         initialMode = null,
         initialRecordId = null,
+        settingsQuery = null,
+        settingsData = null,
+        settingsMasters = null,
     }: {
         stats: Stats;
         initialTab?: TabName | null;
         lockedMenuView?: boolean;
         initialMode?: string | null;
         initialRecordId?: number | null;
+        settingsQuery?: SettingsQuery | null;
+        settingsData?: SettingsDataPayload | null;
+        settingsMasters?: SettingsMastersPayload | null;
     } = $props();
 
     const days = [
@@ -341,6 +374,16 @@
     ] as const;
     type TabName = (typeof tabs)[number];
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
+    const hybridSettingsTabs: TabName[] = [
+        'schedules',
+        'drivers',
+        'segments',
+        'armadas',
+        'pools',
+        'users',
+    ];
+    const isHybridSettingsTab = (tab: TabName) =>
+        hybridSettingsTabs.includes(tab);
     const tabTitle = (tab: TabName) => {
         if (tab === 'routes') {
             return 'Rute Induk';
@@ -499,6 +542,13 @@
         total: 0,
         last_page: 1,
     });
+    let settingsMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
+    let settingsQueryHydrated = $state(false);
 
     let routeForm = $state({
         id: 0,
@@ -624,6 +674,7 @@
 
     let customerSearch = $state('');
     let customerFiltersExpanded = $state(false);
+    let driverSearch = $state('');
     let driverUnitSearch = $state('');
     let armadaSearch = $state('');
     let armadaCategories = $state<string[]>([]);
@@ -634,6 +685,7 @@
     let layoutTemplateSearch = $state('');
     let layoutTemplateChoice = $state('');
     let armadaDetail = $state<ArmadaRow | null>(null);
+    let poolSearch = $state('');
     let userSearch = $state('');
     let userFiltersExpanded = $state(false);
     const today = new Date().toISOString().slice(0, 10);
@@ -769,16 +821,16 @@
         pools.filter((pool) => String(pool.status ?? 'active') === 'active'),
     );
     const roleOptions = $derived(roles);
-    const selectedPoolReport = $derived(
-        pools.find((pool) => pool.id === Number(reportPoolId)) ?? null,
-    );
+
     const formatPoolRoutes = (pool: PoolRow) => {
         const names = Array.isArray(pool.route_names) ? pool.route_names : [];
 
         return names.length > 0 ? names.join(', ') : 'Belum ada rute';
     };
+
     const togglePoolRoute = (routeId: number, checked: boolean) => {
         const id = Number(routeId || 0);
+
         if (id <= 0) {
             return;
         }
@@ -793,8 +845,10 @@
                 : current.filter((item) => Number(item) !== id),
         };
     };
+
     const toggleUserPool = (poolId: number, checked: boolean) => {
         const id = Number(poolId || 0);
+
         if (id <= 0) {
             return;
         }
@@ -809,8 +863,10 @@
                 : current.filter((item) => Number(item) !== id),
         };
     };
+
     const toggleUserRole = (roleId: number, checked: boolean) => {
         const id = Number(roleId || 0);
+
         if (id <= 0) {
             return;
         }
@@ -1133,6 +1189,7 @@
         }
 
         const flatpickr = await loadFlatpickr();
+
         if (!scheduleTimeInput || scheduleTimePicker) {
             return;
         }
@@ -1349,6 +1406,7 @@
         };
 
         let response = await send();
+
         if (response.status === 419 && (await refreshCsrfToken())) {
             response = await send();
         }
@@ -1979,21 +2037,13 @@
         }
     };
 
-    const loadRoutes = async () => {
-        const r = await api('GET', '/api/admin/routes');
-        routes = r.routes ?? [];
-    };
+    const usesHybridSettings = (tab = activeTab) =>
+        lockedFromServer &&
+        activeTab === tab &&
+        initialTab === tab &&
+        isHybridSettingsTab(tab);
 
-    const loadSchedules = async () => {
-        const [s, u, r] = await Promise.all([
-            api('GET', '/api/admin/schedules'),
-            api('GET', '/api/admin/units'),
-            api('GET', '/api/admin/routes'),
-        ]);
-        schedules = s.schedules ?? [];
-        units = u.units ?? [];
-        routes = r.routes ?? [];
-
+    const syncScheduleSelection = () => {
         const routeNames = collectScheduleRouteNames(routes, schedules);
         const fallbackRoute = routeNames[0] ?? '';
         const selectedExists =
@@ -2012,7 +2062,214 @@
         }
     };
 
+    const hydrateSettingsData = (payload: SettingsDataPayload) => {
+        if (!payload.tab || !isTabName(payload.tab)) {
+            return;
+        }
+
+        if (payload.tab === 'schedules') {
+            selectedScheduleRoute = payload.rute ?? selectedScheduleRoute;
+            schedules = payload.schedules ?? [];
+            syncScheduleSelection();
+        }
+
+        if (payload.tab === 'drivers') {
+            drivers = payload.drivers ?? [];
+        }
+
+        if (payload.tab === 'segments') {
+            selectedSegmentRouteId = Number(
+                payload.route_id ?? selectedSegmentRouteId,
+            );
+            segments = payload.segments ?? [];
+        }
+
+        if (payload.tab === 'armadas') {
+            armadas = payload.armadas ?? [];
+        }
+
+        if (payload.tab === 'pools') {
+            pools = payload.pools ?? [];
+            canManagePools = Boolean(payload.can_manage ?? true);
+        }
+
+        if (payload.tab === 'users') {
+            users = payload.users ?? [];
+            roles = payload.roles ?? roles;
+        }
+
+        if (payload.pagination) {
+            settingsMeta = payload.pagination;
+        }
+
+        busy = false;
+    };
+
+    const hydrateSettingsMasters = (payload: SettingsMastersPayload) => {
+        if (!payload.tab || !isTabName(payload.tab)) {
+            return;
+        }
+
+        if (payload.tab === 'schedules') {
+            routes = payload.routes ?? [];
+            units = payload.units ?? [];
+            syncScheduleSelection();
+        }
+
+        if (payload.tab === 'drivers') {
+            armadas = payload.armadas ?? [];
+        }
+
+        if (payload.tab === 'segments') {
+            routes = payload.routes ?? [];
+        }
+
+        if (payload.tab === 'armadas') {
+            armadaCategories = payload.categories ?? [];
+            units = payload.units ?? [];
+        }
+
+        if (payload.tab === 'pools') {
+            routes = payload.routes ?? [];
+        }
+
+        if (payload.tab === 'users') {
+            pools = payload.pools ?? [];
+            roles = payload.roles ?? [];
+            canManagePools = Boolean(payload.can_manage_pools ?? true);
+        }
+    };
+
+    const reloadSettingsWithInertia = (
+        targetPage = settingsMeta.page,
+        includeMasters = false,
+    ) => {
+        if (typeof window === 'undefined' || !usesHybridSettings()) {
+            return;
+        }
+
+        const query: Record<string, string | number> = {
+            page: targetPage,
+            per_page: settingsMeta.per_page,
+        };
+
+        if (activeTab === 'users' && userSearch.trim() !== '') {
+            query.q = userSearch.trim();
+        }
+
+        if (activeTab === 'drivers' && driverSearch.trim() !== '') {
+            query.q = driverSearch.trim();
+        }
+
+        if (activeTab === 'armadas' && armadaSearch.trim() !== '') {
+            query.q = armadaSearch.trim();
+        }
+
+        if (activeTab === 'pools' && poolSearch.trim() !== '') {
+            query.q = poolSearch.trim();
+        }
+
+        if (activeTab === 'schedules' && selectedScheduleRoute !== '') {
+            query.rute = selectedScheduleRoute;
+        }
+
+        if (activeTab === 'segments' && selectedSegmentRouteId > 0) {
+            query.route_id = selectedSegmentRouteId;
+        }
+
+        busy = true;
+        error = '';
+
+        router.get(window.location.pathname, query, {
+            only: includeMasters
+                ? ['settingsData', 'settingsMasters']
+                : ['settingsData'],
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onError: () => {
+                error = 'Gagal memuat data pengaturan.';
+            },
+            onFinish: () => {
+                busy = false;
+            },
+        });
+    };
+
+    $effect(() => {
+        if (!settingsQuery || settingsQueryHydrated) {
+            return;
+        }
+
+        if (initialTab === 'users') {
+            userSearch = settingsQuery.q ?? '';
+        }
+
+        if (initialTab === 'drivers') {
+            driverSearch = settingsQuery.q ?? '';
+        }
+
+        if (initialTab === 'armadas') {
+            armadaSearch = settingsQuery.q ?? '';
+        }
+
+        if (initialTab === 'pools') {
+            poolSearch = settingsQuery.q ?? '';
+        }
+
+        selectedScheduleRoute = settingsQuery.rute ?? '';
+        selectedSegmentRouteId = Number(settingsQuery.route_id ?? 0);
+        settingsMeta = {
+            ...settingsMeta,
+            page: Number(settingsQuery.page ?? 1),
+            per_page: Number(settingsQuery.per_page ?? 20),
+        };
+        settingsQueryHydrated = true;
+    });
+
+    $effect(() => {
+        if (settingsData) {
+            hydrateSettingsData(settingsData);
+        }
+    });
+
+    $effect(() => {
+        if (settingsMasters) {
+            hydrateSettingsMasters(settingsMasters);
+        }
+    });
+
+    const loadRoutes = async () => {
+        const r = await api('GET', '/api/admin/routes');
+        routes = r.routes ?? [];
+    };
+
+    const loadSchedules = async () => {
+        if (usesHybridSettings('schedules')) {
+            reloadSettingsWithInertia();
+
+            return;
+        }
+
+        const [s, u, r] = await Promise.all([
+            api('GET', '/api/admin/schedules'),
+            api('GET', '/api/admin/units'),
+            api('GET', '/api/admin/routes'),
+        ]);
+        schedules = s.schedules ?? [];
+        units = u.units ?? [];
+        routes = r.routes ?? [];
+
+        syncScheduleSelection();
+    };
+
     const loadDrivers = async () => {
+        if (usesHybridSettings('drivers')) {
+            reloadSettingsWithInertia();
+
+            return;
+        }
+
         const [d, armadaResponse] = await Promise.all([
             api('GET', '/api/admin/drivers'),
             api('GET', '/api/admin/armadas'),
@@ -2027,6 +2284,12 @@
     };
 
     const loadSegments = async () => {
+        if (usesHybridSettings('segments')) {
+            reloadSettingsWithInertia(1);
+
+            return;
+        }
+
         const r = await api('GET', '/api/admin/routes');
         routes = r.routes ?? [];
 
@@ -2132,6 +2395,12 @@
     };
 
     const loadUsers = async () => {
+        if (usesHybridSettings('users')) {
+            reloadSettingsWithInertia(1);
+
+            return;
+        }
+
         try {
             const query = userSearch.trim();
             const url =
@@ -2161,6 +2430,12 @@
     };
 
     const loadArmadas = async () => {
+        if (usesHybridSettings('armadas')) {
+            reloadSettingsWithInertia(1);
+
+            return;
+        }
+
         const query = armadaSearch.trim();
         const searchSuffix =
             query === '' ? '' : `?q=${encodeURIComponent(query)}`;
@@ -2195,6 +2470,12 @@
     };
 
     const loadPools = async () => {
+        if (usesHybridSettings('pools')) {
+            reloadSettingsWithInertia();
+
+            return;
+        }
+
         const r = await api('GET', '/api/admin/pools');
         pools = r.pools ?? [];
         routes = r.routes ?? routes;
@@ -3186,6 +3467,12 @@
             activeTab = firstVisibleTab();
         }
 
+        if (usesHybridSettings()) {
+            busy = settingsData === null;
+
+            return;
+        }
+
         void loadActiveTab();
     });
 
@@ -3264,7 +3551,7 @@
         </div>
 
         <div class="grid gap-4 xl:grid-cols-3">
-            {#each visibleTabGroups as group}
+            {#each visibleTabGroups as group (group.title)}
                 <Card class={group.tabs.some((item) => item.tab === activeTab) ? 'border-cyan-300/60 shadow-md shadow-cyan-950/5' : 'border-border/70 shadow-sm'}>
                     <CardHeader class="space-y-1 pb-3">
                         <CardTitle class="text-sm font-semibold">{group.title}</CardTitle>
@@ -3312,6 +3599,29 @@
                 </p>{/if}
             {#if error}<p class="text-sm text-red-600">{error}</p>{/if}
             {#if message}<p class="text-sm text-emerald-600">{message}</p>{/if}
+            {#if usesHybridSettings('drivers') || usesHybridSettings('pools')}
+                <div class="flex flex-col gap-2 md:flex-row">
+                    {#if activeTab === 'drivers'}
+                        <Input
+                            placeholder="Cari nama, telepon, atau nopol driver"
+                            bind:value={driverSearch}
+                        />
+                    {:else}
+                        <Input
+                            placeholder="Cari nama, kode, atau catatan pool"
+                            bind:value={poolSearch}
+                        />
+                    {/if}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="md:min-w-[120px]"
+                        onclick={() => reloadSettingsWithInertia(1)}
+                    >
+                        Search
+                    </Button>
+                </div>
+            {/if}
             {#if hasFormTab(activeTab) && canWriteTab(activeTab)}
                 <div class="flex items-center gap-2">
                     {#if activeMode === 'data'}
@@ -4002,6 +4312,7 @@
                             bind:value={selectedScheduleRoute}
                             onchange={() => {
                                 resetScheduleForm();
+                                void loadSchedules();
                             }}
                         >
                             <option value="">Pilih rute</option>
@@ -4285,14 +4596,16 @@
                                                     {dayRows.length} jadwal
                                                 </p>
                                             </div>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onclick={() =>
-                                                    openCreateSchedule(dow)}
-                                                >Tambah</Button
-                                            >
+                                            {#if canWriteTab('schedules')}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onclick={() =>
+                                                        openCreateSchedule(dow)}
+                                                    >Tambah</Button
+                                                >
+                                            {/if}
                                         </div>
                                         {#if dayRows.length === 0}
                                             <div
@@ -4349,6 +4662,7 @@
                                                                     </span>
                                                                 </div>
                                                             </div>
+                                                            {#if canWriteTab('schedules')}
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger
                                                                     asChild
@@ -4399,6 +4713,7 @@
                                                                     </DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
+                                                            {/if}
                                                         </div>
                                                         <div
                                                             class="mt-3 rounded-xl border border-border/60 bg-background/80 p-3"
@@ -4713,6 +5028,7 @@
                                             >
                                                 {status}
                                             </span>
+                                            {#if canWriteTab('drivers')}
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
@@ -4746,6 +5062,7 @@
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
+                                            {/if}
                                         </div>
                                     </div>
 
@@ -5125,6 +5442,7 @@
                                             <td
                                                 class="sticky right-0 z-20 border-b border-l border-border/60 bg-background px-3 py-4 text-center group-hover:bg-muted/15"
                                             >
+                                                {#if canWriteTab('drivers')}
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger
                                                         asChild
@@ -5172,6 +5490,7 @@
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
+                                                {/if}
                                             </td>
                                         </tr>
                                     {/each}
@@ -5663,6 +5982,7 @@
                                                     {row.route_name ?? selectedSegmentRoute.name}
                                                 </p>
                                             </div>
+                                            {#if canWriteTab('segments')}
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
@@ -5696,6 +6016,7 @@
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
+                                            {/if}
                                         </div>
 
                                         <div class="mt-3 rounded-xl bg-amber-50/80 px-3 py-2 text-xs dark:bg-amber-950/25">
@@ -5818,6 +6139,7 @@
                                                     <td
                                                         class="relative border-b border-border/60 px-4 py-4 text-center"
                                                     >
+                                                        {#if canWriteTab('segments')}
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger
                                                                 asChild
@@ -5868,6 +6190,7 @@
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
+                                                        {/if}
                                                     </td>
                                                 </tr>
                                             {/each}
@@ -7128,6 +7451,7 @@
                             {loadArmadas}
                             {openArmadaView}
                             {openArmadaEditor}
+                            canManage={canWriteTab('armadas')}
                             removeArmada={(id: number) =>
                                 removeItem(
                                     `/api/admin/armadas/${id}`,
@@ -7159,6 +7483,7 @@
                         {loadArmadas}
                         {openArmadaView}
                         {openArmadaEditor}
+                        canManage={canWriteTab('armadas')}
                         removeArmada={(id: number) =>
                             removeItem(
                                 `/api/admin/armadas/${id}`,
@@ -8590,6 +8915,48 @@
                         </div>
                     </div>
                 {/if}
+            {/if}
+
+            {#if usesHybridSettings() && activeMode === 'data' && settingsMeta.total > 0}
+                <div
+                    class="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4"
+                >
+                    <p class="text-xs text-muted-foreground">
+                        Total {settingsMeta.total} data
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={settingsMeta.page <= 1 || busy}
+                            onclick={() =>
+                                reloadSettingsWithInertia(
+                                    settingsMeta.page - 1,
+                                )}
+                        >
+                            Prev
+                        </Button>
+                        <span
+                            class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground"
+                        >
+                            {settingsMeta.page} / {settingsMeta.last_page}
+                        </span>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={settingsMeta.page >=
+                                settingsMeta.last_page || busy}
+                            onclick={() =>
+                                reloadSettingsWithInertia(
+                                    settingsMeta.page + 1,
+                                )}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
             {/if}
         </CardContent>
     </Card>

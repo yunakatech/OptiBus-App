@@ -12,6 +12,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -27,26 +28,47 @@ class AdminOpsApiController extends Controller
     ) {}
 
     private ?bool $schedulesHasRouteId = null;
+
     private ?bool $schedulesHasSeatsColumn = null;
+
     private ?bool $schedulesHasBopColumn = null;
+
     private ?bool $scheduleUnitsTableExists = null;
+
     private ?bool $chartersHasStatusColumn = null;
+
     private ?bool $chartersHasArmadaIdColumn = null;
+
     private ?bool $chartersHasArmadaNopolColumn = null;
+
     private ?bool $chartersHasPoolIdColumn = null;
+
     private ?bool $chartersHasMasterCarterIdColumn = null;
+
     private ?bool $luggagesHasPoolIdColumn = null;
+
     private ?bool $tripAssignmentsHasArmadaId = null;
+
     private ?bool $tripAssignmentsHasArmadaNopol = null;
+
     private ?bool $tripAssignmentsHasStatus = null;
+
     private ?bool $driversHasArmadaId = null;
+
     private ?bool $driversHasArmadaNopol = null;
+
     private ?bool $routesHasBopColumn = null;
+
     private ?bool $routesHasTargetRevenueColumn = null;
+
     private ?bool $routesHasFixedCostColumn = null;
+
     private ?bool $poolsHasFixedCostColumn = null;
+
     private ?bool $driversHasRevenueColumn = null;
+
     private ?bool $driversHasBopColumn = null;
+
     private ?bool $driversHasFixedCostColumn = null;
 
     public function routesIndex(): JsonResponse
@@ -60,14 +82,14 @@ class AdminOpsApiController extends Controller
         $this->applyRouteScopeToQuery($query, 'routes.id', 'routes.name');
 
         $rows = $query->get([
-                'id',
-                'name',
-                'origin',
-                'destination',
-                $this->hasRoutesBopColumn() ? 'bop' : DB::raw('0 as bop'),
-                $this->hasRoutesTargetRevenueColumn() ? 'target_revenue' : DB::raw('0 as target_revenue'),
-                $this->hasRoutesFixedCostColumn() ? 'fixed_cost' : DB::raw('0 as fixed_cost'),
-            ])
+            'id',
+            'name',
+            'origin',
+            'destination',
+            $this->hasRoutesBopColumn() ? 'bop' : DB::raw('0 as bop'),
+            $this->hasRoutesTargetRevenueColumn() ? 'target_revenue' : DB::raw('0 as target_revenue'),
+            $this->hasRoutesFixedCostColumn() ? 'fixed_cost' : DB::raw('0 as fixed_cost'),
+        ])
             ->map(fn ($row) => $this->withRouteFinancials($row, $financials))
             ->values();
 
@@ -110,6 +132,7 @@ class AdminOpsApiController extends Controller
             if ($this->hasSchedulesRouteId()) {
                 DB::table('schedules')->where('route_id', $id)->update(['rute' => $payload['name']]);
             }
+
             return $this->ok(['message' => 'Route updated.', 'id' => $id]);
         }
 
@@ -126,6 +149,7 @@ class AdminOpsApiController extends Controller
             DB::table('schedules')->where('route_id', $id)->update(['route_id' => null]);
         }
         DB::table('routes')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Route deleted.']);
     }
 
@@ -171,8 +195,19 @@ class AdminOpsApiController extends Controller
         }
         $this->applyRouteScopeToQuery($query, $hasRouteId ? 's.route_id' : '', 's.rute');
 
-        $rows = $query->get()->map(function ($row) {
+        $pagination = null;
+        if ($request->boolean('paginate')) {
+            [$page, $perPage] = $this->paginationParams($request);
+            $result = $this->paginateQuery($query, $page, $perPage);
+            $rows = collect($result['data']);
+            $pagination = $result['meta'];
+        } else {
+            $rows = $query->get();
+        }
+
+        $rows = $rows->map(function ($row) {
             $row->jam = substr((string) $row->jam, 0, 5);
+
             return $row;
         })->values();
 
@@ -214,10 +249,14 @@ class AdminOpsApiController extends Controller
         $rows = $rows->map(function ($row) use ($optionsBySchedule) {
             $scheduleId = (int) ($row->id ?? 0);
             $row->unit_options = $optionsBySchedule[$scheduleId] ?? [];
+
             return $row;
         });
 
-        return $this->ok(['schedules' => $rows]);
+        return $this->ok([
+            'schedules' => $rows,
+            ...($pagination !== null ? ['pagination' => $pagination] : []),
+        ]);
     }
 
     public function schedulesSave(Request $request): JsonResponse
@@ -274,6 +313,7 @@ class AdminOpsApiController extends Controller
                         ->orWhere(function (Builder $legacy) use ($routeName) {
                             $legacy->whereNull('route_id')->where('rute', $routeName);
                         });
+
                     return;
                 }
                 $query->where('rute', $routeName);
@@ -393,6 +433,7 @@ class AdminOpsApiController extends Controller
                 if ($id > 0) {
                     return $this->ok(['message' => 'Schedule updated.', 'id' => $scheduleId]);
                 }
+
                 return $this->ok(['message' => 'Schedule created.', 'id' => $scheduleId], 201);
             });
         } catch (QueryException $e) {
@@ -406,15 +447,41 @@ class AdminOpsApiController extends Controller
             DB::table('schedule_units')->where('schedule_id', $id)->delete();
         }
         DB::table('schedules')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Schedule deleted.']);
     }
 
-    public function driversIndex(): JsonResponse
+    public function driversIndex(Request $request): JsonResponse
     {
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
+        $rows = collect($this->driverRowsForMonth($monthStart, $monthEnd));
+        $q = trim((string) $request->query('q', ''));
 
-        return $this->ok(['drivers' => $this->driverRowsForMonth($monthStart, $monthEnd)]);
+        if ($q !== '') {
+            $needle = mb_strtolower($q);
+            $rows = $rows
+                ->filter(static fn (array $row): bool => str_contains(mb_strtolower(implode(' ', [
+                    (string) ($row['nama'] ?? ''),
+                    (string) ($row['phone'] ?? ''),
+                    (string) ($row['nopol'] ?? ''),
+                ])), $needle))
+                ->values();
+        }
+
+        if (! $request->boolean('paginate')) {
+            return $this->ok(['drivers' => $rows]);
+        }
+
+        [$page, $perPage] = $this->paginationParams($request);
+        $pagination = $this->paginationMeta($rows->count(), $page, $perPage);
+
+        return $this->ok([
+            'drivers' => $rows
+                ->slice(($pagination['page'] - 1) * $pagination['per_page'], $pagination['per_page'])
+                ->values(),
+            'pagination' => $pagination,
+        ]);
     }
 
     public function driversSave(Request $request): JsonResponse
@@ -489,6 +556,7 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('drivers')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Driver updated.', 'id' => $id]);
         }
 
@@ -502,6 +570,7 @@ class AdminOpsApiController extends Controller
     public function driversDelete(int $id): JsonResponse
     {
         DB::table('drivers')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Driver deleted.']);
     }
 
@@ -528,6 +597,7 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('luggage_services')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Luggage service updated.', 'id' => $id]);
         }
 
@@ -541,12 +611,14 @@ class AdminOpsApiController extends Controller
     public function luggageServicesDelete(int $id): JsonResponse
     {
         DB::table('luggage_services')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Luggage service deleted.']);
     }
 
     public function segmentsIndex(Request $request): JsonResponse
     {
         $routeId = (int) $request->query('route_id', 0);
+        $q = trim((string) $request->query('q', ''));
 
         $query = DB::table('segments as s')
             ->leftJoin('routes as r', 's.route_id', '=', 'r.id')
@@ -564,9 +636,29 @@ class AdminOpsApiController extends Controller
         if ($routeId > 0) {
             $query->where('s.route_id', $routeId);
         }
+        if ($q !== '') {
+            $qLike = '%'.$q.'%';
+            $query->where(function (Builder $builder) use ($qLike): void {
+                $builder
+                    ->where('s.rute', 'like', $qLike)
+                    ->orWhere('s.origin', 'like', $qLike)
+                    ->orWhere('s.destination', 'like', $qLike)
+                    ->orWhere('r.name', 'like', $qLike);
+            });
+        }
         $this->applyRouteScopeToQuery($query, 's.route_id', 's.rute');
 
-        return $this->ok(['segments' => $query->get()]);
+        if (! $request->boolean('paginate')) {
+            return $this->ok(['segments' => $query->get()]);
+        }
+
+        [$page, $perPage] = $this->paginationParams($request);
+        $result = $this->paginateQuery($query, $page, $perPage);
+
+        return $this->ok([
+            'segments' => $result['data'],
+            'pagination' => $result['meta'],
+        ]);
     }
 
     public function segmentsSave(Request $request): JsonResponse
@@ -591,18 +683,21 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('segments')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Segment updated.', 'id' => $id]);
         }
 
         $newId = DB::table('segments')->insertGetId(array_merge($payload, [
             'created_at' => now(),
         ]));
+
         return $this->ok(['message' => 'Segment created.', 'id' => $newId], 201);
     }
 
     public function segmentsDelete(int $id): JsonResponse
     {
         DB::table('segments')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Segment deleted.']);
     }
 
@@ -628,6 +723,7 @@ class AdminOpsApiController extends Controller
         }
 
         $result = $this->paginateQuery($query, $page, $perPage);
+
         return $this->ok([
             'customers' => $result['data'],
             'pagination' => $result['meta'],
@@ -655,24 +751,28 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('customers')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Customer updated.', 'id' => $id]);
         }
 
         $existing = DB::table('customers')->where('phone', $payload['phone'])->value('id');
         if ($existing) {
             DB::table('customers')->where('id', (int) $existing)->update($payload);
+
             return $this->ok(['message' => 'Customer updated by phone.', 'id' => (int) $existing]);
         }
 
         $newId = DB::table('customers')->insertGetId(array_merge($payload, [
             'created_at' => now(),
         ]));
+
         return $this->ok(['message' => 'Customer created.', 'id' => $newId], 201);
     }
 
     public function customersDelete(int $id): JsonResponse
     {
         DB::table('customers')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Customer deleted.']);
     }
 
@@ -709,6 +809,7 @@ class AdminOpsApiController extends Controller
         $headers = fgetcsv($handle, 0, $delimiter);
         if (! is_array($headers)) {
             fclose($handle);
+
             return $this->error('Template import kosong atau tidak valid.', 422);
         }
 
@@ -722,6 +823,7 @@ class AdminOpsApiController extends Controller
 
         if (! isset($columns['name'], $columns['phone'])) {
             fclose($handle);
+
             return $this->error('Header wajib minimal: name dan phone.', 422);
         }
 
@@ -746,12 +848,14 @@ class AdminOpsApiController extends Controller
             if ($name === '' || $phone === '') {
                 $skipped += 1;
                 $errors[] = "Baris {$line}: name dan phone wajib diisi.";
+
                 continue;
             }
 
             if (mb_strlen($name) > 120 || mb_strlen($phone) > 30 || mb_strlen($pickupPoint) > 180) {
                 $skipped += 1;
                 $errors[] = "Baris {$line}: panjang name/phone/pickup_point melebihi batas.";
+
                 continue;
             }
 
@@ -766,6 +870,7 @@ class AdminOpsApiController extends Controller
             if ($existingId) {
                 DB::table('customers')->where('id', (int) $existingId)->update($payload);
                 $updated += 1;
+
                 continue;
             }
 
@@ -1108,21 +1213,21 @@ class AdminOpsApiController extends Controller
         $this->applyRouteScopeToQuery($query, '', 'rute', $poolId);
 
         $rows = $query->get([
-                'id',
-                'rute',
-                'tanggal',
-                'jam',
-                'unit',
-                'seat',
-                'name',
-                'phone',
-                'pickup_point',
-                'pembayaran',
-                'status',
-                'price',
-                'discount',
-                'created_at',
-            ]);
+            'id',
+            'rute',
+            'tanggal',
+            'jam',
+            'unit',
+            'seat',
+            'name',
+            'phone',
+            'pickup_point',
+            'pembayaran',
+            'status',
+            'price',
+            'discount',
+            'created_at',
+        ]);
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
@@ -1182,12 +1287,12 @@ class AdminOpsApiController extends Controller
             );
 
             $rows = $query->get([
-                    DB::raw('date(l.created_at) as tanggal'),
-                    DB::raw('l.sender_name as name'),
-                    DB::raw('l.receiver_name as phone'),
-                    DB::raw('s.name as rute'),
-                    DB::raw('l.price as final_price'),
-                ]);
+                DB::raw('date(l.created_at) as tanggal'),
+                DB::raw('l.sender_name as name'),
+                DB::raw('l.receiver_name as phone'),
+                DB::raw('s.name as rute'),
+                DB::raw('l.price as final_price'),
+            ]);
 
             return response()->streamDownload(function () use ($rows) {
                 $out = fopen('php://output', 'w');
@@ -1213,19 +1318,19 @@ class AdminOpsApiController extends Controller
             $this->applyCharterPoolScope($query, $poolId);
 
             $rows = $query->get([
-                    DB::raw('c.start_date as tanggal'),
-                    'c.name',
-                    'c.phone',
-                    'c.pickup_point',
-                    'c.drop_point',
-                    DB::raw('c.price as final_price'),
-                ]);
+                DB::raw('c.start_date as tanggal'),
+                'c.name',
+                'c.phone',
+                'c.pickup_point',
+                'c.drop_point',
+                DB::raw('c.price as final_price'),
+            ]);
 
             return response()->streamDownload(function () use ($rows) {
                 $out = fopen('php://output', 'w');
                 fputcsv($out, ['Tanggal', 'Nama Penyewa', 'Nomor HP', 'Jemput - Tujuan', 'Total']);
                 foreach ($rows as $row) {
-                    $rute = ($row->pickup_point ?? '-') . ' - ' . ($row->drop_point ?? '-');
+                    $rute = ($row->pickup_point ?? '-').' - '.($row->drop_point ?? '-');
                     fputcsv($out, [
                         $row->tanggal,
                         $row->name,
@@ -1245,13 +1350,13 @@ class AdminOpsApiController extends Controller
         $this->applyRouteScopeToQuery($query, '', 'b.rute', $poolId);
 
         $rows = $query->get([
-                'b.tanggal',
-                'b.name',
-                'b.phone',
-                'b.rute',
-                DB::raw('COALESCE(b.discount, 0) as discount'),
-                DB::raw('(COALESCE(b.price, 0) - COALESCE(b.discount, 0)) as final_price'),
-            ]);
+            'b.tanggal',
+            'b.name',
+            'b.phone',
+            'b.rute',
+            DB::raw('COALESCE(b.discount, 0) as discount'),
+            DB::raw('(COALESCE(b.price, 0) - COALESCE(b.discount, 0)) as final_price'),
+        ]);
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
@@ -1402,6 +1507,7 @@ class AdminOpsApiController extends Controller
         $this->orderChartersByNearestDeparture($query, $scope);
 
         $result = $this->paginateQuery($query, $page, $perPage);
+
         return $this->ok([
             'charters' => $result['data'],
             'pagination' => $result['meta'],
@@ -1699,10 +1805,11 @@ class AdminOpsApiController extends Controller
                 $this->activityActor(),
                 ['charter_id' => $id],
             );
+
             return $this->ok(['message' => 'Charter updated.', 'id' => $id]);
         }
 
-        if ($hasStatusColumn && !isset($payload['status'])) {
+        if ($hasStatusColumn && ! isset($payload['status'])) {
             $payload['status'] = 'active';
         }
 
@@ -1716,6 +1823,7 @@ class AdminOpsApiController extends Controller
             $this->activityActor(),
             ['charter_id' => $newId],
         );
+
         return $this->ok(['message' => 'Charter created.', 'id' => $newId], 201);
     }
 
@@ -1789,12 +1897,14 @@ class AdminOpsApiController extends Controller
             $updated = DB::table('charters')
                 ->whereIn('id', $allowedIds)
                 ->update(['status' => 'canceled']);
+
             return $this->ok(['message' => 'Bulk cancel charters done.', 'updated' => $updated]);
         }
 
         $updated = DB::table('charters')
             ->whereIn('id', $allowedIds)
             ->update(['payment_status' => 'Canceled']);
+
         return $this->ok(['message' => 'Bulk cancel charters done.', 'updated' => $updated]);
     }
 
@@ -1822,6 +1932,7 @@ class AdminOpsApiController extends Controller
             $this->activityActor(),
             ['charter_id' => $id],
         );
+
         return $this->ok(['message' => 'BOP marked done.', 'id' => $id]);
     }
 
@@ -1849,6 +1960,7 @@ class AdminOpsApiController extends Controller
             $this->activityActor(),
             ['charter_id' => $id],
         );
+
         return $this->ok(['message' => 'Charter payment marked Lunas.', 'id' => $id]);
     }
 
@@ -1884,6 +1996,7 @@ class AdminOpsApiController extends Controller
                 $this->activityActor(),
                 ['charter_id' => $id],
             );
+
             return $this->ok(['message' => 'Charter marked done.', 'id' => $id]);
         }
 
@@ -1895,6 +2008,7 @@ class AdminOpsApiController extends Controller
             $this->activityActor(),
             ['charter_id' => $id],
         );
+
         return $this->ok(['message' => 'Charter marked done.', 'id' => $id]);
     }
 
@@ -2139,6 +2253,7 @@ class AdminOpsApiController extends Controller
                     $this->luggageChangeSummary((array) $previous, $payload + (array) $previous),
                 );
             }
+
             return $this->ok(['message' => 'Luggage updated.', 'id' => $id]);
         }
 
@@ -2148,6 +2263,7 @@ class AdminOpsApiController extends Controller
         ]));
         $resi = $this->ensureLuggageResi($newId);
         $this->appendLuggageLogByResi($resi, (string) $payload['status'], $this->luggageCreateSummary($payload));
+
         return $this->ok(['message' => 'Luggage created.', 'id' => $newId], 201);
     }
 
@@ -2163,6 +2279,7 @@ class AdminOpsApiController extends Controller
         }
 
         DB::table('luggages')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Luggage deleted.']);
     }
 
@@ -2179,6 +2296,7 @@ class AdminOpsApiController extends Controller
         }
 
         $deleted = DB::table('luggages')->whereIn('id', $allowedIds)->delete();
+
         return $this->ok(['message' => 'Bulk delete luggages done.', 'deleted' => $deleted]);
     }
 
@@ -2248,6 +2366,7 @@ class AdminOpsApiController extends Controller
             'payment',
             $this->luggageChangeSummary($before, ['payment_status' => 'Lunas'] + $before),
         );
+
         return $this->ok(['message' => 'Luggage payment marked Lunas.', 'id' => $id]);
     }
 
@@ -2271,6 +2390,7 @@ class AdminOpsApiController extends Controller
             $status,
             $this->luggageChangeSummary($before, ['status' => $status] + $before),
         );
+
         return $this->ok(['message' => 'Luggage status marked pickup.', 'id' => $id]);
     }
 
@@ -2294,6 +2414,7 @@ class AdminOpsApiController extends Controller
             $status,
             $this->luggageChangeSummary($before, ['status' => $status] + $before),
         );
+
         return $this->ok(['message' => 'Luggage status marked arrived.', 'id' => $id]);
     }
 
@@ -2319,6 +2440,7 @@ class AdminOpsApiController extends Controller
                 'Alasan: Pengiriman bagasi dibatalkan',
             ]),
         );
+
         return $this->ok(['message' => 'Luggage status marked canceled.', 'id' => $id]);
     }
 
@@ -2395,22 +2517,22 @@ class AdminOpsApiController extends Controller
         }
 
         $select = [
-                't.id',
-                't.rute',
-                't.tanggal',
-                't.jam',
-                't.unit',
-                't.driver_id',
-                'd.nama',
-                'd.phone',
-            ];
+            't.id',
+            't.rute',
+            't.tanggal',
+            't.jam',
+            't.unit',
+            't.driver_id',
+            'd.nama',
+            'd.phone',
+        ];
 
         if ($this->tripAssignmentsHasArmadaId()) {
             $select[] = 't.armada_id';
         }
 
         if ($this->tripAssignmentsHasArmadaNopol() && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
-            $select[] = DB::raw("COALESCE(t.armada_nopol, a.nopol) as armada_nopol");
+            $select[] = DB::raw('COALESCE(t.armada_nopol, a.nopol) as armada_nopol');
         } elseif ($this->tripAssignmentsHasArmadaNopol()) {
             $select[] = 't.armada_nopol';
         } elseif ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
@@ -2434,6 +2556,7 @@ class AdminOpsApiController extends Controller
         $this->applyRouteScopeToQuery($query, '', 't.rute');
 
         $result = $this->paginateQuery($query, $page, $perPage);
+
         return $this->ok([
             'assignments' => $result['data'],
             'pagination' => $result['meta'],
@@ -2533,6 +2656,7 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('trip_assignments')->where('id', $id)->update($payload);
+
             return $this->ok([
                 'message' => 'Assignment updated.',
                 'id' => $id,
@@ -2559,6 +2683,7 @@ class AdminOpsApiController extends Controller
                 $updatePayload['armada_nopol'] = $payload['armada_nopol'] ?? null;
             }
             DB::table('trip_assignments')->where('id', (int) $existingId)->update($updatePayload);
+
             return $this->ok([
                 'message' => 'Assignment updated by trip.',
                 'id' => (int) $existingId,
@@ -2568,6 +2693,7 @@ class AdminOpsApiController extends Controller
         }
 
         $newId = DB::table('trip_assignments')->insertGetId(array_merge($payload, ['created_at' => now()]));
+
         return $this->ok([
             'message' => 'Assignment created.',
             'id' => $newId,
@@ -2579,6 +2705,7 @@ class AdminOpsApiController extends Controller
     public function assignmentsDelete(int $id): JsonResponse
     {
         DB::table('trip_assignments')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Assignment deleted.']);
     }
 
@@ -2590,6 +2717,7 @@ class AdminOpsApiController extends Controller
         ]);
 
         $deleted = DB::table('trip_assignments')->whereIn('id', $data['ids'])->delete();
+
         return $this->ok(['message' => 'Bulk delete assignments done.', 'deleted' => $deleted]);
     }
 
@@ -2642,22 +2770,26 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('customer_bagasi')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Customer bagasi updated.', 'id' => $id]);
         }
 
         $existingId = (int) (DB::table('customer_bagasi')->where('no_hp', $payload['no_hp'])->value('id') ?? 0);
         if ($existingId > 0) {
             DB::table('customer_bagasi')->where('id', $existingId)->update($payload);
+
             return $this->ok(['message' => 'Customer bagasi updated by phone.', 'id' => $existingId]);
         }
 
         $newId = DB::table('customer_bagasi')->insertGetId(array_merge($payload, ['created_at' => now()]));
+
         return $this->ok(['message' => 'Customer bagasi created.', 'id' => $newId], 201);
     }
 
     public function customerBagasiDelete(int $id): JsonResponse
     {
         DB::table('customer_bagasi')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Customer bagasi deleted.']);
     }
 
@@ -2720,22 +2852,26 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('customer_charter')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Customer charter updated.', 'id' => $id]);
         }
 
         $existingId = (int) (DB::table('customer_charter')->where('no_hp', $payload['no_hp'])->value('id') ?? 0);
         if ($existingId > 0) {
             DB::table('customer_charter')->where('id', $existingId)->update($payload);
+
             return $this->ok(['message' => 'Customer charter updated by phone.', 'id' => $existingId]);
         }
 
         $newId = DB::table('customer_charter')->insertGetId(array_merge($payload, ['created_at' => now()]));
+
         return $this->ok(['message' => 'Customer charter created.', 'id' => $newId], 201);
     }
 
     public function customerCharterDelete(int $id): JsonResponse
     {
         DB::table('customer_charter')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Customer charter deleted.']);
     }
 
@@ -2806,16 +2942,19 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('master_carter')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Rute carter updated.', 'id' => $id]);
         }
 
         $newId = DB::table('master_carter')->insertGetId(array_merge($payload, ['created_at' => now()]));
+
         return $this->ok(['message' => 'Rute carter created.', 'id' => $newId], 201);
     }
 
     public function charterRoutesMasterDelete(int $id): JsonResponse
     {
         DB::table('master_carter')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Rute carter deleted.']);
     }
 
@@ -2888,6 +3027,7 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('units')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Unit updated.', 'id' => $id]);
         }
 
@@ -3030,12 +3170,24 @@ class AdminOpsApiController extends Controller
         $monthEnd = now()->endOfMonth()->toDateString();
         $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
 
-        $rows = $query
-            ->get()
+        $pagination = null;
+        if ($request->boolean('paginate')) {
+            [$page, $perPage] = $this->paginationParams($request);
+            $result = $this->paginateQuery($query, $page, $perPage);
+            $rows = collect($result['data']);
+            $pagination = $result['meta'];
+        } else {
+            $rows = $query->get();
+        }
+
+        $rows = $rows
             ->map(fn ($row) => $this->withArmadaFinancials($row, $financials))
             ->values();
 
-        return $this->ok(['armadas' => $rows]);
+        return $this->ok([
+            'armadas' => $rows,
+            ...($pagination !== null ? ['pagination' => $pagination] : []),
+        ]);
     }
 
     public function armadasSave(Request $request): JsonResponse
@@ -3099,6 +3251,7 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             DB::table('armadas')->where('id', $id)->update($payload);
+
             return $this->ok(['message' => 'Armada updated.', 'id' => $id]);
         }
 
@@ -3143,6 +3296,7 @@ class AdminOpsApiController extends Controller
         }
 
         DB::table('armadas')->where('id', $id)->delete();
+
         return $this->ok(['message' => 'Armada deleted.']);
     }
 
@@ -3192,11 +3346,15 @@ class AdminOpsApiController extends Controller
                     ? DB::table('routes')->orderBy('name')->get(['id', 'name', 'origin', 'destination'])
                     : [],
                 'can_manage' => true,
+                ...($request->boolean('paginate')
+                    ? ['pagination' => $this->paginationMeta(0, 1, max(10, min(100, (int) $request->query('per_page', 20))))]
+                    : []),
             ]);
         }
 
         $canManage = $this->currentUserIsSuperAdmin();
         $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
+        $q = trim((string) $request->query('q', ''));
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
         $routeFinancials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
@@ -3216,13 +3374,38 @@ class AdminOpsApiController extends Controller
 
         if (! $canManage) {
             if ($allowedPoolIds === []) {
-                return $this->ok(['pools' => [], 'routes' => [], 'can_manage' => false]);
+                return $this->ok([
+                    'pools' => [],
+                    'routes' => [],
+                    'can_manage' => false,
+                    ...($request->boolean('paginate')
+                        ? ['pagination' => $this->paginationMeta(0, 1, max(10, min(100, (int) $request->query('per_page', 20))))]
+                        : []),
+                ]);
             }
 
             $poolQuery->whereIn('id', $allowedPoolIds)->where('status', 'active');
         }
 
-        $pools = $poolQuery->get();
+        if ($q !== '') {
+            $qLike = '%'.$q.'%';
+            $poolQuery->where(function (Builder $builder) use ($qLike): void {
+                $builder
+                    ->where('name', 'like', $qLike)
+                    ->orWhere('code', 'like', $qLike)
+                    ->orWhere('notes', 'like', $qLike);
+            });
+        }
+
+        $pagination = null;
+        if ($request->boolean('paginate')) {
+            [$page, $perPage] = $this->paginationParams($request);
+            $result = $this->paginateQuery($poolQuery, $page, $perPage);
+            $pools = collect($result['data']);
+            $pagination = $result['meta'];
+        } else {
+            $pools = $poolQuery->get();
+        }
         $poolIds = $pools->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
         $routesByPool = [];
 
@@ -3286,6 +3469,7 @@ class AdminOpsApiController extends Controller
             'pools' => $rows,
             'routes' => $routeQuery->get(['id', 'name', 'origin', 'destination']),
             'can_manage' => $canManage,
+            ...($pagination !== null ? ['pagination' => $pagination] : []),
         ]);
     }
 
@@ -3765,6 +3949,7 @@ class AdminOpsApiController extends Controller
             DB::table('users')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
             $this->syncUserPools($id, $poolIds);
             $this->syncUserRoles($id, $roleIds);
+
             return $this->ok(['message' => 'User updated.', 'id' => $id]);
         }
 
@@ -3909,7 +4094,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, int> $poolIds
+     * @param  array<int, int>  $poolIds
      */
     private function syncUserPools(int $userId, array $poolIds): void
     {
@@ -3948,7 +4133,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, int> $roleIds
+     * @param  array<int, int>  $roleIds
      */
     private function syncUserRoles(int $userId, array $roleIds): void
     {
@@ -4162,8 +4347,8 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, int> $routeIds
-     * @param array<int, string> $routeNames
+     * @param  array<int, int>  $routeIds
+     * @param  array<int, string>  $routeNames
      */
     private function appendRouteScopeClauses(Builder $builder, string $routeIdColumn, array $routeIds, string $routeNameColumn, array $routeNames): void
     {
@@ -4324,7 +4509,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, int> $ids
+     * @param  array<int, int>  $ids
      * @return array<int, int>
      */
     private function accessibleCharterIds(array $ids): array
@@ -4345,7 +4530,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, int> $ids
+     * @param  array<int, int>  $ids
      * @return array<int, int>
      */
     private function accessibleLuggageIds(array $ids): array
@@ -4423,6 +4608,7 @@ class AdminOpsApiController extends Controller
     private function nullable(?string $value): ?string
     {
         $v = trim((string) ($value ?? ''));
+
         return $v === '' ? null : $v;
     }
 
@@ -4443,8 +4629,8 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, string|null> $row
-     * @param array<string, int> $columns
+     * @param  array<int, string|null>  $row
+     * @param  array<string, int>  $columns
      */
     private function customerImportValue(array $row, array $columns, string $key): string
     {
@@ -4456,7 +4642,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, string|null> $row
+     * @param  array<int, string|null>  $row
      */
     private function isBlankCsvRow(array $row): bool
     {
@@ -4473,6 +4659,7 @@ class AdminOpsApiController extends Controller
     {
         $page = max(1, (int) $request->query('page', 1));
         $perPage = max(10, min(100, (int) $request->query('per_page', 20)));
+
         return [$page, $perPage];
     }
 
@@ -4480,6 +4667,7 @@ class AdminOpsApiController extends Controller
     {
         $trimmed = trim($value);
         $digits = preg_replace('/\D+/', '', $trimmed) ?? '';
+
         return $digits !== '' ? $digits : $trimmed;
     }
 
@@ -4502,6 +4690,7 @@ class AdminOpsApiController extends Controller
                     if ($type === 'seat') {
                         $count += 1;
                     }
+
                     continue;
                 }
 
@@ -4570,6 +4759,7 @@ class AdminOpsApiController extends Controller
 
         $resi = $this->nextLuggageResi();
         DB::table('luggages')->where('id', $luggageId)->update(['kode_resi' => $resi]);
+
         return $resi;
     }
 
@@ -5404,8 +5594,8 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, array{name: string, origin: string, destination: string}> $routeProfiles
-     * @param array<string, array<int, int>> $nameMap
+     * @param  array<int, array{name: string, origin: string, destination: string}>  $routeProfiles
+     * @param  array<string, array<int, int>>  $nameMap
      * @return array<int, int>
      */
     private function matchRouteIdsForCharter(string $pickupPoint, string $dropPoint, array $routeProfiles, array $nameMap): array
@@ -5440,8 +5630,8 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, int> $routeIds
-     * @param array<int, array<string, float>> $financials
+     * @param  array<int, int>  $routeIds
+     * @param  array<int, array<string, float>>  $financials
      * @return array{luggage_revenue: float, departure_revenue: float, charter_revenue: float, revenue: float, departure_bop: float, charter_bop: float, bop: float}
      */
     private function sumRouteFinancials(array $routeIds, array $financials): array
@@ -5459,7 +5649,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, array<string, float>> $financials
+     * @param  array<int, array<string, float>>  $financials
      */
     private function withRouteFinancials(object $row, array $financials): object
     {
@@ -5687,7 +5877,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<string, array<string, float>> $financials
+     * @param  array<string, array<string, float>>  $financials
      */
     private function withArmadaFinancials(object $row, array $financials): object
     {
@@ -5765,7 +5955,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @return array{data: \Illuminate\Support\Collection<int, object>, meta: array<string, int>}
+     * @return array{data: Collection<int, object>, meta: array<string, int>}
      */
     private function paginateQuery(Builder $query, int $page, int $perPage): array
     {
@@ -5852,7 +6042,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<int, string> $tables
+     * @param  array<int, string>  $tables
      */
     private function buildTablesMutationSignature(array $tables): string
     {
@@ -6025,7 +6215,7 @@ class AdminOpsApiController extends Controller
     /**
      * Keep the charter reservation flow connected to the Customer Carter master data.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function syncCustomerCharterFromCharterPayload(array $payload): void
     {
@@ -6081,7 +6271,7 @@ class AdminOpsApiController extends Controller
     /**
      * Reuse Carter reservations as route presets for the Master Carter menu.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function syncMasterCarterFromCharterPayload(array $payload): void
     {
