@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\ActivityLog;
 use App\Support\AccessControl;
+use App\Support\ActivityLog;
+use App\Support\RoleAccessData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,10 @@ use Inertia\Response;
 
 class AdminOpsController extends Controller
 {
+    public function __construct(
+        private readonly RoleAccessData $roleAccessData,
+    ) {}
+
     public function __invoke(Request $request): Response|RedirectResponse
     {
         $lockedMenuView = (bool) ($request->route('locked') ?? false);
@@ -107,6 +112,13 @@ class AdminOpsController extends Controller
             'lockedMenuView' => $lockedMenuView,
             'initialMode' => $initialMode !== '' ? $initialMode : null,
             'initialRecordId' => $recordId > 0 ? $recordId : null,
+            'roleQuery' => $initialTab === 'roles' ? trim((string) $request->query('q', '')) : '',
+            'roleData' => $initialTab === 'roles'
+                ? Inertia::defer(fn (): array => $this->roleAccessData->roles($request), 'role-data')
+                : null,
+            'rolePermissions' => $initialTab === 'roles'
+                ? Inertia::defer(fn (): array => $this->roleAccessData->permissions(), 'role-permissions')
+                : null,
         ]);
     }
 }

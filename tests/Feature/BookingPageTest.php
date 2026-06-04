@@ -45,10 +45,12 @@ class BookingPageTest extends TestCase
         $this->get(route('bookings.index'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Bookings')
-                ->has('bookingGroups', 1)
-                ->where('bookingGroups.0.departure_status', 'canceled')
-                ->where('bookingGroups.0.driver_name', '-')
-                ->where('bookingGroups.0.armada_nopol', '-'),
+                ->missing('bookingGroups')
+                ->loadDeferredProps('booking-list', fn (Assert $reload) => $reload
+                    ->has('bookingGroups', 1)
+                    ->where('bookingGroups.0.departure_status', 'canceled')
+                    ->where('bookingGroups.0.driver_name', '-')
+                    ->where('bookingGroups.0.armada_nopol', '-')),
             );
     }
 
@@ -114,13 +116,15 @@ class BookingPageTest extends TestCase
         $this->get(route('bookings.index'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Bookings')
-                ->where('bookingRouteOptions', ['PINRANG - MAKASSAR'])
-                ->has('bookingGroups', 2)
-                ->where('bookingGroups.0.rute', 'PINRANG - MAKASSAR')
-                ->where('bookingGroups.0.total', 2)
-                ->where('bookingGroups.0.lunas', 1)
-                ->where('bookingGroups.0.refund', 1)
-                ->where('bookingGroups.0.belum_lunas', 0),
+                ->missingAll(['bookingRouteOptions', 'bookingGroups'])
+                ->loadDeferredProps('booking-list', fn (Assert $reload) => $reload
+                    ->where('bookingRouteOptions', ['PINRANG - MAKASSAR'])
+                    ->has('bookingGroups', 2)
+                    ->where('bookingGroups.0.rute', 'PINRANG - MAKASSAR')
+                    ->where('bookingGroups.0.total', 2)
+                    ->where('bookingGroups.0.lunas', 1)
+                    ->where('bookingGroups.0.refund', 1)
+                    ->where('bookingGroups.0.belum_lunas', 0)),
             );
     }
 }

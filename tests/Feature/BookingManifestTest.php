@@ -13,7 +13,7 @@ class BookingManifestTest extends TestCase
 
     public function test_manifest_print_includes_mapped_luggage_and_cancel_history(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['is_super_admin' => true]);
         $this->actingAs($user);
 
         $route = 'PINRANG - MAKASSAR';

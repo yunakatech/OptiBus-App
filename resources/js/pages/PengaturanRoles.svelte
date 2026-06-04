@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { Link, page } from '@inertiajs/svelte';
+    import { Link, page, router } from '@inertiajs/svelte';
     import {
         ArrowLeft,
         CheckCircle2,
@@ -70,6 +70,30 @@
         description: string;
         permission_ids: number[];
     };
+    type Pagination = {
+        page: number;
+        per_page: number;
+        total: number;
+        last_page: number;
+    };
+    type RoleDataPayload = {
+        roles?: RoleRow[];
+        pagination?: Pagination;
+    };
+    type RolePermissionsPayload = {
+        permissions?: Permission[];
+        permission_groups?: PermissionGroup[];
+    };
+
+    let {
+        roleQuery = '',
+        roleData = null,
+        rolePermissions = null,
+    }: {
+        roleQuery?: string;
+        roleData?: RoleDataPayload | null;
+        rolePermissions?: RolePermissionsPayload | null;
+    } = $props();
 
     let roles = $state<RoleRow[]>([]);
     let permissions = $state<Permission[]>([]);
@@ -82,7 +106,14 @@
         permission_ids: [],
     });
     let search = $state('');
-    let loading = $state(false);
+    let roleQueryHydrated = $state(false);
+    let roleMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
+    let loading = $state(true);
     let saving = $state(false);
     let deletingId = $state(0);
     let message = $state('');
@@ -96,27 +127,6 @@
     const isSuperAdminRole = $derived(form.slug === 'super-admin');
     const allPermissionIds = $derived(permissions.map((item) => item.id));
     const selectedCount = $derived(form.permission_ids.length);
-    const filteredRoles = $derived.by(() => {
-        const keyword = search.trim().toLowerCase();
-
-        if (keyword === '') {
-            return roles;
-        }
-
-        return roles.filter((role) => {
-            const haystack = [
-                role.name,
-                role.slug,
-                role.description,
-                role.permission_slugs.join(' '),
-            ]
-                .join(' ')
-                .toLowerCase();
-
-            return haystack.includes(keyword);
-        });
-    });
-
     const csrfToken = () => {
         if (typeof document === 'undefined') {
             return '';
@@ -264,28 +274,35 @@
         return json;
     };
 
-    const loadRoles = async () => {
+    const reloadRolesWithInertia = (targetPage = roleMeta.page) => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
         loading = true;
         message = '';
         error = '';
 
-        try {
-            const result = await api('GET', '/api/admin/roles');
-            roles = result.roles ?? [];
-            permissions = result.permissions ?? [];
-            permissionGroups = result.permission_groups ?? [];
-
-            if (form.id > 0) {
-                const updatedRole = roles.find((role) => role.id === form.id);
-                if (updatedRole) {
-                    editRole(updatedRole, false);
-                }
-            }
-        } catch (e) {
-            error = e instanceof Error ? e.message : 'Gagal memuat role.';
-        } finally {
-            loading = false;
-        }
+        router.get(
+            window.location.pathname,
+            {
+                page: targetPage,
+                per_page: roleMeta.per_page,
+                ...(search.trim() !== '' ? { q: search.trim() } : {}),
+            },
+            {
+                only: ['roleData'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onError: () => {
+                    error = 'Gagal memuat role.';
+                },
+                onFinish: () => {
+                    loading = false;
+                },
+            },
+        );
     };
 
     const scrollToRoleSection = (id: string) => {
@@ -435,9 +452,9 @@
                 },
             );
             message = isEditing ? 'Role updated.' : 'Role created.';
-            await loadRoles();
             resetForm();
             roleView = 'data';
+            reloadRolesWithInertia(1);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal menyimpan role.';
         } finally {
@@ -466,7 +483,7 @@
                     resetForm();
                 }
 
-                await loadRoles();
+                reloadRolesWithInertia(roleMeta.page);
             }
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal menghapus role.';
@@ -482,9 +499,43 @@
     });
 
     $effect(() => {
-        if (isSuperAdmin) {
-            void loadRoles();
+        if (!roleQueryHydrated) {
+            search = roleQuery;
+            roleQueryHydrated = true;
         }
+    });
+
+    $effect(() => {
+        const payload = roleData;
+        if (!payload) {
+            return;
+        }
+
+        roles = Array.isArray(payload.roles) ? payload.roles : [];
+        roleMeta = payload.pagination ?? roleMeta;
+
+        if (form.id > 0) {
+            const updatedRole = roles.find((role) => role.id === form.id);
+            if (updatedRole) {
+                editRole(updatedRole, false);
+            }
+        }
+
+        loading = false;
+    });
+
+    $effect(() => {
+        const payload = rolePermissions;
+        if (!payload) {
+            return;
+        }
+
+        permissions = Array.isArray(payload.permissions)
+            ? payload.permissions
+            : [];
+        permissionGroups = Array.isArray(payload.permission_groups)
+            ? payload.permission_groups
+            : [];
     });
 </script>
 
@@ -523,7 +574,7 @@
                 >
                     <div>
                         <p class="text-xl font-black text-foreground">
-                            {roles.length}
+                            {roleMeta.total}
                         </p>
                         <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
                             Role
@@ -632,7 +683,8 @@
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onclick={() => void loadRoles()}
+                                        onclick={() =>
+                                            reloadRolesWithInertia(roleMeta.page)}
                                         disabled={loading}
                                     >
                                         <RefreshCw
@@ -644,16 +696,27 @@
                                     </Button>
                                 </div>
                             </div>
-                            <label class="relative block">
-                                <Search
-                                    class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                                />
-                                <Input
-                                    bind:value={search}
-                                    placeholder="Cari role atau permission"
-                                    class="pl-9"
-                                />
-                            </label>
+                            <form
+                                class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                                onsubmit={(event) => {
+                                    event.preventDefault();
+                                    reloadRolesWithInertia(1);
+                                }}
+                            >
+                                <label class="relative block">
+                                    <Search
+                                        class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                                    />
+                                    <Input
+                                        bind:value={search}
+                                        placeholder="Cari role atau permission"
+                                        class="pl-9"
+                                    />
+                                </label>
+                                <Button type="submit" disabled={loading}>
+                                    Cari
+                                </Button>
+                            </form>
                         </CardHeader>
                         <CardContent class="space-y-3 p-4 pt-0">
                             {#if error}
@@ -669,14 +732,14 @@
                                 >
                                     Memuat role...
                                 </div>
-                            {:else if filteredRoles.length === 0}
+                            {:else if roles.length === 0}
                                 <div
                                     class="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground"
                                 >
                                     Role tidak ditemukan.
                                 </div>
                             {:else}
-                                {#each filteredRoles as role (role.id)}
+                                {#each roles as role (role.id)}
                                     <article
                                         class={cn(
                                             'rounded-2xl border bg-background/80 p-3 transition-all hover:border-cyan-300/70 hover:shadow-sm',
@@ -764,6 +827,36 @@
                                         </div>
                                     </article>
                                 {/each}
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
+                                    <p class="text-xs text-muted-foreground">
+                                        Total {roleMeta.total} role
+                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={roleMeta.page <= 1 || loading}
+                                            onclick={() =>
+                                                reloadRolesWithInertia(roleMeta.page - 1)}
+                                        >
+                                            Prev
+                                        </Button>
+                                        <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground">
+                                            {roleMeta.page} / {roleMeta.last_page}
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={roleMeta.page >= roleMeta.last_page || loading}
+                                            onclick={() =>
+                                                reloadRolesWithInertia(roleMeta.page + 1)}
+                                        >
+                                            Next
+                                        </Button>
+                                    </div>
+                                </div>
                             {/if}
                         </CardContent>
                     </Card>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\PoolScope;
+use App\Support\RoleAccessData;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
@@ -21,6 +22,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminOpsApiController extends Controller
 {
+    public function __construct(
+        private readonly RoleAccessData $roleAccessData,
+    ) {}
+
     private ?bool $schedulesHasRouteId = null;
     private ?bool $schedulesHasSeatsColumn = null;
     private ?bool $schedulesHasBopColumn = null;
@@ -3403,7 +3408,7 @@ class AdminOpsApiController extends Controller
         return $this->ok(['message' => 'Pool deleted.']);
     }
 
-    public function rolesIndex(): JsonResponse
+    public function rolesIndex(Request $request): JsonResponse
     {
         if ($response = $this->requireSuperAdmin()) {
             return $response;
@@ -3413,72 +3418,9 @@ class AdminOpsApiController extends Controller
             return $this->error('Tabel role dan permission belum tersedia. Jalankan migration terlebih dahulu.', 503);
         }
 
-        $permissions = DB::table('permissions')
-            ->orderBy('group')
-            ->orderBy('name')
-            ->get(['id', 'slug', 'name', 'group'])
-            ->map(static fn ($permission): array => [
-                'id' => (int) $permission->id,
-                'slug' => (string) $permission->slug,
-                'name' => (string) $permission->name,
-                'group' => (string) ($permission->group ?? 'Lainnya'),
-            ])
-            ->values();
-
-        $permissionRows = DB::table('role_permission as rp')
-            ->join('permissions as p', 'rp.permission_id', '=', 'p.id')
-            ->get(['rp.role_id', 'p.id', 'p.slug']);
-
-        $permissionMap = [];
-        foreach ($permissionRows as $row) {
-            $roleId = (int) ($row->role_id ?? 0);
-            $permissionMap[$roleId] ??= ['ids' => [], 'slugs' => []];
-            $permissionMap[$roleId]['ids'][] = (int) ($row->id ?? 0);
-            $permissionMap[$roleId]['slugs'][] = (string) ($row->slug ?? '');
-        }
-
-        $userCounts = DB::table('user_role')
-            ->select('role_id', DB::raw('count(*) as total'))
-            ->groupBy('role_id')
-            ->pluck('total', 'role_id');
-
-        $roles = DB::table('roles')
-            ->orderByDesc('is_system')
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'description', 'is_system', 'created_at', 'updated_at'])
-            ->map(function ($role) use ($permissionMap, $userCounts): array {
-                $roleId = (int) $role->id;
-                $mapped = $permissionMap[$roleId] ?? ['ids' => [], 'slugs' => []];
-                $slug = (string) $role->slug;
-
-                return [
-                    'id' => $roleId,
-                    'name' => (string) $role->name,
-                    'slug' => $slug,
-                    'description' => (string) ($role->description ?? ''),
-                    'is_system' => (bool) ($role->is_system ?? false),
-                    'is_locked' => $slug === 'super-admin',
-                    'permission_ids' => array_values(array_unique($mapped['ids'])),
-                    'permission_slugs' => array_values(array_filter(array_unique($mapped['slugs']))),
-                    'user_count' => (int) ($userCounts[$roleId] ?? 0),
-                    'created_at' => $role->created_at,
-                    'updated_at' => $role->updated_at,
-                ];
-            })
-            ->values();
-
-        $groups = $permissions
-            ->groupBy('group')
-            ->map(static fn ($items, string $group): array => [
-                'group' => $group,
-                'permissions' => $items->values()->all(),
-            ])
-            ->values();
-
         return $this->ok([
-            'roles' => $roles,
-            'permissions' => $permissions,
-            'permission_groups' => $groups,
+            ...$this->roleAccessData->roles($request),
+            ...$this->roleAccessData->permissions(),
         ]);
     }
 

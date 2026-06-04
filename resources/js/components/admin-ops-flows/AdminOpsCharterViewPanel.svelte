@@ -34,6 +34,7 @@
         charterStatusLabel,
         charterPaymentClass,
         openCharterInvoice,
+        canCharterPrint = false,
         copyCharterData,
         charterCanMarkDone,
         markCharterAsDone,
@@ -51,6 +52,7 @@
         charterStatusLabel: (status: string | null | undefined) => string;
         charterPaymentClass: (status: string | null | undefined) => string;
         openCharterInvoice: (id: number) => void;
+        canCharterPrint?: boolean;
         copyCharterData: (row: Charter) => void | Promise<void>;
         charterCanMarkDone: (row: Charter | null | undefined) => boolean;
         markCharterAsDone: (row: Charter) => void | Promise<void>;
@@ -102,7 +104,7 @@
                 </div>
 
                 <div class="relative z-10 flex flex-wrap gap-2">
-                    <Button
+                    {#if canCharterPrint}<Button
                         type="button"
                         variant="outline"
                         class="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
@@ -127,12 +129,11 @@
                     >
                         <Printer class="mr-2 h-4 w-4" />
                         Cetak Invoice
-                    </Button>
-                    <Button
+                    </Button>{/if}
+                    {#if charterCanMarkDone(charterViewData)}<Button
                         type="button"
                         variant="outline"
                         class="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                        disabled={!charterCanMarkDone(charterViewData)}
                         onclick={() => {
                             if (charterViewData) {
                                 void markCharterAsDone(charterViewData);
@@ -140,20 +141,19 @@
                         }}
                     >
                         Selesaikan Perjalanan
-                    </Button>
-                    <Button
+                    </Button>{/if}
+                    {#if charterCanEdit(charterViewData)}<Button
                         type="button"
                         variant="outline"
                         class="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                        disabled={!charterCanEdit(charterViewData)}
                         onclick={() => {
                             if (charterViewData) {
                                 void openCharterEditor(charterViewData);
                             }
                         }}
                     >
-                        {charterCanEdit(charterViewData) ? 'Edit Carter' : 'Charter Selesai'}
-                    </Button>
+                        Edit Carter
+                    </Button>{/if}
                 </div>
             </div>
             <p class="relative z-10 mt-3 max-w-2xl text-xs leading-relaxed text-slate-200/85">

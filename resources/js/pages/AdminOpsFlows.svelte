@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { router } from '@inertiajs/svelte';
+    import { page, router } from '@inertiajs/svelte';
     import { MoreHorizontal } from 'lucide-svelte';
     import { onDestroy, onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -25,6 +25,7 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
+    import { hasPermission } from '@/lib/access';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
     type TabName = 'charters' | 'luggages' | 'assignments' | 'export';
@@ -96,6 +97,16 @@
     const today = new Date().toISOString().slice(0, 10);
     const charterServiceOptions = ['DROPOFF', 'FULLDAY', 'HALFDAY', '2D1N', '3D2N', '4D3N', '5D4N'];
     const defaultCharterService = charterServiceOptions[0];
+    const grantedPermissions = $derived(page.props.auth?.permissions ?? []);
+    const canCharterCreate = $derived(hasPermission(grantedPermissions, 'charter.create'));
+    const canCharterUpdate = $derived(hasPermission(grantedPermissions, 'charter.update'));
+    const canCharterDelete = $derived(hasPermission(grantedPermissions, 'charter.delete'));
+    const canCharterPrint = $derived(hasPermission(grantedPermissions, 'charter.print'));
+    const canLuggageCreate = $derived(hasPermission(grantedPermissions, 'luggage.create'));
+    const canLuggageUpdate = $derived(hasPermission(grantedPermissions, 'luggage.update'));
+    const canLuggagePrint = $derived(hasPermission(grantedPermissions, 'luggage.print'));
+    const canBookingUpdate = $derived(hasPermission(grantedPermissions, 'booking.update'));
+    const canBookingDelete = $derived(hasPermission(grantedPermissions, 'booking.delete'));
     let activeTab = $state<TabName>('charters');
     let activeMode = $state<ViewMode>('data');
     let lockedMenuView = $state(false);
@@ -1264,16 +1275,20 @@ return 'Selesai';
 
     const charterIsCanceled = (status: string | null | undefined) => String(status ?? 'active').toLowerCase() === 'canceled';
 
-    const charterCanEdit = (row: Charter | null | undefined) => !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status);
+    const charterCanEdit = (row: Charter | null | undefined) => canCharterUpdate && !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status);
 
-    const charterCanCancel = (row: Charter | null | undefined) => !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status);
+    const charterCanCancel = (row: Charter | null | undefined) => canCharterDelete && !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status);
 
     const charterCanMarkDone = (row: Charter | null | undefined) =>
-        !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status) && isPaymentLunas(row.payment_status);
+        canCharterUpdate && !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status) && isPaymentLunas(row.payment_status);
 
     const charterMarkDoneHint = (row: Charter | null | undefined) => {
         if (!row) {
             return '';
+        }
+
+        if (!canCharterUpdate) {
+            return 'Role ini memiliki akses lihat tanpa izin mengubah status perjalanan.';
         }
 
         if (charterIsDone(row.status)) {
@@ -2933,6 +2948,7 @@ params.set('to', filterTo);
                             charterStatusLabel={charterStatusLabel}
                             charterPaymentClass={charterPaymentClass}
                             openCharterInvoice={openCharterInvoice}
+                            canCharterPrint={canCharterPrint}
                             copyCharterData={copyCharterData}
                             charterCanMarkDone={charterCanMarkDone}
                             markCharterAsDone={markCharterAsDone}
@@ -3014,9 +3030,9 @@ params.set('to', filterTo);
                     {/if}
                 {:else}
                     <div class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm">
-                        <Button type="button" onclick={() => {
+                        {#if canCharterCreate}<Button type="button" onclick={() => {
  resetCharterFormState(); setFormMode('form'); 
-}}>Tambah Carter</Button>
+}}>Tambah Carter</Button>{/if}
                         <div class="inline-flex items-center rounded-xl border border-border/70 bg-background/80 p-1">
                             <Button
                                 type="button"
@@ -3097,9 +3113,9 @@ params.set('to', filterTo);
                                                         <DropdownMenuItem onclick={() => void copyCharterData(row)}>
                                                             Copy Data
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onclick={() => openCharterInvoice(row.id)}>
+                                                        {#if canCharterPrint}<DropdownMenuItem onclick={() => openCharterInvoice(row.id)}>
                                                             Cetak Invoice
-                                                        </DropdownMenuItem>
+                                                        </DropdownMenuItem>{/if}
                                                         {#if charterCanEdit(row)}
                                                             <DropdownMenuItem onclick={() => openCharterEditor(row)}>
                                                                 Edit Carter
@@ -3478,7 +3494,7 @@ params.set('to', filterTo);
                             <p class="text-xs text-muted-foreground">Kelola transaksi bagasi, status kirim, dan tracking resi dalam tampilan yang lebih ringkas.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <Button
+                            {#if canLuggageCreate}<Button
                                 type="button"
                                 class="h-9 rounded-xl px-4 text-xs"
                                 onclick={() => {
@@ -3487,7 +3503,7 @@ params.set('to', filterTo);
                                 }}
                             >
                                 Tambah Bagasi
-                            </Button>
+                            </Button>{/if}
                         </div>
                     </div>
                     <div class="grid gap-3 md:hidden">
@@ -3531,25 +3547,25 @@ params.set('to', filterTo);
                                                     {/snippet}
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" class="w-52">
-                                                    {#if !lockedLuggageActions}
+                                                    {#if canLuggageUpdate && !lockedLuggageActions}
                                                         <DropdownMenuItem onclick={() => openLuggageEditor(row)}>
                                                             Edit Data
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    {#if normalizedLuggageStatus === luggageReceivedStatus}
+                                                    {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
                                                         <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-active`} onclick={() => void luggageAction(row, 'active')}>
                                                             {pendingLuggageActionKey === `action-${row.id}-active` ? 'Memproses...' : 'Tandai Dalam Perjalanan'}
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    {#if row.payment_status !== 'Lunas'}
+                                                    {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
                                                         <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-paid`} onclick={() => void luggageAction(row, 'paid')}>
                                                             {pendingLuggageActionKey === `action-${row.id}-paid` ? 'Memproses...' : 'Tandai Lunas'}
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    <DropdownMenuItem onclick={() => openLuggagePrint(row.id)}>
+                                                    {#if canLuggagePrint}<DropdownMenuItem onclick={() => openLuggagePrint(row.id)}>
                                                         Print Resi
-                                                    </DropdownMenuItem>
-                                                    {#if !lockedLuggageActions}
+                                                    </DropdownMenuItem>{/if}
+                                                    {#if canLuggageUpdate && !lockedLuggageActions}
                                                         <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-canceled`} onclick={() => void luggageAction(row, 'canceled')}>
                                                             {pendingLuggageActionKey === `action-${row.id}-canceled` ? 'Memproses...' : 'Batalkan Pengiriman'}
                                                         </DropdownMenuItem>
@@ -3704,25 +3720,25 @@ params.set('to', filterTo);
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" class="w-52">
                                                     {@const lockedLuggageActions = [luggagePickedUpStatus, luggageArrivedStatus].includes(normalizedLuggageStatus)}
-                                                    {#if !lockedLuggageActions}
+                                                    {#if canLuggageUpdate && !lockedLuggageActions}
                                                         <DropdownMenuItem onclick={() => openLuggageEditor(row)}>
                                                             Edit Data
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    {#if normalizedLuggageStatus === luggageReceivedStatus}
+                                                    {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
                                                         <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-active`} onclick={() => void luggageAction(row, 'active')}>
                                                             {pendingLuggageActionKey === `action-${row.id}-active` ? 'Memproses...' : 'Tandai Dalam Perjalanan'}
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    {#if row.payment_status !== 'Lunas'}
+                                                    {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
                                                         <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-paid`} onclick={() => void luggageAction(row, 'paid')}>
                                                             {pendingLuggageActionKey === `action-${row.id}-paid` ? 'Memproses...' : 'Tandai Lunas'}
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    <DropdownMenuItem onclick={() => openLuggagePrint(row.id)}>
+                                                    {#if canLuggagePrint}<DropdownMenuItem onclick={() => openLuggagePrint(row.id)}>
                                                         Print Resi
-                                                    </DropdownMenuItem>
-                                                    {#if !lockedLuggageActions}
+                                                    </DropdownMenuItem>{/if}
+                                                    {#if canLuggageUpdate && !lockedLuggageActions}
                                                         <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-canceled`} onclick={() => void luggageAction(row, 'canceled')}>
                                                             {pendingLuggageActionKey === `action-${row.id}-canceled` ? 'Memproses...' : 'Batalkan Pengiriman'}
                                                         </DropdownMenuItem>
@@ -3749,10 +3765,10 @@ params.set('to', filterTo);
             {/if}
 
             {#if activeTab === 'assignments' && !busy}
-                <div class="flex gap-2">
+                {#if canBookingDelete}<div class="flex gap-2">
                     <Button type="button" variant="outline" onclick={() => void bulkDeleteAssignments()} disabled={selectedAssignmentIds.length === 0}>Bulk Delete ({selectedAssignmentIds.length})</Button>
-                </div>
-                <form class="grid gap-3 md:grid-cols-4" onsubmit={saveAssignment}>
+                </div>{/if}
+                {#if canBookingUpdate}<form class="grid gap-3 md:grid-cols-4" onsubmit={saveAssignment}>
                     <Input placeholder="Rute" bind:value={assignmentForm.rute} required />
                     <input
                         bind:this={assignmentDateInput}
@@ -3784,7 +3800,7 @@ params.set('to', filterTo);
                 <label class="flex items-center gap-2 text-sm">
                     <input type="checkbox" bind:checked={assignmentAllowConflict} />
                     Override conflict (paksa simpan)
-                </label>
+                </label>{/if}
                 {#if assignmentConflicts.length > 0}
                     <div class="rounded-md border border-amber-500/40 bg-amber-50/50 p-3 text-sm">
                         <p class="font-medium text-amber-700">Ditemukan konflik assignment:</p>
@@ -3804,10 +3820,10 @@ params.set('to', filterTo);
                                     <td class="px-3 py-2"><input type="checkbox" checked={selectedAssignmentIds.includes(row.id)} onchange={() => (selectedAssignmentIds = toggleSelect(selectedAssignmentIds, row.id))} /></td>
                                     <td class="px-3 py-2">{row.rute}</td><td class="px-3 py-2">{row.tanggal} {String(row.jam).slice(0, 5)}</td><td class="px-3 py-2">{row.unit}</td><td class="px-3 py-2">{row.nama ?? '-'}</td>
                                     <td class="px-3 py-2 space-x-2">
-                                        <Button type="button" size="sm" variant="outline" onclick={() => {
+                                        {#if canBookingUpdate}<Button type="button" size="sm" variant="outline" onclick={() => {
  assignmentForm = { id: row.id, rute: row.rute, tanggal: row.tanggal, jam: String(row.jam).slice(0,5), unit: row.unit, driver_id: row.driver_id }; assignmentConflicts = []; assignmentAllowConflict = false; 
-}}>Edit</Button>
-                                        <Button type="button" size="sm" variant="outline" onclick={() => void removeItem(`/api/admin/assignments/${row.id}`, 'Assignment deleted.')}>Delete</Button>
+}}>Edit</Button>{/if}
+                                        {#if canBookingDelete}<Button type="button" size="sm" variant="outline" onclick={() => void removeItem(`/api/admin/assignments/${row.id}`, 'Assignment deleted.')}>Delete</Button>{/if}
                                     </td>
                                 </tr>
                             {/each}
