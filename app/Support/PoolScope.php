@@ -75,7 +75,19 @@ class PoolScope
             ->get(['r.id', 'r.name', 'r.origin', 'r.destination']);
 
         $labels = [];
+        $routeNames = [];
         foreach ($routes as $route) {
+            $routeName = trim((string) ($route->name ?? ''));
+            $origin = trim((string) ($route->origin ?? ''));
+            $destination = trim((string) ($route->destination ?? ''));
+
+            if ($routeName !== '') {
+                $routeNames[] = $routeName;
+            }
+            if ($origin !== '' && $destination !== '') {
+                $routeNames[] = $origin.' - '.$destination;
+            }
+
             foreach (['name', 'origin', 'destination'] as $field) {
                 $value = trim((string) ($route->{$field} ?? ''));
                 if ($value !== '') {
@@ -88,7 +100,7 @@ class PoolScope
             'all' => false,
             'pool_ids' => $poolIds,
             'route_ids' => $routes->pluck('id')->map(static fn ($value) => (int) $value)->unique()->values()->all(),
-            'route_names' => $routes->pluck('name')->map(static fn ($value) => (string) $value)->filter(static fn ($value) => trim($value) !== '')->unique()->values()->all(),
+            'route_names' => collect($routeNames)->unique()->values()->all(),
             'labels' => collect($labels)->unique()->values()->all(),
             'pool_name' => $pools->count() === 1 ? (string) ($pools->first()->name ?? 'Pool') : 'Pool Saya',
             'target_revenue' => (float) $pools->sum('target_revenue'),
@@ -123,7 +135,15 @@ class PoolScope
             return true;
         }
 
-        return in_array($routeName, $scope['route_names'], true);
+        $routeId = self::routeIdForName($routeName);
+        if ($routeId > 0 && in_array($routeId, $scope['route_ids'], true)) {
+            return true;
+        }
+
+        $normalizedRouteName = self::normalizeRouteName($routeName);
+
+        return collect($scope['route_names'])
+            ->contains(static fn (string $allowedRoute): bool => self::normalizeRouteName($allowedRoute) === $normalizedRouteName);
     }
 
     public static function applyRouteScope(Builder $query, string $routeIdColumn = '', string $routeNameColumn = '', int $poolId = 0, ?int $userId = null): void
@@ -263,7 +283,7 @@ class PoolScope
         $routeIds = $scope['route_ids'];
         $routeNames = $scope['route_names'];
 
-        if ($routeNames === []) {
+        if ($routeIds === [] && $routeNames === []) {
             $query->whereRaw('1 = 0');
 
             return;
@@ -275,7 +295,13 @@ class PoolScope
                 ->from('bookings as scoped_bookings')
                 ->whereColumn('scoped_bookings.phone', $customerPhoneColumn);
 
-            self::appendRouteClauses($exists, '', $routeIds, 'scoped_bookings.rute', $routeNames);
+            self::appendRouteClauses(
+                $exists,
+                Schema::hasColumn('bookings', 'route_id') ? 'scoped_bookings.route_id' : '',
+                $routeIds,
+                'scoped_bookings.rute',
+                $routeNames,
+            );
         });
     }
 
@@ -364,6 +390,95 @@ class PoolScope
             ->all();
     }
 
+    public static function routeIdForName(string $routeName): int
+    {
+        $target = self::normalizeRouteName($routeName);
+        if ($target === '' || ! Schema::hasTable('routes')) {
+            return 0;
+        }
+
+        $exactMatches = [];
+        $aliasMatches = [];
+
+        foreach (DB::table('routes')->get(['id', 'name', 'origin', 'destination']) as $route) {
+            $routeId = (int) ($route->id ?? 0);
+            if ($routeId <= 0) {
+                continue;
+            }
+
+            if (self::normalizeRouteName((string) ($route->name ?? '')) === $target) {
+                $exactMatches[] = $routeId;
+            }
+
+            $origin = trim((string) ($route->origin ?? ''));
+            $destination = trim((string) ($route->destination ?? ''));
+
+            if ($origin !== '' && $destination !== '' && self::normalizeRouteName($origin.' - '.$destination) === $target) {
+                $aliasMatches[] = $routeId;
+            }
+        }
+
+        $exactMatches = array_values(array_unique($exactMatches));
+        if (count($exactMatches) === 1) {
+            return $exactMatches[0];
+        }
+        if ($exactMatches !== []) {
+            return 0;
+        }
+
+        $aliasMatches = array_values(array_unique($aliasMatches));
+
+        return count($aliasMatches) === 1 ? $aliasMatches[0] : 0;
+    }
+
+    public static function applyRouteIdentity(
+        Builder $query,
+        string $routeName,
+        string $routeIdColumn = '',
+        string $routeNameColumn = 'rute',
+        int $routeId = 0,
+    ): void {
+        $routeId = $routeId > 0 ? $routeId : self::routeIdForName($routeName);
+        $normalizedRouteName = self::normalizeRouteName($routeName);
+
+        if (($routeIdColumn === '' || $routeId <= 0) && ($routeNameColumn === '' || $normalizedRouteName === '')) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $builder) use ($routeIdColumn, $routeId, $routeNameColumn, $normalizedRouteName): void {
+            $hasRouteIdClause = $routeIdColumn !== '' && $routeId > 0;
+            if ($hasRouteIdClause) {
+                $builder->where($routeIdColumn, $routeId);
+            }
+
+            if ($routeNameColumn === '' || $normalizedRouteName === '') {
+                return;
+            }
+
+            $legacyNameClause = function (Builder $legacy) use ($hasRouteIdClause, $routeIdColumn, $routeNameColumn, $normalizedRouteName): void {
+                if ($hasRouteIdClause) {
+                    $legacy->whereNull($routeIdColumn);
+                }
+
+                $legacy->whereRaw(self::normalizedRouteSql($routeNameColumn).' = ?', [$normalizedRouteName]);
+            };
+
+            $hasRouteIdClause
+                ? $builder->orWhere($legacyNameClause)
+                : $builder->where($legacyNameClause);
+        });
+    }
+
+    public static function normalizeRouteName(string $routeName): string
+    {
+        $normalized = mb_strtoupper(trim($routeName));
+        $normalized = str_replace(['=>', '->', '→', '–', '—'], '-', $normalized);
+
+        return preg_replace('/\s+/', '', $normalized) ?? $normalized;
+    }
+
     /**
      * @param array<int, int> $routeIds
      * @param array<int, string> $routeNames
@@ -379,11 +494,37 @@ class PoolScope
             }
 
             if ($routeNameColumn !== '' && $routeNames !== []) {
+                $normalizedRouteNames = collect($routeNames)
+                    ->map(static fn (string $routeName): string => self::normalizeRouteName($routeName))
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all();
+                $nameClause = function (Builder $nameBuilder) use ($hasClause, $routeIdColumn, $routeNameColumn, $routeNames, $normalizedRouteNames): void {
+                    if ($hasClause) {
+                        $nameBuilder->whereNull($routeIdColumn);
+                    }
+
+                    $nameBuilder->where(function (Builder $legacyName) use ($routeNameColumn, $routeNames, $normalizedRouteNames): void {
+                        $legacyName->whereIn($routeNameColumn, $routeNames);
+
+                        if ($normalizedRouteNames !== []) {
+                            $placeholders = implode(', ', array_fill(0, count($normalizedRouteNames), '?'));
+                            $legacyName->orWhereRaw(self::normalizedRouteSql($routeNameColumn)." IN ({$placeholders})", $normalizedRouteNames);
+                        }
+                    });
+                };
+
                 $hasClause
-                    ? $routeBuilder->orWhereIn($routeNameColumn, $routeNames)
-                    : $routeBuilder->whereIn($routeNameColumn, $routeNames);
+                    ? $routeBuilder->orWhere($nameClause)
+                    : $routeBuilder->where($nameClause);
             }
         });
+    }
+
+    private static function normalizedRouteSql(string $column): string
+    {
+        return "UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '=>', '-'), '->', '-'), '→', '-'), '–', '-'), '—', '-'), ' ', ''))";
     }
 
     /**

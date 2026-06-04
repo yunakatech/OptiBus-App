@@ -762,9 +762,22 @@ class DashboardController extends Controller
     private function scopedBookingQuery(string $table = 'bookings', string $routeNameColumn = 'rute'): Builder
     {
         $query = DB::table($table);
-        PoolScope::applyRouteScope($query, '', $routeNameColumn);
+        PoolScope::applyRouteScope($query, $this->bookingRouteIdColumn($table), $routeNameColumn);
 
         return $query;
+    }
+
+    private function bookingRouteIdColumn(string $table): string
+    {
+        if (! Schema::hasColumn('bookings', 'route_id')) {
+            return '';
+        }
+
+        if (preg_match('/^bookings(?:\s+as\s+([a-z0-9_]+))?$/i', trim($table), $matches) !== 1) {
+            return '';
+        }
+
+        return isset($matches[1]) ? $matches[1].'.route_id' : 'route_id';
     }
 
     private function scopedCharterQuery(string $table = 'charters', string $alias = ''): Builder
@@ -871,5 +884,4 @@ class DashboardController extends Controller
         }
     }
 }
-
 

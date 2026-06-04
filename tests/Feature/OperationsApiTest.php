@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\AccessControl;
+use App\Support\PoolScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -140,6 +142,142 @@ class OperationsApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'customers')
             ->assertJsonPath('customers.0.name', 'RIDWAN SAPUTRA');
+    }
+
+    public function test_pool_operator_can_search_customers_using_route_id_and_normalized_legacy_route(): void
+    {
+        AccessControl::syncDefaults();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'name' => 'PINRANG -> MAKASSAR',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'created_at' => now(),
+        ]);
+        $outsideRouteId = DB::table('routes')->insertGetId([
+            'name' => 'MAKASSAR -> PAREPARE',
+            'origin' => 'Makassar',
+            'destination' => 'Parepare',
+            'created_at' => now(),
+        ]);
+        $poolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL PINRANG',
+            'code' => 'PNR',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $operator = User::factory()->create(['is_super_admin' => false]);
+        DB::table('pool_user')->insert([
+            'pool_id' => $poolId,
+            'user_id' => $operator->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('user_role')->insert([
+            'user_id' => $operator->id,
+            'role_id' => DB::table('roles')->where('slug', 'operator-booking')->value('id'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('customers')->insert([
+            [
+                'name' => 'CUSTOMER LEGACY ROUTE',
+                'phone' => '081200000001',
+                'pickup_point' => 'Pinrang',
+                'created_at' => now(),
+            ],
+            [
+                'name' => 'CUSTOMER ROUTE ID',
+                'phone' => '081200000002',
+                'pickup_point' => 'Pinrang',
+                'created_at' => now(),
+            ],
+            [
+                'name' => 'CUSTOMER LUAR POOL',
+                'phone' => '081200000003',
+                'pickup_point' => 'Makassar',
+                'created_at' => now(),
+            ],
+            [
+                'name' => 'CUSTOMER ROUTE ID SALAH',
+                'phone' => '081200000004',
+                'pickup_point' => 'Pinrang',
+                'created_at' => now(),
+            ],
+        ]);
+        DB::table('bookings')->insert([
+            [
+                'route_id' => null,
+                'rute' => 'Pinrang - Makassar',
+                'tanggal' => '2026-06-05',
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => 'A1',
+                'name' => 'CUSTOMER LEGACY ROUTE',
+                'phone' => '081200000001',
+                'status' => 'active',
+                'created_at' => now(),
+            ],
+            [
+                'route_id' => $routeId,
+                'rute' => 'LABEL BOOKING LAMA',
+                'tanggal' => '2026-06-05',
+                'jam' => '10:00:00',
+                'unit' => 1,
+                'seat' => 'A2',
+                'name' => 'CUSTOMER ROUTE ID',
+                'phone' => '081200000002',
+                'status' => 'active',
+                'created_at' => now(),
+            ],
+            [
+                'route_id' => $outsideRouteId,
+                'rute' => 'MAKASSAR - PAREPARE',
+                'tanggal' => '2026-06-05',
+                'jam' => '11:00:00',
+                'unit' => 1,
+                'seat' => 'A3',
+                'name' => 'CUSTOMER LUAR POOL',
+                'phone' => '081200000003',
+                'status' => 'active',
+                'created_at' => now(),
+            ],
+            [
+                'route_id' => $outsideRouteId,
+                'rute' => 'Pinrang - Makassar',
+                'tanggal' => '2026-06-05',
+                'jam' => '12:00:00',
+                'unit' => 1,
+                'seat' => 'A4',
+                'name' => 'CUSTOMER ROUTE ID SALAH',
+                'phone' => '081200000004',
+                'status' => 'active',
+                'created_at' => now(),
+            ],
+        ]);
+
+        $this->actingAs($operator);
+
+        $this->assertTrue(PoolScope::canAccessRouteName('Pinrang - Makassar'));
+
+        $this->getJson(route('api.master.customers.search', ['q' => 'customer']))
+            ->assertOk()
+            ->assertJsonCount(2, 'customers')
+            ->assertJsonPath('scope_limited', true)
+            ->assertJsonPath('scope_name', 'POOL PINRANG')
+            ->assertJsonFragment(['name' => 'CUSTOMER LEGACY ROUTE'])
+            ->assertJsonFragment(['name' => 'CUSTOMER ROUTE ID'])
+            ->assertJsonMissing(['name' => 'CUSTOMER LUAR POOL'])
+            ->assertJsonMissing(['name' => 'CUSTOMER ROUTE ID SALAH']);
     }
 
     public function test_submit_charter_and_luggage(): void
