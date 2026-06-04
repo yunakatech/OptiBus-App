@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Api\AdminOpsApiController;
+use App\Http\Controllers\Api\OperationsApiController;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdminOpsFlowsController extends Controller
 {
+    public function __construct(
+        private readonly AdminOpsApiController $adminOpsApi,
+        private readonly OperationsApiController $operationsApi,
+    ) {}
+
     public function __invoke(Request $request): Response|RedirectResponse
     {
         $lockedMenuView = (bool) ($request->route('locked') ?? false);
@@ -35,6 +43,8 @@ class AdminOpsFlowsController extends Controller
         $requestedTab = (string) ($request->route('tab') ?? '');
         $requestedMode = (string) ($request->route('mode') ?? '');
         $requestedCharterId = (int) ($request->route('id') ?? 0);
+        $resolvedTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : 'charters';
+        $usesHybridInertia = in_array($resolvedTab, ['charters', 'luggages'], true);
 
         $component = $requestedTab === 'luggages' ? 'Luggages' : 'AdminOpsFlows';
 
@@ -43,6 +53,64 @@ class AdminOpsFlowsController extends Controller
             'initialMode' => in_array($requestedMode, $allowedModes, true) ? $requestedMode : null,
             'initialCharterId' => $requestedCharterId > 0 ? $requestedCharterId : null,
             'lockedMenuView' => $lockedMenuView,
+            'flowData' => $usesHybridInertia
+                ? Inertia::defer(fn (): array => $this->flowData($request, $resolvedTab), 'flow-data')
+                : null,
+            'flowMasters' => $usesHybridInertia
+                ? Inertia::defer(fn (): array => $this->flowMasters($request, $resolvedTab), 'flow-masters')
+                : null,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function flowData(Request $request, string $tab): array
+    {
+        $payload = match ($tab) {
+            'luggages' => $this->payload($this->adminOpsApi->luggagesIndex($request)),
+            default => $this->payload($this->adminOpsApi->chartersIndex($request)),
+        };
+
+        return ['tab' => $tab, ...$payload];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function flowMasters(Request $request, string $tab): array
+    {
+        $pools = $this->payload($this->adminOpsApi->poolsIndex($request));
+
+        if ($tab === 'luggages') {
+            $services = $this->payload($this->operationsApi->luggageServices());
+
+            return [
+                'tab' => $tab,
+                'services' => $services['services'] ?? [],
+                'pools' => $pools['pools'] ?? [],
+                'routes' => $pools['routes'] ?? [],
+            ];
+        }
+
+        $units = $this->payload($this->operationsApi->units());
+        $drivers = $this->payload($this->operationsApi->drivers());
+        $charterRoutes = $this->payload($this->operationsApi->charterRoutes());
+
+        return [
+            'tab' => $tab,
+            'units' => $units['units'] ?? [],
+            'drivers' => $drivers['drivers'] ?? [],
+            'charterRoutes' => $charterRoutes['routes'] ?? [],
+            'pools' => $pools['pools'] ?? [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payload(JsonResponse $response): array
+    {
+        return (array) $response->getData(true);
     }
 }
