@@ -10,6 +10,7 @@
 </script>
 
 <script lang="ts">
+    import { router } from '@inertiajs/svelte';
     import { MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -46,13 +47,21 @@
         notes: string | null;
         created_at: string | null;
     };
+    type MasterDataPayload = {
+        tab: TabName;
+        customers?: BagasiCustomer[] | CharterCustomer[];
+        routes?: CarterRoute[];
+        pagination?: Pagination;
+    };
 
     let {
         initialTab = null,
         lockedMenuView: lockedFromServer = false,
+        masterData = null,
     }: {
         initialTab?: TabName | null;
         lockedMenuView?: boolean;
+        masterData?: MasterDataPayload | null;
     } = $props();
 
     let activeTab = $state<TabName>('customer-bagasi');
@@ -132,6 +141,59 @@ return 'Carter';
         window.history.replaceState({}, '', `${url.pathname}?${url.searchParams.toString()}`);
     };
 
+    const usesInertiaMasterData = () => lockedMenuView && masterTabs.includes(activeTab);
+    const masterQueryString = (page: number) => {
+        const q = new URLSearchParams();
+        const meta =
+            activeTab === 'customer-bagasi'
+                ? bagasiMeta
+                : activeTab === 'customer-charter'
+                  ? charterMeta
+                  : carterRouteMeta;
+        const query =
+            activeTab === 'customer-bagasi'
+                ? bagasiQ
+                : activeTab === 'customer-charter'
+                  ? charterQ
+                  : carterRouteQ;
+
+        q.set('page', String(page));
+        q.set('per_page', String(meta.per_page));
+
+        if (query.trim() !== '') {
+            q.set('q', query.trim());
+        }
+
+        return q.toString();
+    };
+    const reloadMasterDataWithInertia = (page: number) => {
+        if (typeof window === 'undefined' || !usesInertiaMasterData()) {
+            return false;
+        }
+
+        busy = true;
+        error = '';
+
+        router.get(
+            window.location.pathname,
+            Object.fromEntries(new URLSearchParams(masterQueryString(page))),
+            {
+                only: ['masterData'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onError: () => {
+                    error = 'Gagal memuat data terbaru.';
+                },
+                onFinish: () => {
+                    busy = false;
+                },
+            },
+        );
+
+        return true;
+    };
+
     const csrfToken = () => (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
 
     const api = async (method: 'GET' | 'POST' | 'DELETE', url: string, body?: Record<string, unknown>) => {
@@ -193,6 +255,30 @@ qp.set('q', carterRouteQ.trim());
         carterRouteMeta = res.pagination ?? carterRouteMeta;
     };
 
+    $effect(() => {
+        const payload = masterData;
+        if (!payload) {
+            return;
+        }
+
+        if (payload.tab === 'customer-bagasi') {
+            bagasiCustomers = Array.isArray(payload.customers)
+                ? (payload.customers as BagasiCustomer[])
+                : [];
+            bagasiMeta = payload.pagination ?? bagasiMeta;
+        } else if (payload.tab === 'customer-charter') {
+            charterCustomers = Array.isArray(payload.customers)
+                ? (payload.customers as CharterCustomer[])
+                : [];
+            charterMeta = payload.pagination ?? charterMeta;
+        } else {
+            carterRoutes = Array.isArray(payload.routes) ? payload.routes : [];
+            carterRouteMeta = payload.pagination ?? carterRouteMeta;
+        }
+
+        busy = false;
+    });
+
     const loadActiveTab = async () => {
         busy = true;
         error = '';
@@ -214,6 +300,26 @@ await loadCarterRoutes(carterRouteMeta.page);
         } finally {
             busy = false;
         }
+    };
+
+    const applySearch = async (tab: TabName) => {
+        if (tab === activeTab && reloadMasterDataWithInertia(1)) {
+            return;
+        }
+
+        if (tab === 'customer-bagasi') {
+            await loadBagasiCustomers(1);
+
+            return;
+        }
+
+        if (tab === 'customer-charter') {
+            await loadCharterCustomers(1);
+
+            return;
+        }
+
+        await loadCarterRoutes(1);
     };
 
     const setTab = async (tab: TabName) => {
@@ -368,6 +474,10 @@ carterRouteForm = newCarterRouteForm();
 return;
 }
 
+        if (tab === activeTab && reloadMasterDataWithInertia(page)) {
+            return;
+        }
+
         if (tab === 'customer-bagasi') {
             await loadBagasiCustomers(page);
 
@@ -396,22 +506,36 @@ return;
         }
 
         if (typeof window !== 'undefined') {
-            const initialTab = new URLSearchParams(window.location.search).get('tab');
+            const params = new URLSearchParams(window.location.search);
+            const routeTab = params.get('tab');
 
-            if (isMasterTab(initialTab)) {
-                activeTab = initialTab;
+            if (isMasterTab(routeTab)) {
+                activeTab = routeTab;
                 lockedMenuView = true;
+            }
+
+            const query = params.get('q') ?? '';
+            if (activeTab === 'customer-bagasi') {
+                bagasiQ = query;
+            } else if (activeTab === 'customer-charter') {
+                charterQ = query;
+            } else {
+                carterRouteQ = query;
             }
         }
 
-        busy = true;
+        busy = !usesInertiaMasterData() || !masterData;
 
         try {
-            await loadActiveTab();
+            if (!usesInertiaMasterData()) {
+                await loadActiveTab();
+            }
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat data awal.';
         } finally {
-            busy = false;
+            if (!usesInertiaMasterData() || masterData) {
+                busy = false;
+            }
         }
     });
 </script>
@@ -471,7 +595,7 @@ return;
                         ? 'mt-2 flex flex-wrap gap-2'
                         : 'mt-2 hidden md:flex md:flex-wrap md:gap-2'}>
                         <Input placeholder="Cari nama/no hp/alamat" bind:value={bagasiQ} />
-                        <Button type="button" onclick={() => void loadBagasiCustomers(1)}>Search</Button>
+                        <Button type="button" onclick={() => void applySearch('customer-bagasi')}>Search</Button>
                         <Button type="button" variant="outline" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
                     </div>
                     <div class="grid gap-3 md:hidden">
@@ -583,7 +707,7 @@ return;
                         ? 'mt-2 flex flex-wrap gap-2'
                         : 'mt-2 hidden md:flex md:flex-wrap md:gap-2'}>
                         <Input placeholder="Cari nama/no hp/company" bind:value={charterQ} />
-                        <Button type="button" onclick={() => void loadCharterCustomers(1)}>Search</Button>
+                        <Button type="button" onclick={() => void applySearch('customer-charter')}>Search</Button>
                         <Button type="button" variant="outline" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
                     </div>
                     <div class="grid gap-3 md:hidden">
@@ -834,7 +958,7 @@ return;
                                             <Input id="carter-route-search" class="h-11 w-full rounded-2xl bg-background/90" placeholder="Cari nama, asal, atau tujuan" bind:value={carterRouteQ} />
                                         </div>
                                         <div class="flex flex-wrap gap-2 sm:justify-end">
-                                            <Button type="button" class="h-11 rounded-2xl px-4" onclick={() => void loadCarterRoutes(1)}>Cari</Button>
+                                            <Button type="button" class="h-11 rounded-2xl px-4" onclick={() => void applySearch('rute-carter')}>Cari</Button>
                                             <Button type="button" variant="outline" class="h-11 rounded-2xl px-4" onclick={openCreateMasterForm}>Tambah Data Baru</Button>
                                         </div>
                                     </div>
