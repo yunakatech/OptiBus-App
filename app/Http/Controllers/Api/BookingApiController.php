@@ -21,6 +21,8 @@ class BookingApiController extends Controller
 
     private ?bool $bookingsHasTicketCode = null;
 
+    private ?bool $bookingsHasRouteId = null;
+
     private ?bool $tripAssignmentsHasArmadaId = null;
 
     private ?bool $tripAssignmentsHasArmadaNopol = null;
@@ -261,12 +263,12 @@ class BookingApiController extends Controller
 
         $query = DB::table('bookings as b')
             ->leftJoin('segments as s', 'b.segment_id', '=', 's.id')
-            ->where('b.rute', $validated['rute'])
             ->where('b.tanggal', $validated['tanggal'])
             ->where('b.jam', $jamSql)
             ->where('b.unit', $unit)
             ->where('b.status', '!=', 'canceled');
-        PoolScope::applyRouteScope($query, '', 'b.rute');
+        PoolScope::applyRouteIdentity($query, (string) $validated['rute'], $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
+        PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
         $rows = $query->get([
                 'b.id',
@@ -431,9 +433,9 @@ class BookingApiController extends Controller
         $currentSeat = $this->normalizeSeat((string) ($validated['current_seat'] ?? ''));
         if ($bookingId > 0) {
             $bookingQuery = DB::table('bookings')
-                ->where('id', $bookingId)
-                ->where('rute', $rute);
-            PoolScope::applyRouteScope($bookingQuery, '', 'rute');
+                ->where('id', $bookingId);
+            PoolScope::applyRouteIdentity($bookingQuery, $rute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
+            PoolScope::applyRouteScope($bookingQuery, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
             $bookingRow = $bookingQuery->first(['seat']);
 
             if ($bookingRow !== null) {
@@ -458,10 +460,10 @@ class BookingApiController extends Controller
         if (($resolvedUnitId <= 0 || empty($layout)) && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('trip_assignments') && Schema::hasTable('armadas')) {
             $assignmentQuery = DB::table('trip_assignments as t')
                 ->leftJoin('armadas as a', 't.armada_id', '=', 'a.id')
-                ->where('t.rute', $rute)
                 ->where('t.tanggal', $tanggal)
                 ->where('t.jam', $jamSql)
                 ->where('t.unit', $unit);
+            PoolScope::applyRouteIdentity($assignmentQuery, $rute, '', 't.rute');
             PoolScope::applyRouteScope($assignmentQuery, '', 't.rute');
             $assignment = $assignmentQuery->first([
                     't.armada_id',
@@ -518,7 +520,6 @@ class BookingApiController extends Controller
         }
 
         $bookedSeatQuery = DB::table('bookings')
-            ->where('rute', $rute)
             ->where('tanggal', $tanggal)
             ->where('jam', $jamSql)
             ->where('unit', $unit)
@@ -526,7 +527,8 @@ class BookingApiController extends Controller
             ->when($bookingId > 0, static function ($query) use ($bookingId) {
                 $query->where('id', '!=', $bookingId);
             });
-        PoolScope::applyRouteScope($bookedSeatQuery, '', 'rute');
+        PoolScope::applyRouteIdentity($bookedSeatQuery, $rute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
+        PoolScope::applyRouteScope($bookedSeatQuery, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
 
         $bookedSeatTokens = $bookedSeatQuery
             ->pluck('seat')
@@ -1139,6 +1141,7 @@ class BookingApiController extends Controller
         if (! PoolScope::canAccessRouteName($rute)) {
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
+        $routeId = PoolScope::routeIdForName($rute);
 
         $seats = $data['seats'] ?? null;
         if (! is_array($seats)) {
@@ -1176,18 +1179,20 @@ class BookingApiController extends Controller
                 $price,
                 $discountPerSeat,
                 $createdByUserId,
-                $createdByUsername
+                $createdByUsername,
+                $routeId,
             ) {
                 $supportsDepartureCode = $this->bookingsHasDepartureCode();
                 $supportsTicketCode = $this->bookingsHasTicketCode();
                 $departureCode = BookingCode::departureCode($tanggal, substr($jamSql, 0, 5), $unit, $rute);
-                $conflict = DB::table('bookings')
-                    ->where('rute', $rute)
+                $conflictQuery = DB::table('bookings')
                     ->where('tanggal', $tanggal)
                     ->where('jam', $jamSql)
                     ->where('unit', $unit)
                     ->where('status', '!=', 'canceled')
-                    ->whereIn('seat', $seats)
+                    ->whereIn('seat', $seats);
+                PoolScope::applyRouteIdentity($conflictQuery, $rute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute', $routeId);
+                $conflict = $conflictQuery
                     ->lockForUpdate()
                     ->pluck('seat')
                     ->map(static fn ($seat) => (string) $seat)
@@ -1220,6 +1225,9 @@ class BookingApiController extends Controller
                         'created_at' => now(),
                         'seat' => $seat,
                     ];
+                    if ($this->bookingsHasRouteId()) {
+                        $insert['route_id'] = $routeId > 0 ? $routeId : null;
+                    }
                     if (! $supportsDepartureCode) {
                         unset($insert['departure_code']);
                     }
@@ -1334,6 +1342,7 @@ class BookingApiController extends Controller
         if (! PoolScope::canAccessRouteName($targetRoute)) {
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
+        $targetRouteId = PoolScope::routeIdForName($targetRoute);
 
         if ($isCanceled && ! $paymentOnlyUpdate) {
             return $this->error('Booking cancel hanya bisa diubah status pembayarannya.', 422);
@@ -1384,14 +1393,15 @@ class BookingApiController extends Controller
             || $targetJam !== (string) ($current['jam'] ?? '')
             || $targetUnit !== (int) ($current['unit'] ?? 1);
 
-        $conflict = DB::table('bookings')
-            ->where('rute', $targetRoute)
+        $conflictQuery = DB::table('bookings')
             ->where('tanggal', $targetDate)
             ->where('jam', $targetJam)
             ->where('unit', $targetUnit)
             ->where('seat', $seat)
             ->where('status', '!=', 'canceled')
-            ->where('id', '!=', $id)
+            ->where('id', '!=', $id);
+        PoolScope::applyRouteIdentity($conflictQuery, $targetRoute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute', $targetRouteId);
+        $conflict = $conflictQuery
             ->exists();
 
         if ($conflict) {
@@ -1417,6 +1427,9 @@ class BookingApiController extends Controller
         ];
         if ($this->bookingsHasDepartureCode()) {
             $updatePayload['departure_code'] = $departureCode;
+        }
+        if ($this->bookingsHasRouteId()) {
+            $updatePayload['route_id'] = $targetRouteId > 0 ? $targetRouteId : null;
         }
 
         DB::table('bookings')
@@ -1540,10 +1553,11 @@ class BookingApiController extends Controller
             $query = DB::table('bookings as b')
                 ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
                 ->where('b.id', $bookingId);
-            PoolScope::applyRouteScope($query, '', 'b.rute');
+            PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
             $row = $query->first([
                     'b.id',
+                    $this->bookingsHasRouteId() ? 'b.route_id' : DB::raw('NULL as route_id'),
                     'b.seat',
                     'b.rute',
                     'b.tanggal',
@@ -1576,15 +1590,16 @@ class BookingApiController extends Controller
 
         $query = DB::table('bookings as b')
             ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
-            ->where('b.rute', $rute)
             ->where('b.tanggal', $tanggal)
             ->where('b.jam', $this->normalizeTime($jam))
             ->where('b.unit', $unit)
             ->where('b.seat', $lookupSeat);
-        PoolScope::applyRouteScope($query, '', 'b.rute');
+        PoolScope::applyRouteIdentity($query, $rute, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
+        PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
         $row = $query->first([
                 'b.id',
+                $this->bookingsHasRouteId() ? 'b.route_id' : DB::raw('NULL as route_id'),
                 'b.seat',
                 'b.rute',
                 'b.tanggal',
@@ -1751,6 +1766,15 @@ class BookingApiController extends Controller
         }
 
         return $this->bookingsHasTicketCode;
+    }
+
+    private function bookingsHasRouteId(): bool
+    {
+        if ($this->bookingsHasRouteId === null) {
+            $this->bookingsHasRouteId = Schema::hasColumn('bookings', 'route_id');
+        }
+
+        return $this->bookingsHasRouteId;
     }
 
     private function tripAssignmentsHasArmadaId(): bool

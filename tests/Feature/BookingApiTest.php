@@ -97,8 +97,13 @@ class BookingApiTest extends TestCase
 
         $this->assertDatabaseCount('bookings', 2);
         $this->assertDatabaseCount('customers', 1);
+        $this->assertDatabaseHas('bookings', [
+            'route_id' => $routeId,
+            'phone' => '081234567890',
+        ]);
 
         $conflict = $this->postJson(route('api.bookings.submit'), array_merge($payload, [
+            'rute' => 'Pinrang -> Makassar',
             'seats' => ['1'],
             'discount' => 0,
         ]));
@@ -106,6 +111,70 @@ class BookingApiTest extends TestCase
         $conflict->assertStatus(409)
             ->assertJsonPath('success', false)
             ->assertJsonPath('error', 'conflict');
+    }
+
+    public function test_update_booking_uses_route_id_for_normalized_route_variants(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'name' => 'PINRANG -> MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $trip = [
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'name' => 'RIDWAN',
+            'phone' => '081234567890',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+        ];
+
+        DB::table('bookings')->insert(array_merge($trip, [
+            'route_id' => $routeId,
+            'rute' => 'PINRANG -> MAKASSAR',
+            'seat' => '1',
+        ]));
+        $legacyBookingId = DB::table('bookings')->insertGetId(array_merge($trip, [
+            'route_id' => null,
+            'rute' => 'Pinrang - Makassar',
+            'seat' => '2',
+        ]));
+
+        $conflict = $this->postJson(route('api.bookings.update'), [
+            'booking_id' => $legacyBookingId,
+            'rute' => 'Pinrang => Makassar',
+            'seat' => '1',
+        ]);
+
+        $conflict->assertStatus(409)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error', 'Kursi sudah terpakai pada keberangkatan ini');
+
+        $success = $this->postJson(route('api.bookings.update'), [
+            'booking_id' => $legacyBookingId,
+            'rute' => 'Pinrang => Makassar',
+            'seat' => '3',
+        ]);
+
+        $success->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('booking_id', $legacyBookingId);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $legacyBookingId,
+            'route_id' => $routeId,
+            'rute' => 'Pinrang => Makassar',
+            'seat' => '3',
+        ]);
     }
 
     public function test_cancel_booking_marks_status_canceled(): void
