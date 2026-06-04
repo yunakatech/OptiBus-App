@@ -45,6 +45,7 @@
         openArmadaEditor,
         removeArmada,
         goBackToData,
+        canManage = true,
     }: {
         activeMode?: ViewMode;
         armadaDetail?: ArmadaRow | null;
@@ -62,6 +63,7 @@
         openArmadaEditor: (row: ArmadaRow) => void;
         removeArmada: (id: number) => void | Promise<void>;
         goBackToData: () => void;
+        canManage?: boolean;
     } = $props();
 
     let armadaFiltersExpanded = $state(false);
@@ -177,14 +179,16 @@
                                         <Eye class="mr-2 h-3.5 w-3.5" />
                                         Lihat Detail
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
-                                        <Pencil class="mr-2 h-3.5 w-3.5" />
-                                        Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
-                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                        Hapus
-                                    </DropdownMenuItem>
+                                    {#if canManage}
+                                        <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
+                                            <Pencil class="mr-2 h-3.5 w-3.5" />
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                            Hapus
+                                        </DropdownMenuItem>
+                                    {/if}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -361,14 +365,16 @@
                                             <Eye class="mr-2 h-3.5 w-3.5" />
                                             Lihat Detail
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
-                                            <Pencil class="mr-2 h-3.5 w-3.5" />
-                                            Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
-                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                            Hapus
-                                        </DropdownMenuItem>
+                                        {#if canManage}
+                                            <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
+                                                <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                Hapus
+                                            </DropdownMenuItem>
+                                        {/if}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </td>
