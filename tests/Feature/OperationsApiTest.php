@@ -100,7 +100,46 @@ class OperationsApiTest extends TestCase
 
         $this->getJson(route('api.master.customers.search', ['q' => 'rid']))
             ->assertOk()
-            ->assertJsonCount(1, 'customers');
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonPath('has_more', false)
+            ->assertJsonPath('scope_limited', false);
+    }
+
+    public function test_customer_search_matches_split_terms_address_and_phone_variants(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        DB::table('customers')->insert([
+            [
+                'name' => 'RIDWAN SAPUTRA',
+                'phone' => '+62 (812)-987.654',
+                'pickup_point' => 'Terminal Daya',
+                'gmaps' => 'Jalan Perintis Makassar',
+                'created_at' => now(),
+            ],
+            [
+                'name' => 'RIDWAN LAIN',
+                'phone' => '089999999999',
+                'pickup_point' => 'Pasar Sentral',
+                'gmaps' => 'Pinrang',
+                'created_at' => now(),
+            ],
+        ]);
+
+        $this->getJson(route('api.master.customers.search', ['q' => 'ridwan terminal']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonPath('customers.0.phone', '+62 (812)-987.654');
+
+        $this->getJson(route('api.master.customers.search', ['q' => '0812987']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonPath('customers.0.name', 'RIDWAN SAPUTRA');
+
+        $this->getJson(route('api.master.customers.search', ['q' => 'perintis']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonPath('customers.0.name', 'RIDWAN SAPUTRA');
     }
 
     public function test_submit_charter_and_luggage(): void

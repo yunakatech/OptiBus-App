@@ -141,18 +141,27 @@ class OperationsApiController extends Controller
     public function searchCustomers(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
+        $scope = PoolScope::forCurrentUser();
+
         if ($q === '' || mb_strlen($q) < 2) {
-            return $this->ok(['customers' => []]);
+            return $this->ok([
+                'customers' => [],
+                'has_more' => false,
+                'scope_limited' => ! $scope['all'],
+                'scope_name' => $scope['pool_name'],
+            ]);
         }
 
-        $cacheKey = 'ops:customer-search:'.PoolScope::cacheKey().':'.md5(mb_strtolower($q));
-        $customers = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($q) {
-            $phoneQuery = preg_replace('/\D+/', '', $q) ?? '';
-            $qLower = mb_strtolower($q);
-            $like = '%'.$qLower.'%';
-            $rawLike = '%'.$q.'%';
-            $phoneLike = $phoneQuery !== '' ? '%'.$phoneQuery.'%' : '';
-            $phoneExact = $phoneQuery;
+        $normalizedQuery = preg_replace('/\s+/', ' ', mb_strtolower($q)) ?? mb_strtolower($q);
+        $tokens = array_slice(
+            array_values(array_filter(explode(' ', $normalizedQuery), static fn (string $token): bool => $token !== '')),
+            0,
+            6,
+        );
+        $cacheKey = 'ops:customer-search:v2:'.PoolScope::cacheKey().':'.md5($normalizedQuery);
+        $result = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($normalizedQuery, $tokens) {
+            $normalizedPhoneSql = $this->normalizedCustomerPhoneSql();
+            $phoneVariants = $this->customerPhoneSearchVariants($normalizedQuery);
 
             $query = DB::table('customers')
                 ->select([
@@ -164,30 +173,68 @@ class OperationsApiController extends Controller
                 ]);
             PoolScope::applyCustomerScope($query, 'customers');
 
-            return $query
-                ->where(function ($query) use ($like, $rawLike, $phoneQuery, $phoneLike) {
-                    $query->whereRaw("LOWER(COALESCE(name, '')) LIKE ?", [$like])
-                        ->orWhere('phone', 'like', $rawLike)
-                        ->orWhereRaw("LOWER(COALESCE(pickup_point, '')) LIKE ?", [$like]);
+            foreach ($tokens as $token) {
+                $like = '%'.$token.'%';
+                $tokenPhoneVariants = $this->customerPhoneSearchVariants($token);
 
-                    if ($phoneQuery !== '') {
-                        $query->orWhereRaw("REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), ' ', ''), '-', ''), '+', '') LIKE ?", [$phoneLike]);
+                $query->where(function ($termQuery) use ($like, $normalizedPhoneSql, $tokenPhoneVariants): void {
+                    $termQuery
+                        ->whereRaw("LOWER(COALESCE(name, '')) LIKE ?", [$like])
+                        ->orWhereRaw("LOWER(COALESCE(pickup_point, '')) LIKE ?", [$like])
+                        ->orWhereRaw("LOWER(COALESCE(gmaps, '')) LIKE ?", [$like]);
+
+                    foreach ($tokenPhoneVariants as $phoneVariant) {
+                        $termQuery->orWhereRaw($normalizedPhoneSql.' LIKE ?', ['%'.$phoneVariant.'%']);
                     }
-                })
-                ->orderByRaw(
-                    "CASE
-                        WHEN REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), ' ', ''), '-', ''), '+', '') = ? THEN 0
-                        WHEN LOWER(COALESCE(name, '')) = ? THEN 1
-                        ELSE 2
-                    END",
-                    [$phoneExact, $qLower]
-                )
+                });
+            }
+
+            $rankCases = [];
+            $rankBindings = [];
+            $rank = 0;
+
+            if ($phoneVariants !== []) {
+                $placeholders = implode(', ', array_fill(0, count($phoneVariants), '?'));
+                $rankCases[] = "WHEN {$normalizedPhoneSql} IN ({$placeholders}) THEN {$rank}";
+                array_push($rankBindings, ...$phoneVariants);
+                $rank++;
+            }
+
+            $rankCases[] = "WHEN LOWER(COALESCE(name, '')) = ? THEN {$rank}";
+            $rankBindings[] = $normalizedQuery;
+            $rank++;
+            $rankCases[] = "WHEN LOWER(COALESCE(name, '')) LIKE ? THEN {$rank}";
+            $rankBindings[] = $normalizedQuery.'%';
+            $rank++;
+
+            if ($phoneVariants !== []) {
+                $prefixCases = [];
+                foreach ($phoneVariants as $phoneVariant) {
+                    $prefixCases[] = $normalizedPhoneSql.' LIKE ?';
+                    $rankBindings[] = $phoneVariant.'%';
+                }
+                $rankCases[] = 'WHEN ('.implode(' OR ', $prefixCases).") THEN {$rank}";
+                $rank++;
+            }
+
+            $customers = $query
+                ->orderByRaw('CASE '.implode(' ', $rankCases)." ELSE {$rank} END", $rankBindings)
                 ->orderBy('name')
-                ->limit(20)
+                ->limit(21)
                 ->get();
+
+            return [
+                'customers' => $customers->take(20)->values(),
+                'has_more' => $customers->count() > 20,
+            ];
         });
 
-        return $this->ok(['customers' => $customers]);
+        return $this->ok([
+            'customers' => $result['customers'],
+            'has_more' => $result['has_more'],
+            'scope_limited' => ! $scope['all'],
+            'scope_name' => $scope['pool_name'],
+        ]);
     }
 
     public function submitCharter(Request $request): JsonResponse
@@ -474,6 +521,43 @@ class OperationsApiController extends Controller
         $trimmed = trim($value);
         $digits = preg_replace('/\D+/', '', $trimmed) ?? '';
         return $digits !== '' ? $digits : $trimmed;
+    }
+
+    private function normalizedCustomerPhoneSql(): string
+    {
+        return "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), ' ', ''), '-', ''), '+', ''), '(', ''), ')', ''), '.', ''), '/', '')";
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function customerPhoneSearchVariants(string $value): array
+    {
+        $digits = preg_replace('/\D+/', '', $value) ?? '';
+        if ($digits === '') {
+            return [];
+        }
+
+        $variants = [$digits];
+
+        if (str_starts_with($digits, '0')) {
+            $withoutPrefix = substr($digits, 1);
+            if ($withoutPrefix !== '') {
+                $variants[] = $withoutPrefix;
+                $variants[] = '62'.$withoutPrefix;
+            }
+        } elseif (str_starts_with($digits, '62')) {
+            $withoutPrefix = substr($digits, 2);
+            if ($withoutPrefix !== '') {
+                $variants[] = $withoutPrefix;
+                $variants[] = '0'.$withoutPrefix;
+            }
+        } elseif (str_starts_with($digits, '8')) {
+            $variants[] = '0'.$digits;
+            $variants[] = '62'.$digits;
+        }
+
+        return array_values(array_unique($variants));
     }
 
     private function upsertCustomerBagasi(string $nama, string $noHp, ?string $alamat, string $tipe): int
