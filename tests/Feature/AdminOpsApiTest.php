@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\ActivityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +14,17 @@ class AdminOpsApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function actingAsSuperAdmin(): User
+    {
+        $user = User::factory()->create(['is_super_admin' => true]);
+        $this->actingAs($user);
+
+        return $user;
+    }
+
     public function test_routes_crud_works(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $create = $this->postJson(route('api.admin.routes.save'), [
             'name' => 'BONE - MAKASSAR',
@@ -39,7 +48,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_schedule_duplicate_is_rejected(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $routeId = DB::table('routes')->insertGetId([
             'name' => 'PINRANG - MAKASSAR',
@@ -70,7 +79,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_driver_and_luggage_service_crud_works(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $unitId = DB::table('units')->insertGetId([
             'nopol' => 'DD 7788 XX',
@@ -103,6 +112,7 @@ class AdminOpsApiTest extends TestCase
         $authUser = User::factory()->create([
             'name' => 'Root Admin',
             'email' => 'root.admin@example.com',
+            'is_super_admin' => true,
         ]);
         $this->actingAs($authUser);
 
@@ -164,7 +174,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_segments_customers_and_reports_endpoints_work(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $routeId = DB::table('routes')->insertGetId([
             'name' => 'PINRANG - MAKASSAR',
@@ -233,7 +243,7 @@ class AdminOpsApiTest extends TestCase
             'reason' => 'Testing',
             'created_at' => now(),
         ]);
-        \App\Support\ActivityLog::write(
+        ActivityLog::write(
             'CANCEL',
             'Testing cancellation log',
             'Testing',
@@ -284,7 +294,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_reports_include_active_unpaid_booking_pending_charter_and_luggage(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $today = now()->toDateString();
 
@@ -417,7 +427,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_driver_and_armada_revenue_include_luggage_revenue_in_totals(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $today = now()->toDateString();
         $armadaNopol = 'DD 1234 UX';
@@ -596,7 +606,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_driver_and_armada_luggage_revenue_refresh_immediately_after_mapping_existing_luggage(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
         Cache::flush();
 
         $today = now()->toDateString();
@@ -712,7 +722,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_charter_luggage_assignment_and_csv_endpoints_work(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $unitId = DB::table('units')->insertGetId([
             'nopol' => 'DD 8899 ZZ',
@@ -874,7 +884,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_customer_ops_crud_works(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $bagasi = $this->postJson(route('api.admin.customer-bagasi.save'), [
             'nama' => 'PENGIRIM A',
@@ -908,7 +918,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_luggage_raw_mode_autofills_customer_ids(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $routeId = DB::table('routes')->insertGetId([
             'name' => 'PINRANG - PAREPARE',
@@ -953,7 +963,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_bulk_actions_endpoints_work(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $charterIds = [];
         for ($i = 0; $i < 2; $i++) {
@@ -1015,7 +1025,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_assignment_conflict_detection_and_override_work(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $driverA = DB::table('drivers')->insertGetId([
             'nama' => 'DRIVER A',
@@ -1077,7 +1087,7 @@ class AdminOpsApiTest extends TestCase
 
     public function test_ops_lifecycle_actions_and_revenue_csv_work(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsSuperAdmin();
 
         $today = now()->toDateString();
 
