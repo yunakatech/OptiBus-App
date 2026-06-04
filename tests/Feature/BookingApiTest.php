@@ -67,6 +67,19 @@ class BookingApiTest extends TestCase
             'destination' => 'MAKASSAR',
             'created_at' => now(),
         ]);
+        $poolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL PERWAKILAN PINRANG',
+            'code' => 'PRG',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $segmentId = DB::table('segments')->insertGetId([
             'route_id' => $routeId,
@@ -99,6 +112,10 @@ class BookingApiTest extends TestCase
         $this->assertDatabaseCount('customers', 1);
         $this->assertDatabaseHas('bookings', [
             'route_id' => $routeId,
+            'phone' => '081234567890',
+        ]);
+        $this->assertDatabaseHas('customers', [
+            'pool_id' => $poolId,
             'phone' => '081234567890',
         ]);
 

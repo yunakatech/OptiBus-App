@@ -273,35 +273,68 @@ class PoolScope
             return;
         }
 
-        if (! Schema::hasTable('bookings')) {
-            $query->whereRaw('1 = 0');
-
-            return;
-        }
-
-        $customerPhoneColumn = self::qualifiedColumn($customerAlias, 'phone');
+        $poolIds = $scope['pool_ids'];
         $routeIds = $scope['route_ids'];
         $routeNames = $scope['route_names'];
+        $hasCustomerPoolId = Schema::hasTable('customers') && Schema::hasColumn('customers', 'pool_id');
+        $canUseCustomerPool = $hasCustomerPoolId && $poolIds !== [];
+        $canUseBookings = Schema::hasTable('bookings') && ($routeIds !== [] || $routeNames !== []);
 
-        if ($routeIds === [] && $routeNames === []) {
+        if (! $canUseCustomerPool && ! $canUseBookings) {
             $query->whereRaw('1 = 0');
 
             return;
         }
 
-        $query->whereExists(function (Builder $exists) use ($customerPhoneColumn, $routeIds, $routeNames): void {
-            $exists
-                ->selectRaw('1')
-                ->from('bookings as scoped_bookings')
-                ->whereColumn('scoped_bookings.phone', $customerPhoneColumn);
+        $customerPoolColumn = self::qualifiedColumn($customerAlias, 'pool_id');
+        $customerPhoneColumn = self::qualifiedColumn($customerAlias, 'phone');
+        $query->where(function (Builder $customerScope) use (
+            $canUseCustomerPool,
+            $canUseBookings,
+            $customerPoolColumn,
+            $customerPhoneColumn,
+            $poolIds,
+            $routeIds,
+            $routeNames,
+        ): void {
+            if ($canUseCustomerPool) {
+                $customerScope->whereIn($customerPoolColumn, $poolIds);
+            }
 
-            self::appendRouteClauses(
-                $exists,
-                Schema::hasColumn('bookings', 'route_id') ? 'scoped_bookings.route_id' : '',
+            if (! $canUseBookings) {
+                return;
+            }
+
+            $legacyBookingClause = function (Builder $legacy) use (
+                $canUseCustomerPool,
+                $customerPoolColumn,
+                $customerPhoneColumn,
                 $routeIds,
-                'scoped_bookings.rute',
                 $routeNames,
-            );
+            ): void {
+                if ($canUseCustomerPool) {
+                    $legacy->whereNull($customerPoolColumn);
+                }
+
+                $legacy->whereExists(function (Builder $exists) use ($customerPhoneColumn, $routeIds, $routeNames): void {
+                    $exists
+                        ->selectRaw('1')
+                        ->from('bookings as scoped_bookings')
+                        ->whereColumn('scoped_bookings.phone', $customerPhoneColumn);
+
+                    self::appendRouteClauses(
+                        $exists,
+                        Schema::hasColumn('bookings', 'route_id') ? 'scoped_bookings.route_id' : '',
+                        $routeIds,
+                        'scoped_bookings.rute',
+                        $routeNames,
+                    );
+                });
+            };
+
+            $canUseCustomerPool
+                ? $customerScope->orWhere($legacyBookingClause)
+                : $customerScope->where($legacyBookingClause);
         });
     }
 
@@ -388,6 +421,39 @@ class PoolScope
             ->map(static fn ($value) => (int) $value)
             ->values()
             ->all();
+    }
+
+    public static function customerPoolId(int $routeId = 0, ?int $userId = null): int
+    {
+        if (! self::tablesReady()) {
+            return 0;
+        }
+
+        if ($routeId > 0) {
+            $routePoolId = (int) (DB::table('pool_route as pr')
+                ->join('pools as p', 'pr.pool_id', '=', 'p.id')
+                ->where('pr.route_id', $routeId)
+                ->where('p.status', 'active')
+                ->value('pr.pool_id') ?? 0);
+
+            if ($routePoolId > 0) {
+                return $routePoolId;
+            }
+        }
+
+        $scope = self::forCurrentUser(0, $userId);
+        if (! $scope['all'] && count($scope['pool_ids']) === 1) {
+            return (int) $scope['pool_ids'][0];
+        }
+
+        $activePoolIds = DB::table('pools')
+            ->where('status', 'active')
+            ->pluck('id')
+            ->map(static fn ($value): int => (int) $value)
+            ->values()
+            ->all();
+
+        return count($activePoolIds) === 1 ? $activePoolIds[0] : 0;
     }
 
     public static function routeIdForName(string $routeName): int
