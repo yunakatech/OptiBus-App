@@ -12,6 +12,7 @@
 </script>
 
 <script lang="ts">
+    import { Deferred } from '@inertiajs/svelte';
     import { ArrowRight, BusFront, Copy, Package, Ticket, TrendingDown, TrendingUp, Wallet } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
@@ -517,7 +518,56 @@
         </div>
     </div>
 
-    <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
+    <Deferred
+        data={[
+            'dailyTrend',
+            'monthlyTrend',
+            'recentActivity',
+            'recentActivityTotal',
+            'recentActivityVisibleCount',
+            'departuresToday',
+            'upcomingCharterReminder',
+        ]}
+    >
+        {#snippet fallback()}
+            <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start" aria-label="Memuat data dashboard">
+                <div class="space-y-2.5 xl:col-span-2">
+                    {#each Array.from({ length: 3 }) as _, index (`dashboard-main-skeleton-${index}`)}
+                        <Card class="overflow-hidden">
+                            <CardContent class="space-y-3 p-4">
+                                <div class="h-4 w-40 animate-pulse rounded-full bg-muted"></div>
+                                <div class="h-3 w-28 animate-pulse rounded-full bg-muted/70"></div>
+                                <div class="grid grid-cols-7 items-end gap-2 pt-3">
+                                    {#each Array.from({ length: 7 }) as _, barIndex (`dashboard-chart-skeleton-${index}-${barIndex}`)}
+                                        <div
+                                            class="animate-pulse rounded-md bg-muted"
+                                            style={`height:${24 + ((barIndex + index) % 4) * 10}px`}
+                                        ></div>
+                                    {/each}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    {/each}
+                </div>
+                <div class="space-y-2.5">
+                    {#each Array.from({ length: 3 }) as _, index (`dashboard-side-skeleton-${index}`)}
+                        <Card>
+                            <CardContent class="space-y-3 p-4">
+                                <div class="h-4 w-36 animate-pulse rounded-full bg-muted"></div>
+                                {#each Array.from({ length: index === 1 ? 3 : 2 }) as _, rowIndex (`dashboard-side-row-${index}-${rowIndex}`)}
+                                    <div class="space-y-2 rounded-xl border border-border/60 p-3">
+                                        <div class="h-3 w-2/3 animate-pulse rounded-full bg-muted"></div>
+                                        <div class="h-3 w-full animate-pulse rounded-full bg-muted/70"></div>
+                                    </div>
+                                {/each}
+                            </CardContent>
+                        </Card>
+                    {/each}
+                </div>
+            </div>
+        {/snippet}
+
+        <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
         <div class="space-y-2.5 xl:col-span-2">
             <Card class="h-fit">
                 <CardHeader class="space-y-1 pb-2">
@@ -898,5 +948,6 @@
             </CardContent>
         </Card>
 
-    </div>
+        </div>
+    </Deferred>
 </div>

@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -54,6 +57,75 @@ class DashboardTest extends TestCase
 
         $opsMaster = $this->get(route('admin-ops.master'));
         $opsMaster->assertOk();
+    }
+
+    public function test_dashboard_exposes_aggregated_summary_and_one_deferred_data_group(): void
+    {
+        Carbon::setTestNow('2026-06-05 10:00:00');
+        $this->actingAsSuperAdmin();
+
+        try {
+            DB::table('bookings')->insert([
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-06-05',
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => 'A1',
+                'name' => 'PENUMPANG DASHBOARD',
+                'phone' => '081200000099',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Lunas',
+                'status' => 'active',
+                'price' => 100000,
+                'discount' => 10000,
+                'created_at' => now(),
+            ]);
+            DB::table('charters')->insert([
+                'name' => 'CARTER DASHBOARD',
+                'start_date' => '2026-06-05',
+                'end_date' => '2026-06-05',
+                'price' => 200000,
+                'status' => 'active',
+                'created_at' => now(),
+            ]);
+            DB::table('luggages')->insert([
+                'sender_name' => 'PENGIRIM DASHBOARD',
+                'sender_phone' => '081300000099',
+                'receiver_name' => 'PENERIMA DASHBOARD',
+                'receiver_phone' => '081400000099',
+                'price' => 300000,
+                'status' => 'Diterima',
+                'payment_status' => 'Lunas',
+                'created_at' => now(),
+            ]);
+
+            $this->get(route('dashboard'))
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('Dashboard')
+                    ->where('stats.revenue_total_today', 590000)
+                    ->where('summaryStatsByScope.day.total_bookings', 1)
+                    ->where('summaryStatsByScope.day.revenue_booking', 90000)
+                    ->missingAll([
+                        'dailyTrend',
+                        'monthlyTrend',
+                        'recentActivity',
+                        'recentActivityTotal',
+                        'recentActivityVisibleCount',
+                        'departuresToday',
+                        'upcomingCharterReminder',
+                    ])
+                    ->loadDeferredProps('dashboard-data', fn (Assert $reload) => $reload
+                        ->has('dailyTrend')
+                        ->has('monthlyTrend')
+                        ->has('recentActivity')
+                        ->has('recentActivityTotal')
+                        ->has('recentActivityVisibleCount')
+                        ->has('departuresToday')
+                        ->has('upcomingCharterReminder')),
+                );
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_legacy_tab_urls_redirect_to_new_per_menu_routes(): void
