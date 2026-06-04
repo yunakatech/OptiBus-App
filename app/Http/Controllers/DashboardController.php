@@ -17,23 +17,72 @@ class DashboardController extends Controller
     public function __invoke(): Response
     {
         $today = Carbon::today();
-        $latestActivityDate = $this->latestActivityDate();
-        $trendAnchor = $latestActivityDate && $latestActivityDate->lt($today->copy()->subDays(6))
-            ? $latestActivityDate->copy()
-            : $today->copy();
-        // Summary cards must stay on the current running period, even when future trips are added early.
-        $periodAnchor = $today->copy();
-        $trendYearAnchor = $periodAnchor->copy();
-        $monthStart = $periodAnchor->copy()->startOfMonth();
-        $monthEnd = $periodAnchor->copy()->endOfMonth();
+        $monthStart = $today->copy()->startOfMonth();
         $previousMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
-        $previousMonthEnd = $previousMonthStart->copy()->endOfMonth();
-        $yearStart = $periodAnchor->copy()->startOfYear();
-        $yearEnd = $periodAnchor->copy()->endOfYear();
-        $yesterday = $today->copy()->subDay();
+        $yearStart = $today->copy()->startOfYear();
         $previousYearStart = $yearStart->copy()->subYear()->startOfYear();
-        $previousYearEnd = $previousYearStart->copy()->endOfYear();
+        $dashboardSummary = null;
+        $resolveDashboardSummary = function () use ($today, &$dashboardSummary): array {
+            return $dashboardSummary ??= $this->dashboardSummary($today);
+        };
+        $trendAnchor = null;
+        $resolveTrendAnchor = function () use ($today, &$trendAnchor): Carbon {
+            if ($trendAnchor instanceof Carbon) {
+                return $trendAnchor;
+            }
 
+            $latestActivityDate = $this->latestActivityDate();
+            $trendAnchor = $latestActivityDate && $latestActivityDate->lt($today->copy()->subDays(6))
+                ? $latestActivityDate->copy()
+                : $today->copy();
+
+            return $trendAnchor;
+        };
+
+        $recentActivity = null;
+        $resolveRecentActivity = function () use (&$recentActivity): array {
+            return $recentActivity ??= $this->recentActivity();
+        };
+
+        return Inertia::render('Dashboard', [
+            'todayLabel' => strtoupper($today->translatedFormat('l, d F Y')),
+            'stats' => fn (): array => $resolveDashboardSummary()['stats'],
+            'statsComparison' => fn (): array => $resolveDashboardSummary()['statsComparison'],
+            'statsPeriod' => [
+                'current_label' => $monthStart->translatedFormat('F Y'),
+                'previous_label' => $previousMonthStart->translatedFormat('F Y'),
+            ],
+            'summaryStatsByScope' => fn (): array => $resolveDashboardSummary()['summaryStatsByScope'],
+            'summaryComparisonByScope' => fn (): array => $resolveDashboardSummary()['summaryComparisonByScope'],
+            'summaryPeriodByScope' => [
+                'day' => [
+                    'current_label' => 'Hari Ini',
+                    'previous_label' => 'Kemarin',
+                    'subtitle_label' => 'hari ini',
+                ],
+                'month' => [
+                    'current_label' => $monthStart->translatedFormat('F Y'),
+                    'previous_label' => $previousMonthStart->translatedFormat('F Y'),
+                    'subtitle_label' => 'bulan ini',
+                ],
+                'year' => [
+                    'current_label' => $yearStart->translatedFormat('Y'),
+                    'previous_label' => $previousYearStart->translatedFormat('Y'),
+                    'subtitle_label' => 'tahun ini',
+                ],
+            ],
+            'dailyTrend' => Inertia::defer(fn (): array => $this->dailyTrend($resolveTrendAnchor()), 'dashboard-data'),
+            'monthlyTrend' => Inertia::defer(fn (): array => $this->monthlyTrend($today), 'dashboard-data'),
+            'recentActivity' => Inertia::defer(fn (): array => $resolveRecentActivity()['items'], 'dashboard-data'),
+            'recentActivityTotal' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['total'], 'dashboard-data'),
+            'recentActivityVisibleCount' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['visible_count'], 'dashboard-data'),
+            'departuresToday' => Inertia::defer(fn (): array => $this->departuresToday($today), 'dashboard-data'),
+            'upcomingCharterReminder' => Inertia::defer(fn (): array => $this->upcomingCharterReminder($today), 'dashboard-data'),
+        ]);
+    }
+
+    private function dashboardSummary(Carbon $today): array
+    {
         $stats = [
             'total_bookings' => 0,
             'pending' => 0,
@@ -56,92 +105,69 @@ class DashboardController extends Controller
             'revenue_charter_month' => 0.0,
             'revenue_luggage_month' => 0.0,
         ];
-        $summaryStatsByScope = [
-            'day' => [
-                'total_bookings' => 0,
-                'revenue_booking' => 0.0,
-                'revenue_charter' => 0.0,
-                'revenue_luggage' => 0.0,
-            ],
-            'month' => [
-                'total_bookings' => 0,
-                'revenue_booking' => 0.0,
-                'revenue_charter' => 0.0,
-                'revenue_luggage' => 0.0,
-            ],
-            'year' => [
-                'total_bookings' => 0,
-                'revenue_booking' => 0.0,
-                'revenue_charter' => 0.0,
-                'revenue_luggage' => 0.0,
-            ],
-        ];
-        $summaryComparisonByScope = [
-            'day' => [
-                'total_bookings' => 0,
-                'revenue_booking' => 0.0,
-                'revenue_charter' => 0.0,
-                'revenue_luggage' => 0.0,
-            ],
-            'month' => [
-                'total_bookings' => 0,
-                'revenue_booking' => 0.0,
-                'revenue_charter' => 0.0,
-                'revenue_luggage' => 0.0,
-            ],
-            'year' => [
-                'total_bookings' => 0,
-                'revenue_booking' => 0.0,
-                'revenue_charter' => 0.0,
-                'revenue_luggage' => 0.0,
-            ],
-        ];
+        $summaryStatsByScope = $this->emptySummaryScopes();
+        $summaryComparisonByScope = $this->emptySummaryScopes();
+        $datePeriods = $this->dashboardPeriods($today, false);
+        $dateTimePeriods = $this->dashboardPeriods($today, true);
 
         if (Schema::hasTable('bookings')) {
+            $bookingSummary = $this->periodSummary(
+                $this->scopedBookingQuery()->where('status', '!=', 'canceled'),
+                'tanggal',
+                'COALESCE(price, 0) - COALESCE(discount, 0)',
+                $datePeriods,
+                true,
+            );
+            $bookingValue = static fn (string $key): float => (float) ($bookingSummary->{$key} ?? 0);
+
+            $stats['total_bookings'] = (int) $bookingValue('month_count');
+            $stats['revenue_today'] = $bookingValue('day_revenue');
+            $stats['revenue_booking_month'] = $bookingValue('month_revenue');
+            $statsComparison['total_bookings'] = (int) $bookingValue('previous_month_count');
+            $statsComparison['revenue_booking_month'] = $bookingValue('previous_month_revenue');
+
+            $summaryStatsByScope['day']['total_bookings'] = (int) $bookingValue('day_count');
+            $summaryStatsByScope['month']['total_bookings'] = (int) $bookingValue('month_count');
+            $summaryStatsByScope['year']['total_bookings'] = (int) $bookingValue('year_count');
+            $summaryComparisonByScope['day']['total_bookings'] = (int) $bookingValue('previous_day_count');
+            $summaryComparisonByScope['month']['total_bookings'] = (int) $bookingValue('previous_month_count');
+            $summaryComparisonByScope['year']['total_bookings'] = (int) $bookingValue('previous_year_count');
+            $summaryStatsByScope['day']['revenue_booking'] = $bookingValue('day_revenue');
+            $summaryStatsByScope['month']['revenue_booking'] = $bookingValue('month_revenue');
+            $summaryStatsByScope['year']['revenue_booking'] = $bookingValue('year_revenue');
+            $summaryComparisonByScope['day']['revenue_booking'] = $bookingValue('previous_day_revenue');
+            $summaryComparisonByScope['month']['revenue_booking'] = $bookingValue('previous_month_revenue');
+            $summaryComparisonByScope['year']['revenue_booking'] = $bookingValue('previous_year_revenue');
+
             $activeBookings = $this->scopedBookingQuery()
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', '>=', $today->toDateString());
+            $activeSnapshot = $this->activeBookingSnapshot($activeBookings);
+            $futureCount = (int) ($activeSnapshot->total ?? 0);
 
-            $futureCount = (clone $activeBookings)->count();
             if ($futureCount === 0) {
                 $activeBookings = $this->scopedBookingQuery()->where('status', '!=', 'canceled');
+                $activeSnapshot = $this->activeBookingSnapshot($activeBookings);
             }
 
-            $stats['total_bookings'] = (int) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$monthStart->toDateString(), $monthEnd->toDateString()])
-                ->count();
-            $stats['pending'] = (clone $activeBookings)
-                ->where(function ($query) {
-                    $query->whereNull('pembayaran')->orWhere('pembayaran', 'Belum Lunas');
-                })
-                ->count();
-            $stats['confirmed'] = (clone $activeBookings)
-                ->whereIn('pembayaran', ['Lunas', 'Redbus', 'Traveloka'])
-                ->count();
-            $stats['canceled'] = $this->scopedBookingQuery()
-                ->where('status', 'canceled')
-                ->count();
+            $stats['pending'] = (int) ($activeSnapshot->pending ?? 0);
+            $stats['confirmed'] = (int) ($activeSnapshot->confirmed ?? 0);
+            $stats['canceled'] = (int) $this->scopedBookingQuery()->where('status', 'canceled')->count();
 
             $fleetDate = $futureCount === 0
-                ? $this->scopedBookingQuery()->where('status', '!=', 'canceled')->max('tanggal')
+                ? (clone $activeBookings)->max('tanggal')
                 : $today->toDateString();
+
             if ($fleetDate) {
                 $stats['live_fleet'] = $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereDate('tanggal', $fleetDate)
-                ->select(['rute', 'jam', 'unit'])
-                ->distinct()
-                ->get()
-                ->count();
+                    ->where('status', '!=', 'canceled')
+                    ->whereDate('tanggal', $fleetDate)
+                    ->select(['rute', 'jam', 'unit'])
+                    ->distinct()
+                    ->get()
+                    ->count();
             }
 
-            $bookingRevenueToday = (float) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereDate('tanggal', $today->toDateString())
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
-                ->value('total');
-            $stats['revenue_today'] = $bookingRevenueToday;
             if ($stats['revenue_today'] <= 0 && $fleetDate) {
                 $stats['revenue_today'] = (float) $this->scopedBookingQuery()
                     ->where('status', '!=', 'canceled')
@@ -150,62 +176,12 @@ class DashboardController extends Controller
                     ->value('total');
             }
 
-            $stats['revenue_booking_month'] = (float) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$monthStart->toDateString(), $monthEnd->toDateString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
-                ->value('total');
-            $statsComparison['total_bookings'] = (int) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()])
-                ->count();
-            $statsComparison['revenue_booking_month'] = (float) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
-                ->value('total');
-            $summaryStatsByScope['day']['total_bookings'] = (int) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereDate('tanggal', $today->toDateString())
-                ->count();
-            $summaryStatsByScope['month']['total_bookings'] = (int) $stats['total_bookings'];
-            $summaryStatsByScope['year']['total_bookings'] = (int) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$yearStart->toDateString(), $yearEnd->toDateString()])
-                ->count();
-            $summaryComparisonByScope['day']['total_bookings'] = (int) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereDate('tanggal', $yesterday->toDateString())
-                ->count();
-            $summaryComparisonByScope['month']['total_bookings'] = (int) $statsComparison['total_bookings'];
-            $summaryComparisonByScope['year']['total_bookings'] = (int) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$previousYearStart->toDateString(), $previousYearEnd->toDateString()])
-                ->count();
-            $summaryStatsByScope['day']['revenue_booking'] = (float) $bookingRevenueToday;
-            $summaryStatsByScope['month']['revenue_booking'] = (float) $stats['revenue_booking_month'];
-            $summaryStatsByScope['year']['revenue_booking'] = (float) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$yearStart->toDateString(), $yearEnd->toDateString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
-                ->value('total');
-            $summaryComparisonByScope['day']['revenue_booking'] = (float) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereDate('tanggal', $yesterday->toDateString())
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
-                ->value('total');
-            $summaryComparisonByScope['month']['revenue_booking'] = (float) $statsComparison['revenue_booking_month'];
-            $summaryComparisonByScope['year']['revenue_booking'] = (float) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$previousYearStart->toDateString(), $previousYearEnd->toDateString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
-                ->value('total');
-
             $topRouteRow = (clone $activeBookings)
                 ->selectRaw('rute, COUNT(*) as total')
                 ->groupBy('rute')
                 ->orderByDesc('total')
                 ->first();
+
             if ($topRouteRow) {
                 $stats['top_route'] = (string) $topRouteRow->rute;
                 $stats['top_route_count'] = (int) $topRouteRow->total;
@@ -213,196 +189,134 @@ class DashboardController extends Controller
         }
 
         if (Schema::hasTable('charters')) {
-            $charterRevenueQuery = $this->scopedCharterQuery()
-                ->whereBetween('start_date', [$monthStart->toDateString(), $monthEnd->toDateString()]);
+            $charterQuery = $this->scopedCharterQuery();
+            $this->applyActiveCharterFilter($charterQuery);
+            $charterSummary = $this->periodSummary(
+                $charterQuery,
+                'start_date',
+                'COALESCE(price, 0)',
+                $datePeriods,
+            );
+            $charterValue = static fn (string $key): float => (float) ($charterSummary->{$key} ?? 0);
 
-            if (Schema::hasColumn('charters', 'status')) {
-                $charterRevenueQuery->where('status', '!=', 'canceled');
-            } else {
-                $charterRevenueQuery->where(function ($query) {
-                    $query->whereNull('payment_status')->orWhere('payment_status', '!=', 'Canceled');
-                });
-            }
-
-            $stats['revenue_charter_month'] = (float) $charterRevenueQuery
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-
-            $previousCharterRevenueQuery = $this->scopedCharterQuery()
-                ->whereBetween('start_date', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()]);
-
-            if (Schema::hasColumn('charters', 'status')) {
-                $previousCharterRevenueQuery->where('status', '!=', 'canceled');
-            } else {
-                $previousCharterRevenueQuery->where(function ($query) {
-                    $query->whereNull('payment_status')->orWhere('payment_status', '!=', 'Canceled');
-                });
-            }
-
-            $statsComparison['revenue_charter_month'] = (float) $previousCharterRevenueQuery
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-
-            $charterRevenueTodayQuery = $this->scopedCharterQuery()
-                ->whereDate('start_date', $today->toDateString());
-            $charterRevenueYearQuery = $this->scopedCharterQuery()
-                ->whereBetween('start_date', [$yearStart->toDateString(), $yearEnd->toDateString()]);
-
-            if (Schema::hasColumn('charters', 'status')) {
-                $charterRevenueTodayQuery->where('status', '!=', 'canceled');
-                $charterRevenueYearQuery->where('status', '!=', 'canceled');
-            } else {
-                $charterRevenueTodayQuery->where(function ($query) {
-                    $query->whereNull('payment_status')->orWhere('payment_status', '!=', 'Canceled');
-                });
-                $charterRevenueYearQuery->where(function ($query) {
-                    $query->whereNull('payment_status')->orWhere('payment_status', '!=', 'Canceled');
-                });
-            }
-
-            $stats['revenue_total_today'] += (float) $charterRevenueTodayQuery
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $stats['revenue_total_year'] += (float) $charterRevenueYearQuery
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $summaryStatsByScope['day']['revenue_charter'] = (float) (clone $charterRevenueTodayQuery)
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $summaryStatsByScope['month']['revenue_charter'] = (float) $stats['revenue_charter_month'];
-            $summaryStatsByScope['year']['revenue_charter'] = (float) (clone $charterRevenueYearQuery)
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $charterRevenueYesterdayQuery = $this->scopedCharterQuery()
-                ->whereDate('start_date', $yesterday->toDateString());
-            $charterRevenuePreviousYearQuery = $this->scopedCharterQuery()
-                ->whereBetween('start_date', [$previousYearStart->toDateString(), $previousYearEnd->toDateString()]);
-            if (Schema::hasColumn('charters', 'status')) {
-                $charterRevenueYesterdayQuery->where('status', '!=', 'canceled');
-                $charterRevenuePreviousYearQuery->where('status', '!=', 'canceled');
-            } else {
-                $charterRevenueYesterdayQuery->where(function ($query) {
-                    $query->whereNull('payment_status')->orWhere('payment_status', '!=', 'Canceled');
-                });
-                $charterRevenuePreviousYearQuery->where(function ($query) {
-                    $query->whereNull('payment_status')->orWhere('payment_status', '!=', 'Canceled');
-                });
-            }
-            $summaryComparisonByScope['day']['revenue_charter'] = (float) $charterRevenueYesterdayQuery
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $summaryComparisonByScope['month']['revenue_charter'] = (float) $statsComparison['revenue_charter_month'];
-            $summaryComparisonByScope['year']['revenue_charter'] = (float) $charterRevenuePreviousYearQuery
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
+            $stats['revenue_charter_month'] = $charterValue('month_revenue');
+            $statsComparison['revenue_charter_month'] = $charterValue('previous_month_revenue');
+            $summaryStatsByScope['day']['revenue_charter'] = $charterValue('day_revenue');
+            $summaryStatsByScope['month']['revenue_charter'] = $charterValue('month_revenue');
+            $summaryStatsByScope['year']['revenue_charter'] = $charterValue('year_revenue');
+            $summaryComparisonByScope['day']['revenue_charter'] = $charterValue('previous_day_revenue');
+            $summaryComparisonByScope['month']['revenue_charter'] = $charterValue('previous_month_revenue');
+            $summaryComparisonByScope['year']['revenue_charter'] = $charterValue('previous_year_revenue');
         }
 
         if (Schema::hasTable('luggages')) {
-            $stats['revenue_luggage_month'] = (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereBetween('created_at', [$monthStart->toDateTimeString(), $monthEnd->copy()->endOfDay()->toDateTimeString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $statsComparison['revenue_luggage_month'] = (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereBetween('created_at', [$previousMonthStart->toDateTimeString(), $previousMonthEnd->copy()->endOfDay()->toDateTimeString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
+            $luggageSummary = $this->periodSummary(
+                $this->scopedLuggageQuery()
+                    ->where('status', '!=', 'canceled')
+                    ->where('payment_status', 'Lunas'),
+                'created_at',
+                'COALESCE(price, 0)',
+                $dateTimePeriods,
+            );
+            $luggageValue = static fn (string $key): float => (float) ($luggageSummary->{$key} ?? 0);
 
-            $stats['revenue_total_today'] += (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereDate('created_at', $today->toDateString())
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $stats['revenue_total_year'] += (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereBetween('created_at', [$yearStart->toDateTimeString(), $yearEnd->copy()->endOfDay()->toDateTimeString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $summaryStatsByScope['day']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereDate('created_at', $today->toDateString())
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $summaryStatsByScope['month']['revenue_luggage'] = (float) $stats['revenue_luggage_month'];
-            $summaryStatsByScope['year']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereBetween('created_at', [$yearStart->toDateTimeString(), $yearEnd->copy()->endOfDay()->toDateTimeString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $summaryComparisonByScope['day']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereDate('created_at', $yesterday->toDateString())
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
-            $summaryComparisonByScope['month']['revenue_luggage'] = (float) $statsComparison['revenue_luggage_month'];
-            $summaryComparisonByScope['year']['revenue_luggage'] = (float) $this->scopedLuggageQuery()
-                ->where('status', '!=', 'canceled')
-                ->where('payment_status', 'Lunas')
-                ->whereBetween('created_at', [$previousYearStart->toDateTimeString(), $previousYearEnd->copy()->endOfDay()->toDateTimeString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0)), 0) AS total')
-                ->value('total');
+            $stats['revenue_luggage_month'] = $luggageValue('month_revenue');
+            $statsComparison['revenue_luggage_month'] = $luggageValue('previous_month_revenue');
+            $summaryStatsByScope['day']['revenue_luggage'] = $luggageValue('day_revenue');
+            $summaryStatsByScope['month']['revenue_luggage'] = $luggageValue('month_revenue');
+            $summaryStatsByScope['year']['revenue_luggage'] = $luggageValue('year_revenue');
+            $summaryComparisonByScope['day']['revenue_luggage'] = $luggageValue('previous_day_revenue');
+            $summaryComparisonByScope['month']['revenue_luggage'] = $luggageValue('previous_month_revenue');
+            $summaryComparisonByScope['year']['revenue_luggage'] = $luggageValue('previous_year_revenue');
         }
 
-        $stats['revenue_total_today'] += isset($bookingRevenueToday) ? (float) $bookingRevenueToday : 0.0;
-        $stats['revenue_total_month'] = (float) $stats['revenue_booking_month']
-            + (float) $stats['revenue_charter_month']
-            + (float) $stats['revenue_luggage_month'];
-        if (Schema::hasTable('bookings')) {
-            $stats['revenue_total_year'] += (float) $this->scopedBookingQuery()
-                ->where('status', '!=', 'canceled')
-                ->whereBetween('tanggal', [$yearStart->toDateString(), $yearEnd->toDateString()])
-                ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
-                ->value('total');
-        }
+        $stats['revenue_total_today'] = (float) $summaryStatsByScope['day']['revenue_booking']
+            + (float) $summaryStatsByScope['day']['revenue_charter']
+            + (float) $summaryStatsByScope['day']['revenue_luggage'];
+        $stats['revenue_total_month'] = (float) $summaryStatsByScope['month']['revenue_booking']
+            + (float) $summaryStatsByScope['month']['revenue_charter']
+            + (float) $summaryStatsByScope['month']['revenue_luggage'];
+        $stats['revenue_total_year'] = (float) $summaryStatsByScope['year']['revenue_booking']
+            + (float) $summaryStatsByScope['year']['revenue_charter']
+            + (float) $summaryStatsByScope['year']['revenue_luggage'];
 
-        $recentActivity = null;
-        $resolveRecentActivity = function () use (&$recentActivity): array {
-            return $recentActivity ??= $this->recentActivity();
+        return compact('stats', 'statsComparison', 'summaryStatsByScope', 'summaryComparisonByScope');
+    }
+
+    private function emptySummaryScopes(): array
+    {
+        return [
+            'day' => ['total_bookings' => 0, 'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0],
+            'month' => ['total_bookings' => 0, 'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0],
+            'year' => ['total_bookings' => 0, 'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0],
+        ];
+    }
+
+    private function dashboardPeriods(Carbon $today, bool $dateTime): array
+    {
+        $range = static function (Carbon $start, Carbon $end) use ($dateTime): array {
+            return $dateTime
+                ? [$start->copy()->startOfDay()->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()]
+                : [$start->toDateString(), $end->toDateString()];
         };
 
-        return Inertia::render('Dashboard', [
-            'todayLabel' => strtoupper($trendAnchor->translatedFormat('l, d F Y')),
-            'stats' => $stats,
-            'statsComparison' => $statsComparison,
-            'statsPeriod' => [
-                'current_label' => $monthStart->translatedFormat('F Y'),
-                'previous_label' => $previousMonthStart->translatedFormat('F Y'),
-            ],
-            'summaryStatsByScope' => $summaryStatsByScope,
-            'summaryComparisonByScope' => $summaryComparisonByScope,
-            'summaryPeriodByScope' => [
-                'day' => [
-                    'current_label' => 'Hari Ini',
-                    'previous_label' => 'Kemarin',
-                    'subtitle_label' => 'hari ini',
-                ],
-                'month' => [
-                    'current_label' => $monthStart->translatedFormat('F Y'),
-                    'previous_label' => $previousMonthStart->translatedFormat('F Y'),
-                    'subtitle_label' => 'bulan ini',
-                ],
-                'year' => [
-                    'current_label' => $yearStart->translatedFormat('Y'),
-                    'previous_label' => $previousYearStart->translatedFormat('Y'),
-                    'subtitle_label' => 'tahun ini',
-                ],
-            ],
-            'dailyTrend' => Inertia::defer(fn (): array => $this->dailyTrend($trendAnchor), 'dashboard-trends'),
-            'monthlyTrend' => Inertia::defer(fn (): array => $this->monthlyTrend($trendYearAnchor), 'dashboard-trends'),
-            'recentActivity' => Inertia::defer(fn (): array => $resolveRecentActivity()['items'], 'dashboard-supporting'),
-            'recentActivityTotal' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['total'], 'dashboard-supporting'),
-            'recentActivityVisibleCount' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['visible_count'], 'dashboard-supporting'),
-            'departuresToday' => Inertia::defer(fn (): array => $this->departuresToday($today), 'dashboard-supporting'),
-            'upcomingCharterReminder' => Inertia::defer(fn (): array => $this->upcomingCharterReminder($today), 'dashboard-supporting'),
-        ]);
+        $monthStart = $today->copy()->startOfMonth();
+        $monthEnd = $today->copy()->endOfMonth();
+        $previousMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
+        $previousMonthEnd = $previousMonthStart->copy()->endOfMonth();
+        $yearStart = $today->copy()->startOfYear();
+        $yearEnd = $today->copy()->endOfYear();
+        $previousYearStart = $yearStart->copy()->subYear()->startOfYear();
+        $previousYearEnd = $previousYearStart->copy()->endOfYear();
+
+        return [
+            'day' => $range($today, $today),
+            'month' => $range($monthStart, $monthEnd),
+            'year' => $range($yearStart, $yearEnd),
+            'previous_day' => $range($today->copy()->subDay(), $today->copy()->subDay()),
+            'previous_month' => $range($previousMonthStart, $previousMonthEnd),
+            'previous_year' => $range($previousYearStart, $previousYearEnd),
+        ];
+    }
+
+    private function periodSummary(
+        Builder $query,
+        string $dateColumn,
+        string $revenueExpression,
+        array $periods,
+        bool $includeCount = false,
+    ): object {
+        $selects = [];
+        $bindings = [];
+
+        foreach ($periods as $key => [$start, $end]) {
+            if ($includeCount) {
+                $selects[] = "COALESCE(SUM(CASE WHEN {$dateColumn} BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) AS {$key}_count";
+                array_push($bindings, $start, $end);
+            }
+
+            $selects[] = "COALESCE(SUM(CASE WHEN {$dateColumn} BETWEEN ? AND ? THEN {$revenueExpression} ELSE 0 END), 0) AS {$key}_revenue";
+            array_push($bindings, $start, $end);
+        }
+
+        $firstStart = $periods['previous_year'][0];
+        $lastEnd = $periods['year'][1];
+
+        return $query
+            ->whereBetween($dateColumn, [$firstStart, $lastEnd])
+            ->selectRaw(implode(', ', $selects), $bindings)
+            ->first() ?? (object) [];
+    }
+
+    private function activeBookingSnapshot(Builder $query): object
+    {
+        return (clone $query)
+            ->selectRaw(
+                "COUNT(*) AS total,
+                COALESCE(SUM(CASE WHEN pembayaran IS NULL OR pembayaran = 'Belum Lunas' THEN 1 ELSE 0 END), 0) AS pending,
+                COALESCE(SUM(CASE WHEN pembayaran IN ('Lunas', 'Redbus', 'Traveloka') THEN 1 ELSE 0 END), 0) AS confirmed",
+            )
+            ->first() ?? (object) [];
     }
 
     private function departuresToday(Carbon $today): array
