@@ -11,10 +11,14 @@ class OperationsApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function actingAsSuperAdmin(): void
+    {
+        $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+    }
+
     public function test_master_data_endpoints_return_data(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $routeId = DB::table('routes')->insertGetId([
             'name' => 'PINRANG - MAKASSAR',
@@ -64,7 +68,7 @@ class OperationsApiTest extends TestCase
             'name' => 'RIDWAN',
             'phone' => '081111111111',
             'pickup_point' => 'Terminal',
-            'address' => 'Pinrang',
+            'gmaps' => 'Pinrang',
             'created_at' => now(),
         ]);
 
@@ -101,8 +105,7 @@ class OperationsApiTest extends TestCase
 
     public function test_submit_charter_and_luggage(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $unitId = DB::table('units')->insertGetId([
             'nopol' => 'DD 5566 QQ',
@@ -156,8 +159,7 @@ class OperationsApiTest extends TestCase
 
     public function test_submit_luggage_raw_endpoint_upserts_customers(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->actingAsSuperAdmin();
 
         $routeId = DB::table('routes')->insertGetId([
             'name' => 'RUTE RAW OPS',
