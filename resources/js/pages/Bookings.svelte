@@ -8267,10 +8267,10 @@
             <CardContent>
                 {#if listOnly}
                     <div
-                        class="sticky top-2 z-20 mb-4 rounded-2xl border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/35 p-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90 dark:to-cyan-950/15"
+                        class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/90 md:top-2 md:mx-0 md:rounded-2xl md:border md:border-border/80 md:bg-linear-to-br md:from-background md:via-background md:to-cyan-50/35 md:p-3 md:shadow-sm md:dark:to-cyan-950/15"
                     >
                         <div
-                            class="mb-2.5 flex flex-wrap items-center justify-between gap-2"
+                            class="flex flex-wrap items-center justify-between gap-2"
                         >
                             <div
                                 class="inline-flex items-center rounded-lg border border-border/70 bg-muted/20 p-1"
@@ -8330,7 +8330,7 @@
                                 </Button>
                             </div>
                         </div>
-                        <div class="mt-2 flex justify-end md:hidden">
+                        <div class="flex justify-end md:hidden">
                             <Button
                                 type="button"
                                 size="sm"
@@ -8346,11 +8346,9 @@
                                     : 'Tampilkan Filter'}
                             </Button>
                         </div>
-                        <div class={bookingListFiltersExpanded
-                            ? 'mt-2 block'
-                            : 'mt-2 hidden md:block'}>
-                            <div class="grid gap-2 md:grid-cols-5">
-                                <div class="relative md:col-span-2">
+                        <div class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-2xl border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}>
+                            <div class="grid gap-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+                                <div class="relative">
                                     <Search
                                         class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                                     />
@@ -8358,11 +8356,11 @@
                                         type="text"
                                         placeholder="Cari kode, rute, nama, telepon, jam, unit"
                                         bind:value={bookingListSearch}
-                                        class="h-9 rounded-xl !pl-9 md:!pl-9 text-sm"
+                                        class="h-10 rounded-xl !pl-9 text-sm md:h-9 md:!pl-9"
                                     />
                                 </div>
                                 <select
-                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
                                     bind:value={bookingListRoute}
                                 >
                                     <option value="all">Semua Rute</option>
@@ -8377,10 +8375,10 @@
                                     readonly
                                     autocomplete="off"
                                     placeholder="Pilih tanggal"
-                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
                                 />
                                 <select
-                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
                                     bind:value={bookingListPayment}
                                 >
                                     <option value="all">Semua Pembayaran</option>
@@ -8389,13 +8387,11 @@
                                         >Masih Belum Lunas</option
                                     >
                                 </select>
-                            </div>
-                            <div class="mt-2 flex justify-end">
                                 <Button
                                     type="button"
                                     size="sm"
                                     variant="outline"
-                                    class="h-8 rounded-full px-3 text-xs"
+                                    class="h-10 rounded-xl px-3 text-xs md:h-9 md:rounded-full"
                                     onclick={resetBookingListFilters}
                                 >
                                     Reset
