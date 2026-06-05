@@ -328,14 +328,15 @@ class OperationsApiController extends Controller
         $receiverPhone = $this->normalizePhone((string) $data['receiver_phone']);
         $senderAddress = $this->nullableString($data['sender_address'] ?? null);
         $receiverAddress = $this->nullableString($data['receiver_address'] ?? null);
-        $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim');
-        $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima');
+        $customerPoolId = PoolScope::customerPoolId($routeId);
+        $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim', $customerPoolId);
+        $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima', $customerPoolId);
         $mappedPrice = $this->resolveMappedLuggagePrice($routeId, $serviceId);
         $inputPrice = (float) ($data['price'] ?? 0);
         $resolvedPrice = $inputPrice > 0 ? $inputPrice : $mappedPrice;
         $routeName = $routeId > 0 ? (string) (DB::table('routes')->where('id', $routeId)->value('name') ?? '') : '';
 
-        $id = DB::table('luggages')->insertGetId([
+        $payload = [
             'sender_name' => $senderName,
             'sender_phone' => $senderPhone,
             'sender_address' => $senderAddress,
@@ -357,7 +358,12 @@ class OperationsApiController extends Controller
             'payment_status' => $this->nullableString($data['payment_status'] ?? null) ?? 'Belum Bayar',
             'kode_resi' => $this->nextLuggageResi(),
             'created_at' => now(),
-        ]);
+        ];
+        if (Schema::hasColumn('luggages', 'pool_id')) {
+            $payload['pool_id'] = $customerPoolId > 0 ? $customerPoolId : null;
+        }
+
+        $id = DB::table('luggages')->insertGetId($payload);
 
         $resi = (string) (DB::table('luggages')->where('id', $id)->value('kode_resi') ?? '');
         if ($resi !== '' && DB::getSchemaBuilder()->hasTable('bagasi_logs')) {
@@ -560,7 +566,7 @@ class OperationsApiController extends Controller
         return array_values(array_unique($variants));
     }
 
-    private function upsertCustomerBagasi(string $nama, string $noHp, ?string $alamat, string $tipe): int
+    private function upsertCustomerBagasi(string $nama, string $noHp, ?string $alamat, string $tipe, int $poolId = 0): int
     {
         if ($noHp === '') {
             return 0;
@@ -578,16 +584,30 @@ class OperationsApiController extends Controller
                 'alamat' => $alamat,
                 'tipe' => $nextTipe === '' ? $tipe : $nextTipe,
             ]);
+            $this->assignCustomerBagasiPoolIfMissing((int) $existing->id, $poolId);
+
             return (int) $existing->id;
         }
 
-        return (int) DB::table('customer_bagasi')->insertGetId([
+        return (int) DB::table('customer_bagasi')->insertGetId(array_merge([
             'nama' => $nama,
             'no_hp' => $noHp,
             'alamat' => $alamat,
             'tipe' => $tipe,
             'created_at' => now(),
-        ]);
+        ], $poolId > 0 && Schema::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : []));
+    }
+
+    private function assignCustomerBagasiPoolIfMissing(int $customerId, int $poolId): void
+    {
+        if ($customerId <= 0 || $poolId <= 0 || ! Schema::hasColumn('customer_bagasi', 'pool_id')) {
+            return;
+        }
+
+        DB::table('customer_bagasi')
+            ->where('id', $customerId)
+            ->whereNull('pool_id')
+            ->update(['pool_id' => $poolId]);
     }
 
     private function resolveMappedLuggagePrice(int $routeId, int $serviceId): float

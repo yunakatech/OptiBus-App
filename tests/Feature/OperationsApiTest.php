@@ -310,6 +310,89 @@ class OperationsApiTest extends TestCase
             ->assertJsonMissing(['name' => 'CUSTOMER ROUTE ID SALAH']);
     }
 
+    public function test_pool_operator_can_search_master_bagasi_and_charter_customers_by_pool_without_transactions(): void
+    {
+        AccessControl::syncDefaults();
+
+        $poolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL PINRANG',
+            'code' => 'PNR',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $outsidePoolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL MAKASSAR',
+            'code' => 'MKS',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $operator = User::factory()->create(['is_super_admin' => false]);
+        DB::table('pool_user')->insert([
+            'pool_id' => $poolId,
+            'user_id' => $operator->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('user_role')->insert([
+            'user_id' => $operator->id,
+            'role_id' => DB::table('roles')->where('slug', 'operator-bagasi')->value('id'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('customer_bagasi')->insert([
+            [
+                'pool_id' => $poolId,
+                'nama' => 'BAGASI PINRANG',
+                'no_hp' => '081300000001',
+                'alamat' => 'Pinrang',
+                'tipe' => 'pengirim',
+                'created_at' => now(),
+            ],
+            [
+                'pool_id' => $outsidePoolId,
+                'nama' => 'BAGASI LUAR',
+                'no_hp' => '081300000002',
+                'alamat' => 'Makassar',
+                'tipe' => 'pengirim',
+                'created_at' => now(),
+            ],
+        ]);
+        DB::table('customer_charter')->insert([
+            [
+                'pool_id' => $poolId,
+                'nama' => 'CARTER PINRANG',
+                'no_hp' => '081400000001',
+                'alamat' => 'Pinrang',
+                'company' => 'PT Pinrang',
+                'created_at' => now(),
+            ],
+            [
+                'pool_id' => $outsidePoolId,
+                'nama' => 'CARTER LUAR',
+                'no_hp' => '081400000002',
+                'alamat' => 'Makassar',
+                'company' => 'PT Makassar',
+                'created_at' => now(),
+            ],
+        ]);
+
+        $this->actingAs($operator);
+
+        $this->getJson(route('api.admin.customer-bagasi.index', ['q' => 'bagasi']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonPath('customers.0.nama', 'BAGASI PINRANG');
+
+        $this->getJson(route('api.admin.customer-charter.index', ['q' => 'carter']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonPath('customers.0.nama', 'CARTER PINRANG');
+    }
+
     public function test_submit_charter_and_luggage(): void
     {
         $this->actingAsSuperAdmin();
