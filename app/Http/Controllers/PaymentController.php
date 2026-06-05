@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PaymentController extends Controller
 {
@@ -34,6 +35,75 @@ class PaymentController extends Controller
         return Inertia::render('Payments', [
             'filters' => $filters,
             'paymentData' => Inertia::defer(fn (): array => $this->paymentData($request), 'payment-data'),
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = $this->filters($request);
+        $query = $this->paymentUnionQuery($filters);
+        $rows = $query === null
+            ? collect()
+            : DB::query()
+                ->fromSub($query, 'payment_rows')
+                ->orderByDesc('trx_date')
+                ->orderByDesc('trx_time')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get()
+                ->map(fn (object $row): array => $this->publicRow($row));
+        $filename = 'pembayaran-'.$filters['status'].'-'.$filters['source'].'-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($rows): void {
+            $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
+
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [
+                'Sumber',
+                'Kode',
+                'Customer',
+                'Nama Tambahan',
+                'Kontak',
+                'Pool',
+                'Rute',
+                'Tanggal',
+                'Jam',
+                'Tagihan',
+                'Dibayar',
+                'DP',
+                'Sisa',
+                'Status Pembayaran',
+                'Status Data',
+                'Dibuat',
+            ]);
+
+            foreach ($rows as $row) {
+                fputcsv($out, [
+                    $row['source_label'] ?? '',
+                    $row['code'] ?? '',
+                    $row['customer_name'] ?? '',
+                    $row['secondary_name'] ?? '',
+                    $row['contact'] ?? '',
+                    $row['pool_name'] ?? '',
+                    $row['route'] ?? '',
+                    $row['date'] ?? '',
+                    $row['time'] ?? '',
+                    (float) ($row['amount'] ?? 0),
+                    (float) ($row['paid_amount'] ?? 0),
+                    (float) ($row['down_payment'] ?? 0),
+                    (float) ($row['remaining_amount'] ?? 0),
+                    $row['payment_status'] ?? '',
+                    $row['source_status'] ?? '',
+                    $row['created_at'] ?? '',
+                ]);
+            }
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
