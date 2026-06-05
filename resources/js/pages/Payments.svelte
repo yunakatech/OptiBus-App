@@ -11,7 +11,7 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import { CreditCard, RefreshCw, Search, WalletCards } from 'lucide-svelte';
+    import { CreditCard, Download, RefreshCw, Search, WalletCards } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -320,6 +320,20 @@
         );
     };
 
+    const exportUrl = () => {
+        const params = new URLSearchParams({
+            status: activeStatus,
+            source: activeSource,
+        });
+        const keyword = searchQuery.trim();
+
+        if (keyword !== '') {
+            params.set('q', keyword);
+        }
+
+        return `/payments/export?${params.toString()}`;
+    };
+
     const setStatus = (status: StatusKey) => {
         activeStatus = status;
         reloadData(1);
@@ -439,6 +453,14 @@
                     <Button type="button" variant="outline" class="h-9 rounded-full" onclick={() => reloadData(1)}>
                         <RefreshCw class={`mr-1.5 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         Muat
+                    </Button>
+                    <Button asChild variant="outline" class="h-9 rounded-full border-cyan-200 bg-cyan-50/70 text-cyan-800 hover:bg-cyan-100 dark:border-cyan-400/20 dark:bg-cyan-950/20 dark:text-cyan-100">
+                        {#snippet children(props)}
+                            <a {...props} href={exportUrl()} target="_blank" rel="noreferrer">
+                                <Download class="mr-1.5 h-4 w-4" />
+                                Export CSV
+                            </a>
+                        {/snippet}
                     </Button>
                 </div>
             </div>

@@ -189,6 +189,79 @@ class PaymentPageTest extends TestCase
         ]);
     }
 
+    public function test_payment_export_csv_respects_filter_and_pool_scope(): void
+    {
+        [$operator, $pinrangRouteId, $makassarRouteId] = $this->seedPoolOperator();
+
+        DB::table('bookings')->insert([
+            [
+                'route_id' => $pinrangRouteId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-06-05',
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => 'A1',
+                'name' => 'BOOKING PINRANG EXPORT',
+                'phone' => '081100001',
+                'pickup_point' => 'Pinrang',
+                'pembayaran' => 'Belum Lunas',
+                'status' => 'active',
+                'price' => 150000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+            [
+                'route_id' => $makassarRouteId,
+                'rute' => 'MAKASSAR - PAREPARE',
+                'tanggal' => '2026-06-05',
+                'jam' => '10:00:00',
+                'unit' => 1,
+                'seat' => 'A2',
+                'name' => 'BOOKING MAKASSAR EXPORT',
+                'phone' => '081100002',
+                'pickup_point' => 'Makassar',
+                'pembayaran' => 'Belum Lunas',
+                'status' => 'active',
+                'price' => 140000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+            [
+                'route_id' => $pinrangRouteId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-06-05',
+                'jam' => '11:00:00',
+                'unit' => 1,
+                'seat' => 'A3',
+                'name' => 'BOOKING PINRANG LUNAS EXPORT',
+                'phone' => '081100003',
+                'pickup_point' => 'Pinrang',
+                'pembayaran' => 'Lunas',
+                'status' => 'active',
+                'price' => 160000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $this->actingAs($operator);
+
+        $response = $this->get(route('payments.export', [
+            'status' => 'unpaid',
+            'source' => 'booking',
+            'q' => 'export',
+        ]));
+
+        $response->assertOk();
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('BOOKING PINRANG EXPORT', $csv);
+        $this->assertStringNotContainsString('BOOKING MAKASSAR EXPORT', $csv);
+        $this->assertStringNotContainsString('BOOKING PINRANG LUNAS EXPORT', $csv);
+        $this->assertStringContainsString('Sumber,Kode,Customer', $csv);
+    }
+
     /**
      * @return array{0: User, 1: int, 2: int, 3: int, 4: int}
      */

@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('bookings/ticket/{bookingId}/pdf', [BookingController::class, 'downloadTicketPdf'])->middleware('permission:booking.print')->name('bookings.ticket.pdf');
     Route::get('booking-console', BookingController::class)->middleware('permission:booking.view')->name('booking-console.index');
     Route::get('payments', PaymentController::class)->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.index');
+    Route::get('payments/export', [PaymentController::class, 'export'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.export');
     Route::get('charters', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('locked', true)->name('charters.index');
     Route::get('charters/form', AdminOpsFlowsController::class)->middleware('permission:charter.create')->defaults('tab', 'charters')->defaults('mode', 'form')->defaults('locked', true)->name('charters.form');
     Route::get('charters/view/{id}', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('mode', 'view')->defaults('locked', true)->name('charters.view');
