@@ -2267,7 +2267,7 @@ class BookingApiController extends Controller
 
     private function normalizePayment(string $payment): string
     {
-        $allowed = ['Belum Lunas', 'Lunas', 'Refund', 'Redbus', 'Traveloka', 'QRIS', 'Transfer', 'Transfer BJU', 'Tunai'];
+        $allowed = ['Belum Lunas', 'DP', 'Lunas', 'Refund', 'Redbus', 'Traveloka', 'QRIS', 'Transfer', 'Transfer BJU', 'Tunai'];
 
         return in_array($payment, $allowed, true) ? $payment : 'Belum Lunas';
     }

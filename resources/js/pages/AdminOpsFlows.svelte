@@ -189,11 +189,11 @@
     let luggageMastersLoaded = $state(false);
     let assignmentMastersLoaded = $state(false);
 
-    const charterPaymentStatusOptions = ['Belum Lunas', 'Lunas'];
+    const charterPaymentStatusOptions = ['Belum Lunas', 'DP', 'Lunas'];
     const luggageReceivedStatus = 'Diterima';
     const luggagePickedUpStatus = 'Dalam Perjalanan';
     const luggageArrivedStatus = 'Tiba di Tujuan';
-    const luggagePaymentStatusOptions = ['Belum Bayar', 'Lunas'];
+    const luggagePaymentStatusOptions = ['Belum Bayar', 'DP', 'Lunas'];
     const newCharterForm = () => ({ id: 0, pool_id: 0, master_carter_id: 0, name: '', company_name: '', phone: '', start_date: today, end_date: today, departure_time: '08:00', pickup_point: '', drop_point: '', unit_id: 0, armada_id: 0, armada_nopol: '', driver_name: '', price: 0, layanan: defaultCharterService, bop_price: 0, bop_status: 'pending', down_payment: 0, payment_status: 'Belum Lunas' });
     const newLuggageForm = () => ({ id: 0, pool_id: 0, sender_name: '', sender_phone: '', sender_address: '', receiver_name: '', receiver_phone: '', receiver_address: '', service_id: 0, rute_id: 0, tanggal: today, quantity: 1, notes: '', price: 0, status: luggageReceivedStatus, payment_status: 'Belum Bayar' });
     let charterForm = $state(newCharterForm());

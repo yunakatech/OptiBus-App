@@ -1,4 +1,4 @@
-export type PermissionRequirement = string | string[] | null | undefined;
+export type PermissionRequirement = string | readonly string[] | null | undefined;
 
 export function hasPermission(
     permissions: string[] | null | undefined,

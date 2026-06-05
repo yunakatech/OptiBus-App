@@ -10,6 +10,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CharterDocumentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LuggageDocumentController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\StaticAssetController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('bookings/ticket/{bookingId}/print', [BookingController::class, 'printTicket'])->middleware('permission:booking.print')->name('bookings.ticket.print');
     Route::get('bookings/ticket/{bookingId}/pdf', [BookingController::class, 'downloadTicketPdf'])->middleware('permission:booking.print')->name('bookings.ticket.pdf');
     Route::get('booking-console', BookingController::class)->middleware('permission:booking.view')->name('booking-console.index');
+    Route::get('payments', PaymentController::class)->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.index');
     Route::get('charters', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('locked', true)->name('charters.index');
     Route::get('charters/form', AdminOpsFlowsController::class)->middleware('permission:charter.create')->defaults('tab', 'charters')->defaults('mode', 'form')->defaults('locked', true)->name('charters.form');
     Route::get('charters/view/{id}', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('mode', 'view')->defaults('locked', true)->name('charters.view');
@@ -100,6 +102,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::prefix('api/admin')->name('api.admin.')->group(function () {
+        Route::post('payments/{source}/{id}', [PaymentController::class, 'update'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.update');
+
         Route::get('routes', [AdminOpsApiController::class, 'routesIndex'])->middleware('permission:master.view')->name('routes.index');
         Route::post('routes', [AdminOpsApiController::class, 'routesSave'])->middleware('permission:master.manage')->name('routes.save');
         Route::delete('routes/{id}', [AdminOpsApiController::class, 'routesDelete'])->middleware('permission:master.manage')->name('routes.delete');

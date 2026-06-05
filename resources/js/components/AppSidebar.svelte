@@ -6,6 +6,7 @@
     import CalendarDays from 'lucide-svelte/icons/calendar-days';
     import CarFront from 'lucide-svelte/icons/car-front';
     import ChartColumn from 'lucide-svelte/icons/chart-column';
+    import CreditCard from 'lucide-svelte/icons/credit-card';
     import History from 'lucide-svelte/icons/history';
     import IdCard from 'lucide-svelte/icons/id-card';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
@@ -70,6 +71,12 @@
             href: '/luggages',
             icon: Briefcase,
             permission: 'luggage.view',
+        },
+        {
+            title: 'Pembayaran',
+            href: '/payments',
+            icon: CreditCard,
+            permission: ['payment.update', 'booking.update', 'charter.update', 'luggage.update'],
         },
         {
             title: 'Laporan',
