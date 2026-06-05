@@ -10,9 +10,19 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type PoolScope = {
+    all: boolean;
+    pool_ids: number[];
+    pool_name: string;
+    route_ids: number[];
+    route_names: string[];
+    labels: string[];
+};
+
 export type Auth = {
     user: User;
     permissions: string[];
+    pool_scope?: PoolScope | null;
 };
 
 export type TwoFactorConfigContent = {

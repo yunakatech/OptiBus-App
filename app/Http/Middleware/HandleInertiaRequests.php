@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Support\AccessControl;
+use App\Support\PoolScope;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,6 +39,7 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $userId = (int) ($user?->id ?? 0);
+        $poolScope = $userId > 0 ? PoolScope::forCurrentUser(0, $userId) : null;
 
         return [
             ...parent::share($request),
@@ -54,6 +56,14 @@ class HandleInertiaRequests extends Middleware
                     'is_super_admin' => AccessControl::userIsSuperAdmin($userId),
                 ] : null,
                 'permissions' => $userId > 0 ? AccessControl::userPermissions($userId) : [],
+                'pool_scope' => $poolScope ? [
+                    'all' => (bool) ($poolScope['all'] ?? true),
+                    'pool_ids' => array_values(array_map('intval', $poolScope['pool_ids'] ?? [])),
+                    'pool_name' => (string) ($poolScope['pool_name'] ?? 'Semua Pool'),
+                    'route_ids' => array_values(array_map('intval', $poolScope['route_ids'] ?? [])),
+                    'route_names' => array_values(array_map('strval', $poolScope['route_names'] ?? [])),
+                    'labels' => array_values(array_map('strval', $poolScope['labels'] ?? [])),
+                ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

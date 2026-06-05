@@ -54,7 +54,7 @@
     type Driver = { id: number; nama: string; phone?: string | null };
     type Service = { id: number; name: string };
     type Pagination = { page: number; per_page: number; total: number; last_page: number };
-    type PoolOption = { id: number; name: string; code?: string | null; status?: string | null; route_ids?: number[] };
+    type PoolOption = { id: number; name: string; code?: string | null; status?: string | null; route_ids?: number[]; route_names?: string[] };
     type Charter = { id: number; pool_id: number | null; master_carter_id: number | null; name: string; company_name: string | null; phone: string | null; start_date: string; end_date: string; departure_time: string | null; pickup_point: string | null; drop_point: string | null; unit_id: number | null; unit_nopol: string | null; unit_category: string | null; armada_id: number | null; armada_nopol: string | null; driver_name: string | null; price: number; layanan: string | null; bop_price: number; bop_status: string | null; down_payment: number; payment_status: string | null; status: string | null };
     type CharterCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; company: string | null };
     type BagasiCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; tipe: string | null };
@@ -62,6 +62,14 @@
     type Assignment = { id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; nama: string | null };
     type AssignmentConflict = { type: string; message: string; assignment_id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; driver_name: string | null };
     type CharterRoute = { id: number; name: string; origin: string | null; destination: string | null; duration: string | null; rental_price: number; bop_price: number };
+    type AuthPoolScope = {
+        all?: boolean;
+        pool_ids?: number[];
+        pool_name?: string;
+        route_ids?: number[];
+        route_names?: string[];
+        labels?: string[];
+    } | null;
     type FlowDataPayload = {
         tab: 'charters' | 'luggages';
         charters?: Charter[];
@@ -109,6 +117,16 @@
     const canBookingDelete = $derived(hasPermission(grantedPermissions, 'booking.delete'));
     let activeTab = $state<TabName>('charters');
     let activeMode = $state<ViewMode>('data');
+    const authPoolScope = $derived((page.props.auth?.pool_scope ?? null) as AuthPoolScope);
+    const poolContextName = $derived(String(authPoolScope?.pool_name ?? 'Semua Pool'));
+    const poolContextIsAll = $derived(Boolean(authPoolScope?.all));
+    const poolContextRouteCount = $derived(Array.isArray(authPoolScope?.route_ids) ? authPoolScope.route_ids.length : 0);
+    const poolContextBadge = $derived(poolContextIsAll ? 'Semua pool' : `${poolContextRouteCount} rute mapped`);
+    const poolContextDescription = $derived(
+        poolContextIsAll
+            ? 'Superadmin dapat memilih pool. Saat rute cocok dengan mapping, pool form ikut diarahkan otomatis.'
+            : `Input ${activeTab === 'luggages' ? 'bagasi' : 'carter'} otomatis diarahkan ke ${poolContextName}.`,
+    );
     let lockedMenuView = $state(false);
     let busy = $state(false);
     let error = $state('');
@@ -812,6 +830,42 @@ q.set('q', filterQuery.trim());
         return activePools().find((pool) => Array.isArray(pool.route_ids) && pool.route_ids.map(Number).includes(id)) ?? null;
     };
 
+    const normalizePoolLabel = (value: string | null | undefined) =>
+        String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+    const poolForRouteLabels = (...labels: Array<string | null | undefined>) => {
+        const normalizedLabels = labels
+            .map((label) => normalizePoolLabel(label))
+            .filter(Boolean);
+
+        if (normalizedLabels.length === 0) {
+            return null;
+        }
+
+        return activePools().find((pool) => {
+            const routeNames = Array.isArray(pool.route_names) ? pool.route_names : [];
+
+            return routeNames.some((routeName) =>
+                normalizedLabels.includes(normalizePoolLabel(routeName)),
+            );
+        }) ?? null;
+    };
+
+    const poolIdForCharterLabels = (
+        pickupPoint: string | null | undefined,
+        dropPoint: string | null | undefined,
+        routeName: string | null | undefined = null,
+    ) => {
+        const mappedPool = poolForRouteLabels(
+            routeName,
+            pickupPoint,
+            dropPoint,
+            pickupPoint && dropPoint ? `${pickupPoint} - ${dropPoint}` : null,
+        );
+
+        return mappedPool ? mappedPool.id : defaultPoolId();
+    };
+
     const applyDefaultPoolToForms = () => {
         const id = defaultPoolId();
 
@@ -1411,7 +1465,7 @@ return 'Selesai';
 
     const toCharterFormFromRow = (row: Charter) => ({
         id: row.id,
-        pool_id: row.pool_id ?? defaultPoolId(),
+        pool_id: row.pool_id ?? poolIdForCharterLabels(row.pickup_point, row.drop_point),
         master_carter_id: row.master_carter_id ?? 0,
         name: row.name,
         company_name: row.company_name ?? '',
@@ -1482,7 +1536,7 @@ return 'Selesai';
         resetLuggageFormState();
         luggageForm = {
             id: row.id,
-            pool_id: row.pool_id ?? defaultPoolId(),
+            pool_id: row.pool_id ?? poolForRouteId(row.rute_id)?.id ?? defaultPoolId(),
             sender_name: row.sender_name ?? '',
             sender_phone: row.sender_phone ?? '',
             sender_address: row.sender_address ?? '',
@@ -1762,6 +1816,16 @@ return 'Selesai';
         charterForm.layanan = route.duration ?? defaultCharterService;
         charterForm.price = Number(route.rental_price ?? 0);
         charterForm.bop_price = Number(route.bop_price ?? 0);
+
+        const mappedPoolId = poolIdForCharterLabels(
+            route.origin,
+            route.destination,
+            route.name,
+        );
+
+        if (mappedPoolId > 0) {
+            charterForm.pool_id = mappedPoolId;
+        }
     };
 
     const onCharterRouteBlur = () => {
@@ -2749,7 +2813,30 @@ params.set('to', filterTo);
 
 <div class="space-y-4 p-3 pb-28 md:p-4">
     <Card>
-        <CardHeader><CardTitle>{tabTitle(activeTab)}</CardTitle></CardHeader>
+        <CardHeader class="space-y-3">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <CardTitle>{tabTitle(activeTab)}</CardTitle>
+                {#if activeTab === 'charters' || activeTab === 'luggages'}
+                    <span
+                        class="rounded-full border border-cyan-300/70 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-900/35 dark:text-cyan-100"
+                    >
+                        {poolContextBadge}
+                    </span>
+                {/if}
+            </div>
+            {#if activeTab === 'charters' || activeTab === 'luggages'}
+                <div
+                    class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
+                >
+                    <p class="font-semibold">Pool aktif: {poolContextName}</p>
+                    <p
+                        class="mt-0.5 text-[11px] leading-snug text-cyan-800/80 dark:text-cyan-200/75"
+                    >
+                        {poolContextDescription}
+                    </p>
+                </div>
+            {/if}
+        </CardHeader>
         <CardContent class="space-y-4">
             <div class="sticky top-0 z-10 space-y-3 border-b bg-background pb-3">
                 {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}

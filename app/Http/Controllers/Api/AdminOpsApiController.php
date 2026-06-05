@@ -3433,13 +3433,26 @@ class AdminOpsApiController extends Controller
                 ->join('routes as r', 'pr.route_id', '=', 'r.id')
                 ->whereIn('pr.pool_id', $poolIds)
                 ->orderBy('r.name')
-                ->get(['pr.pool_id', 'r.id', 'r.name']);
+                ->get(['pr.pool_id', 'r.id', 'r.name', 'r.origin', 'r.destination']);
 
             foreach ($routeRows as $row) {
                 $poolId = (int) ($row->pool_id ?? 0);
                 $routesByPool[$poolId] ??= ['ids' => [], 'names' => []];
                 $routesByPool[$poolId]['ids'][] = (int) ($row->id ?? 0);
-                $routesByPool[$poolId]['names'][] = (string) ($row->name ?? '');
+
+                $routeName = trim((string) ($row->name ?? ''));
+                $origin = trim((string) ($row->origin ?? ''));
+                $destination = trim((string) ($row->destination ?? ''));
+
+                foreach ([$routeName, $origin, $destination] as $label) {
+                    if ($label !== '') {
+                        $routesByPool[$poolId]['names'][] = $label;
+                    }
+                }
+
+                if ($origin !== '' && $destination !== '') {
+                    $routesByPool[$poolId]['names'][] = $origin.' - '.$destination;
+                }
             }
         }
 
@@ -3465,7 +3478,12 @@ class AdminOpsApiController extends Controller
                 'notes' => (string) ($pool->notes ?? ''),
                 'created_at' => (string) ($pool->created_at ?? ''),
                 'route_ids' => array_values(array_filter($routes['ids'], static fn ($id) => (int) $id > 0)),
-                'route_names' => array_values(array_filter($routes['names'], static fn ($name) => trim((string) $name) !== '')),
+                'route_names' => collect($routes['names'])
+                    ->map(static fn ($name) => trim((string) $name))
+                    ->filter(static fn ($name) => $name !== '')
+                    ->unique()
+                    ->values()
+                    ->all(),
             ];
         })->values();
 
@@ -4479,6 +4497,18 @@ class AdminOpsApiController extends Controller
         $isAllowed = static fn (int $poolId): bool => $poolId > 0 && in_array($poolId, $allowedPoolIds, true);
         $mappedPoolId = $this->poolIdForRouteId($routeId);
 
+        if ($mappedPoolId <= 0) {
+            foreach ($labels as $label) {
+                $labelPoolId = $this->poolIdForRouteLabel((string) $label);
+
+                if ($labelPoolId > 0) {
+                    $mappedPoolId = $labelPoolId;
+
+                    break;
+                }
+            }
+        }
+
         if ($requestedPoolId > 0) {
             if (! $isAllowed($requestedPoolId)) {
                 return -1;
@@ -4497,14 +4527,6 @@ class AdminOpsApiController extends Controller
 
         if ($existingPoolId > 0) {
             return $isAllowed($existingPoolId) ? $existingPoolId : -1;
-        }
-
-        foreach ($labels as $label) {
-            $labelPoolId = $this->poolIdForRouteLabel((string) $label);
-
-            if ($labelPoolId > 0) {
-                return $isAllowed($labelPoolId) ? $labelPoolId : -1;
-            }
         }
 
         if (count($allowedPoolIds) === 1) {
