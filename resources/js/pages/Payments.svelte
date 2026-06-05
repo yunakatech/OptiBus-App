@@ -11,7 +11,7 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import { CreditCard, Download, RefreshCw, Search, WalletCards } from 'lucide-svelte';
+    import { CreditCard, Download, MoreHorizontal, RefreshCw, Search, WalletCards } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -21,6 +21,11 @@
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuTrigger,
+    } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { runWithFeedback } from '@/lib/action-feedback';
@@ -371,6 +376,66 @@
 
 <AppHead title="Pembayaran" />
 
+{#snippet PaymentActionMenu(row: PaymentRow)}
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            {#snippet children(props)}
+                <Button
+                    {...props}
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="h-9 w-9 rounded-full border border-border/70 bg-background/80 shadow-sm hover:border-cyan-200 hover:bg-cyan-50 dark:hover:bg-cyan-950/20"
+                    aria-label={`Aksi pembayaran ${row.code}`}
+                >
+                    <MoreHorizontal class="h-4 w-4" />
+                </Button>
+            {/snippet}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-72 rounded-2xl p-3">
+            <div class="space-y-3">
+                <div class="rounded-xl bg-muted/40 p-2">
+                    <p class="truncate text-xs font-semibold text-foreground">{row.customer_name || row.code}</p>
+                    <p class="mt-0.5 truncate text-[11px] text-muted-foreground">{row.code} | {formatCurrencyDisplay(row.remaining_amount)} sisa</p>
+                </div>
+                <label class="block space-y-1.5">
+                    <span class="text-xs font-semibold text-muted-foreground">Status pembayaran</span>
+                    <select
+                        class="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                        value={drafts[row.key]?.payment_status ?? displayStatusForDraft(row)}
+                        disabled={!row.can_update}
+                        onchange={(event) => updateDraftStatus(row, (event.currentTarget as HTMLSelectElement).value)}
+                    >
+                        {#each paymentOptions as option (option)}
+                            <option value={option}>{option}</option>
+                        {/each}
+                    </select>
+                </label>
+                {#if row.source === 'charter' && (drafts[row.key]?.payment_status ?? displayStatusForDraft(row)) === 'DP'}
+                    <label class="block space-y-1.5">
+                        <span class="text-xs font-semibold text-muted-foreground">Nominal DP</span>
+                        <Input
+                            class="h-10 rounded-xl text-right"
+                            value={drafts[row.key]?.down_payment ?? formatCurrencyInput(row.down_payment)}
+                            oninput={(event) => updateDraftDownPayment(row, (event.currentTarget as HTMLInputElement).value)}
+                        />
+                    </label>
+                {/if}
+                <LoadingButton
+                    type="button"
+                    class="h-10 w-full rounded-xl"
+                    loading={updatingKey === row.key}
+                    disabled={!row.can_update}
+                    loadingText="Menyimpan..."
+                    onclick={() => updatePayment(row)}
+                >
+                    Simpan Pembayaran
+                </LoadingButton>
+            </div>
+        </DropdownMenuContent>
+    </DropdownMenu>
+{/snippet}
+
 <div class="min-h-full space-y-4 overflow-x-hidden p-3 pb-28 md:p-4">
     <Card class="overflow-hidden border-sidebar-border/70 bg-linear-to-br from-background via-background to-cyan-50/30 dark:border-sidebar-border dark:to-cyan-950/15">
         <CardHeader class="space-y-4 border-b bg-background/80 backdrop-blur">
@@ -520,36 +585,8 @@
                                             {row.payment_status}
                                         </Badge>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <div class="ml-auto flex max-w-56 flex-col gap-2">
-                                            <select
-                                                class="h-9 rounded-xl border border-input bg-background px-3 text-sm"
-                                                value={drafts[row.key]?.payment_status ?? displayStatusForDraft(row)}
-                                                disabled={!row.can_update}
-                                                onchange={(event) => updateDraftStatus(row, (event.currentTarget as HTMLSelectElement).value)}
-                                            >
-                                                {#each paymentOptions as option (option)}
-                                                    <option value={option}>{option}</option>
-                                                {/each}
-                                            </select>
-                                            {#if row.source === 'charter' && (drafts[row.key]?.payment_status ?? displayStatusForDraft(row)) === 'DP'}
-                                                <Input
-                                                    class="h-9 rounded-xl text-right"
-                                                    value={drafts[row.key]?.down_payment ?? formatCurrencyInput(row.down_payment)}
-                                                    oninput={(event) => updateDraftDownPayment(row, (event.currentTarget as HTMLInputElement).value)}
-                                                />
-                                            {/if}
-                                            <LoadingButton
-                                                type="button"
-                                                class="h-9 rounded-xl"
-                                                loading={updatingKey === row.key}
-                                                disabled={!row.can_update}
-                                                loadingText="Simpan..."
-                                                onclick={() => updatePayment(row)}
-                                            >
-                                                Simpan
-                                            </LoadingButton>
-                                        </div>
+                                    <td class="px-4 py-3 text-right">
+                                        {@render PaymentActionMenu(row)}
                                     </td>
                                 </tr>
                             {/each}
@@ -568,9 +605,12 @@
                                     <p class="mt-2 font-semibold text-foreground">{row.customer_name || row.code}</p>
                                     <p class="text-xs text-muted-foreground">{row.code} | {row.date || '-'}</p>
                                 </div>
-                                <Badge class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}>
-                                    {row.payment_status}
-                                </Badge>
+                                <div class="flex items-center gap-2">
+                                    <Badge class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}>
+                                        {row.payment_status}
+                                    </Badge>
+                                    {@render PaymentActionMenu(row)}
+                                </div>
                             </div>
                             <div class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-muted/30 p-2 text-xs">
                                 <div>
@@ -585,35 +625,6 @@
                                     <p class="text-muted-foreground">Rute</p>
                                     <p class="font-semibold text-foreground">{row.route}</p>
                                 </div>
-                            </div>
-                            <div class="mt-3 space-y-2">
-                                <select
-                                    class="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                                    value={drafts[row.key]?.payment_status ?? displayStatusForDraft(row)}
-                                    disabled={!row.can_update}
-                                    onchange={(event) => updateDraftStatus(row, (event.currentTarget as HTMLSelectElement).value)}
-                                >
-                                    {#each paymentOptions as option (option)}
-                                        <option value={option}>{option}</option>
-                                    {/each}
-                                </select>
-                                {#if row.source === 'charter' && (drafts[row.key]?.payment_status ?? displayStatusForDraft(row)) === 'DP'}
-                                    <Input
-                                        class="h-10 rounded-xl text-right"
-                                        value={drafts[row.key]?.down_payment ?? formatCurrencyInput(row.down_payment)}
-                                        oninput={(event) => updateDraftDownPayment(row, (event.currentTarget as HTMLInputElement).value)}
-                                    />
-                                {/if}
-                                <LoadingButton
-                                    type="button"
-                                    class="h-10 w-full rounded-xl"
-                                    loading={updatingKey === row.key}
-                                    disabled={!row.can_update}
-                                    loadingText="Menyimpan..."
-                                    onclick={() => updatePayment(row)}
-                                >
-                                    Simpan Pembayaran
-                                </LoadingButton>
                             </div>
                         </div>
                     {/each}
