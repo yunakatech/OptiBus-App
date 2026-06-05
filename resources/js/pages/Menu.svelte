@@ -17,6 +17,7 @@
     import CalendarDays from 'lucide-svelte/icons/calendar-days';
     import CarFront from 'lucide-svelte/icons/car-front';
     import ChartColumn from 'lucide-svelte/icons/chart-column';
+    import CreditCard from 'lucide-svelte/icons/credit-card';
     import History from 'lucide-svelte/icons/history';
     import IdCard from 'lucide-svelte/icons/id-card';
     import MapPinned from 'lucide-svelte/icons/map-pinned';
@@ -47,6 +48,7 @@
             label: 'Pengaturan',
             items: [
                 { title: 'Laporan', href: '/report', icon: ChartColumn, permission: 'report.view' },
+                { title: 'Pembayaran', href: '/payments', icon: CreditCard, permission: ['payment.update', 'booking.update', 'charter.update', 'luggage.update'] },
                 { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
                 { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
                 { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },

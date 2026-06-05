@@ -342,6 +342,7 @@
     const today = toDateKey(new Date());
     const paymentOptions = [
         'Belum Lunas',
+        'DP',
         'Lunas',
         'Redbus',
         'Traveloka',
