@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { router } from '@inertiajs/svelte';
+    import { page, router } from '@inertiajs/svelte';
     import {
         Armchair,
         BusFront,
@@ -183,6 +183,15 @@
         address: string;
     };
 
+    type AuthPoolScope = {
+        all?: boolean;
+        pool_ids?: number[];
+        pool_name?: string;
+        route_ids?: number[];
+        route_names?: string[];
+        labels?: string[];
+    } | null;
+
     type BookedSeatRow = SeatDetail & {
         seat: string;
     };
@@ -264,6 +273,27 @@
         groupDetailKey?: string;
         serverNow?: string;
     } = $props();
+
+    const authPoolScope = $derived(
+        (page.props.auth?.pool_scope ?? null) as AuthPoolScope,
+    );
+    const poolContextName = $derived(
+        String(authPoolScope?.pool_name ?? 'Semua Pool'),
+    );
+    const poolContextIsAll = $derived(Boolean(authPoolScope?.all));
+    const poolContextRouteCount = $derived(
+        Array.isArray(authPoolScope?.route_ids)
+            ? authPoolScope.route_ids.length
+            : 0,
+    );
+    const poolContextBadge = $derived(
+        poolContextIsAll ? 'Semua pool' : `${poolContextRouteCount} rute mapped`,
+    );
+    const poolContextDescription = $derived(
+        poolContextIsAll
+            ? 'Superadmin dapat melihat semua pool. Saat input booking, pool tetap mengikuti rute yang dipilih.'
+            : `Input booking dan jadwal kosong mengikuti mapping rute untuk ${poolContextName}.`,
+    );
 
     const toDateKey = (date: Date) => {
         const year = date.getFullYear();
@@ -5171,6 +5201,25 @@
                 </CardHeader>
             {/if}
             <CardContent class="space-y-5 p-4 md:p-5">
+                <div
+                    class="flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 shadow-sm dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
+                >
+                    <div>
+                        <p class="font-semibold">
+                            Pool aktif: {poolContextName}
+                        </p>
+                        <p
+                            class="mt-0.5 text-[11px] leading-snug text-cyan-800/80 dark:text-cyan-200/75"
+                        >
+                            {poolContextDescription}
+                        </p>
+                    </div>
+                    <span
+                        class="rounded-full border border-cyan-300/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-900/35 dark:text-cyan-100"
+                    >
+                        {poolContextBadge}
+                    </span>
+                </div>
                 <div class="space-y-3 md:hidden">
                     <div
                         class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
@@ -8192,6 +8241,27 @@
                         ? 'Daftar data keberangkatan yang sudah masuk dari Live Booking Console.'
                         : 'Preview data keberangkatan terbaru dari tabel `bookings`.'}
                 </CardDescription>
+                {#if listOnly}
+                    <div
+                        class="mt-3 flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
+                    >
+                        <div>
+                            <p class="font-semibold">
+                                Pool aktif: {poolContextName}
+                            </p>
+                            <p
+                                class="mt-0.5 text-[11px] leading-snug text-cyan-800/80 dark:text-cyan-200/75"
+                            >
+                                {poolContextDescription}
+                            </p>
+                        </div>
+                        <span
+                            class="rounded-full border border-cyan-300/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-900/35 dark:text-cyan-100"
+                        >
+                            {poolContextBadge}
+                        </span>
+                    </div>
+                {/if}
             </CardHeader>
             <CardContent>
                 {#if listOnly}

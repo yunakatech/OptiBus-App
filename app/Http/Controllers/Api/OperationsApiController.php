@@ -418,17 +418,32 @@ class OperationsApiController extends Controller
         }
 
         $isAllowed = static fn (int $poolId): bool => $poolId > 0 && in_array($poolId, $allowedPoolIds, true);
-
-        if ($requestedPoolId > 0) {
-            return $isAllowed($requestedPoolId) ? $requestedPoolId : -1;
-        }
+        $mappedPoolId = 0;
 
         foreach ([$pickupPoint, $dropPoint] as $label) {
-            $poolId = $this->poolIdForCharterLabel($label);
+            $labelPoolId = $this->poolIdForCharterLabel($label);
 
-            if ($poolId > 0) {
-                return $isAllowed($poolId) ? $poolId : -1;
+            if ($labelPoolId > 0) {
+                $mappedPoolId = $labelPoolId;
+
+                break;
             }
+        }
+
+        if ($requestedPoolId > 0) {
+            if (! $isAllowed($requestedPoolId)) {
+                return -1;
+            }
+
+            if ($mappedPoolId > 0 && $mappedPoolId !== $requestedPoolId) {
+                return -3;
+            }
+
+            return $requestedPoolId;
+        }
+
+        if ($mappedPoolId > 0) {
+            return $isAllowed($mappedPoolId) ? $mappedPoolId : -1;
         }
 
         if (count($allowedPoolIds) === 1) {
@@ -469,6 +484,7 @@ class OperationsApiController extends Controller
     {
         return match ($code) {
             -1 => 'Pool tidak sesuai dengan akses user.',
+            -3 => 'Rute yang dipilih sudah dimapping ke pool lain.',
             default => 'Pilih Perwakilan/Pool atau rute yang sesuai dengan akses user.',
         };
     }

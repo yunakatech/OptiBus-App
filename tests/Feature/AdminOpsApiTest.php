@@ -882,6 +882,61 @@ class AdminOpsApiTest extends TestCase
         $this->deleteJson(route('api.admin.assignments.delete', ['id' => $assignmentId]))->assertOk();
     }
 
+    public function test_admin_charter_rejects_pool_that_conflicts_with_mapped_route(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+        $pinrangPoolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL PINRANG',
+            'code' => 'PNR',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $makassarPoolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL MAKASSAR',
+            'code' => 'MKS',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            'pool_id' => $pinrangPoolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson(route('api.admin.charters.save'), [
+            'pool_id' => $makassarPoolId,
+            'name' => 'ROMBONGAN SALAH POOL',
+            'company_name' => 'PT TEST',
+            'phone' => '08129999',
+            'start_date' => '2026-06-05',
+            'end_date' => '2026-06-05',
+            'departure_time' => '09:00',
+            'pickup_point' => 'PINRANG',
+            'drop_point' => 'MAKASSAR',
+            'driver_name' => 'DRIVER TEST',
+            'price' => 3000000,
+            'layanan' => 'VIP',
+            'bop_price' => 500000,
+            'bop_status' => 'pending',
+            'payment_status' => 'DP',
+        ])->assertStatus(422)
+            ->assertJsonPath('error', 'Rute yang dipilih sudah dimapping ke pool lain.');
+
+        $this->assertDatabaseMissing('charters', [
+            'name' => 'ROMBONGAN SALAH POOL',
+        ]);
+    }
+
     public function test_customer_ops_crud_works(): void
     {
         $this->actingAsSuperAdmin();

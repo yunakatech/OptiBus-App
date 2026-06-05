@@ -393,6 +393,66 @@ class OperationsApiTest extends TestCase
             ->assertJsonPath('customers.0.nama', 'CARTER PINRANG');
     }
 
+    public function test_submit_charter_rejects_pool_that_conflicts_with_mapped_route(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $unitId = DB::table('units')->insertGetId([
+            'nopol' => 'DD 4400 PP',
+            'merek' => 'Toyota',
+            'type' => 'Hiace',
+            'kapasitas' => 14,
+            'status' => 'Aktif',
+            'created_at' => now(),
+        ]);
+        $routeId = DB::table('routes')->insertGetId([
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+        $pinrangPoolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL PINRANG',
+            'code' => 'PNR',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $makassarPoolId = DB::table('pools')->insertGetId([
+            'name' => 'POOL MAKASSAR',
+            'code' => 'MKS',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            'pool_id' => $pinrangPoolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson(route('api.ops.charters.submit'), [
+            'pool_id' => $makassarPoolId,
+            'name' => 'PT SALAH POOL',
+            'company_name' => 'PT SALAH POOL',
+            'phone' => '0812999000',
+            'start_date' => '2026-06-05',
+            'end_date' => '2026-06-05',
+            'departure_time' => '08:30',
+            'pickup_point' => 'PINRANG',
+            'drop_point' => 'MAKASSAR',
+            'unit_id' => $unitId,
+            'driver_name' => 'ANDI',
+            'price' => 3000000,
+            'layanan' => 'Regular',
+            'bop_price' => 200000,
+        ])->assertStatus(422)
+            ->assertJsonPath('error', 'Rute yang dipilih sudah dimapping ke pool lain.');
+
+        $this->assertDatabaseCount('charters', 0);
+    }
+
     public function test_submit_charter_and_luggage(): void
     {
         $this->actingAsSuperAdmin();
