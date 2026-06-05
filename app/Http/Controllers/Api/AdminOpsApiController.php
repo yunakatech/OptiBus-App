@@ -2202,14 +2202,33 @@ class AdminOpsApiController extends Controller
         $receiverName = strtoupper(trim((string) $data['receiver_name']));
         $senderAddress = $this->nullable($data['sender_address'] ?? null);
         $receiverAddress = $this->nullable($data['receiver_address'] ?? null);
+        $routeName = $routeId > 0 ? (string) (DB::table('routes')->where('id', $routeId)->value('name') ?? '') : '';
+        $poolId = 0;
 
-        $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim');
-        $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima');
+        if ($this->luggagesHasPoolIdColumn()) {
+            $poolId = $this->resolveTransactionPoolId(
+                (int) ($data['pool_id'] ?? 0),
+                $routeId,
+                [$routeName],
+                (int) ($before['pool_id'] ?? 0),
+            );
+
+            if ($poolId < 0) {
+                return $this->error($this->transactionPoolErrorMessage($poolId), 422);
+            }
+        }
+
+        $customerPoolId = $poolId > 0 ? $poolId : PoolScope::customerPoolId($routeId);
+        if ($customerPoolId <= 0) {
+            $customerPoolId = $this->defaultCustomerPoolId('customer_bagasi');
+        }
+
+        $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim', $customerPoolId);
+        $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima', $customerPoolId);
 
         $inputPrice = (float) ($data['price'] ?? 0);
         $mappedPrice = $this->resolveMappedLuggagePrice($routeId, $serviceId);
         $resolvedPrice = $inputPrice > 0 ? $inputPrice : $mappedPrice;
-        $routeName = $routeId > 0 ? (string) (DB::table('routes')->where('id', $routeId)->value('name') ?? '') : '';
 
         $payload = [
             'sender_name' => $senderName,
@@ -2234,17 +2253,6 @@ class AdminOpsApiController extends Controller
         ];
 
         if ($this->luggagesHasPoolIdColumn()) {
-            $poolId = $this->resolveTransactionPoolId(
-                (int) ($data['pool_id'] ?? 0),
-                $routeId,
-                [$routeName],
-                (int) ($before['pool_id'] ?? 0),
-            );
-
-            if ($poolId < 0) {
-                return $this->error($this->transactionPoolErrorMessage($poolId), 422);
-            }
-
             $payload['pool_id'] = $poolId > 0 ? $poolId : null;
         }
 
@@ -2772,9 +2780,11 @@ class AdminOpsApiController extends Controller
             'alamat' => $this->nullable($data['alamat'] ?? null),
             'tipe' => $this->nullable($data['tipe'] ?? null) ?? 'pengirim',
         ];
+        $poolId = $this->defaultCustomerPoolId('customer_bagasi');
 
         if ($id > 0) {
             DB::table('customer_bagasi')->where('id', $id)->update($payload);
+            $this->assignCustomerPoolIfMissing($id, $poolId, 'customer_bagasi');
 
             return $this->ok(['message' => 'Customer bagasi updated.', 'id' => $id]);
         }
@@ -2782,11 +2792,12 @@ class AdminOpsApiController extends Controller
         $existingId = (int) (DB::table('customer_bagasi')->where('no_hp', $payload['no_hp'])->value('id') ?? 0);
         if ($existingId > 0) {
             DB::table('customer_bagasi')->where('id', $existingId)->update($payload);
+            $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_bagasi');
 
             return $this->ok(['message' => 'Customer bagasi updated by phone.', 'id' => $existingId]);
         }
 
-        $newId = DB::table('customer_bagasi')->insertGetId(array_merge($payload, ['created_at' => now()]));
+        $newId = DB::table('customer_bagasi')->insertGetId(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], ['created_at' => now()]));
 
         return $this->ok(['message' => 'Customer bagasi created.', 'id' => $newId], 201);
     }
@@ -2854,9 +2865,11 @@ class AdminOpsApiController extends Controller
             'alamat' => $this->nullable($data['alamat'] ?? null),
             'company' => $this->nullable($data['company'] ?? null),
         ];
+        $poolId = $this->defaultCustomerPoolId('customer_charter');
 
         if ($id > 0) {
             DB::table('customer_charter')->where('id', $id)->update($payload);
+            $this->assignCustomerPoolIfMissing($id, $poolId, 'customer_charter');
 
             return $this->ok(['message' => 'Customer charter updated.', 'id' => $id]);
         }
@@ -2864,11 +2877,12 @@ class AdminOpsApiController extends Controller
         $existingId = (int) (DB::table('customer_charter')->where('no_hp', $payload['no_hp'])->value('id') ?? 0);
         if ($existingId > 0) {
             DB::table('customer_charter')->where('id', $existingId)->update($payload);
+            $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_charter');
 
             return $this->ok(['message' => 'Customer charter updated by phone.', 'id' => $existingId]);
         }
 
-        $newId = DB::table('customer_charter')->insertGetId(array_merge($payload, ['created_at' => now()]));
+        $newId = DB::table('customer_charter')->insertGetId(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], ['created_at' => now()]));
 
         return $this->ok(['message' => 'Customer charter created.', 'id' => $newId], 201);
     }
@@ -4009,22 +4023,22 @@ class AdminOpsApiController extends Controller
             && Schema::hasTable('routes');
     }
 
-    private function defaultCustomerPoolId(): int
+    private function defaultCustomerPoolId(string $table = 'customers'): int
     {
-        if (! Schema::hasTable('customers') || ! Schema::hasColumn('customers', 'pool_id')) {
+        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'pool_id')) {
             return 0;
         }
 
         return PoolScope::customerPoolId();
     }
 
-    private function assignCustomerPoolIfMissing(int $customerId, int $poolId): void
+    private function assignCustomerPoolIfMissing(int $customerId, int $poolId, string $table = 'customers'): void
     {
-        if ($customerId <= 0 || $poolId <= 0 || ! Schema::hasColumn('customers', 'pool_id')) {
+        if ($customerId <= 0 || $poolId <= 0 || ! Schema::hasTable($table) || ! Schema::hasColumn($table, 'pool_id')) {
             return;
         }
 
-        DB::table('customers')
+        DB::table($table)
             ->where('id', $customerId)
             ->whereNull('pool_id')
             ->update(['pool_id' => $poolId]);
@@ -4736,7 +4750,7 @@ class AdminOpsApiController extends Controller
         return $count;
     }
 
-    private function upsertCustomerBagasi(string $nama, string $noHp, ?string $alamat, string $tipe): int
+    private function upsertCustomerBagasi(string $nama, string $noHp, ?string $alamat, string $tipe, int $poolId = 0): int
     {
         if ($noHp === '') {
             return 0;
@@ -4758,17 +4772,18 @@ class AdminOpsApiController extends Controller
                 'alamat' => $alamat,
                 'tipe' => $nextTipe === '' ? $tipe : $nextTipe,
             ]);
+            $this->assignCustomerPoolIfMissing((int) $existing->id, $poolId, 'customer_bagasi');
 
             return (int) $existing->id;
         }
 
-        return (int) DB::table('customer_bagasi')->insertGetId([
+        return (int) DB::table('customer_bagasi')->insertGetId(array_merge([
             'nama' => $nama,
             'no_hp' => $noHp,
             'alamat' => $alamat,
             'tipe' => $tipe,
             'created_at' => now(),
-        ]);
+        ], $poolId > 0 && Schema::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : []));
     }
 
     private function resolveMappedLuggagePrice(int $routeId, int $serviceId): float
@@ -6262,6 +6277,9 @@ class AdminOpsApiController extends Controller
             'alamat' => $this->nullable($payload['pickup_point'] ?? null),
             'company' => $this->nullable($payload['company_name'] ?? null),
         ];
+        $poolId = Schema::hasColumn('customer_charter', 'pool_id')
+            ? (int) ($payload['pool_id'] ?? PoolScope::customerPoolId())
+            : 0;
 
         $existingId = (int) (DB::table('customer_charter')->where('no_hp', $phone)->value('id') ?? 0);
 
@@ -6279,18 +6297,24 @@ class AdminOpsApiController extends Controller
             }
 
             DB::table('customer_charter')->where('id', $existingId)->update($updatePayload);
+            $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_charter');
 
             return;
         }
 
         try {
-            DB::table('customer_charter')->insert(array_merge($customerPayload, ['created_at' => now()]));
+            DB::table('customer_charter')->insert(array_merge(
+                $customerPayload,
+                $poolId > 0 ? ['pool_id' => $poolId] : [],
+                ['created_at' => now()],
+            ));
         } catch (QueryException) {
             DB::table('customer_charter')->where('no_hp', $phone)->update([
                 'nama' => $customerPayload['nama'],
                 'alamat' => $customerPayload['alamat'],
                 'company' => $customerPayload['company'],
             ]);
+            $this->assignCustomerPoolIfMissing((int) (DB::table('customer_charter')->where('no_hp', $phone)->value('id') ?? 0), $poolId, 'customer_charter');
         }
     }
 

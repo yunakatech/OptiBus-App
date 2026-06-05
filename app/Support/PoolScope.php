@@ -345,32 +345,71 @@ class PoolScope
             return;
         }
 
-        if (! Schema::hasTable('luggages')) {
+        $poolIds = $scope['pool_ids'];
+        $hasCustomerPoolId = Schema::hasTable('customer_bagasi') && Schema::hasColumn('customer_bagasi', 'pool_id');
+        $canUseCustomerPool = $hasCustomerPoolId && $poolIds !== [];
+        $canUseLuggages = Schema::hasTable('luggages');
+
+        if (! $canUseCustomerPool && ! $canUseLuggages) {
             $query->whereRaw('1 = 0');
 
             return;
         }
 
+        $customerPoolColumn = self::qualifiedColumn($customerAlias, 'pool_id');
         $customerPhoneColumn = self::qualifiedColumn($customerAlias, 'no_hp');
+        $query->where(function (Builder $customerScope) use (
+            $canUseCustomerPool,
+            $canUseLuggages,
+            $customerPoolColumn,
+            $customerPhoneColumn,
+            $poolIds,
+            $poolId,
+            $userId,
+        ): void {
+            if ($canUseCustomerPool) {
+                $customerScope->whereIn($customerPoolColumn, $poolIds);
+            }
 
-        $query->whereExists(function (Builder $exists) use ($customerPhoneColumn, $poolId, $userId): void {
-            $exists
-                ->selectRaw('1')
-                ->from('luggages as scoped_luggages')
-                ->where(function (Builder $phone) use ($customerPhoneColumn): void {
-                    $phone
-                        ->whereColumn('scoped_luggages.sender_phone', $customerPhoneColumn)
-                        ->orWhereColumn('scoped_luggages.receiver_phone', $customerPhoneColumn);
-                });
+            if (! $canUseLuggages) {
+                return;
+            }
 
-            self::applyPoolOrRouteScope(
-                $exists,
-                Schema::hasColumn('luggages', 'pool_id') ? 'scoped_luggages.pool_id' : '',
-                Schema::hasColumn('luggages', 'rute_id') ? 'scoped_luggages.rute_id' : '',
-                'scoped_luggages.rute',
+            $legacyLuggageClause = function (Builder $legacy) use (
+                $canUseCustomerPool,
+                $customerPoolColumn,
+                $customerPhoneColumn,
                 $poolId,
                 $userId,
-            );
+            ): void {
+                if ($canUseCustomerPool) {
+                    $legacy->whereNull($customerPoolColumn);
+                }
+
+                $legacy->whereExists(function (Builder $exists) use ($customerPhoneColumn, $poolId, $userId): void {
+                    $exists
+                        ->selectRaw('1')
+                        ->from('luggages as scoped_luggages')
+                        ->where(function (Builder $phone) use ($customerPhoneColumn): void {
+                            $phone
+                                ->whereColumn('scoped_luggages.sender_phone', $customerPhoneColumn)
+                                ->orWhereColumn('scoped_luggages.receiver_phone', $customerPhoneColumn);
+                        });
+
+                    self::applyPoolOrRouteScope(
+                        $exists,
+                        Schema::hasColumn('luggages', 'pool_id') ? 'scoped_luggages.pool_id' : '',
+                        Schema::hasColumn('luggages', 'rute_id') ? 'scoped_luggages.rute_id' : '',
+                        'scoped_luggages.rute',
+                        $poolId,
+                        $userId,
+                    );
+                });
+            };
+
+            $canUseCustomerPool
+                ? $customerScope->orWhere($legacyLuggageClause)
+                : $customerScope->where($legacyLuggageClause);
         });
     }
 
@@ -381,21 +420,60 @@ class PoolScope
             return;
         }
 
-        if (! Schema::hasTable('charters')) {
+        $poolIds = $scope['pool_ids'];
+        $hasCustomerPoolId = Schema::hasTable('customer_charter') && Schema::hasColumn('customer_charter', 'pool_id');
+        $canUseCustomerPool = $hasCustomerPoolId && $poolIds !== [];
+        $canUseCharters = Schema::hasTable('charters');
+
+        if (! $canUseCustomerPool && ! $canUseCharters) {
             $query->whereRaw('1 = 0');
 
             return;
         }
 
+        $customerPoolColumn = self::qualifiedColumn($customerAlias, 'pool_id');
         $customerPhoneColumn = self::qualifiedColumn($customerAlias, 'no_hp');
+        $query->where(function (Builder $customerScope) use (
+            $canUseCustomerPool,
+            $canUseCharters,
+            $customerPoolColumn,
+            $customerPhoneColumn,
+            $poolIds,
+            $poolId,
+            $userId,
+        ): void {
+            if ($canUseCustomerPool) {
+                $customerScope->whereIn($customerPoolColumn, $poolIds);
+            }
 
-        $query->whereExists(function (Builder $exists) use ($customerPhoneColumn, $poolId, $userId): void {
-            $exists
-                ->selectRaw('1')
-                ->from('charters as scoped_charters')
-                ->whereColumn('scoped_charters.phone', $customerPhoneColumn);
+            if (! $canUseCharters) {
+                return;
+            }
 
-            self::applyCharterScope($exists, 'scoped_charters', $poolId, $userId);
+            $legacyCharterClause = function (Builder $legacy) use (
+                $canUseCustomerPool,
+                $customerPoolColumn,
+                $customerPhoneColumn,
+                $poolId,
+                $userId,
+            ): void {
+                if ($canUseCustomerPool) {
+                    $legacy->whereNull($customerPoolColumn);
+                }
+
+                $legacy->whereExists(function (Builder $exists) use ($customerPhoneColumn, $poolId, $userId): void {
+                    $exists
+                        ->selectRaw('1')
+                        ->from('charters as scoped_charters')
+                        ->whereColumn('scoped_charters.phone', $customerPhoneColumn);
+
+                    self::applyCharterScope($exists, 'scoped_charters', $poolId, $userId);
+                });
+            };
+
+            $canUseCustomerPool
+                ? $customerScope->orWhere($legacyCharterClause)
+                : $customerScope->where($legacyCharterClause);
         });
     }
 
