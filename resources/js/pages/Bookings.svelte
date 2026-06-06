@@ -8269,11 +8269,27 @@
                     <div
                         class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/90 md:top-2 md:mx-0 md:rounded-2xl md:border md:border-border/80 md:bg-linear-to-br md:from-background md:via-background md:to-cyan-50/35 md:p-3 md:shadow-sm md:dark:to-cyan-950/15"
                     >
-                        <div
-                            class="flex flex-wrap items-center justify-between gap-2"
-                        >
+                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant={emptyDepartureOpen
+                                    ? 'secondary'
+                                    : 'default'}
+                                class="h-9 rounded-xl px-4 text-xs"
+                                onclick={() =>
+                                    void openEmptyDepartureForm()}
+                            >
+                                {#if emptyDepartureOpen}
+                                    <X class="mr-1.5 h-3.5 w-3.5" />
+                                    Tutup
+                                {:else}
+                                    <Plus class="mr-1.5 h-3.5 w-3.5" />
+                                    Tambah Jadwal
+                                {/if}
+                            </Button>
                             <div
-                                class="inline-flex items-center rounded-lg border border-border/70 bg-muted/20 p-1"
+                                class="inline-flex items-center rounded-xl border border-border/70 bg-background/80 p-1"
                             >
                                 <Button
                                     type="button"
@@ -8281,7 +8297,7 @@
                                     variant={bookingListScope === 'active'
                                         ? 'default'
                                         : 'ghost'}
-                                    class="h-7 rounded-md px-2.5 text-[11px]"
+                                    class="h-7 rounded-lg px-2.5 text-[11px]"
                                     onclick={() =>
                                         (bookingListScope = 'active')}
                                 >
@@ -8293,58 +8309,37 @@
                                     variant={bookingListScope === 'history'
                                         ? 'default'
                                         : 'ghost'}
-                                    class="h-7 rounded-md px-2.5 text-[11px]"
+                                    class="h-7 rounded-lg px-2.5 text-[11px]"
                                     onclick={() =>
                                         (bookingListScope = 'history')}
                                 >
                                     History
                                 </Button>
                             </div>
-                            <div
-                                class="flex flex-wrap items-center justify-end gap-2"
-                            >
-                                <Badge
-                                    variant="secondary"
-                                    class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                >
-                                    {filteredBookingGroups().length} / {localBookingGroups.length}
-                                    jadwal
-                                </Badge>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm">
+                            <p class="text-xs font-medium text-muted-foreground">
+                                {bookingListScope === 'history' ? 'Mode history: data keberangkatan selesai dan dibatalkan' : 'Mode aktif: jadwal keberangkatan berjalan'}
+                            </p>
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                    Total {filteredBookingGroups().length} / {localBookingGroups.length} jadwal
+                                </span>
                                 <Button
                                     type="button"
                                     size="sm"
-                                    variant={emptyDepartureOpen
-                                        ? 'secondary'
-                                        : 'default'}
-                                    class="h-8 rounded-full px-3 text-xs"
+                                    variant="outline"
+                                    class="h-8 rounded-full px-3 text-xs md:hidden"
                                     onclick={() =>
-                                        void openEmptyDepartureForm()}
+                                        (bookingListFiltersExpanded =
+                                            !bookingListFiltersExpanded)}
+                                    aria-expanded={bookingListFiltersExpanded}
                                 >
-                                    {#if emptyDepartureOpen}
-                                        <X class="mr-1.5 h-3.5 w-3.5" />
-                                        Tutup
-                                    {:else}
-                                        <Plus class="mr-1.5 h-3.5 w-3.5" />
-                                        Tambah Jadwal
-                                    {/if}
+                                    {bookingListFiltersExpanded
+                                        ? 'Sembunyikan Filter'
+                                        : 'Tampilkan Filter'}
                                 </Button>
                             </div>
-                        </div>
-                        <div class="flex justify-end md:hidden">
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                class="h-8 rounded-full px-3 text-xs"
-                                onclick={() =>
-                                    (bookingListFiltersExpanded =
-                                        !bookingListFiltersExpanded)}
-                                aria-expanded={bookingListFiltersExpanded}
-                            >
-                                {bookingListFiltersExpanded
-                                    ? 'Sembunyikan Filter'
-                                    : 'Tampilkan Filter'}
-                            </Button>
                         </div>
                         <div class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-2xl border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}>
                             <div class="grid gap-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
