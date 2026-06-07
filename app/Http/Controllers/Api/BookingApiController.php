@@ -1348,7 +1348,7 @@ class BookingApiController extends Controller
             return $this->error('Booking cancel hanya bisa diubah status pembayarannya.', 422);
         }
 
-        if ($isCanceled && $paymentOnlyUpdate) {
+        if ($paymentOnlyUpdate) {
             $paymentChangeSummary = $this->bookingChangeSummary($current, [
                 'pembayaran' => $payment,
             ]);
@@ -1363,7 +1363,7 @@ class BookingApiController extends Controller
 
             ActivityLog::write(
                 'PAYMENT',
-                'Pembayaran booking cancel '.$bookingIdentity.' diperbarui',
+                'Pembayaran booking '.$bookingIdentity.' diperbarui',
                 $paymentChangeSummary,
                 (string) ($request->user()?->email ?? $request->user()?->name ?? 'system'),
                 ['booking_id' => $id],
@@ -1372,7 +1372,7 @@ class BookingApiController extends Controller
             return $this->ok([
                 'booking_id' => $id,
                 'seat' => (string) ($current['seat'] ?? ''),
-                'message' => 'Status pembayaran booking cancel berhasil diperbarui',
+                'message' => 'Status pembayaran booking berhasil diperbarui',
                 'rute' => (string) ($current['rute'] ?? ''),
                 'tanggal' => (string) ($current['tanggal'] ?? ''),
                 'jam' => substr((string) ($current['jam'] ?? ''), 0, 5),
