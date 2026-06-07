@@ -25,6 +25,7 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
+    import { consumeDataStale, markDataStale } from '@/lib/data-invalidation';
     import { hasPermission } from '@/lib/access';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
@@ -705,6 +706,19 @@ return '/admin-ops/flows/assignments';
             throw new Error(json.error || json.message || firstValidationError || `Request gagal (${res.status})`);
         }
 
+        if (method !== 'GET') {
+            if (url.includes('/api/admin/charters')) {
+                markDataStale(['flows', 'payments', 'dashboard']);
+            } else if (url.includes('/api/admin/luggages')) {
+                markDataStale(['flows', 'payments', 'bookings', 'dashboard']);
+            } else if (
+                url.includes('/api/admin/assignments') &&
+                !url.includes('/conflicts')
+            ) {
+                markDataStale(['flows', 'bookings', 'dashboard']);
+            }
+        }
+
         return json;
     };
 
@@ -766,6 +780,8 @@ q.set('q', filterQuery.trim());
             return false;
         }
 
+        consumeDataStale(['flows']);
+
         const query =
             activeTab === 'charters'
                 ? charterQueryString(page)
@@ -792,6 +808,30 @@ q.set('q', filterQuery.trim());
         );
 
         return true;
+    };
+
+    const reloadActiveFlowList = async (page: number) => {
+        if (
+            activeMode === 'data' &&
+            (activeTab === 'charters' || activeTab === 'luggages') &&
+            reloadFlowDataWithInertia(page)
+        ) {
+            return;
+        }
+
+        if (activeTab === 'charters') {
+            await loadCharters(page);
+
+            return;
+        }
+
+        if (activeTab === 'luggages') {
+            await loadLuggages(page);
+
+            return;
+        }
+
+        await loadAssignments(page);
     };
 
     const formatCurrencyId = (value: number | string | null | undefined) =>
@@ -2215,8 +2255,8 @@ await loadAssignments(assignmentMeta.page);
             });
             message = charterForm.id ? 'Charter updated.' : 'Charter created.';
             resetCharterFormState();
-            await loadCharters(charterMeta.page);
             setFormMode('data');
+            await reloadActiveFlowList(charterMeta.page);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan charter.';
         } finally {
@@ -2258,7 +2298,8 @@ await loadAssignments(assignmentMeta.page);
             });
             message = luggageForm.id ? 'Luggage updated.' : 'Luggage created.';
             resetLuggageFormState();
-            await loadLuggages(luggageMeta.page);
+            setFormMode('data');
+            await reloadActiveFlowList(luggageMeta.page);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan luggage.';
         } finally {
@@ -2300,7 +2341,7 @@ await loadAssignments(assignmentMeta.page);
             assignmentForm = { id: 0, rute: '', tanggal: today, jam: '08:00', unit: 1, driver_id: 0 };
             assignmentConflicts = [];
             assignmentAllowConflict = false;
-            await loadAssignments(assignmentMeta.page);
+            await reloadActiveFlowList(assignmentMeta.page);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan assignment.';
         } finally {
@@ -2363,7 +2404,13 @@ await loadAssignments(assignmentMeta.page);
             }
 
             message = okMessage;
-            await loadActiveTab();
+            await reloadActiveFlowList(
+                activeTab === 'charters'
+                    ? charterMeta.page
+                    : activeTab === 'luggages'
+                      ? luggageMeta.page
+                      : assignmentMeta.page,
+            );
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal menghapus data.';
         } finally {
@@ -2404,7 +2451,7 @@ await loadAssignments(assignmentMeta.page);
                 await loadCharterView(row.id);
             }
 
-            await loadCharters(charterMeta.page);
+            await reloadActiveFlowList(charterMeta.page);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal menandai charter selesai.';
         }
@@ -2439,7 +2486,7 @@ return;
         try {
             await runWithFeedback(async () => {
                 await api('POST', `/api/admin/luggages/${row.id}${actionMap[action]}`);
-                await loadLuggages(luggageMeta.page);
+                await reloadActiveFlowList(luggageMeta.page);
             }, {
                 loadingMessage: `Memproses aksi ${action} untuk bagasi #${row.id}...`,
                 successMessage: `Bagasi #${row.id} berhasil diperbarui.`,
@@ -2542,7 +2589,7 @@ return;
 
         await api('POST', '/api/admin/assignments/bulk-delete', { ids: selectedAssignmentIds });
         message = `Deleted ${selectedAssignmentIds.length} assignment(s).`;
-        await loadAssignments(assignmentMeta.page);
+        await reloadActiveFlowList(assignmentMeta.page);
     };
 
     const jumpPage = async (target: number, type: 'charter' | 'luggage' | 'assignment') => {
@@ -2775,10 +2822,24 @@ params.set('to', filterTo);
             }
         }
 
-        busy = !usesInertiaFlowData() || (activeMode === 'data' && !flowData);
+        const staleFlowData =
+            activeMode === 'data' && consumeDataStale(['flows']);
+
+        busy =
+            staleFlowData ||
+            !usesInertiaFlowData() ||
+            (activeMode === 'data' && !flowData);
 
         try {
-            if (!usesInertiaFlowData()) {
+            if (staleFlowData) {
+                await reloadActiveFlowList(
+                    activeTab === 'charters'
+                        ? charterMeta.page
+                        : activeTab === 'luggages'
+                          ? luggageMeta.page
+                          : assignmentMeta.page,
+                );
+            } else if (!usesInertiaFlowData()) {
                 await loadMasters();
                 await loadActiveTab();
             }
@@ -2789,7 +2850,10 @@ params.set('to', filterTo);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat data awal.';
         } finally {
-            if (!usesInertiaFlowData() || activeMode !== 'data' || flowData) {
+            if (
+                !staleFlowData &&
+                (!usesInertiaFlowData() || activeMode !== 'data' || flowData)
+            ) {
                 busy = false;
             }
         }
