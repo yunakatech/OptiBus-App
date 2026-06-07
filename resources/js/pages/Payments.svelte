@@ -34,6 +34,7 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
+    import { consumeDataStale, markDataStale } from '@/lib/data-invalidation';
 
     type StatusKey = 'unpaid' | 'dp' | 'paid';
     type SourceKey = 'all' | 'booking' | 'charter' | 'luggage';
@@ -123,6 +124,7 @@
     let updatingKey = $state('');
     let drafts = $state<Record<string, { payment_status: string; down_payment: string }>>({});
     let initializedFromProps = $state(false);
+    let stalePaymentChecked = $state(false);
 
     const authPoolScope = $derived((page.props.auth?.pool_scope ?? null) as AuthPoolScope);
     const poolContextName = $derived(String(authPoolScope?.pool_name ?? 'Semua Pool'));
@@ -303,6 +305,7 @@
     };
 
     const reloadData = (pageNumber = 1) => {
+        consumeDataStale(['payments']);
         loading = true;
         router.get(
             '/payments',
@@ -324,6 +327,18 @@
             },
         );
     };
+
+    $effect(() => {
+        if (!initializedFromProps || stalePaymentChecked) {
+            return;
+        }
+
+        stalePaymentChecked = true;
+
+        if (consumeDataStale(['payments'])) {
+            reloadData(pagination.page);
+        }
+    });
 
     const exportUrl = () => {
         const params = new URLSearchParams({
@@ -367,11 +382,13 @@
                 successMessage: 'Pembayaran berhasil diperbarui.',
                 errorMessage: 'Gagal memperbarui pembayaran.',
             });
+            markDataStale(['bookings', 'flows', 'dashboard']);
             reloadData(pagination.page);
         } finally {
             updatingKey = '';
         }
     };
+
 </script>
 
 <AppHead title="Pembayaran" />

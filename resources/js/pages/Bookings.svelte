@@ -59,6 +59,7 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
+    import { consumeDataStale, markDataStale } from '@/lib/data-invalidation';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
     type Totals = {
@@ -391,6 +392,7 @@
     let bookingListVisibleCount = $state(24);
     let lastBookingListFilterSignature = $state('');
     let bookingListFiltersExpanded = $state(false);
+    let bookingListReloadTimer: ReturnType<typeof setTimeout> | null = null;
     let emptyDepartureOpen = $state(false);
     let emptyDepartureDate = $state(today);
     let emptyDepartureRoute = $state('');
@@ -399,6 +401,21 @@
     let emptyDepartureRoutes = $state<string[]>([]);
     let emptyDepartureSchedules = $state<ScheduleItem[]>([]);
     let openGroupDetail = $state<BookingGroup | null>(null);
+
+    $effect(() => {
+        if (!openGroupDetail) {
+            return;
+        }
+
+        const refreshedGroup = localBookingGroups.find(
+            (group) => group.key === openGroupDetail!.key,
+        );
+
+        if (refreshedGroup && refreshedGroup !== openGroupDetail) {
+            openGroupDetail = refreshedGroup;
+        }
+    });
+
     let bookingDate = $state(today);
     let selectedRoute = $state('');
     let selectedJam = $state('');
@@ -2421,6 +2438,12 @@
         bookingListVisibleCount = BOOKING_LIST_PAGE_SIZE;
     });
     const reloadBookingListData = () => {
+        if (bookingListReloadTimer) {
+            clearTimeout(bookingListReloadTimer);
+            bookingListReloadTimer = null;
+        }
+
+        consumeDataStale(['bookings']);
         bookingListHydrated = false;
         router.reload({
             only: [...BOOKING_LIST_DATA_PROPS],
@@ -2429,6 +2452,22 @@
             only: string[];
             preserveScroll: boolean;
         });
+    };
+    const scheduleBookingListReload = () => {
+        markDataStale(['bookings', 'payments', 'flows', 'dashboard']);
+
+        if (!listOnly) {
+            return;
+        }
+
+        if (bookingListReloadTimer) {
+            clearTimeout(bookingListReloadTimer);
+        }
+
+        bookingListReloadTimer = setTimeout(() => {
+            bookingListReloadTimer = null;
+            reloadBookingListData();
+        }, 180);
     };
     const resetBookingListFilters = () => {
         bookingListScope = 'active';
@@ -4665,6 +4704,13 @@
             throw new Error(data.error || `Request gagal (${response.status})`);
         }
 
+        if (
+            path.startsWith('/api/bookings/') ||
+            path.startsWith('/api/admin/assignments')
+        ) {
+            scheduleBookingListReload();
+        }
+
         return data;
     };
 
@@ -5133,6 +5179,10 @@
                     formError = 'Detail keberangkatan tidak ditemukan.';
                 }
             }
+
+            if (consumeDataStale(['bookings'])) {
+                reloadBookingListData();
+            }
         } else {
             void loadRoutesByDate();
         }
@@ -5150,6 +5200,11 @@
 
             if (groupRiturSearchTimer) {
                 clearTimeout(groupRiturSearchTimer);
+            }
+
+            if (bookingListReloadTimer) {
+                clearTimeout(bookingListReloadTimer);
+                bookingListReloadTimer = null;
             }
 
             bookingDatePicker?.destroy();
