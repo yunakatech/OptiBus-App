@@ -194,6 +194,43 @@ class BookingApiTest extends TestCase
         ]);
     }
 
+    public function test_payment_only_update_does_not_require_complete_booking_fields(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $bookingId = DB::table('bookings')->insertGetId([
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => '1',
+            'name' => 'RIDWAN',
+            'phone' => '081234567890',
+            'pickup_point' => '',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->postJson(route('api.bookings.update'), [
+            'booking_id' => $bookingId,
+            'pembayaran' => 'Lunas',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('booking_id', $bookingId)
+            ->assertJsonPath('pembayaran', 'Lunas');
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'pembayaran' => 'Lunas',
+            'pickup_point' => '',
+        ]);
+    }
+
     public function test_cancel_booking_marks_status_canceled(): void
     {
         $this->actingAsSuperAdmin();
