@@ -12,6 +12,7 @@
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
     import { CreditCard, Download, MoreHorizontal, RefreshCw, Search, WalletCards } from 'lucide-svelte';
+    import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -124,7 +125,6 @@
     let updatingKey = $state('');
     let drafts = $state<Record<string, { payment_status: string; down_payment: string }>>({});
     let initializedFromProps = $state(false);
-    let stalePaymentChecked = $state(false);
 
     const authPoolScope = $derived((page.props.auth?.pool_scope ?? null) as AuthPoolScope);
     const poolContextName = $derived(String(authPoolScope?.pool_name ?? 'Semua Pool'));
@@ -328,16 +328,22 @@
         );
     };
 
-    $effect(() => {
-        if (!initializedFromProps || stalePaymentChecked) {
+    const reloadIfPaymentDataStale = () => {
+        if (!initializedFromProps || loading) {
             return;
         }
-
-        stalePaymentChecked = true;
 
         if (consumeDataStale(['payments'])) {
             reloadData(pagination.page);
         }
+    };
+
+    $effect(() => {
+        if (!initializedFromProps) {
+            return;
+        }
+
+        reloadIfPaymentDataStale();
     });
 
     const exportUrl = () => {
@@ -388,6 +394,28 @@
             updatingKey = '';
         }
     };
+
+    onMount(() => {
+        const checkSoon = () => {
+            window.setTimeout(reloadIfPaymentDataStale, 0);
+        };
+        const checkWhenVisible = () => {
+            if (document.visibilityState === 'visible') {
+                checkSoon();
+            }
+        };
+
+        checkSoon();
+        window.addEventListener('pageshow', checkSoon);
+        window.addEventListener('focus', checkSoon);
+        document.addEventListener('visibilitychange', checkWhenVisible);
+
+        return () => {
+            window.removeEventListener('pageshow', checkSoon);
+            window.removeEventListener('focus', checkSoon);
+            document.removeEventListener('visibilitychange', checkWhenVisible);
+        };
+    });
 
 </script>
 

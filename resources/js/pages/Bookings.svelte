@@ -3095,6 +3095,7 @@
                             ? { ...row, pembayaran: 'Lunas' }
                             : row,
                     );
+                    markDataStale(['payments', 'dashboard']);
                 },
                 {
                     loadingMessage: `Memproses ${payableRows.length} pembayaran keberangkatan...`,
