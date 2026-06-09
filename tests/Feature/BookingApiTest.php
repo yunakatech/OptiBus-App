@@ -231,6 +231,45 @@ class BookingApiTest extends TestCase
         ]);
     }
 
+    public function test_empty_departure_rejects_existing_active_departure(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $date = '2026-05-15';
+        $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
+
+        DB::table('schedules')->insert([
+            'rute' => 'PINRANG - MAKASSAR',
+            'dow' => $dow,
+            'jam' => '09:00:00',
+            'units' => 1,
+            'unit_label' => 'Unit 1',
+            'created_at' => now(),
+        ]);
+
+        DB::table('trip_assignments')->insert([
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => $date,
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->postJson(route('api.bookings.empty-departure'), [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => $date,
+            'jam' => '09:00',
+            'unit' => 1,
+        ]);
+
+        $response->assertStatus(409)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error', 'Keberangkatan untuk rute, tanggal, jam, dan unit ini sudah ada.');
+
+        $this->assertDatabaseCount('trip_assignments', 1);
+    }
+
     public function test_cancel_booking_marks_status_canceled(): void
     {
         $this->actingAsSuperAdmin();

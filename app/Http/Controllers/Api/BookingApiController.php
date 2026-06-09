@@ -608,6 +608,15 @@ class BookingApiController extends Controller
         }
 
         $existing = $this->findTripAssignment($payload['rute'], $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
+        $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
+        if ($existing && $existingStatus !== 'canceled') {
+            return $this->error('Keberangkatan untuk rute, tanggal, jam, dan unit ini sudah ada.', 409);
+        }
+
+        if ($this->hasActiveBookingForDeparture($payload['rute'], $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit)) {
+            return $this->error('Keberangkatan untuk rute, tanggal, jam, dan unit ini sudah memiliki data penumpang.', 409);
+        }
+
         if ($existing) {
             DB::table('trip_assignments')->where('id', (int) $existing->id)->update($payload);
             $id = (int) $existing->id;
@@ -1906,6 +1915,31 @@ class BookingApiController extends Controller
         }
 
         return array_values(array_unique(array_filter($ids, static fn (int $id) => $id > 0)));
+    }
+
+    private function hasActiveBookingForDeparture(string $rute, string $tanggal, string $jam, int $unit): bool
+    {
+        if (! Schema::hasTable('bookings')) {
+            return false;
+        }
+
+        $query = DB::table('bookings as b')
+            ->where('b.tanggal', $tanggal)
+            ->where('b.jam', $this->normalizeTime($jam))
+            ->where('b.unit', $unit);
+
+        if (Schema::hasColumn('bookings', 'status')) {
+            $query->where(function (Builder $statusQuery): void {
+                $statusQuery
+                    ->whereNull('b.status')
+                    ->orWhereNotIn('b.status', ['canceled', 'cancelled']);
+            });
+        }
+
+        PoolScope::applyRouteIdentity($query, $rute, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
+        PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
+
+        return $query->exists();
     }
 
     private function ensureTripAssignmentForDeparture(string $rute, string $tanggal, string $jam, int $unit): object
