@@ -154,9 +154,35 @@ class AdminOpsController extends Controller
         $listRequest->query->set('paginate', '1');
         $routeOptions = [];
 
-        if ($tab === 'schedules' && trim((string) $listRequest->query('rute', '')) === '') {
+        if ($tab === 'schedules') {
             $routeOptions = $this->routeOptions();
-            $listRequest->query->set('rute', (string) ($routeOptions[0]['name'] ?? ''));
+            $routeId = max(0, (int) $listRequest->query('route_id', 0));
+            $rute = trim((string) $listRequest->query('rute', ''));
+
+            if ($routeId <= 0 && $rute !== '') {
+                foreach ($routeOptions as $routeOption) {
+                    if (trim((string) ($routeOption['name'] ?? '')) === $rute) {
+                        $routeId = (int) ($routeOption['id'] ?? 0);
+                        break;
+                    }
+                }
+            }
+
+            if ($routeId <= 0) {
+                $routeId = (int) ($routeOptions[0]['id'] ?? 0);
+            }
+
+            if ($routeId > 0) {
+                $listRequest->query->set('route_id', $routeId);
+                foreach ($routeOptions as $routeOption) {
+                    if ((int) ($routeOption['id'] ?? 0) === $routeId) {
+                        $listRequest->query->set('rute', (string) ($routeOption['name'] ?? ''));
+                        break;
+                    }
+                }
+            } elseif ($rute === '') {
+                $listRequest->query->set('rute', (string) ($routeOptions[0]['name'] ?? ''));
+            }
         }
 
         if ($tab === 'segments' && (int) $listRequest->query('route_id', 0) <= 0) {
@@ -198,7 +224,10 @@ class AdminOpsController extends Controller
                 'last_page' => 1,
             ],
             ...($tab === 'pools' ? ['can_manage' => (bool) ($payload['can_manage'] ?? true)] : []),
-            ...($tab === 'schedules' ? ['rute' => trim((string) $listRequest->query('rute', ''))] : []),
+            ...($tab === 'schedules' ? [
+                'route_id' => max(0, (int) $listRequest->query('route_id', 0)),
+                'rute' => trim((string) $listRequest->query('rute', '')),
+            ] : []),
             ...($tab === 'segments' ? ['route_id' => max(0, (int) $listRequest->query('route_id', 0))] : []),
         ];
     }

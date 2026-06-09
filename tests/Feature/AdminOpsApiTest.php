@@ -77,6 +77,42 @@ class AdminOpsApiTest extends TestCase
         ])->assertStatus(409);
     }
 
+    public function test_schedules_index_prefers_route_id_over_stale_route_name(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        DB::table('routes')->insert([
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+        $routeId = DB::table('routes')->insertGetId([
+            'name' => 'PAREPARE - MAKASSAR',
+            'origin' => 'PAREPARE',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        DB::table('schedules')->insert([
+            'route_id' => $routeId,
+            'rute' => 'PAREPARE - MAKASSAR',
+            'dow' => 1,
+            'jam' => '08:00:00',
+            'units' => 1,
+            'unit_label' => 'Unit 1',
+            'created_at' => now(),
+        ]);
+
+        $this->getJson(route('api.admin.schedules.index', [
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+        ]))->assertOk()
+            ->assertJsonCount(1, 'schedules')
+            ->assertJsonPath('schedules.0.route_id', $routeId)
+            ->assertJsonPath('schedules.0.rute', 'PAREPARE - MAKASSAR');
+    }
+
     public function test_driver_and_luggage_service_crud_works(): void
     {
         $this->actingAsSuperAdmin();

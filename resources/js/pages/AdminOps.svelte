@@ -570,6 +570,7 @@
         unit_labels: ['Unit 1'],
     });
     let selectedScheduleRoute = $state('');
+    let selectedScheduleRouteId = $state(0);
     let selectedSegmentRouteId = $state(0);
     let driverForm = $state({
         id: 0,
@@ -775,6 +776,52 @@
         });
 
         return names.sort((a, b) => a.localeCompare(b, 'id'));
+    };
+    const scheduleRouteKey = (value: string | null | undefined) =>
+        String(value ?? '')
+            .trim()
+            .toUpperCase()
+            .replace(/=>|->|\u2192|\u2013|\u2014/g, '-')
+            .replace(/\s+/g, '');
+    const scheduleRouteNameById = (routeId: number): string =>
+        String(
+            routes.find((row) => Number(row.id) === Number(routeId))?.name ??
+                '',
+        ).trim();
+    const scheduleRouteIdByName = (routeName: string): number => {
+        const key = scheduleRouteKey(routeName);
+
+        if (key === '') {
+            return 0;
+        }
+
+        const route = routes.find((row) => scheduleRouteKey(row.name) === key);
+        if (route) {
+            return Number(route.id || 0);
+        }
+
+        const schedule = schedules.find(
+            (row) =>
+                scheduleRouteKey(row.route_name ?? row.rute) === key &&
+                Number(row.route_id ?? 0) > 0,
+        );
+
+        return Number(schedule?.route_id ?? 0);
+    };
+    const canonicalScheduleRouteName = (
+        routeName: string,
+        routeId = 0,
+    ): string => {
+        const nameById = scheduleRouteNameById(routeId);
+
+        if (nameById !== '') {
+            return nameById;
+        }
+
+        const key = scheduleRouteKey(routeName);
+        const route = routes.find((row) => scheduleRouteKey(row.name) === key);
+
+        return String(route?.name ?? routeName).trim();
     };
 
     const scheduleRouteOptions = $derived(
@@ -2046,13 +2093,25 @@
     const syncScheduleSelection = () => {
         const routeNames = collectScheduleRouteNames(routes, schedules);
         const fallbackRoute = routeNames[0] ?? '';
+
+        if (routeNames.length === 0) {
+            return;
+        }
+
+        const canonicalRoute = canonicalScheduleRouteName(
+            selectedScheduleRoute,
+            selectedScheduleRouteId,
+        );
         const selectedExists =
-            selectedScheduleRoute !== '' &&
-            routeNames.includes(selectedScheduleRoute);
+            canonicalRoute !== '' && routeNames.includes(canonicalRoute);
 
         if (!selectedExists) {
             selectedScheduleRoute = fallbackRoute;
+        } else {
+            selectedScheduleRoute = canonicalRoute;
         }
+
+        selectedScheduleRouteId = scheduleRouteIdByName(selectedScheduleRoute);
 
         const formRouteExists =
             scheduleForm.rute !== '' && routeNames.includes(scheduleForm.rute);
@@ -2068,7 +2127,13 @@
         }
 
         if (payload.tab === 'schedules') {
-            selectedScheduleRoute = payload.rute ?? selectedScheduleRoute;
+            selectedScheduleRouteId = Number(
+                payload.route_id ?? selectedScheduleRouteId,
+            );
+            selectedScheduleRoute = canonicalScheduleRouteName(
+                payload.rute ?? selectedScheduleRoute,
+                selectedScheduleRouteId,
+            );
             schedules = payload.schedules ?? [];
             syncScheduleSelection();
         }
@@ -2169,8 +2234,19 @@
             query.q = poolSearch.trim();
         }
 
-        if (activeTab === 'schedules' && selectedScheduleRoute !== '') {
-            query.rute = selectedScheduleRoute;
+        if (
+            activeTab === 'schedules' &&
+            (selectedScheduleRouteId > 0 || selectedScheduleRoute !== '')
+        ) {
+            const routeId =
+                selectedScheduleRouteId ||
+                scheduleRouteIdByName(selectedScheduleRoute);
+
+            if (routeId > 0) {
+                query.route_id = routeId;
+            } else {
+                query.rute = selectedScheduleRoute;
+            }
         }
 
         if (activeTab === 'segments' && selectedSegmentRouteId > 0) {
@@ -2217,7 +2293,11 @@
             poolSearch = settingsQuery.q ?? '';
         }
 
-        selectedScheduleRoute = settingsQuery.rute ?? '';
+        selectedScheduleRouteId = Number(settingsQuery.route_id ?? 0);
+        selectedScheduleRoute = canonicalScheduleRouteName(
+            settingsQuery.rute ?? '',
+            selectedScheduleRouteId,
+        );
         selectedSegmentRouteId = Number(settingsQuery.route_id ?? 0);
         settingsMeta = {
             ...settingsMeta,
@@ -2666,7 +2746,13 @@
     const resetScheduleForm = () =>
         (scheduleForm = {
             id: 0,
-            rute: selectedScheduleRoute || scheduleRouteOptions[0] || '',
+            rute:
+                canonicalScheduleRouteName(
+                    selectedScheduleRoute,
+                    selectedScheduleRouteId,
+                ) ||
+                scheduleRouteOptions[0] ||
+                '',
             dow: 1,
             jam: '08:00',
             units: 1,
@@ -2874,7 +2960,10 @@
 
         try {
             const activeRoute = (
-                scheduleForm.rute ||
+                canonicalScheduleRouteName(
+                    scheduleForm.rute || selectedScheduleRoute,
+                    selectedScheduleRouteId,
+                ) ||
                 selectedScheduleRoute ||
                 ''
             ).trim();
@@ -2883,9 +2972,7 @@
                 throw new Error('Pilih rute terlebih dahulu.');
             }
 
-            const selectedRouteId = Number(
-                routes.find((row) => row.name === activeRoute)?.id ?? 0,
-            );
+            const selectedRouteId = scheduleRouteIdByName(activeRoute);
             await runWithFeedback(
                 async () => {
                     await api('POST', '/api/admin/schedules', {
@@ -2934,6 +3021,7 @@
                 ? 'Schedule updated.'
                 : 'Schedule created.';
             selectedScheduleRoute = activeRoute;
+            selectedScheduleRouteId = selectedRouteId;
             resetScheduleForm();
             await loadActiveTab();
             activeMode = 'data';
@@ -2946,7 +3034,12 @@
 
     const openCreateSchedule = (dow: number) => {
         const routeName =
-            selectedScheduleRoute || scheduleRouteOptions[0] || '';
+            canonicalScheduleRouteName(
+                selectedScheduleRoute,
+                selectedScheduleRouteId,
+            ) ||
+            scheduleRouteOptions[0] ||
+            '';
         scheduleForm = {
             id: 0,
             rute: routeName,
@@ -2962,7 +3055,13 @@
     };
 
     const openEditSchedule = (row: ScheduleRow) => {
-        selectedScheduleRoute = row.route_name ?? row.rute;
+        selectedScheduleRouteId = Number(
+            row.route_id ?? scheduleRouteIdByName(row.route_name ?? row.rute),
+        );
+        selectedScheduleRoute = canonicalScheduleRouteName(
+            row.route_name ?? row.rute,
+            selectedScheduleRouteId,
+        );
         const unitOptions = Array.isArray(row.unit_options)
             ? row.unit_options
             : [];
@@ -2987,7 +3086,7 @@
         );
         scheduleForm = {
             id: row.id,
-            rute: row.route_name ?? row.rute,
+            rute: selectedScheduleRoute,
             dow: row.dow,
             jam: row.jam,
             units: totalUnits,
@@ -4310,7 +4409,13 @@
                         <select
                             class="h-9 rounded-md border border-input bg-background px-3 text-sm"
                             bind:value={selectedScheduleRoute}
-                            onchange={() => {
+                            onchange={(event) => {
+                                const routeName = (
+                                    event.currentTarget as HTMLSelectElement
+                                ).value;
+                                selectedScheduleRoute = routeName;
+                                selectedScheduleRouteId =
+                                    scheduleRouteIdByName(routeName);
                                 resetScheduleForm();
                                 void loadSchedules();
                             }}

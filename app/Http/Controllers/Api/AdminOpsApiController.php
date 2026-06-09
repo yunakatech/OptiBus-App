@@ -185,9 +185,17 @@ class AdminOpsApiController extends Controller
             ->orderBy('s.jam');
 
         if ($hasRouteId && $routeId > 0) {
-            $query->where('s.route_id', $routeId);
-        }
-        if ($rute !== '') {
+            $routeName = trim((string) (DB::table('routes')->where('id', $routeId)->value('name') ?? ''));
+            $query->where(function (Builder $builder) use ($routeId, $routeName): void {
+                $builder->where('s.route_id', $routeId);
+
+                if ($routeName !== '') {
+                    $builder->orWhere(function (Builder $legacy) use ($routeName): void {
+                        $legacy->whereNull('s.route_id')->where('s.rute', $routeName);
+                    });
+                }
+            });
+        } elseif ($rute !== '') {
             $query->where('s.rute', $rute);
         }
         if ($dow !== null && $dow !== '') {
@@ -301,6 +309,10 @@ class AdminOpsApiController extends Controller
                 $routeId = (int) $matched->id;
                 $routeName = trim((string) $matched->name);
             }
+        }
+
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
         $duplicate = DB::table('schedules')
