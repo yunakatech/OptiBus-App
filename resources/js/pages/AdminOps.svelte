@@ -104,6 +104,11 @@
         total: number;
         days: ScheduleDayGroup[];
     };
+    type ScheduleRouteSelectOption = {
+        id: number;
+        name: string;
+        value: string;
+    };
     type DriverRow = {
         id: number;
         nama: string;
@@ -777,6 +782,45 @@
 
         return names.sort((a, b) => a.localeCompare(b, 'id'));
     };
+    const scheduleRouteValue = (routeId: number, routeName: string) =>
+        Number(routeId || 0) > 0
+            ? `id:${Number(routeId)}`
+            : `name:${scheduleRouteKey(routeName)}`;
+    const collectScheduleRouteSelectOptions = (
+        routeRows: RouteRow[],
+        scheduleRows: ScheduleRow[],
+    ): ScheduleRouteSelectOption[] => {
+        const options: ScheduleRouteSelectOption[] = [];
+        const seen = new Set<string>();
+        const pushOption = (routeId: number, routeName: string) => {
+            const name = String(routeName ?? '').trim();
+
+            if (name === '') {
+                return;
+            }
+
+            const id = Number(routeId || 0);
+            const value = scheduleRouteValue(id, name);
+            const key = id > 0 ? value : `name:${scheduleRouteKey(name)}`;
+
+            if (seen.has(key)) {
+                return;
+            }
+
+            seen.add(key);
+            options.push({ id, name, value });
+        };
+
+        routeRows.forEach((row) => pushOption(Number(row.id ?? 0), row.name));
+        scheduleRows.forEach((row) =>
+            pushOption(
+                Number(row.route_id ?? 0),
+                String(row.route_name ?? row.rute ?? ''),
+            ),
+        );
+
+        return options.sort((a, b) => a.name.localeCompare(b.name, 'id'));
+    };
     const scheduleRouteKey = (value: string | null | undefined) =>
         String(value ?? '')
             .trim()
@@ -826,6 +870,17 @@
 
     const scheduleRouteOptions = $derived(
         collectScheduleRouteNames(routes, schedules),
+    );
+    const scheduleRouteSelectOptions = $derived(
+        collectScheduleRouteSelectOptions(routes, schedules),
+    );
+    const selectedScheduleRouteValue = $derived(
+        selectedScheduleRoute !== '' || selectedScheduleRouteId > 0
+            ? scheduleRouteValue(
+                  selectedScheduleRouteId,
+                  selectedScheduleRoute,
+              )
+            : '',
     );
     const scheduleRouteGroups = $derived.by<ScheduleRouteGroup[]>(() => {
         const groups: Record<string, ScheduleRow[]> = {};
@@ -2761,6 +2816,25 @@
             unit_ids: [0],
             unit_labels: ['Unit 1'],
         });
+    const selectScheduleRoute = async (value: string) => {
+        const selected = scheduleRouteSelectOptions.find(
+            (option) => option.value === value,
+        );
+
+        if (!selected) {
+            selectedScheduleRoute = '';
+            selectedScheduleRouteId = 0;
+            resetScheduleForm();
+            await loadSchedules();
+
+            return;
+        }
+
+        selectedScheduleRoute = selected.name;
+        selectedScheduleRouteId = selected.id;
+        resetScheduleForm();
+        await loadSchedules();
+    };
     const resetDriverForm = () => (
         (driverUnitSearch = ''),
         (driverForm = {
@@ -4408,21 +4482,20 @@
                     >
                         <select
                             class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                            bind:value={selectedScheduleRoute}
+                            value={selectedScheduleRouteValue}
                             onchange={(event) => {
-                                const routeName = (
-                                    event.currentTarget as HTMLSelectElement
-                                ).value;
-                                selectedScheduleRoute = routeName;
-                                selectedScheduleRouteId =
-                                    scheduleRouteIdByName(routeName);
-                                resetScheduleForm();
-                                void loadSchedules();
+                                void selectScheduleRoute(
+                                    (
+                                        event.currentTarget as HTMLSelectElement
+                                    ).value,
+                                );
                             }}
                         >
                             <option value="">Pilih rute</option>
-                            {#each scheduleRouteOptions as routeName (routeName)}
-                                <option value={routeName}>{routeName}</option>
+                            {#each scheduleRouteSelectOptions as route (route.value)}
+                                <option value={route.value}
+                                    >{route.name}</option
+                                >
                             {/each}
                         </select>
                         <Button
