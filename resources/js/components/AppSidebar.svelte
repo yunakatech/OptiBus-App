@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import Building2 from 'lucide-svelte/icons/building-2';
@@ -47,7 +47,7 @@
         children?: Snippet;
     } = $props();
 
-    const platformNavItems: NavItem[] = [
+    const operasionalNavItems: NavItem[] = [
         {
             title: 'Dashboard',
             href: dashboard(),
@@ -78,6 +78,9 @@
             icon: CreditCard,
             permission: ['payment.update', 'booking.update', 'charter.update', 'luggage.update'],
         },
+    ];
+
+    const laporanNavItems: NavItem[] = [
         {
             title: 'Laporan',
             href: '/report',
@@ -86,28 +89,25 @@
         },
     ];
 
-    const customerNavItems: NavItem[] = [
+    const dataMasterNavItems: NavItem[] = [
         {
-            title: 'Reguler',
+            title: 'Pelanggan Reguler',
             href: '/admin-ops/customers',
             icon: Users,
             permission: 'customer.view',
         },
         {
-            title: 'Bagasi',
+            title: 'Pelanggan Bagasi',
             href: '/admin-ops/master/customer-bagasi',
             icon: Briefcase,
             permission: 'customer.view',
         },
         {
-            title: 'Carter',
+            title: 'Pelanggan Carter',
             href: '/admin-ops/master/customer-charter',
             icon: BusFront,
             permission: 'customer.view',
         },
-    ];
-
-    const settingsNavItems: NavItem[] = [
         {
             title: 'Jadwal',
             href: '/admin-ops/schedules',
@@ -115,22 +115,10 @@
             permission: 'master.view',
         },
         {
-            title: 'Logs',
-            href: '/admin-ops/cancellations',
-            icon: History,
-            permission: 'logs.view',
-        },
-        {
             title: 'Rute Induk',
             href: '/admin-ops/routes',
             icon: Route,
             permission: 'master.view',
-        },
-        {
-            title: 'Pool',
-            href: '/admin-ops/pools',
-            icon: Building2,
-            permission: 'pool.manage',
         },
         {
             title: 'Master Carter',
@@ -151,6 +139,12 @@
             permission: 'master.view',
         },
         {
+            title: 'Pool',
+            href: '/admin-ops/pools',
+            icon: Building2,
+            permission: 'pool.manage',
+        },
+        {
             title: 'Driver',
             href: '/admin-ops/drivers',
             icon: IdCard,
@@ -168,6 +162,9 @@
             icon: CarFront,
             permission: 'armada.view',
         },
+    ];
+
+    const sistemNavItems: NavItem[] = [
         {
             title: 'Users',
             href: '/admin-ops/users',
@@ -181,26 +178,38 @@
             permission: 'role.manage',
             superAdminOnly: true,
         },
+        {
+            title: 'Logs',
+            href: '/admin-ops/cancellations',
+            icon: History,
+            permission: 'logs.view',
+        },
     ];
 
     const mainSections: NavSection[] = [
         {
-            id: 'platform',
-            title: 'Platform',
+            id: 'operasional',
+            title: 'Operasional',
             icon: LayoutGrid,
-            items: platformNavItems,
+            items: operasionalNavItems,
         },
         {
-            id: 'customer',
-            title: 'Customer',
-            icon: Users,
-            items: customerNavItems,
-        },
-        {
-            id: 'pengaturan',
-            title: 'Pengaturan',
+            id: 'data-master',
+            title: 'Data Master',
             icon: Settings2,
-            items: settingsNavItems,
+            items: dataMasterNavItems,
+        },
+        {
+            id: 'laporan',
+            title: 'Laporan',
+            icon: ChartColumn,
+            items: laporanNavItems,
+        },
+        {
+            id: 'sistem',
+            title: 'Sistem',
+            icon: ShieldCheck,
+            items: sistemNavItems,
         },
     ];
 
