@@ -35,7 +35,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', DashboardController::class)->middleware(RedirectSuperAdmin::class)->middleware('permission:dashboard.view')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->middleware('superadmin.redirect')->middleware('permission:dashboard.view')->name('dashboard');
     Route::inertia('menu', 'Menu')->name('menu.index');
     Route::get('bookings', BookingController::class)->middleware('permission:booking.view')->name('bookings.index');
     Route::get('bookings/detail/{groupKey}', BookingController::class)->middleware('permission:booking.view')->name('bookings.detail');
