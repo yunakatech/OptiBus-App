@@ -4401,6 +4401,14 @@ class AdminOpsApiController extends Controller
             'target_revenue' => 0.0,
         ];
 
+        // Global pool override from session — consistent with PoolScope::forCurrentUser()
+        if ($poolId <= 0) {
+            $sessionPoolId = (int) (session('active_pool_id', 0));
+            if ($sessionPoolId > 0) {
+                $poolId = $sessionPoolId;
+            }
+        }
+
         if (! $this->poolTablesReady()) {
             return $fallback;
         }
