@@ -112,6 +112,11 @@
         navigator.clipboard?.writeText(text);
         alert('Nomor rekening disalin!');
     }
+
+    function handleQrisError(e: Event) {
+        const img = e.target as HTMLImageElement;
+        img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect fill="#f0f0f0" width="192" height="192"/><text x="96" y="100" text-anchor="middle" fill="#999" font-size="14">QRIS</text></svg>');
+    }
 </script>
 
 <AppHead title="Langganan" />
@@ -278,7 +283,7 @@
                                 src={paymentConfig.qris.image_url}
                                 alt="QRIS {paymentConfig.qris.merchant_name}"
                                 class="w-48 h-48 object-contain"
-                                onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22192%22 height=%22192%22><rect fill=%22%23f0f0f0%22 width=%22192%22 height=%22192%22/><text x=%2296%22 y=%22100%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2214%22>QRIS</text></svg>'"
+                                onerror={handleQrisError}
                             />
                         </div>
                         <div class="text-center text-sm font-medium">{paymentConfig.qris.merchant_name}</div>
