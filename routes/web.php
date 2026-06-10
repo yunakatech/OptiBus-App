@@ -16,6 +16,10 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\StaticAssetController;
 use Illuminate\Support\Facades\Route;
 
+// Google OAuth
+Route::get('auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('google.redirect');
+Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('google.callback');
+
 // Public landing page — no auth required
 Route::get('/', [PublicController::class, 'welcome'])->name('home');
 
