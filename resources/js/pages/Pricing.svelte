@@ -72,6 +72,7 @@
                         <Button class="w-full" variant={plan.slug === 'pro' ? 'default' : 'outline'}>
                             Daftar {plan.name} <ArrowRight class="ml-2 h-4 w-4" />
                         </Button>
+                        <p class="text-xs text-center text-muted-foreground mt-2">✓ Free Trial 14 Hari</p>
                     </a>
                 </CardContent>
             </Card>

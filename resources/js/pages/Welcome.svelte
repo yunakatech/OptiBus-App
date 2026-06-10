@@ -90,6 +90,7 @@
                         <Button class="w-full" variant={plan.slug === 'pro' ? 'default' : 'outline'} onclick={() => goRegister(plan.slug)}>
                             Pilih {plan.name}
                         </Button>
+                        <p class="text-xs text-center text-muted-foreground mt-2">✓ Free Trial 14 Hari</p>
                     </CardContent>
                 </Card>
             {/each}
