@@ -17,7 +17,101 @@ class PoolScope
     }
 
     /**
-     * @return array{all: bool, pool_ids: array<int, int>, route_ids: array<int, int>, route_names: array<int, string>, labels: array<int, string>, pool_name: string, target_revenue: float}
+     * Resolve the current user's tenant_id.
+     * Returns 0 if the user is a platform super admin (cross-tenant).
+     */
+    public static function tenantId(?int $userId = null): int
+    {
+        $userId ??= (int) (auth()->id() ?? 0);
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        // Super admins bypass tenant scope → return 0 (all tenants)
+        if (AccessControl::userIsSuperAdmin($userId)) {
+            return 0;
+        }
+
+        // Check user-level tenant_id first
+        if (Schema::hasTable('users') && Schema::hasColumn('users', 'tenant_id')) {
+            $userTenantId = (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0);
+            if ($userTenantId > 0) {
+                return $userTenantId;
+            }
+        }
+
+        // Fallback: derive tenant_id from user's assigned pools
+        if (self::tablesReady() && Schema::hasColumn('pools', 'tenant_id')) {
+            $poolIds = self::userPoolIds($userId);
+            if ($poolIds !== []) {
+                return (int) (DB::table('pools')->whereIn('id', $poolIds)->value('tenant_id') ?? 0);
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Scope a query builder to the current user's tenant.
+     * Skips scoping when tenantId is 0 (super admin = all tenants).
+     */
+    public static function applyTenantScope(Builder $query, string $tenantColumn = 'tenant_id', ?int $userId = null): void
+    {
+        $tenantId = self::tenantId($userId);
+        if ($tenantId <= 0) {
+            return;
+        }
+
+        $query->where($tenantColumn, $tenantId);
+    }
+
+    /**
+     * Get the current tenant's subscription info.
+     * Returns null if SaaS tables aren't ready or user is super admin.
+     *
+     * @return array{tenant_id: int, tenant_name: string, plan_id: int, plan_name: string, plan_slug: string, subscription_status: string, trial_ends_at: string|null, ends_at: string|null}|null
+     */
+    public static function tenantSubscription(?int $userId = null): ?array
+    {
+        $tenantId = self::tenantId($userId);
+        if ($tenantId <= 0 || ! Schema::hasTable('subscriptions') || ! Schema::hasTable('plans')) {
+            return null;
+        }
+
+        $sub = DB::table('subscriptions')
+            ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
+            ->where('subscriptions.tenant_id', $tenantId)
+            ->select(
+                'subscriptions.tenant_id',
+                'tenants.name as tenant_name',
+                'subscriptions.plan_id',
+                'plans.name as plan_name',
+                'plans.slug as plan_slug',
+                'subscriptions.status as subscription_status',
+                'subscriptions.trial_ends_at',
+                'subscriptions.ends_at',
+            )
+            ->first();
+
+        if (! $sub) {
+            return null;
+        }
+
+        return [
+            'tenant_id' => (int) $sub->tenant_id,
+            'tenant_name' => (string) $sub->tenant_name,
+            'plan_id' => (int) $sub->plan_id,
+            'plan_name' => (string) $sub->plan_name,
+            'plan_slug' => (string) $sub->plan_slug,
+            'subscription_status' => (string) $sub->subscription_status,
+            'trial_ends_at' => $sub->trial_ends_at,
+            'ends_at' => $sub->ends_at,
+        ];
+    }
+
+    /**
+     * @return array{all: bool, pool_ids: array<int, int>, route_ids: array<int, int>, route_names: array<int, string>, labels: array<int, string>, pool_name: string, target_revenue: float, tenant_id: int}
      */
     public static function forCurrentUser(int $poolId = 0, ?int $userId = null): array
     {
@@ -29,6 +123,7 @@ class PoolScope
             'labels' => [],
             'pool_name' => 'Semua Pool',
             'target_revenue' => 0.0,
+            'tenant_id' => 0,
         ];
 
         // Global pool override from session — applies across all pages/API calls
@@ -49,6 +144,7 @@ class PoolScope
 
         $userId ??= (int) (auth()->id() ?? 0);
         $isSuperAdmin = AccessControl::userIsSuperAdmin($userId);
+        $tenantId = self::tenantId($userId);
         if ($isSuperAdmin && $poolId <= 0) {
             return $fallback;
         }
@@ -56,6 +152,11 @@ class PoolScope
         $poolQuery = DB::table('pools')
             ->where('status', 'active')
             ->orderBy('name');
+
+        // Tenant scoping: non-super-admin users only see pools within their tenant
+        if ($tenantId > 0 && Schema::hasColumn('pools', 'tenant_id')) {
+            $poolQuery->where('tenant_id', $tenantId);
+        }
 
         if ($poolId > 0) {
             $poolQuery->where('id', $poolId);
@@ -112,6 +213,7 @@ class PoolScope
             'labels' => collect($labels)->unique()->values()->all(),
             'pool_name' => $pools->count() === 1 ? (string) ($pools->first()->name ?? 'Pool') : 'Pool Saya',
             'target_revenue' => (float) $pools->sum('target_revenue'),
+            'tenant_id' => $tenantId,
         ];
     }
 
@@ -680,7 +782,7 @@ class PoolScope
     }
 
     /**
-     * @return array{all: false, pool_ids: array<int, int>, route_ids: array<int, int>, route_names: array<int, string>, labels: array<int, string>, pool_name: string, target_revenue: float}
+     * @return array{all: false, pool_ids: array<int, int>, route_ids: array<int, int>, route_names: array<int, string>, labels: array<int, string>, pool_name: string, target_revenue: float, tenant_id: int}
      */
     private static function emptyScope(string $poolName): array
     {
@@ -692,6 +794,7 @@ class PoolScope
             'labels' => [],
             'pool_name' => $poolName,
             'target_revenue' => 0.0,
+            'tenant_id' => 0,
         ];
     }
 

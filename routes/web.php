@@ -11,6 +11,7 @@ use App\Http\Controllers\CharterDocumentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LuggageDocumentController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PlatformDashboardController;
 use App\Http\Controllers\StaticAssetController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,27 +19,34 @@ Route::redirect('/', '/login')->name('home');
 
 Route::get('style.css', [StaticAssetController::class, 'style'])->name('style.css');
 
+// Platform Admin Dashboard (SaaS metrics — super admin only)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('platform/dashboard', PlatformDashboardController::class)
+        ->middleware('permission:pool.manage')
+        ->name('platform.dashboard');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
     Route::inertia('menu', 'Menu')->name('menu.index');
     Route::get('bookings', BookingController::class)->middleware('permission:booking.view')->name('bookings.index');
     Route::get('bookings/detail/{groupKey}', BookingController::class)->middleware('permission:booking.view')->name('bookings.detail');
-    Route::get('bookings/manifest/{groupKey}/print', [BookingController::class, 'printManifest'])->middleware('permission:booking.print')->name('bookings.manifest.print');
-    Route::get('bookings/manifest/{groupKey}/pdf', [BookingController::class, 'downloadManifestPdf'])->middleware('permission:booking.print')->name('bookings.manifest.pdf');
-    Route::get('bookings/ticket/{bookingId}/print', [BookingController::class, 'printTicket'])->middleware('permission:booking.print')->name('bookings.ticket.print');
-    Route::get('bookings/ticket/{bookingId}/pdf', [BookingController::class, 'downloadTicketPdf'])->middleware('permission:booking.print')->name('bookings.ticket.pdf');
+    Route::get('bookings/manifest/{groupKey}/print', [BookingController::class, 'printManifest'])->middleware('permission:booking.print')->middleware('feature:booking.manifest')->name('bookings.manifest.print');
+    Route::get('bookings/manifest/{groupKey}/pdf', [BookingController::class, 'downloadManifestPdf'])->middleware('permission:booking.print')->middleware('feature:booking.manifest')->name('bookings.manifest.pdf');
+    Route::get('bookings/ticket/{bookingId}/print', [BookingController::class, 'printTicket'])->middleware('permission:booking.print')->middleware('feature:booking.ticket_print')->name('bookings.ticket.print');
+    Route::get('bookings/ticket/{bookingId}/pdf', [BookingController::class, 'downloadTicketPdf'])->middleware('permission:booking.print')->middleware('feature:booking.ticket_print')->name('bookings.ticket.pdf');
     Route::get('booking-console', BookingController::class)->middleware('permission:booking.view')->name('booking-console.index');
     Route::get('payments', PaymentController::class)->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.index');
-    Route::get('payments/export', [PaymentController::class, 'export'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.export');
+    Route::get('payments/export', [PaymentController::class, 'export'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->middleware('feature:report.export_csv')->name('payments.export');
     Route::get('charters', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('locked', true)->name('charters.index');
     Route::get('charters/form', AdminOpsFlowsController::class)->middleware('permission:charter.create')->defaults('tab', 'charters')->defaults('mode', 'form')->defaults('locked', true)->name('charters.form');
     Route::get('charters/view/{id}', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('mode', 'view')->defaults('locked', true)->name('charters.view');
-    Route::get('charters/{id}/invoice/print', [CharterDocumentController::class, 'print'])->middleware('permission:charter.print')->name('charters.invoice.print');
-    Route::get('charters/{id}/invoice/pdf', [CharterDocumentController::class, 'pdf'])->middleware('permission:charter.print')->name('charters.invoice.pdf');
+    Route::get('charters/{id}/invoice/print', [CharterDocumentController::class, 'print'])->middleware('permission:charter.print')->middleware('feature:charter.invoice_print')->name('charters.invoice.print');
+    Route::get('charters/{id}/invoice/pdf', [CharterDocumentController::class, 'pdf'])->middleware('permission:charter.print')->middleware('feature:charter.invoice_print')->name('charters.invoice.pdf');
     Route::get('luggages', AdminOpsFlowsController::class)->middleware('permission:luggage.view')->defaults('tab', 'luggages')->defaults('locked', true)->name('luggages.index');
     Route::get('luggages/form', AdminOpsFlowsController::class)->middleware('permission:luggage.create')->defaults('tab', 'luggages')->defaults('mode', 'form')->defaults('locked', true)->name('luggages.form');
-    Route::get('luggages/{id}/print', [LuggageDocumentController::class, 'print'])->middleware('permission:luggage.print')->name('luggages.print');
-    Route::get('luggages/{id}/pdf', [LuggageDocumentController::class, 'pdf'])->middleware('permission:luggage.print')->name('luggages.pdf');
+    Route::get('luggages/{id}/print', [LuggageDocumentController::class, 'print'])->middleware('permission:luggage.print')->middleware('feature:luggage.resi_print')->name('luggages.print');
+    Route::get('luggages/{id}/pdf', [LuggageDocumentController::class, 'pdf'])->middleware('permission:luggage.print')->middleware('feature:luggage.resi_print')->name('luggages.pdf');
     Route::get('report', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('report.index');
     Route::get('reports', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('reports.index');
     Route::get('admin-ops', AdminOpsController::class)->middleware('permission:master.view,driver.view,armada.view,user.manage,pool.manage,logs.view,report.view')->name('admin-ops.index');
