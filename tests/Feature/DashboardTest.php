@@ -98,13 +98,35 @@ class DashboardTest extends TestCase
                 'payment_status' => 'Lunas',
                 'created_at' => now(),
             ]);
+            DB::table('luggages')->insert([
+                'sender_name' => 'PENGIRIM BELUM BAYAR DASHBOARD',
+                'sender_phone' => '081300000100',
+                'receiver_name' => 'PENERIMA BELUM BAYAR DASHBOARD',
+                'receiver_phone' => '081400000100',
+                'price' => 50000,
+                'status' => 'Dalam Perjalanan',
+                'payment_status' => 'Belum Bayar',
+                'created_at' => now(),
+            ]);
+            DB::table('luggages')->insert([
+                'sender_name' => 'PENGIRIM CANCELED DASHBOARD',
+                'sender_phone' => '081300000101',
+                'receiver_name' => 'PENERIMA CANCELED DASHBOARD',
+                'receiver_phone' => '081400000101',
+                'price' => 70000,
+                'status' => 'canceled',
+                'payment_status' => 'Belum Bayar',
+                'created_at' => now(),
+            ]);
 
             $this->get(route('dashboard'))
                 ->assertInertia(fn (Assert $page) => $page
                     ->component('Dashboard')
-                    ->where('stats.revenue_total_today', 590000)
+                    ->where('stats.revenue_total_today', 640000)
+                    ->where('stats.revenue_luggage_month', 350000)
                     ->where('summaryStatsByScope.day.total_bookings', 1)
                     ->where('summaryStatsByScope.day.revenue_booking', 90000)
+                    ->where('summaryStatsByScope.day.revenue_luggage', 350000)
                     ->missingAll([
                         'dailyTrend',
                         'monthlyTrend',
