@@ -6499,6 +6499,626 @@ class AdminOpsApiController extends Controller
         }
     }
 
+    // ──────────────────────────────────────────────
+    // SaaS: Tenants CRUD
+    // ──────────────────────────────────────────────
+
+    public function tenantsIndex(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('tenants')) {
+            return $this->ok(['tenants' => [], 'plans' => [], 'pagination' => $this->paginationMeta(0, 1, 20)]);
+        }
+
+        $q = trim((string) $request->query('q', ''));
+        $query = DB::table('tenants')
+            ->leftJoin('subscriptions', function ($join) {
+                $join->on('tenants.id', '=', 'subscriptions.tenant_id')
+                    ->whereRaw('subscriptions.id = (SELECT id FROM subscriptions s2 WHERE s2.tenant_id = tenants.id ORDER BY s2.created_at DESC LIMIT 1)');
+            })
+            ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->select(
+                'tenants.*',
+                'subscriptions.id as subscription_id',
+                'subscriptions.status as subscription_status',
+                'subscriptions.trial_ends_at',
+                'subscriptions.starts_at',
+                'subscriptions.ends_at',
+                'subscriptions.billing_interval',
+                'plans.name as plan_name',
+                'plans.slug as plan_slug',
+            )
+            ->orderBy('tenants.created_at', 'desc');
+
+        if ($q !== '') {
+            $qLike = '%'.$q.'%';
+            $query->where(function (Builder $builder) use ($qLike): void {
+                $builder
+                    ->where('tenants.name', 'like', $qLike)
+                    ->orWhere('tenants.slug', 'like', $qLike)
+                    ->orWhere('tenants.email', 'like', $qLike);
+            });
+        }
+
+        [$page, $perPage] = $this->paginationParams($request);
+        $result = $this->paginateQuery($query, $page, $perPage);
+        $tenants = collect($result['data'])->map(function ($t) {
+            $userCount = Schema::hasColumn('users', 'tenant_id') ? (int) DB::table('users')->where('tenant_id', $t->id)->count() : 0;
+            $poolCount = Schema::hasColumn('pools', 'tenant_id') ? (int) DB::table('pools')->where('tenant_id', $t->id)->count() : 0;
+
+            return [
+                'id' => (int) $t->id,
+                'name' => (string) ($t->name ?? ''),
+                'slug' => (string) ($t->slug ?? ''),
+                'email' => (string) ($t->email ?? ''),
+                'phone' => (string) ($t->phone ?? ''),
+                'address' => (string) ($t->address ?? ''),
+                'domain' => $t->domain ?? null,
+                'logo_url' => $t->logo_url ?? null,
+                'status' => (string) ($t->status ?? 'active'),
+                'target_revenue' => (float) ($t->target_revenue ?? 0),
+                'subscription_id' => $t->subscription_id ? (int) $t->subscription_id : null,
+                'subscription_status' => (string) ($t->subscription_status ?? ''),
+                'trial_ends_at' => $t->trial_ends_at,
+                'starts_at' => $t->starts_at,
+                'ends_at' => $t->ends_at,
+                'billing_interval' => (string) ($t->billing_interval ?? 'monthly'),
+                'plan_name' => (string) ($t->plan_name ?? 'Belum Ada'),
+                'plan_slug' => (string) ($t->plan_slug ?? ''),
+                'user_count' => $userCount,
+                'pool_count' => $poolCount,
+                'created_at' => $t->created_at,
+            ];
+        })->all();
+
+        $plans = Schema::hasTable('plans') ? DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'slug', 'price_monthly']) : [];
+
+        return $this->ok([
+            'tenants' => $tenants,
+            'plans' => $plans,
+            'pagination' => $result['meta'],
+        ]);
+    }
+
+    public function tenantsSave(Request $request): JsonResponse
+    {
+        if ($response = $this->requirePermission('pool.manage')) {
+            return $response;
+        }
+
+        if (! Schema::hasTable('tenants')) {
+            return $this->error('Tabel tenants belum tersedia.', 409);
+        }
+
+        $id = (int) $request->input('id', 0);
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'min:1'],
+            'name' => ['required', 'string', 'max:200'],
+            'slug' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9-]+$/', Rule::unique('tenants', 'slug')->ignore($id)],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string'],
+            'domain' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in(['active', 'suspended', 'canceled'])],
+            'target_revenue' => ['nullable', 'numeric', 'min:0'],
+            // For new tenants, optionally set initial plan
+            'plan_id' => ['nullable', 'integer', 'min:1', 'exists:plans,id'],
+            'trial_days' => ['nullable', 'integer', 'min:0', 'max:90'],
+        ]);
+
+        $payload = [
+            'name' => trim((string) $data['name']),
+            'slug' => trim((string) $data['slug']),
+            'email' => $this->nullable($data['email'] ?? null),
+            'phone' => $this->nullable($data['phone'] ?? null),
+            'address' => $this->nullable($data['address'] ?? null),
+            'domain' => $this->nullable($data['domain'] ?? null),
+            'status' => (string) ($data['status'] ?? 'active'),
+            'target_revenue' => (float) ($data['target_revenue'] ?? 0),
+        ];
+
+        return DB::transaction(function () use ($id, $payload, $data): JsonResponse {
+            $isNew = $id <= 0;
+
+            if ($id > 0) {
+                DB::table('tenants')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
+                $tenantId = $id;
+            } else {
+                $tenantId = (int) DB::table('tenants')->insertGetId(array_merge($payload, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]));
+            }
+
+            // Auto-create subscription for new tenants
+            if ($isNew) {
+                $planId = (int) ($data['plan_id'] ?? DB::table('plans')->where('slug', config('saas.default_plan', 'starter'))->value('id') ?? 1);
+                $trialDays = (int) ($data['trial_days'] ?? config('saas.trial_days', 14));
+                $trialEndsAt = $trialDays > 0 ? now()->addDays($trialDays)->toDateString() : null;
+
+                DB::table('subscriptions')->insert([
+                    'tenant_id' => $tenantId,
+                    'plan_id' => $planId,
+                    'status' => $trialDays > 0 ? 'trial' : 'active',
+                    'trial_ends_at' => $trialEndsAt,
+                    'starts_at' => now()->toDateString(),
+                    'ends_at' => $trialDays > 0 ? $trialEndsAt : now()->addMonth()->toDateString(),
+                    'billing_interval' => 'monthly',
+                    'grace_period_days' => config('saas.grace_period_days', 7),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Create default pool for new tenant
+                if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'tenant_id')) {
+                    DB::table('pools')->insert([
+                        'name' => strtoupper($payload['name'].' Pool'),
+                        'code' => $payload['slug'].'-pool',
+                        'tenant_id' => $tenantId,
+                        'status' => 'active',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            return $this->ok([
+                'message' => $isNew ? 'Tenant created.' : 'Tenant updated.',
+                'id' => $tenantId,
+            ], $isNew ? 201 : 200);
+        });
+    }
+
+    public function tenantsDelete(int $id): JsonResponse
+    {
+        if ($response = $this->requirePermission('pool.manage')) {
+            return $response;
+        }
+
+        if (! Schema::hasTable('tenants')) {
+            return $this->error('Tabel tenants belum tersedia.', 409);
+        }
+
+        $tenant = DB::table('tenants')->where('id', $id)->first();
+        if (! $tenant) {
+            return $this->error('Tenant tidak ditemukan.', 404);
+        }
+
+        return DB::transaction(function () use ($id, $tenant): JsonResponse {
+            // Instead of hard-deleting, mark as canceled (data retention period)
+            DB::table('tenants')->where('id', $id)->update([
+                'status' => 'canceled',
+                'updated_at' => now(),
+            ]);
+
+            // Cancel the subscription
+            if (Schema::hasTable('subscriptions')) {
+                DB::table('subscriptions')
+                    ->where('tenant_id', $id)
+                    ->whereIn('status', ['trial', 'active', 'past_due'])
+                    ->update([
+                        'status' => 'canceled',
+                        'canceled_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            return $this->ok(['message' => "Tenant '{$tenant->name}' telah dicancel."]);
+        });
+    }
+
+    // ──────────────────────────────────────────────
+    // SaaS: Subscriptions
+    // ──────────────────────────────────────────────
+
+    public function subscriptionsIndex(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('subscriptions') || ! Schema::hasTable('tenants') || ! Schema::hasTable('plans')) {
+            return $this->ok(['subscriptions' => [], 'tenants' => [], 'plans' => [], 'pagination' => $this->paginationMeta(0, 1, 20)]);
+        }
+
+        $status = trim((string) $request->query('status', ''));
+        $tenantId = (int) $request->query('tenant_id', 0);
+        $q = trim((string) $request->query('q', ''));
+
+        $query = DB::table('subscriptions')
+            ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
+            ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->select(
+                'subscriptions.*',
+                'tenants.name as tenant_name',
+                'tenants.slug as tenant_slug',
+                'plans.name as plan_name',
+                'plans.slug as plan_slug',
+                'plans.price_monthly',
+            )
+            ->orderBy('subscriptions.created_at', 'desc');
+
+        if ($status !== '') {
+            $query->where('subscriptions.status', $status);
+        }
+        if ($tenantId > 0) {
+            $query->where('subscriptions.tenant_id', $tenantId);
+        }
+        if ($q !== '') {
+            $qLike = '%'.$q.'%';
+            $query->where('tenants.name', 'like', $qLike);
+        }
+
+        [$page, $perPage] = $this->paginationParams($request);
+        $result = $this->paginateQuery($query, $page, $perPage);
+
+        $subscriptions = collect($result['data'])->map(function ($s) {
+            return [
+                'id' => (int) $s->id,
+                'tenant_id' => (int) $s->tenant_id,
+                'tenant_name' => (string) $s->tenant_name,
+                'tenant_slug' => (string) $s->tenant_slug,
+                'plan_id' => (int) $s->plan_id,
+                'plan_name' => (string) $s->plan_name,
+                'plan_slug' => (string) $s->plan_slug,
+                'price_monthly' => (float) $s->price_monthly,
+                'status' => (string) $s->status,
+                'trial_ends_at' => $s->trial_ends_at,
+                'starts_at' => $s->starts_at,
+                'ends_at' => $s->ends_at,
+                'billing_interval' => (string) ($s->billing_interval ?? 'monthly'),
+                'canceled_at' => $s->canceled_at,
+                'grace_period_days' => (int) ($s->grace_period_days ?? 7),
+                'notes' => $s->notes ?? null,
+                'created_at' => $s->created_at,
+            ];
+        })->all();
+
+        $tenants = DB::table('tenants')->orderBy('name')->get(['id', 'name', 'slug']);
+        $plans = DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'slug', 'price_monthly']);
+
+        return $this->ok([
+            'subscriptions' => $subscriptions,
+            'tenants' => $tenants,
+            'plans' => $plans,
+            'status_options' => ['trial', 'active', 'past_due', 'suspended', 'canceled', 'expired'],
+            'pagination' => $result['meta'],
+        ]);
+    }
+
+    public function subscriptionsSave(Request $request): JsonResponse
+    {
+        if ($response = $this->requirePermission('pool.manage')) {
+            return $response;
+        }
+
+        if (! Schema::hasTable('subscriptions')) {
+            return $this->error('Tabel subscriptions belum tersedia.', 409);
+        }
+
+        $id = (int) $request->input('id', 0);
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'min:1'],
+            'tenant_id' => ['required_without:id', 'integer', 'min:1', 'exists:tenants,id'],
+            'plan_id' => ['nullable', 'integer', 'min:1', 'exists:plans,id'],
+            'status' => ['nullable', Rule::in(['trial', 'active', 'past_due', 'suspended', 'canceled'])],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date'],
+            'billing_interval' => ['nullable', Rule::in(['monthly', 'yearly'])],
+            'grace_period_days' => ['nullable', 'integer', 'min:0', 'max:90'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        return DB::transaction(function () use ($id, $data): JsonResponse {
+            if ($id > 0) {
+                $payload = [];
+                if (isset($data['plan_id'])) { $payload['plan_id'] = (int) $data['plan_id']; }
+                if (isset($data['status'])) {
+                    $payload['status'] = (string) $data['status'];
+                    if ($data['status'] === 'canceled') {
+                        $payload['canceled_at'] = now();
+                    }
+                }
+                if (isset($data['starts_at'])) { $payload['starts_at'] = $data['starts_at']; }
+                if (isset($data['ends_at'])) { $payload['ends_at'] = $data['ends_at']; }
+                if (isset($data['billing_interval'])) { $payload['billing_interval'] = $data['billing_interval']; }
+                if (isset($data['grace_period_days'])) { $payload['grace_period_days'] = (int) $data['grace_period_days']; }
+                if (isset($data['notes'])) { $payload['notes'] = $this->nullable($data['notes']); }
+
+                if ($payload !== []) {
+                    $payload['updated_at'] = now();
+                    DB::table('subscriptions')->where('id', $id)->update($payload);
+                }
+
+                $sub = DB::table('subscriptions')->where('id', $id)->first();
+                $message = 'Subscription updated.';
+            } else {
+                $tenantId = (int) $data['tenant_id'];
+                $planId = (int) ($data['plan_id'] ?? DB::table('plans')->where('slug', 'starter')->value('id') ?? 1);
+                $status = (string) ($data['status'] ?? 'active');
+                $startsAt = isset($data['starts_at']) ? $data['starts_at'] : now()->toDateString();
+                $endsAt = $data['ends_at'] ?? now()->addMonth()->toDateString();
+
+                $subId = (int) DB::table('subscriptions')->insertGetId([
+                    'tenant_id' => $tenantId,
+                    'plan_id' => $planId,
+                    'status' => $status,
+                    'starts_at' => $startsAt,
+                    'ends_at' => $endsAt,
+                    'billing_interval' => (string) ($data['billing_interval'] ?? 'monthly'),
+                    'grace_period_days' => (int) ($data['grace_period_days'] ?? 7),
+                    'notes' => $this->nullable($data['notes'] ?? null),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $id = $subId;
+                $sub = DB::table('subscriptions')->where('id', $id)->first();
+                $message = 'Subscription created.';
+            }
+
+            return $this->ok([
+                'message' => $message,
+                'id' => $id,
+                'subscription' => $sub,
+            ]);
+        });
+    }
+
+    // ──────────────────────────────────────────────
+    // SaaS: Plans
+    // ──────────────────────────────────────────────
+
+    public function plansIndex(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('plans')) {
+            return $this->ok(['plans' => []]);
+        }
+
+        $plans = DB::table('plans')
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($p) {
+                $features = [];
+                if (Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
+                    $features = DB::table('plan_feature')
+                        ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
+                        ->where('plan_feature.plan_id', $p->id)
+                        ->select(
+                            'feature_gates.feature_key',
+                            'feature_gates.feature_name',
+                            'feature_gates.feature_group',
+                            'feature_gates.is_core',
+                            'plan_feature.max_value',
+                        )
+                        ->orderBy('feature_gates.feature_group')
+                        ->orderBy('feature_gates.feature_name')
+                        ->get()
+                        ->map(function ($f) {
+                            return [
+                                'feature_key' => (string) $f->feature_key,
+                                'feature_name' => (string) $f->feature_name,
+                                'feature_group' => (string) $f->feature_group,
+                                'is_core' => (bool) $f->is_core,
+                                'max_value' => $f->max_value,
+                            ];
+                        })
+                        ->all();
+                }
+
+                return [
+                    'id' => (int) $p->id,
+                    'name' => (string) $p->name,
+                    'slug' => (string) $p->slug,
+                    'description' => (string) ($p->description ?? ''),
+                    'price_monthly' => (float) $p->price_monthly,
+                    'price_yearly' => (float) $p->price_yearly,
+                    'max_pools' => (int) $p->max_pools,
+                    'max_users' => (int) $p->max_users,
+                    'max_armadas' => (int) $p->max_armadas,
+                    'max_routes' => (int) $p->max_routes,
+                    'max_drivers' => (int) $p->max_drivers,
+                    'max_charters_per_month' => (int) $p->max_charters_per_month,
+                    'has_seat_map' => (bool) $p->has_seat_map,
+                    'has_pdf_export' => (bool) $p->has_pdf_export,
+                    'has_csv_export' => (bool) $p->has_csv_export,
+                    'has_online_booking' => (bool) $p->has_online_booking,
+                    'has_analytics' => (bool) $p->has_analytics,
+                    'has_whatsapp_api' => (bool) $p->has_whatsapp_api,
+                    'has_custom_domain' => (bool) $p->has_custom_domain,
+                    'has_custom_roles' => (bool) $p->has_custom_roles,
+                    'support_priority' => (string) $p->support_priority,
+                    'sort_order' => (int) $p->sort_order,
+                    'is_active' => (bool) $p->is_active,
+                    'features' => $features,
+                ];
+            })
+            ->all();
+
+        return $this->ok(['plans' => $plans]);
+    }
+
+    public function plansSave(Request $request): JsonResponse
+    {
+        if ($response = $this->requirePermission('pool.manage')) {
+            return $response;
+        }
+
+        if (! Schema::hasTable('plans')) {
+            return $this->error('Tabel plans belum tersedia.', 409);
+        }
+
+        $id = (int) $request->input('id', 0);
+        if ($id <= 0) {
+            return $this->error('Plan ID diperlukan untuk update. Plan baru hanya bisa dibuat via migration.', 422);
+        }
+
+        $data = $request->validate([
+            'id' => ['required', 'integer', 'min:1', 'exists:plans,id'],
+            'name' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string'],
+            'price_monthly' => ['nullable', 'numeric', 'min:0'],
+            'price_yearly' => ['nullable', 'numeric', 'min:0'],
+            'max_pools' => ['nullable', 'integer', 'min:0'],
+            'max_users' => ['nullable', 'integer', 'min:0'],
+            'max_armadas' => ['nullable', 'integer', 'min:0'],
+            'max_routes' => ['nullable', 'integer', 'min:0'],
+            'max_drivers' => ['nullable', 'integer', 'min:0'],
+            'max_charters_per_month' => ['nullable', 'integer', 'min:0'],
+            'has_seat_map' => ['nullable', 'boolean'],
+            'has_pdf_export' => ['nullable', 'boolean'],
+            'has_csv_export' => ['nullable', 'boolean'],
+            'has_online_booking' => ['nullable', 'boolean'],
+            'has_analytics' => ['nullable', 'boolean'],
+            'has_whatsapp_api' => ['nullable', 'boolean'],
+            'has_custom_domain' => ['nullable', 'boolean'],
+            'has_custom_roles' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
+            // Feature overrides: { feature_key: max_value }
+            'features' => ['nullable', 'array'],
+            'features.*.feature_key' => ['required', 'string', 'exists:feature_gates,feature_key'],
+            'features.*.max_value' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $booleanFields = ['has_seat_map', 'has_pdf_export', 'has_csv_export', 'has_online_booking', 'has_analytics', 'has_whatsapp_api', 'has_custom_domain', 'has_custom_roles', 'is_active'];
+
+        return DB::transaction(function () use ($id, $data, $booleanFields): JsonResponse {
+            $payload = [];
+            $planFields = ['name', 'description', 'price_monthly', 'price_yearly', 'max_pools', 'max_users', 'max_armadas', 'max_routes', 'max_drivers', 'max_charters_per_month'];
+
+            foreach ($planFields as $field) {
+                if (isset($data[$field])) {
+                    $payload[$field] = $data[$field];
+                }
+            }
+            foreach ($booleanFields as $field) {
+                if (isset($data[$field])) {
+                    $payload[$field] = (bool) $data[$field];
+                }
+            }
+
+            if ($payload !== []) {
+                $payload['updated_at'] = now();
+                DB::table('plans')->where('id', $id)->update($payload);
+            }
+
+            // Update feature mappings
+            if (isset($data['features']) && Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
+                foreach ($data['features'] as $featureOverride) {
+                    $gateId = DB::table('feature_gates')->where('feature_key', $featureOverride['feature_key'])->value('id');
+                    if ($gateId) {
+                        DB::table('plan_feature')->updateOrInsert(
+                            ['plan_id' => $id, 'feature_gate_id' => $gateId],
+                            ['max_value' => $featureOverride['max_value'] ?? null, 'updated_at' => now()],
+                        );
+                    }
+                }
+            }
+
+            return $this->ok(['message' => 'Plan updated.', 'id' => $id]);
+        });
+    }
+
+    // ──────────────────────────────────────────────
+    // SaaS: Invoices
+    // ──────────────────────────────────────────────
+
+    public function invoicesIndex(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('invoice_subscriptions')) {
+            return $this->ok(['invoices' => [], 'pagination' => $this->paginationMeta(0, 1, 20)]);
+        }
+
+        $status = trim((string) $request->query('status', ''));
+        $tenantId = (int) $request->query('tenant_id', 0);
+
+        $query = DB::table('invoice_subscriptions')
+            ->join('tenants', 'invoice_subscriptions.tenant_id', '=', 'tenants.id')
+            ->leftJoin('subscriptions', 'invoice_subscriptions.subscription_id', '=', 'subscriptions.id')
+            ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->select(
+                'invoice_subscriptions.*',
+                'tenants.name as tenant_name',
+                'tenants.slug as tenant_slug',
+                'plans.name as plan_name',
+            )
+            ->orderBy('invoice_subscriptions.created_at', 'desc');
+
+        if ($status !== '') {
+            $query->where('invoice_subscriptions.status', $status);
+        }
+        if ($tenantId > 0) {
+            $query->where('invoice_subscriptions.tenant_id', $tenantId);
+        }
+
+        [$page, $perPage] = $this->paginationParams($request);
+        $result = $this->paginateQuery($query, $page, $perPage);
+
+        $invoices = collect($result['data'])->map(function ($inv) {
+            return [
+                'id' => (int) $inv->id,
+                'tenant_id' => (int) $inv->tenant_id,
+                'tenant_name' => (string) $inv->tenant_name,
+                'tenant_slug' => (string) $inv->tenant_slug,
+                'subscription_id' => (int) $inv->subscription_id,
+                'invoice_number' => (string) $inv->invoice_number,
+                'amount' => (float) $inv->amount,
+                'status' => (string) $inv->status,
+                'due_date' => $inv->due_date,
+                'paid_at' => $inv->paid_at,
+                'payment_method' => $inv->payment_method,
+                'plan_name' => (string) ($inv->plan_name ?? ''),
+                'notes' => $inv->notes,
+                'created_at' => $inv->created_at,
+            ];
+        })->all();
+
+        return $this->ok([
+            'invoices' => $invoices,
+            'status_options' => ['pending', 'paid', 'overdue', 'failed', 'refunded'],
+            'pagination' => $result['meta'],
+        ]);
+    }
+
+    public function invoicesMarkPaid(int $id, Request $request): JsonResponse
+    {
+        if ($response = $this->requirePermission('pool.manage')) {
+            return $response;
+        }
+
+        if (! Schema::hasTable('invoice_subscriptions')) {
+            return $this->error('Tabel invoice belum tersedia.', 409);
+        }
+
+        $invoice = DB::table('invoice_subscriptions')->where('id', $id)->first();
+        if (! $invoice) {
+            return $this->error('Invoice tidak ditemukan.', 404);
+        }
+
+        $data = $request->validate([
+            'payment_method' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        DB::table('invoice_subscriptions')->where('id', $id)->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+            'payment_method' => $this->nullable($data['payment_method'] ?? 'Manual Transfer'),
+            'updated_at' => now(),
+        ]);
+
+        // If this invoice is for an active subscription, extend the end date
+        if ($invoice->subscription_id > 0 && Schema::hasTable('subscriptions')) {
+            $sub = DB::table('subscriptions')->where('id', (int) $invoice->subscription_id)->first();
+            if ($sub && in_array($sub->status, ['trial', 'active', 'past_due'])) {
+                $newEndsAt = now()->addMonth()->toDateString();
+                if ($sub->billing_interval === 'yearly') {
+                    $newEndsAt = now()->addYear()->toDateString();
+                }
+                DB::table('subscriptions')->where('id', $sub->id)->update([
+                    'status' => 'active',
+                    'ends_at' => $newEndsAt,
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        return $this->ok(['message' => 'Invoice marked as paid.']);
+    }
+
     private function ok(array $data = [], int $status = 200): JsonResponse
     {
         return response()->json(array_merge(['success' => true], $data), $status);
