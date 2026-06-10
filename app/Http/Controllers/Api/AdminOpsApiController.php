@@ -1026,17 +1026,47 @@ class AdminOpsApiController extends Controller
             ->values()
             ->all();
 
+        $revenueTotal = (float) ($summaryRow->revenue_total ?? 0);
+        $scopeMeta = $this->routeScopeReportMeta($poolId);
+        $target = (float) ($scopeMeta['target_revenue'] ?? 0);
+        $bookingBop = $this->estimateReportBookingBop($from, $to, $poolId);
+
         return [
             'summary' => [
                 'from' => $from,
                 'to' => $to,
                 'type' => 'booking',
                 'total_rows' => (int) ($summaryRow->total_rows ?? 0),
-                'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
-            ] + $this->routeScopeReportMeta($poolId),
+                'revenue_total' => $revenueTotal,
+                'bop_total' => $bookingBop,
+                'margin_total' => $revenueTotal - $bookingBop,
+                'achievement_percent' => $target > 0 ? round(($revenueTotal / $target) * 100, 1) : 0,
+            ] + $scopeMeta,
             'rows' => $rows,
             'pagination' => $pagination,
         ];
+    }
+
+    private function estimateReportBookingBop(string $from, string $to, int $poolId = 0): float
+    {
+        if (! Schema::hasTable('routes') || ! Schema::hasColumn('routes', 'bop') || ! Schema::hasTable('bookings')) {
+            return 0.0;
+        }
+
+        $routeQuery = DB::table('bookings')
+            ->whereBetween('tanggal', [$from, $to])
+            ->select('rute')
+            ->distinct();
+        $this->applyNotCanceledFilter($routeQuery, 'status');
+        $this->applyRouteScopeToQuery($routeQuery, '', 'rute', $poolId);
+
+        $routes = $routeQuery->pluck('rute')->all();
+
+        if (empty($routes)) {
+            return 0.0;
+        }
+
+        return (float) DB::table('routes')->whereIn('name', $routes)->sum('bop');
     }
 
     private function buildCharterReport(string $from, string $to, int $page, int $perPage, int $poolId = 0): array
@@ -1076,6 +1106,7 @@ class AdminOpsApiController extends Controller
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
             ->selectRaw('COALESCE(SUM(COALESCE(c.price, 0)), 0) as revenue_total')
+            ->selectRaw('COALESCE(SUM(COALESCE(c.bop_price, 0)), 0) as bop_total')
             ->first();
         $pagination = $this->paginationMeta((int) ($summaryRow->total_rows ?? 0), $page, $perPage);
 
@@ -1106,14 +1137,22 @@ class AdminOpsApiController extends Controller
             ->values()
             ->all();
 
+        $revenueTotal = (float) ($summaryRow->revenue_total ?? 0);
+        $bopTotal = (float) ($summaryRow->bop_total ?? 0);
+        $scopeMeta = $this->routeScopeReportMeta($poolId);
+        $target = (float) ($scopeMeta['target_revenue'] ?? 0);
+
         return [
             'summary' => [
                 'from' => $from,
                 'to' => $to,
                 'type' => 'charter',
                 'total_rows' => (int) ($summaryRow->total_rows ?? 0),
-                'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
-            ] + $this->routeScopeReportMeta($poolId),
+                'revenue_total' => $revenueTotal,
+                'bop_total' => $bopTotal,
+                'margin_total' => $revenueTotal - $bopTotal,
+                'achievement_percent' => $target > 0 ? round(($revenueTotal / $target) * 100, 1) : 0,
+            ] + $scopeMeta,
             'rows' => $rows,
             'pagination' => $pagination,
         ];
@@ -1178,14 +1217,21 @@ class AdminOpsApiController extends Controller
             ->values()
             ->all();
 
+        $revenueTotal = (float) ($summaryRow->revenue_total ?? 0);
+        $scopeMeta = $this->routeScopeReportMeta($poolId);
+        $target = (float) ($scopeMeta['target_revenue'] ?? 0);
+
         return [
             'summary' => [
                 'from' => $from,
                 'to' => $to,
                 'type' => 'bagasi',
                 'total_rows' => (int) ($summaryRow->total_rows ?? 0),
-                'revenue_total' => (float) ($summaryRow->revenue_total ?? 0),
-            ] + $this->routeScopeReportMeta($poolId),
+                'revenue_total' => $revenueTotal,
+                'bop_total' => 0,
+                'margin_total' => $revenueTotal,
+                'achievement_percent' => $target > 0 ? round(($revenueTotal / $target) * 100, 1) : 0,
+            ] + $scopeMeta,
             'rows' => $rows,
             'pagination' => $pagination,
         ];

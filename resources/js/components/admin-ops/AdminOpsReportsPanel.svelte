@@ -9,6 +9,9 @@
         type: ReportKind;
         total_rows: number;
         revenue_total: number;
+        bop_total?: number;
+        margin_total?: number;
+        achievement_percent?: number;
         pool_id?: number;
         pool_name?: string;
         target_revenue?: number;
@@ -419,7 +422,7 @@
 
             {#if reportSummary}
                 <div
-                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-3"
+                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-3 lg:grid-cols-5"
                 >
                     <div class="rounded-2xl bg-muted/20 px-4 py-3">
                         <p
@@ -438,7 +441,38 @@
                                 reportSummary,
                                 reportType,
                             ).label.toLowerCase()}
-                            untuk periode terpilih
+                        </p>
+                    </div>
+
+                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
+                        <p
+                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        >
+                            Total BOP
+                        </p>
+                        <p
+                            class="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-rose-700 dark:text-rose-300"
+                        >
+                            {formatCurrency(reportSummary.bop_total ?? 0)}
+                        </p>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Biaya operasional periode ini
+                        </p>
+                    </div>
+
+                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
+                        <p
+                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        >
+                            Margin
+                        </p>
+                        <p
+                            class={`mt-2 text-2xl font-semibold tracking-tight tabular-nums ${(reportSummary.margin_total ?? 0) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}
+                        >
+                            {formatCurrency(reportSummary.margin_total ?? 0)}
+                        </p>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Pendapatan − BOP
                         </p>
                     </div>
 
@@ -453,7 +487,6 @@
                         </p>
                         <p class="mt-1 text-xs text-muted-foreground">
                             {resolvedMeta(reportSummary, reportType).dataLabel}
-                            cocok dengan filter tanggal
                         </p>
                     </div>
 
@@ -461,17 +494,22 @@
                         <p
                             class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
-                            Pool
+                            Pool & Target
                         </p>
-                        <p
-                            class="mt-2 text-lg font-semibold tracking-tight"
-                        >
+                        <p class="mt-2 text-lg font-semibold tracking-tight">
                             {reportSummary.pool_name || 'Semua Pool'}
                         </p>
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            Target:
-                            {formatCurrency(reportSummary.target_revenue ?? 0)}
-                        </p>
+                        {#if (reportSummary.target_revenue ?? 0) > 0}
+                            <p class="mt-1 text-xs font-medium text-muted-foreground">
+                                Target: {formatCurrency(reportSummary.target_revenue ?? 0)}
+                            </p>
+                            <div class="mt-1.5 h-1.5 rounded-full bg-muted/80">
+                                <div class="h-1.5 rounded-full bg-emerald-500/70 transition-all" style={`width:${Math.min(reportSummary.achievement_percent ?? 0, 100)}%`}></div>
+                            </div>
+                            <p class="mt-0.5 text-[10px] text-muted-foreground">{reportSummary.achievement_percent ?? 0}% tercapai</p>
+                        {:else}
+                            <p class="mt-1 text-xs text-muted-foreground">Target belum diatur</p>
+                        {/if}
                     </div>
                 </div>
             {/if}
