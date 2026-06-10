@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
+use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use App\Support\RoleAccessData;
 use Carbon\Carbon;
@@ -109,6 +110,13 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+
+        // Plan limit enforcement: only check when creating NEW routes
+        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('routes', 'tenant_id')) {
+            if (! FeatureGate::canCreate('master.routes', 'routes', 'tenant_id')) {
+                return $this->error(FeatureGate::limitMessage('master.routes') ?? 'Batas rute paket Anda sudah tercapai.', 403);
+            }
+        }
         $payload = [
             'name' => strtoupper(trim((string) $data['name'])),
             'origin' => $this->nullable($data['origin'] ?? null),
@@ -512,6 +520,12 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+
+        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('drivers', 'tenant_id')) {
+            if (! FeatureGate::canCreate('master.drivers', 'drivers', 'tenant_id')) {
+                return $this->error(FeatureGate::limitMessage('master.drivers') ?? 'Batas driver paket Anda sudah tercapai.', 403);
+            }
+        }
         $armadaId = (int) ($data['armada_id'] ?? 0);
         $requestedArmadaNopol = strtoupper(trim((string) ($data['armada_nopol'] ?? '')));
         $armadaNopol = $requestedArmadaNopol !== '' ? $requestedArmadaNopol : null;
@@ -1737,6 +1751,20 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+
+        // Starter plan: max 3 charters per month
+        if ($id <= 0 && FeatureGate::enabled()) {
+            $charterPlan = FeatureGate::currentPlan();
+            if ($charterPlan && $charterPlan->plan_slug === 'starter') {
+                $thisMonthCount = (int) DB::table('charters')
+                    ->whereBetween('start_date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])
+                    ->count();
+                if ($thisMonthCount >= 3) {
+                    return $this->error('Paket Starter hanya bisa membuat 3 carter per bulan. Silakan upgrade ke Pro.', 403);
+                }
+            }
+        }
+
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaIdColumn = $this->chartersHasArmadaIdColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
@@ -3312,6 +3340,13 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+
+        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('armadas', 'tenant_id')) {
+            if (! FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id')) {
+                return $this->error(FeatureGate::limitMessage('master.armadas') ?? 'Batas armada paket Anda sudah tercapai.', 403);
+            }
+        }
+
         $nopol = strtoupper(trim((string) $data['nopol']));
 
         $duplicate = DB::table('armadas')
@@ -3629,6 +3664,13 @@ class AdminOpsApiController extends Controller
         }
 
         $id = (int) $request->input('id', 0);
+
+        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('pools', 'tenant_id')) {
+            if (! FeatureGate::canCreate('tenant.multiple_pools', 'pools', 'tenant_id')) {
+                return $this->error(FeatureGate::limitMessage('tenant.multiple_pools') ?? 'Batas pool/cabang paket Anda sudah tercapai.', 403);
+            }
+        }
+
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
             'name' => ['required', 'string', 'max:120'],
@@ -4040,6 +4082,13 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+
+        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('users', 'tenant_id')) {
+            if (! FeatureGate::canCreate('user.management', 'users', 'tenant_id')) {
+                return $this->error(FeatureGate::limitMessage('user.management') ?? 'Batas user paket Anda sudah tercapai.', 403);
+            }
+        }
+
         $payload = [
             'name' => trim((string) $data['name']),
             'email' => strtolower(trim((string) $data['email'])),
