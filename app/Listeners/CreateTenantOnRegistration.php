@@ -49,15 +49,25 @@ class CreateTenantOnRegistration
         }
 
         $planId = (int) $plan->id;
-        $tenantSlug = $this->generateTenantSlug($userName);
+
+        // Use travel_name from form if provided, otherwise fallback to user's name
+        $travelName = trim((string) request()->input('travel_name', ''));
+        if ($travelName === '') {
+            $travelName = $userName;
+        }
+        $phone = trim((string) request()->input('phone', ''));
+        $routeId = (int) request()->input('route_id', 0);
+
+        $tenantSlug = $this->generateTenantSlug($travelName);
         $trialDays = (int) config('saas.trial_days', 14);
 
-        DB::transaction(function () use ($userId, $userName, $tenantSlug, $planId, $trialDays): void {
+        DB::transaction(function () use ($userId, $travelName, $phone, $routeId, $tenantSlug, $planId, $trialDays): void {
             // 1. Create tenant
             $tenantId = (int) DB::table('tenants')->insertGetId([
-                'name' => $userName,
+                'name' => $travelName,
                 'slug' => $tenantSlug,
                 'email' => DB::table('users')->where('id', $userId)->value('email') ?? '',
+                'phone' => $phone !== '' ? $phone : null,
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -80,7 +90,10 @@ class CreateTenantOnRegistration
 
             // 3. Create default pool
             if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'tenant_id')) {
-                $poolName = strtoupper($userName).' POOL';
+                $poolName = strtoupper($travelName);
+                if (! str_contains($poolName, 'POOL')) {
+                    $poolName .= ' POOL';
+                }
                 $poolCode = $tenantSlug.'-pool';
                 $existingPool = DB::table('pools')->where('code', $poolCode)->exists();
                 if ($existingPool) {
@@ -95,6 +108,19 @@ class CreateTenantOnRegistration
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                // Auto-assign selected route to pool
+                if ($routeId > 0 && Schema::hasTable('pool_route') && Schema::hasTable('routes')) {
+                    $routeExists = DB::table('routes')->where('id', $routeId)->exists();
+                    if ($routeExists) {
+                        DB::table('pool_route')->insert([
+                            'pool_id' => $poolId,
+                            'route_id' => $routeId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
 
                 // 4. Assign user to pool
                 if (Schema::hasTable('pool_user')) {
