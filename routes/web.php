@@ -189,6 +189,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('pools', [AdminOpsApiController::class, 'poolsIndex'])->middleware('permission:pool.manage,user.manage,report.view,charter.view,luggage.view')->name('pools.index');
         Route::post('pools', [AdminOpsApiController::class, 'poolsSave'])->middleware('permission:pool.manage')->name('pools.save');
         Route::delete('pools/{id}', [AdminOpsApiController::class, 'poolsDelete'])->middleware('permission:pool.manage')->name('pools.delete');
+        Route::post('pool/switch', [AdminOpsApiController::class, 'poolSwitch'])->name('pool.switch');
 
         Route::get('users', [AdminOpsApiController::class, 'usersIndex'])->middleware('permission:user.manage')->name('users.index');
         Route::post('users', [AdminOpsApiController::class, 'usersSave'])->middleware('permission:user.manage')->name('users.save');

@@ -31,6 +31,14 @@ class PoolScope
             'target_revenue' => 0.0,
         ];
 
+        // Global pool override from session — applies across all pages/API calls
+        if ($poolId <= 0) {
+            $sessionPoolId = (int) (session('active_pool_id', 0));
+            if ($sessionPoolId > 0) {
+                $poolId = $sessionPoolId;
+            }
+        }
+
         if (! self::tablesReady()) {
             return $fallback;
         }
