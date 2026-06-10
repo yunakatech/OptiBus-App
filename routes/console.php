@@ -3,10 +3,23 @@
 use App\Support\BookingScheduleBackfill;
 use App\Support\LegacyBookingCoreImporter;
 use App\Support\LegacyOperationsImporter;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+
+// ─── Scheduled Tasks ───────────────────────────────
+
+app()->booted(function () {
+    $schedule = app(Schedule::class);
+
+    // Daily 1am: check subscription lifecycle (trial→expired, active→past_due, past_due→suspended, suspended→canceled)
+    $schedule->command('subscription:check-expired')->dailyAt('01:00')->withoutOverlapping();
+
+    // Daily 2am: auto-generate invoices for subscriptions ending within 7 days
+    $schedule->command('subscription:generate-invoices')->dailyAt('02:00')->withoutOverlapping();
+});
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

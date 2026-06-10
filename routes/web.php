@@ -83,6 +83,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin-ops/saas/subscriptions', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'subscriptions')->name('admin-ops.saas.subscriptions');
     Route::get('admin-ops/saas/plans', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'plans')->name('admin-ops.saas.plans');
 
+    // Solo Driver mode
+    Route::get('solo/dashboard', [\App\Http\Controllers\SoloDriverController::class, 'dashboard'])->middleware('permission:dashboard.view')->name('solo.dashboard');
+
+    // Subscription & Payment (tenant self-service)
+    Route::get('subscription', [\App\Http\Controllers\SubscriptionPaymentController::class, 'index'])->name('subscription.index');
+    Route::get('subscription/payment/finish', [\App\Http\Controllers\SubscriptionPaymentController::class, 'finish'])->name('subscription.payment.finish');
+    Route::get('subscription/payment/error', [\App\Http\Controllers\SubscriptionPaymentController::class, 'error'])->name('subscription.payment.error');
+    Route::post('api/subscription/pay/{invoiceId}', [\App\Http\Controllers\SubscriptionPaymentController::class, 'pay'])->name('api.subscription.pay');
+
+    // Midtrans webhook (no auth — called by Midtrans servers)
+    Route::post('api/webhooks/midtrans', [\App\Http\Controllers\Api\PaymentWebhookController::class, 'midtrans'])->name('api.webhooks.midtrans');
+
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
         Route::get('schedules', [BookingApiController::class, 'schedules'])->middleware('permission:booking.view')->name('schedules');
