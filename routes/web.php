@@ -20,6 +20,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('google.callback');
 
+// Onboarding for Google OAuth users
+Route::middleware(['auth'])->group(function () {
+    Route::get('onboarding', [\App\Http\Controllers\Auth\OnboardingController::class, 'show'])->name('onboarding');
+    Route::post('onboarding', [\App\Http\Controllers\Auth\OnboardingController::class, 'store'])->name('onboarding.store');
+});
+
 // Public landing page — no auth required
 Route::get('/', [PublicController::class, 'welcome'])->name('home');
 
@@ -39,7 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', DashboardController::class)->middleware('superadmin.redirect')->middleware('permission:dashboard.view')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
     Route::inertia('menu', 'Menu')->name('menu.index');
     Route::get('bookings', BookingController::class)->middleware('permission:booking.view')->name('bookings.index');
     Route::get('bookings/detail/{groupKey}', BookingController::class)->middleware('permission:booking.view')->name('bookings.detail');

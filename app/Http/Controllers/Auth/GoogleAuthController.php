@@ -43,8 +43,9 @@ class GoogleAuthController extends Controller
 
         // Find or create user
         $user = User::where('email', $email)->first();
+        $isNewUser = ! $user;
 
-        if (! $user) {
+        if ($isNewUser) {
             // New user — create account
             $user = User::create([
                 'name' => $name,
@@ -57,9 +58,6 @@ class GoogleAuthController extends Controller
             // Auto-assign default role
             $this->assignDefaultRole((int) $user->id);
 
-            // Auto-provision tenant if SaaS tables exist
-            $this->autoProvisionTenant((int) $user->id, $name, $email);
-
             Log::info("New user created via Google OAuth: #{$user->id} {$email}");
         } else {
             // Update avatar if null
@@ -70,7 +68,12 @@ class GoogleAuthController extends Controller
 
         Auth::login($user, true);
 
-        // Redirect super admins to platform dashboard
+        // New users must complete onboarding before accessing dashboard
+        if ($isNewUser) {
+            return redirect()->route('onboarding');
+        }
+
+        // Returning users go directly to dashboard
         if (AccessControl::userIsSuperAdmin((int) $user->id)) {
             return redirect()->intended(route('platform.dashboard'));
         }
@@ -130,7 +133,19 @@ class GoogleAuthController extends Controller
                 return;
             }
 
+            // One trial per email
             $trialDays = (int) config('saas.trial_days', 14);
+            $alreadyHadTrial = DB::table('subscriptions')
+                ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
+                ->where('tenants.email', $email)
+                ->where(function ($q) {
+                    $q->where('subscriptions.status', 'trial')
+                      ->orWhereNotNull('subscriptions.trial_ends_at');
+                })
+                ->exists();
+            if ($alreadyHadTrial) {
+                $trialDays = 0;
+            }
 
             DB::transaction(function () use ($userId, $name, $email, $tenantSlug, $plan, $trialDays): void {
                 $tenantId = DB::table('tenants')->insertGetId([

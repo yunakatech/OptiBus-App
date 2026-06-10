@@ -59,7 +59,14 @@ class CreateTenantOnRegistration
         $routeText = trim((string) request()->input('route', ''));
 
         $tenantSlug = $this->generateTenantSlug($travelName);
+        $userEmail = DB::table('users')->where('id', $userId)->value('email') ?? '';
+
+        // One trial per email — check if this email already had a trial
         $trialDays = (int) config('saas.trial_days', 14);
+        $alreadyHadTrial = $this->emailHasUsedTrial($userEmail);
+        if ($alreadyHadTrial) {
+            $trialDays = 0; // No trial — requires immediate subscription
+        }
 
         DB::transaction(function () use ($userId, $travelName, $phone, $routeText, $tenantSlug, $planId, $trialDays): void {
             // 1. Create tenant
@@ -219,6 +226,25 @@ class CreateTenantOnRegistration
         ]);
 
         Log::info("Assigned role '{$roleId}' to user #{$userId}");
+    }
+
+    /**
+     * Check if this email has ever had a trial subscription before.
+     */
+    private function emailHasUsedTrial(string $email): bool
+    {
+        if ($email === '' || ! Schema::hasTable('subscriptions') || ! Schema::hasTable('tenants')) {
+            return false;
+        }
+
+        return DB::table('subscriptions')
+            ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
+            ->where('tenants.email', $email)
+            ->where(function ($q) {
+                $q->where('subscriptions.status', 'trial')
+                  ->orWhereNotNull('subscriptions.trial_ends_at');
+            })
+            ->exists();
     }
 
     private function generateTenantSlug(string $name): string
