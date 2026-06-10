@@ -250,6 +250,14 @@
                     {/snippet}
                 </SidebarMenuButton>
             </SidebarMenuItem>
+            {#if page.props.auth?.active_pool}
+                <SidebarMenuItem>
+                    <div class="mx-1 flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1.5 text-[11px] font-medium text-primary">
+                        <Building2 class="size-3 shrink-0" />
+                        <span class="truncate">{page.props.auth.active_pool.name}</span>
+                    </div>
+                </SidebarMenuItem>
+            {/if}
         </SidebarMenu>
     </SidebarHeader>
 

@@ -3433,6 +3433,37 @@ class AdminOpsApiController extends Controller
         return $this->ok(['armada' => $this->withArmadaFinancials($row, $financials)]);
     }
 
+    public function poolSwitch(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'pool_id' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $poolId = (int) ($data['pool_id'] ?? 0);
+
+        if ($poolId > 0 && $this->poolTablesReady()) {
+            $pool = DB::table('pools')
+                ->where('id', $poolId)
+                ->where('status', 'active')
+                ->first(['id', 'name']);
+
+            if (! $pool) {
+                return $this->error('Pool tidak ditemukan atau tidak aktif.', 422);
+            }
+        }
+
+        session(['active_pool_id' => $poolId]);
+        $poolName = $poolId > 0
+            ? (string) (DB::table('pools')->where('id', $poolId)->value('name') ?? 'Pool')
+            : 'Semua Pool';
+
+        return $this->ok([
+            'message' => $poolId > 0 ? "Pool aktif: {$poolName}" : 'Menampilkan semua pool.',
+            'pool_id' => $poolId,
+            'pool_name' => $poolName,
+        ]);
+    }
+
     public function poolsIndex(Request $request): JsonResponse
     {
         if (! $this->poolTablesReady()) {

@@ -449,9 +449,16 @@
                         <select
                             class="h-8 rounded-xl border border-border/70 bg-background/90 px-2.5 text-xs font-medium text-foreground shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                             value={selectedPoolId}
-                            onchange={(e) => {
+                            onchange={async (e) => {
                                 const target = e.currentTarget as HTMLSelectElement;
                                 const id = Number(target.value || 0);
+                                try {
+                                    await fetch('/api/admin/pool/switch', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content || '' },
+                                        body: JSON.stringify({ pool_id: id }),
+                                    });
+                                } catch { /* proceed with reload regardless */ }
                                 const url = id > 0 ? `?pool_id=${id}` : window.location.pathname;
                                 router.visit(url, { preserveState: false, preserveScroll: true });
                             }}
