@@ -43,9 +43,16 @@ class AppServiceProvider extends ServiceProvider
 
         // Redirect super admins to platform dashboard after login
         Event::listen(Login::class, function (Login $event): void {
-            $userId = (int) ($event->user?->id ?? 0);
-            if ($userId > 0 && AccessControl::userIsSuperAdmin($userId)) {
-                session()->put('url.intended', route('platform.dashboard'));
+            try {
+                $userId = (int) ($event->user?->id ?? 0);
+                if ($userId > 0 && AccessControl::userIsSuperAdmin($userId)) {
+                    $request = request();
+                    if ($request && $request->hasSession()) {
+                        $request->session()->put('url.intended', route('platform.dashboard'));
+                    }
+                }
+            } catch (\Throwable) {
+                // Silently fail — don't break login for non-super-admin users
             }
         });
     }
