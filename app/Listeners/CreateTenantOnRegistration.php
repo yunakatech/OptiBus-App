@@ -56,7 +56,17 @@ class CreateTenantOnRegistration
             $travelName = $userName;
         }
         $phone = trim((string) request()->input('phone', ''));
-        $routeText = trim((string) request()->input('route', ''));
+        $origin = trim((string) request()->input('origin', ''));
+        $destination = trim((string) request()->input('destination', ''));
+        // Fallback: parse old 'route' field if origin/destination not provided
+        if ($origin === '' && $destination === '') {
+            $routeText = trim((string) request()->input('route', ''));
+            if ($routeText !== '') {
+                $parts = array_map('trim', explode('-', $routeText, 2));
+                $origin = $parts[0] ?? '';
+                $destination = $parts[1] ?? '';
+            }
+        }
 
         $tenantSlug = $this->generateTenantSlug($travelName);
         $userEmail = DB::table('users')->where('id', $userId)->value('email') ?? '';
@@ -68,7 +78,7 @@ class CreateTenantOnRegistration
             $trialDays = 0; // No trial — requires immediate subscription
         }
 
-        DB::transaction(function () use ($userId, $travelName, $phone, $routeText, $tenantSlug, $planId, $trialDays): void {
+        DB::transaction(function () use ($userId, $travelName, $phone, $origin, $destination, $tenantSlug, $planId, $trialDays): void {
             // 1. Create tenant
             $tenantId = (int) DB::table('tenants')->insertGetId([
                 'name' => $travelName,
@@ -116,12 +126,9 @@ class CreateTenantOnRegistration
                     'updated_at' => now(),
                 ]);
 
-                // Auto-create route from free text & assign to pool
-                if ($routeText !== '' && Schema::hasTable('routes') && Schema::hasTable('pool_route')) {
-                    $parts = array_map('trim', explode('-', $routeText, 2));
-                    $origin = $parts[0] ?? '';
-                    $destination = $parts[1] ?? '';
-                    $routeName = $origin && $destination ? strtoupper($origin.' -> '.$destination) : strtoupper($routeText);
+                // Auto-create route from origin & destination fields
+                if ($origin !== '' && $destination !== '' && Schema::hasTable('routes') && Schema::hasTable('pool_route')) {
+                    $routeName = strtoupper($origin.' -> '.$destination);
 
                     // Check if route already exists
                     $existingRouteId = DB::table('routes')
@@ -133,20 +140,23 @@ class CreateTenantOnRegistration
                     } else {
                         $routeId = (int) DB::table('routes')->insertGetId([
                             'name' => $routeName,
-                            'origin' => $origin !== '' ? $origin : null,
-                            'destination' => $destination !== '' ? $destination : null,
+                            'origin' => $origin,
+                            'destination' => $destination,
                             'tenant_id' => $tenantId,
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
                     }
 
-                    DB::table('pool_route')->insert([
-                        'pool_id' => $poolId,
-                        'route_id' => $routeId,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                    // Map route to pool if not already mapped
+                    if (! DB::table('pool_route')->where('pool_id', $poolId)->where('route_id', $routeId)->exists()) {
+                        DB::table('pool_route')->insert([
+                            'pool_id' => $poolId,
+                            'route_id' => $routeId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
                 }
 
                 // 4. Assign user to pool
