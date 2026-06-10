@@ -84,25 +84,8 @@ class FortifyServiceProvider extends ServiceProvider
                     ->all();
             }
 
-            // Load sample routes for initial config
-            $routes = [];
-            if (Schema::hasTable('routes')) {
-                $routes = DB::table('routes')
-                    ->orderBy('name')
-                    ->get(['id', 'name', 'origin', 'destination'])
-                    ->map(fn ($r) => [
-                        'id' => (int) $r->id,
-                        'name' => (string) $r->name,
-                        'label' => ($r->origin && $r->destination)
-                            ? "{$r->origin} → {$r->destination}"
-                            : (string) $r->name,
-                    ])
-                    ->all();
-            }
-
             return Inertia::render('auth/Register', [
                 'plans' => $plans,
-                'routes' => $routes,
                 'passwordRules' => '',
             ]);
         });

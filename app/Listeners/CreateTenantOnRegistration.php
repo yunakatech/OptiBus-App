@@ -56,12 +56,12 @@ class CreateTenantOnRegistration
             $travelName = $userName;
         }
         $phone = trim((string) request()->input('phone', ''));
-        $routeId = (int) request()->input('route_id', 0);
+        $routeText = trim((string) request()->input('route', ''));
 
         $tenantSlug = $this->generateTenantSlug($travelName);
         $trialDays = (int) config('saas.trial_days', 14);
 
-        DB::transaction(function () use ($userId, $travelName, $phone, $routeId, $tenantSlug, $planId, $trialDays): void {
+        DB::transaction(function () use ($userId, $travelName, $phone, $routeText, $tenantSlug, $planId, $trialDays): void {
             // 1. Create tenant
             $tenantId = (int) DB::table('tenants')->insertGetId([
                 'name' => $travelName,
@@ -109,17 +109,37 @@ class CreateTenantOnRegistration
                     'updated_at' => now(),
                 ]);
 
-                // Auto-assign selected route to pool
-                if ($routeId > 0 && Schema::hasTable('pool_route') && Schema::hasTable('routes')) {
-                    $routeExists = DB::table('routes')->where('id', $routeId)->exists();
-                    if ($routeExists) {
-                        DB::table('pool_route')->insert([
-                            'pool_id' => $poolId,
-                            'route_id' => $routeId,
+                // Auto-create route from free text & assign to pool
+                if ($routeText !== '' && Schema::hasTable('routes') && Schema::hasTable('pool_route')) {
+                    $parts = array_map('trim', explode('-', $routeText, 2));
+                    $origin = $parts[0] ?? '';
+                    $destination = $parts[1] ?? '';
+                    $routeName = $origin && $destination ? strtoupper($origin.' -> '.$destination) : strtoupper($routeText);
+
+                    // Check if route already exists
+                    $existingRouteId = DB::table('routes')
+                        ->where('name', $routeName)
+                        ->value('id');
+
+                    if ($existingRouteId) {
+                        $routeId = (int) $existingRouteId;
+                    } else {
+                        $routeId = (int) DB::table('routes')->insertGetId([
+                            'name' => $routeName,
+                            'origin' => $origin !== '' ? $origin : null,
+                            'destination' => $destination !== '' ? $destination : null,
+                            'tenant_id' => $tenantId,
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
                     }
+
+                    DB::table('pool_route')->insert([
+                        'pool_id' => $poolId,
+                        'route_id' => $routeId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
 
                 // 4. Assign user to pool
