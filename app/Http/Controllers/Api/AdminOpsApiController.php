@@ -3088,7 +3088,11 @@ class AdminOpsApiController extends Controller
 
         $query = DB::table('units')
             ->orderBy('nopol')
-            ->select(['id', 'nopol', 'merek', 'type', 'category', 'tahun', 'warna', 'kapasitas', 'status', 'layout']);
+            ->select(['id', 'nopol', 'merek', 'type', 'category', 'tahun', 'warna', 'kapasitas', 'status', 'layout'])
+            ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q) {
+                $tenantId = PoolScope::tenantId();
+                if ($tenantId > 0) { $q->where('units.tenant_id', $tenantId); }
+            });
 
         if ($status !== '') {
             $query->where('status', $status);
@@ -5411,6 +5415,12 @@ class AdminOpsApiController extends Controller
         $rows = DB::table('drivers as d')
             ->when($canJoinArmadas, static function (Builder $query) {
                 $query->leftJoin('armadas as a', 'd.armada_id', '=', 'a.id');
+            })
+            ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $query) {
+                $tenantId = PoolScope::tenantId();
+                if ($tenantId > 0) {
+                    $query->where('d.tenant_id', $tenantId);
+                }
             })
             ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'd.tenant_id');
