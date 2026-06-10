@@ -24,13 +24,9 @@
     let { passwordRules = '' }: { passwordRules?: string } = $props();
 
     const plans = $derived((page.props.plans ?? []) as Array<{ id: number; name: string; slug: string; price_monthly: number; description: string }>);
-    const routes = $derived((page.props.routes ?? []) as Array<{ id: number; name: string; label: string }>);
 
     let selectedPlan = $state('starter');
     let showPlanSelector = $state(false);
-    let showRouteSelector = $state(false);
-    let selectedRouteId = $state(0);
-    let selectedRouteLabel = $state('');
 
     onMount(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -41,11 +37,6 @@
     });
 
     const currentPlan = $derived(plans.find(p => p.slug === selectedPlan));
-    const selectedRouteDisplay = $derived(
-        selectedRouteId > 0
-            ? (routes.find(r => r.id === selectedRouteId)?.label ?? 'Pilih rute')
-            : 'Pilih rute'
-    );
 
     function formatRupiah(v: number): string {
         if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)}M`;
@@ -118,31 +109,12 @@
                 <InputError message={errors.phone} />
             </div>
 
-            <!-- Route selection (required for initial config) -->
+            <!-- Route (free text — user creates their own) -->
             <div class="grid gap-2">
-                <Label>Rute Utama <span class="text-destructive">*</span></Label>
-                <div class="relative">
-                    <button type="button" onclick={() => showRouteSelector = !showRouteSelector}
-                        class="w-full flex items-center justify-between border rounded-lg px-4 py-3 text-left hover:bg-muted/20"
-                    >
-                        <span class={selectedRouteId > 0 ? '' : 'text-muted-foreground'}>{selectedRouteDisplay}</span>
-                        <ChevronDown class="h-4 w-4 text-muted-foreground" />
-                    </button>
-                    {#if showRouteSelector}
-                        <div class="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto border rounded-lg bg-background shadow-lg">
-                            {#each routes as route}
-                                <button type="button" onclick={() => { selectedRouteId = route.id; selectedRouteLabel = route.label; showRouteSelector = false; }}
-                                    class="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/20 first:rounded-t-lg last:rounded-b-lg {selectedRouteId === route.id ? 'bg-primary/5 font-medium' : ''}"
-                                >
-                                    {route.label}
-                                </button>
-                            {/each}
-                        </div>
-                    {/if}
-                </div>
-                <input type="hidden" name="route_id" value={selectedRouteId} />
-                <p class="text-xs text-muted-foreground">Rute utama operasional travel Anda.</p>
-                <InputError message={errors.route_id} />
+                <Label for="route">Rute Utama <span class="text-destructive">*</span></Label>
+                <Input id="route" type="text" required name="route" placeholder="Contoh: Pinrang - Makassar" />
+                <p class="text-xs text-muted-foreground">Tulis rute utama operasional travel Anda. Akan otomatis dibuatkan.</p>
+                <InputError message={errors.route} />
             </div>
 
             <hr />
