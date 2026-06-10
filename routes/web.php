@@ -77,6 +77,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin-ops/master/customer-charter', AdminOpsMasterController::class)->middleware('permission:customer.view')->defaults('tab', 'customer-charter')->defaults('locked', true)->name('admin-ops.master.customer-charter');
     Route::get('admin-ops/master/rute-carter', AdminOpsMasterController::class)->middleware('permission:master.view')->defaults('tab', 'rute-carter')->defaults('locked', true)->name('admin-ops.master.rute-carter');
 
+    // SaaS Management
+    Route::get('admin-ops/saas', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->name('admin-ops.saas');
+    Route::get('admin-ops/saas/tenants', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'tenants')->name('admin-ops.saas.tenants');
+    Route::get('admin-ops/saas/subscriptions', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'subscriptions')->name('admin-ops.saas.subscriptions');
+    Route::get('admin-ops/saas/plans', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'plans')->name('admin-ops.saas.plans');
+
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
         Route::get('schedules', [BookingApiController::class, 'schedules'])->middleware('permission:booking.view')->name('schedules');
@@ -206,6 +212,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('roles', [AdminOpsApiController::class, 'rolesIndex'])->middleware('permission:role.manage')->name('roles.index');
         Route::post('roles', [AdminOpsApiController::class, 'rolesSave'])->middleware('permission:role.manage')->name('roles.save');
         Route::delete('roles/{id}', [AdminOpsApiController::class, 'rolesDelete'])->middleware('permission:role.manage')->name('roles.delete');
+
+        // SaaS Management API
+        Route::get('tenants', [AdminOpsApiController::class, 'tenantsIndex'])->middleware('permission:pool.manage')->name('tenants.index');
+        Route::post('tenants', [AdminOpsApiController::class, 'tenantsSave'])->middleware('permission:pool.manage')->name('tenants.save');
+        Route::delete('tenants/{id}', [AdminOpsApiController::class, 'tenantsDelete'])->middleware('permission:pool.manage')->name('tenants.delete');
+        Route::get('subscriptions', [AdminOpsApiController::class, 'subscriptionsIndex'])->middleware('permission:pool.manage')->name('subscriptions.index');
+        Route::post('subscriptions', [AdminOpsApiController::class, 'subscriptionsSave'])->middleware('permission:pool.manage')->name('subscriptions.save');
+        Route::get('plans', [AdminOpsApiController::class, 'plansIndex'])->middleware('permission:pool.manage')->name('plans.index');
+        Route::post('plans', [AdminOpsApiController::class, 'plansSave'])->middleware('permission:pool.manage')->name('plans.save');
+        Route::get('invoices', [AdminOpsApiController::class, 'invoicesIndex'])->middleware('permission:pool.manage')->name('invoices.index');
+        Route::post('invoices/{id}/mark-paid', [AdminOpsApiController::class, 'invoicesMarkPaid'])->middleware('permission:pool.manage')->name('invoices.mark-paid');
     });
 });
 
