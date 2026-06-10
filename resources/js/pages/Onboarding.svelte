@@ -7,7 +7,6 @@
 
 <script lang="ts">
     import { Form, page } from '@inertiajs/svelte';
-    import { BusFront } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import InputError from '@/components/InputError.svelte';
     import { Button } from '@/components/ui/button';
@@ -29,12 +28,11 @@
 >
     {#snippet children({ errors, processing })}
         <div class="text-center mb-4">
-            <BusFront class="h-10 w-10 text-primary mx-auto mb-2" />
             <h2 class="text-lg font-semibold">Lengkapi Data Travel</h2>
             <p class="text-sm text-muted-foreground mt-1">
-                Akun Google: {user_email}<br />
-                Isi data di bawah untuk memulai.
+                Akun Google: {user_email}
             </p>
+            <p class="text-xs text-muted-foreground mt-0.5">Isi data di bawah untuk memulai.</p>
         </div>
 
         <div class="grid gap-6">
