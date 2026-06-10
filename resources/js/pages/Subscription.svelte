@@ -297,9 +297,12 @@
                 {#if paymentTab === 'transfer' && paymentConfig.bank_transfer.enabled}
                     <div class="space-y-2">
                         {#each paymentConfig.bank_transfer.accounts as account, i}
-                            <button
+                            <div
+                                role="button"
+                                tabindex="0"
                                 onclick={() => selectedBank = i}
-                                class="w-full text-left border rounded-lg p-3 hover:bg-muted/20 transition-colors {selectedBank === i ? 'border-primary bg-primary/5' : ''}"
+                                onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectedBank = i; }}
+                                class="w-full text-left border rounded-lg p-3 hover:bg-muted/20 transition-colors cursor-pointer {selectedBank === i ? 'border-primary bg-primary/5' : ''}"
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
@@ -308,7 +311,7 @@
                                         <div class="text-xs text-muted-foreground">a.n. {account.account_holder}</div>
                                     </div>
                                     <div class="flex gap-1">
-                                        <button onclick={(e) => { e.stopPropagation(); copyText(account.account_number); }} class="p-1 text-muted-foreground hover:text-foreground" title="Salin nomor rekening">
+                                        <button onclick={(e) => { e.stopPropagation(); copyText(account.account_number); }} class="p-1 text-muted-foreground hover:text-foreground" title="Salin nomor rekening" aria-label="Salin nomor rekening">
                                             <Copy class="h-4 w-4" />
                                         </button>
                                         {#if selectedBank === i}
@@ -317,7 +320,7 @@
                                     </div>
                                 </div>
                                 <div class="text-xs text-muted-foreground mt-2">Transfer tepat <strong>{formatRupiah(payingInvoice.amount)}</strong></div>
-                            </button>
+                            </div>
                         {/each}
                     </div>
                 {/if}
