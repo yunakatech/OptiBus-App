@@ -138,14 +138,7 @@ class CreateTenantOnRegistration
                     if ($existingRouteId) {
                         $routeId = (int) $existingRouteId;
                     } else {
-                        $routeId = (int) DB::table('routes')->insertGetId([
-                            'name' => $routeName,
-                            'origin' => $origin,
-                            'destination' => $destination,
-                            'tenant_id' => $tenantId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                        $routeId = (int) DB::table('routes')->insertGetId($this->routePayload($routeName, $origin, $destination, $tenantId));
                     }
 
                     // Map route to pool if not already mapped
@@ -244,6 +237,30 @@ class CreateTenantOnRegistration
     /**
      * Check if this email has ever had a trial subscription before.
      */
+    /**
+     * Build route payload with only the columns that exist.
+     */
+    private function routePayload(string $name, string $origin, string $destination, int $tenantId): array
+    {
+        $payload = [
+            'name' => $name,
+            'origin' => $origin !== '' ? $origin : null,
+            'destination' => $destination !== '' ? $destination : null,
+        ];
+
+        if (Schema::hasColumn('routes', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+        if (Schema::hasColumn('routes', 'created_at')) {
+            $payload['created_at'] = now();
+        }
+        if (Schema::hasColumn('routes', 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
+
+        return $payload;
+    }
+
     private function emailHasUsedTrial(string $email): bool
     {
         if ($email === '' || ! Schema::hasTable('subscriptions') || ! Schema::hasTable('tenants')) {

@@ -130,14 +130,7 @@ class OnboardingController extends Controller
                         $existingId = DB::table('routes')->where('name', $routeName)->value('id');
                         $routeId = $existingId
                             ? (int) $existingId
-                            : (int) DB::table('routes')->insertGetId([
-                                'name' => $routeName,
-                                'origin' => $origin,
-                                'destination' => $destination,
-                                'tenant_id' => $tenantId,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+                            : (int) DB::table('routes')->insertGetId($this->routePayload($routeName, $origin, $destination, $tenantId));
 
                         if (! DB::table('pool_route')->where('pool_id', $poolId)->where('route_id', $routeId)->exists()) {
                             DB::table('pool_route')->insert([
@@ -176,6 +169,30 @@ class OnboardingController extends Controller
 
         // Redirect to subscription/payment page
         return redirect()->route('subscription.index');
+    }
+
+    /**
+     * Build route payload with only the columns that exist.
+     */
+    private function routePayload(string $name, string $origin, string $destination, int $tenantId): array
+    {
+        $payload = [
+            'name' => $name,
+            'origin' => $origin !== '' ? $origin : null,
+            'destination' => $destination !== '' ? $destination : null,
+        ];
+
+        if (Schema::hasColumn('routes', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+        if (Schema::hasColumn('routes', 'created_at')) {
+            $payload['created_at'] = now();
+        }
+        if (Schema::hasColumn('routes', 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
+
+        return $payload;
     }
 
     private function generateSlug(string $name): string
