@@ -232,6 +232,8 @@
         reportLoading = false,
         pools = [],
         reportPoolId = $bindable(0),
+        reportRouteId = $bindable(0),
+        routes = [] as Array<{ id: number; name: string; origin: string | null; destination: string | null }>,
         reportFromInput = $bindable<HTMLInputElement | null>(null),
         reportToInput = $bindable<HTMLInputElement | null>(null),
         formatCurrency,
@@ -247,6 +249,8 @@
         reportLoading?: boolean;
         pools?: PoolOption[];
         reportPoolId?: number;
+        reportRouteId?: number;
+        routes?: Array<{ id: number; name: string; origin: string | null; destination: string | null }>;
         reportFromInput?: HTMLInputElement | null;
         reportToInput?: HTMLInputElement | null;
         formatCurrency: (value: number) => string;
@@ -332,8 +336,8 @@
             </div>
             <div
                 class={reportFiltersExpanded
-                    ? `grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-[190px_minmax(180px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`
-                    : `hidden rounded-[24px] border p-3 md:grid md:grid-cols-2 xl:grid-cols-[190px_minmax(180px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`}
+                    ? `grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-[190px_minmax(160px,0.8fr)_minmax(160px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`
+                    : `hidden rounded-[24px] border p-3 md:grid md:grid-cols-2 xl:grid-cols-[190px_minmax(160px,0.8fr)_minmax(160px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`}
             >
                 <label class="flex flex-col gap-1.5">
                     <span
@@ -367,6 +371,26 @@
                         {#each pools as pool (pool.id)}
                             <option value={pool.id}>
                                 {pool.name}{pool.code ? ` (${pool.code})` : ''}
+                            </option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="flex flex-col gap-1.5">
+                    <span
+                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                    >
+                        Rute Induk
+                    </span>
+                    <select
+                        class="h-11 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        bind:value={reportRouteId}
+                        onchange={() => void loadReport(1)}
+                    >
+                        <option value={0}>Semua Rute</option>
+                        {#each routes as route (route.id)}
+                            <option value={route.id}>
+                                {route.name}{route.origin ? ` (${route.origin}→${route.destination ?? '-'})` : ''}
                             </option>
                         {/each}
                     </select>
@@ -601,25 +625,13 @@
                                 <tr
                                     class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
-                                    <th class="px-4 py-3 text-left">
-                                        Tanggal
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Pelanggan
-                                    </th>
-                                    <th class="px-4 py-3 text-left">Rute</th>
-                                    <th class="px-4 py-3 text-left">
-                                        Seat / Unit
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Pembayaran
-                                    </th>
-                                    <th class="px-4 py-3 text-right">
-                                        Potongan
-                                    </th>
-                                    <th class="px-4 py-3 text-right">
-                                        Total
-                                    </th>
+                                    <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Rute</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Seat / Unit</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Pembayaran</th>
+                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Potongan</th>
+                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -714,9 +726,16 @@
                                                 {row.start_date || '-'} / {shortTime(row.departure_time)}
                                             </p>
                                         </div>
-                                        <p class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
-                                            {formatCurrency(row.total)}
-                                        </p>
+                                        <div class="shrink-0 text-right">
+                                            <p class="text-sm font-semibold tabular-nums text-foreground">
+                                                {formatCurrency(row.total)}
+                                            </p>
+                                            {#if row.bop_status}
+                                                <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeClass(row.bop_status)}`}>
+                                                    {row.bop_status}
+                                                </span>
+                                            {/if}
+                                        </div>
                                     </div>
                                     <div class="mt-3 flex flex-wrap gap-1.5">
                                         <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}>
@@ -756,25 +775,13 @@
                                 <tr
                                     class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
-                                    <th class="px-4 py-3 text-left">
-                                        Perjalanan
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Penyewa
-                                    </th>
-                                    <th class="px-4 py-3 text-left">Rute</th>
-                                    <th class="px-4 py-3 text-left">
-                                        Layanan
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Armada
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Status
-                                    </th>
-                                    <th class="px-4 py-3 text-right">
-                                        Total
-                                    </th>
+                                    <th class="px-4 py-3 text-left font-semibold">Perjalanan</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Penyewa</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Rute</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Layanan</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Armada</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Status</th>
+                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -916,25 +923,13 @@
                                 <tr
                                     class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
-                                    <th class="px-4 py-3 text-left">
-                                        Tanggal
-                                    </th>
-                                    <th class="px-4 py-3 text-left">Resi</th>
-                                    <th class="px-4 py-3 text-left">
-                                        Pengirim
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Penerima
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Layanan
-                                    </th>
-                                    <th class="px-4 py-3 text-left">
-                                        Status
-                                    </th>
-                                    <th class="px-4 py-3 text-right">
-                                        Total
-                                    </th>
+                                    <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Resi</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Pengirim</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Penerima</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Layanan</th>
+                                    <th class="px-4 py-3 text-left font-semibold">Status</th>
+                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
                                 </tr>
                             </thead>
                             <tbody>

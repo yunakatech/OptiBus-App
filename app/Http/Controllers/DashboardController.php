@@ -14,13 +14,16 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): Response
+    private int $activePoolId = 0;
+
+    public function __invoke(\Illuminate\Http\Request $request): Response
     {
         $today = Carbon::today();
         $monthStart = $today->copy()->startOfMonth();
         $previousMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
         $yearStart = $today->copy()->startOfYear();
         $previousYearStart = $yearStart->copy()->subYear()->startOfYear();
+        $this->activePoolId = (int) $request->query('pool_id', 0);
         $dashboardSummary = null;
         $resolveDashboardSummary = function () use ($today, &$dashboardSummary): array {
             return $dashboardSummary ??= $this->dashboardSummary($today);
@@ -44,8 +47,16 @@ class DashboardController extends Controller
             return $recentActivity ??= $this->recentActivity();
         };
 
+        $pools = $this->loadPoolsForSwitcher();
+        $selectedPoolName = $this->activePoolId > 0
+            ? ((string) ($pools->firstWhere('id', $this->activePoolId)?->name ?? 'Pool'))
+            : 'Semua Pool';
+
         return Inertia::render('Dashboard', [
             'todayLabel' => strtoupper($today->translatedFormat('l, d F Y')),
+            'pools' => $pools->values(),
+            'selectedPoolId' => $this->activePoolId,
+            'selectedPoolName' => $selectedPoolName,
             'stats' => fn (): array => $resolveDashboardSummary()['stats'],
             'statsComparison' => fn (): array => $resolveDashboardSummary()['statsComparison'],
             'statsPeriod' => [
@@ -121,7 +132,7 @@ class DashboardController extends Controller
 
         if (Schema::hasTable('bookings')) {
             $bookingSummary = $this->periodSummary(
-                $this->scopedBookingQuery()->where('status', '!=', 'canceled'),
+                $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)->where('status', '!=', 'canceled'),
                 'tanggal',
                 'COALESCE(price, 0) - COALESCE(discount, 0)',
                 $datePeriods,
@@ -148,27 +159,27 @@ class DashboardController extends Controller
             $summaryComparisonByScope['month']['revenue_booking'] = $bookingValue('previous_month_revenue');
             $summaryComparisonByScope['year']['revenue_booking'] = $bookingValue('previous_year_revenue');
 
-            $activeBookings = $this->scopedBookingQuery()
+            $activeBookings = $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
                 ->where('status', '!=', 'canceled')
                 ->whereDate('tanggal', '>=', $today->toDateString());
             $activeSnapshot = $this->activeBookingSnapshot($activeBookings);
             $futureCount = (int) ($activeSnapshot->total ?? 0);
 
             if ($futureCount === 0) {
-                $activeBookings = $this->scopedBookingQuery()->where('status', '!=', 'canceled');
+                $activeBookings = $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)->where('status', '!=', 'canceled');
                 $activeSnapshot = $this->activeBookingSnapshot($activeBookings);
             }
 
             $stats['pending'] = (int) ($activeSnapshot->pending ?? 0);
             $stats['confirmed'] = (int) ($activeSnapshot->confirmed ?? 0);
-            $stats['canceled'] = (int) $this->scopedBookingQuery()->where('status', 'canceled')->count();
+            $stats['canceled'] = (int) $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)->where('status', 'canceled')->count();
 
             $fleetDate = $futureCount === 0
                 ? (clone $activeBookings)->max('tanggal')
                 : $today->toDateString();
 
             if ($fleetDate) {
-                $stats['live_fleet'] = $this->scopedBookingQuery()
+                $stats['live_fleet'] = $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
                     ->where('status', '!=', 'canceled')
                     ->whereDate('tanggal', $fleetDate)
                     ->select(['rute', 'jam', 'unit'])
@@ -178,7 +189,7 @@ class DashboardController extends Controller
             }
 
             if ($stats['revenue_today'] <= 0 && $fleetDate) {
-                $stats['revenue_today'] = (float) $this->scopedBookingQuery()
+                $stats['revenue_today'] = (float) $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
                     ->where('status', '!=', 'canceled')
                     ->whereDate('tanggal', $fleetDate)
                     ->selectRaw('COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) AS total')
@@ -198,7 +209,7 @@ class DashboardController extends Controller
         }
 
         if (Schema::hasTable('charters')) {
-            $charterQuery = $this->scopedCharterQuery();
+            $charterQuery = $this->scopedCharterQuery('charters', '', $this->activePoolId);
             $this->applyActiveCharterFilter($charterQuery);
             $charterSummary = $this->periodSummary(
                 $charterQuery,
@@ -218,7 +229,7 @@ class DashboardController extends Controller
             $summaryComparisonByScope['year']['revenue_charter'] = $charterValue('previous_year_revenue');
 
             // BOP for charters
-            $charterBopQuery = $this->scopedCharterQuery();
+            $charterBopQuery = $this->scopedCharterQuery('charters', '', $this->activePoolId);
             $this->applyActiveCharterFilter($charterBopQuery);
             $charterBopSummary = $this->periodSummary(
                 $charterBopQuery,
@@ -239,7 +250,7 @@ class DashboardController extends Controller
         }
 
         if (Schema::hasTable('luggages')) {
-            $luggageQuery = $this->scopedLuggageQuery();
+            $luggageQuery = $this->scopedLuggageQuery('luggages', '', $this->activePoolId);
             $this->applyActiveLuggageFilter($luggageQuery);
 
             $luggageSummary = $this->periodSummary(
@@ -427,7 +438,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        $groupRows = $this->scopedBookingQuery()
+        $groupRows = $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
             ->where('status', '!=', 'canceled')
             ->whereDate('tanggal', $today->toDateString())
             ->selectRaw('rute, jam, unit, COUNT(*) as total_bookings')
@@ -551,7 +562,7 @@ class DashboardController extends Controller
         }
 
         $endDate = $today->copy()->addDays(7)->toDateString();
-        $query = $this->scopedCharterQuery()
+        $query = $this->scopedCharterQuery('charters', '', $this->activePoolId)
             ->whereBetween('start_date', [$today->toDateString(), $endDate]);
 
         if (Schema::hasColumn('charters', 'status')) {
@@ -740,7 +751,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        return $this->scopedBookingQuery()
+        return $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
             ->where('status', '!=', 'canceled')
             ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
             ->selectRaw('tanggal as period, COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) as total')
@@ -759,7 +770,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        $query = $this->scopedCharterQuery()
+        $query = $this->scopedCharterQuery('charters', '', $this->activePoolId)
             ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw('start_date as period, COALESCE(SUM(COALESCE(price, 0)), 0) as total')
             ->groupBy('start_date');
@@ -781,7 +792,7 @@ class DashboardController extends Controller
         }
 
         $dateExpression = $this->dateExpression('created_at');
-        $query = $this->scopedLuggageQuery()
+        $query = $this->scopedLuggageQuery('luggages', '', $this->activePoolId)
             ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()]);
 
         $this->applyActiveLuggageFilter($query);
@@ -805,7 +816,7 @@ class DashboardController extends Controller
 
         $monthExpression = $this->monthExpression('tanggal');
 
-        return $this->scopedBookingQuery()
+        return $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
             ->where('status', '!=', 'canceled')
             ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
             ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(price, 0) - COALESCE(discount, 0)), 0) as total")
@@ -825,7 +836,7 @@ class DashboardController extends Controller
         }
 
         $monthExpression = $this->monthExpression('start_date');
-        $query = $this->scopedCharterQuery()
+        $query = $this->scopedCharterQuery('charters', '', $this->activePoolId)
             ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(price, 0)), 0) as total")
             ->groupBy(DB::raw($monthExpression));
@@ -846,7 +857,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        $query = $this->scopedCharterQuery()
+        $query = $this->scopedCharterQuery('charters', '', $this->activePoolId)
             ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw('start_date as period, COALESCE(SUM(COALESCE(bop_price, 0)), 0) as total')
             ->groupBy('start_date');
@@ -868,7 +879,7 @@ class DashboardController extends Controller
         }
 
         $monthExpression = $this->monthExpression('start_date');
-        $query = $this->scopedCharterQuery()
+        $query = $this->scopedCharterQuery('charters', '', $this->activePoolId)
             ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(bop_price, 0)), 0) as total")
             ->groupBy(DB::raw($monthExpression));
@@ -890,7 +901,7 @@ class DashboardController extends Controller
         }
 
         $monthExpression = $this->monthExpression('created_at');
-        $query = $this->scopedLuggageQuery()
+        $query = $this->scopedLuggageQuery('luggages', '', $this->activePoolId)
             ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()]);
 
         $this->applyActiveLuggageFilter($query);
@@ -937,10 +948,10 @@ class DashboardController extends Controller
         }
     }
 
-    private function scopedBookingQuery(string $table = 'bookings', string $routeNameColumn = 'rute'): Builder
+    private function scopedBookingQuery(string $table = 'bookings', string $routeNameColumn = 'rute', int $poolId = 0): Builder
     {
         $query = DB::table($table);
-        PoolScope::applyRouteScope($query, $this->bookingRouteIdColumn($table), $routeNameColumn);
+        PoolScope::applyRouteScope($query, $this->bookingRouteIdColumn($table), $routeNameColumn, $poolId);
 
         return $query;
     }
@@ -958,15 +969,15 @@ class DashboardController extends Controller
         return isset($matches[1]) ? $matches[1].'.route_id' : 'route_id';
     }
 
-    private function scopedCharterQuery(string $table = 'charters', string $alias = ''): Builder
+    private function scopedCharterQuery(string $table = 'charters', string $alias = '', int $poolId = 0): Builder
     {
         $query = DB::table($table);
-        PoolScope::applyCharterScope($query, $alias);
+        PoolScope::applyCharterScope($query, $alias, $poolId);
 
         return $query;
     }
 
-    private function scopedLuggageQuery(string $table = 'luggages', string $alias = ''): Builder
+    private function scopedLuggageQuery(string $table = 'luggages', string $alias = '', int $poolId = 0): Builder
     {
         $query = DB::table($table);
         $prefix = $alias !== '' ? $alias.'.' : '';
@@ -976,6 +987,7 @@ class DashboardController extends Controller
             Schema::hasColumn('luggages', 'pool_id') ? $prefix.'pool_id' : '',
             Schema::hasColumn('luggages', 'rute_id') ? $prefix.'rute_id' : '',
             $prefix.'rute',
+            $poolId,
         );
 
         return $query;
@@ -1002,19 +1014,19 @@ class DashboardController extends Controller
         $dates = [];
 
         if (Schema::hasTable('bookings')) {
-            $value = $this->scopedBookingQuery()->max('tanggal');
+            $value = $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)->max('tanggal');
             if ($value) {
                 $dates[] = Carbon::parse((string) $value)->startOfDay();
             }
         }
         if (Schema::hasTable('charters')) {
-            $value = $this->scopedCharterQuery()->max('start_date');
+            $value = $this->scopedCharterQuery('charters', '', $this->activePoolId)->max('start_date');
             if ($value) {
                 $dates[] = Carbon::parse((string) $value)->startOfDay();
             }
         }
         if (Schema::hasTable('luggages')) {
-            $value = $this->scopedLuggageQuery()->max('created_at');
+            $value = $this->scopedLuggageQuery('luggages', '', $this->activePoolId)->max('created_at');
             if ($value) {
                 $dates[] = Carbon::parse((string) $value)->startOfDay();
             }
@@ -1063,6 +1075,30 @@ class DashboardController extends Controller
     }
 
     /**
+     * Load pools available for the dashboard switcher.
+     */
+    private function loadPoolsForSwitcher(): \Illuminate\Support\Collection
+    {
+        if (! Schema::hasTable('pools')) {
+            return collect([]);
+        }
+
+        $scope = PoolScope::forCurrentUser();
+        $query = DB::table('pools')
+            ->where('status', 'active')
+            ->select(['id', 'name', 'code']);
+
+        if (! ($scope['all'] ?? true)) {
+            $poolIds = $scope['pool_ids'] ?? [];
+            if (! empty($poolIds)) {
+                $query->whereIn('id', $poolIds);
+            }
+        }
+
+        return $query->orderBy('name')->get();
+    }
+
+    /**
      * Estimate booking BOP from route-level BOP data, proportional to booking volume.
      */
     private function estimateBookingBop(string $dateStart, string $dateEnd, array $scopeStats, string $scopeKey = 'month'): float
@@ -1075,7 +1111,7 @@ class DashboardController extends Controller
             return 0.0;
         }
 
-        $bookingRoutes = $this->scopedBookingQuery()
+        $bookingRoutes = $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
             ->where('status', '!=', 'canceled')
             ->whereBetween('tanggal', [$dateStart, $dateEnd])
             ->select('rute')
@@ -1108,18 +1144,28 @@ class DashboardController extends Controller
     {
         $target = 0.0;
 
-        if (Schema::hasTable('routes') && Schema::hasColumn('routes', 'target_revenue')) {
-            $target += (float) DB::table('routes')->sum('target_revenue');
+        // Pool-level target takes priority when a specific pool is selected
+        if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'target_revenue')) {
+            $poolQuery = DB::table('pools')->where('status', 'active');
+            if ($this->activePoolId > 0) {
+                $poolQuery->where('id', $this->activePoolId);
+            }
+            $target = (float) $poolQuery->sum('target_revenue');
         }
 
-        if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'target_revenue')) {
-            $poolTarget = (float) DB::table('pools')
-                ->where('status', 'active')
-                ->sum('target_revenue');
-            // Use pool targets as baseline if routes have no target
-            if ($target <= 0) {
-                $target = $poolTarget;
+        // Fallback to route-level targets
+        if ($target <= 0 && Schema::hasTable('routes') && Schema::hasColumn('routes', 'target_revenue')) {
+            $routeQuery = DB::table('routes');
+            if ($this->activePoolId > 0 && Schema::hasTable('pool_route')) {
+                $routeIds = DB::table('pool_route')
+                    ->where('pool_id', $this->activePoolId)
+                    ->pluck('route_id')
+                    ->all();
+                if (! empty($routeIds)) {
+                    $routeQuery->whereIn('id', $routeIds);
+                }
             }
+            $target = (float) $routeQuery->sum('target_revenue');
         }
 
         return $target;

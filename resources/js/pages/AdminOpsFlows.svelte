@@ -173,6 +173,7 @@
     let charterFilterDatePicker: FlatpickrInstance | null = null;
     let luggageFilterDateInput = $state<HTMLInputElement | null>(null);
     let luggageFilterDatePicker: FlatpickrInstance | null = null;
+    let luggageStatusFilter = $state('');
     let exportFromDateInput = $state<HTMLInputElement | null>(null);
     let exportToDateInput = $state<HTMLInputElement | null>(null);
     let exportFromDatePicker: FlatpickrInstance | null = null;
@@ -742,6 +743,10 @@ q.set('q', filterQuery.trim());
         q.set('per_page', String(luggageMeta.per_page || 20));
         q.set('from', filterFrom);
         q.set('to', filterTo);
+
+        if (luggageStatusFilter !== '') {
+            q.set('status', luggageStatusFilter);
+        }
 
         if (filterQuery.trim() !== '') {
 q.set('q', filterQuery.trim());
@@ -3656,6 +3661,25 @@ params.set('to', filterTo);
                                 Tambah Bagasi
                             </Button>{/if}
                         </div>
+                    </div>
+                    <!-- Status tabs -->
+                    <div class="flex flex-wrap gap-1.5 rounded-2xl border border-border/60 bg-muted/30 p-1">
+                        {#each luggageStatusTabs() as tab (tab.key)}
+                            <button
+                                type="button"
+                                class={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
+                                    luggageStatusFilter === tab.key
+                                        ? 'bg-white text-foreground shadow-sm dark:bg-slate-800 dark:text-slate-100'
+                                        : 'text-muted-foreground hover:bg-white/60 hover:text-foreground dark:hover:bg-slate-800/60'
+                                }`}
+                                onclick={() => {
+                                    luggageStatusFilter = tab.key;
+                                    void loadLuggages(1);
+                                }}
+                            >
+                                {tab.label}
+                            </button>
+                        {/each}
                     </div>
                     <div class="grid gap-3 md:hidden">
                         {#if luggages.length === 0}
