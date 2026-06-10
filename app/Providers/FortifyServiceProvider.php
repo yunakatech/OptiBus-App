@@ -6,7 +6,9 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -58,7 +60,35 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => redirect()->route('login'));
+        Fortify::registerView(function (Request $request) {
+            // Store plan selection from query param into session for the listener
+            $plan = trim((string) $request->query('plan', ''));
+            if ($plan !== '') {
+                session(['registration_plan' => $plan]);
+            }
+
+            // Load public plan data
+            $plans = [];
+            if (Schema::hasTable('plans')) {
+                $plans = DB::table('plans')
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->get(['id', 'name', 'slug', 'description', 'price_monthly'])
+                    ->map(fn ($p) => [
+                        'id' => (int) $p->id,
+                        'name' => (string) $p->name,
+                        'slug' => (string) $p->slug,
+                        'description' => (string) ($p->description ?? ''),
+                        'price_monthly' => (float) $p->price_monthly,
+                    ])
+                    ->all();
+            }
+
+            return Inertia::render('auth/Register', [
+                'plans' => $plans,
+                'passwordRules' => '',
+            ]);
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/TwoFactorChallenge'));
 

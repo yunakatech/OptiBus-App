@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Listeners\CreateTenantOnRegistration;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -25,6 +28,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerEventListeners();
+    }
+
+    /**
+     * Register event listeners.
+     */
+    protected function registerEventListeners(): void
+    {
+        // Auto-provision tenant + subscription on user registration
+        Event::listen(Registered::class, CreateTenantOnRegistration::class);
     }
 
     /**
