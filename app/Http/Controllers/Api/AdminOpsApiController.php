@@ -940,12 +940,18 @@ class AdminOpsApiController extends Controller
             'to' => ['nullable', 'date_format:Y-m-d'],
             'type' => ['nullable', Rule::in(['booking', 'charter', 'bagasi'])],
             'pool_id' => ['nullable', 'integer', 'min:0'],
+            'route_id' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $from = $validated['from'] ?? now()->toDateString();
         $to = $validated['to'] ?? now()->toDateString();
         $type = $validated['type'] ?? 'booking';
         $poolId = (int) ($validated['pool_id'] ?? 0);
+        $routeId = (int) ($validated['route_id'] ?? 0);
+        $routeName = '';
+        if ($routeId > 0 && Schema::hasTable('routes')) {
+            $routeName = trim((string) (DB::table('routes')->where('id', $routeId)->value('name') ?? ''));
+        }
         [$from, $to] = $this->normalizeDateRange($from, $to);
         [$page, $perPage] = $this->paginationParams($request);
         $rangeKey = implode(':', [
@@ -953,34 +959,38 @@ class AdminOpsApiController extends Controller
             $from,
             $to,
             $poolId,
+            $routeId,
             (int) (auth()->id() ?? 0),
             $page,
             $perPage,
             $this->reportCacheSignatureForType($type),
         ]);
 
-        $report = Cache::remember("admin-ops:reports-summary:{$rangeKey}", now()->addSeconds(30), function () use ($type, $from, $to, $page, $perPage, $poolId): array {
-            return $this->buildTypedReport($type, $from, $to, $page, $perPage, $poolId);
+        $report = Cache::remember("admin-ops:reports-summary:{$rangeKey}", now()->addSeconds(30), function () use ($type, $from, $to, $page, $perPage, $poolId, $routeName): array {
+            return $this->buildTypedReport($type, $from, $to, $page, $perPage, $poolId, $routeName);
         });
 
         return $this->ok($report);
     }
 
-    private function buildTypedReport(string $type, string $from, string $to, int $page, int $perPage, int $poolId = 0): array
+    private function buildTypedReport(string $type, string $from, string $to, int $page, int $perPage, int $poolId = 0, string $routeName = ''): array
     {
         return match ($type) {
-            'charter' => $this->buildCharterReport($from, $to, $page, $perPage, $poolId),
-            'bagasi' => $this->buildLuggageReport($from, $to, $page, $perPage, $poolId),
-            default => $this->buildBookingReport($from, $to, $page, $perPage, $poolId),
+            'charter' => $this->buildCharterReport($from, $to, $page, $perPage, $poolId, $routeName),
+            'bagasi' => $this->buildLuggageReport($from, $to, $page, $perPage, $poolId, $routeName),
+            default => $this->buildBookingReport($from, $to, $page, $perPage, $poolId, $routeName),
         };
     }
 
-    private function buildBookingReport(string $from, string $to, int $page, int $perPage, int $poolId = 0): array
+    private function buildBookingReport(string $from, string $to, int $page, int $perPage, int $poolId = 0, string $routeName = ''): array
     {
         $baseQuery = DB::table('bookings as b')
             ->whereBetween('b.tanggal', [$from, $to]);
         $this->applyNotCanceledFilter($baseQuery, 'b.status');
         $this->applyRouteScopeToQuery($baseQuery, '', 'b.rute', $poolId);
+        if ($routeName !== '') {
+            $baseQuery->where('b.rute', $routeName);
+        }
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -1069,7 +1079,7 @@ class AdminOpsApiController extends Controller
         return (float) DB::table('routes')->whereIn('name', $routes)->sum('bop');
     }
 
-    private function buildCharterReport(string $from, string $to, int $page, int $perPage, int $poolId = 0): array
+    private function buildCharterReport(string $from, string $to, int $page, int $perPage, int $poolId = 0, string $routeName = ''): array
     {
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
@@ -1102,6 +1112,12 @@ class AdminOpsApiController extends Controller
             ->whereBetween('c.start_date', [$from, $to]);
         $this->applyActiveCharterReportFilter($baseQuery);
         $this->applyCharterPoolScope($baseQuery, $poolId);
+        if ($routeName !== '') {
+            $baseQuery->where(function (Builder $q) use ($routeName): void {
+                $q->where('c.pickup_point', 'like', "%{$routeName}%")
+                  ->orWhere('c.drop_point', 'like', "%{$routeName}%");
+            });
+        }
 
         $summaryRow = (clone $baseQuery)
             ->selectRaw('COUNT(*) as total_rows')
@@ -1158,13 +1174,16 @@ class AdminOpsApiController extends Controller
         ];
     }
 
-    private function buildLuggageReport(string $from, string $to, int $page, int $perPage, int $poolId = 0): array
+    private function buildLuggageReport(string $from, string $to, int $page, int $perPage, int $poolId = 0, string $routeName = ''): array
     {
         [$createdFrom, $createdTo] = $this->dateTimeRange($from, $to);
 
         $baseQuery = DB::table('luggages as l')
             ->whereBetween('l.created_at', [$createdFrom, $createdTo]);
         $this->applyNotCanceledFilter($baseQuery, 'l.status');
+        if ($routeName !== '') {
+            $baseQuery->where('l.rute', $routeName);
+        }
         $this->applyPoolOrRouteScopeToQuery(
             $baseQuery,
             $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',

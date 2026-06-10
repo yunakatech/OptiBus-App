@@ -699,6 +699,7 @@
     let reportTo = $state(today);
     let reportType = $state<ReportKind>('booking');
     let reportPoolId = $state(0);
+    let reportRouteId = $state(0);
     let scheduleTimeInput = $state<HTMLInputElement | null>(null);
     let scheduleTimePicker: FlatpickrInstance | null = null;
     let reportFromInput = $state<HTMLInputElement | null>(null);
@@ -2694,7 +2695,7 @@
         reportLoading = true;
 
         try {
-            const url = `/api/admin/reports/summary?from=${encodeURIComponent(reportFrom)}&to=${encodeURIComponent(reportTo)}&type=${encodeURIComponent(reportType)}&pool_id=${encodeURIComponent(String(reportPoolId || 0))}&page=${encodeURIComponent(String(page))}&per_page=${encodeURIComponent(String(reportMeta.per_page || 50))}`;
+            const url = `/api/admin/reports/summary?from=${encodeURIComponent(reportFrom)}&to=${encodeURIComponent(reportTo)}&type=${encodeURIComponent(reportType)}&pool_id=${encodeURIComponent(String(reportPoolId || 0))}&route_id=${encodeURIComponent(String(reportRouteId || 0))}&page=${encodeURIComponent(String(page))}&per_page=${encodeURIComponent(String(reportMeta.per_page || 50))}`;
             const r = await api('GET', url);
             reportSummary = r.summary ?? null;
             reportRows = Array.isArray(r.rows) ? r.rows : [];
@@ -9076,6 +9077,8 @@
                         {reportLoading}
                         {pools}
                         bind:reportPoolId
+                        bind:reportRouteId
+                        {routes}
                         bind:reportFromInput
                         bind:reportToInput
                         {formatCurrency}

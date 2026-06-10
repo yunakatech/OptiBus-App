@@ -12,8 +12,8 @@
 </script>
 
 <script lang="ts">
-    import { Deferred } from '@inertiajs/svelte';
-    import { ArrowRight, BusFront, Copy, Package, Ticket, TrendingDown, TrendingUp, Wallet } from 'lucide-svelte';
+    import { Deferred, router } from '@inertiajs/svelte';
+    import { ArrowRight, Building2, BusFront, Copy, Package, Ticket, TrendingDown, TrendingUp, Wallet } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -123,8 +123,17 @@
         items: UpcomingCharterItem[];
     };
 
+    type PoolOption = {
+        id: number;
+        name: string;
+        code: string | null;
+    };
+
     let {
         stats,
+        pools = [] as PoolOption[],
+        selectedPoolId = 0,
+        selectedPoolName = 'Semua Pool',
         dailyTrend = [],
         monthlyTrend = [],
         recentActivity = [],
@@ -149,6 +158,9 @@
         },
     }: {
         stats: DashboardStats;
+        pools?: PoolOption[];
+        selectedPoolId?: number;
+        selectedPoolName?: string;
         dailyTrend?: TrendItem[];
         monthlyTrend?: TrendItem[];
         recentActivity?: ActivityItem[];
@@ -431,6 +443,29 @@
             <div class="space-y-0.5 md:space-y-1">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:text-[11px]">Ringkasan Dashboard</p>
                 <h2 class="text-base font-semibold tracking-tight text-foreground md:text-lg">Performa Booking dan Pendapatan</h2>
+                {#if pools.length > 0}
+                    <div class="flex items-center gap-2 pt-1">
+                        <Building2 class="size-3.5 text-muted-foreground" />
+                        <select
+                            class="h-8 rounded-xl border border-border/70 bg-background/90 px-2.5 text-xs font-medium text-foreground shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                            value={selectedPoolId}
+                            onchange={(e) => {
+                                const target = e.currentTarget as HTMLSelectElement;
+                                const id = Number(target.value || 0);
+                                const url = id > 0 ? `?pool_id=${id}` : window.location.pathname;
+                                router.visit(url, { preserveState: false, preserveScroll: true });
+                            }}
+                        >
+                            <option value={0}>Semua Pool</option>
+                            {#each pools as pool (pool.id)}
+                                <option value={pool.id}>{pool.name}{pool.code ? ` (${pool.code})` : ''}</option>
+                            {/each}
+                        </select>
+                        {#if selectedPoolId > 0}
+                            <span class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{selectedPoolName}</span>
+                        {/if}
+                    </div>
+                {/if}
             </div>
             <div class="flex flex-col gap-2 md:items-end">
                 <div class="hidden items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground dark:border-slate-700/70 dark:bg-slate-900/70 sm:flex md:self-auto">
