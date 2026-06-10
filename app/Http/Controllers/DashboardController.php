@@ -51,6 +51,9 @@ class DashboardController extends Controller
         $selectedPoolName = $this->activePoolId > 0
             ? ((string) ($pools->firstWhere('id', $this->activePoolId)?->name ?? 'Pool'))
             : 'Semua Pool';
+        // Capture for deferred closures — Inertia::defer() runs in separate request
+        // that may not include original query params, so we bind poolId into closure scope.
+        $deferredPoolId = $this->activePoolId;
 
         return Inertia::render('Dashboard', [
             'todayLabel' => strtoupper($today->translatedFormat('l, d F Y')),
@@ -82,13 +85,34 @@ class DashboardController extends Controller
                     'subtitle_label' => 'tahun ini',
                 ],
             ],
-            'dailyTrend' => Inertia::defer(fn (): array => $this->dailyTrend($resolveTrendAnchor()), 'dashboard-data'),
-            'monthlyTrend' => Inertia::defer(fn (): array => $this->monthlyTrend($today), 'dashboard-data'),
-            'recentActivity' => Inertia::defer(fn (): array => $resolveRecentActivity()['items'], 'dashboard-data'),
-            'recentActivityTotal' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['total'], 'dashboard-data'),
-            'recentActivityVisibleCount' => Inertia::defer(fn (): int => (int) $resolveRecentActivity()['visible_count'], 'dashboard-data'),
-            'departuresToday' => Inertia::defer(fn (): array => $this->departuresToday($today), 'dashboard-data'),
-            'upcomingCharterReminder' => Inertia::defer(fn (): array => $this->upcomingCharterReminder($today), 'dashboard-data'),
+            'dailyTrend' => Inertia::defer(function () use ($resolveTrendAnchor, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $this->dailyTrend($resolveTrendAnchor());
+            }, 'dashboard-data'),
+            'monthlyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $this->monthlyTrend($today);
+            }, 'dashboard-data'),
+            'recentActivity' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $resolveRecentActivity()['items'];
+            }, 'dashboard-data'),
+            'recentActivityTotal' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): int {
+                $this->activePoolId = $deferredPoolId;
+                return (int) $resolveRecentActivity()['total'];
+            }, 'dashboard-data'),
+            'recentActivityVisibleCount' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): int {
+                $this->activePoolId = $deferredPoolId;
+                return (int) $resolveRecentActivity()['visible_count'];
+            }, 'dashboard-data'),
+            'departuresToday' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $this->departuresToday($today);
+            }, 'dashboard-data'),
+            'upcomingCharterReminder' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $this->upcomingCharterReminder($today);
+            }, 'dashboard-data'),
         ]);
     }
 
