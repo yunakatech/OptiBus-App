@@ -41,7 +41,7 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
 
-    type TabName = 'tenants' | 'subscriptions' | 'plans';
+    type TabName = 'tenants' | 'subscriptions' | 'plans' | 'payment';
 
     // ─── Props ───
     let { tab: initialTab = null, summary = null, saasTablesReady = false }: {
@@ -79,12 +79,39 @@
     let plans = $state<any[]>([]);
     let editingPlan = $state<any>(null);
 
+    // Payment settings state
+    let paymentSettings = $state<any>(null);
+    let payBusy = $state(false);
+    let payMessage = $state('');
+
+    async function loadPaymentSettings() {
+        payBusy = true;
+        const data = await apiFetch('/api/admin/payment-settings');
+        if (data) { paymentSettings = data.settings; }
+        payBusy = false;
+    }
+
+    async function savePaymentSettings(formEl: HTMLFormElement) {
+        payBusy = true; payMessage = '';
+        const formData = new FormData(formEl);
+        const res = await fetch('/api/admin/payment-settings', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' },
+            body: formData,
+        });
+        const data = await res.json();
+        if (data?.success) { payMessage = data.message; paymentSettings = data.settings; }
+        else { payMessage = data?.error || 'Gagal menyimpan'; }
+        payBusy = false;
+    }
+
     // ─── Init ───
     onMount(() => {
         activeTab = initialTab ?? 'tenants';
         if (activeTab === 'tenants') loadTenants();
         else if (activeTab === 'subscriptions') loadSubscriptions();
         else if (activeTab === 'plans') loadPlans();
+        else if (activeTab === 'payment') loadPaymentSettings();
     });
 
     function switchTab(tab: TabName) {
@@ -96,6 +123,7 @@
         if (tab === 'tenants') loadTenants();
         else if (tab === 'subscriptions') loadSubscriptions();
         else if (tab === 'plans') loadPlans();
+        else if (tab === 'payment') loadPaymentSettings();
     }
 
     // ─── API helpers ───
@@ -303,6 +331,7 @@
                 { key: 'tenants', label: 'Tenants', icon: Building2 },
                 { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
                 { key: 'plans', label: 'Plans', icon: Package },
+                { key: 'payment', label: 'Pembayaran', icon: CreditCard },
             ] as tab}
                 <button
                     onclick={() => switchTab(tab.key as TabName)}
@@ -674,6 +703,74 @@
                     </Card>
                 {/each}
             </div>
+        {/if}
+
+        <!-- ============ PAYMENT TAB ============ -->
+        {#if activeTab === 'payment'}
+            {#if payMessage}
+                <div class="bg-green-50 text-green-700 rounded-lg px-4 py-3 text-sm">{payMessage}</div>
+            {/if}
+
+            <form onsubmit={(e) => { e.preventDefault(); savePaymentSettings(e.target as HTMLFormElement); }}>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- QRIS -->
+                    <Card>
+                        <CardHeader><CardTitle>QRIS</CardTitle></CardHeader>
+                        <CardContent class="space-y-3">
+                            <div>
+                                <Label class="text-xs">Nama Merchant</Label>
+                                <Input name="qris_merchant_name" value={paymentSettings?.qris?.merchant_name ?? ''} placeholder="Qbus Indonesia" />
+                            </div>
+                            <div>
+                                <Label class="text-xs">QRIS Image</Label>
+                                <div class="flex items-center gap-3">
+                                    {#if paymentSettings?.qris?.image_url}
+                                        <img src={paymentSettings.qris.image_url} alt="QRIS" class="w-24 h-24 object-contain border rounded" />
+                                    {/if}
+                                    <Input type="file" name="qris_image" accept="image/png,image/jpeg" />
+                                </div>
+                                <p class="text-xs text-muted-foreground mt-1">Upload gambar QRIS. Format PNG/JPG, max 1MB.</p>
+                            </div>
+                            <div>
+                                <Label class="text-xs">Catatan QRIS</Label>
+                                <Input name="qris_note" value={paymentSettings?.qris?.note ?? ''} placeholder="Scan QRIS di bawah dan masukkan nominal sesuai paket." />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <!-- Bank Transfer -->
+                    <Card>
+                        <CardHeader><CardTitle>Rekening Bank</CardTitle></CardHeader>
+                        <CardContent class="space-y-4">
+                            {#each [1, 2, 3] as i}
+                                {@const accounts = paymentSettings?.bank_transfer?.accounts ?? []}
+                                {@const acc = accounts[i - 1] ?? {}}
+                                <div class="border rounded-lg p-3 space-y-2">
+                                    <div class="font-medium text-sm">Rekening #{i}</div>
+                                    <div>
+                                        <Label class="text-xs">Nama Bank</Label>
+                                        <Input name={`bank_${i}_name`} value={acc.bank_name ?? ''} placeholder="BCA" />
+                                    </div>
+                                    <div>
+                                        <Label class="text-xs">Nomor Rekening</Label>
+                                        <Input name={`bank_${i}_number`} value={acc.account_number ?? ''} placeholder="1234567890" />
+                                    </div>
+                                    <div>
+                                        <Label class="text-xs">Atas Nama</Label>
+                                        <Input name={`bank_${i}_holder`} value={acc.account_holder ?? ''} placeholder="PT Qbus Indonesia" />
+                                    </div>
+                                </div>
+                            {/each}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div class="flex justify-end mt-6">
+                    <Button type="submit" disabled={payBusy}>
+                        {payBusy ? 'Menyimpan...' : 'Simpan Pengaturan Pembayaran'}
+                    </Button>
+                </div>
+            </form>
         {/if}
     {/if}
 </div>
