@@ -210,10 +210,11 @@ class DashboardController extends Controller
         }
 
         if (Schema::hasTable('luggages')) {
+            $luggageQuery = $this->scopedLuggageQuery();
+            $this->applyActiveLuggageFilter($luggageQuery);
+
             $luggageSummary = $this->periodSummary(
-                $this->scopedLuggageQuery()
-                    ->where('status', '!=', 'canceled')
-                    ->where('payment_status', 'Lunas'),
+                $luggageQuery,
                 'created_at',
                 'COALESCE(price, 0)',
                 $dateTimePeriods,
@@ -669,11 +670,12 @@ class DashboardController extends Controller
         }
 
         $dateExpression = $this->dateExpression('created_at');
+        $query = $this->scopedLuggageQuery()
+            ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()]);
 
-        return $this->scopedLuggageQuery()
-            ->where('status', '!=', 'canceled')
-            ->where('payment_status', 'Lunas')
-            ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()])
+        $this->applyActiveLuggageFilter($query);
+
+        return $query
             ->selectRaw("{$dateExpression} as period, COALESCE(SUM(COALESCE(price, 0)), 0) as total")
             ->groupBy(DB::raw($dateExpression))
             ->pluck('total', 'period')
@@ -734,11 +736,12 @@ class DashboardController extends Controller
         }
 
         $monthExpression = $this->monthExpression('created_at');
+        $query = $this->scopedLuggageQuery()
+            ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()]);
 
-        return $this->scopedLuggageQuery()
-            ->where('status', '!=', 'canceled')
-            ->where('payment_status', 'Lunas')
-            ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()])
+        $this->applyActiveLuggageFilter($query);
+
+        return $query
             ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(price, 0)), 0) as total")
             ->groupBy(DB::raw($monthExpression))
             ->pluck('total', 'period')
@@ -757,6 +760,27 @@ class DashboardController extends Controller
         $query->where(function ($builder) {
             $builder->whereNull('payment_status')->orWhere('payment_status', '!=', 'Canceled');
         });
+    }
+
+    private function applyActiveLuggageFilter(Builder $query, string $alias = ''): void
+    {
+        $prefix = $alias !== '' ? $alias.'.' : '';
+
+        if (Schema::hasColumn('luggages', 'status')) {
+            $query->where(function (Builder $builder) use ($prefix): void {
+                $builder
+                    ->whereNull($prefix.'status')
+                    ->orWhereRaw('LOWER('.$prefix.'status) <> ?', ['canceled']);
+            });
+        }
+
+        if (Schema::hasColumn('luggages', 'payment_status')) {
+            $query->where(function (Builder $builder) use ($prefix): void {
+                $builder
+                    ->whereNull($prefix.'payment_status')
+                    ->orWhereRaw('LOWER('.$prefix.'payment_status) <> ?', ['canceled']);
+            });
+        }
     }
 
     private function scopedBookingQuery(string $table = 'bookings', string $routeNameColumn = 'rute'): Builder
@@ -884,4 +908,3 @@ class DashboardController extends Controller
         }
     }
 }
-
