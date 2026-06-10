@@ -100,6 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin-ops/saas/tenants', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'tenants')->name('admin-ops.saas.tenants');
     Route::get('admin-ops/saas/subscriptions', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'subscriptions')->name('admin-ops.saas.subscriptions');
     Route::get('admin-ops/saas/plans', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'plans')->name('admin-ops.saas.plans');
+    Route::get('admin-ops/saas/payment', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'payment')->name('admin-ops.saas.payment');
 
     // Solo Driver mode
     Route::get('solo/dashboard', [\App\Http\Controllers\SoloDriverController::class, 'dashboard'])->middleware('permission:dashboard.view')->name('solo.dashboard');
@@ -248,6 +249,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('plans', [AdminOpsApiController::class, 'plansSave'])->middleware('permission:pool.manage')->name('plans.save');
         Route::get('invoices', [AdminOpsApiController::class, 'invoicesIndex'])->middleware('permission:pool.manage')->name('invoices.index');
         Route::post('invoices/{id}/mark-paid', [AdminOpsApiController::class, 'invoicesMarkPaid'])->middleware('permission:pool.manage')->name('invoices.mark-paid');
+
+        // Payment settings
+        Route::get('payment-settings', [AdminOpsApiController::class, 'paymentSettingsGet'])->middleware('permission:pool.manage')->name('payment-settings.get');
+        Route::post('payment-settings', [AdminOpsApiController::class, 'paymentSettingsSave'])->middleware('permission:pool.manage')->name('payment-settings.save');
     });
 });
 

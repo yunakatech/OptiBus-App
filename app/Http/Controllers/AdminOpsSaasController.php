@@ -19,7 +19,7 @@ class AdminOpsSaasController extends Controller
     public function __invoke(Request $request): Response
     {
         $tab = trim((string) $request->route('tab', 'tenants'));
-        if (! in_array($tab, ['tenants', 'subscriptions', 'plans'], true)) {
+        if (! in_array($tab, ['tenants', 'subscriptions', 'plans', 'payment'], true)) {
             $tab = 'tenants';
         }
 

@@ -53,20 +53,32 @@ class SubscriptionPaymentController extends Controller
             ? DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get()
             : collect();
 
-        // Manual payment config
+        // Manual payment config — read from DB settings, fallback to config file
+        $getSetting = function (string $key, string $default): string {
+            if (! Schema::hasTable('settings')) {
+                return $default;
+            }
+            return (string) (DB::table('settings')->where('key', $key)->value('value') ?? $default);
+        };
+
+        $qrisImagePath = $getSetting('payment.qris_image_path', '');
         $paymentConfig = [
             'qris' => [
-                'enabled' => config('payment.qris.enabled', true),
-                'merchant_name' => config('payment.qris.merchant_name', 'Qbus Indonesia'),
-                'image_url' => asset(config('payment.qris.image_path', 'images/qris.png')),
-                'note' => config('payment.qris.note', ''),
+                'enabled' => true,
+                'merchant_name' => $getSetting('payment.qris_merchant_name', config('payment.qris.merchant_name', 'Qbus Indonesia')),
+                'image_url' => $qrisImagePath !== '' ? asset($qrisImagePath) : asset(config('payment.qris.image_path', 'images/qris.png')),
+                'note' => $getSetting('payment.qris_note', config('payment.qris.note', '')),
             ],
             'bank_transfer' => [
-                'enabled' => config('payment.bank_transfer.enabled', true),
-                'accounts' => collect(config('payment.bank_transfer.accounts', []))
-                    ->filter(fn ($acc) => ! empty($acc['account_number']) && ! empty($acc['bank_name']))
-                    ->values()
-                    ->all(),
+                'enabled' => true,
+                'accounts' => collect([1, 2, 3])->map(function ($i) use ($getSetting): array {
+                    return [
+                        'bank_name' => $getSetting("payment.bank_{$i}_name", config("payment.bank_transfer.accounts.".($i - 1).".bank_name", '')),
+                        'account_number' => $getSetting("payment.bank_{$i}_number", config("payment.bank_transfer.accounts.".($i - 1).".account_number", '')),
+                        'account_holder' => $getSetting("payment.bank_{$i}_holder", config("payment.bank_transfer.accounts.".($i - 1).".account_holder", '')),
+                        'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                    ];
+                })->filter(fn ($acc) => ! empty($acc['account_number']) && ! empty($acc['bank_name']))->values()->all(),
             ],
             'upload_max_kb' => (int) config('payment.upload.max_size_kb', 2048),
         ];

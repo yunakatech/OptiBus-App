@@ -7168,6 +7168,114 @@ class AdminOpsApiController extends Controller
         return $this->ok(['message' => 'Invoice marked as paid.']);
     }
 
+    // ──────────────────────────────────────────────
+    // SaaS: Payment Settings
+    // ──────────────────────────────────────────────
+
+    public function paymentSettingsGet(): JsonResponse
+    {
+        $settings = $this->loadPaymentSettings();
+
+        return $this->ok(['settings' => $settings]);
+    }
+
+    public function paymentSettingsSave(Request $request): JsonResponse
+    {
+        if ($response = $this->requirePermission('pool.manage')) {
+            return $response;
+        }
+
+        $data = $request->validate([
+            'qris_merchant_name' => ['nullable', 'string', 'max:120'],
+            'qris_note' => ['nullable', 'string', 'max:255'],
+            'bank_1_name' => ['nullable', 'string', 'max:50'],
+            'bank_1_number' => ['nullable', 'string', 'max:50'],
+            'bank_1_holder' => ['nullable', 'string', 'max:120'],
+            'bank_2_name' => ['nullable', 'string', 'max:50'],
+            'bank_2_number' => ['nullable', 'string', 'max:50'],
+            'bank_2_holder' => ['nullable', 'string', 'max:120'],
+            'bank_3_name' => ['nullable', 'string', 'max:50'],
+            'bank_3_number' => ['nullable', 'string', 'max:50'],
+            'bank_3_holder' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        // Handle QRIS image upload
+        if ($request->hasFile('qris_image')) {
+            $request->validate(['qris_image' => ['image', 'max:1024']]); // max 1MB
+            $path = $request->file('qris_image')->storeAs('payment', 'qris.png', 'public');
+            $this->saveSetting('payment.qris_image_path', 'storage/'.$path);
+        }
+
+        $this->saveSetting('payment.qris_merchant_name', trim((string) ($data['qris_merchant_name'] ?? '')));
+        $this->saveSetting('payment.qris_note', trim((string) ($data['qris_note'] ?? '')));
+        $this->saveSetting('payment.bank_1_name', trim((string) ($data['bank_1_name'] ?? '')));
+        $this->saveSetting('payment.bank_1_number', trim((string) ($data['bank_1_number'] ?? '')));
+        $this->saveSetting('payment.bank_1_holder', trim((string) ($data['bank_1_holder'] ?? '')));
+        $this->saveSetting('payment.bank_2_name', trim((string) ($data['bank_2_name'] ?? '')));
+        $this->saveSetting('payment.bank_2_number', trim((string) ($data['bank_2_number'] ?? '')));
+        $this->saveSetting('payment.bank_2_holder', trim((string) ($data['bank_2_holder'] ?? '')));
+        $this->saveSetting('payment.bank_3_name', trim((string) ($data['bank_3_name'] ?? '')));
+        $this->saveSetting('payment.bank_3_number', trim((string) ($data['bank_3_number'] ?? '')));
+        $this->saveSetting('payment.bank_3_holder', trim((string) ($data['bank_3_holder'] ?? '')));
+
+        return $this->ok(['message' => 'Pengaturan pembayaran disimpan.', 'settings' => $this->loadPaymentSettings()]);
+    }
+
+    private function loadPaymentSettings(): array
+    {
+        return [
+            'qris' => [
+                'merchant_name' => $this->getSetting('payment.qris_merchant_name', config('payment.qris.merchant_name', 'Qbus Indonesia')),
+                'note' => $this->getSetting('payment.qris_note', config('payment.qris.note', '')),
+                'image_url' => asset($this->getSetting('payment.qris_image_path', config('payment.qris.image_path', 'images/qris.png'))),
+            ],
+            'bank_transfer' => [
+                'enabled' => true,
+                'accounts' => [
+                    [
+                        'bank_name' => $this->getSetting('payment.bank_1_name', config('payment.bank_transfer.accounts.0.bank_name', 'BCA')),
+                        'account_number' => $this->getSetting('payment.bank_1_number', config('payment.bank_transfer.accounts.0.account_number', '1234567890')),
+                        'account_holder' => $this->getSetting('payment.bank_1_holder', config('payment.bank_transfer.accounts.0.account_holder', 'PT Qbus Indonesia')),
+                        'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                    ],
+                    [
+                        'bank_name' => $this->getSetting('payment.bank_2_name', config('payment.bank_transfer.accounts.1.bank_name', 'BRI')),
+                        'account_number' => $this->getSetting('payment.bank_2_number', config('payment.bank_transfer.accounts.1.account_number', '0987654321')),
+                        'account_holder' => $this->getSetting('payment.bank_2_holder', config('payment.bank_transfer.accounts.1.account_holder', 'PT Qbus Indonesia')),
+                        'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                    ],
+                    [
+                        'bank_name' => $this->getSetting('payment.bank_3_name', config('payment.bank_transfer.accounts.2.bank_name', 'Mandiri')),
+                        'account_number' => $this->getSetting('payment.bank_3_number', config('payment.bank_transfer.accounts.2.account_number', '1122334455')),
+                        'account_holder' => $this->getSetting('payment.bank_3_holder', config('payment.bank_transfer.accounts.2.account_holder', 'PT Qbus Indonesia')),
+                        'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    private function getSetting(string $key, string $default = ''): string
+    {
+        if (! Schema::hasTable('settings')) {
+            return $default;
+        }
+
+        return (string) (DB::table('settings')->where('key', $key)->value('value') ?? $default);
+    }
+
+    private function saveSetting(string $key, string $value): void
+    {
+        if (! Schema::hasTable('settings')) {
+            return;
+        }
+
+        DB::table('settings')->updateOrInsert(
+            ['key' => $key],
+            ['value' => $value],
+        );
+    }
+
     private function ok(array $data = [], int $status = 200): JsonResponse
     {
         return response()->json(array_merge(['success' => true], $data), $status);
