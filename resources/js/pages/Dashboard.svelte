@@ -32,6 +32,13 @@
         revenue_total_today: number;
         revenue_total_month: number;
         revenue_total_year: number;
+        bop_booking_month: number;
+        bop_charter_month: number;
+        margin_booking_month: number;
+        margin_charter_month: number;
+        margin_total_month: number;
+        target_revenue_month: number;
+        achievement_percent: number;
         top_route: string;
         top_route_count: number;
     };
@@ -41,6 +48,12 @@
         revenue_booking: number;
         revenue_charter: number;
         revenue_luggage: number;
+        bop_booking: number;
+        bop_charter: number;
+        margin_booking: number;
+        margin_charter: number;
+        target_revenue: number;
+        achievement_percent: number;
     };
 
     type SummaryPeriodMeta = {
@@ -57,6 +70,8 @@
         booking_revenue?: number;
         charter_revenue?: number;
         luggage_revenue?: number;
+        charter_bop?: number;
+        margin?: number;
     };
 
     type ActivityItem = {
@@ -118,14 +133,14 @@
         recentActivityTotal = 0,
         recentActivityVisibleCount = 0,
         summaryStatsByScope = {
-            day: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
-            month: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
-            year: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+            day: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0, bop_booking: 0, bop_charter: 0, margin_booking: 0, margin_charter: 0, target_revenue: 0, achievement_percent: 0 },
+            month: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0, bop_booking: 0, bop_charter: 0, margin_booking: 0, margin_charter: 0, target_revenue: 0, achievement_percent: 0 },
+            year: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0, bop_booking: 0, bop_charter: 0, margin_booking: 0, margin_charter: 0, target_revenue: 0, achievement_percent: 0 },
         },
         summaryComparisonByScope = {
-            day: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
-            month: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
-            year: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0 },
+            day: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0, bop_booking: 0, bop_charter: 0, margin_booking: 0, margin_charter: 0, target_revenue: 0, achievement_percent: 0 },
+            month: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0, bop_booking: 0, bop_charter: 0, margin_booking: 0, margin_charter: 0, target_revenue: 0, achievement_percent: 0 },
+            year: { total_bookings: 0, revenue_booking: 0, revenue_charter: 0, revenue_luggage: 0, bop_booking: 0, bop_charter: 0, margin_booking: 0, margin_charter: 0, target_revenue: 0, achievement_percent: 0 },
         },
         summaryPeriodByScope = {
             day: { current_label: 'Hari Ini', previous_label: 'Kemarin', subtitle_label: 'hari ini' },
@@ -252,6 +267,8 @@
         { label: 'Booking', value: Number(row.booking_revenue || 0) },
         { label: 'Carter', value: Number(row.charter_revenue || 0) },
         { label: 'Bagasi', value: Number(row.luggage_revenue || 0) },
+        { label: 'BOP Carter', value: Number(row.charter_bop || 0) },
+        { label: 'Margin', value: Number(row.margin || 0) },
     ];
 
     const dailySelectedClass = (row: TrendItem) =>
@@ -516,6 +533,65 @@
                 </a>
             {/each}
         </div>
+
+        {#if stats.target_revenue_month > 0 || activeSummaryStats.margin_booking || activeSummaryStats.margin_charter}
+            <div class="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-2.5">
+                <!-- Target & Achievement Card -->
+                {#if stats.target_revenue_month > 0}
+                    <Card class="overflow-hidden border border-purple-200/80 bg-[linear-gradient(135deg,rgba(250,245,255,0.98),rgba(243,232,255,0.92))] shadow-sm dark:border-purple-400/25 dark:bg-[linear-gradient(135deg,rgba(59,7,100,0.72),rgba(15,23,42,0.94))]">
+                        <CardContent class="space-y-2 p-3 md:p-4">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-purple-700/80 dark:text-purple-200/80">Target Revenue</p>
+                            <p class="text-lg font-semibold tracking-tight text-purple-950 dark:text-purple-50">{toCurrency(stats.target_revenue_month)}</p>
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between text-[10px] font-medium">
+                                    <span class="text-purple-700/70 dark:text-purple-200/70">Pencapaian {activeSummaryPeriod.subtitle_label}</span>
+                                    <span class="text-purple-800 dark:text-purple-200">{stats.achievement_percent}%</span>
+                                </div>
+                                <div class="h-2 rounded-full bg-purple-200/70 dark:bg-purple-800/60">
+                                    <div class="h-2 rounded-full bg-purple-500/80 transition-all" style={`width:${Math.min(stats.achievement_percent, 100)}%`}></div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                {/if}
+
+                <!-- Margin Booking Card -->
+                <Card class="overflow-hidden border border-green-200/80 bg-[linear-gradient(135deg,rgba(240,253,244,0.98),rgba(220,252,231,0.92))] shadow-sm dark:border-green-400/25 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.72),rgba(15,23,42,0.94))]">
+                    <CardContent class="space-y-2 p-3 md:p-4">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-green-700/80 dark:text-green-200/80">Margin Booking</p>
+                        <p class="text-lg font-semibold tracking-tight text-green-950 dark:text-green-50">{toCurrency(activeSummaryStats.margin_booking)}</p>
+                        <div class="flex items-center gap-2 text-[10px] text-green-700/70 dark:text-green-200/70">
+                            <span>Rev {toCurrency(activeSummaryStats.revenue_booking)}</span>
+                            <span>− BOP {toCurrency(activeSummaryStats.bop_booking)}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Margin Carter Card -->
+                <Card class="overflow-hidden border border-teal-200/80 bg-[linear-gradient(135deg,rgba(240,253,250,0.98),rgba(204,251,241,0.92))] shadow-sm dark:border-teal-400/25 dark:bg-[linear-gradient(135deg,rgba(19,78,74,0.72),rgba(15,23,42,0.94))]">
+                    <CardContent class="space-y-2 p-3 md:p-4">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-700/80 dark:text-teal-200/80">Margin Carter</p>
+                        <p class="text-lg font-semibold tracking-tight text-teal-950 dark:text-teal-50">{toCurrency(activeSummaryStats.margin_charter)}</p>
+                        <div class="flex items-center gap-2 text-[10px] text-teal-700/70 dark:text-teal-200/70">
+                            <span>Rev {toCurrency(activeSummaryStats.revenue_charter)}</span>
+                            <span>− BOP {toCurrency(activeSummaryStats.bop_charter)}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Total Margin Card -->
+                {@const totalMargin = (activeSummaryStats.margin_booking || 0) + (activeSummaryStats.margin_charter || 0) + (activeSummaryStats.revenue_luggage || 0)}
+                <Card class="overflow-hidden border border-blue-200/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.98),rgba(219,234,254,0.92))] shadow-sm dark:border-blue-400/25 dark:bg-[linear-gradient(135deg,rgba(23,37,84,0.74),rgba(15,23,42,0.94))]">
+                    <CardContent class="space-y-2 p-3 md:p-4">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-700/80 dark:text-blue-200/80">Margin Total</p>
+                        <p class="text-lg font-semibold tracking-tight text-blue-950 dark:text-blue-50">{toCurrency(totalMargin)}</p>
+                        <p class="text-[10px] text-blue-700/70 dark:text-blue-200/70">
+                            Rev {toCurrency(activeSummaryStats.revenue_booking + activeSummaryStats.revenue_charter + activeSummaryStats.revenue_luggage)} − BOP {toCurrency(activeSummaryStats.bop_booking + activeSummaryStats.bop_charter)}
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+        {/if}
     </div>
 
     <Deferred
@@ -702,7 +778,7 @@
             <Card class="hidden h-fit xl:block">
                 <CardHeader class="space-y-1 pb-2">
                     <CardTitle class="text-sm md:text-base">Insight Cepat</CardTitle>
-                    <CardDescription class="text-xs">Snapshot operasional</CardDescription>
+                    <CardDescription class="text-xs">Snapshot operasional & finansial</CardDescription>
                 </CardHeader>
                 <CardContent class="grid gap-2.5 pt-0 text-sm xl:grid-cols-2">
                     <div class="rounded-md border p-2.5">
@@ -722,6 +798,20 @@
                         <p class="text-xs text-muted-foreground">Pendapatan Bulan Ini</p>
                         <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_month)}</p>
                     </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Margin Bulan Ini</p>
+                        <p class="text-sm font-semibold text-green-700 dark:text-green-300">{toCurrency(stats.margin_total_month)}</p>
+                    </div>
+                    {#if stats.target_revenue_month > 0}
+                        <div class="rounded-md border p-2.5">
+                            <p class="text-xs text-muted-foreground">Target & Pencapaian</p>
+                            <p class="text-sm font-semibold">{toCurrency(stats.target_revenue_month)}</p>
+                            <div class="mt-1.5 h-1.5 rounded-full bg-muted/80">
+                                <div class="h-1.5 rounded-full bg-purple-500/70" style={`width:${Math.min(stats.achievement_percent, 100)}%`}></div>
+                            </div>
+                            <p class="mt-0.5 text-[10px] text-muted-foreground">{stats.achievement_percent}% tercapai</p>
+                        </div>
+                    {/if}
                     <div class="rounded-md border p-2.5 xl:col-span-2">
                         <p class="text-xs text-muted-foreground">Pendapatan Tahun Ini</p>
                         <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_year)}</p>
@@ -838,7 +928,7 @@
             <Card class="xl:hidden">
                 <CardHeader class="space-y-1 pb-2">
                     <CardTitle class="text-sm md:text-base">Insight Cepat</CardTitle>
-                    <CardDescription class="text-xs">Snapshot operasional</CardDescription>
+                    <CardDescription class="text-xs">Snapshot operasional & finansial</CardDescription>
                 </CardHeader>
                 <CardContent class="space-y-2.5 pt-0 text-sm">
                     <div class="rounded-md border p-2.5">
@@ -858,6 +948,20 @@
                         <p class="text-xs text-muted-foreground">Pendapatan Bulan Ini</p>
                         <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_month)}</p>
                     </div>
+                    <div class="rounded-md border p-2.5">
+                        <p class="text-xs text-muted-foreground">Margin Bulan Ini</p>
+                        <p class="text-sm font-semibold text-green-700 dark:text-green-300">{toCurrency(stats.margin_total_month)}</p>
+                    </div>
+                    {#if stats.target_revenue_month > 0}
+                        <div class="rounded-md border p-2.5">
+                            <p class="text-xs text-muted-foreground">Target & Pencapaian</p>
+                            <p class="text-sm font-semibold">{toCurrency(stats.target_revenue_month)}</p>
+                            <div class="mt-1.5 h-1.5 rounded-full bg-muted/80">
+                                <div class="h-1.5 rounded-full bg-purple-500/70" style={`width:${Math.min(stats.achievement_percent, 100)}%`}></div>
+                            </div>
+                            <p class="mt-0.5 text-[10px] text-muted-foreground">{stats.achievement_percent}% tercapai</p>
+                        </div>
+                    {/if}
                     <div class="rounded-md border p-2.5">
                         <p class="text-xs text-muted-foreground">Pendapatan Tahun Ini</p>
                         <p class="text-sm font-semibold">{toCurrency(stats.revenue_total_year)}</p>

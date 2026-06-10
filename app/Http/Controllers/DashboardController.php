@@ -96,6 +96,13 @@ class DashboardController extends Controller
             'revenue_total_today' => 0.0,
             'revenue_total_month' => 0.0,
             'revenue_total_year' => 0.0,
+            'bop_charter_month' => 0.0,
+            'bop_booking_month' => 0.0,
+            'margin_charter_month' => 0.0,
+            'margin_booking_month' => 0.0,
+            'margin_total_month' => 0.0,
+            'target_revenue_month' => 0.0,
+            'achievement_percent' => 0.0,
             'top_route' => '-',
             'top_route_count' => 0,
         ];
@@ -104,6 +111,8 @@ class DashboardController extends Controller
             'revenue_booking_month' => 0.0,
             'revenue_charter_month' => 0.0,
             'revenue_luggage_month' => 0.0,
+            'bop_charter_month' => 0.0,
+            'bop_booking_month' => 0.0,
         ];
         $summaryStatsByScope = $this->emptySummaryScopes();
         $summaryComparisonByScope = $this->emptySummaryScopes();
@@ -207,6 +216,26 @@ class DashboardController extends Controller
             $summaryComparisonByScope['day']['revenue_charter'] = $charterValue('previous_day_revenue');
             $summaryComparisonByScope['month']['revenue_charter'] = $charterValue('previous_month_revenue');
             $summaryComparisonByScope['year']['revenue_charter'] = $charterValue('previous_year_revenue');
+
+            // BOP for charters
+            $charterBopQuery = $this->scopedCharterQuery();
+            $this->applyActiveCharterFilter($charterBopQuery);
+            $charterBopSummary = $this->periodSummary(
+                $charterBopQuery,
+                'start_date',
+                'COALESCE(bop_price, 0)',
+                $datePeriods,
+            );
+            $charterBopValue = static fn (string $key): float => (float) ($charterBopSummary->{$key} ?? 0);
+
+            $stats['bop_charter_month'] = $charterBopValue('month_revenue');
+            $statsComparison['bop_charter_month'] = $charterBopValue('previous_month_revenue');
+            $summaryStatsByScope['day']['bop_charter'] = $charterBopValue('day_revenue');
+            $summaryStatsByScope['month']['bop_charter'] = $charterBopValue('month_revenue');
+            $summaryStatsByScope['year']['bop_charter'] = $charterBopValue('year_revenue');
+            $summaryComparisonByScope['day']['bop_charter'] = $charterBopValue('previous_day_revenue');
+            $summaryComparisonByScope['month']['bop_charter'] = $charterBopValue('previous_month_revenue');
+            $summaryComparisonByScope['year']['bop_charter'] = $charterBopValue('previous_year_revenue');
         }
 
         if (Schema::hasTable('luggages')) {
@@ -241,15 +270,87 @@ class DashboardController extends Controller
             + (float) $summaryStatsByScope['year']['revenue_charter']
             + (float) $summaryStatsByScope['year']['revenue_luggage'];
 
+        // Booking BOP estimate from route-level BOP
+        $stats['bop_booking_month'] = $this->estimateBookingBop(
+            $datePeriods['month'][0], $datePeriods['month'][1], $summaryStatsByScope,
+        );
+        $statsComparison['bop_booking_month'] = $this->estimateBookingBop(
+            $datePeriods['previous_month'][0], $datePeriods['previous_month'][1], $summaryComparisonByScope,
+        );
+        $summaryStatsByScope['day']['bop_booking'] = $this->estimateBookingBop(
+            $datePeriods['day'][0], $datePeriods['day'][1], $summaryStatsByScope,
+            'day',
+        );
+        $summaryStatsByScope['month']['bop_booking'] = $stats['bop_booking_month'];
+        $summaryStatsByScope['year']['bop_booking'] = $this->estimateBookingBop(
+            $datePeriods['year'][0], $datePeriods['year'][1], $summaryStatsByScope,
+        );
+        $summaryComparisonByScope['day']['bop_booking'] = $this->estimateBookingBop(
+            $datePeriods['previous_day'][0], $datePeriods['previous_day'][1], $summaryComparisonByScope,
+            'day',
+        );
+        $summaryComparisonByScope['month']['bop_booking'] = $statsComparison['bop_booking_month'];
+        $summaryComparisonByScope['year']['bop_booking'] = $this->estimateBookingBop(
+            $datePeriods['previous_year'][0], $datePeriods['previous_year'][1], $summaryComparisonByScope,
+        );
+
+        // Target revenue from routes & pools
+        $stats['target_revenue_month'] = $this->targetRevenueForPeriod();
+        foreach (['day', 'month', 'year'] as $scope) {
+            $summaryStatsByScope[$scope]['target_revenue'] = $stats['target_revenue_month'];
+        }
+
+        // Margin calculations
+        $stats['margin_booking_month'] = $stats['revenue_booking_month'] - $stats['bop_booking_month'];
+        $stats['margin_charter_month'] = $stats['revenue_charter_month'] - $stats['bop_charter_month'];
+        $stats['margin_total_month'] = $stats['revenue_total_month'] - $stats['bop_booking_month'] - $stats['bop_charter_month'];
+        $stats['achievement_percent'] = $stats['target_revenue_month'] > 0
+            ? round(($stats['revenue_total_month'] / $stats['target_revenue_month']) * 100, 1)
+            : 0;
+
+        foreach (['day', 'month', 'year'] as $scope) {
+            $rb = (float) ($summaryStatsByScope[$scope]['revenue_booking'] ?? 0);
+            $rc = (float) ($summaryStatsByScope[$scope]['revenue_charter'] ?? 0);
+            $bb = (float) ($summaryStatsByScope[$scope]['bop_booking'] ?? 0);
+            $bc = (float) ($summaryStatsByScope[$scope]['bop_charter'] ?? 0);
+            $target = (float) ($summaryStatsByScope[$scope]['target_revenue'] ?? 0);
+            $totalRevenue = $rb + $rc + (float) ($summaryStatsByScope[$scope]['revenue_luggage'] ?? 0);
+            $totalBop = $bb + $bc;
+
+            $summaryStatsByScope[$scope]['margin_booking'] = $rb - $bb;
+            $summaryStatsByScope[$scope]['margin_charter'] = $rc - $bc;
+            $summaryStatsByScope[$scope]['achievement_percent'] = $target > 0
+                ? round(($totalRevenue / $target) * 100, 1)
+                : 0;
+        }
+
         return compact('stats', 'statsComparison', 'summaryStatsByScope', 'summaryComparisonByScope');
     }
 
     private function emptySummaryScopes(): array
     {
         return [
-            'day' => ['total_bookings' => 0, 'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0],
-            'month' => ['total_bookings' => 0, 'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0],
-            'year' => ['total_bookings' => 0, 'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0],
+            'day' => [
+                'total_bookings' => 0,
+                'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0,
+                'bop_booking' => 0.0, 'bop_charter' => 0.0,
+                'margin_booking' => 0.0, 'margin_charter' => 0.0,
+                'target_revenue' => 0.0, 'achievement_percent' => 0.0,
+            ],
+            'month' => [
+                'total_bookings' => 0,
+                'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0,
+                'bop_booking' => 0.0, 'bop_charter' => 0.0,
+                'margin_booking' => 0.0, 'margin_charter' => 0.0,
+                'target_revenue' => 0.0, 'achievement_percent' => 0.0,
+            ],
+            'year' => [
+                'total_bookings' => 0,
+                'revenue_booking' => 0.0, 'revenue_charter' => 0.0, 'revenue_luggage' => 0.0,
+                'bop_booking' => 0.0, 'bop_charter' => 0.0,
+                'margin_booking' => 0.0, 'margin_charter' => 0.0,
+                'target_revenue' => 0.0, 'achievement_percent' => 0.0,
+            ],
         ];
     }
 
@@ -560,6 +661,7 @@ class DashboardController extends Controller
                 $bookingRevenueByDate = $this->bookingRevenueByDateRange($start, $anchorDate);
                 $charterRevenueByDate = $this->charterRevenueByDateRange($start, $anchorDate);
                 $luggageRevenueByDate = $this->luggageRevenueByDateRange($start, $anchorDate);
+                $charterBopByDate = $this->charterBopByDateRange($start, $anchorDate);
 
                 for ($i = 6; $i >= 0; $i--) {
                     $day = $anchorDate->copy()->subDays($i);
@@ -567,14 +669,18 @@ class DashboardController extends Controller
                     $bookingRevenue = $bookingRevenueByDate[$dayKey] ?? 0.0;
                     $charterRevenue = $charterRevenueByDate[$dayKey] ?? 0.0;
                     $luggageRevenue = $luggageRevenueByDate[$dayKey] ?? 0.0;
+                    $charterBop = $charterBopByDate[$dayKey] ?? 0.0;
+                    $totalRevenue = $bookingRevenue + $charterRevenue + $luggageRevenue;
 
                     $rows[] = [
                         'label' => strtoupper($day->translatedFormat('D')),
                         'date' => $day->translatedFormat('d M'),
-                        'revenue' => $bookingRevenue + $charterRevenue + $luggageRevenue,
+                        'revenue' => $totalRevenue,
                         'booking_revenue' => $bookingRevenue,
                         'charter_revenue' => $charterRevenue,
                         'luggage_revenue' => $luggageRevenue,
+                        'charter_bop' => $charterBop,
+                        'margin' => $totalRevenue - $charterBop,
                     ];
                 }
 
@@ -597,6 +703,7 @@ class DashboardController extends Controller
                 $bookingRevenueByMonth = $this->bookingRevenueByMonthRange($yearStart, $yearEnd);
                 $charterRevenueByMonth = $this->charterRevenueByMonthRange($yearStart, $yearEnd);
                 $luggageRevenueByMonth = $this->luggageRevenueByMonthRange($yearStart, $yearEnd);
+                $charterBopByMonth = $this->charterBopByMonthRange($yearStart, $yearEnd);
 
                 for ($month = 1; $month <= $endMonth; $month++) {
                     $start = Carbon::create($year, $month, 1)->startOfMonth();
@@ -604,14 +711,18 @@ class DashboardController extends Controller
                     $bookingRevenue = $bookingRevenueByMonth[$monthKey] ?? 0.0;
                     $charterRevenue = $charterRevenueByMonth[$monthKey] ?? 0.0;
                     $luggageRevenue = $luggageRevenueByMonth[$monthKey] ?? 0.0;
+                    $charterBop = $charterBopByMonth[$monthKey] ?? 0.0;
+                    $totalRevenue = $bookingRevenue + $charterRevenue + $luggageRevenue;
 
                     $rows[] = [
                         'label' => strtoupper($start->translatedFormat('M')),
                         'name' => $start->translatedFormat('F Y'),
-                        'revenue' => $bookingRevenue + $charterRevenue + $luggageRevenue,
+                        'revenue' => $totalRevenue,
                         'booking_revenue' => $bookingRevenue,
                         'charter_revenue' => $charterRevenue,
                         'luggage_revenue' => $luggageRevenue,
+                        'charter_bop' => $charterBop,
+                        'margin' => $totalRevenue - $charterBop,
                     ];
                 }
 
@@ -717,6 +828,49 @@ class DashboardController extends Controller
         $query = $this->scopedCharterQuery()
             ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
             ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(price, 0)), 0) as total")
+            ->groupBy(DB::raw($monthExpression));
+
+        $this->applyActiveCharterFilter($query);
+
+        return $query->pluck('total', 'period')
+            ->mapWithKeys(static fn ($value, $key): array => [(string) $key => (float) $value])
+            ->all();
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    private function charterBopByDateRange(Carbon $start, Carbon $end): array
+    {
+        if (! Schema::hasTable('charters')) {
+            return [];
+        }
+
+        $query = $this->scopedCharterQuery()
+            ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+            ->selectRaw('start_date as period, COALESCE(SUM(COALESCE(bop_price, 0)), 0) as total')
+            ->groupBy('start_date');
+
+        $this->applyActiveCharterFilter($query);
+
+        return $query->pluck('total', 'period')
+            ->map(static fn ($value): float => (float) $value)
+            ->all();
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    private function charterBopByMonthRange(Carbon $start, Carbon $end): array
+    {
+        if (! Schema::hasTable('charters')) {
+            return [];
+        }
+
+        $monthExpression = $this->monthExpression('start_date');
+        $query = $this->scopedCharterQuery()
+            ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+            ->selectRaw("{$monthExpression} as period, COALESCE(SUM(COALESCE(bop_price, 0)), 0) as total")
             ->groupBy(DB::raw($monthExpression));
 
         $this->applyActiveCharterFilter($query);
@@ -906,5 +1060,68 @@ class DashboardController extends Controller
         } catch (\Throwable) {
             return '-';
         }
+    }
+
+    /**
+     * Estimate booking BOP from route-level BOP data, proportional to booking volume.
+     */
+    private function estimateBookingBop(string $dateStart, string $dateEnd, array $scopeStats, string $scopeKey = 'month'): float
+    {
+        if (! Schema::hasTable('routes') || ! Schema::hasColumn('routes', 'bop')) {
+            return 0.0;
+        }
+
+        if (! Schema::hasTable('bookings')) {
+            return 0.0;
+        }
+
+        $bookingRoutes = $this->scopedBookingQuery()
+            ->where('status', '!=', 'canceled')
+            ->whereBetween('tanggal', [$dateStart, $dateEnd])
+            ->select('rute')
+            ->distinct()
+            ->pluck('rute')
+            ->all();
+
+        if (empty($bookingRoutes)) {
+            return 0.0;
+        }
+
+        $routeBopSum = (float) DB::table('routes')
+            ->whereIn('name', $bookingRoutes)
+            ->sum('bop');
+
+        // Scale daily BOP proportionally relative to monthly
+        if ($scopeKey === 'day' && ($scopeStats['month']['total_bookings'] ?? 1) > 0) {
+            $dayCount = (int) ($scopeStats['day']['total_bookings'] ?? 0);
+            $monthCount = max(1, (int) ($scopeStats['month']['total_bookings'] ?? 1));
+            $routeBopSum = $routeBopSum * ($dayCount / $monthCount);
+        }
+
+        return $routeBopSum;
+    }
+
+    /**
+     * Sum target revenue from routes and pools.
+     */
+    private function targetRevenueForPeriod(): float
+    {
+        $target = 0.0;
+
+        if (Schema::hasTable('routes') && Schema::hasColumn('routes', 'target_revenue')) {
+            $target += (float) DB::table('routes')->sum('target_revenue');
+        }
+
+        if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'target_revenue')) {
+            $poolTarget = (float) DB::table('pools')
+                ->where('status', 'active')
+                ->sum('target_revenue');
+            // Use pool targets as baseline if routes have no target
+            if ($target <= 0) {
+                $target = $poolTarget;
+            }
+        }
+
+        return $target;
     }
 }

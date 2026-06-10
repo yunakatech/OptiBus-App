@@ -179,6 +179,10 @@
                     <p class="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Total Biaya</p>
                     <p class="mt-2 text-base font-semibold text-foreground">{formatCurrencyId(charterViewData.price ?? 0)}</p>
                     <p class="mt-1 text-sm text-muted-foreground">BOP {formatCurrencyId(charterViewData.bop_price ?? 0)}</p>
+                    {@const charterMargin = (charterViewData.price ?? 0) - (charterViewData.bop_price ?? 0)}
+                    <p class={`text-sm font-medium ${charterMargin >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        Margin {formatCurrencyId(charterMargin)}
+                    </p>
                     <p class="text-sm text-muted-foreground">Sisa {formatCurrencyId(charterPaymentRemaining(charterViewData))}</p>
                 </div>
                 <div class="rounded-2xl border border-border/70 bg-muted/20 p-4">
