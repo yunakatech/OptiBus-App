@@ -109,12 +109,22 @@
                 <InputError message={errors.phone} />
             </div>
 
-            <!-- Route (free text — user creates their own) -->
+            <!-- Route (split into Dari & Tujuan for auto route creation) -->
             <div class="grid gap-2">
-                <Label for="route">Rute Utama <span class="text-destructive">*</span></Label>
-                <Input id="route" type="text" required name="route" placeholder="Contoh: Pinrang - Makassar" />
-                <p class="text-xs text-muted-foreground">Tulis rute utama operasional travel Anda. Akan otomatis dibuatkan.</p>
-                <InputError message={errors.route} />
+                <Label>Rute Utama <span class="text-destructive">*</span></Label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="grid gap-1.5">
+                        <Label for="origin" class="text-xs text-muted-foreground">Dari</Label>
+                        <Input id="origin" type="text" required name="origin" placeholder="Contoh: Pinrang" />
+                        <InputError message={errors.origin} />
+                    </div>
+                    <div class="grid gap-1.5">
+                        <Label for="destination" class="text-xs text-muted-foreground">Tujuan</Label>
+                        <Input id="destination" type="text" required name="destination" placeholder="Contoh: Makassar" />
+                        <InputError message={errors.destination} />
+                    </div>
+                </div>
+                <p class="text-xs text-muted-foreground">Rute utama operasional travel Anda. Akan otomatis terdaftar di Rute Induk dan termapping ke Pool.</p>
             </div>
 
             <hr />

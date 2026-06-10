@@ -53,7 +53,7 @@ class OnboardingController extends Controller
         $tenantSlug = $this->generateSlug($travelName);
 
         try {
-            DB::transaction(function () use ($userId, $travelName, $phone, $routeText, $email, $tenantSlug): void {
+            DB::transaction(function () use ($userId, $travelName, $phone, $origin, $destination, $email, $tenantSlug): void {
                 // 1. Create tenant
                 $tenantId = (int) DB::table('tenants')->insertGetId([
                     'name' => $travelName,

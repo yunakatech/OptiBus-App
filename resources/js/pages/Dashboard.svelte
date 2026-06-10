@@ -576,8 +576,8 @@
             {/each}
         </div>
 
-        {#if stats.target_revenue_month > 0 || activeSummaryStats.margin_booking || activeSummaryStats.margin_charter}
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-2.5">
+        {#if stats.target_revenue_month > 0 || activeSummaryStats.margin_booking || activeSummaryStats.margin_charter || activeSummaryStats.revenue_luggage}
+            <div class="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5 md:gap-2.5">
                 <!-- Target & Achievement Card -->
                 {#if stats.target_revenue_month > 0}
                     <Card class="overflow-hidden border border-purple-200/80 bg-[linear-gradient(135deg,rgba(250,245,255,0.98),rgba(243,232,255,0.92))] shadow-sm dark:border-purple-400/25 dark:bg-[linear-gradient(135deg,rgba(59,7,100,0.72),rgba(15,23,42,0.94))]">
@@ -601,8 +601,8 @@
                 <Card class="overflow-hidden border border-green-200/80 bg-[linear-gradient(135deg,rgba(240,253,244,0.98),rgba(220,252,231,0.92))] shadow-sm dark:border-green-400/25 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.72),rgba(15,23,42,0.94))]">
                     <CardContent class="space-y-2 p-3 md:p-4">
                         <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-green-700/80 dark:text-green-200/80">Margin Booking</p>
-                        <p class="text-lg font-semibold tracking-tight text-green-950 dark:text-green-50">{toCurrency(activeSummaryStats.margin_booking)}</p>
-                        <div class="flex items-center gap-2 text-[10px] text-green-700/70 dark:text-green-200/70">
+                        <p class={`text-lg font-semibold tracking-tight ${(activeSummaryStats.margin_booking || 0) >= 0 ? 'text-green-950 dark:text-green-50' : 'text-rose-700 dark:text-rose-300'}`}>{toCurrency(activeSummaryStats.margin_booking)}</p>
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-green-700/70 dark:text-green-200/70">
                             <span>Rev {toCurrency(activeSummaryStats.revenue_booking)}</span>
                             <span>− BOP {toCurrency(activeSummaryStats.bop_booking)}</span>
                         </div>
@@ -613,10 +613,21 @@
                 <Card class="overflow-hidden border border-teal-200/80 bg-[linear-gradient(135deg,rgba(240,253,250,0.98),rgba(204,251,241,0.92))] shadow-sm dark:border-teal-400/25 dark:bg-[linear-gradient(135deg,rgba(19,78,74,0.72),rgba(15,23,42,0.94))]">
                     <CardContent class="space-y-2 p-3 md:p-4">
                         <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-700/80 dark:text-teal-200/80">Margin Carter</p>
-                        <p class="text-lg font-semibold tracking-tight text-teal-950 dark:text-teal-50">{toCurrency(activeSummaryStats.margin_charter)}</p>
-                        <div class="flex items-center gap-2 text-[10px] text-teal-700/70 dark:text-teal-200/70">
+                        <p class={`text-lg font-semibold tracking-tight ${(activeSummaryStats.margin_charter || 0) >= 0 ? 'text-teal-950 dark:text-teal-50' : 'text-rose-700 dark:text-rose-300'}`}>{toCurrency(activeSummaryStats.margin_charter)}</p>
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-teal-700/70 dark:text-teal-200/70">
                             <span>Rev {toCurrency(activeSummaryStats.revenue_charter)}</span>
                             <span>− BOP {toCurrency(activeSummaryStats.bop_charter)}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Margin Bagasi Card -->
+                <Card class="overflow-hidden border border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98),rgba(254,243,199,0.92))] shadow-sm dark:border-amber-400/25 dark:bg-[linear-gradient(135deg,rgba(120,53,15,0.62),rgba(15,23,42,0.94))]">
+                    <CardContent class="space-y-2 p-3 md:p-4">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700/80 dark:text-amber-200/80">Margin Bagasi</p>
+                        <p class="text-lg font-semibold tracking-tight text-amber-950 dark:text-amber-50">{toCurrency(activeSummaryStats.revenue_luggage)}</p>
+                        <div class="text-[10px] text-amber-700/70 dark:text-amber-200/70">
+                            <span>Rev {toCurrency(activeSummaryStats.revenue_luggage)} — tanpa BOP</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -625,7 +636,7 @@
                 <Card class="overflow-hidden border border-blue-200/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.98),rgba(219,234,254,0.92))] shadow-sm dark:border-blue-400/25 dark:bg-[linear-gradient(135deg,rgba(23,37,84,0.74),rgba(15,23,42,0.94))]">
                     <CardContent class="space-y-2 p-3 md:p-4">
                         <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-700/80 dark:text-blue-200/80">Margin Total</p>
-                        <p class="text-lg font-semibold tracking-tight text-blue-950 dark:text-blue-50">{toCurrency((activeSummaryStats.margin_booking || 0) + (activeSummaryStats.margin_charter || 0) + (activeSummaryStats.revenue_luggage || 0))}</p>
+                        <p class={`text-lg font-semibold tracking-tight ${((activeSummaryStats.margin_booking || 0) + (activeSummaryStats.margin_charter || 0) + (activeSummaryStats.revenue_luggage || 0)) >= 0 ? 'text-blue-950 dark:text-blue-50' : 'text-rose-700 dark:text-rose-300'}`}>{toCurrency((activeSummaryStats.margin_booking || 0) + (activeSummaryStats.margin_charter || 0) + (activeSummaryStats.revenue_luggage || 0))}</p>
                         <p class="text-[10px] text-blue-700/70 dark:text-blue-200/70">
                             Rev {toCurrency(activeSummaryStats.revenue_booking + activeSummaryStats.revenue_charter + activeSummaryStats.revenue_luggage)} − BOP {toCurrency(activeSummaryStats.bop_booking + activeSummaryStats.bop_charter)}
                         </p>

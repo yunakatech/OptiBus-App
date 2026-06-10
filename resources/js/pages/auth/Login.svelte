@@ -14,8 +14,10 @@
     import { Checkbox } from '@/components/ui/checkbox';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
+    import TextLink from '@/components/TextLink.svelte';
     import { Spinner } from '@/components/ui/spinner';
     import { store } from '@/routes/login';
+    import { register } from '@/routes';
 
     let { status = '' }: { status?: string } = $props();
 </script>
@@ -88,6 +90,11 @@
                     Login dengan Google
                 </Button>
             </a>
+
+            <div class="text-center text-sm text-muted-foreground">
+                Belum punya akun?
+                <TextLink href={register()} class="underline underline-offset-4">Daftar</TextLink>
+            </div>
         </div>
     {/snippet}
 </Form>
