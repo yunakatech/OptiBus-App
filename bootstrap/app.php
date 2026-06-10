@@ -41,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => EnsurePermission::class,
             'feature' => EnsureFeature::class,
+            'superadmin.redirect' => RedirectSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
