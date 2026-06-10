@@ -123,8 +123,15 @@
 
 <div class="space-y-6 pb-8 max-w-2xl mx-auto">
     <div>
-        <h1 class="text-2xl font-bold">Langganan Anda</h1>
-        <p class="text-muted-foreground mt-1">Kelola paket dan pembayaran</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Langganan Anda</h1>
+                <p class="text-muted-foreground mt-1">Kelola paket dan pembayaran</p>
+            </div>
+            <a href="/dashboard" class="text-sm text-muted-foreground hover:text-foreground underline">
+                Ke Dashboard →
+            </a>
+        </div>
     </div>
 
     {#if !tenantSub}

@@ -164,7 +164,8 @@ class OnboardingController extends Controller
 
         Log::info("Onboarding complete for user #{$userId}: {$travelName}");
 
-        return redirect()->route('dashboard');
+        // Redirect to subscription/payment page
+        return redirect()->route('subscription.index');
     }
 
     private function generateSlug(string $name): string

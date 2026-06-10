@@ -171,6 +171,9 @@ class CreateTenantOnRegistration
 
         session()->forget('registration_plan');
 
+        // Redirect to subscription/payment page after registration
+        session()->put('url.intended', route('subscription.index'));
+
         Log::info("Tenant auto-provisioned for user #{$userId}", [
             'tenant_slug' => $tenantSlug,
             'plan' => $planSlug,
