@@ -50,7 +50,8 @@
 <AppHead title="Daftar" />
 
 <Form
-    {...store.form()}
+    action="/register"
+    method="post"
     resetOnSuccess={['password', 'password_confirmation']}
     class="flex flex-col gap-6"
 >
