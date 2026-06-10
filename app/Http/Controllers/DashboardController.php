@@ -1043,7 +1043,7 @@ class DashboardController extends Controller
     private function recentActivity(): array
     {
         $visibleCount = 4;
-        $items = collect(ActivityLog::recent($visibleCount))
+        $items = collect(ActivityLog::recent($visibleCount, 0, $this->activePoolId))
             ->map(function (array $item) {
                 return [
                     'title' => $item['title'],
@@ -1057,7 +1057,7 @@ class DashboardController extends Controller
 
         return [
             'items' => $items,
-            'total' => ActivityLog::count(),
+            'total' => ActivityLog::count($this->activePoolId),
             'visible_count' => count($items),
         ];
     }

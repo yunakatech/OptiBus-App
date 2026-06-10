@@ -44,9 +44,9 @@ class ActivityLog
     /**
      * @return array<int, array<string, string>>
      */
-    public static function recent(int $limit = 50, int $offset = 0): array
+    public static function recent(int $limit = 50, int $offset = 0, int $poolId = 0): array
     {
-        $scope = PoolScope::forCurrentUser();
+        $scope = PoolScope::forCurrentUser($poolId);
 
         if (self::usesDatabase()) {
             return self::recentFromDatabase(max(1, $limit), max(0, $offset), $scope);
@@ -83,9 +83,9 @@ class ActivityLog
         );
     }
 
-    public static function count(): int
+    public static function count(int $poolId = 0): int
     {
-        $scope = PoolScope::forCurrentUser();
+        $scope = PoolScope::forCurrentUser($poolId);
 
         if (self::usesDatabase()) {
             if ($scope['all']) {
