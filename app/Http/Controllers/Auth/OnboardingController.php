@@ -40,12 +40,14 @@ class OnboardingController extends Controller
         $data = $request->validate([
             'travel_name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:30'],
-            'route' => ['required', 'string', 'max:120'],
+            'origin' => ['required', 'string', 'max:80'],
+            'destination' => ['required', 'string', 'max:80'],
         ]);
 
         $travelName = trim($data['travel_name']);
         $phone = trim($data['phone']);
-        $routeText = trim($data['route']);
+        $origin = trim($data['origin']);
+        $destination = trim($data['destination']);
         $userId = (int) $user->id;
         $email = $user->email;
         $tenantSlug = $this->generateSlug($travelName);
@@ -113,31 +115,31 @@ class OnboardingController extends Controller
                         'updated_at' => now(),
                     ]);
 
-                    // Auto-create route from text
-                    if ($routeText !== '' && Schema::hasTable('routes') && Schema::hasTable('pool_route')) {
-                        $parts = array_map('trim', explode('-', $routeText, 2));
-                        $origin = $parts[0] ?? '';
-                        $destination = $parts[1] ?? '';
-                        $routeName = $origin && $destination ? strtoupper($origin.' -> '.$destination) : strtoupper($routeText);
+                    // Auto-create route from origin & destination
+                    if ($origin !== '' && $destination !== '' && Schema::hasTable('routes') && Schema::hasTable('pool_route')) {
+                        $routeName = strtoupper($origin.' -> '.$destination);
 
                         $existingId = DB::table('routes')->where('name', $routeName)->value('id');
                         $routeId = $existingId
                             ? (int) $existingId
                             : (int) DB::table('routes')->insertGetId([
                                 'name' => $routeName,
-                                'origin' => $origin !== '' ? $origin : null,
-                                'destination' => $destination !== '' ? $destination : null,
+                                'origin' => $origin,
+                                'destination' => $destination,
                                 'tenant_id' => $tenantId,
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
 
-                        DB::table('pool_route')->insert([
-                            'pool_id' => $poolId,
-                            'route_id' => $routeId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                        // Map route to pool
+                        if (! DB::table('pool_route')->where('pool_id', $poolId)->where('route_id', $routeId)->exists()) {
+                            DB::table('pool_route')->insert([
+                                'pool_id' => $poolId,
+                                'route_id' => $routeId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
                     }
 
                     // Assign user to pool
