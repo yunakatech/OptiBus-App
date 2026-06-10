@@ -88,12 +88,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Subscription & Payment (tenant self-service)
     Route::get('subscription', [\App\Http\Controllers\SubscriptionPaymentController::class, 'index'])->name('subscription.index');
-    Route::get('subscription/payment/finish', [\App\Http\Controllers\SubscriptionPaymentController::class, 'finish'])->name('subscription.payment.finish');
-    Route::get('subscription/payment/error', [\App\Http\Controllers\SubscriptionPaymentController::class, 'error'])->name('subscription.payment.error');
-    Route::post('api/subscription/pay/{invoiceId}', [\App\Http\Controllers\SubscriptionPaymentController::class, 'pay'])->name('api.subscription.pay');
-
-    // Midtrans webhook (no auth — called by Midtrans servers)
-    Route::post('api/webhooks/midtrans', [\App\Http\Controllers\Api\PaymentWebhookController::class, 'midtrans'])->name('api.webhooks.midtrans');
+    Route::post('api/subscription/upload-proof/{invoiceId}', [\App\Http\Controllers\SubscriptionPaymentController::class, 'uploadProof'])->name('api.subscription.upload-proof');
 
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
