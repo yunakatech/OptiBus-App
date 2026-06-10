@@ -52,6 +52,14 @@ class OnboardingController extends Controller
         $email = $user->email;
         $tenantSlug = $this->generateSlug($travelName);
 
+        // Check if user already has a tenant
+        if (Schema::hasColumn('users', 'tenant_id')) {
+            $existingTenantId = DB::table('users')->where('id', $userId)->value('tenant_id');
+            if ($existingTenantId) {
+                return redirect()->route('subscription.index');
+            }
+        }
+
         try {
             DB::transaction(function () use ($userId, $travelName, $phone, $origin, $destination, $email, $tenantSlug): void {
                 // 1. Create tenant
@@ -68,7 +76,7 @@ class OnboardingController extends Controller
                 // 2. Create subscription (check for trial eligibility)
                 $plan = DB::table('plans')->where('slug', 'starter')->where('is_active', true)->first();
                 if (! $plan) {
-                    return;
+                    throw new \RuntimeException('Paket Starter tidak ditemukan.');
                 }
 
                 $trialDays = (int) config('saas.trial_days', 14);
@@ -131,7 +139,6 @@ class OnboardingController extends Controller
                                 'updated_at' => now(),
                             ]);
 
-                        // Map route to pool
                         if (! DB::table('pool_route')->where('pool_id', $poolId)->where('route_id', $routeId)->exists()) {
                             DB::table('pool_route')->insert([
                                 'pool_id' => $poolId,
@@ -142,7 +149,6 @@ class OnboardingController extends Controller
                         }
                     }
 
-                    // Assign user to pool
                     if (Schema::hasTable('pool_user')) {
                         DB::table('pool_user')->insert([
                             'pool_id' => $poolId,
@@ -158,10 +164,12 @@ class OnboardingController extends Controller
                     DB::table('users')->where('id', $userId)->update(['tenant_id' => $tenantId]);
                 }
             });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e; // Let Inertia handle validation errors properly
         } catch (\Throwable $e) {
-            Log::error("Onboarding failed for user #{$userId}: {$e->getMessage()}");
+            Log::error("Onboarding failed for user #{$userId}: ".$e->getMessage()."\n".$e->getTraceAsString());
 
-            return back()->withErrors(['travel_name' => 'Gagal menyimpan data. Silakan coba lagi.']);
+            return back()->withErrors(['travel_name' => 'Gagal: '.$e->getMessage()]);
         }
 
         Log::info("Onboarding complete for user #{$userId}: {$travelName}");
