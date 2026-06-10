@@ -111,6 +111,9 @@ class CreateTenantOnRegistration
             if (Schema::hasColumn('users', 'tenant_id')) {
                 DB::table('users')->where('id', $userId)->update(['tenant_id' => $tenantId]);
             }
+
+            // 6. Assign default "Admin Pool" role so user can access the app
+            $this->assignDefaultRole($userId);
         });
 
         session()->forget('registration_plan');
@@ -126,6 +129,41 @@ class CreateTenantOnRegistration
         return Schema::hasTable('tenants')
             && Schema::hasTable('plans')
             && Schema::hasTable('subscriptions');
+    }
+
+    private function assignDefaultRole(int $userId): void
+    {
+        if (! Schema::hasTable('roles') || ! Schema::hasTable('user_role')) {
+            return;
+        }
+
+        // Find "Admin Pool" role (most appropriate for tenant owner)
+        $roleId = DB::table('roles')->where('slug', 'admin-pool')->value('id');
+
+        // Fallback: use any available non-super-admin role
+        if (! $roleId) {
+            $roleId = DB::table('roles')
+                ->where('slug', '!=', 'super-admin')
+                ->orderBy('id')
+                ->value('id');
+        }
+
+        if (! $roleId) {
+            return;
+        }
+
+        // Check if user already has a role
+        $existingRole = DB::table('user_role')->where('user_id', $userId)->exists();
+        if ($existingRole) {
+            return;
+        }
+
+        DB::table('user_role')->insert([
+            'user_id' => $userId,
+            'role_id' => (int) $roleId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function generateTenantSlug(string $name): string
