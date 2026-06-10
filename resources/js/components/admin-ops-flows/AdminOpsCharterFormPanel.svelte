@@ -661,10 +661,9 @@
                             <span class="text-cyan-100">Nominal BOP</span>
                             <span class="font-semibold">{formatCurrencyId(charterForm.bop_price)}</span>
                         </div>
-                        {@const liveMargin = Number(charterForm.price || 0) - Number(charterForm.bop_price || 0)}
                         <div class="mt-1 flex items-center justify-between gap-2">
                             <span class="text-cyan-100">Margin</span>
-                            <span class={`font-semibold ${liveMargin >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{formatCurrencyId(liveMargin)}</span>
+                            <span class={`font-semibold ${(Number(charterForm.price || 0) - Number(charterForm.bop_price || 0)) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{formatCurrencyId(Number(charterForm.price || 0) - Number(charterForm.bop_price || 0))}</span>
                         </div>
                         {#if Number(charterForm.down_payment || 0) > 0}
                             <div class="mt-1 flex items-center justify-between gap-2">

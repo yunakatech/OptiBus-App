@@ -580,11 +580,10 @@
                 </Card>
 
                 <!-- Total Margin Card -->
-                {@const totalMargin = (activeSummaryStats.margin_booking || 0) + (activeSummaryStats.margin_charter || 0) + (activeSummaryStats.revenue_luggage || 0)}
                 <Card class="overflow-hidden border border-blue-200/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.98),rgba(219,234,254,0.92))] shadow-sm dark:border-blue-400/25 dark:bg-[linear-gradient(135deg,rgba(23,37,84,0.74),rgba(15,23,42,0.94))]">
                     <CardContent class="space-y-2 p-3 md:p-4">
                         <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-700/80 dark:text-blue-200/80">Margin Total</p>
-                        <p class="text-lg font-semibold tracking-tight text-blue-950 dark:text-blue-50">{toCurrency(totalMargin)}</p>
+                        <p class="text-lg font-semibold tracking-tight text-blue-950 dark:text-blue-50">{toCurrency((activeSummaryStats.margin_booking || 0) + (activeSummaryStats.margin_charter || 0) + (activeSummaryStats.revenue_luggage || 0))}</p>
                         <p class="text-[10px] text-blue-700/70 dark:text-blue-200/70">
                             Rev {toCurrency(activeSummaryStats.revenue_booking + activeSummaryStats.revenue_charter + activeSummaryStats.revenue_luggage)} − BOP {toCurrency(activeSummaryStats.bop_booking + activeSummaryStats.bop_charter)}
                         </p>
