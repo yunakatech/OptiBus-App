@@ -137,6 +137,11 @@ class CreateTenantOnRegistration
             return;
         }
 
+        // Safety net: ensure roles and permissions are seeded
+        if ((int) DB::table('roles')->count() === 0) {
+            \App\Support\AccessControl::syncDefaults();
+        }
+
         // Find "Admin Pool" role (most appropriate for tenant owner)
         $roleId = DB::table('roles')->where('slug', 'admin-pool')->value('id');
 
@@ -149,6 +154,8 @@ class CreateTenantOnRegistration
         }
 
         if (! $roleId) {
+            Log::error("Cannot assign role to user #{$userId}: no roles exist in database. Run AccessControl::syncDefaults().");
+
             return;
         }
 
@@ -164,6 +171,8 @@ class CreateTenantOnRegistration
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        Log::info("Assigned role '{$roleId}' to user #{$userId}");
     }
 
     private function generateTenantSlug(string $name): string
