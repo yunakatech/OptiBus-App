@@ -31,9 +31,8 @@
     <!-- Nav -->
     <nav class="border-b">
         <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-2 font-bold text-xl">
-                <BusFront class="h-6 w-6 text-primary" />
-                Qbus
+            <a href="/" class="flex items-center gap-2">
+                <AppLogo class="h-8 w-auto" />
             </a>
             <div class="flex items-center gap-3">
                 <a href="/pricing" class="text-sm text-muted-foreground hover:text-foreground">Paket</a>
