@@ -3251,6 +3251,9 @@ class AdminOpsApiController extends Controller
         $acType = trim((string) $request->query('ac_type', ''));
 
         $query = DB::table('armadas')
+            ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'armadas.tenant_id');
+            })
             ->select([
                 'id',
                 'merk',
@@ -3522,6 +3525,9 @@ class AdminOpsApiController extends Controller
         $routeFinancials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
 
         $poolQuery = DB::table('pools')
+            ->when(Schema::hasColumn('pools', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'pools.tenant_id');
+            })
             ->select([
                 'id',
                 'name',
@@ -3963,6 +3969,9 @@ class AdminOpsApiController extends Controller
         }
 
         $query = DB::table('users')
+            ->when(Schema::hasColumn('users', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'users.tenant_id');
+            })
             ->select($select)
             ->orderBy('name');
 
@@ -5402,6 +5411,9 @@ class AdminOpsApiController extends Controller
         $rows = DB::table('drivers as d')
             ->when($canJoinArmadas, static function (Builder $query) {
                 $query->leftJoin('armadas as a', 'd.armada_id', '=', 'a.id');
+            })
+            ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'd.tenant_id');
             })
             ->orderBy('d.nama')
             ->get($select);
