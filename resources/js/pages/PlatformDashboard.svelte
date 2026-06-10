@@ -11,9 +11,10 @@
 
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
-    import { ArrowDown, ArrowUp, BarChart3, Building2, CreditCard, TrendingDown, TrendingUp, Users } from 'lucide-svelte';
+    import { ArrowDown, ArrowUp, BarChart3, Building2, CreditCard, LayoutGrid, Receipt, Settings2, TrendingDown, TrendingUp, Users } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
+    import { Button } from '@/components/ui/button';
     import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
     type TenantItem = {
@@ -123,9 +124,22 @@
 <AppHead title="Platform Dashboard" />
 
 <div class="space-y-6 pb-8">
-    <div>
-        <h1 class="text-2xl font-bold tracking-tight">Platform Dashboard</h1>
-        <p class="text-muted-foreground mt-1">Metrik SaaS dan manajemen tenant Qbus</p>
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">Platform Dashboard</h1>
+            <p class="text-muted-foreground mt-1">Metrik SaaS dan manajemen tenant Qbus</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/admin-ops/saas">
+                <Button variant="outline" size="sm"><Settings2 class="mr-1 h-4 w-4" /> Kelola Tenant</Button>
+            </a>
+            <a href="/admin-ops/saas/subscriptions">
+                <Button variant="outline" size="sm"><CreditCard class="mr-1 h-4 w-4" /> Subscription</Button>
+            </a>
+            <a href="/admin-ops/saas/plans">
+                <Button variant="outline" size="sm"><Receipt class="mr-1 h-4 w-4" /> Paket</Button>
+            </a>
+        </div>
     </div>
 
     <!-- Metric Cards -->
@@ -269,9 +283,9 @@
                                 </thead>
                                 <tbody>
                                     {#each tenants as tenant}
-                                        <tr class="border-b last:border-0">
+                                        <tr class="border-b last:border-0 hover:bg-muted/20">
                                             <td class="py-2">
-                                                <div class="font-medium">{tenant.name}</div>
+                                                <a href="/admin-ops/saas/tenants" class="font-medium hover:text-primary hover:underline">{tenant.name}</a>
                                                 <div class="text-xs text-muted-foreground">{tenant.slug}</div>
                                             </td>
                                             <td class="py-2">

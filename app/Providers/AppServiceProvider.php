@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Listeners\CreateTenantOnRegistration;
+use App\Support\AccessControl;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +40,14 @@ class AppServiceProvider extends ServiceProvider
     {
         // Auto-provision tenant + subscription on user registration
         Event::listen(Registered::class, CreateTenantOnRegistration::class);
+
+        // Redirect super admins to platform dashboard after login
+        Event::listen(Login::class, function (Login $event): void {
+            $userId = (int) ($event->user?->id ?? 0);
+            if ($userId > 0 && AccessControl::userIsSuperAdmin($userId)) {
+                session()->put('url.intended', route('platform.dashboard'));
+            }
+        });
     }
 
     /**
