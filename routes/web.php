@@ -12,10 +12,18 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LuggageDocumentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlatformDashboardController;
+use App\Http\Controllers\PublicController;
 use App\Http\Controllers\StaticAssetController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login')->name('home');
+// Public landing page — no auth required
+Route::get('/', [PublicController::class, 'welcome'])->name('home');
+
+// Public pricing page — no auth required
+Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
+
+// Public API — no auth required
+Route::get('api/plans', [\App\Http\Controllers\Api\PublicApiController::class, 'plans'])->name('api.plans');
 
 Route::get('style.css', [StaticAssetController::class, 'style'])->name('style.css');
 
