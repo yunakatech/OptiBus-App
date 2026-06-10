@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
+    import BarChart3 from 'lucide-svelte/icons/bar-chart-3';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import Building2 from 'lucide-svelte/icons/building-2';
     import BusFront from 'lucide-svelte/icons/bus-front';
@@ -165,6 +166,13 @@
     ];
 
     const sistemNavItems: NavItem[] = [
+        {
+            title: 'Platform',
+            href: '/platform/dashboard',
+            icon: BarChart3,
+            permission: 'pool.manage',
+            superAdminOnly: true,
+        },
         {
             title: 'Users',
             href: '/admin-ops/users',

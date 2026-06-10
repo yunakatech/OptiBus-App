@@ -40,6 +40,7 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $userId = (int) ($user?->id ?? 0);
         $poolScope = $userId > 0 ? PoolScope::forCurrentUser(0, $userId) : null;
+        $tenantSubscription = $userId > 0 ? PoolScope::tenantSubscription($userId) : null;
         $activePoolId = (int) (session('active_pool_id', 0));
         $activePoolName = 'Semua Pool';
         if ($activePoolId > 0 && \Illuminate\Support\Facades\Schema::hasTable('pools')) {
@@ -73,6 +74,7 @@ class HandleInertiaRequests extends Middleware
                     'id' => $activePoolId,
                     'name' => $activePoolName,
                 ] : null,
+                'tenant_subscription' => $tenantSubscription,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
