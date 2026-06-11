@@ -6477,10 +6477,25 @@ class AdminOpsApiController extends Controller
 
     private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
     {
-        $prefix = $alias !== '' ? $alias.'.' : '';
-        if (Schema::hasColumn(trim($table), 'tenant_id')) {
+        [$baseTable, $tableAlias] = $this->parseTableAlias($table);
+        $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
+        $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
+        if (Schema::hasColumn($baseTable, 'tenant_id')) {
             \App\Support\PoolScope::applyTenantScope($query, $prefix.'tenant_id');
         }
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function parseTableAlias(string $table): array
+    {
+        $table = trim($table);
+        if (preg_match('/^([a-z0-9_]+)(?:\s+as\s+([a-z0-9_]+))?$/i', $table, $matches) === 1) {
+            return [$matches[1], $matches[2] ?? ''];
+        }
+
+        return [$table, ''];
     }
 
     private function tripAssignmentsHasArmadaId(): bool

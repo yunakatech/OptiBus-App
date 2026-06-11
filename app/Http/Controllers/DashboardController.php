@@ -493,8 +493,26 @@ class DashboardController extends Controller
             ];
         }
 
+        $customerScope = PoolScope::forCurrentUser($this->activePoolId);
         $bookingRows = $this->scopedBookingQuery('bookings as b', 'b.rute')
-            ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
+            ->leftJoin('customers as c', function ($join) use ($customerScope): void {
+                $join->on('c.phone', '=', 'b.phone');
+
+                if (! Schema::hasColumn('customers', 'pool_id')) {
+                    return;
+                }
+
+                if (! ($customerScope['all'] ?? true)) {
+                    $poolIds = $customerScope['pool_ids'] ?? [];
+                    if ($poolIds === []) {
+                        $join->whereRaw('1 = 0');
+
+                        return;
+                    }
+
+                    $join->whereIn('c.pool_id', $poolIds);
+                }
+            })
             ->where('b.status', '!=', 'canceled')
             ->whereDate('b.tanggal', $today->toDateString())
             ->select([
@@ -688,7 +706,7 @@ class DashboardController extends Controller
     private function dailyTrend(Carbon $anchorDate): array
     {
         return Cache::remember(
-            'dashboard:daily-trend:'.$anchorDate->toDateString().':'.PoolScope::cacheKey(),
+            'dashboard:daily-trend:'.$anchorDate->toDateString().':'.PoolScope::cacheKey($this->activePoolId),
             now()->addMinutes(2),
             function () use ($anchorDate): array {
                 $rows = [];
@@ -727,7 +745,7 @@ class DashboardController extends Controller
     private function monthlyTrend(Carbon $yearAnchor): array
     {
         return Cache::remember(
-            'dashboard:monthly-trend:'.$yearAnchor->format('Y-m').':'.PoolScope::cacheKey(),
+            'dashboard:monthly-trend:'.$yearAnchor->format('Y-m').':'.PoolScope::cacheKey($this->activePoolId),
             now()->addMinutes(2),
             function () use ($yearAnchor): array {
                 $rows = [];
@@ -1022,9 +1040,24 @@ class DashboardController extends Controller
 
     private function tenantIdColumn(string $table, string $alias = ''): string
     {
-        $prefix = $alias !== '' ? $alias.'.' : '';
+        [$baseTable, $tableAlias] = $this->parseTableAlias($table);
+        $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
+        $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
 
-        return Schema::hasColumn(trim($table), 'tenant_id') ? $prefix.'tenant_id' : '';
+        return Schema::hasColumn($baseTable, 'tenant_id') ? $prefix.'tenant_id' : '';
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function parseTableAlias(string $table): array
+    {
+        $table = trim($table);
+        if (preg_match('/^([a-z0-9_]+)(?:\s+as\s+([a-z0-9_]+))?$/i', $table, $matches) === 1) {
+            return [$matches[1], $matches[2] ?? ''];
+        }
+
+        return [$table, ''];
     }
 
     private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
@@ -1134,6 +1167,8 @@ class DashboardController extends Controller
             $poolIds = $scope['pool_ids'] ?? [];
             if (! empty($poolIds)) {
                 $query->whereIn('id', $poolIds);
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
 
@@ -1165,7 +1200,20 @@ class DashboardController extends Controller
             return 0.0;
         }
 
-        $routeBopSum = (float) DB::table('routes')
+        $routeQuery = DB::table('routes');
+        $this->applyTenantScopeIfExists($routeQuery, 'routes');
+
+        $scope = PoolScope::forCurrentUser($this->activePoolId);
+        if (! ($scope['all'] ?? true)) {
+            $routeIds = $scope['route_ids'] ?? [];
+            if ($routeIds === []) {
+                return 0.0;
+            }
+
+            $routeQuery->whereIn('id', $routeIds);
+        }
+
+        $routeBopSum = (float) $routeQuery
             ->whereIn('name', $bookingRoutes)
             ->sum('bop');
 
@@ -1185,11 +1233,20 @@ class DashboardController extends Controller
     private function targetRevenueForPeriod(): float
     {
         $target = 0.0;
+        $scope = PoolScope::forCurrentUser($this->activePoolId);
+        $isScoped = ! ($scope['all'] ?? true);
 
         // Pool-level target takes priority when a specific pool is selected
         if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'target_revenue')) {
             $poolQuery = DB::table('pools')->where('status', 'active');
-            if ($this->activePoolId > 0) {
+            if ($isScoped) {
+                $poolIds = $scope['pool_ids'] ?? [];
+                if ($poolIds === []) {
+                    return 0.0;
+                }
+
+                $poolQuery->whereIn('id', $poolIds);
+            } elseif ($this->activePoolId > 0) {
                 $poolQuery->where('id', $this->activePoolId);
             }
             if (Schema::hasColumn('pools', 'tenant_id')) {
@@ -1201,7 +1258,14 @@ class DashboardController extends Controller
         // Fallback to route-level targets
         if ($target <= 0 && Schema::hasTable('routes') && Schema::hasColumn('routes', 'target_revenue')) {
             $routeQuery = DB::table('routes');
-            if ($this->activePoolId > 0 && Schema::hasTable('pool_route')) {
+            if ($isScoped) {
+                $routeIds = $scope['route_ids'] ?? [];
+                if ($routeIds === []) {
+                    return 0.0;
+                }
+
+                $routeQuery->whereIn('id', $routeIds);
+            } elseif ($this->activePoolId > 0 && Schema::hasTable('pool_route')) {
                 $routeIds = DB::table('pool_route')
                     ->where('pool_id', $this->activePoolId)
                     ->pluck('route_id')
