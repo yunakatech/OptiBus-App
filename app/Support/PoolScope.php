@@ -388,6 +388,10 @@ class PoolScope
             return;
         }
 
+        if (Schema::hasTable('customers') && Schema::hasColumn('customers', 'tenant_id')) {
+            self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
+        }
+
         $poolIds = $scope['pool_ids'];
         $routeIds = $scope['route_ids'];
         $routeNames = $scope['route_names'];
@@ -437,6 +441,10 @@ class PoolScope
                         ->from('bookings as scoped_bookings')
                         ->whereColumn('scoped_bookings.phone', $customerPhoneColumn);
 
+                    if (Schema::hasColumn('bookings', 'tenant_id')) {
+                        self::applyTenantScope($exists, 'scoped_bookings.tenant_id');
+                    }
+
                     self::appendRouteClauses(
                         $exists,
                         Schema::hasColumn('bookings', 'route_id') ? 'scoped_bookings.route_id' : '',
@@ -458,6 +466,10 @@ class PoolScope
         $scope = self::forCurrentUser($poolId, $userId);
         if ($scope['all']) {
             return;
+        }
+
+        if (Schema::hasTable('customer_bagasi') && Schema::hasColumn('customer_bagasi', 'tenant_id')) {
+            self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
         }
 
         $poolIds = $scope['pool_ids'];
@@ -511,6 +523,10 @@ class PoolScope
                                 ->orWhereColumn('scoped_luggages.receiver_phone', $customerPhoneColumn);
                         });
 
+                    if (Schema::hasColumn('luggages', 'tenant_id')) {
+                        self::applyTenantScope($exists, 'scoped_luggages.tenant_id', $userId);
+                    }
+
                     self::applyPoolOrRouteScope(
                         $exists,
                         Schema::hasColumn('luggages', 'pool_id') ? 'scoped_luggages.pool_id' : '',
@@ -533,6 +549,10 @@ class PoolScope
         $scope = self::forCurrentUser($poolId, $userId);
         if ($scope['all']) {
             return;
+        }
+
+        if (Schema::hasTable('customer_charter') && Schema::hasColumn('customer_charter', 'tenant_id')) {
+            self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
         }
 
         $poolIds = $scope['pool_ids'];
@@ -581,6 +601,10 @@ class PoolScope
                         ->selectRaw('1')
                         ->from('charters as scoped_charters')
                         ->whereColumn('scoped_charters.phone', $customerPhoneColumn);
+
+                    if (Schema::hasColumn('charters', 'tenant_id')) {
+                        self::applyTenantScope($exists, 'scoped_charters.tenant_id', $userId);
+                    }
 
                     self::applyCharterScope($exists, 'scoped_charters', $poolId, $userId);
                 });

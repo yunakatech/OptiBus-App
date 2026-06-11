@@ -21,9 +21,11 @@ class PaymentPageTest extends TestCase
     public function test_payment_page_is_scoped_to_operator_pool(): void
     {
         [$operator, $pinrangRouteId, $makassarRouteId, $pinrangPoolId, $makassarPoolId] = $this->seedPoolOperator();
+        $tenantId = $this->defaultTenantId();
 
         DB::table('bookings')->insert([
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $pinrangRouteId,
                 'rute' => 'PINRANG - MAKASSAR',
                 'tanggal' => '2026-06-05',
@@ -40,6 +42,7 @@ class PaymentPageTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $makassarRouteId,
                 'rute' => 'MAKASSAR - PAREPARE',
                 'tanggal' => '2026-06-05',
@@ -59,6 +62,7 @@ class PaymentPageTest extends TestCase
 
         DB::table('charters')->insert([
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $pinrangPoolId,
                 'name' => 'CARTER PINRANG',
                 'start_date' => '2026-06-05',
@@ -72,6 +76,7 @@ class PaymentPageTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $makassarPoolId,
                 'name' => 'CARTER MAKASSAR',
                 'start_date' => '2026-06-05',
@@ -88,6 +93,7 @@ class PaymentPageTest extends TestCase
 
         DB::table('luggages')->insert([
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $pinrangPoolId,
                 'sender_name' => 'BAGASI PINRANG',
                 'sender_phone' => '082100001',
@@ -103,6 +109,7 @@ class PaymentPageTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $makassarPoolId,
                 'sender_name' => 'BAGASI MAKASSAR',
                 'sender_phone' => '082100002',
@@ -139,8 +146,10 @@ class PaymentPageTest extends TestCase
     public function test_payment_update_respects_pool_scope(): void
     {
         [$operator, $pinrangRouteId, $makassarRouteId] = $this->seedPoolOperator();
+        $tenantId = $this->defaultTenantId();
 
         $insideBookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
             'route_id' => $pinrangRouteId,
             'rute' => 'PINRANG - MAKASSAR',
             'tanggal' => '2026-06-05',
@@ -157,6 +166,7 @@ class PaymentPageTest extends TestCase
             'created_at' => now(),
         ]);
         $outsideBookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
             'route_id' => $makassarRouteId,
             'rute' => 'MAKASSAR - PAREPARE',
             'tanggal' => '2026-06-05',
@@ -197,9 +207,11 @@ class PaymentPageTest extends TestCase
     public function test_payment_export_csv_respects_filter_and_pool_scope(): void
     {
         [$operator, $pinrangRouteId, $makassarRouteId] = $this->seedPoolOperator();
+        $tenantId = $this->defaultTenantId();
 
         DB::table('bookings')->insert([
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $pinrangRouteId,
                 'rute' => 'PINRANG - MAKASSAR',
                 'tanggal' => '2026-06-05',
@@ -216,6 +228,7 @@ class PaymentPageTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $makassarRouteId,
                 'rute' => 'MAKASSAR - PAREPARE',
                 'tanggal' => '2026-06-05',
@@ -232,6 +245,7 @@ class PaymentPageTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $pinrangRouteId,
                 'rute' => 'PINRANG - MAKASSAR',
                 'tanggal' => '2026-06-05',

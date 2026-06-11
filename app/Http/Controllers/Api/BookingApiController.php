@@ -46,6 +46,9 @@ class BookingApiController extends Controller
 
             $query = DB::table('schedules')
                 ->where('dow', $dow);
+            if (Schema::hasColumn('schedules', 'tenant_id')) {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            }
             PoolScope::applyRouteScope(
                 $query,
                 Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
@@ -100,6 +103,9 @@ class BookingApiController extends Controller
                 ->where('s.rute', $rute)
                 ->where('s.dow', $dow)
                 ->orderBy('s.jam');
+            if (Schema::hasColumn('schedules', 'tenant_id')) {
+                PoolScope::applyTenantScope($query, 's.tenant_id');
+            }
             PoolScope::applyRouteScope(
                 $query,
                 Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
@@ -123,6 +129,9 @@ class BookingApiController extends Controller
             if (! empty($scheduleIds)) {
                 $items = DB::table('schedule_units')
                     ->whereIn('schedule_id', $scheduleIds)
+                    ->when(Schema::hasColumn('schedule_units', 'tenant_id'), function (Builder $query): void {
+                        PoolScope::applyTenantScope($query, 'tenant_id');
+                    })
                     ->orderBy('schedule_id')
                     ->orderBy('unit_no')
                     ->get(['schedule_id', 'unit_no', 'label', 'unit_id']);
@@ -330,6 +339,9 @@ class BookingApiController extends Controller
             ->where('s.dow', $dow)
             ->where('s.jam', $jamSql)
             ->orderBy('s.id');
+        if (Schema::hasColumn('schedules', 'tenant_id')) {
+            PoolScope::applyTenantScope($scheduleQuery, 's.tenant_id');
+        }
         PoolScope::applyRouteScope(
             $scheduleQuery,
             Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
@@ -367,6 +379,9 @@ class BookingApiController extends Controller
             if (! empty($scheduleIds)) {
                 $optionRows = DB::table('schedule_units')
                     ->whereIn('schedule_id', $scheduleIds)
+                    ->when(Schema::hasColumn('schedule_units', 'tenant_id'), function (Builder $query): void {
+                        PoolScope::applyTenantScope($query, 'tenant_id');
+                    })
                     ->orderBy('schedule_id')
                     ->orderBy('unit_no')
                     ->get(['schedule_id', 'unit_no', 'label', 'unit_id']);
@@ -1782,8 +1797,25 @@ class BookingApiController extends Controller
         }
 
         $tenantId = PoolScope::tenantId();
+        if ($tenantId <= 0) {
+            $tenantId = $this->defaultTenantId();
+        }
 
         return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    }
+
+    private function defaultTenantId(): int
+    {
+        if (! Schema::hasTable('tenants')) {
+            return 0;
+        }
+
+        $tenantId = (int) (DB::table('tenants')->where('id', 1)->value('id') ?? 0);
+        if ($tenantId > 0) {
+            return $tenantId;
+        }
+
+        return (int) (DB::table('tenants')->where('slug', 'qbus-default')->value('id') ?? 0);
     }
 
     private function bookingsHasTicketCode(): bool
@@ -1859,6 +1891,9 @@ class BookingApiController extends Controller
             ->where('dow', $dow)
             ->where('jam', $this->normalizeTime($jam))
             ->orderBy('id');
+        if (Schema::hasColumn('schedules', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
         PoolScope::applyRouteScope(
             $query,
             Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
@@ -2279,7 +2314,7 @@ class BookingApiController extends Controller
             'pickup_point' => $pickupPoint,
             'gmaps' => $address,
             'created_at' => now(),
-        ];
+        ] + $this->tenantPayload('customers');
         $poolId = 0;
 
         if (Schema::hasColumn('customers', 'pool_id')) {
@@ -2287,13 +2322,35 @@ class BookingApiController extends Controller
             $customer['pool_id'] = $poolId > 0 ? $poolId : null;
         }
 
-        DB::table('customers')->upsert([$customer], ['phone'], ['name', 'pickup_point', 'gmaps']);
+        $existingQuery = DB::table('customers')->where('phone', $phone);
+        if (Schema::hasColumn('customers', 'tenant_id')) {
+            $tenantId = (int) ($customer['tenant_id'] ?? 0);
+            if ($tenantId > 0) {
+                $existingQuery->where('tenant_id', $tenantId);
+            }
+        }
+        $existingId = (int) ($existingQuery->value('id') ?? 0);
+
+        if ($existingId > 0) {
+            DB::table('customers')
+                ->where('id', $existingId)
+                ->update([
+                    'name' => $customer['name'],
+                    'pickup_point' => $customer['pickup_point'],
+                    'gmaps' => $customer['gmaps'],
+                ]);
+        } else {
+            DB::table('customers')->insert($customer);
+        }
 
         if ($poolId > 0) {
-            DB::table('customers')
+            $poolQuery = DB::table('customers')
                 ->where('phone', $phone)
-                ->whereNull('pool_id')
-                ->update(['pool_id' => $poolId]);
+                ->whereNull('pool_id');
+            if (Schema::hasColumn('customers', 'tenant_id') && (int) ($customer['tenant_id'] ?? 0) > 0) {
+                $poolQuery->where('tenant_id', (int) $customer['tenant_id']);
+            }
+            $poolQuery->update(['pool_id' => $poolId]);
         }
     }
 
@@ -2346,7 +2403,11 @@ class BookingApiController extends Controller
             return 0.0;
         }
 
-        $price = DB::table('segments')->where('id', $segmentId)->value('harga');
+        $query = DB::table('segments')->where('id', $segmentId);
+        if (Schema::hasColumn('segments', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
+        $price = $query->value('harga');
 
         return (float) ($price ?? 0);
     }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -54,8 +55,10 @@ class AdminOpsApiTest extends TestCase
     public function test_schedule_duplicate_is_rejected(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
@@ -63,6 +66,7 @@ class AdminOpsApiTest extends TestCase
         ]);
 
         DB::table('schedules')->insert([
+            'tenant_id' => $tenantId,
             'route_id' => $routeId,
             'rute' => 'PINRANG - MAKASSAR',
             'dow' => 1,
@@ -264,11 +268,162 @@ class AdminOpsApiTest extends TestCase
         $this->assertNotNull(collect($armadas)->firstWhere('id', $armadaId));
     }
 
+    public function test_legacy_master_data_is_scoped_by_tenant(): void
+    {
+        AccessControl::syncDefaults();
+        $tenantId = $this->defaultTenantId();
+        $tenantTwoId = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Dua',
+            'slug' => 'tenant-dua',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+        $otherRouteId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantTwoId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL TENANT SATU',
+            'code' => 'T1',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $otherPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantTwoId,
+            'name' => 'POOL TENANT DUA',
+            'code' => 'T2',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            [
+                'pool_id' => $poolId,
+                'route_id' => $routeId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'pool_id' => $otherPoolId,
+                'route_id' => $otherRouteId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        DB::table('schedules')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'route_id' => $routeId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'dow' => 1,
+                'jam' => '08:00:00',
+                'units' => 1,
+                'unit_label' => 'Tenant Satu',
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantTwoId,
+                'route_id' => $otherRouteId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'dow' => 1,
+                'jam' => '09:00:00',
+                'units' => 1,
+                'unit_label' => 'Tenant Dua',
+                'created_at' => now(),
+            ],
+        ]);
+        DB::table('segments')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'route_id' => $routeId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'origin' => 'PINRANG',
+                'destination' => 'MAROS',
+                'harga' => 75000,
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantTwoId,
+                'route_id' => $otherRouteId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'origin' => 'PINRANG',
+                'destination' => 'TENANT DUA',
+                'harga' => 99000,
+                'created_at' => now(),
+            ],
+        ]);
+        DB::table('customers')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolId,
+                'name' => 'CUSTOMER TENANT SATU',
+                'phone' => '081211111111',
+                'pickup_point' => 'Pinrang',
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantTwoId,
+                'pool_id' => $otherPoolId,
+                'name' => 'CUSTOMER TENANT DUA',
+                'phone' => '081222222222',
+                'pickup_point' => 'Pinrang',
+                'created_at' => now(),
+            ],
+        ]);
+
+        $operator = User::factory()->create(['is_super_admin' => false, 'tenant_id' => $tenantId]);
+        DB::table('pool_user')->insert([
+            'pool_id' => $poolId,
+            'user_id' => $operator->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('user_role')->insert([
+            'user_id' => $operator->id,
+            'role_id' => DB::table('roles')->where('slug', 'admin-pool')->value('id'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->actingAs($operator);
+
+        $this->getJson(route('api.admin.schedules.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'schedules')
+            ->assertJsonPath('schedules.0.unit_label', 'Tenant Satu');
+
+        $this->getJson(route('api.admin.segments.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'segments')
+            ->assertJsonPath('segments.0.destination', 'MAROS');
+
+        $this->getJson(route('api.admin.customers.index', ['q' => 'customer tenant']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonPath('customers.0.name', 'CUSTOMER TENANT SATU');
+    }
+
     public function test_segments_customers_and_reports_endpoints_work(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
@@ -815,8 +970,10 @@ class AdminOpsApiTest extends TestCase
     public function test_charter_luggage_assignment_and_csv_endpoints_work(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $unitId = DB::table('units')->insertGetId([
+            'tenant_id' => $tenantId,
             'nopol' => 'DD 8899 ZZ',
             'merek' => 'Isuzu',
             'type' => 'Elf',
@@ -826,6 +983,7 @@ class AdminOpsApiTest extends TestCase
         ]);
 
         $driverId = DB::table('drivers')->insertGetId([
+            'tenant_id' => $tenantId,
             'nama' => 'DRIVER BARU',
             'phone' => '0812',
             'unit_id' => $unitId,
@@ -833,10 +991,12 @@ class AdminOpsApiTest extends TestCase
         ]);
 
         $serviceId = DB::table('luggage_services')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'Dokumen',
             'created_at' => now(),
         ]);
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
@@ -1070,14 +1230,17 @@ class AdminOpsApiTest extends TestCase
     public function test_luggage_raw_mode_autofills_customer_ids(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - PAREPARE',
             'origin' => 'PINRANG',
             'destination' => 'PAREPARE',
             'created_at' => now(),
         ]);
         $serviceId = DB::table('luggage_services')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'Kilat',
             'created_at' => now(),
         ]);
@@ -1239,10 +1402,12 @@ class AdminOpsApiTest extends TestCase
     public function test_ops_lifecycle_actions_and_revenue_csv_work(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $today = now()->toDateString();
 
         $charterId = DB::table('charters')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'CHARTER LIFECYCLE',
             'start_date' => $today,
             'end_date' => $today,
@@ -1266,6 +1431,7 @@ class AdminOpsApiTest extends TestCase
         ]);
 
         $luggageId = DB::table('luggages')->insertGetId([
+            'tenant_id' => $tenantId,
             'sender_name' => 'S',
             'sender_phone' => '081',
             'receiver_name' => 'R',
@@ -1300,6 +1466,7 @@ class AdminOpsApiTest extends TestCase
         $this->assertTrue(count($tracking['logs'] ?? []) >= 5);
 
         DB::table('bookings')->insert([
+            'tenant_id' => $tenantId,
             'rute' => 'PINRANG - MAKASSAR',
             'tanggal' => $today,
             'jam' => '08:00:00',
@@ -1316,6 +1483,7 @@ class AdminOpsApiTest extends TestCase
         ]);
 
         DB::table('luggages')->insert([
+            'tenant_id' => $tenantId,
             'sender_name' => 'CSV S',
             'sender_phone' => '08111',
             'receiver_name' => 'CSV R',

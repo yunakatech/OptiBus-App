@@ -33,6 +33,9 @@ class OperationsApiController extends Controller
         $query = DB::table('segments as s')
             ->leftJoin('routes as r', 's.route_id', '=', 'r.id')
             ->select(['s.id', 's.rute', 's.harga']);
+        if (Schema::hasColumn('segments', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 's.tenant_id');
+        }
 
         if ($routeName !== '') {
             $query->where('r.name', $routeName);
@@ -51,6 +54,9 @@ class OperationsApiController extends Controller
 
         $query = DB::table('segments as s')
             ->where('s.id', $validated['id']);
+        if (Schema::hasColumn('segments', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 's.tenant_id');
+        }
         PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
 
         $price = $query->value('s.harga');
@@ -71,6 +77,9 @@ class OperationsApiController extends Controller
         }
 
         $query = DB::table('units')->orderBy('nopol');
+        if (Schema::hasColumn('units', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
         if (Schema::hasColumn('units', 'status')) {
             $query->where('status', 'Aktif');
         }
@@ -96,6 +105,9 @@ class OperationsApiController extends Controller
         }
 
         $query = DB::table('armadas')->select($columns)->orderBy('nopol');
+        if (Schema::hasColumn('armadas', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
         $availableColumns = array_flip($columns);
 
         if ($q !== '') {
@@ -125,18 +137,24 @@ class OperationsApiController extends Controller
 
     public function drivers(): JsonResponse
     {
-        $drivers = DB::table('drivers')
-            ->orderBy('nama')
-            ->get(['id', 'nama', 'phone']);
+        $query = DB::table('drivers')->orderBy('nama');
+        if (Schema::hasColumn('drivers', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
+
+        $drivers = $query->get(['id', 'nama', 'phone']);
 
         return $this->ok(['drivers' => $drivers]);
     }
 
     public function luggageServices(): JsonResponse
     {
-        $services = DB::table('luggage_services')
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $query = DB::table('luggage_services')->orderBy('name');
+        if (Schema::hasColumn('luggage_services', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
+
+        $services = $query->get(['id', 'name']);
 
         return $this->ok(['services' => $services]);
     }
@@ -372,13 +390,13 @@ class OperationsApiController extends Controller
 
         $resi = (string) (DB::table('luggages')->where('id', $id)->value('kode_resi') ?? '');
         if ($resi !== '' && DB::getSchemaBuilder()->hasTable('bagasi_logs')) {
-            DB::table('bagasi_logs')->insert([
-                'kode_resi' => $resi,
-                'status' => $this->luggageReceivedStatus(),
-                'notes' => $this->luggageReceivedStatus(),
-                'created_by_username' => auth()->user()?->email ?? auth()->user()?->name ?? 'system',
-                'created_at' => now(),
-            ]);
+                DB::table('bagasi_logs')->insert(array_merge([
+                    'kode_resi' => $resi,
+                    'status' => $this->luggageReceivedStatus(),
+                    'notes' => $this->luggageReceivedStatus(),
+                    'created_by_username' => auth()->user()?->email ?? auth()->user()?->name ?? 'system',
+                    'created_at' => now(),
+                ], $this->tenantPayload('bagasi_logs')));
         }
 
         ActivityLog::write(
@@ -412,8 +430,25 @@ class OperationsApiController extends Controller
         }
 
         $tenantId = PoolScope::tenantId();
+        if ($tenantId <= 0) {
+            $tenantId = $this->defaultTenantId();
+        }
 
         return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    }
+
+    private function defaultTenantId(): int
+    {
+        if (! Schema::hasTable('tenants')) {
+            return 0;
+        }
+
+        $tenantId = (int) (DB::table('tenants')->where('id', 1)->value('id') ?? 0);
+        if ($tenantId > 0) {
+            return $tenantId;
+        }
+
+        return (int) (DB::table('tenants')->where('slug', 'qbus-default')->value('id') ?? 0);
     }
 
     private function resolveCharterPoolId(int $requestedPoolId, string $pickupPoint, string $dropPoint): int
@@ -611,14 +646,34 @@ class OperationsApiController extends Controller
             return 0;
         }
 
-        $existing = DB::table('customer_bagasi')->where('no_hp', $noHp)->first(['id', 'tipe']);
+        $existingQuery = DB::table('customer_bagasi')->where('no_hp', $noHp);
+        if (Schema::hasColumn('customer_bagasi', 'tenant_id')) {
+            $tenantId = PoolScope::tenantId();
+            if ($tenantId <= 0) {
+                $tenantId = $this->defaultTenantId();
+            }
+            if ($tenantId > 0) {
+                $existingQuery->where('tenant_id', $tenantId);
+            }
+        }
+        $existing = $existingQuery->first(['id', 'tipe']);
         if ($existing) {
             $existingTipe = strtolower((string) ($existing->tipe ?? ''));
             $nextTipe = $existingTipe;
             if ($existingTipe !== $tipe && $existingTipe !== 'keduanya') {
                 $nextTipe = 'keduanya';
             }
-            DB::table('customer_bagasi')->where('id', (int) $existing->id)->update([
+            $updateQuery = DB::table('customer_bagasi')->where('id', (int) $existing->id);
+            if (Schema::hasColumn('customer_bagasi', 'tenant_id')) {
+                $tenantId = PoolScope::tenantId();
+                if ($tenantId <= 0) {
+                    $tenantId = $this->defaultTenantId();
+                }
+                if ($tenantId > 0) {
+                    $updateQuery->where('tenant_id', $tenantId);
+                }
+            }
+            $updateQuery->update([
                 'nama' => $nama,
                 'alamat' => $alamat,
                 'tipe' => $nextTipe === '' ? $tipe : $nextTipe,
@@ -634,7 +689,7 @@ class OperationsApiController extends Controller
             'alamat' => $alamat,
             'tipe' => $tipe,
             'created_at' => now(),
-        ], $poolId > 0 && Schema::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : []));
+        ], $poolId > 0 && Schema::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : [], $this->tenantPayload('customer_bagasi')));
     }
 
     private function assignCustomerBagasiPoolIfMissing(int $customerId, int $poolId): void
@@ -643,10 +698,19 @@ class OperationsApiController extends Controller
             return;
         }
 
-        DB::table('customer_bagasi')
+        $query = DB::table('customer_bagasi')
             ->where('id', $customerId)
-            ->whereNull('pool_id')
-            ->update(['pool_id' => $poolId]);
+            ->whereNull('pool_id');
+        if (Schema::hasColumn('customer_bagasi', 'tenant_id')) {
+            $tenantId = PoolScope::tenantId();
+            if ($tenantId <= 0) {
+                $tenantId = $this->defaultTenantId();
+            }
+            if ($tenantId > 0) {
+                $query->where('tenant_id', $tenantId);
+            }
+        }
+        $query->update(['pool_id' => $poolId]);
     }
 
     private function resolveMappedLuggagePrice(int $routeId, int $serviceId): float
@@ -658,10 +722,19 @@ class OperationsApiController extends Controller
     {
         $date = now()->format('Ymd');
         $prefix = "BGS-{$date}-";
-        $last = (string) (DB::table('luggages')
+        $query = DB::table('luggages')
             ->where('kode_resi', 'like', "{$prefix}%")
-            ->orderByDesc('id')
-            ->value('kode_resi') ?? '');
+            ->orderByDesc('id');
+        if (Schema::hasColumn('luggages', 'tenant_id')) {
+            $tenantId = PoolScope::tenantId();
+            if ($tenantId <= 0) {
+                $tenantId = $this->defaultTenantId();
+            }
+            if ($tenantId > 0) {
+                $query->where('tenant_id', $tenantId);
+            }
+        }
+        $last = (string) ($query->value('kode_resi') ?? '');
 
         $seq = 1;
         if ($last !== '') {

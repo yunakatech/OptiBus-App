@@ -436,6 +436,7 @@ class BookingController extends Controller
     {
         $query = DB::table($table);
         PoolScope::applyRouteScope($query, $this->bookingRouteIdColumn($table), $routeNameColumn);
+        $this->applyTenantScopeIfExists($query, $table);
 
         return $query;
     }
@@ -453,10 +454,36 @@ class BookingController extends Controller
         return isset($matches[1]) ? $matches[1].'.route_id' : 'route_id';
     }
 
+    private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
+    {
+        [$baseTable, $tableAlias] = $this->parseTableAlias($table);
+        if (! Schema::hasColumn($baseTable, 'tenant_id')) {
+            return;
+        }
+
+        $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
+        $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
+        PoolScope::applyTenantScope($query, $prefix.'tenant_id');
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function parseTableAlias(string $table): array
+    {
+        $table = trim($table);
+        if (preg_match('/^([a-z0-9_]+)(?:\s+as\s+([a-z0-9_]+))?$/i', $table, $matches) === 1) {
+            return [$matches[1], $matches[2] ?? ''];
+        }
+
+        return [$table, ''];
+    }
+
     private function scopedRoutesQuery(): Builder
     {
         $query = DB::table('routes');
         PoolScope::applyRouteScope($query, 'routes.id', 'routes.name');
+        $this->applyTenantScopeIfExists($query, 'routes');
 
         return $query;
     }
@@ -471,6 +498,7 @@ class BookingController extends Controller
             Schema::hasColumn('schedules', 'route_id') ? $prefix.'route_id' : '',
             $prefix.'rute',
         );
+        $this->applyTenantScopeIfExists($query, $table, $alias);
 
         return $query;
     }
@@ -479,6 +507,7 @@ class BookingController extends Controller
     {
         $query = DB::table('customers');
         PoolScope::applyCustomerScope($query, 'customers');
+        $this->applyTenantScopeIfExists($query, 'customers');
 
         return (int) $query->count();
     }
@@ -790,8 +819,9 @@ class BookingController extends Controller
                 if (! empty($routeKeys) && ! empty($dows) && ! empty($jams)) {
                     $scheduleRows = DB::table('schedules')
                         ->whereIn('dow', array_keys($dows))
-                        ->whereIn('jam', array_keys($jams))
-                        ->get(['rute', 'dow', 'jam', 'bop']);
+                        ->whereIn('jam', array_keys($jams));
+                    $this->applyTenantScopeIfExists($scheduleRows, 'schedules');
+                    $scheduleRows = $scheduleRows->get(['rute', 'dow', 'jam', 'bop']);
 
                     $bopBySchedule = [];
                     foreach ($scheduleRows as $row) {
