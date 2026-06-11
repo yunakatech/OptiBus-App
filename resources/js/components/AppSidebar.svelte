@@ -265,11 +265,45 @@
                     {/snippet}
                 </SidebarMenuButton>
             </SidebarMenuItem>
-            {#if page.props.auth?.active_pool}
+            {#if page.props.auth?.pools && page.props.auth.pools.length > 0}
                 <SidebarMenuItem>
-                    <div class="mx-1 flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1.5 text-[11px] font-medium text-primary">
-                        <Building2 class="size-3 shrink-0" />
-                        <span class="truncate">{page.props.auth.active_pool.name}</span>
+                    <div class="relative mx-1 group/pool-switcher">
+                        <button
+                            type="button"
+                            class="flex w-full items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition {page.props.auth?.active_pool ? 'border-primary/30 bg-primary/8 text-primary' : 'border-sidebar-border/70 text-muted-foreground hover:border-primary/30 hover:bg-primary/5'}"
+                        >
+                            <Building2 class="size-3 shrink-0" />
+                            <span class="truncate">{page.props.auth?.active_pool?.name ?? 'Semua Pool'}</span>
+                            <svg class="ml-auto size-3 shrink-0 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <!-- Dropdown (hidden by default, shown on click via Svelte) -->
+                        <div class="absolute left-0 top-full z-50 mt-1 hidden w-52 rounded-xl border border-border/80 bg-background shadow-lg group-focus-within/pool-switcher:block group-hover/pool-switcher:block">
+                            <a href="/api/admin/pool/reset" class="block px-3 py-2 text-xs text-muted-foreground hover:bg-muted/50 rounded-t-xl"
+                               onclick={(e) => {
+                                   e.preventDefault();
+                                   fetch('/api/admin/pool/switch', {
+                                       method: 'POST',
+                                       headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content || ''},
+                                       body: JSON.stringify({pool_id: 0}),
+                                   }).finally(() => window.location.reload());
+                               }}>
+                                <span>Semua Pool</span>
+                            </a>
+                            {#each page.props.auth.pools as pool (pool.id)}
+                                <a href="?pool_id={pool.id}" class="block px-3 py-2 text-xs hover:bg-muted/50 {page.props.auth?.active_pool?.id === pool.id ? 'bg-primary/5 font-medium text-primary' : 'text-foreground'}"
+                                   onclick={(e) => {
+                                       e.preventDefault();
+                                       fetch('/api/admin/pool/switch', {
+                                           method: 'POST',
+                                           headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content || ''},
+                                           body: JSON.stringify({pool_id: pool.id}),
+                                       }).finally(() => window.location.reload());
+                                   }}>
+                                    {pool.name}
+                                    {#if pool.code}<span class="ml-1 text-[10px] text-muted-foreground">({pool.code})</span>{/if}
+                                </a>
+                            {/each}
+                        </div>
                     </div>
                 </SidebarMenuItem>
             {/if}
