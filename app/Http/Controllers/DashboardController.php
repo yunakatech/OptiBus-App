@@ -1192,6 +1192,9 @@ class DashboardController extends Controller
             if ($this->activePoolId > 0) {
                 $poolQuery->where('id', $this->activePoolId);
             }
+            if (Schema::hasColumn('pools', 'tenant_id')) {
+                PoolScope::applyTenantScope($poolQuery, 'tenant_id');
+            }
             $target = (float) $poolQuery->sum('target_revenue');
         }
 
@@ -1207,6 +1210,7 @@ class DashboardController extends Controller
                     $routeQuery->whereIn('id', $routeIds);
                 }
             }
+            $this->applyTenantScopeIfExists($routeQuery, 'routes');
             $target = (float) $routeQuery->sum('target_revenue');
         }
 
