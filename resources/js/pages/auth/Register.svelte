@@ -1,7 +1,7 @@
 <script module lang="ts">
     export const layout = {
         title: 'Daftar Akun',
-        description: 'Pilih paket dan isi data travel Anda untuk memulai trial gratis.',
+        description: 'Daftar trial atau lanjutkan pembayaran paket Qbus.',
     };
 </script>
 
@@ -21,22 +21,58 @@
     import { login } from '@/routes';
     import { store } from '@/routes/register';
 
-    let { passwordRules = '' }: { passwordRules?: string } = $props();
+    type Plan = { id: number; name: string; slug: string; price_monthly: number; description: string };
+    type RegistrationIntent = 'trial' | 'payment';
 
-    const plans = $derived((page.props.plans ?? []) as Array<{ id: number; name: string; slug: string; price_monthly: number; description: string }>);
+    let {
+        passwordRules = '',
+        selectedPlan: selectedPlanProp = 'starter',
+        registrationIntent: registrationIntentProp = 'trial',
+    }: {
+        passwordRules?: string;
+        selectedPlan?: string;
+        registrationIntent?: RegistrationIntent;
+    } = $props();
 
-    let selectedPlan = $state('starter');
+    const plans = $derived((page.props.plans ?? []) as Plan[]);
+
+    // svelte-ignore state_referenced_locally
+    let selectedPlan = $state(selectedPlanProp || 'starter');
+    // svelte-ignore state_referenced_locally
+    let registrationIntent = $state<RegistrationIntent>(registrationIntentProp === 'payment' ? 'payment' : 'trial');
     let showPlanSelector = $state(false);
 
     onMount(() => {
         const urlParams = new URLSearchParams(window.location.search);
+        const intentParam = urlParams.get('intent');
+        if (intentParam === 'trial' || intentParam === 'payment') {
+            registrationIntent = intentParam;
+        }
+
         const planParam = urlParams.get('plan');
-        if (planParam && plans.some(p => p.slug === planParam)) {
+        if (registrationIntent === 'trial') {
+            selectedPlan = 'starter';
+            return;
+        }
+
+        if (planParam && plans.some((p) => p.slug === planParam)) {
             selectedPlan = planParam;
+        } else if (!plans.some((p) => p.slug === selectedPlan)) {
+            selectedPlan = plans[0]?.slug ?? 'starter';
         }
     });
 
-    const currentPlan = $derived(plans.find(p => p.slug === selectedPlan));
+    const currentPlan = $derived(plans.find((p) => p.slug === selectedPlan));
+    const isTrialFlow = $derived(registrationIntent === 'trial');
+    const isPaymentFlow = $derived(registrationIntent === 'payment');
+    const submitLabel = $derived(isTrialFlow ? 'Daftar - Mulai Trial 14 Hari' : 'Daftar & Lanjut Pembayaran');
+    const planHelpText = $derived.by(() => {
+        if (!currentPlan) return '';
+
+        return isTrialFlow
+            ? 'Trial 14 hari tersedia untuk paket Starter. Upgrade dapat dilakukan dari menu SaaS setelah masuk.'
+            : `Setelah daftar, Anda diarahkan ke halaman pembayaran ${formatRupiah(currentPlan.price_monthly)}/bulan.`;
+    });
 
     function formatRupiah(v: number): string {
         if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)}M`;
@@ -53,27 +89,36 @@
 >
     {#snippet children({ errors, processing })}
         <div class="grid gap-6">
-            <!-- Plan Selector -->
             <div class="grid gap-2">
-                <Label>Paket Langganan</Label>
+                <Label>{isTrialFlow ? 'Paket Trial' : 'Paket Langganan'}</Label>
                 <div class="relative">
-                    <button type="button" onclick={() => showPlanSelector = !showPlanSelector}
-                        class="w-full flex items-center justify-between border rounded-lg px-4 py-3 text-left hover:bg-muted/20"
+                    <button
+                        type="button"
+                        onclick={() => { if (isPaymentFlow) showPlanSelector = !showPlanSelector; }}
+                        class={`w-full flex items-center justify-between border rounded-lg px-4 py-3 text-left ${isPaymentFlow ? 'hover:bg-muted/20' : 'bg-muted/10 cursor-default'}`}
                     >
                         <div>
                             <div class="font-medium">{currentPlan?.name ?? 'Pilih Paket'}</div>
-                            <div class="text-sm text-muted-foreground">{currentPlan ? `${formatRupiah(currentPlan.price_monthly)}/bulan · ${currentPlan.description}` : 'Klik untuk pilih'}</div>
+                            <div class="text-sm text-muted-foreground">
+                                {currentPlan ? `${formatRupiah(currentPlan.price_monthly)}/bulan - ${currentPlan.description}` : 'Klik untuk pilih'}
+                            </div>
                         </div>
-                        <ChevronDown class="h-4 w-4 text-muted-foreground" />
+                        {#if isPaymentFlow}
+                            <ChevronDown class="h-4 w-4 text-muted-foreground" />
+                        {/if}
                     </button>
-                    {#if showPlanSelector}
+
+                    {#if showPlanSelector && isPaymentFlow}
                         <div class="absolute z-10 mt-1 w-full border rounded-lg bg-background shadow-lg">
                             {#each plans as plan}
-                                <button type="button" onclick={() => { selectedPlan = plan.slug; showPlanSelector = false; }}
+                                <button
+                                    type="button"
+                                    onclick={() => { selectedPlan = plan.slug; showPlanSelector = false; }}
                                     class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/20 first:rounded-t-lg last:rounded-b-lg {selectedPlan === plan.slug ? 'bg-primary/5' : ''}"
                                 >
                                     <div>
-                                        <div class="font-medium flex items-center gap-2">{plan.name}
+                                        <div class="font-medium flex items-center gap-2">
+                                            {plan.name}
                                             {#if plan.slug === 'pro'}<Badge variant="default" class="text-[10px] py-0">Populer</Badge>{/if}
                                         </div>
                                         <div class="text-sm text-muted-foreground">{plan.description}</div>
@@ -88,12 +133,12 @@
                     {/if}
                 </div>
                 <input type="hidden" name="plan" value={selectedPlan} />
-                {#if currentPlan}
-                    <p class="text-xs text-muted-foreground mt-1">Trial 14 hari gratis. Setelah trial: {formatRupiah(currentPlan.price_monthly)}/bulan.</p>
+                <input type="hidden" name="registration_intent" value={registrationIntent} />
+                {#if planHelpText}
+                    <p class="text-xs text-muted-foreground mt-1">{planHelpText}</p>
                 {/if}
             </div>
 
-            <!-- Travel / Pool Name (required for config) -->
             <div class="grid gap-2">
                 <Label for="travel_name">Nama Travel / Pool <span class="text-destructive">*</span></Label>
                 <Input id="travel_name" type="text" required name="travel_name" placeholder="Contoh: Mandiri Trans" />
@@ -101,7 +146,6 @@
                 <InputError message={errors.travel_name} />
             </div>
 
-            <!-- Phone (required) -->
             <div class="grid gap-2">
                 <Label for="phone">Nomor WhatsApp <span class="text-destructive">*</span></Label>
                 <Input id="phone" type="tel" required name="phone" placeholder="0852xxxx" />
@@ -109,7 +153,6 @@
                 <InputError message={errors.phone} />
             </div>
 
-            <!-- Route (split into Dari & Tujuan for auto route creation) -->
             <div class="grid gap-2">
                 <Label>Rute Utama <span class="text-destructive">*</span></Label>
                 <div class="grid grid-cols-2 gap-3">
@@ -129,7 +172,6 @@
 
             <hr />
 
-            <!-- Account Info -->
             <div class="grid gap-2">
                 <Label for="name">Nama Anda <span class="text-destructive">*</span></Label>
                 <Input id="name" type="text" required autocomplete="name" name="name" placeholder="Nama lengkap" />
@@ -156,20 +198,22 @@
 
             <Button type="submit" class="w-full" disabled={processing}>
                 {#if processing}<Spinner />{/if}
-                Daftar — Trial 14 Hari Gratis
+                {submitLabel}
             </Button>
 
-            <div class="relative my-4">
-                <div class="absolute inset-0 flex items-center"><span class="w-full border-t"></span></div>
-                <div class="relative flex justify-center text-xs uppercase"><span class="bg-card px-2 text-muted-foreground">Atau</span></div>
-            </div>
+            {#if isTrialFlow}
+                <div class="relative my-4">
+                    <div class="absolute inset-0 flex items-center"><span class="w-full border-t"></span></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-card px-2 text-muted-foreground">Atau</span></div>
+                </div>
 
-            <a href="/auth/google/redirect" class="w-full">
-                <Button type="button" variant="outline" class="w-full gap-2">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    Daftar dengan Google
-                </Button>
-            </a>
+                <a href="/auth/google/redirect" class="w-full">
+                    <Button type="button" variant="outline" class="w-full gap-2">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        Daftar dengan Google
+                    </Button>
+                </a>
+            {/if}
         </div>
 
         <div class="text-center text-sm text-muted-foreground">

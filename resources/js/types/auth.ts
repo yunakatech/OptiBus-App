@@ -19,10 +19,35 @@ export type PoolScope = {
     labels: string[];
 };
 
+export type PoolOption = {
+    id: number;
+    name: string;
+    code?: string | null;
+};
+
+export type ActivePool = {
+    id: number;
+    name: string;
+};
+
+export type TenantSubscription = {
+    tenant_id: number;
+    tenant_name: string;
+    plan_id: number;
+    plan_name: string;
+    plan_slug: string;
+    subscription_status: string;
+    trial_ends_at: string | null;
+    ends_at: string | null;
+};
+
 export type Auth = {
     user: User;
     permissions: string[];
+    pools?: PoolOption[];
     pool_scope?: PoolScope | null;
+    active_pool?: ActivePool | null;
+    tenant_subscription?: TenantSubscription | null;
 };
 
 export type TwoFactorConfigContent = {

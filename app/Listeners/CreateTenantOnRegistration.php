@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Services\PaymentGateway;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -38,8 +39,17 @@ class CreateTenantOnRegistration
             }
         }
 
-        // Get the selected plan from session or request input
-        $planSlug = (string) (session('registration_plan') ?: request()->input('plan', config('saas.default_plan', 'starter')));
+        // Get the selected plan and flow from session or request input.
+        $requestedPlanSlug = trim((string) (request()->input('plan') ?: session('registration_plan') ?: config('saas.default_plan', 'starter')));
+        $registrationIntent = trim((string) (request()->input('registration_intent') ?: request()->input('intent') ?: session('registration_intent') ?: ''));
+        $registrationIntent = in_array($registrationIntent, ['trial', 'payment'], true)
+            ? $registrationIntent
+            : ($requestedPlanSlug !== '' && request()->has('plan') ? 'payment' : 'trial');
+
+        $planSlug = $registrationIntent === 'trial'
+            ? 'starter'
+            : ($requestedPlanSlug !== '' ? $requestedPlanSlug : (string) config('saas.default_plan', 'starter'));
+
         $plan = DB::table('plans')->where('slug', $planSlug)->where('is_active', true)->first();
         if (! $plan) {
             $plan = DB::table('plans')->where('slug', 'starter')->first();
@@ -49,6 +59,8 @@ class CreateTenantOnRegistration
         }
 
         $planId = (int) $plan->id;
+        $planSlug = (string) $plan->slug;
+        $planAmount = (float) $plan->price_monthly;
 
         // Use travel_name from form if provided, otherwise fallback to user's name
         $travelName = trim((string) request()->input('travel_name', ''));
@@ -74,8 +86,9 @@ class CreateTenantOnRegistration
         // Trial logic:
         // - Starter plan → 14 days trial (unless email already used trial)
         // - Pro/Fleet plan → no trial, immediate payment required
+        // Only intent=trial can receive trial days; pricing plan selection is payment.
         $trialDays = 0;
-        if ($planSlug === 'starter') {
+        if ($registrationIntent === 'trial' && $planSlug === 'starter') {
             $trialDays = (int) config('saas.trial_days', 14);
             $alreadyHadTrial = $this->emailHasUsedTrial($userEmail);
             if ($alreadyHadTrial) {
@@ -83,7 +96,7 @@ class CreateTenantOnRegistration
             }
         }
 
-        DB::transaction(function () use ($userId, $travelName, $phone, $origin, $destination, $tenantSlug, $planId, $trialDays, $planSlug): void {
+        DB::transaction(function () use ($userId, $travelName, $phone, $origin, $destination, $tenantSlug, $planId, $trialDays, $planAmount): void {
             // 1. Create tenant
             $tenantId = (int) DB::table('tenants')->insertGetId([
                 'name' => $travelName,
@@ -102,7 +115,7 @@ class CreateTenantOnRegistration
             $endsAt = $trialDays > 0
                 ? $trialEndsAt
                 : now()->addDay()->toDateString(); // 1 day for paid plans to prompt payment
-            DB::table('subscriptions')->insert([
+            $subscriptionId = (int) DB::table('subscriptions')->insertGetId([
                 'tenant_id' => $tenantId,
                 'plan_id' => $planId,
                 'status' => $trialDays > 0 ? 'trial' : 'active',
@@ -114,6 +127,10 @@ class CreateTenantOnRegistration
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            if ($trialDays <= 0 && $planAmount > 0) {
+                PaymentGateway::createInvoice($tenantId, $subscriptionId, $planAmount, $endsAt);
+            }
 
             // 3. Create default pool
             if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'tenant_id')) {
@@ -184,14 +201,17 @@ class CreateTenantOnRegistration
             $this->assignDefaultRole($userId);
         });
 
-        session()->forget('registration_plan');
+        session()->forget(['registration_plan', 'registration_intent']);
 
-        // Redirect to subscription/payment page after registration
-        session()->put('url.intended', route('subscription.index'));
+        $redirectRoute = $registrationIntent === 'trial' && $trialDays > 0
+            ? route('dashboard')
+            : route('subscription.index');
+        session()->put('url.intended', $redirectRoute);
 
         Log::info("Tenant auto-provisioned for user #{$userId}", [
             'tenant_slug' => $tenantSlug,
             'plan' => $planSlug,
+            'registration_intent' => $registrationIntent,
         ]);
     }
 

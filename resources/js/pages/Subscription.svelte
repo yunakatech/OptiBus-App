@@ -117,6 +117,15 @@
         const img = e.target as HTMLImageElement;
         img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect fill="#f0f0f0" width="192" height="192"/><text x="96" y="100" text-anchor="middle" fill="#999" font-size="14">QRIS</text></svg>');
     }
+
+    function closePaymentModal() {
+        showPaymentModal = false;
+    }
+
+    function selectProofFile(e: Event) {
+        const input = e.currentTarget as HTMLInputElement;
+        proofFile = input.files?.[0] ?? null;
+    }
 </script>
 
 <AppHead title="Langganan" />
@@ -243,15 +252,16 @@
 
 <!-- Payment Modal -->
 {#if showPaymentModal && payingInvoice}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onclick={() => showPaymentModal = false}>
-        <div class="bg-background rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto" onclick={(e) => e.stopPropagation()}>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <button type="button" class="absolute inset-0 cursor-default" aria-label="Tutup modal pembayaran" onclick={closePaymentModal}></button>
+        <div class="relative bg-background rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
                 <div>
                     <h3 class="font-bold text-lg">Pembayaran</h3>
                     <p class="text-xs text-muted-foreground">{payingInvoice.invoice_number} · {formatRupiah(payingInvoice.amount)}</p>
                 </div>
-                <button onclick={() => showPaymentModal = false} class="p-1 hover:bg-muted rounded-full"><X class="h-5 w-5" /></button>
+                <button onclick={closePaymentModal} class="p-1 hover:bg-muted rounded-full"><X class="h-5 w-5" /></button>
             </div>
 
             <div class="p-4 space-y-4">
@@ -343,7 +353,7 @@
                             {:else}
                                 <span class="text-muted-foreground">Pilih file (JPG/PNG/PDF, max {paymentConfig.upload_max_kb}KB)</span>
                             {/if}
-                            <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden" onchange={(e) => { proofFile = e.target?.files?.[0] ?? null; }} />
+                            <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden" onchange={selectProofFile} />
                         </label>
                     </div>
                     {#if proofFile}

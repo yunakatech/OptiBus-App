@@ -61,11 +61,23 @@ class FortifyServiceProvider extends ServiceProvider
         ]));
 
         Fortify::registerView(function (Request $request) {
-            // Store plan selection from query param into session for the listener
+            // Store registration source for the provisioning listener.
             $plan = trim((string) $request->query('plan', ''));
+            $intent = trim((string) $request->query('intent', ''));
+            $intent = in_array($intent, ['trial', 'payment'], true)
+                ? $intent
+                : ($plan !== '' ? 'payment' : 'trial');
+
+            if ($intent === 'trial') {
+                $plan = 'starter';
+            }
+
             if ($plan !== '') {
                 session(['registration_plan' => $plan]);
+            } else {
+                session()->forget('registration_plan');
             }
+            session(['registration_intent' => $intent]);
 
             // Load plans
             $plans = [];
@@ -87,6 +99,8 @@ class FortifyServiceProvider extends ServiceProvider
             return Inertia::render('auth/Register', [
                 'plans' => $plans,
                 'passwordRules' => '',
+                'selectedPlan' => $plan !== '' ? $plan : config('saas.default_plan', 'starter'),
+                'registrationIntent' => $intent,
             ]);
         });
 
