@@ -47,6 +47,36 @@ class HandleInertiaRequests extends Middleware
             $activePoolName = (string) (\Illuminate\Support\Facades\DB::table('pools')->where('id', $activePoolId)->value('name') ?? 'Pool');
         }
 
+        // Tenant-filtered pools for global pool switcher (cached 30s)
+        $availablePools = [];
+        if ($userId > 0 && \Illuminate\Support\Facades\Schema::hasTable('pools')) {
+            $tenantId = PoolScope::tenantId($userId);
+            $availablePools = \Illuminate\Support\Facades\Cache::remember(
+                "inertia:pools:user:{$userId}",
+                now()->addSeconds(30),
+                function () use ($tenantId, $poolScope): array {
+                    $query = \Illuminate\Support\Facades\DB::table('pools')
+                        ->where('status', 'active')
+                        ->select(['id', 'name', 'code']);
+
+                    if ($tenantId > 0 && \Illuminate\Support\Facades\Schema::hasColumn('pools', 'tenant_id')) {
+                        $query->where('tenant_id', $tenantId);
+                    } elseif (! ($poolScope['all'] ?? true)) {
+                        $poolIds = $poolScope['pool_ids'] ?? [];
+                        if (! empty($poolIds)) {
+                            $query->whereIn('id', $poolIds);
+                        }
+                    }
+
+                    return $query->orderBy('name')->get()->map(fn ($p) => [
+                        'id' => (int) $p->id,
+                        'name' => (string) $p->name,
+                        'code' => (string) ($p->code ?? ''),
+                    ])->values()->all();
+                }
+            );
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -62,6 +92,7 @@ class HandleInertiaRequests extends Middleware
                     'is_super_admin' => AccessControl::userIsSuperAdmin($userId),
                 ] : null,
                 'permissions' => $userId > 0 ? AccessControl::userPermissions($userId) : [],
+                'pools' => $availablePools,
                 'pool_scope' => $poolScope ? [
                     'all' => (bool) ($poolScope['all'] ?? true),
                     'pool_ids' => array_values(array_map('intval', $poolScope['pool_ids'] ?? [])),

@@ -443,35 +443,11 @@
             <div class="space-y-0.5 md:space-y-1">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:text-[11px]">Ringkasan Dashboard</p>
                 <h2 class="text-base font-semibold tracking-tight text-foreground md:text-lg">Performa Booking dan Pendapatan</h2>
-                {#if pools.length > 0}
-                    <div class="flex items-center gap-2 pt-1">
-                        <Building2 class="size-3.5 text-muted-foreground" />
-                        <select
-                            class="h-8 rounded-xl border border-border/70 bg-background/90 px-2.5 text-xs font-medium text-foreground shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
-                            value={selectedPoolId}
-                            onchange={async (e) => {
-                                const target = e.currentTarget as HTMLSelectElement;
-                                const id = Number(target.value || 0);
-                                try {
-                                    await fetch('/api/admin/pool/switch', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content || '' },
-                                        body: JSON.stringify({ pool_id: id }),
-                                    });
-                                } catch { /* proceed with reload regardless */ }
-                                const url = id > 0 ? `?pool_id=${id}` : window.location.pathname;
-                                router.visit(url, { preserveState: false, preserveScroll: true });
-                            }}
-                        >
-                            <option value={0}>Semua Pool</option>
-                            {#each pools as pool (pool.id)}
-                                <option value={pool.id}>{pool.name}{pool.code ? ` (${pool.code})` : ''}</option>
-                            {/each}
-                        </select>
-                        {#if selectedPoolId > 0}
-                            <span class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{selectedPoolName}</span>
-                        {/if}
-                    </div>
+                {#if selectedPoolId > 0}
+                    <p class="text-[11px] text-muted-foreground">
+                        <Building2 class="inline size-3 -mt-0.5 mr-1" />
+                        Pool aktif: <span class="font-medium text-primary">{selectedPoolName}</span>
+                    </p>
                 {/if}
             </div>
             <div class="flex flex-col gap-2 md:items-end">
