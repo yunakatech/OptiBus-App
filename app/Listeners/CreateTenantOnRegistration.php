@@ -71,14 +71,19 @@ class CreateTenantOnRegistration
         $tenantSlug = $this->generateTenantSlug($travelName);
         $userEmail = DB::table('users')->where('id', $userId)->value('email') ?? '';
 
-        // One trial per email — check if this email already had a trial
-        $trialDays = (int) config('saas.trial_days', 14);
-        $alreadyHadTrial = $this->emailHasUsedTrial($userEmail);
-        if ($alreadyHadTrial) {
-            $trialDays = 0; // No trial — requires immediate subscription
+        // Trial logic:
+        // - Starter plan → 14 days trial (unless email already used trial)
+        // - Pro/Fleet plan → no trial, immediate payment required
+        $trialDays = 0;
+        if ($planSlug === 'starter') {
+            $trialDays = (int) config('saas.trial_days', 14);
+            $alreadyHadTrial = $this->emailHasUsedTrial($userEmail);
+            if ($alreadyHadTrial) {
+                $trialDays = 0; // No trial — requires immediate subscription
+            }
         }
 
-        DB::transaction(function () use ($userId, $travelName, $phone, $origin, $destination, $tenantSlug, $planId, $trialDays): void {
+        DB::transaction(function () use ($userId, $travelName, $phone, $origin, $destination, $tenantSlug, $planId, $trialDays, $planSlug): void {
             // 1. Create tenant
             $tenantId = (int) DB::table('tenants')->insertGetId([
                 'name' => $travelName,
@@ -90,15 +95,20 @@ class CreateTenantOnRegistration
                 'updated_at' => now(),
             ]);
 
-            // 2. Create subscription with trial
+            // 2. Create subscription
+            //   - Starter: 14 day trial
+            //   - Pro/Fleet: no trial, 1 day billing cycle so payment is prompted ASAP
             $trialEndsAt = $trialDays > 0 ? now()->addDays($trialDays)->toDateString() : null;
+            $endsAt = $trialDays > 0
+                ? $trialEndsAt
+                : now()->addDay()->toDateString(); // 1 day for paid plans to prompt payment
             DB::table('subscriptions')->insert([
                 'tenant_id' => $tenantId,
                 'plan_id' => $planId,
                 'status' => $trialDays > 0 ? 'trial' : 'active',
                 'trial_ends_at' => $trialEndsAt,
                 'starts_at' => now()->toDateString(),
-                'ends_at' => $trialDays > 0 ? $trialEndsAt : now()->addMonth()->toDateString(),
+                'ends_at' => $endsAt,
                 'billing_interval' => 'monthly',
                 'grace_period_days' => config('saas.grace_period_days', 7),
                 'created_at' => now(),
