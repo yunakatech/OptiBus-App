@@ -13,6 +13,11 @@ class PaymentPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
+    }
+
     public function test_payment_page_is_scoped_to_operator_pool(): void
     {
         [$operator, $pinrangRouteId, $makassarRouteId, $pinrangPoolId, $makassarPoolId] = $this->seedPoolOperator();
@@ -268,20 +273,24 @@ class PaymentPageTest extends TestCase
     private function seedPoolOperator(): array
     {
         AccessControl::syncDefaults();
+        $tenantId = $this->defaultTenantId();
 
         $pinrangRouteId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
             'created_at' => now(),
         ]);
         $makassarRouteId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'MAKASSAR - PAREPARE',
             'origin' => 'MAKASSAR',
             'destination' => 'PAREPARE',
             'created_at' => now(),
         ]);
         $pinrangPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL PINRANG',
             'code' => 'PNR',
             'status' => 'active',
@@ -289,6 +298,7 @@ class PaymentPageTest extends TestCase
             'updated_at' => now(),
         ]);
         $makassarPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL MAKASSAR',
             'code' => 'MKS',
             'status' => 'active',
@@ -311,7 +321,7 @@ class PaymentPageTest extends TestCase
             ],
         ]);
 
-        $operator = User::factory()->create(['is_super_admin' => false]);
+        $operator = User::factory()->create(['is_super_admin' => false, 'tenant_id' => $tenantId]);
         DB::table('pool_user')->insert([
             'pool_id' => $pinrangPoolId,
             'user_id' => $operator->id,

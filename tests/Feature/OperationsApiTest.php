@@ -18,6 +18,11 @@ class OperationsApiTest extends TestCase
         $this->actingAs(User::factory()->create(['is_super_admin' => true]));
     }
 
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
+    }
+
     public function test_master_data_endpoints_return_data(): void
     {
         $this->actingAsSuperAdmin();
@@ -147,20 +152,24 @@ class OperationsApiTest extends TestCase
     public function test_pool_operator_can_search_customers_using_route_id_and_normalized_legacy_route(): void
     {
         AccessControl::syncDefaults();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG -> MAKASSAR',
             'origin' => 'Pinrang',
             'destination' => 'Makassar',
             'created_at' => now(),
         ]);
         $outsideRouteId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'MAKASSAR -> PAREPARE',
             'origin' => 'Makassar',
             'destination' => 'Parepare',
             'created_at' => now(),
         ]);
         $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL PINRANG',
             'code' => 'PNR',
             'status' => 'active',
@@ -168,6 +177,7 @@ class OperationsApiTest extends TestCase
             'updated_at' => now(),
         ]);
         $outsidePoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL MAKASSAR',
             'code' => 'MKS',
             'status' => 'active',
@@ -189,7 +199,7 @@ class OperationsApiTest extends TestCase
             ],
         ]);
 
-        $operator = User::factory()->create(['is_super_admin' => false]);
+        $operator = User::factory()->create(['is_super_admin' => false, 'tenant_id' => $tenantId]);
         DB::table('pool_user')->insert([
             'pool_id' => $poolId,
             'user_id' => $operator->id,
@@ -313,8 +323,10 @@ class OperationsApiTest extends TestCase
     public function test_pool_operator_can_search_master_bagasi_and_charter_customers_by_pool_without_transactions(): void
     {
         AccessControl::syncDefaults();
+        $tenantId = $this->defaultTenantId();
 
         $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL PINRANG',
             'code' => 'PNR',
             'status' => 'active',
@@ -322,6 +334,7 @@ class OperationsApiTest extends TestCase
             'updated_at' => now(),
         ]);
         $outsidePoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL MAKASSAR',
             'code' => 'MKS',
             'status' => 'active',
@@ -329,7 +342,7 @@ class OperationsApiTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $operator = User::factory()->create(['is_super_admin' => false]);
+        $operator = User::factory()->create(['is_super_admin' => false, 'tenant_id' => $tenantId]);
         DB::table('pool_user')->insert([
             'pool_id' => $poolId,
             'user_id' => $operator->id,
@@ -396,6 +409,7 @@ class OperationsApiTest extends TestCase
     public function test_submit_charter_rejects_pool_that_conflicts_with_mapped_route(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $unitId = DB::table('units')->insertGetId([
             'nopol' => 'DD 4400 PP',
@@ -406,12 +420,14 @@ class OperationsApiTest extends TestCase
             'created_at' => now(),
         ]);
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
             'created_at' => now(),
         ]);
         $pinrangPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL PINRANG',
             'code' => 'PNR',
             'status' => 'active',
@@ -419,6 +435,7 @@ class OperationsApiTest extends TestCase
             'updated_at' => now(),
         ]);
         $makassarPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL MAKASSAR',
             'code' => 'MKS',
             'status' => 'active',

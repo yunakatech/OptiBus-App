@@ -146,6 +146,7 @@ class AdminOpsApiController extends Controller
         }
 
         $newId = DB::table('routes')->insertGetId(array_merge($payload, [
+            ...$this->tenantPayload('routes'),
             'created_at' => now(),
         ]));
 
@@ -1876,11 +1877,16 @@ class AdminOpsApiController extends Controller
         ];
 
         $masterCarterId = (int) ($data['master_carter_id'] ?? 0);
-        if (
-            $masterCarterId > 0
-            && (! Schema::hasTable('master_carter') || ! DB::table('master_carter')->where('id', $masterCarterId)->exists())
-        ) {
-            return $this->error('Master Carter tidak ditemukan.', 422);
+        if ($masterCarterId > 0) {
+            if (! Schema::hasTable('master_carter')) {
+                return $this->error('Master Carter tidak ditemukan.', 422);
+            }
+
+            $masterCarterQuery = DB::table('master_carter')->where('id', $masterCarterId);
+            $this->applyTenantScopeIfExists($masterCarterQuery, 'master_carter');
+            if (! $masterCarterQuery->exists()) {
+                return $this->error('Master Carter tidak ditemukan.', 422);
+            }
         }
 
         if ($hasPoolIdColumn) {
@@ -1932,6 +1938,7 @@ class AdminOpsApiController extends Controller
         if ($hasStatusColumn && ! isset($payload['status'])) {
             $payload['status'] = 'active';
         }
+        $payload = array_merge($payload, $this->tenantPayload('charters'));
 
         $newId = DB::table('charters')->insertGetId(array_merge($payload, ['created_at' => now()]));
         $this->syncCustomerCharterFromCharterPayload($payload);
@@ -2371,6 +2378,7 @@ class AdminOpsApiController extends Controller
         if ($this->luggagesHasPoolIdColumn()) {
             $payload['pool_id'] = $poolId > 0 ? $poolId : null;
         }
+        $payload = array_merge($payload, $this->tenantPayload('luggages'));
 
         if ($id > 0) {
             $previous = (object) $before;
@@ -2821,7 +2829,7 @@ class AdminOpsApiController extends Controller
             ]);
         }
 
-        $newId = DB::table('trip_assignments')->insertGetId(array_merge($payload, ['created_at' => now()]));
+        $newId = DB::table('trip_assignments')->insertGetId(array_merge($payload, $this->tenantPayload('trip_assignments'), ['created_at' => now()]));
 
         return $this->ok([
             'message' => 'Assignment created.',
@@ -3084,7 +3092,7 @@ class AdminOpsApiController extends Controller
             return $this->ok(['message' => 'Rute carter updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('master_carter')->insertGetId(array_merge($payload, ['created_at' => now()]));
+        $newId = DB::table('master_carter')->insertGetId(array_merge($payload, $this->tenantPayload('master_carter'), ['created_at' => now()]));
 
         return $this->ok(['message' => 'Rute carter created.', 'id' => $newId], 201);
     }
@@ -3498,13 +3506,23 @@ class AdminOpsApiController extends Controller
         $poolId = (int) ($data['pool_id'] ?? 0);
 
         if ($poolId > 0 && $this->poolTablesReady()) {
-            $pool = DB::table('pools')
+            $poolQuery = DB::table('pools')
                 ->where('id', $poolId)
-                ->where('status', 'active')
-                ->first(['id', 'name']);
+                ->where('status', 'active');
+
+            if (Schema::hasColumn('pools', 'tenant_id')) {
+                PoolScope::applyTenantScope($poolQuery, 'tenant_id');
+            }
+
+            $pool = $poolQuery->first(['id', 'name']);
 
             if (! $pool) {
                 return $this->error('Pool tidak ditemukan atau tidak aktif.', 422);
+            }
+
+            $scope = PoolScope::forCurrentUser(0, (int) ($request->user()?->id ?? 0), false);
+            if (! ($scope['all'] ?? true) && ! in_array($poolId, $scope['pool_ids'] ?? [], true)) {
+                return $this->error('Anda tidak memiliki akses ke pool ini.', 403);
             }
         }
 
@@ -6486,6 +6504,20 @@ class AdminOpsApiController extends Controller
     }
 
     /**
+     * @return array<string, int>
+     */
+    private function tenantPayload(string $table): array
+    {
+        if (! Schema::hasColumn($table, 'tenant_id')) {
+            return [];
+        }
+
+        $tenantId = PoolScope::tenantId();
+
+        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    }
+
+    /**
      * @return array{0: string, 1: string}
      */
     private function parseTableAlias(string $table): array
@@ -6635,13 +6667,15 @@ class AdminOpsApiController extends Controller
             'rental_price' => (float) ($payload['price'] ?? 0),
             'bop_price' => (float) ($payload['bop_price'] ?? 0),
         ];
+        $routePayload = array_merge($routePayload, $this->tenantPayload('master_carter'));
 
         try {
-            $existingId = (int) (DB::table('master_carter')
+            $existingQuery = DB::table('master_carter')
                 ->whereRaw("UPPER(COALESCE(origin, '')) = ?", [strtoupper($origin)])
                 ->whereRaw("UPPER(COALESCE(destination, '')) = ?", [strtoupper($destination)])
-                ->whereRaw("UPPER(COALESCE(duration, '')) = ?", [strtoupper($duration)])
-                ->value('id') ?? 0);
+                ->whereRaw("UPPER(COALESCE(duration, '')) = ?", [strtoupper($duration)]);
+            $this->applyTenantScopeIfExists($existingQuery, 'master_carter');
+            $existingId = (int) ($existingQuery->value('id') ?? 0);
 
             if ($existingId > 0) {
                 DB::table('master_carter')->where('id', $existingId)->update($routePayload);

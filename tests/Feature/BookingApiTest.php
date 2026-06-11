@@ -17,6 +17,11 @@ class BookingApiTest extends TestCase
         $this->actingAs(User::factory()->create(['is_super_admin' => true]));
     }
 
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
+    }
+
     public function test_authenticated_user_can_get_schedules(): void
     {
         $this->actingAsSuperAdmin();
@@ -60,14 +65,17 @@ class BookingApiTest extends TestCase
     public function test_submit_booking_and_detect_conflict(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
             'created_at' => now(),
         ]);
         $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL PERWAKILAN PINRANG',
             'code' => 'PRG',
             'status' => 'active',
