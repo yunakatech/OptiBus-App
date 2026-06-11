@@ -16,7 +16,7 @@ return new class extends Migration
             if (Schema::hasTable($currentTable) && ! Schema::hasColumn($currentTable, 'tenant_id')) {
                 Schema::table($currentTable, function (Blueprint $t) use ($currentTable): void {
                     $t->unsignedBigInteger('tenant_id')->nullable()->after('id');
-                    $t->index("idx_{$currentTable}_tenant_id");
+                    $t->index('tenant_id', "idx_{$currentTable}_tenant_id");
                 });
                 DB::table($currentTable)->whereNull('tenant_id')->update(['tenant_id' => $defaultTenantId]);
             }
@@ -26,8 +26,10 @@ return new class extends Migration
     public function down(): void
     {
         foreach (['master_carter', 'luggage_services', 'units'] as $table) {
-            if (Schema::hasTable($table) && Schema::hasColumn($table, 'tenant_id')) {
-                Schema::table($table, function (Blueprint $t) {
+            $currentTable = $table;
+            if (Schema::hasTable($currentTable) && Schema::hasColumn($currentTable, 'tenant_id')) {
+                Schema::table($currentTable, function (Blueprint $t) use ($currentTable): void {
+                    $t->dropIndex("idx_{$currentTable}_tenant_id");
                     $t->dropColumn('tenant_id');
                 });
             }
