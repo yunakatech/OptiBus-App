@@ -81,6 +81,7 @@ class AdminOpsApiController extends Controller
         $query = DB::table('routes')
             ->orderBy('name');
         $this->applyRouteScopeToQuery($query, 'routes.id', 'routes.name');
+        $this->applyTenantScopeIfExists($query, 'routes');
 
         $rows = $query->get([
             'id',
@@ -739,6 +740,7 @@ class AdminOpsApiController extends Controller
             ->select(['id', 'name', 'phone', 'pickup_point', 'gmaps'])
             ->orderBy('name');
         PoolScope::applyCustomerScope($query, 'customers');
+        $this->applyTenantScopeIfExists($query, 'customers');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -1005,6 +1007,7 @@ class AdminOpsApiController extends Controller
             ->whereBetween('b.tanggal', [$from, $to]);
         $this->applyNotCanceledFilter($baseQuery, 'b.status');
         $this->applyRouteScopeToQuery($baseQuery, '', 'b.rute', $poolId);
+        $this->applyTenantScopeIfExists($baseQuery, 'bookings', 'b');
         if ($routeName !== '') {
             $baseQuery->where('b.rute', $routeName);
         }
@@ -1129,6 +1132,7 @@ class AdminOpsApiController extends Controller
             ->whereBetween('c.start_date', [$from, $to]);
         $this->applyActiveCharterReportFilter($baseQuery);
         $this->applyCharterPoolScope($baseQuery, $poolId);
+        $this->applyTenantScopeIfExists($baseQuery, 'charters', 'c');
         if ($routeName !== '') {
             $baseQuery->where(function (Builder $q) use ($routeName): void {
                 $q->where('c.pickup_point', 'like', "%{$routeName}%")
@@ -1198,6 +1202,7 @@ class AdminOpsApiController extends Controller
         $baseQuery = DB::table('luggages as l')
             ->whereBetween('l.created_at', [$createdFrom, $createdTo]);
         $this->applyNotCanceledFilter($baseQuery, 'l.status');
+        $this->applyTenantScopeIfExists($baseQuery, 'luggages', 'l');
         if ($routeName !== '') {
             $baseQuery->where('l.rute', $routeName);
         }
@@ -1603,6 +1608,7 @@ class AdminOpsApiController extends Controller
             }
         }
         $this->applyCharterPoolScope($query);
+        $this->applyTenantScopeIfExists($query, 'charters', 'c');
         $this->orderChartersByNearestDeparture($query, $scope);
 
         $result = $this->paginateQuery($query, $page, $perPage);
@@ -1673,6 +1679,7 @@ class AdminOpsApiController extends Controller
             $query->leftJoin('armadas as a', 'c.armada_id', '=', 'a.id');
         }
         $this->applyCharterPoolScope($query);
+        $this->applyTenantScopeIfExists($query, 'charters', 'c');
 
         $select = [
             'c.id',
@@ -2249,6 +2256,7 @@ class AdminOpsApiController extends Controller
             Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
             'l.rute',
         );
+        $this->applyTenantScopeIfExists($query, 'luggages', 'l');
 
         $result = $this->paginateQuery($query, $page, $perPage);
         $rows = collect($result['data'])
@@ -4793,6 +4801,7 @@ class AdminOpsApiController extends Controller
             Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
             'l.rute',
         );
+        $this->applyTenantScopeIfExists($query, 'luggages', 'l');
 
         return $query
             ->pluck('l.id')
@@ -6432,6 +6441,14 @@ class AdminOpsApiController extends Controller
         }
 
         return $this->luggagesHasPoolIdColumn;
+    }
+
+    private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
+    {
+        $prefix = $alias !== '' ? $alias.'.' : '';
+        if (Schema::hasColumn(trim($table), 'tenant_id')) {
+            \App\Support\PoolScope::applyTenantScope($query, $prefix.'tenant_id');
+        }
     }
 
     private function tripAssignmentsHasArmadaId(): bool
