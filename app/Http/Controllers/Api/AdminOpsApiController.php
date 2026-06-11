@@ -604,6 +604,9 @@ class AdminOpsApiController extends Controller
     {
         $rows = DB::table('luggage_services')
             ->orderBy('name')
+            ->when(Schema::hasColumn('luggage_services', 'tenant_id'), function (Builder $q) {
+                PoolScope::applyTenantScope($q, 'luggage_services.tenant_id');
+            })
             ->get(['id', 'name']);
 
         return $this->ok(['services' => $rows]);
@@ -3018,7 +3021,10 @@ class AdminOpsApiController extends Controller
             ])
             ->orderBy('name')
             ->orderBy('origin')
-            ->orderBy('destination');
+            ->orderBy('destination')
+            ->when(Schema::hasColumn('master_carter', 'tenant_id'), function (Builder $q) {
+                PoolScope::applyTenantScope($q, 'master_carter.tenant_id');
+            });
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -5833,11 +5839,19 @@ class AdminOpsApiController extends Controller
         }
 
         foreach ($financials as $routeId => $bucket) {
-            $financials[$routeId]['revenue'] = (float) ($bucket['departure_revenue'] ?? 0)
-                + (float) ($bucket['luggage_revenue'] ?? 0)
-                + (float) ($bucket['charter_revenue'] ?? 0);
+            // Zero out charter revenue for routes that have zero operational data
+            // Prevents phantom revenue from loose name-based matching
+            $depRev = (float) ($bucket['departure_revenue'] ?? 0);
+            $lugRev = (float) ($bucket['luggage_revenue'] ?? 0);
+            $charRev = (float) ($bucket['charter_revenue'] ?? 0);
+
+            if ($depRev <= 0 && $lugRev <= 0) {
+                $charRev = 0;
+            }
+
+            $financials[$routeId]['revenue'] = $depRev + $lugRev + $charRev;
             $financials[$routeId]['bop'] = (float) ($bucket['departure_bop'] ?? 0)
-                + (float) ($bucket['charter_bop'] ?? 0);
+                + ($charRev > 0 ? (float) ($bucket['charter_bop'] ?? 0) : 0);
         }
 
         return $financials;
@@ -5859,15 +5873,18 @@ class AdminOpsApiController extends Controller
             $origin = $profile['origin'];
             $destination = $profile['destination'];
 
+            // Only match if BOTH origin AND destination match (same or reverse direction)
+            // This prevents phantom charter revenue on loosely-matched routes
             $sameDirection = $origin !== '' && $destination !== '' && $pickup === $origin && $drop === $destination;
             $reverseDirection = $origin !== '' && $destination !== '' && $pickup === $destination && $drop === $origin;
-            $routeNameMatch = $name !== '' && ($pickup === $name || $drop === $name);
 
-            if ($sameDirection || $reverseDirection || $routeNameMatch) {
+            if ($sameDirection || $reverseDirection) {
                 $matches[] = $routeId;
             }
         }
 
+        // Fallback: only match by single location/label if no directional match found
+        // This handles charters with single pickup/drop labels
         if ($matches === []) {
             foreach ([$pickup, $drop] as $label) {
                 foreach ($nameMap[$label] ?? [] as $routeId) {

@@ -93,13 +93,14 @@ class OnboardingController extends Controller
                 }
 
                 $trialEndsAt = $trialDays > 0 ? now()->addDays($trialDays)->toDateString() : null;
+                $endsAt = $trialDays > 0 ? $trialEndsAt : now()->addDay()->toDateString();
                 DB::table('subscriptions')->insert([
                     'tenant_id' => $tenantId,
                     'plan_id' => (int) $plan->id,
                     'status' => $trialDays > 0 ? 'trial' : 'active',
                     'trial_ends_at' => $trialEndsAt,
                     'starts_at' => now()->toDateString(),
-                    'ends_at' => $trialDays > 0 ? $trialEndsAt : now()->addMonth()->toDateString(),
+                    'ends_at' => $endsAt,
                     'billing_interval' => 'monthly',
                     'grace_period_days' => config('saas.grace_period_days', 7),
                     'created_at' => now(),
