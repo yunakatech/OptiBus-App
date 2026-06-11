@@ -534,15 +534,22 @@ class AdminOpsApiController extends Controller
 
         if (Schema::hasTable('armadas')) {
             if ($armadaId > 0) {
-                $armada = DB::table('armadas')->where('id', $armadaId)->first(['id', 'nopol']);
+                $armadaQuery = DB::table('armadas')->where('id', $armadaId);
+                if (Schema::hasColumn('armadas', 'tenant_id')) {
+                    PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
+                }
+                $armada = $armadaQuery->first(['id', 'nopol']);
                 if (! $armada) {
                     return $this->error('Nopol armada tidak ditemukan.', 422);
                 }
                 $armadaNopol = strtoupper(trim((string) ($armada->nopol ?? '')));
             } elseif ($requestedArmadaNopol !== '') {
-                $armada = DB::table('armadas')
-                    ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol])
-                    ->first(['id', 'nopol']);
+                $armadaQuery = DB::table('armadas')
+                    ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol]);
+                if (Schema::hasColumn('armadas', 'tenant_id')) {
+                    PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
+                }
+                $armada = $armadaQuery->first(['id', 'nopol']);
 
                 if (! $armada) {
                     return $this->error('Nopol armada tidak ditemukan.', 422);
@@ -583,12 +590,16 @@ class AdminOpsApiController extends Controller
         }
 
         if ($id > 0) {
-            DB::table('drivers')->where('id', $id)->update($payload);
+            $query = DB::table('drivers')->where('id', $id);
+            if (Schema::hasColumn('drivers', 'tenant_id')) {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            }
+            $query->update($payload);
 
             return $this->ok(['message' => 'Driver updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('drivers')->insertGetId(array_merge($payload, [
+        $newId = DB::table('drivers')->insertGetId(array_merge($payload, $this->tenantPayload('drivers'), [
             'created_at' => now(),
         ]));
 
@@ -627,12 +638,16 @@ class AdminOpsApiController extends Controller
         ];
 
         if ($id > 0) {
-            DB::table('luggage_services')->where('id', $id)->update($payload);
+            $query = DB::table('luggage_services')->where('id', $id);
+            if (Schema::hasColumn('luggage_services', 'tenant_id')) {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            }
+            $query->update($payload);
 
             return $this->ok(['message' => 'Luggage service updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, [
+        $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, $this->tenantPayload('luggage_services'), [
             'created_at' => now(),
         ]));
 
@@ -3155,6 +3170,9 @@ class AdminOpsApiController extends Controller
 
         $duplicate = DB::table('units')
             ->whereRaw('UPPER(nopol) = ?', [$nopol])
+            ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'tenant_id');
+            })
             ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
             ->exists();
 
@@ -3176,12 +3194,16 @@ class AdminOpsApiController extends Controller
         ];
 
         if ($id > 0) {
-            DB::table('units')->where('id', $id)->update($payload);
+            $query = DB::table('units')->where('id', $id);
+            if (Schema::hasColumn('units', 'tenant_id')) {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            }
+            $query->update($payload);
 
             return $this->ok(['message' => 'Unit updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('units')->insertGetId(array_merge($payload, [
+        $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), [
             'created_at' => now(),
         ]));
 
@@ -3254,6 +3276,9 @@ class AdminOpsApiController extends Controller
 
         $rows = DB::table('units')
             ->select('category')
+            ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'units.tenant_id');
+            })
             ->whereNotNull('category')
             ->whereRaw('TRIM(category) <> ?', [''])
             ->distinct()
@@ -3280,42 +3305,27 @@ class AdminOpsApiController extends Controller
             ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'armadas.tenant_id');
             })
-            ->select([
-                'id',
-                'merk',
-                'tahun',
-                'warna',
-                'nopol',
-                'nomor_rangka',
-                'kategori',
-                'ac_type',
-                'platform_gps',
-                'api_gps',
-                'revenue',
-                'bop',
-                'fixed_cost',
-                'target_bulanan',
-                'target_tahunan',
-            ])
+            ->select($this->armadaSelectColumns())
             ->orderBy('nopol');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
             $query->where(function (Builder $builder) use ($qLike) {
-                $builder
-                    ->where('nopol', 'like', $qLike)
-                    ->orWhere('nomor_rangka', 'like', $qLike)
-                    ->orWhere('merk', 'like', $qLike)
-                    ->orWhere('kategori', 'like', $qLike)
-                    ->orWhere('platform_gps', 'like', $qLike);
+                $builder->where('nopol', 'like', $qLike);
+
+                foreach (['nomor_rangka', 'merk', 'kategori', 'platform_gps'] as $column) {
+                    if (Schema::hasColumn('armadas', $column)) {
+                        $builder->orWhere($column, 'like', $qLike);
+                    }
+                }
             });
         }
 
-        if ($kategori !== '') {
+        if ($kategori !== '' && Schema::hasColumn('armadas', 'kategori')) {
             $query->where('kategori', $kategori);
         }
 
-        if (in_array($acType, ['AC', 'Non-AC'], true)) {
+        if (in_array($acType, ['AC', 'Non-AC'], true) && Schema::hasColumn('armadas', 'ac_type')) {
             $query->where('ac_type', $acType);
         }
 
@@ -3341,6 +3351,34 @@ class AdminOpsApiController extends Controller
             'armadas' => $rows,
             ...($pagination !== null ? ['pagination' => $pagination] : []),
         ]);
+    }
+
+    private function armadaSelectColumns(): array
+    {
+        $columnDefaults = [
+            'id' => '0',
+            'merk' => 'NULL',
+            'tahun' => '0',
+            'warna' => 'NULL',
+            'nopol' => "''",
+            'nomor_rangka' => 'NULL',
+            'kategori' => 'NULL',
+            'ac_type' => "'AC'",
+            'platform_gps' => 'NULL',
+            'api_gps' => 'NULL',
+            'revenue' => '0',
+            'bop' => '0',
+            'fixed_cost' => '0',
+            'target_bulanan' => '0',
+            'target_tahunan' => '0',
+        ];
+
+        return collect($columnDefaults)
+            ->map(static fn (string $default, string $column): mixed => Schema::hasColumn('armadas', $column)
+                ? $column
+                : DB::raw($default.' as '.$column))
+            ->values()
+            ->all();
     }
 
     public function armadasSave(Request $request): JsonResponse
@@ -3380,6 +3418,9 @@ class AdminOpsApiController extends Controller
 
         $duplicate = DB::table('armadas')
             ->whereRaw('UPPER(nopol) = ?', [$nopol])
+            ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'tenant_id');
+            })
             ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
             ->exists();
 
@@ -3409,17 +3450,38 @@ class AdminOpsApiController extends Controller
             $payload['bop'] = (float) ($data['bop'] ?? 0);
         }
 
+        $payload = $this->filterPayloadColumns('armadas', $payload);
+
         if ($id > 0) {
-            DB::table('armadas')->where('id', $id)->update($payload);
+            $query = DB::table('armadas')->where('id', $id);
+            if (Schema::hasColumn('armadas', 'tenant_id')) {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            }
+            $updated = $query->update($payload);
+
+            if ($updated === 0) {
+                return $this->error('Armada tidak ditemukan untuk tenant ini.', 404);
+            }
 
             return $this->ok(['message' => 'Armada updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('armadas')->insertGetId(array_merge($payload, [
+        $newId = DB::table('armadas')->insertGetId(array_merge($payload, $this->tenantPayload('armadas'), [
             'created_at' => now(),
         ]));
 
         return $this->ok(['message' => 'Armada created.', 'id' => $newId], 201);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private function filterPayloadColumns(string $table, array $payload): array
+    {
+        return collect($payload)
+            ->filter(static fn (mixed $_value, string $column): bool => Schema::hasColumn($table, $column))
+            ->all();
     }
 
     public function armadasDelete(int $id): JsonResponse
@@ -3428,7 +3490,15 @@ class AdminOpsApiController extends Controller
             return $this->ok(['message' => 'Armada deleted.']);
         }
 
-        $nopol = (string) (DB::table('armadas')->where('id', $id)->value('nopol') ?? '');
+        $armadaQuery = DB::table('armadas')->where('id', $id);
+        if (Schema::hasColumn('armadas', 'tenant_id')) {
+            PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
+        }
+
+        $nopol = (string) ($armadaQuery->value('nopol') ?? '');
+        if ($nopol === '') {
+            return $this->error('Armada tidak ditemukan untuk tenant ini.', 404);
+        }
 
         if ($this->chartersHasArmadaIdColumn()) {
             $payload = ['armada_id' => null];
@@ -3455,7 +3525,11 @@ class AdminOpsApiController extends Controller
                 ->update(['armada_nopol' => null]);
         }
 
-        DB::table('armadas')->where('id', $id)->delete();
+        $deleteQuery = DB::table('armadas')->where('id', $id);
+        if (Schema::hasColumn('armadas', 'tenant_id')) {
+            PoolScope::applyTenantScope($deleteQuery, 'tenant_id');
+        }
+        $deleteQuery->delete();
 
         return $this->ok(['message' => 'Armada deleted.']);
     }
@@ -3466,25 +3540,12 @@ class AdminOpsApiController extends Controller
             return $this->error('Data armada tidak tersedia.', 404);
         }
 
-        $row = DB::table('armadas')
-            ->where('id', $id)
-            ->first([
-                'id',
-                'merk',
-                'tahun',
-                'warna',
-                'nopol',
-                'nomor_rangka',
-                'kategori',
-                'ac_type',
-                'platform_gps',
-                'api_gps',
-                'revenue',
-                'bop',
-                'fixed_cost',
-                'target_bulanan',
-                'target_tahunan',
-            ]);
+        $query = DB::table('armadas')->where('id', $id);
+        if (Schema::hasColumn('armadas', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
+
+        $row = $query->first($this->armadaSelectColumns());
 
         if (! $row) {
             return $this->error('Armada tidak ditemukan.', 404);
@@ -3758,10 +3819,14 @@ class AdminOpsApiController extends Controller
 
         return DB::transaction(function () use ($id, $payload, $routeIds): JsonResponse {
             if ($id > 0) {
-                DB::table('pools')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
+                $query = DB::table('pools')->where('id', $id);
+                if (Schema::hasColumn('pools', 'tenant_id')) {
+                    PoolScope::applyTenantScope($query, 'tenant_id');
+                }
+                $query->update(array_merge($payload, ['updated_at' => now()]));
                 $poolId = $id;
             } else {
-                $poolId = (int) DB::table('pools')->insertGetId(array_merge($payload, [
+                $poolId = (int) DB::table('pools')->insertGetId(array_merge($payload, $this->tenantPayload('pools'), [
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]));
@@ -4185,7 +4250,11 @@ class AdminOpsApiController extends Controller
         }
 
         if ($id > 0) {
-            DB::table('users')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
+            $query = DB::table('users')->where('id', $id);
+            if (Schema::hasColumn('users', 'tenant_id')) {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            }
+            $query->update(array_merge($payload, ['updated_at' => now()]));
             $this->syncUserPools($id, $poolIds);
             $this->syncUserRoles($id, $roleIds);
 
@@ -4196,7 +4265,7 @@ class AdminOpsApiController extends Controller
             return $this->error('Password wajib untuk user baru.', 422);
         }
 
-        $newId = DB::table('users')->insertGetId(array_merge($payload, [
+        $newId = DB::table('users')->insertGetId(array_merge($payload, $this->tenantPayload('users'), [
             'email_verified_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),
@@ -6513,8 +6582,25 @@ class AdminOpsApiController extends Controller
         }
 
         $tenantId = PoolScope::tenantId();
+        if ($tenantId <= 0) {
+            $tenantId = $this->defaultTenantId();
+        }
 
         return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    }
+
+    private function defaultTenantId(): int
+    {
+        if (! Schema::hasTable('tenants')) {
+            return 0;
+        }
+
+        $tenantId = (int) (DB::table('tenants')->where('id', 1)->value('id') ?? 0);
+        if ($tenantId > 0) {
+            return $tenantId;
+        }
+
+        return (int) (DB::table('tenants')->where('slug', 'qbus-default')->value('id') ?? 0);
     }
 
     /**

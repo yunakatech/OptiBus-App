@@ -213,6 +213,57 @@ class AdminOpsApiTest extends TestCase
         $this->deleteJson(route('api.admin.units.delete', ['id' => $unitId]))->assertOk();
     }
 
+    public function test_armada_category_and_armada_create_use_default_tenant(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $unitCreate = $this->postJson(route('api.admin.units.save'), [
+            'nopol' => 'TEMPLATE BIGBUS 42',
+            'category' => 'Bigbus',
+            'kapasitas' => 42,
+            'status' => 'Aktif',
+        ])->assertCreated()->json();
+
+        $unitId = (int) ($unitCreate['id'] ?? 0);
+        $this->assertDatabaseHas('units', [
+            'id' => $unitId,
+            'tenant_id' => $tenantId,
+            'category' => 'Bigbus',
+        ]);
+
+        $categories = $this->getJson(route('api.admin.armada-categories.index'))
+            ->assertOk()
+            ->json('categories');
+
+        $this->assertContains('Bigbus', $categories);
+
+        $armadaCreate = $this->postJson(route('api.admin.armadas.save'), [
+            'merk' => 'Hino',
+            'tahun' => 2024,
+            'warna' => 'Putih',
+            'nopol' => 'DD 5500 QB',
+            'nomor_rangka' => 'QBUS-RANGKA-5500',
+            'kategori' => 'Bigbus',
+            'ac_type' => 'AC',
+            'target_revenue' => 25000000,
+            'fixed_cost' => 5000000,
+        ])->assertCreated()->json();
+
+        $armadaId = (int) ($armadaCreate['id'] ?? 0);
+        $this->assertDatabaseHas('armadas', [
+            'id' => $armadaId,
+            'tenant_id' => $tenantId,
+            'nopol' => 'DD 5500 QB',
+        ]);
+
+        $armadas = $this->getJson(route('api.admin.armadas.index'))
+            ->assertOk()
+            ->json('armadas');
+
+        $this->assertNotNull(collect($armadas)->firstWhere('id', $armadaId));
+    }
+
     public function test_segments_customers_and_reports_endpoints_work(): void
     {
         $this->actingAsSuperAdmin();
