@@ -275,6 +275,7 @@ class PaymentController extends Controller
         ]);
 
         PoolScope::applyRouteScope($query, $hasRouteId ? 'b.route_id' : '', 'b.rute');
+        $this->applyTenantScopeIfExists($query, 'bookings', 'b');
         $query->whereRaw("LOWER(COALESCE(b.status, 'active')) <> 'canceled'");
         $this->applyBookingStatusFilter($query, $status);
         $this->applySearch($query, (string) $filters['q'], ['b.name', 'b.phone', 'b.rute', 'b.pembayaran']);
@@ -329,6 +330,7 @@ class PaymentController extends Controller
         ]);
 
         PoolScope::applyCharterScope($query, 'c');
+        $this->applyTenantScopeIfExists($query, 'charters', 'c');
         $query
             ->whereRaw("LOWER(COALESCE(c.payment_status, '')) <> 'canceled'")
             ->whereRaw(($hasStatus ? "LOWER(COALESCE(c.status, 'active'))" : "'active'")." <> 'canceled'");
@@ -393,6 +395,7 @@ class PaymentController extends Controller
             $hasRouteId ? 'l.rute_id' : '',
             'l.rute',
         );
+        $this->applyTenantScopeIfExists($query, 'luggages', 'l');
         $query
             ->whereRaw("LOWER(COALESCE(l.payment_status, '')) <> 'canceled'")
             ->whereRaw("LOWER(COALESCE(l.status, '')) <> 'canceled'");
@@ -571,6 +574,7 @@ class PaymentController extends Controller
         $hasRouteId = Schema::hasColumn('bookings', 'route_id');
         $query = DB::table('bookings as b')->where('b.id', $id);
         PoolScope::applyRouteScope($query, $hasRouteId ? 'b.route_id' : '', 'b.rute');
+        $this->applyTenantScopeIfExists($query, 'bookings', 'b');
 
         $row = $query->first(['b.id', 'b.name', 'b.rute', 'b.pembayaran']);
         if (! $row) {
@@ -594,6 +598,7 @@ class PaymentController extends Controller
     {
         $query = DB::table('charters as c')->where('c.id', $id);
         PoolScope::applyCharterScope($query, 'c');
+        $this->applyTenantScopeIfExists($query, 'charters', 'c');
 
         $row = $query->first(['c.id', 'c.name', 'c.payment_status', 'c.down_payment']);
         if (! $row) {
@@ -631,6 +636,7 @@ class PaymentController extends Controller
             $hasRouteId ? 'l.rute_id' : '',
             'l.rute',
         );
+        $this->applyTenantScopeIfExists($query, 'luggages', 'l');
 
         $row = $query->first(['l.id', 'l.kode_resi', 'l.sender_name', 'l.payment_status']);
         if (! $row) {
@@ -719,17 +725,20 @@ class PaymentController extends Controller
         }
 
         if ($poolId > 0 && Schema::hasTable('pools')) {
-            $name = trim((string) (DB::table('pools')->where('id', $poolId)->value('name') ?? ''));
+            $poolQuery = DB::table('pools')->where('id', $poolId);
+            $this->applyTenantScopeIfExists($poolQuery, 'pools');
+            $name = trim((string) ($poolQuery->value('name') ?? ''));
             if ($name !== '') {
                 return $this->poolNameCache[$cacheKey] = $name;
             }
         }
 
         if ($routeId > 0 && PoolScope::tablesReady()) {
-            $name = trim((string) (DB::table('pool_route as pr')
+            $poolRouteQuery = DB::table('pool_route as pr')
                 ->join('pools as p', 'pr.pool_id', '=', 'p.id')
-                ->where('pr.route_id', $routeId)
-                ->value('p.name') ?? ''));
+                ->where('pr.route_id', $routeId);
+            $this->applyTenantScopeIfExists($poolRouteQuery, 'pools', 'p');
+            $name = trim((string) ($poolRouteQuery->value('p.name') ?? ''));
             if ($name !== '') {
                 return $this->poolNameCache[$cacheKey] = $name;
             }
@@ -744,8 +753,10 @@ class PaymentController extends Controller
         if ($labels !== [] && PoolScope::tablesReady()) {
             $routes = DB::table('pool_route as pr')
                 ->join('routes as r', 'pr.route_id', '=', 'r.id')
-                ->join('pools as p', 'pr.pool_id', '=', 'p.id')
-                ->get(['p.name', 'r.name as route_name', 'r.origin', 'r.destination']);
+                ->join('pools as p', 'pr.pool_id', '=', 'p.id');
+            $this->applyTenantScopeIfExists($routes, 'pools', 'p');
+            $this->applyTenantScopeIfExists($routes, 'routes', 'r');
+            $routes = $routes->get(['p.name', 'r.name as route_name', 'r.origin', 'r.destination']);
 
             foreach ($routes as $route) {
                 $routeLabels = [
@@ -770,6 +781,16 @@ class PaymentController extends Controller
     private function normalizeLabel(string $value): string
     {
         return preg_replace('/\s+/', ' ', mb_strtolower(trim($value))) ?? '';
+    }
+
+    private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
+    {
+        if (! Schema::hasColumn($table, 'tenant_id')) {
+            return;
+        }
+
+        $prefix = $alias !== '' ? $alias.'.' : '';
+        PoolScope::applyTenantScope($query, $prefix.'tenant_id');
     }
 
     /**

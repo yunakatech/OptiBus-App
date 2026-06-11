@@ -215,6 +215,7 @@ class OperationsApiTest extends TestCase
 
         DB::table('customers')->insert([
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => null,
                 'name' => 'CUSTOMER LEGACY ROUTE',
                 'phone' => '081200000001',
@@ -222,6 +223,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => null,
                 'name' => 'CUSTOMER ROUTE ID',
                 'phone' => '081200000002',
@@ -229,6 +231,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => null,
                 'name' => 'CUSTOMER LUAR POOL',
                 'phone' => '081200000003',
@@ -236,6 +239,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => null,
                 'name' => 'CUSTOMER ROUTE ID SALAH',
                 'phone' => '081200000004',
@@ -243,6 +247,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $poolId,
                 'name' => 'CUSTOMER TANPA BOOKING',
                 'phone' => '081200000005',
@@ -252,6 +257,7 @@ class OperationsApiTest extends TestCase
         ]);
         DB::table('bookings')->insert([
             [
+                'tenant_id' => $tenantId,
                 'route_id' => null,
                 'rute' => 'Pinrang - Makassar',
                 'tanggal' => '2026-06-05',
@@ -264,6 +270,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $routeId,
                 'rute' => 'LABEL BOOKING LAMA',
                 'tanggal' => '2026-06-05',
@@ -276,6 +283,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $outsideRouteId,
                 'rute' => 'MAKASSAR - PAREPARE',
                 'tanggal' => '2026-06-05',
@@ -288,6 +296,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'route_id' => $routeId,
                 'rute' => 'Pinrang - Makassar',
                 'tanggal' => '2026-06-05',
@@ -358,6 +367,7 @@ class OperationsApiTest extends TestCase
 
         DB::table('customer_bagasi')->insert([
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $poolId,
                 'nama' => 'BAGASI PINRANG',
                 'no_hp' => '081300000001',
@@ -366,6 +376,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $outsidePoolId,
                 'nama' => 'BAGASI LUAR',
                 'no_hp' => '081300000002',
@@ -376,6 +387,7 @@ class OperationsApiTest extends TestCase
         ]);
         DB::table('customer_charter')->insert([
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $poolId,
                 'nama' => 'CARTER PINRANG',
                 'no_hp' => '081400000001',
@@ -384,6 +396,7 @@ class OperationsApiTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'pool_id' => $outsidePoolId,
                 'nama' => 'CARTER LUAR',
                 'no_hp' => '081400000002',

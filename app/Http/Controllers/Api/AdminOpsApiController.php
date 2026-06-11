@@ -137,9 +137,17 @@ class AdminOpsApiController extends Controller
         }
 
         if ($id > 0) {
+            $routeUpdate = DB::table('routes')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($routeUpdate, 'routes');
+            if (! $routeUpdate->exists()) {
+                return $this->error('Route not found.', 404);
+            }
+
             DB::table('routes')->where('id', $id)->update($payload);
             if ($this->hasSchedulesRouteId()) {
-                DB::table('schedules')->where('route_id', $id)->update(['rute' => $payload['name']]);
+                $scheduleRouteUpdate = DB::table('schedules')->where('route_id', $id);
+                $this->applyWriteTenantScopeIfExists($scheduleRouteUpdate, 'schedules');
+                $scheduleRouteUpdate->update(['rute' => $payload['name']]);
             }
 
             return $this->ok(['message' => 'Route updated.', 'id' => $id]);
@@ -155,8 +163,16 @@ class AdminOpsApiController extends Controller
 
     public function routesDelete(int $id): JsonResponse
     {
+        $routeQuery = DB::table('routes')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($routeQuery, 'routes');
+        if (! $routeQuery->exists()) {
+            return $this->error('Route not found.', 404);
+        }
+
         if ($this->hasSchedulesRouteId()) {
-            DB::table('schedules')->where('route_id', $id)->update(['route_id' => null]);
+            $scheduleRouteUpdate = DB::table('schedules')->where('route_id', $id);
+            $this->applyWriteTenantScopeIfExists($scheduleRouteUpdate, 'schedules');
+            $scheduleRouteUpdate->update(['route_id' => null]);
         }
         DB::table('routes')->where('id', $id)->delete();
 
@@ -173,6 +189,7 @@ class AdminOpsApiController extends Controller
 
         $query = DB::table('schedules as s')
             ->leftJoin('units as u', 's.unit_id', '=', 'u.id');
+        $this->applyTenantScopeIfExists($query, 'schedules', 's');
 
         if ($hasRouteId) {
             $query->leftJoin('routes as r', 's.route_id', '=', 'r.id');
@@ -195,7 +212,9 @@ class AdminOpsApiController extends Controller
             ->orderBy('s.jam');
 
         if ($hasRouteId && $routeId > 0) {
-            $routeName = trim((string) (DB::table('routes')->where('id', $routeId)->value('name') ?? ''));
+            $routeLookup = DB::table('routes')->where('id', $routeId);
+            $this->applyTenantScopeIfExists($routeLookup, 'routes');
+            $routeName = trim((string) ($routeLookup->value('name') ?? ''));
             $query->where(function (Builder $builder) use ($routeId, $routeName): void {
                 $builder->where('s.route_id', $routeId);
 
@@ -237,8 +256,9 @@ class AdminOpsApiController extends Controller
                     ->leftJoin('units as u', 'su.unit_id', '=', 'u.id')
                     ->whereIn('schedule_id', $scheduleIds)
                     ->orderBy('su.schedule_id')
-                    ->orderBy('su.unit_no')
-                    ->get([
+                    ->orderBy('su.unit_no');
+                $this->applyTenantScopeIfExists($optionRows, 'schedule_units', 'su');
+                $optionRows = $optionRows->get([
                         'su.schedule_id',
                         'su.unit_no',
                         'su.label',
@@ -302,7 +322,9 @@ class AdminOpsApiController extends Controller
         $jam = $data['jam'].':00';
 
         if ($hasRouteId && $routeId > 0) {
-            $route = DB::table('routes')->where('id', $routeId)->first(['id', 'name']);
+            $routeQuery = DB::table('routes')->where('id', $routeId);
+            $this->applyWriteTenantScopeIfExists($routeQuery, 'routes');
+            $route = $routeQuery->first(['id', 'name']);
             if (! $route) {
                 return $this->error('Route tidak ditemukan.', 422);
             }
@@ -325,7 +347,7 @@ class AdminOpsApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
-        $duplicate = DB::table('schedules')
+        $duplicateQuery = DB::table('schedules')
             ->where('dow', (int) $data['dow'])
             ->where('jam', $jam)
             ->where(function (Builder $query) use ($hasRouteId, $routeId, $routeName) {
@@ -340,8 +362,9 @@ class AdminOpsApiController extends Controller
                 }
                 $query->where('rute', $routeName);
             })
-            ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
-            ->exists();
+            ->when($id > 0, fn ($q) => $q->where('id', '!=', $id));
+        $this->applyWriteTenantScopeIfExists($duplicateQuery, 'schedules');
+        $duplicate = $duplicateQuery->exists();
 
         if ($duplicate) {
             return $this->error('Jadwal duplikat (rute + hari + jam).', 409);
@@ -380,9 +403,10 @@ class AdminOpsApiController extends Controller
         )));
         $unitsById = [];
         if (! empty($lookupUnitIds)) {
-            $unitsById = DB::table('units')
-                ->whereIn('id', $lookupUnitIds)
-                ->get(['id', 'kapasitas', 'layout'])
+            $unitsQuery = DB::table('units')
+                ->whereIn('id', $lookupUnitIds);
+            $this->applyWriteTenantScopeIfExists($unitsQuery, 'units');
+            $unitsById = $unitsQuery->get(['id', 'kapasitas', 'layout'])
                 ->keyBy(static fn ($row) => (int) ($row->id ?? 0))
                 ->all();
         }
@@ -424,28 +448,41 @@ class AdminOpsApiController extends Controller
             $payload['route_id'] = $routeId > 0 ? $routeId : null;
         }
 
+        if ($id > 0) {
+            $existingScheduleQuery = DB::table('schedules')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($existingScheduleQuery, 'schedules');
+            if (! $existingScheduleQuery->exists()) {
+                return $this->error('Schedule not found.', 404);
+            }
+        }
+
         try {
             return DB::transaction(function () use ($id, $payload, $normalizedLabels, $normalizedUnitIds) {
                 $scheduleId = $id;
                 if ($scheduleId > 0) {
-                    DB::table('schedules')->where('id', $scheduleId)->update($payload);
+                    $scheduleUpdate = DB::table('schedules')->where('id', $scheduleId);
+                    $this->applyWriteTenantScopeIfExists($scheduleUpdate, 'schedules');
+                    $scheduleUpdate->update($payload);
                 } else {
                     $scheduleId = (int) DB::table('schedules')->insertGetId(array_merge($payload, [
+                        ...$this->tenantPayload('schedules'),
                         'created_at' => now(),
                     ]));
                 }
 
                 if ($this->hasScheduleUnitsTable()) {
-                    DB::table('schedule_units')->where('schedule_id', $scheduleId)->delete();
+                    $scheduleUnitsDelete = DB::table('schedule_units')->where('schedule_id', $scheduleId);
+                    $this->applyWriteTenantScopeIfExists($scheduleUnitsDelete, 'schedule_units');
+                    $scheduleUnitsDelete->delete();
                     $rows = [];
                     foreach ($normalizedLabels as $idx => $label) {
-                        $rows[] = [
+                        $rows[] = array_merge([
                             'schedule_id' => $scheduleId,
                             'unit_no' => $idx + 1,
                             'label' => $label,
                             'unit_id' => $normalizedUnitIds[$idx] ?? null,
                             'created_at' => now(),
-                        ];
+                        ], $this->tenantPayload('schedule_units'));
                     }
                     if (! empty($rows)) {
                         DB::table('schedule_units')->insert($rows);
@@ -465,10 +502,20 @@ class AdminOpsApiController extends Controller
 
     public function schedulesDelete(int $id): JsonResponse
     {
-        if ($this->hasScheduleUnitsTable()) {
-            DB::table('schedule_units')->where('schedule_id', $id)->delete();
+        $scheduleQuery = DB::table('schedules')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($scheduleQuery, 'schedules');
+        if (! $scheduleQuery->exists()) {
+            return $this->error('Schedule not found.', 404);
         }
-        DB::table('schedules')->where('id', $id)->delete();
+
+        if ($this->hasScheduleUnitsTable()) {
+            $scheduleUnitsDelete = DB::table('schedule_units')->where('schedule_id', $id);
+            $this->applyWriteTenantScopeIfExists($scheduleUnitsDelete, 'schedule_units');
+            $scheduleUnitsDelete->delete();
+        }
+        $scheduleDelete = DB::table('schedules')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($scheduleDelete, 'schedules');
+        $scheduleDelete->delete();
 
         return $this->ok(['message' => 'Schedule deleted.']);
     }
@@ -678,6 +725,7 @@ class AdminOpsApiController extends Controller
                 DB::raw('r.name as route_name'),
             ])
             ->orderBy('s.rute');
+        $this->applyTenantScopeIfExists($query, 'segments', 's');
 
         if ($routeId > 0) {
             $query->where('s.route_id', $routeId);
@@ -719,21 +767,40 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+        $routeQuery = DB::table('routes')->where('id', (int) $data['route_id']);
+        $this->applyWriteTenantScopeIfExists($routeQuery, 'routes');
+        $route = $routeQuery->first(['id', 'name']);
+        if (! $route) {
+            return $this->error('Route tidak ditemukan.', 422);
+        }
+
+        $routeName = trim((string) ($route->name ?? $data['rute']));
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
         $payload = [
             'route_id' => (int) $data['route_id'],
-            'rute' => trim((string) $data['rute']),
+            'rute' => $routeName !== '' ? $routeName : trim((string) $data['rute']),
             'origin' => $this->nullable($data['origin'] ?? null),
             'destination' => $this->nullable($data['destination'] ?? null),
             'harga' => (float) $data['harga'],
         ];
 
         if ($id > 0) {
-            DB::table('segments')->where('id', $id)->update($payload);
+            $segmentUpdate = DB::table('segments')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($segmentUpdate, 'segments');
+            if (! $segmentUpdate->exists()) {
+                return $this->error('Segment not found.', 404);
+            }
+
+            $segmentUpdate->update($payload);
 
             return $this->ok(['message' => 'Segment updated.', 'id' => $id]);
         }
 
         $newId = DB::table('segments')->insertGetId(array_merge($payload, [
+            ...$this->tenantPayload('segments'),
             'created_at' => now(),
         ]));
 
@@ -742,7 +809,13 @@ class AdminOpsApiController extends Controller
 
     public function segmentsDelete(int $id): JsonResponse
     {
-        DB::table('segments')->where('id', $id)->delete();
+        $segmentDelete = DB::table('segments')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($segmentDelete, 'segments');
+        if (! $segmentDelete->exists()) {
+            return $this->error('Segment not found.', 404);
+        }
+
+        $segmentDelete->delete();
 
         return $this->ok(['message' => 'Segment deleted.']);
     }
@@ -798,21 +871,32 @@ class AdminOpsApiController extends Controller
         $poolId = $this->defaultCustomerPoolId();
 
         if ($id > 0) {
-            DB::table('customers')->where('id', $id)->update($payload);
+            $customerUpdate = DB::table('customers')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
+            if (! $customerUpdate->exists()) {
+                return $this->error('Customer not found.', 404);
+            }
+
+            $customerUpdate->update($payload);
             $this->assignCustomerPoolIfMissing($id, $poolId);
 
             return $this->ok(['message' => 'Customer updated.', 'id' => $id]);
         }
 
-        $existing = DB::table('customers')->where('phone', $payload['phone'])->value('id');
+        $existingQuery = DB::table('customers')->where('phone', $payload['phone']);
+        $this->applyWriteTenantScopeIfExists($existingQuery, 'customers');
+        $existing = $existingQuery->value('id');
         if ($existing) {
-            DB::table('customers')->where('id', (int) $existing)->update($payload);
+            $customerUpdate = DB::table('customers')->where('id', (int) $existing);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
+            $customerUpdate->update($payload);
             $this->assignCustomerPoolIfMissing((int) $existing, $poolId);
 
             return $this->ok(['message' => 'Customer updated by phone.', 'id' => (int) $existing]);
         }
 
         $newId = DB::table('customers')->insertGetId(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], [
+            ...$this->tenantPayload('customers'),
             'created_at' => now(),
         ]));
 
@@ -821,7 +905,13 @@ class AdminOpsApiController extends Controller
 
     public function customersDelete(int $id): JsonResponse
     {
-        DB::table('customers')->where('id', $id)->delete();
+        $customerDelete = DB::table('customers')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($customerDelete, 'customers');
+        if (! $customerDelete->exists()) {
+            return $this->error('Customer not found.', 404);
+        }
+
+        $customerDelete->delete();
 
         return $this->ok(['message' => 'Customer deleted.']);
     }
@@ -917,9 +1007,13 @@ class AdminOpsApiController extends Controller
                 'gmaps' => $gmaps !== '' ? $gmaps : null,
             ];
 
-            $existingId = DB::table('customers')->where('phone', $phone)->value('id');
+            $existingQuery = DB::table('customers')->where('phone', $phone);
+            $this->applyWriteTenantScopeIfExists($existingQuery, 'customers');
+            $existingId = $existingQuery->value('id');
             if ($existingId) {
-                DB::table('customers')->where('id', (int) $existingId)->update($payload);
+                $customerUpdate = DB::table('customers')->where('id', (int) $existingId);
+                $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
+                $customerUpdate->update($payload);
                 $this->assignCustomerPoolIfMissing((int) $existingId, $poolId);
                 $updated += 1;
 
@@ -927,6 +1021,7 @@ class AdminOpsApiController extends Controller
             }
 
             DB::table('customers')->insert(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], [
+                ...$this->tenantPayload('customers'),
                 'created_at' => now(),
             ]));
             $created += 1;
@@ -1105,6 +1200,7 @@ class AdminOpsApiController extends Controller
             ->distinct();
         $this->applyNotCanceledFilter($routeQuery, 'status');
         $this->applyRouteScopeToQuery($routeQuery, '', 'rute', $poolId);
+        $this->applyTenantScopeIfExists($routeQuery, 'bookings');
 
         $routes = $routeQuery->pluck('rute')->all();
 
@@ -1112,7 +1208,10 @@ class AdminOpsApiController extends Controller
             return 0.0;
         }
 
-        return (float) DB::table('routes')->whereIn('name', $routes)->sum('bop');
+        $routesQuery = DB::table('routes')->whereIn('name', $routes);
+        $this->applyTenantScopeIfExists($routesQuery, 'routes');
+
+        return (float) $routesQuery->sum('bop');
     }
 
     private function buildCharterReport(string $from, string $to, int $page, int $perPage, int $poolId = 0, string $routeName = ''): array
@@ -1331,6 +1430,7 @@ class AdminOpsApiController extends Controller
             ->orderBy('rute');
         $this->applyNotCanceledFilter($query, 'status');
         $this->applyRouteScopeToQuery($query, '', 'rute', $poolId);
+        $this->applyTenantScopeIfExists($query, 'bookings');
 
         $rows = $query->get([
             'id',
@@ -1398,6 +1498,7 @@ class AdminOpsApiController extends Controller
                 ->whereBetween('l.created_at', [$createdFrom, $createdTo])
                 ->orderByDesc('l.created_at');
             $this->applyNotCanceledFilter($query, 'l.status');
+            $this->applyTenantScopeIfExists($query, 'luggages', 'l');
             $this->applyPoolOrRouteScopeToQuery(
                 $query,
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
@@ -1436,6 +1537,7 @@ class AdminOpsApiController extends Controller
                 ->orderByDesc('c.start_date');
             $this->applyActiveCharterReportFilter($query, 'c');
             $this->applyCharterPoolScope($query, $poolId);
+            $this->applyTenantScopeIfExists($query, 'charters', 'c');
 
             $rows = $query->get([
                 DB::raw('c.start_date as tanggal'),
@@ -1468,6 +1570,7 @@ class AdminOpsApiController extends Controller
             ->orderByDesc('b.tanggal');
         $this->applyNotCanceledFilter($query, 'b.status');
         $this->applyRouteScopeToQuery($query, '', 'b.rute', $poolId);
+        $this->applyTenantScopeIfExists($query, 'bookings', 'b');
 
         $rows = $query->get([
             'b.tanggal',
@@ -1798,9 +1901,9 @@ class AdminOpsApiController extends Controller
         $hasMasterCarterIdColumn = $this->chartersHasMasterCarterIdColumn();
         $before = [];
         if ($id > 0) {
-            $existing = DB::table('charters')
-                ->where('id', $id)
-                ->first();
+            $existingQuery = DB::table('charters')->where('id', $id);
+            $this->applyTenantScopeIfExists($existingQuery, 'charters');
+            $existing = $existingQuery->first();
             if (! $existing) {
                 return $this->error('Charter not found.', 404);
             }
@@ -1822,10 +1925,11 @@ class AdminOpsApiController extends Controller
         $selectedUnit = null;
         $selectedUnitCategory = '';
         if ($unitId > 0) {
-            $selectedUnit = DB::table('units')
+            $unitQuery = DB::table('units')
                 ->select(['id', 'nopol', 'category'])
-                ->where('id', $unitId)
-                ->first();
+                ->where('id', $unitId);
+            $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
+            $selectedUnit = $unitQuery->first();
 
             if (! $selectedUnit) {
                 return $this->error('Kategori armada tidak ditemukan.', 422);
@@ -1842,19 +1946,21 @@ class AdminOpsApiController extends Controller
             $matchedArmada = null;
 
             if ($armadaId > 0) {
-                $matchedArmada = DB::table('armadas')
+                $armadaQuery = DB::table('armadas')
                     ->select(['id', 'nopol', 'kategori'])
-                    ->where('id', $armadaId)
-                    ->first();
+                    ->where('id', $armadaId);
+                $this->applyWriteTenantScopeIfExists($armadaQuery, 'armadas');
+                $matchedArmada = $armadaQuery->first();
 
                 if (! $matchedArmada) {
                     return $this->error('Armada tidak ditemukan.', 422);
                 }
             } elseif ($requestedArmadaNopol !== '') {
-                $matchedArmada = DB::table('armadas')
+                $armadaQuery = DB::table('armadas')
                     ->select(['id', 'nopol', 'kategori'])
-                    ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol])
-                    ->first();
+                    ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol]);
+                $this->applyWriteTenantScopeIfExists($armadaQuery, 'armadas');
+                $matchedArmada = $armadaQuery->first();
             }
 
             if ($matchedArmada) {
@@ -1898,7 +2004,7 @@ class AdminOpsApiController extends Controller
             }
 
             $masterCarterQuery = DB::table('master_carter')->where('id', $masterCarterId);
-            $this->applyTenantScopeIfExists($masterCarterQuery, 'master_carter');
+            $this->applyWriteTenantScopeIfExists($masterCarterQuery, 'master_carter');
             if (! $masterCarterQuery->exists()) {
                 return $this->error('Master Carter tidak ditemukan.', 422);
             }
@@ -1936,7 +2042,9 @@ class AdminOpsApiController extends Controller
         }
 
         if ($id > 0) {
-            DB::table('charters')->where('id', $id)->update($payload);
+            $charterUpdate = DB::table('charters')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($charterUpdate, 'charters');
+            $charterUpdate->update($payload);
             $this->syncCustomerCharterFromCharterPayload($payload);
             $this->syncMasterCarterFromCharterPayload($payload);
             ActivityLog::write(
@@ -1971,7 +2079,9 @@ class AdminOpsApiController extends Controller
 
     public function chartersDelete(int $id): JsonResponse
     {
-        $before = (array) (DB::table('charters')->where('id', $id)->first() ?? []);
+        $charterQuery = DB::table('charters')->where('id', $id);
+        $this->applyTenantScopeIfExists($charterQuery, 'charters');
+        $before = (array) ($charterQuery->first() ?? []);
         if ($before === []) {
             return $this->error('Charter not found.', 404);
         }
@@ -1981,9 +2091,9 @@ class AdminOpsApiController extends Controller
         }
 
         if ($this->chartersHasStatusColumn()) {
-            $updated = DB::table('charters')
-                ->where('id', $id)
-                ->update(['status' => 'canceled']);
+            $charterUpdate = DB::table('charters')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($charterUpdate, 'charters');
+            $updated = $charterUpdate->update(['status' => 'canceled']);
             if ($updated === 0) {
                 return $this->error('Charter not found.', 404);
             }
@@ -2002,9 +2112,9 @@ class AdminOpsApiController extends Controller
             return $this->ok(['message' => 'Charter canceled.', 'updated' => $updated]);
         }
 
-        $updated = DB::table('charters')
-            ->where('id', $id)
-            ->update(['payment_status' => 'Canceled']);
+        $charterUpdate = DB::table('charters')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($charterUpdate, 'charters');
+        $updated = $charterUpdate->update(['payment_status' => 'Canceled']);
         if ($updated === 0) {
             return $this->error('Charter not found.', 404);
         }
@@ -2326,7 +2436,12 @@ class AdminOpsApiController extends Controller
         $id = (int) ($data['id'] ?? 0);
         $serviceId = (int) ($data['service_id'] ?? $data['layanan_id'] ?? 0);
         $routeId = (int) ($data['rute_id'] ?? 0);
-        $before = $id > 0 ? (array) (DB::table('luggages')->where('id', $id)->first() ?? []) : [];
+        $before = [];
+        if ($id > 0) {
+            $luggageQuery = DB::table('luggages')->where('id', $id);
+            $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+            $before = (array) ($luggageQuery->first() ?? []);
+        }
         if ($id > 0 && $before === []) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2340,7 +2455,15 @@ class AdminOpsApiController extends Controller
         $receiverName = strtoupper(trim((string) $data['receiver_name']));
         $senderAddress = $this->nullable($data['sender_address'] ?? null);
         $receiverAddress = $this->nullable($data['receiver_address'] ?? null);
-        $routeName = $routeId > 0 ? (string) (DB::table('routes')->where('id', $routeId)->value('name') ?? '') : '';
+        $routeName = '';
+        if ($routeId > 0) {
+            $routeQuery = DB::table('routes')->where('id', $routeId);
+            $this->applyWriteTenantScopeIfExists($routeQuery, 'routes');
+            $routeName = (string) ($routeQuery->value('name') ?? '');
+            if ($routeName === '') {
+                return $this->error('Rute tidak ditemukan.', 422);
+            }
+        }
         $poolId = 0;
 
         if ($this->luggagesHasPoolIdColumn()) {
@@ -2397,7 +2520,9 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             $previous = (object) $before;
-            DB::table('luggages')->where('id', $id)->update($payload);
+            $luggageUpdate = DB::table('luggages')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
+            $luggageUpdate->update($payload);
             if ($previous) {
                 $this->appendLuggageLogByResi(
                     $this->ensureLuggageResi($id),
@@ -2421,7 +2546,9 @@ class AdminOpsApiController extends Controller
 
     public function luggagesDelete(int $id): JsonResponse
     {
-        $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        $luggageQuery = DB::table('luggages')->where('id', $id);
+        $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+        $before = (array) ($luggageQuery->first() ?? []);
         if ($before === []) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2430,7 +2557,9 @@ class AdminOpsApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
         }
 
-        DB::table('luggages')->where('id', $id)->delete();
+        $luggageDelete = DB::table('luggages')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($luggageDelete, 'luggages');
+        $luggageDelete->delete();
 
         return $this->ok(['message' => 'Luggage deleted.']);
     }
@@ -2501,7 +2630,9 @@ class AdminOpsApiController extends Controller
 
     public function luggagesMarkPaid(int $id): JsonResponse
     {
-        $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        $luggageQuery = DB::table('luggages')->where('id', $id);
+        $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+        $before = (array) ($luggageQuery->first() ?? []);
         if ($before === []) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2509,7 +2640,9 @@ class AdminOpsApiController extends Controller
         if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
             return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
         }
-        $updated = DB::table('luggages')->where('id', $id)->update(['payment_status' => 'Lunas']);
+        $luggageUpdate = DB::table('luggages')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
+        $updated = $luggageUpdate->update(['payment_status' => 'Lunas']);
         if ($updated === 0) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2524,7 +2657,9 @@ class AdminOpsApiController extends Controller
 
     public function luggagesMarkActive(int $id): JsonResponse
     {
-        $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        $luggageQuery = DB::table('luggages')->where('id', $id);
+        $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+        $before = (array) ($luggageQuery->first() ?? []);
         if ($before === []) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2533,7 +2668,9 @@ class AdminOpsApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
         }
         $status = $this->luggagePickedUpStatus();
-        $updated = DB::table('luggages')->where('id', $id)->update(['status' => $status]);
+        $luggageUpdate = DB::table('luggages')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
+        $updated = $luggageUpdate->update(['status' => $status]);
         if ($updated === 0) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2548,7 +2685,9 @@ class AdminOpsApiController extends Controller
 
     public function luggagesMarkDone(int $id): JsonResponse
     {
-        $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        $luggageQuery = DB::table('luggages')->where('id', $id);
+        $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+        $before = (array) ($luggageQuery->first() ?? []);
         if ($before === []) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2557,7 +2696,9 @@ class AdminOpsApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
         }
         $status = $this->luggageArrivedStatus();
-        $updated = DB::table('luggages')->where('id', $id)->update(['status' => $status]);
+        $luggageUpdate = DB::table('luggages')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
+        $updated = $luggageUpdate->update(['status' => $status]);
         if ($updated === 0) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2572,7 +2713,9 @@ class AdminOpsApiController extends Controller
 
     public function luggagesMarkCanceled(int $id): JsonResponse
     {
-        $before = (array) (DB::table('luggages')->where('id', $id)->first() ?? []);
+        $luggageQuery = DB::table('luggages')->where('id', $id);
+        $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+        $before = (array) ($luggageQuery->first() ?? []);
         if ($before === []) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2580,7 +2723,9 @@ class AdminOpsApiController extends Controller
         if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['rute'] ?? ''])) {
             return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
         }
-        $updated = DB::table('luggages')->where('id', $id)->update(['status' => 'canceled']);
+        $luggageUpdate = DB::table('luggages')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
+        $updated = $luggageUpdate->update(['status' => 'canceled']);
         if ($updated === 0) {
             return $this->error('Luggage not found.', 404);
         }
@@ -2598,17 +2743,39 @@ class AdminOpsApiController extends Controller
 
     public function luggagesTracking(int $id): JsonResponse
     {
-        $luggage = DB::table('luggages')
-            ->where('id', $id)
-            ->first(['id', 'kode_resi', 'sender_name', 'receiver_name', 'status', 'payment_status']);
+        $luggageQuery = DB::table('luggages')
+            ->where('id', $id);
+        $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+        $luggage = $luggageQuery->first([
+            'id',
+            $this->luggagesHasPoolIdColumn() ? 'pool_id' : DB::raw('NULL as pool_id'),
+            Schema::hasColumn('luggages', 'tenant_id') ? 'tenant_id' : DB::raw('NULL as tenant_id'),
+            'rute',
+            'kode_resi',
+            'sender_name',
+            'receiver_name',
+            'status',
+            'payment_status',
+        ]);
 
         if (! $luggage) {
             return $this->error('Luggage not found.', 404);
         }
 
+        if (! $this->transactionPoolSnapshotAccessible((int) ($luggage->pool_id ?? 0), [$luggage->rute ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
+
         $resi = $luggage->kode_resi ?: $this->ensureLuggageResi($id);
         $logs = DB::table('bagasi_logs')
-            ->where('kode_resi', $resi)
+            ->where('kode_resi', $resi);
+        if (Schema::hasColumn('bagasi_logs', 'tenant_id') && (int) ($luggage->tenant_id ?? 0) > 0) {
+            $logs->where('tenant_id', (int) $luggage->tenant_id);
+        } else {
+            $this->applyTenantScopeIfExists($logs, 'bagasi_logs');
+        }
+
+        $logs = $logs
             ->orderByDesc('id')
             ->get(['id', 'kode_resi', 'status', 'notes', 'created_by_username', 'created_at'])
             ->map(function ($row) {
@@ -2638,9 +2805,19 @@ class AdminOpsApiController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $exists = DB::table('luggages')->where('id', $id)->exists();
-        if (! $exists) {
+        $luggageQuery = DB::table('luggages')->where('id', $id);
+        $this->applyTenantScopeIfExists($luggageQuery, 'luggages');
+        $luggage = $luggageQuery->first([
+            'id',
+            $this->luggagesHasPoolIdColumn() ? 'pool_id' : DB::raw('NULL as pool_id'),
+            'rute',
+        ]);
+        if (! $luggage) {
             return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($luggage->pool_id ?? 0), [$luggage->rute ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
         }
 
         $resi = $this->ensureLuggageResi($id);
@@ -2882,6 +3059,7 @@ class AdminOpsApiController extends Controller
             ->select(['id', 'nama', 'no_hp', 'alamat', 'tipe'])
             ->orderBy('nama');
         PoolScope::applyCustomerBagasiScope($query, 'customer_bagasi');
+        $this->applyTenantScopeIfExists($query, 'customer_bagasi');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -2922,28 +3100,49 @@ class AdminOpsApiController extends Controller
         $poolId = $this->defaultCustomerPoolId('customer_bagasi');
 
         if ($id > 0) {
-            DB::table('customer_bagasi')->where('id', $id)->update($payload);
+            $customerUpdate = DB::table('customer_bagasi')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_bagasi');
+            if (! $customerUpdate->exists()) {
+                return $this->error('Customer bagasi not found.', 404);
+            }
+
+            $customerUpdate->update($payload);
             $this->assignCustomerPoolIfMissing($id, $poolId, 'customer_bagasi');
 
             return $this->ok(['message' => 'Customer bagasi updated.', 'id' => $id]);
         }
 
-        $existingId = (int) (DB::table('customer_bagasi')->where('no_hp', $payload['no_hp'])->value('id') ?? 0);
+        $existingQuery = DB::table('customer_bagasi')->where('no_hp', $payload['no_hp']);
+        $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_bagasi');
+        $existingId = (int) ($existingQuery->value('id') ?? 0);
         if ($existingId > 0) {
-            DB::table('customer_bagasi')->where('id', $existingId)->update($payload);
+            $customerUpdate = DB::table('customer_bagasi')->where('id', $existingId);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_bagasi');
+            $customerUpdate->update($payload);
             $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_bagasi');
 
             return $this->ok(['message' => 'Customer bagasi updated by phone.', 'id' => $existingId]);
         }
 
-        $newId = DB::table('customer_bagasi')->insertGetId(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], ['created_at' => now()]));
+        $newId = DB::table('customer_bagasi')->insertGetId(array_merge(
+            $payload,
+            $poolId > 0 ? ['pool_id' => $poolId] : [],
+            $this->tenantPayload('customer_bagasi'),
+            ['created_at' => now()],
+        ));
 
         return $this->ok(['message' => 'Customer bagasi created.', 'id' => $newId], 201);
     }
 
     public function customerBagasiDelete(int $id): JsonResponse
     {
-        DB::table('customer_bagasi')->where('id', $id)->delete();
+        $customerDelete = DB::table('customer_bagasi')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($customerDelete, 'customer_bagasi');
+        if (! $customerDelete->exists()) {
+            return $this->error('Customer bagasi not found.', 404);
+        }
+
+        $customerDelete->delete();
 
         return $this->ok(['message' => 'Customer bagasi deleted.']);
     }
@@ -2958,6 +3157,7 @@ class AdminOpsApiController extends Controller
             ->select(['id', 'nama', 'no_hp', 'alamat', 'company'])
             ->orderBy('nama');
         PoolScope::applyCustomerCharterScope($query, 'customer_charter');
+        $this->applyTenantScopeIfExists($query, 'customer_charter');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -3007,28 +3207,49 @@ class AdminOpsApiController extends Controller
         $poolId = $this->defaultCustomerPoolId('customer_charter');
 
         if ($id > 0) {
-            DB::table('customer_charter')->where('id', $id)->update($payload);
+            $customerUpdate = DB::table('customer_charter')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
+            if (! $customerUpdate->exists()) {
+                return $this->error('Customer charter not found.', 404);
+            }
+
+            $customerUpdate->update($payload);
             $this->assignCustomerPoolIfMissing($id, $poolId, 'customer_charter');
 
             return $this->ok(['message' => 'Customer charter updated.', 'id' => $id]);
         }
 
-        $existingId = (int) (DB::table('customer_charter')->where('no_hp', $payload['no_hp'])->value('id') ?? 0);
+        $existingQuery = DB::table('customer_charter')->where('no_hp', $payload['no_hp']);
+        $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_charter');
+        $existingId = (int) ($existingQuery->value('id') ?? 0);
         if ($existingId > 0) {
-            DB::table('customer_charter')->where('id', $existingId)->update($payload);
+            $customerUpdate = DB::table('customer_charter')->where('id', $existingId);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
+            $customerUpdate->update($payload);
             $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_charter');
 
             return $this->ok(['message' => 'Customer charter updated by phone.', 'id' => $existingId]);
         }
 
-        $newId = DB::table('customer_charter')->insertGetId(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], ['created_at' => now()]));
+        $newId = DB::table('customer_charter')->insertGetId(array_merge(
+            $payload,
+            $poolId > 0 ? ['pool_id' => $poolId] : [],
+            $this->tenantPayload('customer_charter'),
+            ['created_at' => now()],
+        ));
 
         return $this->ok(['message' => 'Customer charter created.', 'id' => $newId], 201);
     }
 
     public function customerCharterDelete(int $id): JsonResponse
     {
-        DB::table('customer_charter')->where('id', $id)->delete();
+        $customerDelete = DB::table('customer_charter')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($customerDelete, 'customer_charter');
+        if (! $customerDelete->exists()) {
+            return $this->error('Customer charter not found.', 404);
+        }
+
+        $customerDelete->delete();
 
         return $this->ok(['message' => 'Customer charter deleted.']);
     }
@@ -4327,10 +4548,11 @@ class AdminOpsApiController extends Controller
             return;
         }
 
-        DB::table($table)
+        $query = DB::table($table)
             ->where('id', $customerId)
-            ->whereNull('pool_id')
-            ->update(['pool_id' => $poolId]);
+            ->whereNull('pool_id');
+        $this->applyWriteTenantScopeIfExists($query, $table);
+        $query->update(['pool_id' => $poolId]);
     }
 
     private function currentUserIsSuperAdmin(): bool
@@ -5058,9 +5280,10 @@ class AdminOpsApiController extends Controller
             return 0;
         }
 
-        $existing = DB::table('customer_bagasi')
-            ->where('no_hp', $noHp)
-            ->first(['id', 'tipe']);
+        $existingQuery = DB::table('customer_bagasi')
+            ->where('no_hp', $noHp);
+        $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_bagasi');
+        $existing = $existingQuery->first(['id', 'tipe']);
 
         if ($existing) {
             $existingTipe = strtolower((string) ($existing->tipe ?? ''));
@@ -5069,7 +5292,9 @@ class AdminOpsApiController extends Controller
                 $nextTipe = 'keduanya';
             }
 
-            DB::table('customer_bagasi')->where('id', (int) $existing->id)->update([
+            $customerUpdate = DB::table('customer_bagasi')->where('id', (int) $existing->id);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_bagasi');
+            $customerUpdate->update([
                 'nama' => $nama,
                 'alamat' => $alamat,
                 'tipe' => $nextTipe === '' ? $tipe : $nextTipe,
@@ -5085,7 +5310,7 @@ class AdminOpsApiController extends Controller
             'alamat' => $alamat,
             'tipe' => $tipe,
             'created_at' => now(),
-        ], $poolId > 0 && Schema::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : []));
+        ], $poolId > 0 && Schema::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : [], $this->tenantPayload('customer_bagasi')));
     }
 
     private function resolveMappedLuggagePrice(int $routeId, int $serviceId): float
@@ -5112,10 +5337,11 @@ class AdminOpsApiController extends Controller
         $prefix = "BGS-{$date}-";
         $like = "{$prefix}%";
 
-        $last = (string) (DB::table('luggages')
+        $query = DB::table('luggages')
             ->where('kode_resi', 'like', $like)
-            ->orderByDesc('id')
-            ->value('kode_resi') ?? '');
+            ->orderByDesc('id');
+        $this->applyWriteTenantScopeIfExists($query, 'luggages');
+        $last = (string) ($query->value('kode_resi') ?? '');
 
         $seq = 1;
         if ($last !== '') {
@@ -5135,13 +5361,13 @@ class AdminOpsApiController extends Controller
         $actor = $user?->email ?? $user?->name ?? 'system';
         $normalizedStatus = $this->normalizeLuggageStatus($status);
 
-        DB::table('bagasi_logs')->insert([
+        DB::table('bagasi_logs')->insert(array_merge([
             'kode_resi' => $resi,
             'status' => $normalizedStatus,
             'notes' => $this->nullable($notes),
             'created_by_username' => $actor,
             'created_at' => now(),
-        ]);
+        ], $this->tenantPayload('bagasi_logs')));
 
         ActivityLog::write(
             'BAGASI',
@@ -5449,7 +5675,9 @@ class AdminOpsApiController extends Controller
             return null;
         }
 
-        $rows = DB::table('routes')->get(['id', 'name']);
+        $query = DB::table('routes');
+        $this->applyWriteTenantScopeIfExists($query, 'routes');
+        $rows = $query->get(['id', 'name']);
         foreach ($rows as $row) {
             if ($this->normalizeRouteName((string) ($row->name ?? '')) === $normalizedTarget) {
                 return $row;
@@ -6572,13 +6800,33 @@ class AdminOpsApiController extends Controller
         }
     }
 
+    private function applyWriteTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
+    {
+        [$baseTable, $tableAlias] = $this->parseTableAlias($table);
+        $tenantId = $this->writeTenantId($baseTable);
+        if ($tenantId <= 0) {
+            return;
+        }
+
+        $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
+        $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
+        $query->where($prefix.'tenant_id', $tenantId);
+    }
+
     /**
      * @return array<string, int>
      */
     private function tenantPayload(string $table): array
     {
+        $tenantId = $this->writeTenantId($table);
+
+        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    }
+
+    private function writeTenantId(string $table): int
+    {
         if (! Schema::hasColumn($table, 'tenant_id')) {
-            return [];
+            return 0;
         }
 
         $tenantId = PoolScope::tenantId();
@@ -6586,7 +6834,7 @@ class AdminOpsApiController extends Controller
             $tenantId = $this->defaultTenantId();
         }
 
-        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+        return $tenantId;
     }
 
     private function defaultTenantId(): int
@@ -6689,7 +6937,9 @@ class AdminOpsApiController extends Controller
             ? (int) ($payload['pool_id'] ?? PoolScope::customerPoolId())
             : 0;
 
-        $existingId = (int) (DB::table('customer_charter')->where('no_hp', $phone)->value('id') ?? 0);
+        $existingQuery = DB::table('customer_charter')->where('no_hp', $phone);
+        $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_charter');
+        $existingId = (int) ($existingQuery->value('id') ?? 0);
 
         if ($existingId > 0) {
             $updatePayload = [
@@ -6704,7 +6954,9 @@ class AdminOpsApiController extends Controller
                 $updatePayload['company'] = $customerPayload['company'];
             }
 
-            DB::table('customer_charter')->where('id', $existingId)->update($updatePayload);
+            $customerUpdate = DB::table('customer_charter')->where('id', $existingId);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
+            $customerUpdate->update($updatePayload);
             $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_charter');
 
             return;
@@ -6714,15 +6966,20 @@ class AdminOpsApiController extends Controller
             DB::table('customer_charter')->insert(array_merge(
                 $customerPayload,
                 $poolId > 0 ? ['pool_id' => $poolId] : [],
+                $this->tenantPayload('customer_charter'),
                 ['created_at' => now()],
             ));
         } catch (QueryException) {
-            DB::table('customer_charter')->where('no_hp', $phone)->update([
+            $customerUpdate = DB::table('customer_charter')->where('no_hp', $phone);
+            $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
+            $customerUpdate->update([
                 'nama' => $customerPayload['nama'],
                 'alamat' => $customerPayload['alamat'],
                 'company' => $customerPayload['company'],
             ]);
-            $this->assignCustomerPoolIfMissing((int) (DB::table('customer_charter')->where('no_hp', $phone)->value('id') ?? 0), $poolId, 'customer_charter');
+            $existingAfterError = DB::table('customer_charter')->where('no_hp', $phone);
+            $this->applyWriteTenantScopeIfExists($existingAfterError, 'customer_charter');
+            $this->assignCustomerPoolIfMissing((int) ($existingAfterError->value('id') ?? 0), $poolId, 'customer_charter');
         }
     }
 
