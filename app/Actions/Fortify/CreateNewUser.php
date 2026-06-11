@@ -56,6 +56,7 @@ class CreateNewUser implements CreatesNewUsers
             if ((int) DB::table('roles')->count() === 0) {
                 AccessControl::syncDefaults();
             }
+            AccessControl::ensureDefaultRoleReady('admin-pool');
 
             // Skip if user already has a role (double-safety with event listener)
             if (DB::table('user_role')->where('user_id', $userId)->exists()) {

@@ -38,6 +38,20 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->redirectUsersTo(function (HttpRequest $request): string {
+            $userId = (int) ($request->user()?->id ?? 0);
+
+            if ($userId > 0 && \App\Support\AccessControl::userIsSuperAdmin($userId)) {
+                return route('platform.dashboard');
+            }
+
+            if ($userId > 0 && \App\Support\AccessControl::can($userId, 'dashboard.view')) {
+                return route('dashboard');
+            }
+
+            return route('subscription.index');
+        });
+
         $middleware->alias([
             'permission' => EnsurePermission::class,
             'feature' => EnsureFeature::class,

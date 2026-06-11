@@ -232,6 +232,7 @@ class CreateTenantOnRegistration
         if ((int) DB::table('roles')->count() === 0) {
             \App\Support\AccessControl::syncDefaults();
         }
+        \App\Support\AccessControl::ensureDefaultRoleReady('admin-pool');
 
         // Find "Admin Pool" role (most appropriate for tenant owner)
         $roleId = DB::table('roles')->where('slug', 'admin-pool')->value('id');

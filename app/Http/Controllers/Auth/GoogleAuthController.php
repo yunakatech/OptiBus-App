@@ -91,6 +91,7 @@ class GoogleAuthController extends Controller
             if ((int) DB::table('roles')->count() === 0) {
                 AccessControl::syncDefaults();
             }
+            AccessControl::ensureDefaultRoleReady('admin-pool');
 
             if (DB::table('user_role')->where('user_id', $userId)->exists()) {
                 return;
