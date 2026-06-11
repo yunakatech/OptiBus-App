@@ -976,6 +976,7 @@ class DashboardController extends Controller
     {
         $query = DB::table($table);
         PoolScope::applyRouteScope($query, $this->bookingRouteIdColumn($table), $routeNameColumn, $poolId);
+        $this->applyTenantScopeIfExists($query, $table);
 
         return $query;
     }
@@ -997,6 +998,7 @@ class DashboardController extends Controller
     {
         $query = DB::table($table);
         PoolScope::applyCharterScope($query, $alias, $poolId);
+        $this->applyTenantScopeIfExists($query, $table, $alias);
 
         return $query;
     }
@@ -1013,8 +1015,24 @@ class DashboardController extends Controller
             $prefix.'rute',
             $poolId,
         );
+        $this->applyTenantScopeIfExists($query, $table, $alias);
 
         return $query;
+    }
+
+    private function tenantIdColumn(string $table, string $alias = ''): string
+    {
+        $prefix = $alias !== '' ? $alias.'.' : '';
+
+        return Schema::hasColumn(trim($table), 'tenant_id') ? $prefix.'tenant_id' : '';
+    }
+
+    private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
+    {
+        $column = $this->tenantIdColumn($table, $alias);
+        if ($column !== '') {
+            PoolScope::applyTenantScope($query, $column);
+        }
     }
 
     private function dateExpression(string $column): string
