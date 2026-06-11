@@ -9,24 +9,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Fix: drop improperly named indexes from previous failed migration
-        foreach (['master_carter', 'luggage_services', 'units'] as $table) {
-            try {
-                $badIndex = '"master_carter_idx_master_carter_tenant_id_index"';
-                // Try to drop the bad index that PostgreSQL created from wrong syntax
-                DB::statement("DROP INDEX IF EXISTS {$badIndex}");
-            } catch (\Throwable) {
-                // Index might not exist — ignore
-            }
-        }
-
-        // Re-add indexes correctly
+        // On PostgreSQL, the previous failed migration actually created the index
+        // despite the error. On SQLite local, the index might not exist.
+        // Safely attempt creation in a way that won't fail if already present.
         foreach (['master_carter', 'luggage_services', 'units'] as $table) {
             $indexName = "idx_{$table}_tenant_id";
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'tenant_id')) {
-                Schema::table($table, function (Blueprint $t) use ($indexName): void {
-                    $t->index('tenant_id', $indexName);
-                });
+                try {
+                    Schema::table($table, function (Blueprint $t) use ($indexName): void {
+                        $t->index('tenant_id', $indexName);
+                    });
+                } catch (\Throwable) {
+                    // Index may already exist — that's fine
+                }
             }
         }
     }
@@ -36,9 +31,13 @@ return new class extends Migration
         foreach (['master_carter', 'luggage_services', 'units'] as $table) {
             $indexName = "idx_{$table}_tenant_id";
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'tenant_id')) {
-                Schema::table($table, function (Blueprint $t) use ($indexName): void {
-                    $t->dropIndex($indexName);
-                });
+                try {
+                    Schema::table($table, function (Blueprint $t) use ($indexName): void {
+                        $t->dropIndex($indexName);
+                    });
+                } catch (\Throwable) {
+                    // May not exist
+                }
             }
         }
     }
