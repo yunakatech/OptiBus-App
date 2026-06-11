@@ -1,125 +1,332 @@
 <script module lang="ts">
     export const layout = {
         title: 'Paket & Harga',
-        description: 'Pilih paket yang sesuai dengan kebutuhan operasional travel Anda.',
+        description: 'Pilih paket Qbus sesuai ukuran operasional travel Anda.',
     };
 </script>
 
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
-    import { ArrowRight, Check, X } from 'lucide-svelte';
-    import { Badge } from '@/components/ui/badge';
-    import { Button } from '@/components/ui/button';
-    import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+    import {
+        ArrowRight,
+        Building2,
+        BusFront,
+        CalendarRange,
+        Check,
+        HelpCircle,
+        Route,
+        ShieldCheck,
+        UsersRound,
+        X,
+    } from 'lucide-svelte';
+    import AppLogo from '@/components/AppLogo.svelte';
 
     type PlanFeature = { name: string; group: string; included: boolean; limit: number | null };
-    type Plan = { id: number; name: string; slug: string; description: string; price_monthly: number; price_yearly: number; max_armadas: number; max_routes: number; max_users: number; max_pools: number; max_drivers: number; features: PlanFeature[] };
+    type Plan = {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
+        price_monthly: number;
+        price_yearly: number;
+        max_armadas: number;
+        max_routes: number;
+        max_users: number;
+        max_pools: number;
+        max_drivers: number;
+        features: PlanFeature[];
+    };
 
-    const plans = $derived((page.props.plans ?? []) as Plan[]);
+    const fallbackPlans: Plan[] = [
+        {
+            id: 1,
+            name: 'Starter',
+            slug: 'starter',
+            description: 'Untuk driver individu dan travel yang mulai digital.',
+            price_monthly: 49000,
+            price_yearly: 490000,
+            max_armadas: 1,
+            max_routes: 2,
+            max_users: 1,
+            max_pools: 1,
+            max_drivers: 1,
+            features: [
+                { name: 'Dashboard Revenue', group: 'Dashboard', included: true, limit: null },
+                { name: 'Booking Seat Basic', group: 'Booking', included: true, limit: null },
+                { name: 'Pembayaran Terpadu', group: 'Keuangan', included: true, limit: null },
+                { name: 'Seat Map Visual', group: 'Booking', included: false, limit: 0 },
+                { name: 'Export CSV', group: 'Laporan', included: false, limit: 0 },
+            ],
+        },
+        {
+            id: 2,
+            name: 'Pro',
+            slug: 'pro',
+            description: 'Untuk travel kecil dengan jadwal aktif dan tim admin.',
+            price_monthly: 99000,
+            price_yearly: 990000,
+            max_armadas: 3,
+            max_routes: 0,
+            max_users: 3,
+            max_pools: 2,
+            max_drivers: 3,
+            features: [
+                { name: 'Dashboard Revenue', group: 'Dashboard', included: true, limit: null },
+                { name: 'Booking Seat Basic', group: 'Booking', included: true, limit: null },
+                { name: 'Pembayaran Terpadu', group: 'Keuangan', included: true, limit: null },
+                { name: 'Seat Map Visual', group: 'Booking', included: true, limit: null },
+                { name: 'Export CSV', group: 'Laporan', included: true, limit: null },
+            ],
+        },
+        {
+            id: 3,
+            name: 'Fleet',
+            slug: 'fleet',
+            description: 'Untuk multi-pool, banyak armada, dan kontrol akses tim.',
+            price_monthly: 199000,
+            price_yearly: 1990000,
+            max_armadas: 10,
+            max_routes: 0,
+            max_users: 10,
+            max_pools: 5,
+            max_drivers: 15,
+            features: [
+                { name: 'Dashboard Revenue', group: 'Dashboard', included: true, limit: null },
+                { name: 'Booking Seat Basic', group: 'Booking', included: true, limit: null },
+                { name: 'Pembayaran Terpadu', group: 'Keuangan', included: true, limit: null },
+                { name: 'Seat Map Visual', group: 'Booking', included: true, limit: null },
+                { name: 'Export CSV', group: 'Laporan', included: true, limit: null },
+                { name: 'Custom Role', group: 'Akses', included: true, limit: null },
+            ],
+        },
+    ];
 
-    function formatRupiah(v: number): string {
-        if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)}M`;
-        return `Rp ${(v / 1_000).toFixed(0)}K`;
+    const plans = $derived(((page.props.plans ?? []) as Plan[]).length > 0 ? ((page.props.plans ?? []) as Plan[]) : fallbackPlans);
+    const allFeatureNames = $derived([...new Set(plans.flatMap((plan) => plan.features?.map((feature) => feature.name) ?? []))].filter(Boolean));
+
+    const buyingGuides = [
+        { title: 'Starter', body: 'Cocok untuk 1 armada, rute terbatas, dan satu admin utama.' },
+        { title: 'Pro', body: 'Pilihan standar untuk travel kecil yang perlu seat map, export, dan booking online.' },
+        { title: 'Fleet', body: 'Dipakai saat cabang, role, dan armada sudah perlu kontrol terpisah.' },
+    ];
+
+    function formatRupiah(value: number): string {
+        if (value >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
+        return `Rp ${(value / 1_000).toFixed(0)} rb`;
     }
 
-    // Build a flat list of unique feature names across all plans for comparison table
-    const allFeatureNames = $derived(
-        [...new Set(plans.flatMap(p => p.features?.map(f => f.name) ?? []))]
-            .filter(Boolean)
-    );
+    function limitLabel(value: number, suffix: string): string {
+        return value > 0 ? `${value} ${suffix}` : `Unlimited ${suffix}`;
+    }
+
+    function capacityLabel(value: number): string {
+        return value > 0 ? String(value) : 'Unlimited';
+    }
+
+    function yearlySaving(plan: Plan): number {
+        return Math.max(0, plan.price_monthly * 12 - plan.price_yearly);
+    }
 </script>
 
 <svelte:head>
-    <title>Paket & Harga — Qbus</title>
+    <title>Paket & Harga - Qbus</title>
+    <meta name="description" content="Bandingkan paket Starter, Pro, dan Fleet untuk sistem operasional travel Qbus." />
 </svelte:head>
 
-<div class="space-y-8">
-    <!-- Header -->
-    <div class="text-center py-6">
-        <h1 class="text-2xl font-bold">Paket & Harga</h1>
-        <p class="text-muted-foreground mt-2">Trial 14 hari gratis. Upgrade kapan saja.</p>
-    </div>
-
-    <!-- Plan Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {#each plans as plan}
-            <Card class={plan.slug === 'pro' ? 'border-primary ring-1 ring-primary/20 relative' : ''}>
-                {#if plan.slug === 'pro'}
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Badge class="shadow-md">Paling Populer</Badge>
-                    </div>
-                {/if}
-                <CardHeader>
-                    <CardTitle class="text-xl">{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                    <div class="flex items-baseline gap-1">
-                        <span class="text-3xl font-bold">{formatRupiah(plan.price_monthly)}</span>
-                        <span class="text-muted-foreground text-sm">/bulan</span>
-                    </div>
-                    <div class="text-sm text-muted-foreground">{formatRupiah(plan.price_yearly)}/tahun</div>
-
-                    <div class="border-t pt-4 space-y-2 text-sm">
-                        <div class="flex justify-between"><span class="text-muted-foreground">Armada</span> <span class="font-medium">{plan.max_armadas > 0 ? plan.max_armadas : 'Unlimited'}</span></div>
-                        <div class="flex justify-between"><span class="text-muted-foreground">Rute</span> <span class="font-medium">{plan.max_routes > 0 ? plan.max_routes : 'Unlimited'}</span></div>
-                        <div class="flex justify-between"><span class="text-muted-foreground">User</span> <span class="font-medium">{plan.max_users}</span></div>
-                        <div class="flex justify-between"><span class="text-muted-foreground">Pool/Cabang</span> <span class="font-medium">{plan.max_pools}</span></div>
-                        <div class="flex justify-between"><span class="text-muted-foreground">Driver</span> <span class="font-medium">{plan.max_drivers > 0 ? plan.max_drivers : 'Unlimited'}</span></div>
-                    </div>
-
-                    <a href={`/register?plan=${plan.slug}`} class="block">
-                        <Button class="w-full" variant={plan.slug === 'pro' ? 'default' : 'outline'}>
-                            Daftar {plan.name} <ArrowRight class="ml-2 h-4 w-4" />
-                        </Button>
-                        <p class="text-xs text-center text-muted-foreground mt-2">✓ Free Trial 14 Hari</p>
-                    </a>
-                </CardContent>
-            </Card>
-        {/each}
-    </div>
-
-    <!-- Feature Comparison Table -->
-    <Card>
-        <CardHeader>
-            <CardTitle>Perbandingan Fitur</CardTitle>
-        </CardHeader>
-        <CardContent class="p-0">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b bg-muted/30">
-                            <th class="text-left px-4 py-3 font-medium">Fitur</th>
-                            {#each plans as plan}
-                                <th class="text-center px-4 py-3 font-medium">{plan.name}</th>
-                            {/each}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each allFeatureNames as featureName}
-                            <tr class="border-b last:border-0">
-                                <td class="px-4 py-2.5">{featureName}</td>
-                                {#each plans as plan}
-                                    {@const f = plan.features?.find(f => f.name === featureName)}
-                                    <td class="text-center px-4 py-2.5">
-                                        {#if f?.included}
-                                            <Check class="h-4 w-4 text-green-500 mx-auto" />
-                                        {:else}
-                                            <X class="h-4 w-4 text-muted-foreground mx-auto" />
-                                        {/if}
-                                    </td>
-                                {/each}
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
+<div class="min-h-screen bg-[#f7f8f4] text-[#17201f]">
+    <nav class="sticky top-0 z-40 border-b border-[#d9ded4] bg-[#f7f8f4]/92 backdrop-blur">
+        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <a href="/" class="flex items-center" aria-label="Qbus">
+                <AppLogo />
+            </a>
+            <div class="hidden items-center gap-7 text-sm font-medium text-[#4b5a56] md:flex">
+                <a href="/" class="hover:text-[#17201f]">Landing</a>
+                <a href="#compare" class="hover:text-[#17201f]">Perbandingan</a>
+                <a href="/login" class="hover:text-[#17201f]">Login</a>
             </div>
-        </CardContent>
-    </Card>
+            <a href="/register" class="inline-flex h-9 items-center justify-center rounded-md bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]">
+                Mulai trial
+            </a>
+        </div>
+    </nav>
 
-    <!-- Bottom CTA -->
-    <div class="text-center py-8">
-        <p class="text-muted-foreground mb-4">Butuh bantuan memilih? Hubungi kami di WhatsApp.</p>
-        <Button variant="outline" href="/login">Sudah punya akun? Login</Button>
-    </div>
+    <main>
+        <section class="border-b border-[#d9ded4]">
+            <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1fr_auto] md:items-end lg:px-8">
+                <div>
+                    <p class="text-sm font-semibold uppercase text-[#b96c20]">Pricing</p>
+                    <h1 class="mt-3 max-w-3xl text-4xl font-semibold leading-tight tracking-normal sm:text-5xl">Pilih kapasitas sesuai ukuran travel.</h1>
+                    <p class="mt-4 max-w-2xl text-base leading-7 text-[#53615d]">
+                        Semua paket mendapat trial 14 hari. Upgrade saat rute, pool, atau armada bertambah.
+                    </p>
+                </div>
+                <div class="rounded-lg border border-[#d9ded4] bg-white p-4 text-sm text-[#53615d]">
+                    <div class="flex items-center gap-2 font-semibold text-[#17201f]">
+                        <CalendarRange class="h-4 w-4 text-[#0d7066]" />
+                        Tagihan tahunan lebih hemat
+                    </div>
+                    <p class="mt-2">Harga di bawah belum termasuk biaya add-on khusus.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div class="grid gap-5 lg:grid-cols-3">
+                {#each plans as plan}
+                    <article class={`flex flex-col rounded-lg border bg-white p-5 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-xl shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}>
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 class="text-xl font-semibold">{plan.name}</h2>
+                                <p class="mt-2 min-h-14 text-sm leading-6 text-[#53615d]">{plan.description}</p>
+                            </div>
+                            {#if plan.slug === 'pro'}
+                                <span class="rounded-full bg-[#eaf6f2] px-2.5 py-1 text-xs font-semibold text-[#0d7066]">Populer</span>
+                            {/if}
+                        </div>
+
+                        <div class="mt-6 border-y border-[#e1e6df] py-5">
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-4xl font-semibold">{formatRupiah(plan.price_monthly)}</span>
+                                <span class="text-sm text-[#53615d]">/bulan</span>
+                            </div>
+                            <p class="mt-2 text-sm text-[#53615d]">
+                                {formatRupiah(plan.price_yearly)}/tahun
+                                {#if yearlySaving(plan) > 0}
+                                    <span class="font-semibold text-[#0d7066]"> - hemat {formatRupiah(yearlySaving(plan))}</span>
+                                {/if}
+                            </p>
+                        </div>
+
+                        <div class="mt-5 grid grid-cols-2 gap-2 text-sm">
+                            <div class="rounded-md bg-[#f1f4ee] p-3"><BusFront class="mb-2 h-4 w-4 text-[#0d7066]" />{limitLabel(plan.max_armadas, 'armada')}</div>
+                            <div class="rounded-md bg-[#f1f4ee] p-3"><Route class="mb-2 h-4 w-4 text-[#0d7066]" />{limitLabel(plan.max_routes, 'rute')}</div>
+                            <div class="rounded-md bg-[#f1f4ee] p-3"><UsersRound class="mb-2 h-4 w-4 text-[#0d7066]" />{limitLabel(plan.max_users, 'user')}</div>
+                            <div class="rounded-md bg-[#f1f4ee] p-3"><Building2 class="mb-2 h-4 w-4 text-[#0d7066]" />{limitLabel(plan.max_pools, 'pool')}</div>
+                        </div>
+
+                        <div class="mt-5 grow space-y-2">
+                            {#each (plan.features ?? []).filter((feature) => feature.included).slice(0, 5) as feature}
+                                <div class="flex items-center gap-2 text-sm text-[#33403d]">
+                                    <Check class="h-4 w-4 text-[#0d7066]" />
+                                    <span>{feature.name}</span>
+                                </div>
+                            {/each}
+                            {#if (plan.features ?? []).filter((feature) => feature.included).length === 0}
+                                <div class="flex items-center gap-2 text-sm text-[#33403d]">
+                                    <Check class="h-4 w-4 text-[#0d7066]" />
+                                    <span>Dashboard, booking, pembayaran, dan laporan dasar</span>
+                                </div>
+                            {/if}
+                        </div>
+
+                        <a href={`/register?plan=${plan.slug}`} class={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
+                            Pilih {plan.name} <ArrowRight class="ml-2 h-4 w-4" />
+                        </a>
+                    </article>
+                {/each}
+            </div>
+        </section>
+
+        <section id="compare" class="border-y border-[#d9ded4] bg-white">
+            <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+                <div class="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+                    <div>
+                        <p class="text-sm font-semibold uppercase text-[#b96c20]">Perbandingan fitur</p>
+                        <h2 class="mt-2 text-3xl font-semibold tracking-normal">Lihat batas kapasitas dan fitur utama.</h2>
+                    </div>
+                    <div class="inline-flex items-center gap-2 rounded-full border border-[#d9ded4] px-3 py-1.5 text-sm text-[#53615d]">
+                        <ShieldCheck class="h-4 w-4 text-[#0d7066]" />
+                        Tenant dan pool terpisah
+                    </div>
+                </div>
+
+                <div class="overflow-hidden rounded-lg border border-[#d9ded4]">
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[760px] text-sm">
+                            <thead>
+                                <tr class="border-b border-[#d9ded4] bg-[#f1f4ee]">
+                                    <th class="px-4 py-3 text-left font-semibold">Item</th>
+                                    {#each plans as plan}
+                                        <th class="px-4 py-3 text-center font-semibold">{plan.name}</th>
+                                    {/each}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-[#e5e9e2]">
+                                    <td class="px-4 py-3 font-medium">Armada</td>
+                                    {#each plans as plan}<td class="px-4 py-3 text-center">{capacityLabel(plan.max_armadas)}</td>{/each}
+                                </tr>
+                                <tr class="border-b border-[#e5e9e2]">
+                                    <td class="px-4 py-3 font-medium">Rute</td>
+                                    {#each plans as plan}<td class="px-4 py-3 text-center">{capacityLabel(plan.max_routes)}</td>{/each}
+                                </tr>
+                                <tr class="border-b border-[#e5e9e2]">
+                                    <td class="px-4 py-3 font-medium">User</td>
+                                    {#each plans as plan}<td class="px-4 py-3 text-center">{capacityLabel(plan.max_users)}</td>{/each}
+                                </tr>
+                                {#each allFeatureNames as featureName}
+                                    <tr class="border-b border-[#e5e9e2] last:border-0">
+                                        <td class="px-4 py-3 font-medium">{featureName}</td>
+                                        {#each plans as plan}
+                                            {@const feature = plan.features?.find((item) => item.name === featureName)}
+                                            <td class="px-4 py-3 text-center">
+                                                {#if feature?.included}
+                                                    <Check class="mx-auto h-4 w-4 text-[#0d7066]" />
+                                                {:else}
+                                                    <X class="mx-auto h-4 w-4 text-[#9aa39f]" />
+                                                {/if}
+                                            </td>
+                                        {/each}
+                                    </tr>
+                                {/each}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div class="grid gap-4 md:grid-cols-[0.8fr_1.2fr]">
+                <div>
+                    <div class="flex items-center gap-2 text-sm font-semibold uppercase text-[#b96c20]">
+                        <HelpCircle class="h-4 w-4" />
+                        Cara memilih
+                    </div>
+                    <h2 class="mt-2 text-3xl font-semibold tracking-normal">Paket mengikuti skala operasional.</h2>
+                </div>
+                <div class="grid gap-3">
+                    {#each buyingGuides as guide}
+                        <div class="rounded-lg border border-[#d9ded4] bg-white p-5">
+                            <h3 class="font-semibold">{guide.title}</h3>
+                            <p class="mt-1 text-sm leading-6 text-[#53615d]">{guide.body}</p>
+                        </div>
+                    {/each}
+                </div>
+            </div>
+        </section>
+
+        <section class="border-t border-[#d9ded4] bg-[#103d3a]">
+            <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 text-white sm:px-6 md:grid-cols-[1fr_auto] md:items-center lg:px-8">
+                <div>
+                    <p class="text-sm font-semibold uppercase text-[#a8dccd]">Trial 14 hari</p>
+                    <h2 class="mt-2 text-3xl font-semibold tracking-normal text-white">Mulai dengan paket yang paling dekat dengan kondisi saat ini.</h2>
+                </div>
+                <a href="/register" class="inline-flex h-11 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb]">
+                    Daftar sekarang <ArrowRight class="ml-2 h-4 w-4" />
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-t border-[#d9ded4] bg-[#f7f8f4]">
+        <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-[#53615d] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+            <span>Qbus - Paket SaaS operasional travel.</span>
+            <div class="flex gap-5">
+                <a href="/" class="hover:text-[#17201f]">Landing</a>
+                <a href="/login" class="hover:text-[#17201f]">Login</a>
+                <a href="/register" class="hover:text-[#17201f]">Daftar</a>
+            </div>
+        </div>
+    </footer>
 </div>
