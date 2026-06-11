@@ -23,6 +23,7 @@
 
     const tenantSub = $derived(page.props.auth?.tenant_subscription as PlanInfo | null);
 
+    // svelte-ignore state_referenced_locally
     let visible = $state(show);
 
     function dismiss() {

@@ -13,7 +13,7 @@
 
 <script lang="ts">
     import { Deferred, router } from '@inertiajs/svelte';
-    import { ArrowRight, Building2, BusFront, Copy, Package, Ticket, TrendingDown, TrendingUp, Wallet } from 'lucide-svelte';
+    import { ArrowRight, Banknote, Building2, BusFront, Copy, Package, Ticket, TrendingDown, TrendingUp, Wallet } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -196,6 +196,11 @@
         summaryComparisonByScope[selectedSummaryScope] ?? summaryComparisonByScope.month,
     );
     const activeSummaryPeriod = $derived(summaryPeriodByScope[selectedSummaryScope] ?? summaryPeriodByScope.month);
+    const monthlyTotalRevenueComparison = $derived(
+        Number(summaryComparisonByScope.month?.revenue_booking || 0)
+            + Number(summaryComparisonByScope.month?.revenue_charter || 0)
+            + Number(summaryComparisonByScope.month?.revenue_luggage || 0),
+    );
 
     const toCurrency = (value: number) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
     const normalizeJam = (value: string) => String(value || '').trim();
@@ -229,7 +234,7 @@
 
     const formatCompactNumber = (value: number) => Number(value || 0).toLocaleString('id-ID');
 
-    const metricTrend = (current: number, previous: number, formatter: (value: number) => string) => {
+    const metricTrend = (current: number, previous: number, formatter: (value: number) => string, previousLabel = activeSummaryPeriod.previous_label) => {
         const delta = Number(current || 0) - Number(previous || 0);
         const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
         const percent = previous > 0 ? Math.abs((delta / previous) * 100) : null;
@@ -240,8 +245,8 @@
             direction,
             label:
                 direction === 'flat'
-                    ? `Stabil vs ${activeSummaryPeriod.previous_label}`
-                    : `${direction === 'up' ? 'Naik' : 'Turun'} ${percentLabel} vs ${activeSummaryPeriod.previous_label}`,
+                    ? `Stabil vs ${previousLabel}`
+                    : `${direction === 'up' ? 'Naik' : 'Turun'} ${percentLabel} vs ${previousLabel}`,
             detail:
                 direction === 'flat'
                     ? formatter(previous)
@@ -290,6 +295,24 @@
 
     const dashboardMetricCards = () => [
         {
+            key: 'monthly-total-revenue',
+            title: 'Total Revenue Bulanan',
+            subtitle: 'Akumulasi booking, carter, dan bagasi bulan ini',
+            value: toCurrency(stats.revenue_total_month),
+            href: '/reports',
+            cta: 'Buka Laporan Revenue',
+            periodLabel: summaryPeriodByScope.month.current_label,
+            trend: metricTrend(stats.revenue_total_month, monthlyTotalRevenueComparison, toCurrency, summaryPeriodByScope.month.previous_label),
+            compareBars: metricBars(stats.revenue_total_month, monthlyTotalRevenueComparison),
+            icon: Banknote,
+            spanClass: 'md:col-span-2 xl:col-span-2',
+            shellClass: 'border-indigo-200/80 bg-[linear-gradient(135deg,rgba(238,242,255,0.98),rgba(219,234,254,0.92))] dark:border-indigo-400/25 dark:bg-[linear-gradient(135deg,rgba(30,27,75,0.74),rgba(15,23,42,0.94))]',
+            iconClass: 'border-indigo-200/70 bg-indigo-500/12 text-indigo-700 dark:border-indigo-300/25 dark:bg-indigo-300/10 dark:text-indigo-100',
+            valueClass: 'text-indigo-950 dark:text-indigo-50',
+            barClass: 'bg-indigo-500/75',
+            noteClass: 'text-indigo-700/80 dark:text-indigo-100/90',
+        },
+        {
             key: 'bookings',
             title: 'Booking Active',
             subtitle: `Keberangkatan ${activeSummaryPeriod.subtitle_label}`,
@@ -300,6 +323,7 @@
             trend: metricTrend(activeSummaryStats.total_bookings, activeSummaryComparison.total_bookings, formatCompactNumber),
             compareBars: metricBars(activeSummaryStats.total_bookings, activeSummaryComparison.total_bookings),
             icon: BusFront,
+            spanClass: '',
             shellClass: 'border-cyan-200/80 bg-[linear-gradient(135deg,rgba(236,254,255,0.98),rgba(224,242,254,0.92))] dark:border-cyan-400/25 dark:bg-[linear-gradient(135deg,rgba(8,47,73,0.74),rgba(15,23,42,0.94))]',
             iconClass: 'border-cyan-200/70 bg-cyan-500/12 text-cyan-700 dark:border-cyan-300/25 dark:bg-cyan-300/10 dark:text-cyan-100',
             valueClass: 'text-cyan-950 dark:text-cyan-50',
@@ -317,6 +341,7 @@
             trend: metricTrend(activeSummaryStats.revenue_booking, activeSummaryComparison.revenue_booking, toCurrency),
             compareBars: metricBars(activeSummaryStats.revenue_booking, activeSummaryComparison.revenue_booking),
             icon: Ticket,
+            spanClass: '',
             shellClass: 'border-emerald-200/80 bg-[linear-gradient(135deg,rgba(240,253,244,0.98),rgba(220,252,231,0.92))] dark:border-emerald-400/25 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.72),rgba(15,23,42,0.94))]',
             iconClass: 'border-emerald-200/70 bg-emerald-500/12 text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-300/10 dark:text-emerald-100',
             valueClass: 'text-emerald-950 dark:text-emerald-50',
@@ -334,6 +359,7 @@
             trend: metricTrend(activeSummaryStats.revenue_charter, activeSummaryComparison.revenue_charter, toCurrency),
             compareBars: metricBars(activeSummaryStats.revenue_charter, activeSummaryComparison.revenue_charter),
             icon: Wallet,
+            spanClass: '',
             shellClass: 'border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98),rgba(254,243,199,0.92))] dark:border-amber-400/25 dark:bg-[linear-gradient(135deg,rgba(120,53,15,0.62),rgba(15,23,42,0.94))]',
             iconClass: 'border-amber-200/70 bg-amber-500/12 text-amber-700 dark:border-amber-300/25 dark:bg-amber-300/10 dark:text-amber-100',
             valueClass: 'text-amber-950 dark:text-amber-50',
@@ -351,6 +377,7 @@
             trend: metricTrend(activeSummaryStats.revenue_luggage, activeSummaryComparison.revenue_luggage, toCurrency),
             compareBars: metricBars(activeSummaryStats.revenue_luggage, activeSummaryComparison.revenue_luggage),
             icon: Package,
+            spanClass: '',
             shellClass: 'border-sky-200/80 bg-[linear-gradient(135deg,rgba(240,249,255,0.98),rgba(224,242,254,0.92))] dark:border-sky-400/25 dark:bg-[linear-gradient(135deg,rgba(12,74,110,0.68),rgba(15,23,42,0.94))]',
             iconClass: 'border-sky-200/70 bg-sky-500/12 text-sky-700 dark:border-sky-300/25 dark:bg-sky-300/10 dark:text-sky-100',
             valueClass: 'text-sky-950 dark:text-sky-50',
@@ -476,9 +503,9 @@
                 </div>
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-2.5 xl:grid-cols-4">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5 xl:grid-cols-4">
             {#each dashboardMetricCards() as metric (metric.key)}
-                <a href={metric.href} class="block h-full">
+                <a href={metric.href} class={`block h-full ${metric.spanClass ?? ''}`}>
                     <Card
                         class={`group h-full overflow-hidden border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${metric.shellClass}`}
                     >
