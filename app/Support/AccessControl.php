@@ -184,6 +184,36 @@ class AccessControl
         }
     }
 
+    public static function ensureDefaultRoleReady(string $roleSlug): void
+    {
+        if (! self::tablesReady()) {
+            return;
+        }
+
+        $roleDefaults = self::defaultRoles()[$roleSlug] ?? null;
+        if (! $roleDefaults) {
+            return;
+        }
+
+        $roleId = (int) (DB::table('roles')->where('slug', $roleSlug)->value('id') ?? 0);
+        if ($roleId <= 0) {
+            self::syncDefaults();
+
+            return;
+        }
+
+        $requiredPermissionSlugs = $roleDefaults['permissions'];
+        $existingCount = (int) DB::table('role_permission')
+            ->join('permissions', 'role_permission.permission_id', '=', 'permissions.id')
+            ->where('role_permission.role_id', $roleId)
+            ->whereIn('permissions.slug', $requiredPermissionSlugs)
+            ->count();
+
+        if ($existingCount < count($requiredPermissionSlugs)) {
+            self::syncDefaults();
+        }
+    }
+
     public static function bootstrapFirstSuperAdmin(): void
     {
         if (! Schema::hasTable('users')) {

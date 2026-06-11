@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
+use App\Support\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -40,6 +42,15 @@ class RegistrationTest extends TestCase
             );
     }
 
+    public function test_authenticated_user_without_dashboard_permission_is_not_redirected_to_forbidden_dashboard(): void
+    {
+        $user = User::factory()->create(['is_super_admin' => false]);
+
+        $response = $this->actingAs($user)->get(route('register'));
+
+        $response->assertRedirect(route('subscription.index', absolute: false));
+    }
+
     public function test_trial_registration_creates_trial_subscription_without_invoice(): void
     {
         $response = $this->post(route('register.store'), [
@@ -67,7 +78,30 @@ class RegistrationTest extends TestCase
             'plan_id' => $starterPlanId,
             'status' => 'trial',
         ]);
+        $this->assertTrue(AccessControl::can((int) auth()->id(), 'dashboard.view'));
         $this->assertFalse(DB::table('invoice_subscriptions')->where('tenant_id', $tenantId)->exists());
+    }
+
+    public function test_registration_repairs_default_role_permissions_before_assigning_role(): void
+    {
+        DB::table('role_permission')->delete();
+
+        $response = $this->post(route('register.store'), [
+            'name' => 'Fixed Role User',
+            'email' => 'fixed-role@example.com',
+            'travel_name' => 'Fixed Role Travel',
+            'phone' => '085255556666',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'plan' => 'starter',
+            'registration_intent' => 'trial',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertTrue(AccessControl::can((int) auth()->id(), 'dashboard.view'));
     }
 
     public function test_payment_registration_creates_pending_invoice_and_redirects_to_subscription(): void
