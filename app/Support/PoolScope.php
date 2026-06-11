@@ -180,8 +180,13 @@ class PoolScope
 
         $routes = DB::table('pool_route as pr')
             ->join('routes as r', 'pr.route_id', '=', 'r.id')
-            ->whereIn('pr.pool_id', $poolIds)
-            ->get(['r.id', 'r.name', 'r.origin', 'r.destination']);
+            ->whereIn('pr.pool_id', $poolIds);
+
+        if ($tenantId > 0 && Schema::hasColumn('routes', 'tenant_id')) {
+            $routes->where('r.tenant_id', $tenantId);
+        }
+
+        $routes = $routes->get(['r.id', 'r.name', 'r.origin', 'r.destination']);
 
         $labels = [];
         $routeNames = [];
@@ -605,6 +610,16 @@ class PoolScope
             ->join('pools as p', 'pu.pool_id', '=', 'p.id')
             ->where('pu.user_id', $userId)
             ->where('p.status', 'active')
+            ->when(
+                ! AccessControl::userIsSuperAdmin($userId)
+                && Schema::hasTable('users')
+                && Schema::hasColumn('users', 'tenant_id')
+                && Schema::hasColumn('pools', 'tenant_id')
+                && (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0) > 0,
+                function (Builder $query) use ($userId): void {
+                    $query->where('p.tenant_id', (int) DB::table('users')->where('id', $userId)->value('tenant_id'));
+                },
+            )
             ->pluck('pu.pool_id')
             ->map(static fn ($value) => (int) $value)
             ->values()
@@ -654,7 +669,13 @@ class PoolScope
         $exactMatches = [];
         $aliasMatches = [];
 
-        foreach (DB::table('routes')->get(['id', 'name', 'origin', 'destination']) as $route) {
+        $tenantId = self::tenantId();
+        $query = DB::table('routes');
+        if ($tenantId > 0 && Schema::hasColumn('routes', 'tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        foreach ($query->get(['id', 'name', 'origin', 'destination']) as $route) {
             $routeId = (int) ($route->id ?? 0);
             if ($routeId <= 0) {
                 continue;
