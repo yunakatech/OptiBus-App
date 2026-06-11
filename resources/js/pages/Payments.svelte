@@ -148,6 +148,12 @@
         },
         active: { count: 0, amount: 0, remaining: 0 },
     });
+    const activeAmount = $derived(Number(summary.active?.amount ?? 0));
+    const activeRemaining = $derived(Number(summary.active?.remaining ?? 0));
+    const activePaidEstimate = $derived(Math.max(activeAmount - activeRemaining, 0));
+    const activeCollectionRate = $derived(
+        activeAmount > 0 ? Math.round((activePaidEstimate / activeAmount) * 100) : 0,
+    );
 
     $effect(() => {
         if (initializedFromProps) {
@@ -524,6 +530,25 @@
                         </p>
                     </button>
                 {/each}
+            </div>
+
+            <div class="grid gap-2 md:grid-cols-4">
+                <div class="rounded-xl border border-border/70 bg-card p-3">
+                    <p class="text-xs text-muted-foreground">Data aktif</p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">{summary.active.count}</p>
+                </div>
+                <div class="rounded-xl border border-border/70 bg-card p-3">
+                    <p class="text-xs text-muted-foreground">Nilai tagihan</p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">{formatCurrencyDisplay(activeAmount)}</p>
+                </div>
+                <div class="rounded-xl border border-border/70 bg-card p-3">
+                    <p class="text-xs text-muted-foreground">Sisa ditagih</p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">{formatCurrencyDisplay(activeRemaining)}</p>
+                </div>
+                <div class="rounded-xl border border-border/70 bg-card p-3">
+                    <p class="text-xs text-muted-foreground">Estimasi tertagih</p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">{activeCollectionRate}%</p>
+                </div>
             </div>
         </CardHeader>
 

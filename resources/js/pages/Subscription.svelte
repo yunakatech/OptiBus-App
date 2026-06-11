@@ -5,23 +5,83 @@
 </script>
 
 <script lang="ts">
-    import { page } from '@inertiajs/svelte';
-    import { Banknote, Check, Copy, CreditCard, FileImage, History, Landmark, QrCode, Receipt, ShieldAlert, Upload, X } from 'lucide-svelte';
+    import { Link, page } from '@inertiajs/svelte';
+    import {
+        AlertTriangle,
+        Banknote,
+        Check,
+        CheckCircle2,
+        Copy,
+        CreditCard,
+        ExternalLink,
+        FileCheck2,
+        Landmark,
+        QrCode,
+        Receipt,
+        ShieldAlert,
+        Upload,
+        X,
+    } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
-    import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-    import { Input } from '@/components/ui/input';
+    import {
+        Card,
+        CardContent,
+        CardDescription,
+        CardHeader,
+        CardTitle,
+    } from '@/components/ui/card';
     import { Label } from '@/components/ui/label';
 
-    type TenantSub = { tenant_id: number; tenant_name: string; plan_id: number; plan_name: string; plan_slug: string; subscription_status: string; trial_ends_at: string | null; ends_at: string | null };
-    type Invoice = { id: number; invoice_number: string; amount: number; status: string; due_date: string; paid_at: string | null; payment_method: string; payment_proof: string | null; created_at: string };
-    type Plan = { id: number; name: string; slug: string; price_monthly: number; price_yearly: number; description: string };
-    type BankAccount = { bank_name: string; account_number: string; account_holder: string; note: string };
+    type TenantSub = {
+        tenant_id: number;
+        tenant_name: string;
+        plan_id: number;
+        plan_name: string;
+        plan_slug: string;
+        subscription_status: string;
+        trial_ends_at: string | null;
+        ends_at: string | null;
+    };
+
+    type Invoice = {
+        id: number;
+        invoice_number: string;
+        amount: number;
+        status: string;
+        due_date: string;
+        paid_at: string | null;
+        payment_method: string;
+        payment_proof: string | null;
+        created_at: string;
+    };
+
+    type Plan = {
+        id: number;
+        name: string;
+        slug: string;
+        price_monthly: number;
+        price_yearly: number;
+        description: string;
+    };
+
+    type BankAccount = {
+        bank_name: string;
+        account_number: string;
+        account_holder: string;
+        note: string;
+    };
+
     type PaymentConfig = {
         qris: { enabled: boolean; merchant_name: string; image_url: string; note: string };
         bank_transfer: { enabled: boolean; accounts: BankAccount[] };
         upload_max_kb: number;
+    };
+
+    type BadgeMeta = {
+        variant: 'default' | 'destructive' | 'outline' | 'secondary';
+        label: string;
     };
 
     const tenantSub = $derived((page.props.tenant_subscription ?? null) as TenantSub | null);
@@ -34,7 +94,19 @@
         upload_max_kb: 2048,
     }) as PaymentConfig);
 
-    // Payment modal state
+    const pendingInvoices = $derived(invoices.filter((invoice) => invoice.status === 'pending'));
+    const payableInvoice = $derived(
+        pendingInvoices.find((invoice) => !invoice.payment_proof) ?? pendingInvoices[0] ?? null,
+    );
+    const invoiceInVerification = $derived(
+        pendingInvoices.find((invoice) => invoice.payment_proof) ?? null,
+    );
+    const paidInvoices = $derived(invoices.filter((invoice) => invoice.status === 'paid'));
+    const subscriptionMeta = $derived(statusBadge(tenantSub?.subscription_status ?? ''));
+    const paymentMethodsCount = $derived(
+        Number(paymentConfig.qris.enabled) + Number(paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0),
+    );
+
     let showPaymentModal = $state(false);
     let payingInvoice = $state<Invoice | null>(null);
     let paymentTab = $state<'qris' | 'transfer'>('qris');
@@ -43,31 +115,70 @@
     let proofFile = $state<File | null>(null);
     let uploading = $state(false);
     let uploadMessage = $state('');
+    let copiedAccount = $state('');
+    let copyResetTimer: number | undefined = undefined;
 
-    function formatRupiah(v: number): string {
-        return `Rp ${v.toLocaleString('id-ID')}`;
+    function formatRupiah(value: number): string {
+        return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
     }
 
-    function statusBadge(status: string) {
-        const m: Record<string, { variant: 'default' | 'destructive' | 'outline' | 'secondary'; label: string }> = {
-            trial: { variant: 'secondary', label: 'Trial' }, active: { variant: 'default', label: 'Aktif' },
-            past_due: { variant: 'outline', label: 'Jatuh Tempo' }, suspended: { variant: 'destructive', label: 'Ditangguhkan' },
-            canceled: { variant: 'destructive', label: 'Dibatalkan' }, expired: { variant: 'outline', label: 'Kadaluarsa' },
-        };
-        return m[status] ?? { variant: 'outline', label: status };
+    function formatDate(value: string | null | undefined): string {
+        if (!value) {
+            return '-';
+        }
+
+        return new Date(value).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        });
     }
 
-    function invoiceStatusBadge(status: string) {
-        const m: Record<string, { variant: 'default' | 'destructive' | 'outline' | 'secondary'; label: string }> = {
-            pending: { variant: 'secondary', label: 'Menunggu' }, paid: { variant: 'default', label: 'Lunas' },
-            overdue: { variant: 'destructive', label: 'Overdue' }, failed: { variant: 'destructive', label: 'Gagal' },
+    function statusBadge(status: string): BadgeMeta {
+        const map: Record<string, BadgeMeta> = {
+            trial: { variant: 'secondary', label: 'Trial' },
+            active: { variant: 'default', label: 'Aktif' },
+            past_due: { variant: 'outline', label: 'Jatuh Tempo' },
+            suspended: { variant: 'destructive', label: 'Ditangguhkan' },
+            canceled: { variant: 'destructive', label: 'Dibatalkan' },
+            expired: { variant: 'outline', label: 'Kedaluwarsa' },
         };
-        return m[status] ?? { variant: 'outline', label: status };
+
+        return map[status] ?? { variant: 'outline', label: status || 'Belum aktif' };
+    }
+
+    function invoiceStatusBadge(status: string): BadgeMeta {
+        const map: Record<string, BadgeMeta> = {
+            pending: { variant: 'secondary', label: 'Menunggu' },
+            paid: { variant: 'default', label: 'Lunas' },
+            overdue: { variant: 'destructive', label: 'Overdue' },
+            failed: { variant: 'destructive', label: 'Gagal' },
+        };
+
+        return map[status] ?? { variant: 'outline', label: status || '-' };
+    }
+
+    function planStateLabel(plan: Plan): string {
+        if (plan.slug === currentPlan?.slug) {
+            return 'Paket aktif';
+        }
+
+        return plan.price_monthly > (currentPlan?.price_monthly ?? 0)
+            ? 'Upgrade via admin'
+            : 'Downgrade via admin';
+    }
+
+    function defaultPaymentTab(): 'qris' | 'transfer' {
+        if (paymentConfig.qris.enabled) {
+            return 'qris';
+        }
+
+        return 'transfer';
     }
 
     function openPayment(invoice: Invoice) {
         payingInvoice = invoice;
-        paymentTab = paymentConfig.qris.enabled ? 'qris' : 'transfer';
+        paymentTab = defaultPaymentTab();
         selectedBank = 0;
         paymentMethodLabel = '';
         proofFile = null;
@@ -75,34 +186,81 @@
         showPaymentModal = true;
     }
 
+    function csrfToken(): string {
+        return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
+    }
+
+    function xsrfTokenFromCookie(): string {
+        const part = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('XSRF-TOKEN='));
+
+        if (!part) {
+            return '';
+        }
+
+        try {
+            return decodeURIComponent(part.split('=')[1] ?? '');
+        } catch {
+            return '';
+        }
+    }
+
+    function selectedPaymentMethodLabel(): string {
+        if (paymentMethodLabel.trim() !== '') {
+            return paymentMethodLabel.trim();
+        }
+
+        if (paymentTab === 'qris') {
+            return `QRIS - ${paymentConfig.qris.merchant_name || 'Qbus'}`;
+        }
+
+        const account = paymentConfig.bank_transfer.accounts[selectedBank];
+        if (!account) {
+            return 'Transfer bank';
+        }
+
+        return `Transfer ${account.bank_name} ${account.account_number}`;
+    }
+
     async function uploadProof() {
-        if (!proofFile || !payingInvoice) return;
+        if (!proofFile || !payingInvoice) {
+            return;
+        }
+
         uploading = true;
         uploadMessage = '';
 
+        const token = csrfToken() || xsrfTokenFromCookie();
         const formData = new FormData();
         formData.append('proof_file', proofFile);
-
-        let methodLabel = paymentMethodLabel || (paymentTab === 'qris'
-            ? `QRIS — ${paymentConfig.qris.merchant_name}`
-            : `Transfer ${paymentConfig.bank_transfer.accounts[selectedBank]?.bank_name} ${paymentConfig.bank_transfer.accounts[selectedBank]?.account_number}`);
-        formData.append('payment_method', methodLabel);
+        formData.append('payment_method', selectedPaymentMethodLabel());
 
         try {
-            const res = await fetch(`/api/subscription/upload-proof/${payingInvoice.id}`, {
+            const response = await fetch(`/api/subscription/upload-proof/${payingInvoice.id}`, {
                 method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' },
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': token,
+                },
                 body: formData,
             });
-            const data = await res.json();
-            if (data.success) {
-                uploadMessage = data.message;
-                setTimeout(() => { showPaymentModal = false; window.location.reload(); }, 1500);
-            } else {
-                uploadMessage = data.error || 'Gagal upload.';
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || data.success === false) {
+                uploadMessage = data.error || data.message || 'Gagal upload bukti pembayaran.';
+                return;
             }
-        } catch (e: any) {
-            uploadMessage = e.message || 'Network error';
+
+            uploadMessage = data.message || 'Bukti pembayaran berhasil diupload.';
+            window.setTimeout(() => {
+                showPaymentModal = false;
+                window.location.reload();
+            }, 1200);
+        } catch (error: any) {
+            uploadMessage = error.message || 'Network error';
         } finally {
             uploading = false;
         }
@@ -110,263 +268,457 @@
 
     function copyText(text: string) {
         navigator.clipboard?.writeText(text);
-        alert('Nomor rekening disalin!');
+        copiedAccount = text;
+
+        if (copyResetTimer) {
+            window.clearTimeout(copyResetTimer);
+        }
+
+        copyResetTimer = window.setTimeout(() => {
+            copiedAccount = '';
+        }, 1600);
     }
 
-    function handleQrisError(e: Event) {
-        const img = e.target as HTMLImageElement;
-        img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect fill="#f0f0f0" width="192" height="192"/><text x="96" y="100" text-anchor="middle" fill="#999" font-size="14">QRIS</text></svg>');
+    function handleQrisError(event: Event) {
+        const img = event.target as HTMLImageElement;
+        img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect fill="#f8fafc" width="192" height="192"/><text x="96" y="100" text-anchor="middle" fill="#64748b" font-size="14">QRIS</text></svg>');
     }
 
     function closePaymentModal() {
         showPaymentModal = false;
     }
 
-    function selectProofFile(e: Event) {
-        const input = e.currentTarget as HTMLInputElement;
+    function selectProofFile(event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
         proofFile = input.files?.[0] ?? null;
     }
 </script>
 
 <AppHead title="Langganan" />
 
-<div class="space-y-6 pb-8 max-w-2xl mx-auto">
-    <div>
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold">Langganan Anda</h1>
-                <p class="text-muted-foreground mt-1">Kelola paket dan pembayaran</p>
-            </div>
-            <a href="/dashboard" class="text-sm text-muted-foreground hover:text-foreground underline">
-                Ke Dashboard →
-            </a>
+<div class="min-h-full space-y-5 overflow-x-hidden p-3 pb-24 md:p-4">
+    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold tracking-tight text-foreground">Langganan</h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Kelola status paket, invoice, dan upload bukti pembayaran tenant.
+            </p>
         </div>
+        <Button asChild variant="outline" class="h-9 w-fit rounded-lg">
+            {#snippet children(props)}
+                <Link {...props} href="/dashboard">
+                    Ke Dashboard
+                    <ExternalLink class="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+            {/snippet}
+        </Button>
     </div>
 
     {#if !tenantSub}
-        <Card>
-            <CardContent class="py-8 text-center">
-                <ShieldAlert class="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-                <p class="text-muted-foreground">Tidak ada data langganan.</p>
+        <Card class="border-dashed">
+            <CardContent class="py-10 text-center">
+                <ShieldAlert class="mx-auto h-10 w-10 text-muted-foreground" />
+                <h2 class="mt-4 text-lg font-semibold text-foreground">Data langganan belum tersedia</h2>
+                <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                    Tenant belum memiliki paket aktif. Pilih paket dari pricing atau hubungi admin SaaS.
+                </p>
+                <Button asChild class="mt-5 rounded-lg">
+                    {#snippet children(props)}
+                        <Link {...props} href="/pricing">Lihat Pricing</Link>
+                    {/snippet}
+                </Button>
             </CardContent>
         </Card>
     {:else}
-        <!-- Current Plan -->
-        <Card class="border-primary/30 bg-primary/5">
-            <CardHeader>
-                <div class="flex items-center gap-2">
-                    <Badge variant={statusBadge(tenantSub.subscription_status).variant}>{statusBadge(tenantSub.subscription_status).label}</Badge>
-                </div>
-                <CardTitle class="text-2xl mt-2">{currentPlan?.name ?? tenantSub.plan_name}</CardTitle>
-                <CardDescription>{currentPlan?.description ?? ''}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-3xl font-bold">{formatRupiah(currentPlan?.price_monthly ?? 0)}</span>
-                    <span class="text-muted-foreground">/bulan</span>
-                </div>
-                <div class="text-sm text-muted-foreground mt-1">
-                    {formatRupiah(currentPlan?.price_yearly ?? 0)}/tahun
-                </div>
-                {#if tenantSub.subscription_status === 'trial'}
-                    <p class="text-sm text-amber-600 mt-3">
-                        Trial berakhir: {tenantSub.trial_ends_at ? new Date(tenantSub.trial_ends_at).toLocaleDateString('id-ID') : '—'}
-                    </p>
-                {:else if tenantSub.ends_at}
-                    <p class="text-sm text-muted-foreground mt-3">
-                        Periode: {new Date(tenantSub.ends_at).toLocaleDateString('id-ID')}
-                    </p>
-                {/if}
-            </CardContent>
-        </Card>
-
-        <!-- Available Plans -->
-        <Card>
-            <CardHeader><CardTitle class="text-lg">Paket Tersedia</CardTitle></CardHeader>
-            <CardContent>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {#each plans as plan}
-                        <div class="border rounded-lg p-4 {plan.slug === currentPlan?.slug ? 'border-primary bg-primary/5' : ''}">
-                            <div class="font-semibold">{plan.name}</div>
-                            <div class="text-lg font-bold mt-1">{formatRupiah(plan.price_monthly)}<span class="text-xs font-normal text-muted-foreground">/bln</span></div>
-                            <p class="text-xs text-muted-foreground mt-2">{plan.description}</p>
-                            {#if plan.slug !== currentPlan?.slug}
-                                <Badge variant="outline" class="mt-3 w-full justify-center text-xs">
-                                    {plan.price_monthly > (currentPlan?.price_monthly ?? 0) ? 'Hubungi admin untuk upgrade' : 'Hubungi admin untuk downgrade'}
-                                </Badge>
-                            {:else}
-                                <Badge variant="default" class="mt-3 w-full justify-center">Paket Aktif</Badge>
-                            {/if}
-                        </div>
-                    {/each}
-                </div>
-            </CardContent>
-        </Card>
-
-        <!-- Invoice History -->
-        <Card>
-            <CardHeader>
-                <CardTitle class="text-lg flex items-center gap-2"><Receipt class="h-5 w-5" /> Riwayat Invoice</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {#if invoices.length > 0}
-                    <div class="space-y-3">
-                        {#each invoices as inv}
-                            <div class="flex items-center justify-between text-sm border rounded-lg p-3 hover:bg-muted/20">
-                                <div>
-                                    <div class="font-medium">{inv.invoice_number}</div>
-                                    <div class="text-xs text-muted-foreground">
-                                        Jatuh tempo: {new Date(inv.due_date).toLocaleDateString('id-ID')}
-                                        {#if inv.payment_method} · {inv.payment_method}{/if}
-                                    </div>
-                                    {#if inv.payment_proof}
-                                        <div class="text-xs text-green-600 mt-0.5">✓ Bukti terupload</div>
-                                    {/if}
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div class="space-y-4">
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b bg-muted/20">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <Badge variant={subscriptionMeta.variant}>{subscriptionMeta.label}</Badge>
+                                    <span class="text-xs text-muted-foreground">{tenantSub.tenant_name}</span>
                                 </div>
-                                <div class="text-right shrink-0">
-                                    <div class="font-medium mb-1">{formatRupiah(inv.amount)}</div>
-                                    {#if inv.status === 'paid'}
-                                        <Badge variant="default" class="text-[10px]">Lunas</Badge>
-                                    {:else if inv.status === 'pending'}
-                                        {#if inv.payment_proof}
-                                            <Badge variant="secondary" class="text-[10px]">Verifikasi</Badge>
-                                        {:else}
-                                            <Button size="sm" variant="outline" class="text-xs h-7 px-2" onclick={() => openPayment(inv)}>
-                                                <Banknote class="h-3 w-3 mr-1" /> Bayar
-                                            </Button>
-                                        {/if}
-                                    {:else}
-                                        <Badge variant={invoiceStatusBadge(inv.status).variant} class="text-[10px]">{invoiceStatusBadge(inv.status).label}</Badge>
-                                    {/if}
+                                <CardTitle class="mt-3 text-2xl">
+                                    {currentPlan?.name ?? tenantSub.plan_name}
+                                </CardTitle>
+                                <CardDescription class="mt-1">
+                                    {currentPlan?.description || 'Paket operasional Qbus untuk tenant ini.'}
+                                </CardDescription>
+                            </div>
+                            <div class="rounded-lg border bg-background px-3 py-2 text-right">
+                                <p class="text-xs text-muted-foreground">Biaya bulanan</p>
+                                <p class="text-lg font-semibold text-foreground">
+                                    {formatRupiah(currentPlan?.price_monthly ?? 0)}
+                                </p>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent class="grid gap-3 p-4 md:grid-cols-3">
+                        <div class="rounded-lg border border-border/70 p-3">
+                            <p class="text-xs text-muted-foreground">Periode / trial</p>
+                            <p class="mt-1 font-semibold text-foreground">
+                                {tenantSub.subscription_status === 'trial'
+                                    ? formatDate(tenantSub.trial_ends_at)
+                                    : formatDate(tenantSub.ends_at)}
+                            </p>
+                        </div>
+                        <div class="rounded-lg border border-border/70 p-3">
+                            <p class="text-xs text-muted-foreground">Invoice menunggu</p>
+                            <p class="mt-1 font-semibold text-foreground">{pendingInvoices.length} invoice</p>
+                        </div>
+                        <div class="rounded-lg border border-border/70 p-3">
+                            <p class="text-xs text-muted-foreground">Metode pembayaran</p>
+                            <p class="mt-1 font-semibold text-foreground">{paymentMethodsCount} metode aktif</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {#if payableInvoice}
+                    <Card class="border-amber-200 bg-amber-50/40 dark:border-amber-400/20 dark:bg-amber-950/10">
+                        <CardContent class="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+                            <div class="flex gap-3">
+                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-100">
+                                    <Receipt class="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-foreground">Invoice perlu dibayar</p>
+                                    <p class="mt-1 text-sm text-muted-foreground">
+                                        {payableInvoice.invoice_number} jatuh tempo {formatDate(payableInvoice.due_date)}
+                                    </p>
+                                    <p class="mt-2 text-xl font-semibold text-foreground">
+                                        {formatRupiah(payableInvoice.amount)}
+                                    </p>
                                 </div>
                             </div>
-                        {/each}
-                    </div>
-                {:else}
-                    <p class="text-sm text-muted-foreground text-center py-4">Belum ada invoice.</p>
+                            <Button class="h-10 rounded-lg" onclick={() => openPayment(payableInvoice)}>
+                                <Banknote class="mr-2 h-4 w-4" />
+                                Bayar Sekarang
+                            </Button>
+                        </CardContent>
+                    </Card>
+                {:else if invoiceInVerification}
+                    <Card class="border-sky-200 bg-sky-50/50 dark:border-sky-400/20 dark:bg-sky-950/10">
+                        <CardContent class="flex items-start gap-3 p-4">
+                            <FileCheck2 class="mt-0.5 h-5 w-5 shrink-0 text-sky-700 dark:text-sky-200" />
+                            <div>
+                                <p class="font-semibold text-foreground">Bukti pembayaran sedang diverifikasi</p>
+                                <p class="mt-1 text-sm text-muted-foreground">
+                                    Invoice {invoiceInVerification.invoice_number} sudah memiliki bukti upload.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 {/if}
-            </CardContent>
-        </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="text-lg">Paket Tersedia</CardTitle>
+                        <CardDescription>Perbandingan paket yang bisa digunakan tenant.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="grid gap-3 md:grid-cols-3">
+                            {#each plans as plan}
+                                <div class={`rounded-lg border p-3 ${plan.slug === currentPlan?.slug ? 'border-primary bg-primary/5' : 'border-border/70'}`}>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="font-semibold text-foreground">{plan.name}</p>
+                                        {#if plan.slug === currentPlan?.slug}
+                                            <CheckCircle2 class="h-4 w-4 text-primary" />
+                                        {/if}
+                                    </div>
+                                    <p class="mt-2 text-lg font-semibold text-foreground">
+                                        {formatRupiah(plan.price_monthly)}
+                                        <span class="text-xs font-normal text-muted-foreground">/bulan</span>
+                                    </p>
+                                    <p class="mt-2 min-h-10 text-xs leading-5 text-muted-foreground">
+                                        {plan.description}
+                                    </p>
+                                    <Badge
+                                        variant={plan.slug === currentPlan?.slug ? 'default' : 'outline'}
+                                        class="mt-3 w-full justify-center"
+                                    >
+                                        {planStateLabel(plan)}
+                                    </Badge>
+                                </div>
+                            {/each}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2 text-lg">
+                            <Receipt class="h-5 w-5" />
+                            Riwayat Invoice
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {#if invoices.length > 0}
+                            <div class="overflow-hidden rounded-lg border">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+                                        <tr>
+                                            <th class="px-3 py-2">Invoice</th>
+                                            <th class="px-3 py-2">Jatuh Tempo</th>
+                                            <th class="px-3 py-2 text-right">Nominal</th>
+                                            <th class="px-3 py-2">Status</th>
+                                            <th class="px-3 py-2 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-border/70">
+                                        {#each invoices as invoice}
+                                            <tr>
+                                                <td class="px-3 py-3">
+                                                    <p class="font-semibold text-foreground">{invoice.invoice_number}</p>
+                                                    <p class="mt-0.5 text-xs text-muted-foreground">
+                                                        {invoice.payment_method || 'Belum ada metode'}
+                                                    </p>
+                                                </td>
+                                                <td class="px-3 py-3 text-muted-foreground">
+                                                    {formatDate(invoice.due_date)}
+                                                </td>
+                                                <td class="px-3 py-3 text-right font-semibold">
+                                                    {formatRupiah(invoice.amount)}
+                                                </td>
+                                                <td class="px-3 py-3">
+                                                    {#if invoice.payment_proof && invoice.status === 'pending'}
+                                                        <Badge variant="secondary">Verifikasi</Badge>
+                                                    {:else}
+                                                        <Badge variant={invoiceStatusBadge(invoice.status).variant}>
+                                                            {invoiceStatusBadge(invoice.status).label}
+                                                        </Badge>
+                                                    {/if}
+                                                </td>
+                                                <td class="px-3 py-3 text-right">
+                                                    {#if invoice.status === 'pending' && !invoice.payment_proof}
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            class="h-8 rounded-lg"
+                                                            onclick={() => openPayment(invoice)}
+                                                        >
+                                                            Bayar
+                                                        </Button>
+                                                    {:else if invoice.payment_proof}
+                                                        <span class="text-xs text-emerald-700 dark:text-emerald-300">Bukti terupload</span>
+                                                    {:else}
+                                                        <span class="text-xs text-muted-foreground">-</span>
+                                                    {/if}
+                                                </td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {:else}
+                            <div class="rounded-lg border border-dashed p-6 text-center">
+                                <Receipt class="mx-auto h-8 w-8 text-muted-foreground" />
+                                <p class="mt-3 text-sm text-muted-foreground">Belum ada invoice.</p>
+                            </div>
+                        {/if}
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div class="space-y-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2 text-lg">
+                            <CreditCard class="h-5 w-5" />
+                            Metode Pembayaran
+                        </CardTitle>
+                        <CardDescription>Metode ini diatur dari menu SaaS admin.</CardDescription>
+                    </CardHeader>
+                    <CardContent class="space-y-3">
+                        {#if paymentConfig.qris.enabled}
+                            <div class="rounded-lg border border-border/70 p-3">
+                                <div class="flex items-center gap-2 font-semibold text-foreground">
+                                    <QrCode class="h-4 w-4" />
+                                    QRIS
+                                </div>
+                                <p class="mt-1 text-sm text-muted-foreground">
+                                    {paymentConfig.qris.merchant_name || 'Merchant Qbus'}
+                                </p>
+                            </div>
+                        {/if}
+
+                        {#if paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0}
+                            {#each paymentConfig.bank_transfer.accounts as account}
+                                <div class="rounded-lg border border-border/70 p-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-semibold text-foreground">{account.bank_name}</p>
+                                            <p class="mt-1 font-mono text-sm tracking-wide">{account.account_number}</p>
+                                            <p class="mt-1 text-xs text-muted-foreground">a.n. {account.account_holder}</p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            class="h-8 w-8 rounded-lg"
+                                            onclick={() => copyText(account.account_number)}
+                                            aria-label="Salin nomor rekening"
+                                        >
+                                            {#if copiedAccount === account.account_number}
+                                                <Check class="h-4 w-4 text-emerald-600" />
+                                            {:else}
+                                                <Copy class="h-4 w-4" />
+                                            {/if}
+                                        </Button>
+                                    </div>
+                                </div>
+                            {/each}
+                        {/if}
+
+                        {#if paymentMethodsCount === 0}
+                            <div class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                Metode pembayaran belum aktif. Lengkapi pengaturan pembayaran di menu SaaS.
+                            </div>
+                        {/if}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2 text-lg">
+                            <AlertTriangle class="h-5 w-5" />
+                            Catatan Pembayaran
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-3 text-sm text-muted-foreground">
+                        <p>Transfer atau scan QRIS sesuai nominal invoice agar verifikasi cepat.</p>
+                        <p>Upload bukti pembayaran JPG, PNG, atau PDF maksimal {paymentConfig.upload_max_kb}KB.</p>
+                        <p>{paidInvoices.length} invoice sudah lunas dari {invoices.length} invoice terakhir.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     {/if}
 </div>
 
-<!-- Payment Modal -->
 {#if showPaymentModal && payingInvoice}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <button type="button" class="absolute inset-0 cursor-default" aria-label="Tutup modal pembayaran" onclick={closePaymentModal}></button>
-        <div class="relative bg-background rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-            <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
+        <button
+            type="button"
+            class="absolute inset-0 cursor-default"
+            aria-label="Tutup modal pembayaran"
+            onclick={closePaymentModal}
+        ></button>
+        <div class="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-background shadow-xl">
+            <div class="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-background p-4">
                 <div>
-                    <h3 class="font-bold text-lg">Pembayaran</h3>
-                    <p class="text-xs text-muted-foreground">{payingInvoice.invoice_number} · {formatRupiah(payingInvoice.amount)}</p>
+                    <h3 class="text-lg font-semibold text-foreground">Pembayaran Invoice</h3>
+                    <p class="mt-0.5 text-sm text-muted-foreground">
+                        {payingInvoice.invoice_number} - {formatRupiah(payingInvoice.amount)}
+                    </p>
                 </div>
-                <button onclick={closePaymentModal} class="p-1 hover:bg-muted rounded-full"><X class="h-5 w-5" /></button>
+                <button
+                    type="button"
+                    class="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    onclick={closePaymentModal}
+                    aria-label="Tutup modal"
+                >
+                    <X class="h-5 w-5" />
+                </button>
             </div>
 
-            <div class="p-4 space-y-4">
-                <!-- Amount display -->
-                <div class="text-center bg-muted rounded-lg py-3">
-                    <div class="text-xs text-muted-foreground">Total Pembayaran</div>
-                    <div class="text-2xl font-bold">{formatRupiah(payingInvoice.amount)}</div>
+            <div class="space-y-4 p-4">
+                <div class="rounded-lg border bg-muted/30 p-3 text-center">
+                    <p class="text-xs text-muted-foreground">Total pembayaran</p>
+                    <p class="mt-1 text-2xl font-semibold text-foreground">{formatRupiah(payingInvoice.amount)}</p>
                 </div>
 
-                <!-- Payment method tabs -->
-                <div class="flex gap-1 border rounded-lg p-1">
+                <div class="grid grid-cols-2 gap-2 rounded-lg border p-1">
                     {#if paymentConfig.qris.enabled}
                         <button
+                            type="button"
                             onclick={() => paymentTab = 'qris'}
-                            class="flex-1 flex items-center justify-center gap-1 py-2 text-sm rounded-md {paymentTab === 'qris' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}"
+                            class={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${paymentTab === 'qris' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
                         >
-                            <QrCode class="h-4 w-4" /> QRIS
+                            <QrCode class="h-4 w-4" />
+                            QRIS
                         </button>
                     {/if}
                     {#if paymentConfig.bank_transfer.enabled}
                         <button
+                            type="button"
                             onclick={() => paymentTab = 'transfer'}
-                            class="flex-1 flex items-center justify-center gap-1 py-2 text-sm rounded-md {paymentTab === 'transfer' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}"
+                            class={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${paymentTab === 'transfer' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
                         >
-                            <Landmark class="h-4 w-4" /> Transfer
+                            <Landmark class="h-4 w-4" />
+                            Transfer
                         </button>
                     {/if}
                 </div>
 
-                <!-- QRIS Tab -->
                 {#if paymentTab === 'qris' && paymentConfig.qris.enabled}
                     <div class="space-y-3">
-                        <div class="text-sm text-muted-foreground text-center">{paymentConfig.qris.note}</div>
-                        <div class="bg-white rounded-lg p-4 flex flex-col items-center">
+                        <p class="text-center text-sm text-muted-foreground">{paymentConfig.qris.note}</p>
+                        <div class="flex justify-center rounded-lg border bg-white p-4">
                             <img
                                 src={paymentConfig.qris.image_url}
                                 alt="QRIS {paymentConfig.qris.merchant_name}"
-                                class="w-48 h-48 object-contain"
+                                class="h-52 w-52 object-contain"
                                 onerror={handleQrisError}
                             />
                         </div>
-                        <div class="text-center text-sm font-medium">{paymentConfig.qris.merchant_name}</div>
-                        <div class="text-center text-xs text-amber-600 bg-amber-50 rounded-lg py-2 px-3">
-                            ⚠️ Masukkan nominal <strong>{formatRupiah(payingInvoice.amount)}</strong> saat scan QRIS
-                        </div>
+                        <p class="text-center text-sm font-semibold text-foreground">
+                            {paymentConfig.qris.merchant_name}
+                        </p>
                     </div>
                 {/if}
 
-                <!-- Transfer Tab -->
                 {#if paymentTab === 'transfer' && paymentConfig.bank_transfer.enabled}
                     <div class="space-y-2">
-                        {#each paymentConfig.bank_transfer.accounts as account, i}
-                            <div
-                                role="button"
-                                tabindex="0"
-                                onclick={() => selectedBank = i}
-                                onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectedBank = i; }}
-                                class="w-full text-left border rounded-lg p-3 hover:bg-muted/20 transition-colors cursor-pointer {selectedBank === i ? 'border-primary bg-primary/5' : ''}"
+                        {#each paymentConfig.bank_transfer.accounts as account, index}
+                            <button
+                                type="button"
+                                onclick={() => selectedBank = index}
+                                class={`w-full rounded-lg border p-3 text-left transition ${selectedBank === index ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/30'}`}
                             >
-                                <div class="flex items-center justify-between">
+                                <div class="flex items-start justify-between gap-3">
                                     <div>
-                                        <div class="font-semibold">{account.bank_name}</div>
-                                        <div class="text-lg font-mono tracking-wider">{account.account_number}</div>
-                                        <div class="text-xs text-muted-foreground">a.n. {account.account_holder}</div>
+                                        <p class="font-semibold text-foreground">{account.bank_name}</p>
+                                        <p class="mt-1 font-mono text-lg tracking-wide">{account.account_number}</p>
+                                        <p class="mt-1 text-xs text-muted-foreground">a.n. {account.account_holder}</p>
                                     </div>
-                                    <div class="flex gap-1">
-                                        <button onclick={(e) => { e.stopPropagation(); copyText(account.account_number); }} class="p-1 text-muted-foreground hover:text-foreground" title="Salin nomor rekening" aria-label="Salin nomor rekening">
-                                            <Copy class="h-4 w-4" />
-                                        </button>
-                                        {#if selectedBank === i}
-                                            <Check class="h-5 w-5 text-primary" />
-                                        {/if}
-                                    </div>
+                                    {#if selectedBank === index}
+                                        <Check class="h-5 w-5 text-primary" />
+                                    {/if}
                                 </div>
-                                <div class="text-xs text-muted-foreground mt-2">Transfer tepat <strong>{formatRupiah(payingInvoice.amount)}</strong></div>
-                            </div>
+                            </button>
                         {/each}
                     </div>
                 {/if}
 
-                <!-- Proof Upload -->
                 <div class="border-t pt-4">
-                    <Label class="text-sm font-medium mb-2 block">Upload Bukti Pembayaran</Label>
-                    <div class="flex items-center gap-3">
-                        <label class="flex-1 flex items-center gap-2 border rounded-lg px-4 py-3 cursor-pointer hover:bg-muted/20 text-sm">
-                            <Upload class="h-4 w-4 text-muted-foreground" />
-                            {#if proofFile}
-                                <span class="text-green-600 truncate">{proofFile.name}</span>
-                            {:else}
-                                <span class="text-muted-foreground">Pilih file (JPG/PNG/PDF, max {paymentConfig.upload_max_kb}KB)</span>
-                            {/if}
-                            <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden" onchange={selectProofFile} />
-                        </label>
-                    </div>
+                    <Label class="mb-2 block text-sm font-medium">Upload Bukti Pembayaran</Label>
+                    <label class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 text-sm hover:bg-muted/30">
+                        <Upload class="h-4 w-4 shrink-0 text-muted-foreground" />
+                        {#if proofFile}
+                            <span class="truncate font-medium text-emerald-700 dark:text-emerald-300">{proofFile.name}</span>
+                        {:else}
+                            <span class="truncate text-muted-foreground">
+                                Pilih file JPG/PNG/PDF, max {paymentConfig.upload_max_kb}KB
+                            </span>
+                        {/if}
+                        <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden" onchange={selectProofFile} />
+                    </label>
+
                     {#if proofFile}
-                        <Button class="w-full mt-3" onclick={uploadProof} disabled={uploading}>
+                        <Button class="mt-3 h-10 w-full rounded-lg" onclick={uploadProof} disabled={uploading}>
                             {#if uploading}
                                 Mengupload...
                             {:else}
-                                <Upload class="h-4 w-4 mr-2" /> Kirim Bukti Pembayaran
+                                <Upload class="mr-2 h-4 w-4" />
+                                Kirim Bukti Pembayaran
                             {/if}
                         </Button>
                     {/if}
+
                     {#if uploadMessage}
-                        <div class="mt-3 text-sm rounded-lg px-4 py-2 {uploadMessage.includes('berhasil') ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'}">
+                        <div class={`mt-3 rounded-lg px-4 py-2 text-sm ${uploadMessage.toLowerCase().includes('berhasil') ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-200' : 'bg-destructive/10 text-destructive'}`}>
                             {uploadMessage}
                         </div>
                     {/if}
