@@ -5605,7 +5605,11 @@ class AdminOpsApiController extends Controller
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function (): array {
             $map = [];
-            $rows = DB::table('schedules')->get(['rute', 'dow', 'jam', 'bop']);
+            $rows = DB::table('schedules')
+                ->when(Schema::hasColumn('schedules', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'schedules.tenant_id');
+                })
+                ->get(['rute', 'dow', 'jam', 'bop']);
 
             foreach ($rows as $row) {
                 $key = $this->driverScheduleBopKey(
@@ -5649,6 +5653,9 @@ class AdminOpsApiController extends Controller
                 ->selectRaw('SUM(CASE WHEN COALESCE(price, 0) - COALESCE(discount, 0) > 0 THEN COALESCE(price, 0) - COALESCE(discount, 0) ELSE 0 END) as net_revenue')
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'bookings.tenant_id');
+                })
                 ->groupBy('rute', 'tanggal', 'jam', 'unit')
                 ->get();
 
@@ -5696,7 +5703,11 @@ class AdminOpsApiController extends Controller
             return [];
         }
 
-        $routes = DB::table('routes')->get(['id', 'name', 'origin', 'destination']);
+        $routes = DB::table('routes')
+            ->when(Schema::hasColumn('routes', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'routes.tenant_id');
+            })
+            ->get(['id', 'name', 'origin', 'destination']);
         $financials = [];
         $nameMap = [];
         $routeProfiles = [];
@@ -5733,6 +5744,9 @@ class AdminOpsApiController extends Controller
                 ->selectRaw('SUM(CASE WHEN COALESCE(price, 0) - COALESCE(discount, 0) > 0 THEN COALESCE(price, 0) - COALESCE(discount, 0) ELSE 0 END) as net_revenue')
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'bookings.tenant_id');
+                })
                 ->groupBy('rute')
                 ->get();
 
@@ -5747,6 +5761,9 @@ class AdminOpsApiController extends Controller
             $scheduleBopMap = $this->scheduleBopMap();
             $assignmentRows = DB::table('trip_assignments')
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'trip_assignments.tenant_id');
+                })
                 ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
                     $query->where(function (Builder $statusQuery) {
                         $statusQuery
@@ -5787,6 +5804,9 @@ class AdminOpsApiController extends Controller
                     'rute',
                     'price',
                 ])
+                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'luggages.tenant_id');
+                })
                 ->whereBetween(DB::raw('COALESCE(tanggal, DATE(created_at))'), [$monthStart, $monthEnd])
                 ->where(function (Builder $query) {
                     $this->applyLuggageStatusFilter($query, 'status', $this->luggageRevenueStatuses());
@@ -5814,6 +5834,9 @@ class AdminOpsApiController extends Controller
             $hasStatus = $this->chartersHasStatusColumn();
             $charterRows = DB::table('charters')
                 ->whereBetween('start_date', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'charters.tenant_id');
+                })
                 ->get([
                     'pickup_point',
                     'drop_point',
@@ -5997,6 +6020,9 @@ class AdminOpsApiController extends Controller
 
             $assignmentRows = $assignmentQuery
                 ->whereBetween('t.tanggal', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 't.tenant_id');
+                })
                 ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
                     $query->where(function (Builder $statusQuery) {
                         $statusQuery
@@ -6066,6 +6092,9 @@ class AdminOpsApiController extends Controller
 
             $luggageRows = $luggageQuery
                 ->whereBetween(DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal)'), [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'l.tenant_id');
+                })
                 ->where(function (Builder $query) {
                     $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageRevenueStatuses());
                 })
@@ -6121,6 +6150,9 @@ class AdminOpsApiController extends Controller
 
             $charterRows = $charterQuery
                 ->whereBetween('c.start_date', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'c.tenant_id');
+                })
                 ->get($charterSelect);
 
             foreach ($charterRows as $charter) {
