@@ -167,17 +167,20 @@
                 </div>
 
                 <div class="relative">
-                    <div class="pointer-events-none absolute -top-8 right-2 h-24 w-24 rounded-full bg-[#0d8dff]/10 blur-2xl"></div>
-                    <div class="relative lg:-mr-14 xl:-mr-24">
+                    <div class="pointer-events-none absolute -inset-x-6 bottom-4 h-36 rounded-full bg-[radial-gradient(circle_at_center,rgba(13,112,102,0.24),rgba(13,141,255,0.12)_42%,transparent_72%)] blur-3xl"></div>
+                    <div class="pointer-events-none absolute top-4 right-2 h-28 w-28 rounded-full bg-[#0d8dff]/12 blur-2xl"></div>
+                    <div class="relative mx-auto max-w-[650px] lg:-mr-10 xl:-mr-16">
+                        <div class="pointer-events-none absolute inset-x-8 bottom-3 h-1/2 rounded-[32px] bg-[#edf4f1]/80 shadow-[0_34px_90px_rgba(16,61,58,0.20)] ring-1 ring-[#c8d7d0]/70"></div>
+                        <div class="pointer-events-none absolute right-10 bottom-8 h-24 w-24 rounded-full bg-[#0d8dff]/18 blur-2xl"></div>
                         <img
                             src="/landing/qbus-hero-devices.png"
                             alt="Mockup dashboard Qbus di laptop dan aplikasi booking seat di ponsel"
-                            width="1672"
-                            height="941"
+                            width="455"
+                            height="272"
                             loading="eager"
                             decoding="async"
                             fetchpriority="high"
-                            class="w-full max-w-none rounded-xl object-contain drop-shadow-[0_26px_45px_rgba(23,32,31,0.16)] lg:w-[112%]"
+                            class="relative z-10 w-full max-w-none object-contain drop-shadow-[0_24px_34px_rgba(16,61,58,0.24)] lg:w-[112%]"
                         />
                     </div>
                 </div>
