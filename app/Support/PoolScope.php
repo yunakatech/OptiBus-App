@@ -113,7 +113,7 @@ class PoolScope
     /**
      * @return array{all: bool, pool_ids: array<int, int>, route_ids: array<int, int>, route_names: array<int, string>, labels: array<int, string>, pool_name: string, target_revenue: float, tenant_id: int}
      */
-    public static function forCurrentUser(int $poolId = 0, ?int $userId = null): array
+    public static function forCurrentUser(int $poolId = 0, ?int $userId = null, bool $useSessionPool = true): array
     {
         $fallback = [
             'all' => true,
@@ -127,7 +127,7 @@ class PoolScope
         ];
 
         // Global pool override from session — applies across all pages/API calls
-        if ($poolId <= 0) {
+        if ($useSessionPool && $poolId <= 0) {
             $sessionPoolId = (int) (session('active_pool_id', 0));
             if ($sessionPoolId > 0) {
                 $poolId = $sessionPoolId;

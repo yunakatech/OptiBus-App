@@ -23,14 +23,21 @@ class ActivityLog
 
         if (self::usesDatabase()) {
             try {
-                DB::table('activity_logs')->insert([
+                $insert = [
                     'tag' => $payload['tag'],
                     'title' => $payload['title'],
                     'meta' => $payload['meta'],
                     'actor' => $payload['actor'],
                     'extra' => $payload['extra'] !== [] ? json_encode($payload['extra'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : null,
                     'created_at' => $payload['created_at'],
-                ]);
+                ];
+
+                if (Schema::hasColumn('activity_logs', 'tenant_id')) {
+                    $tenantId = self::tenantIdFromExtra($payload['extra']);
+                    $insert['tenant_id'] = $tenantId > 0 ? $tenantId : null;
+                }
+
+                DB::table('activity_logs')->insert($insert);
 
                 return;
             } catch (\Throwable) {
@@ -185,7 +192,7 @@ class ActivityLog
         $batchSize = max(100, min(500, $needed * 4));
 
         while (true) {
-            $rows = DB::table('activity_logs')
+            $rows = self::databaseQueryForScope($scope)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($scanOffset)
@@ -230,7 +237,7 @@ class ActivityLog
         $batchSize = 500;
 
         while (true) {
-            $rows = DB::table('activity_logs')
+            $rows = self::databaseQueryForScope($scope)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($offset)
@@ -267,8 +274,33 @@ class ActivityLog
         if (Schema::hasColumn('activity_logs', 'extra')) {
             $columns[] = 'extra';
         }
+        if (Schema::hasColumn('activity_logs', 'tenant_id')) {
+            $columns[] = 'tenant_id';
+        }
 
         return $columns;
+    }
+
+    /**
+     * @param array<string, mixed> $scope
+     */
+    private static function databaseQueryForScope(array $scope): \Illuminate\Database\Query\Builder
+    {
+        $query = DB::table('activity_logs');
+        $tenantId = (int) ($scope['tenant_id'] ?? 0);
+
+        if (
+            $tenantId > 0
+            && Schema::hasColumn('activity_logs', 'tenant_id')
+        ) {
+            $query->where(function ($builder) use ($tenantId): void {
+                $builder
+                    ->where('tenant_id', $tenantId)
+                    ->orWhereNull('tenant_id');
+            });
+        }
+
+        return $query;
     }
 
     /**
@@ -283,6 +315,7 @@ class ActivityLog
             'actor' => trim((string) ($row->actor ?? '')),
             'created_at' => trim((string) ($row->created_at ?? '')),
             'extra' => self::normalizeExtra($row->extra ?? []),
+            'tenant_id' => (int) ($row->tenant_id ?? 0),
         ];
     }
 
@@ -313,6 +346,11 @@ class ActivityLog
                 $extra['user_id'] ??= (int) $user->id;
                 $extra['user_email'] ??= (string) ($user->email ?? '');
                 $extra['user_name'] ??= (string) ($user->name ?? '');
+
+                $tenantId = PoolScope::tenantId((int) $user->id);
+                if ($tenantId > 0) {
+                    $extra['tenant_id'] ??= $tenantId;
+                }
             }
         } catch (\Throwable) {
             // Logging must stay non-blocking even outside an authenticated request.
@@ -349,6 +387,25 @@ class ActivityLog
         }
 
         $extra = self::normalizeExtra($row['extra'] ?? []);
+        $rowTenantId = (int) ($row['tenant_id'] ?? 0);
+        if ($rowTenantId > 0) {
+            $extra['tenant_id'] ??= $rowTenantId;
+        }
+
+        $scopeTenantId = (int) ($scope['tenant_id'] ?? 0);
+        if ($scopeTenantId > 0) {
+            $extraTenantId = self::tenantIdFromExtra($extra);
+            $resolvedTenantId = $rowTenantId > 0 ? $rowTenantId : $extraTenantId;
+
+            if ($resolvedTenantId > 0 && $resolvedTenantId !== $scopeTenantId) {
+                return false;
+            }
+
+            if ($resolvedTenantId <= 0 && self::hasBusinessScopeHints($extra)) {
+                return false;
+            }
+        }
+
         if (self::extraMatchesScope($extra, $scope)) {
             return true;
         }
@@ -387,7 +444,9 @@ class ActivityLog
             return true;
         }
 
-        if (self::intersects(self::stringList($extra['rute'] ?? []), $routeNames)) {
+        $scopeTenantId = (int) ($scope['tenant_id'] ?? 0);
+        $extraTenantId = $scopeTenantId > 0 ? self::tenantIdFromExtra($extra) : 0;
+        if (($scopeTenantId <= 0 || $extraTenantId === $scopeTenantId) && self::intersects(self::stringList($extra['rute'] ?? []), $routeNames)) {
             return true;
         }
 
@@ -428,6 +487,59 @@ class ActivityLog
         }
 
         return false;
+    }
+
+    /**
+     * @param array<string, mixed> $extra
+     */
+    private static function tenantIdFromExtra(array $extra): int
+    {
+        $tenantId = self::firstInteger($extra['tenant_id'] ?? null);
+        if ($tenantId > 0) {
+            return $tenantId;
+        }
+
+        $userId = self::firstInteger($extra['user_id'] ?? null);
+        if ($userId > 0 && Schema::hasTable('users') && Schema::hasColumn('users', 'tenant_id')) {
+            return (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0);
+        }
+
+        $poolId = self::firstInteger($extra['pool_id'] ?? ($extra['pool_ids'] ?? null));
+        if ($poolId > 0 && Schema::hasTable('pools') && Schema::hasColumn('pools', 'tenant_id')) {
+            return (int) (DB::table('pools')->where('id', $poolId)->value('tenant_id') ?? 0);
+        }
+
+        $routeId = self::firstInteger($extra['route_id'] ?? ($extra['rute_id'] ?? null));
+        if ($routeId > 0 && Schema::hasTable('routes') && Schema::hasColumn('routes', 'tenant_id')) {
+            return (int) (DB::table('routes')->where('id', $routeId)->value('tenant_id') ?? 0);
+        }
+
+        $bookingId = self::firstInteger($extra['booking_id'] ?? ($extra['booking_ids'] ?? null));
+        if ($bookingId > 0 && Schema::hasTable('bookings') && Schema::hasColumn('bookings', 'tenant_id')) {
+            return (int) (DB::table('bookings')->where('id', $bookingId)->value('tenant_id') ?? 0);
+        }
+
+        $tripAssignmentId = self::firstInteger($extra['trip_assignment_id'] ?? ($extra['trip_assignment_ids'] ?? null));
+        if ($tripAssignmentId > 0 && Schema::hasTable('trip_assignments') && Schema::hasColumn('trip_assignments', 'tenant_id')) {
+            return (int) (DB::table('trip_assignments')->where('id', $tripAssignmentId)->value('tenant_id') ?? 0);
+        }
+
+        $charterId = self::firstInteger($extra['charter_id'] ?? ($extra['charter_ids'] ?? null));
+        if ($charterId > 0 && Schema::hasTable('charters') && Schema::hasColumn('charters', 'tenant_id')) {
+            return (int) (DB::table('charters')->where('id', $charterId)->value('tenant_id') ?? 0);
+        }
+
+        $luggageId = self::firstInteger($extra['luggage_id'] ?? ($extra['luggage_ids'] ?? null));
+        if ($luggageId > 0 && Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'tenant_id')) {
+            return (int) (DB::table('luggages')->where('id', $luggageId)->value('tenant_id') ?? 0);
+        }
+
+        $resi = self::stringList($extra['kode_resi'] ?? []);
+        if ($resi !== [] && Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'tenant_id')) {
+            return (int) (DB::table('luggages')->whereIn('kode_resi', $resi)->value('tenant_id') ?? 0);
+        }
+
+        return 0;
     }
 
     /**
@@ -501,6 +613,9 @@ class ActivityLog
 
         return DB::table('bookings')
             ->whereIn('id', $ids)
+            ->when(Schema::hasColumn('bookings', 'tenant_id'), function ($query): void {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            })
             ->whereIn('rute', $routeNames)
             ->exists();
     }
@@ -517,6 +632,9 @@ class ActivityLog
 
         return DB::table('trip_assignments')
             ->whereIn('id', $ids)
+            ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function ($query): void {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            })
             ->whereIn('rute', $routeNames)
             ->exists();
     }
@@ -538,6 +656,9 @@ class ActivityLog
         }
 
         $query = DB::table('charters')->whereIn('id', $ids);
+        if (Schema::hasColumn('charters', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
 
         $query->where(function ($builder) use ($canUsePool, $poolIds, $labels): void {
             $hasClause = false;
@@ -572,6 +693,9 @@ class ActivityLog
         }
 
         $query = DB::table('luggages')->whereIn('id', $ids);
+        if (Schema::hasColumn('luggages', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
         self::appendLuggageScope($query, $poolIds, $routeIds, $routeNames);
 
         return $query->exists();
@@ -590,6 +714,9 @@ class ActivityLog
         }
 
         $query = DB::table('luggages')->whereIn('kode_resi', $codes);
+        if (Schema::hasColumn('luggages', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
         self::appendLuggageScope($query, $poolIds, $routeIds, $routeNames);
 
         return $query->exists();
@@ -642,6 +769,13 @@ class ActivityLog
             static fn ($item): int => (int) $item,
             $values,
         ), static fn (int $item): bool => $item > 0)));
+    }
+
+    private static function firstInteger(mixed $value): int
+    {
+        $values = self::integerList($value);
+
+        return (int) ($values[0] ?? 0);
     }
 
     /**

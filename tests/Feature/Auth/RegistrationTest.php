@@ -17,11 +17,11 @@ class RegistrationTest extends TestCase
         $this->skipUnlessFortifyHas(Features::registration());
     }
 
-    public function test_registration_screen_redirects_to_login()
+    public function test_registration_screen_can_be_rendered()
     {
         $response = $this->get(route('register'));
 
-        $response->assertRedirect(route('login'));
+        $response->assertOk();
     }
 
     public function test_new_users_can_register()
@@ -34,6 +34,6 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('subscription.index', absolute: false));
     }
 }

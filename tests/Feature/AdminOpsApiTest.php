@@ -22,6 +22,11 @@ class AdminOpsApiTest extends TestCase
         return $user;
     }
 
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
+    }
+
     public function test_routes_crud_works(): void
     {
         $this->actingAsSuperAdmin();
@@ -921,14 +926,17 @@ class AdminOpsApiTest extends TestCase
     public function test_admin_charter_rejects_pool_that_conflicts_with_mapped_route(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
             'created_at' => now(),
         ]);
         $pinrangPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL PINRANG',
             'code' => 'PNR',
             'status' => 'active',
@@ -936,6 +944,7 @@ class AdminOpsApiTest extends TestCase
             'updated_at' => now(),
         ]);
         $makassarPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL MAKASSAR',
             'code' => 'MKS',
             'status' => 'active',

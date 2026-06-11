@@ -39,32 +39,31 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $userId = (int) ($user?->id ?? 0);
-        $poolScope = $userId > 0 ? PoolScope::forCurrentUser(0, $userId) : null;
         $tenantSubscription = $userId > 0 ? PoolScope::tenantSubscription($userId) : null;
-        $activePoolId = (int) (session('active_pool_id', 0));
-        $activePoolName = 'Semua Pool';
-        if ($activePoolId > 0 && \Illuminate\Support\Facades\Schema::hasTable('pools')) {
-            $activePoolName = (string) (\Illuminate\Support\Facades\DB::table('pools')->where('id', $activePoolId)->value('name') ?? 'Pool');
-        }
+        $poolSwitcherScope = $userId > 0 ? PoolScope::forCurrentUser(0, $userId, false) : null;
 
         // Tenant-filtered pools for global pool switcher (cached 30s)
         $availablePools = [];
         if ($userId > 0 && \Illuminate\Support\Facades\Schema::hasTable('pools')) {
             $tenantId = PoolScope::tenantId($userId);
             $availablePools = \Illuminate\Support\Facades\Cache::remember(
-                "inertia:pools:user:{$userId}",
+                "inertia:pools:user:{$userId}:v2",
                 now()->addSeconds(30),
-                function () use ($tenantId, $poolScope): array {
+                function () use ($tenantId, $poolSwitcherScope): array {
                     $query = \Illuminate\Support\Facades\DB::table('pools')
                         ->where('status', 'active')
                         ->select(['id', 'name', 'code']);
 
                     if ($tenantId > 0 && \Illuminate\Support\Facades\Schema::hasColumn('pools', 'tenant_id')) {
                         $query->where('tenant_id', $tenantId);
-                    } elseif (! ($poolScope['all'] ?? true)) {
-                        $poolIds = $poolScope['pool_ids'] ?? [];
+                    }
+
+                    if (! ($poolSwitcherScope['all'] ?? true)) {
+                        $poolIds = $poolSwitcherScope['pool_ids'] ?? [];
                         if (! empty($poolIds)) {
                             $query->whereIn('id', $poolIds);
+                        } else {
+                            $query->whereRaw('1 = 0');
                         }
                     }
 
@@ -76,6 +75,20 @@ class HandleInertiaRequests extends Middleware
                 }
             );
         }
+
+        $activePoolId = (int) (session('active_pool_id', 0));
+        $activePoolName = 'Semua Pool';
+        if ($activePoolId > 0) {
+            $activePool = collect($availablePools)->firstWhere('id', $activePoolId);
+            if ($activePool) {
+                $activePoolName = (string) ($activePool['name'] ?? 'Pool');
+            } else {
+                session()->forget('active_pool_id');
+                $activePoolId = 0;
+            }
+        }
+
+        $poolScope = $userId > 0 ? PoolScope::forCurrentUser(0, $userId) : null;
 
         return [
             ...parent::share($request),

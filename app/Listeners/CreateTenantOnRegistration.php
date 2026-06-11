@@ -141,9 +141,11 @@ class CreateTenantOnRegistration
                     $routeName = strtoupper($origin.' -> '.$destination);
 
                     // Check if route already exists
-                    $existingRouteId = DB::table('routes')
-                        ->where('name', $routeName)
-                        ->value('id');
+                    $existingRouteQuery = DB::table('routes')->where('name', $routeName);
+                    if (Schema::hasColumn('routes', 'tenant_id')) {
+                        $existingRouteQuery->where('tenant_id', $tenantId);
+                    }
+                    $existingRouteId = $existingRouteQuery->value('id');
 
                     if ($existingRouteId) {
                         $routeId = (int) $existingRouteId;

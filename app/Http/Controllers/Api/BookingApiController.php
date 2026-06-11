@@ -602,6 +602,7 @@ class BookingApiController extends Controller
             'jam' => $data['jam'].':00',
             'unit' => $unit,
         ];
+        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'active';
@@ -676,6 +677,7 @@ class BookingApiController extends Controller
             'jam' => $data['jam'].':00',
             'unit' => $unit,
         ];
+        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'canceled';
@@ -755,6 +757,7 @@ class BookingApiController extends Controller
             'jam' => $data['jam'].':00',
             'unit' => $unit,
         ];
+        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'arrived';
@@ -1237,6 +1240,7 @@ class BookingApiController extends Controller
                     if ($this->bookingsHasRouteId()) {
                         $insert['route_id'] = $routeId > 0 ? $routeId : null;
                     }
+                    $insert = array_merge($insert, $this->tenantPayload('bookings'));
                     if (! $supportsDepartureCode) {
                         unset($insert['departure_code']);
                     }
@@ -1444,7 +1448,7 @@ class BookingApiController extends Controller
         DB::table('bookings')
             ->where('id', $id)
             ->where('status', '!=', 'canceled')
-            ->update($updatePayload);
+            ->update(array_merge($updatePayload, $this->tenantPayload('bookings')));
 
         $this->upsertCustomer($name, $phone, $pickupPoint, $address, $targetRouteId);
 
@@ -1768,6 +1772,20 @@ class BookingApiController extends Controller
         return $this->bookingsHasDepartureCode;
     }
 
+    /**
+     * @return array<string, int>
+     */
+    private function tenantPayload(string $table): array
+    {
+        if (! Schema::hasColumn($table, 'tenant_id')) {
+            return [];
+        }
+
+        $tenantId = PoolScope::tenantId();
+
+        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    }
+
     private function bookingsHasTicketCode(): bool
     {
         if ($this->bookingsHasTicketCode === null) {
@@ -1975,6 +1993,7 @@ class BookingApiController extends Controller
             'jam' => $this->normalizeTime($jam),
             'unit' => max(1, $unit),
         ];
+        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'active';

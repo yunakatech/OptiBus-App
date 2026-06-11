@@ -18,6 +18,11 @@ class AdminOpsFlowsPageTest extends TestCase
         $this->actingAs(User::factory()->create(['is_super_admin' => true]));
     }
 
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
+    }
+
     public function test_charter_page_exposes_deferred_flow_data_and_masters(): void
     {
         $this->actingAsSuperAdmin();
@@ -64,14 +69,17 @@ class AdminOpsFlowsPageTest extends TestCase
     public function test_pool_operator_gets_pool_scope_and_route_labels_on_flow_page(): void
     {
         AccessControl::syncDefaults();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
             'created_at' => now(),
         ]);
         $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'POOL PINRANG',
             'code' => 'PNR',
             'status' => 'active',
@@ -85,7 +93,7 @@ class AdminOpsFlowsPageTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $operator = User::factory()->create(['is_super_admin' => false]);
+        $operator = User::factory()->create(['is_super_admin' => false, 'tenant_id' => $tenantId]);
         DB::table('pool_user')->insert([
             'pool_id' => $poolId,
             'user_id' => $operator->id,

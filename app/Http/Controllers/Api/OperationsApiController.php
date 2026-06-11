@@ -17,6 +17,9 @@ class OperationsApiController extends Controller
     public function charterRoutes(): JsonResponse
     {
         $routes = DB::table('master_carter')
+            ->when(Schema::hasColumn('master_carter', 'tenant_id'), function ($query): void {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            })
             ->orderBy('name')
             ->get(['id', 'name', 'origin', 'destination', 'duration', 'rental_price', 'bop_price']);
 
@@ -290,6 +293,7 @@ class OperationsApiController extends Controller
         if (Schema::hasColumn('charters', 'status')) {
             $payload['status'] = 'active';
         }
+        $payload = array_merge($payload, $this->tenantPayload('charters'));
 
         $id = DB::table('charters')->insertGetId($payload);
         $this->syncMasterCarterFromCharterPayload($data);
@@ -362,6 +366,7 @@ class OperationsApiController extends Controller
         if (Schema::hasColumn('luggages', 'pool_id')) {
             $payload['pool_id'] = $customerPoolId > 0 ? $customerPoolId : null;
         }
+        $payload = array_merge($payload, $this->tenantPayload('luggages'));
 
         $id = DB::table('luggages')->insertGetId($payload);
 
@@ -395,6 +400,20 @@ class OperationsApiController extends Controller
     {
         $v = trim((string) ($value ?? ''));
         return $v === '' ? null : $v;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function tenantPayload(string $table): array
+    {
+        if (! Schema::hasColumn($table, 'tenant_id')) {
+            return [];
+        }
+
+        $tenantId = PoolScope::tenantId();
+
+        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
     }
 
     private function resolveCharterPoolId(int $requestedPoolId, string $pickupPoint, string $dropPoint): int
@@ -514,13 +533,17 @@ class OperationsApiController extends Controller
             'rental_price' => (float) ($payload['price'] ?? 0),
             'bop_price' => (float) ($payload['bop_price'] ?? 0),
         ];
+        $routePayload = array_merge($routePayload, $this->tenantPayload('master_carter'));
 
         try {
-            $existingId = (int) (DB::table('master_carter')
+            $existingQuery = DB::table('master_carter')
                 ->whereRaw("UPPER(COALESCE(origin, '')) = ?", [strtoupper($origin)])
                 ->whereRaw("UPPER(COALESCE(destination, '')) = ?", [strtoupper($destination)])
-                ->whereRaw("UPPER(COALESCE(duration, '')) = ?", [strtoupper($duration)])
-                ->value('id') ?? 0);
+                ->whereRaw("UPPER(COALESCE(duration, '')) = ?", [strtoupper($duration)]);
+            if (Schema::hasColumn('master_carter', 'tenant_id')) {
+                PoolScope::applyTenantScope($existingQuery, 'tenant_id');
+            }
+            $existingId = (int) ($existingQuery->value('id') ?? 0);
 
             if ($existingId > 0) {
                 DB::table('master_carter')->where('id', $existingId)->update($routePayload);

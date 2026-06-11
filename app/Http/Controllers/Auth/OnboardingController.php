@@ -128,7 +128,11 @@ class OnboardingController extends Controller
                     if ($origin !== '' && $destination !== '' && Schema::hasTable('routes') && Schema::hasTable('pool_route')) {
                         $routeName = strtoupper($origin.' -> '.$destination);
 
-                        $existingId = DB::table('routes')->where('name', $routeName)->value('id');
+                        $existingRouteQuery = DB::table('routes')->where('name', $routeName);
+                        if (Schema::hasColumn('routes', 'tenant_id')) {
+                            $existingRouteQuery->where('tenant_id', $tenantId);
+                        }
+                        $existingId = $existingRouteQuery->value('id');
                         $routeId = $existingId
                             ? (int) $existingId
                             : (int) DB::table('routes')->insertGetId($this->routePayload($routeName, $origin, $destination, $tenantId));
