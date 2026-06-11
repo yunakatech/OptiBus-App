@@ -2,7 +2,6 @@
     import { page } from '@inertiajs/svelte';
     import {
         ArrowRight,
-        BarChart3,
         BusFront,
         Clock3,
         CreditCard,
@@ -168,68 +167,18 @@
                 </div>
 
                 <div class="relative">
-                    <div class="overflow-hidden rounded-lg border border-[#bdc9c1] bg-[#17201f] shadow-2xl shadow-[#17201f]/18">
-                        <div class="flex items-center justify-between border-b border-white/10 bg-[#111917] px-4 py-3">
-                            <div class="flex items-center gap-2">
-                                <span class="h-2.5 w-2.5 rounded-full bg-[#ef7d32]"></span>
-                                <span class="h-2.5 w-2.5 rounded-full bg-[#e4b94b]"></span>
-                                <span class="h-2.5 w-2.5 rounded-full bg-[#5ab98f]"></span>
-                            </div>
-                            <span class="text-xs font-semibold uppercase text-white/55">Dashboard Operasional</span>
-                        </div>
-                        <div class="grid gap-3 p-4 text-white md:grid-cols-[1.1fr_0.9fr]">
-                            <div class="rounded-md border border-white/10 bg-white/[0.06] p-4">
-                                <div class="mb-4 flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs uppercase text-white/45">Target revenue hari ini</p>
-                                        <p class="mt-1 text-2xl font-semibold">Rp 18.4 jt</p>
-                                    </div>
-                                    <BarChart3 class="h-8 w-8 text-[#80d8bd]" />
-                                </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="rounded-md bg-white/[0.08] p-3">
-                                        <p class="text-[11px] text-white/45">Seat</p>
-                                        <p class="text-lg font-semibold">42</p>
-                                    </div>
-                                    <div class="rounded-md bg-white/[0.08] p-3">
-                                        <p class="text-[11px] text-white/45">Carter</p>
-                                        <p class="text-lg font-semibold">6</p>
-                                    </div>
-                                    <div class="rounded-md bg-white/[0.08] p-3">
-                                        <p class="text-[11px] text-white/45">Bagasi</p>
-                                        <p class="text-lg font-semibold">28</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="rounded-md border border-white/10 bg-white/[0.06] p-4">
-                                <p class="text-xs uppercase text-white/45">Pool aktif</p>
-                                <div class="mt-3 space-y-2">
-                                    {#each ['Pool Pinrang', 'Pool Makassar', 'Pool Parepare'] as pool, index}
-                                        <div class="flex items-center justify-between rounded-md bg-white/[0.08] px-3 py-2">
-                                            <span class="text-sm">{pool}</span>
-                                            <span class={`h-2 w-2 rounded-full ${index === 0 ? 'bg-[#80d8bd]' : 'bg-white/30'}`}></span>
-                                        </div>
-                                    {/each}
-                                </div>
-                            </div>
-                            <div class="rounded-md border border-white/10 bg-white/[0.06] p-4 md:col-span-2">
-                                <div class="mb-3 flex items-center justify-between">
-                                    <p class="text-xs uppercase text-white/45">Keberangkatan berikutnya</p>
-                                    <span class="rounded-full bg-[#ef7d32]/20 px-2 py-1 text-[11px] text-[#ffc79d]">09:00</span>
-                                </div>
-                                <div class="grid gap-2 md:grid-cols-3">
-                                    {#each ['PINRANG - MAKASSAR', 'MAKASSAR - PAREPARE', 'CARTER BANDARA'] as routeName}
-                                        <div class="rounded-md bg-[#f7f8f4] p-3 text-[#17201f]">
-                                            <p class="text-[11px] font-semibold uppercase text-[#64716d]">{routeName}</p>
-                                            <div class="mt-3 flex items-center justify-between text-sm">
-                                                <span>Manifest</span>
-                                                <span class="font-semibold">Ready</span>
-                                            </div>
-                                        </div>
-                                    {/each}
-                                </div>
-                            </div>
-                        </div>
+                    <div class="pointer-events-none absolute -top-8 right-2 h-24 w-24 rounded-full bg-[#0d8dff]/10 blur-2xl"></div>
+                    <div class="relative lg:-mr-14 xl:-mr-24">
+                        <img
+                            src="/landing/qbus-hero-devices.png"
+                            alt="Mockup dashboard Qbus di laptop dan aplikasi booking seat di ponsel"
+                            width="1672"
+                            height="941"
+                            loading="eager"
+                            decoding="async"
+                            fetchpriority="high"
+                            class="w-full max-w-none rounded-xl object-contain drop-shadow-[0_26px_45px_rgba(23,32,31,0.16)] lg:w-[112%]"
+                        />
                     </div>
                 </div>
             </div>
