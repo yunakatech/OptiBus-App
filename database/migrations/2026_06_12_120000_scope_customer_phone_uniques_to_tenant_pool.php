@@ -31,9 +31,7 @@ return new class extends Migration
         $this->dropUniqueIfExists($table, $scopedIndex);
         $this->dropUniqueIfExists($table, $legacyIndex);
 
-        Schema::table($table, function (Blueprint $schema) use ($column, $scopedIndex): void {
-            $schema->unique(['tenant_id', 'pool_id', $column], $scopedIndex);
-        });
+        $this->addUniqueIfMissing($table, ['tenant_id', 'pool_id', $column], $scopedIndex);
     }
 
     private function restoreLegacyUnique(string $table, string $column, string $scopedIndex): void
@@ -43,21 +41,29 @@ return new class extends Migration
         }
 
         $this->dropUniqueIfExists($table, $scopedIndex);
-
-        Schema::table($table, function (Blueprint $schema) use ($column, $table): void {
-            $schema->unique($column, $this->legacyUniqueName($table, $column));
-        });
+        $this->addUniqueIfMissing($table, [$column], $this->legacyUniqueName($table, $column));
     }
 
     private function dropUniqueIfExists(string $table, string $index): void
     {
-        try {
-            Schema::table($table, function (Blueprint $schema) use ($index): void {
-                $schema->dropUnique($index);
-            });
-        } catch (Throwable) {
-            // Ignore missing indexes and legacy drivers that cannot introspect the current state.
+        if (! Schema::hasIndex($table, $index, 'unique')) {
+            return;
         }
+
+        Schema::table($table, function (Blueprint $schema) use ($index): void {
+            $schema->dropUnique($index);
+        });
+    }
+
+    private function addUniqueIfMissing(string $table, array $columns, string $index): void
+    {
+        if (Schema::hasIndex($table, $index, 'unique')) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $schema) use ($columns, $index): void {
+            $schema->unique($columns, $index);
+        });
     }
 
     private function supportsScopedUnique(string $table, string $column): bool
