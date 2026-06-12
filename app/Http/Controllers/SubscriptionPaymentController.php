@@ -24,21 +24,27 @@ class SubscriptionPaymentController extends Controller
         $currentPlan = null;
 
         if ($tenantSub && Schema::hasTable('invoice_subscriptions')) {
+            $hasPaymentProofColumn = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
+            $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
+            $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
             $invoices = DB::table('invoice_subscriptions')
                 ->where('tenant_id', $tenantSub['tenant_id'])
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
                 ->get()
-                ->map(function ($inv) {
+                ->map(function ($inv) use ($hasPaymentProofColumn, $hasDueDateColumn, $hasPaidAtColumn) {
+                    $paymentProof = $hasPaymentProofColumn ? ($inv->payment_proof ?? null) : null;
+
                     return [
                         'id' => (int) $inv->id,
                         'invoice_number' => (string) $inv->invoice_number,
                         'amount' => (float) $inv->amount,
                         'status' => (string) $inv->status,
-                        'due_date' => $inv->due_date,
-                        'paid_at' => $inv->paid_at,
+                        'due_date' => $hasDueDateColumn ? ($inv->due_date ?? null) : null,
+                        'paid_at' => $hasPaidAtColumn ? ($inv->paid_at ?? null) : null,
                         'payment_method' => (string) ($inv->payment_method ?? ''),
-                        'payment_proof' => $inv->payment_proof ?? null,
+                        'payment_proof' => $paymentProof,
+                        'payment_proof_url' => $this->paymentProofUrl($paymentProof),
                         'created_at' => $inv->created_at,
                     ];
                 })
@@ -106,12 +112,34 @@ class SubscriptionPaymentController extends Controller
         ]);
     }
 
+    private function paymentProofUrl(?string $path): ?string
+    {
+        $path = trim((string) $path);
+        if ($path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
     /**
      * Upload bukti pembayaran untuk invoice.
      * POST /api/subscription/upload-proof/{invoiceId}
      */
     public function uploadProof(int $invoiceId, Request $request): \Illuminate\Http\JsonResponse
     {
+        if (! Schema::hasTable('invoice_subscriptions') || ! Schema::hasColumn('invoice_subscriptions', 'payment_proof')) {
+            return response()->json(['success' => false, 'error' => 'Kolom bukti pembayaran belum tersedia. Jalankan migrasi database.'], 409);
+        }
+
         $maxKb = (int) config('payment.upload.max_size_kb', 2048);
 
         $request->validate([

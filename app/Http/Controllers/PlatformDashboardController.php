@@ -25,6 +25,8 @@ class PlatformDashboardController extends Controller
             'tenants' => $this->tenantsList(),
             'recentSignups' => $this->recentSignups($monthStart),
             'expiringSoon' => $this->expiringSoon($today),
+            'paymentMetrics' => $this->paymentMetrics($today),
+            'paymentWatchlist' => $this->paymentWatchlist($today),
         ]);
     }
 
@@ -241,6 +243,117 @@ class PlatformDashboardController extends Controller
     }
 
     // ─── Query Helpers ─────────────────────────────────────────────
+
+    private function paymentMetrics(Carbon $today): array
+    {
+        if (! Schema::hasTable('invoice_subscriptions')) {
+            return [
+                'pending_count' => 0,
+                'verification_count' => 0,
+                'overdue_count' => 0,
+                'paid_month_count' => 0,
+                'paid_month_amount' => 0.0,
+                'pending_amount' => 0.0,
+            ];
+        }
+
+        $hasPaymentProof = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
+        $hasDueDate = Schema::hasColumn('invoice_subscriptions', 'due_date');
+        $hasPaidAt = Schema::hasColumn('invoice_subscriptions', 'paid_at');
+
+        $pending = DB::table('invoice_subscriptions')->where('status', 'pending');
+        if ($hasPaymentProof) {
+            $pending->where(function ($query): void {
+                $query->whereNull('payment_proof')->orWhere('payment_proof', '');
+            });
+        }
+
+        $verificationCount = $hasPaymentProof
+            ? (int) DB::table('invoice_subscriptions')
+                ->where('status', 'pending')
+                ->whereNotNull('payment_proof')
+                ->where('payment_proof', '!=', '')
+                ->count()
+            : 0;
+
+        $overdue = DB::table('invoice_subscriptions')->where('status', 'overdue');
+        if ($hasDueDate) {
+            $overdue->orWhere(function ($query) use ($today): void {
+                $query
+                    ->where('status', 'pending')
+                    ->whereDate('due_date', '<', $today->toDateString());
+            });
+        }
+
+        $paidMonth = DB::table('invoice_subscriptions')->where('status', 'paid');
+        if ($hasPaidAt) {
+            $paidMonth->whereBetween('paid_at', [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()]);
+        }
+
+        return [
+            'pending_count' => (int) $pending->count(),
+            'verification_count' => $verificationCount,
+            'overdue_count' => (int) $overdue->count(),
+            'paid_month_count' => (int) (clone $paidMonth)->count(),
+            'paid_month_amount' => (float) (clone $paidMonth)->sum('amount'),
+            'pending_amount' => (float) DB::table('invoice_subscriptions')
+                ->whereIn('status', ['pending', 'overdue'])
+                ->sum('amount'),
+        ];
+    }
+
+    private function paymentWatchlist(Carbon $today): array
+    {
+        if (! Schema::hasTable('invoice_subscriptions') || ! Schema::hasTable('tenants')) {
+            return [];
+        }
+
+        $hasPaymentProof = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
+        $hasDueDate = Schema::hasColumn('invoice_subscriptions', 'due_date');
+
+        $query = DB::table('invoice_subscriptions')
+            ->join('tenants', 'invoice_subscriptions.tenant_id', '=', 'tenants.id')
+            ->leftJoin('subscriptions', 'invoice_subscriptions.subscription_id', '=', 'subscriptions.id')
+            ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->whereIn('invoice_subscriptions.status', ['pending', 'overdue'])
+            ->select(
+                'invoice_subscriptions.id',
+                'invoice_subscriptions.invoice_number',
+                'invoice_subscriptions.amount',
+                'invoice_subscriptions.status',
+                Schema::hasColumn('invoice_subscriptions', 'due_date') ? 'invoice_subscriptions.due_date' : DB::raw('NULL as due_date'),
+                'tenants.name as tenant_name',
+                'plans.name as plan_name',
+                $hasPaymentProof ? 'invoice_subscriptions.payment_proof' : DB::raw('NULL as payment_proof'),
+            )
+            ->orderByRaw("CASE WHEN invoice_subscriptions.status = 'overdue' THEN 0 ELSE 1 END");
+
+        if ($hasDueDate) {
+            $query->orderBy('invoice_subscriptions.due_date');
+        } else {
+            $query->orderBy('invoice_subscriptions.created_at', 'desc');
+        }
+
+        return $query
+            ->limit(8)
+            ->get()
+            ->map(function ($invoice) use ($today): array {
+                $dueDate = $invoice->due_date ? Carbon::parse((string) $invoice->due_date) : null;
+
+                return [
+                    'id' => (int) $invoice->id,
+                    'invoice_number' => (string) $invoice->invoice_number,
+                    'tenant_name' => (string) $invoice->tenant_name,
+                    'plan_name' => (string) ($invoice->plan_name ?? '-'),
+                    'amount' => (float) $invoice->amount,
+                    'status' => (string) $invoice->status,
+                    'due_date' => $invoice->due_date,
+                    'days_overdue' => $dueDate ? max(0, (int) $dueDate->diffInDays($today, false)) : 0,
+                    'has_payment_proof' => trim((string) ($invoice->payment_proof ?? '')) !== '',
+                ];
+            })
+            ->all();
+    }
 
     private function computeMrr(): float
     {

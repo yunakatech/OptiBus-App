@@ -70,6 +70,7 @@
         booking_revenue?: number;
         charter_revenue?: number;
         luggage_revenue?: number;
+        booking_bop?: number;
         charter_bop?: number;
         margin?: number;
     };
@@ -196,6 +197,14 @@
         summaryComparisonByScope[selectedSummaryScope] ?? summaryComparisonByScope.month,
     );
     const activeSummaryPeriod = $derived(summaryPeriodByScope[selectedSummaryScope] ?? summaryPeriodByScope.month);
+    const activeTotalRevenue = $derived(
+        Number(activeSummaryStats.revenue_booking || 0)
+            + Number(activeSummaryStats.revenue_charter || 0)
+            + Number(activeSummaryStats.revenue_luggage || 0),
+    );
+    const activeTotalBop = $derived(Number(activeSummaryStats.bop_booking || 0) + Number(activeSummaryStats.bop_charter || 0));
+    const activeTotalMargin = $derived(activeTotalRevenue - activeTotalBop);
+    const activeAchievementWidth = $derived(Math.min(Math.max(Number(activeSummaryStats.achievement_percent || 0), 0), 100));
     const monthlyTotalRevenueComparison = $derived(
         Number(summaryComparisonByScope.month?.revenue_booking || 0)
             + Number(summaryComparisonByScope.month?.revenue_charter || 0)
@@ -284,6 +293,7 @@
         { label: 'Booking', value: Number(row.booking_revenue || 0) },
         { label: 'Carter', value: Number(row.charter_revenue || 0) },
         { label: 'Bagasi', value: Number(row.luggage_revenue || 0) },
+        { label: 'BOP Booking', value: Number(row.booking_bop || 0) },
         { label: 'BOP Carter', value: Number(row.charter_bop || 0) },
         { label: 'Margin', value: Number(row.margin || 0) },
     ];
@@ -384,6 +394,43 @@
             barClass: 'bg-sky-500/75',
             noteClass: 'text-sky-700/80 dark:text-sky-100/90',
         },
+    ];
+
+    const commandMetrics = () => [
+        {
+            key: 'booking-active',
+            label: 'Booking Active',
+            value: formatCompactNumber(activeSummaryStats.total_bookings),
+            meta: metricTrend(activeSummaryStats.total_bookings, activeSummaryComparison.total_bookings, formatCompactNumber).label,
+            href: '/bookings',
+        },
+        {
+            key: 'bop-booking',
+            label: 'BOP Booking',
+            value: toCurrency(activeSummaryStats.bop_booking),
+            meta: 'Unique keberangkatan',
+            href: '/reports',
+        },
+        {
+            key: 'bop-carter',
+            label: 'BOP Carter',
+            value: toCurrency(activeSummaryStats.bop_charter),
+            meta: 'Operasional carter',
+            href: '/charters',
+        },
+        {
+            key: 'margin-total',
+            label: 'Margin Total',
+            value: toCurrency(activeTotalMargin),
+            meta: `${activeTotalMargin >= 0 ? 'Surplus' : 'Defisit'} ${activeSummaryPeriod.subtitle_label}`,
+            href: '/reports',
+        },
+    ];
+
+    const revenueChannels = () => [
+        { key: 'booking', label: 'Booking', value: activeSummaryStats.revenue_booking, href: '/bookings' },
+        { key: 'carter', label: 'Carter', value: activeSummaryStats.revenue_charter, href: '/charters' },
+        { key: 'bagasi', label: 'Bagasi', value: activeSummaryStats.revenue_luggage, href: '/luggages' },
     ];
 
     let copyMessage = $state('');
@@ -503,83 +550,101 @@
                 </div>
             </div>
         </div>
-        <div class="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2.5 xl:grid-cols-4">
-            {#each dashboardMetricCards() as metric (metric.key)}
-                <a href={metric.href} class={`block h-full ${metric.spanClass ?? ''}`}>
-                    <Card
-                        class={`group h-full overflow-hidden border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${metric.shellClass}`}
-                    >
-                        <CardHeader class="gap-2 p-2.5 sm:p-3.5 md:gap-3 md:p-4">
-                            {@const MetricIcon = metric.icon}
-                            {@const TrendIcon =
-                                metric.trend.direction === 'up'
-                                    ? TrendingUp
-                                    : metric.trend.direction === 'down'
-                                      ? TrendingDown
-                                      : ArrowRight}
-                            <div class="flex items-start justify-between gap-2 md:gap-3">
-                                <div class={`flex h-9 w-9 items-center justify-center rounded-xl border backdrop-blur sm:h-11 sm:w-11 sm:rounded-2xl ${metric.iconClass}`}>
-                                    <MetricIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+        <section class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/70 dark:bg-slate-950">
+            <div class="grid gap-0 lg:grid-cols-[1.05fr_1.35fr]">
+                <div class="border-b border-slate-200/80 bg-slate-950 p-4 text-white dark:border-slate-800 lg:border-b-0 lg:border-r">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase text-slate-300">Command Center</p>
+                            <h3 class="mt-1 text-2xl font-semibold leading-tight md:text-3xl">{toCurrency(activeTotalRevenue)}</h3>
+                            <p class="mt-1 text-xs text-slate-300">Total revenue {activeSummaryPeriod.subtitle_label}</p>
+                        </div>
+                        <a href="/reports" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20" aria-label="Buka laporan revenue">
+                            <ArrowRight class="h-4 w-4" />
+                        </a>
+                    </div>
+
+                    <div class="mt-5 grid grid-cols-2 gap-2">
+                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+                            <p class="text-[11px] text-slate-300">Target</p>
+                            <p class="mt-1 text-sm font-semibold">{toCurrency(activeSummaryStats.target_revenue || stats.target_revenue_month)}</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
+                            <p class="text-[11px] text-slate-300">Achievement</p>
+                            <p class="mt-1 text-sm font-semibold">{activeSummaryStats.achievement_percent || stats.achievement_percent}%</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
+                        <div class="h-full rounded-full bg-emerald-400 transition-all" style={`width:${activeAchievementWidth}%`}></div>
+                    </div>
+                </div>
+
+                <div class="p-3 md:p-4">
+                    <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                        {#each commandMetrics() as metric (metric.key)}
+                            <a href={metric.href} class="group rounded-2xl border border-slate-200 bg-slate-50/70 p-3 transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/70">
+                                <div class="flex items-start justify-between gap-2">
+                                    <p class="text-[11px] font-semibold uppercase text-muted-foreground">{metric.label}</p>
+                                    <ArrowRight class="h-3.5 w-3.5 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
                                 </div>
-                                <div class="hidden rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 sm:block">
-                                    {metric.periodLabel}
-                                </div>
+                                <p class="mt-2 break-words text-lg font-semibold text-foreground">{metric.value}</p>
+                                <p class="mt-1 text-[11px] text-muted-foreground">{metric.meta}</p>
+                            </a>
+                        {/each}
+                    </div>
+
+                    <div class="mt-3 grid gap-3 lg:grid-cols-[1fr_0.85fr]">
+                        <div class="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+                            <div class="mb-3 flex items-center justify-between gap-2">
+                                <p class="text-xs font-semibold text-foreground">Revenue Channel</p>
+                                <span class="text-[11px] text-muted-foreground">{activeSummaryPeriod.current_label}</span>
                             </div>
-
-                            <div class="space-y-0.5 sm:space-y-1">
-                                <CardDescription class="line-clamp-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300 sm:text-[11px] sm:tracking-[0.14em]">
-                                    {metric.title}
-                                </CardDescription>
-                                <p class="hidden text-[11px] leading-relaxed text-slate-600 dark:text-slate-400 sm:line-clamp-1">{metric.subtitle}</p>
-                                <CardTitle class={`break-words pt-0 text-[15px] leading-tight tracking-tight sm:text-xl md:text-2xl ${metric.valueClass}`}>
-                                    {metric.value}
-                                </CardTitle>
-                            </div>
-
-                            <div class="hidden gap-2 sm:grid md:grid-cols-[1.15fr_0.85fr]">
-                                <div class="rounded-2xl border border-white/70 bg-white/60 px-3 py-2 dark:border-white/10 dark:bg-slate-950/35">
-                                    <div class={`mb-1.5 flex items-center gap-2 text-[11px] font-semibold ${metric.noteClass}`}>
-                                        <TrendIcon class="h-3.5 w-3.5" />
-                                        <span>{metric.trend.label}</span>
-                                    </div>
-                                    <p class={`text-[11px] font-semibold ${metric.noteClass}`}>{metric.trend.detail}</p>
-                                </div>
-
-                                <div class="rounded-2xl border border-white/70 bg-white/55 px-3 py-2 dark:border-white/10 dark:bg-slate-950/35">
-                                    <div class="space-y-2">
-                                        <div>
-                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                                                <span class="truncate">{activeSummaryPeriod.previous_label}</span>
-                                                <span>{metric.compareBars.previous}%</span>
-                                            </div>
-                                            <div class="h-1.5 rounded-full bg-white/80 dark:bg-slate-800/80">
-                                                <div class="h-1.5 rounded-full bg-slate-300/90 dark:bg-slate-600/80" style={`width:${metric.compareBars.previous}%`}></div>
-                                            </div>
+                            <div class="space-y-2">
+                                {#each revenueChannels() as channel (channel.key)}
+                                    {@const width = activeTotalRevenue > 0 ? Math.max(8, Math.round((Number(channel.value || 0) / activeTotalRevenue) * 100)) : 8}
+                                    <a href={channel.href} class="block rounded-xl border border-transparent px-2 py-1.5 transition hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-800 dark:hover:bg-slate-900">
+                                        <div class="flex items-center justify-between gap-3 text-xs">
+                                            <span class="font-medium text-foreground">{channel.label}</span>
+                                            <span class="font-semibold text-foreground">{toCurrency(channel.value)}</span>
                                         </div>
-                                        <div>
-                                            <div class="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                                                <span>{activeSummaryPeriod.current_label}</span>
-                                                <span>{metric.compareBars.current}%</span>
-                                            </div>
-                                            <div class="h-1.5 rounded-full bg-white/80 dark:bg-slate-800/80">
-                                                <div class={`h-1.5 rounded-full ${metric.barClass}`} style={`width:${metric.compareBars.current}%`}></div>
-                                            </div>
+                                        <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                            <div class="h-full rounded-full bg-primary/75" style={`width:${width}%`}></div>
                                         </div>
+                                    </a>
+                                {/each}
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+                            <p class="text-xs font-semibold text-foreground">Unit Economics</p>
+                            <div class="mt-3 space-y-2 text-xs">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-muted-foreground">Revenue</span>
+                                    <span class="font-semibold text-foreground">{toCurrency(activeTotalRevenue)}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-muted-foreground">BOP Booking</span>
+                                    <span class="font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_booking)}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-muted-foreground">BOP Carter</span>
+                                    <span class="font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_charter)}</span>
+                                </div>
+                                <div class="border-t border-slate-200 pt-2 dark:border-slate-800">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="font-medium text-foreground">Margin Total</span>
+                                        <span class={`font-semibold ${activeTotalMargin >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}>{toCurrency(activeTotalMargin)}</span>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                            <div class="hidden items-center justify-between border-t border-white/60 pt-1 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:text-slate-300 sm:flex md:text-[11px]">
-                                <span>{metric.cta}</span>
-                                <ArrowRight class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                            </div>
-                        </CardHeader>
-                    </Card>
-                </a>
-            {/each}
-        </div>
-
-        {#if stats.target_revenue_month > 0 || activeSummaryStats.margin_booking || activeSummaryStats.margin_charter || activeSummaryStats.revenue_luggage}
+        {#if false && (stats.target_revenue_month > 0 || activeSummaryStats.margin_booking || activeSummaryStats.margin_charter || activeSummaryStats.revenue_luggage)}
             <div class="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5 md:gap-2.5">
                 <!-- Target & Achievement Card -->
                 {#if stats.target_revenue_month > 0}

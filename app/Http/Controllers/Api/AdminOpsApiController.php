@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use App\Support\RoleAccessData;
 use Carbon\Carbon;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -71,6 +74,10 @@ class AdminOpsApiController extends Controller
     private ?bool $driversHasBopColumn = null;
 
     private ?bool $driversHasFixedCostColumn = null;
+
+    private ?bool $driversHasTargetRevenueBulananColumn = null;
+
+    private ?bool $driversHasTargetRevenueTahunanColumn = null;
 
     public function routesIndex(): JsonResponse
     {
@@ -563,6 +570,7 @@ class AdminOpsApiController extends Controller
             'armada_id' => ['nullable', 'integer', 'min:1'],
             'armada_nopol' => ['nullable', 'string', 'max:50'],
             'target_revenue_bulanan' => ['nullable', 'numeric', 'min:0'],
+            'target_revenue_tahunan' => ['nullable', 'numeric', 'min:0'],
             'revenue' => ['nullable', 'numeric', 'min:0'],
             'bop' => ['nullable', 'numeric', 'min:0'],
             'fixed_cost' => ['nullable', 'numeric', 'min:0'],
@@ -610,8 +618,15 @@ class AdminOpsApiController extends Controller
         $payload = [
             'nama' => strtoupper(trim((string) $data['nama'])),
             'phone' => $this->nullable($data['phone'] ?? null),
-            'target_revenue_bulanan' => (float) ($data['target_revenue_bulanan'] ?? 0),
         ];
+
+        if ($this->hasDriversTargetRevenueBulananColumn()) {
+            $payload['target_revenue_bulanan'] = (float) ($data['target_revenue_bulanan'] ?? 0);
+        }
+
+        if ($this->hasDriversTargetRevenueTahunanColumn() && array_key_exists('target_revenue_tahunan', $data)) {
+            $payload['target_revenue_tahunan'] = (float) ($data['target_revenue_tahunan'] ?? 0);
+        }
 
         if ($this->driversHasArmadaId()) {
             $payload['unit_id'] = null;
@@ -3478,6 +3493,16 @@ class AdminOpsApiController extends Controller
         return $this->driversHasFixedCostColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'fixed_cost');
     }
 
+    private function hasDriversTargetRevenueBulananColumn(): bool
+    {
+        return $this->driversHasTargetRevenueBulananColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'target_revenue_bulanan');
+    }
+
+    private function hasDriversTargetRevenueTahunanColumn(): bool
+    {
+        return $this->driversHasTargetRevenueTahunanColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'target_revenue_tahunan');
+    }
+
     public function unitsDelete(int $id): JsonResponse
     {
         DB::table('schedules')->where('unit_id', $id)->update(['unit_id' => null]);
@@ -4523,6 +4548,111 @@ class AdminOpsApiController extends Controller
         DB::table('users')->where('id', $id)->delete();
 
         return $this->ok(['message' => 'User deleted.']);
+    }
+
+    public function usersVerify(int $id): JsonResponse
+    {
+        if ($response = $this->requirePermission('user.manage')) {
+            return $response;
+        }
+
+        $user = $this->userForAdminAction($id);
+        if (! $user) {
+            return $this->error('User tidak ditemukan.', 404);
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+            event(new Verified($user));
+        }
+
+        ActivityLog::write('user.verified', 'User diverifikasi manual', (string) $user->email, null, [
+            'user_id' => $user->id,
+        ]);
+
+        return $this->ok(['message' => 'User verified.']);
+    }
+
+    public function usersUnverify(int $id): JsonResponse
+    {
+        if ($response = $this->requirePermission('user.manage')) {
+            return $response;
+        }
+
+        $authUserId = (int) (auth()->id() ?? 0);
+        if ($id === $authUserId) {
+            return $this->error('Tidak bisa membatalkan verifikasi akun yang sedang login.', 409);
+        }
+
+        $user = $this->userForAdminAction($id);
+        if (! $user) {
+            return $this->error('User tidak ditemukan.', 404);
+        }
+
+        $user->forceFill(['email_verified_at' => null])->save();
+
+        ActivityLog::write('user.unverified', 'Verifikasi user dibatalkan', (string) $user->email, null, [
+            'user_id' => $user->id,
+        ]);
+
+        return $this->ok(['message' => 'User unverified.']);
+    }
+
+    public function usersSendVerification(int $id): JsonResponse
+    {
+        if ($response = $this->requirePermission('user.manage')) {
+            return $response;
+        }
+
+        $user = $this->userForAdminAction($id);
+        if (! $user) {
+            return $this->error('User tidak ditemukan.', 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return $this->error('Email user sudah terverifikasi.', 409);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        ActivityLog::write('user.verification_sent', 'Link verifikasi user dikirim', (string) $user->email, null, [
+            'user_id' => $user->id,
+        ]);
+
+        return $this->ok(['message' => 'Verification email sent.']);
+    }
+
+    private function userForAdminAction(int $id): ?User
+    {
+        if ($id <= 0 || ! Schema::hasTable('users')) {
+            return null;
+        }
+
+        $query = DB::table('users')->where('id', $id);
+        if (Schema::hasColumn('users', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'users.tenant_id');
+        }
+
+        if (! $this->currentUserIsSuperAdmin() && $this->poolTablesReady()) {
+            $poolIds = $this->currentUserPoolIds();
+            if ($poolIds === []) {
+                return null;
+            }
+
+            $query->whereExists(function (Builder $exists) use ($poolIds): void {
+                $exists
+                    ->selectRaw('1')
+                    ->from('pool_user as scoped_pool_user')
+                    ->whereColumn('scoped_pool_user.user_id', 'users.id')
+                    ->whereIn('scoped_pool_user.pool_id', $poolIds);
+            });
+        }
+
+        if (! $query->exists()) {
+            return null;
+        }
+
+        return User::query()->whereKey($id)->first();
     }
 
     private function poolTablesReady(): bool
@@ -5726,8 +5856,10 @@ class AdminOpsApiController extends Controller
             'd.nama',
             'd.phone',
             'd.unit_id',
-            'd.target_revenue_bulanan',
+            $this->hasDriversTargetRevenueBulananColumn() ? 'd.target_revenue_bulanan' : DB::raw('0 as target_revenue_bulanan'),
+            $this->hasDriversTargetRevenueTahunanColumn() ? 'd.target_revenue_tahunan' : DB::raw('0 as target_revenue_tahunan'),
             $this->hasDriversRevenueColumn() ? 'd.revenue' : DB::raw('0 as revenue'),
+            $this->hasDriversBopColumn() ? 'd.bop' : DB::raw('0 as bop'),
             $this->hasDriversFixedCostColumn() ? 'd.fixed_cost' : DB::raw('0 as fixed_cost'),
         ];
 
@@ -7557,11 +7689,19 @@ class AdminOpsApiController extends Controller
     public function invoicesIndex(Request $request): JsonResponse
     {
         if (! Schema::hasTable('invoice_subscriptions')) {
-            return $this->ok(['invoices' => [], 'pagination' => $this->paginationMeta(0, 1, 20)]);
+            return $this->ok([
+                'invoices' => [],
+                'summary' => $this->emptyInvoiceSummary(),
+                'pagination' => $this->paginationMeta(0, 1, 20),
+            ]);
         }
 
         $status = trim((string) $request->query('status', ''));
         $tenantId = (int) $request->query('tenant_id', 0);
+        $q = trim((string) $request->query('q', ''));
+        $hasPaymentProofColumn = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
+        $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
+        $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
 
         $query = DB::table('invoice_subscriptions')
             ->join('tenants', 'invoice_subscriptions.tenant_id', '=', 'tenants.id')
@@ -7576,16 +7716,53 @@ class AdminOpsApiController extends Controller
             ->orderBy('invoice_subscriptions.created_at', 'desc');
 
         if ($status !== '') {
-            $query->where('invoice_subscriptions.status', $status);
+            if ($status === 'verification' && $hasPaymentProofColumn) {
+                $query
+                    ->where('invoice_subscriptions.status', 'pending')
+                    ->whereNotNull('invoice_subscriptions.payment_proof')
+                    ->where('invoice_subscriptions.payment_proof', '!=', '');
+            } elseif ($status === 'pending' && $hasPaymentProofColumn) {
+                $query
+                    ->where('invoice_subscriptions.status', 'pending')
+                    ->where(function (Builder $pending) {
+                        $pending
+                            ->whereNull('invoice_subscriptions.payment_proof')
+                            ->orWhere('invoice_subscriptions.payment_proof', '');
+                    });
+            } elseif ($status === 'overdue' && $hasDueDateColumn) {
+                $query->where(function (Builder $overdue) {
+                    $overdue
+                        ->where('invoice_subscriptions.status', 'overdue')
+                        ->orWhere(function (Builder $pendingOverdue) {
+                            $pendingOverdue
+                                ->where('invoice_subscriptions.status', 'pending')
+                                ->whereDate('invoice_subscriptions.due_date', '<', now()->toDateString());
+                        });
+                });
+            } else {
+                $query->where('invoice_subscriptions.status', $status);
+            }
         }
         if ($tenantId > 0) {
             $query->where('invoice_subscriptions.tenant_id', $tenantId);
+        }
+        if ($q !== '') {
+            $qLike = '%'.$q.'%';
+            $query->where(function (Builder $search) use ($qLike): void {
+                $search
+                    ->where('invoice_subscriptions.invoice_number', 'like', $qLike)
+                    ->orWhere('tenants.name', 'like', $qLike)
+                    ->orWhere('tenants.slug', 'like', $qLike)
+                    ->orWhere('plans.name', 'like', $qLike);
+            });
         }
 
         [$page, $perPage] = $this->paginationParams($request);
         $result = $this->paginateQuery($query, $page, $perPage);
 
         $invoices = collect($result['data'])->map(function ($inv) {
+            $paymentProof = trim((string) ($inv->payment_proof ?? ''));
+
             return [
                 'id' => (int) $inv->id,
                 'tenant_id' => (int) $inv->tenant_id,
@@ -7595,20 +7772,108 @@ class AdminOpsApiController extends Controller
                 'invoice_number' => (string) $inv->invoice_number,
                 'amount' => (float) $inv->amount,
                 'status' => (string) $inv->status,
-                'due_date' => $inv->due_date,
-                'paid_at' => $inv->paid_at,
-                'payment_method' => $inv->payment_method,
+                'due_date' => $inv->due_date ?? null,
+                'paid_at' => $inv->paid_at ?? null,
+                'payment_method' => $inv->payment_method ?? null,
+                'payment_proof' => $paymentProof,
+                'payment_proof_url' => $this->paymentProofUrl($paymentProof),
                 'plan_name' => (string) ($inv->plan_name ?? ''),
-                'notes' => $inv->notes,
-                'created_at' => $inv->created_at,
+                'notes' => $inv->notes ?? null,
+                'created_at' => $inv->created_at ?? null,
             ];
         })->all();
 
         return $this->ok([
             'invoices' => $invoices,
-            'status_options' => ['pending', 'paid', 'overdue', 'failed', 'refunded'],
+            'summary' => $this->invoiceSummary($hasPaymentProofColumn, $hasDueDateColumn, $hasPaidAtColumn),
+            'status_options' => ['pending', 'verification', 'paid', 'overdue', 'failed', 'refunded'],
             'pagination' => $result['meta'],
         ]);
+    }
+
+    /**
+     * @return array{pending: int, verification: int, paid_month: int, overdue: int, total_amount_pending: float}
+     */
+    private function emptyInvoiceSummary(): array
+    {
+        return [
+            'pending' => 0,
+            'verification' => 0,
+            'paid_month' => 0,
+            'overdue' => 0,
+            'total_amount_pending' => 0.0,
+        ];
+    }
+
+    /**
+     * @return array{pending: int, verification: int, paid_month: int, overdue: int, total_amount_pending: float}
+     */
+    private function invoiceSummary(bool $hasPaymentProofColumn, bool $hasDueDateColumn, bool $hasPaidAtColumn): array
+    {
+        $base = DB::table('invoice_subscriptions');
+
+        $pending = (clone $base)->where('status', 'pending');
+        if ($hasPaymentProofColumn) {
+            $pending->where(function (Builder $query): void {
+                $query
+                    ->whereNull('payment_proof')
+                    ->orWhere('payment_proof', '');
+            });
+        }
+
+        $verification = 0;
+        if ($hasPaymentProofColumn) {
+            $verification = (int) (clone $base)
+                ->where('status', 'pending')
+                ->whereNotNull('payment_proof')
+                ->where('payment_proof', '!=', '')
+                ->count();
+        }
+
+        $paidMonth = 0;
+        if ($hasPaidAtColumn) {
+            $paidMonth = (int) (clone $base)
+                ->where('status', 'paid')
+                ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count();
+        }
+
+        $overdue = (clone $base)->where('status', 'overdue');
+        if ($hasDueDateColumn) {
+            $overdue->orWhere(function (Builder $query): void {
+                $query
+                    ->where('status', 'pending')
+                    ->whereDate('due_date', '<', now()->toDateString());
+            });
+        }
+
+        return [
+            'pending' => (int) $pending->count(),
+            'verification' => $verification,
+            'paid_month' => $paidMonth,
+            'overdue' => (int) $overdue->count(),
+            'total_amount_pending' => (float) (clone $base)
+                ->whereIn('status', ['pending', 'overdue'])
+                ->sum('amount'),
+        ];
+    }
+
+    private function paymentProofUrl(?string $path): ?string
+    {
+        $path = trim((string) $path);
+        if ($path === '') {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://', '/'])) {
+            return $path;
+        }
+
+        if (Str::startsWith($path, 'storage/')) {
+            return asset($path);
+        }
+
+        return Storage::disk('public')->url($path);
     }
 
     public function invoicesMarkPaid(int $id, Request $request): JsonResponse
