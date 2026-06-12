@@ -100,6 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin-ops/saas/tenants', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'tenants')->name('admin-ops.saas.tenants');
     Route::get('admin-ops/saas/subscriptions', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'subscriptions')->name('admin-ops.saas.subscriptions');
     Route::get('admin-ops/saas/plans', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'plans')->name('admin-ops.saas.plans');
+    Route::get('admin-ops/saas/invoices', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'billing')->name('admin-ops.saas.invoices');
     Route::get('admin-ops/saas/payment', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:pool.manage')->defaults('tab', 'payment')->name('admin-ops.saas.payment');
 
     // Solo Driver mode
@@ -233,6 +234,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('users', [AdminOpsApiController::class, 'usersIndex'])->middleware('permission:user.manage')->name('users.index');
         Route::post('users', [AdminOpsApiController::class, 'usersSave'])->middleware('permission:user.manage')->name('users.save');
+        Route::post('users/{id}/verify', [AdminOpsApiController::class, 'usersVerify'])->middleware('permission:user.manage')->name('users.verify');
+        Route::post('users/{id}/unverify', [AdminOpsApiController::class, 'usersUnverify'])->middleware('permission:user.manage')->name('users.unverify');
+        Route::post('users/{id}/send-verification', [AdminOpsApiController::class, 'usersSendVerification'])->middleware('permission:user.manage')->name('users.send-verification');
         Route::delete('users/{id}', [AdminOpsApiController::class, 'usersDelete'])->middleware('permission:user.manage')->name('users.delete');
 
         Route::get('roles', [AdminOpsApiController::class, 'rolesIndex'])->middleware('permission:role.manage')->name('roles.index');

@@ -41,12 +41,20 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
 
-    type TabName = 'tenants' | 'subscriptions' | 'plans' | 'payment';
+    type TabName = 'tenants' | 'subscriptions' | 'plans' | 'billing' | 'payment';
 
     // ─── Props ───
     let { tab: initialTab = null, summary = null, saasTablesReady = false }: {
         tab?: TabName | null;
-        summary?: { tenant_count: number; active_subscription_count: number; plan_count: number } | null;
+        summary?: {
+            tenant_count: number;
+            active_subscription_count: number;
+            plan_count: number;
+            invoice_pending_count?: number;
+            invoice_verification_count?: number;
+            invoice_overdue_count?: number;
+            invoice_paid_month_count?: number;
+        } | null;
         saasTablesReady?: boolean;
     } = $props();
 
@@ -78,6 +86,11 @@
     // Plans state
     let plans = $state<any[]>([]);
     let editingPlan = $state<any>(null);
+
+    // Billing state
+    let invoices = $state<any[]>([]);
+    let invoicePagination = $state<any>(null);
+    let invoiceSummary = $state<any>({ pending: 0, verification: 0, paid_month: 0, overdue: 0, total_amount_pending: 0 });
 
     // Payment settings state
     let paymentSettings = $state<any>(null);
@@ -111,6 +124,7 @@
         if (activeTab === 'tenants') loadTenants();
         else if (activeTab === 'subscriptions') loadSubscriptions();
         else if (activeTab === 'plans') loadPlans();
+        else if (activeTab === 'billing') loadInvoices();
         else if (activeTab === 'payment') loadPaymentSettings();
     });
 
@@ -123,6 +137,7 @@
         if (tab === 'tenants') loadTenants();
         else if (tab === 'subscriptions') loadSubscriptions();
         else if (tab === 'plans') loadPlans();
+        else if (tab === 'billing') loadInvoices();
         else if (tab === 'payment') loadPaymentSettings();
     }
 
@@ -267,18 +282,53 @@
     }
 
     // ─── Helpers ───
+    async function loadInvoices(pageNum = 1) {
+        const params = new URLSearchParams({ paginate: '1', page: String(pageNum), per_page: '15' });
+        if (statusFilter) params.set('status', statusFilter);
+        if (searchQuery) params.set('q', searchQuery);
+        const data = await apiFetch(`/api/admin/invoices?${params}`);
+        if (data) {
+            invoices = data.invoices ?? [];
+            invoicePagination = data.pagination ?? null;
+            invoiceSummary = data.summary ?? { pending: 0, verification: 0, paid_month: 0, overdue: 0, total_amount_pending: 0 };
+        }
+    }
+
+    async function markInvoicePaid(invoice: any) {
+        if (!confirm(`Tandai invoice ${invoice.invoice_number} sebagai lunas?`)) return;
+        const data = await apiFetch(`/api/admin/invoices/${invoice.id}/mark-paid`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' },
+            body: JSON.stringify({ payment_method: invoice.payment_method || 'Manual Transfer' }),
+        });
+        if (data?.success) {
+            message = data.message;
+            loadInvoices(invoicePagination?.page ?? 1);
+        }
+    }
+
     function statusBadge(status: string): { variant: 'default' | 'destructive' | 'outline' | 'secondary'; label: string } {
         const map: Record<string, any> = { trial: { variant: 'secondary', label: 'Trial' }, active: { variant: 'default', label: 'Active' }, past_due: { variant: 'outline', label: 'Past Due' }, suspended: { variant: 'destructive', label: 'Suspended' }, canceled: { variant: 'destructive', label: 'Canceled' }, expired: { variant: 'outline', label: 'Expired' } };
         return map[status] ?? { variant: 'outline', label: status };
     }
 
+    function invoiceBadge(invoice: any): { variant: 'default' | 'destructive' | 'outline' | 'secondary'; label: string } {
+        if (invoice.status === 'paid') return { variant: 'default', label: 'Lunas' };
+        if (invoice.status === 'overdue') return { variant: 'destructive', label: 'Overdue' };
+        if (invoice.status === 'pending' && invoice.payment_proof) return { variant: 'secondary', label: 'Verifikasi' };
+        if (invoice.status === 'pending') return { variant: 'outline', label: 'Pending' };
+        return { variant: 'outline', label: invoice.status || '-' };
+    }
+
     function formatRupiah(v: number): string {
-        if (Math.abs(v) >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)}M`;
-        return `Rp ${(v / 1_000).toFixed(0)}K`;
+        const amount = Number(v || 0);
+        if (Math.abs(amount) >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
+        if (Math.abs(amount) >= 1_000) return `Rp ${(amount / 1_000).toFixed(0)}K`;
+        return `Rp ${amount.toLocaleString('id-ID')}`;
     }
 
     function formatDate(d: string | null): string {
-        if (!d) return '—';
+        if (!d) return '-';
         return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     }
 
@@ -301,6 +351,9 @@
                 <Badge variant="outline">{summary.tenant_count} Tenants</Badge>
                 <Badge variant="secondary">{summary.active_subscription_count} Active</Badge>
                 <Badge variant="outline">{summary.plan_count} Plans</Badge>
+                <Badge variant="outline">{summary.invoice_pending_count ?? 0} Pending</Badge>
+                <Badge variant="secondary">{summary.invoice_verification_count ?? 0} Verifikasi</Badge>
+                <Badge variant={(summary.invoice_overdue_count ?? 0) > 0 ? 'destructive' : 'outline'}>{summary.invoice_overdue_count ?? 0} Overdue</Badge>
             {/if}
         </div>
     </div>
@@ -331,7 +384,8 @@
                 { key: 'tenants', label: 'Tenants', icon: Building2 },
                 { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
                 { key: 'plans', label: 'Plans', icon: Package },
-                { key: 'payment', label: 'Pembayaran', icon: CreditCard },
+                { key: 'billing', label: 'Billing', icon: FileText },
+                { key: 'payment', label: 'Metode Pembayaran', icon: CreditCard },
             ] as tab}
                 <button
                     onclick={() => switchTab(tab.key as TabName)}
@@ -703,6 +757,116 @@
                     </Card>
                 {/each}
             </div>
+        {/if}
+
+        <!-- ============ BILLING TAB ============ -->
+        {#if activeTab === 'billing'}
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                {#each [
+                    { label: 'Pending', value: invoiceSummary.pending ?? 0, meta: 'Belum upload bukti' },
+                    { label: 'Verifikasi', value: invoiceSummary.verification ?? 0, meta: 'Bukti masuk' },
+                    { label: 'Lunas Bulan Ini', value: invoiceSummary.paid_month ?? 0, meta: 'Invoice paid' },
+                    { label: 'Overdue', value: invoiceSummary.overdue ?? 0, meta: 'Lewat jatuh tempo' },
+                    { label: 'Nominal Pending', value: formatRupiah(invoiceSummary.total_amount_pending ?? 0), meta: 'Outstanding' },
+                ] as item}
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                        <p class="text-xs font-medium text-muted-foreground">{item.label}</p>
+                        <p class="mt-2 text-xl font-semibold text-foreground">{item.value}</p>
+                        <p class="mt-1 text-xs text-muted-foreground">{item.meta}</p>
+                    </div>
+                {/each}
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="relative flex-1 max-w-sm">
+                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input class="pl-9" placeholder="Cari invoice atau tenant..." bind:value={searchQuery} onchange={() => loadInvoices()} />
+                </div>
+                <select bind:value={statusFilter} onchange={() => loadInvoices()} class="rounded-md border px-3 py-2 text-sm">
+                    <option value="">Semua Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="verification">Perlu Verifikasi</option>
+                    <option value="paid">Paid</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="failed">Failed</option>
+                    <option value="refunded">Refunded</option>
+                </select>
+                <Button variant="outline" size="icon" onclick={() => { searchQuery = ''; statusFilter = ''; loadInvoices(); }}><RefreshCw class="h-4 w-4" /></Button>
+            </div>
+
+            <Card>
+                <CardContent class="p-0">
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[920px] text-sm">
+                            <thead>
+                                <tr class="border-b text-left">
+                                    <th class="px-4 py-3 font-medium text-muted-foreground">Invoice</th>
+                                    <th class="px-4 py-3 font-medium text-muted-foreground">Tenant</th>
+                                    <th class="px-4 py-3 font-medium text-muted-foreground">Paket</th>
+                                    <th class="px-4 py-3 font-medium text-muted-foreground text-right">Nominal</th>
+                                    <th class="px-4 py-3 font-medium text-muted-foreground">Due Date</th>
+                                    <th class="px-4 py-3 font-medium text-muted-foreground">Status</th>
+                                    <th class="px-4 py-3 font-medium text-muted-foreground">Bukti</th>
+                                    <th class="px-4 py-3 w-16"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {#each invoices as inv}
+                                    <tr class="border-b last:border-0 hover:bg-muted/30">
+                                        <td class="px-4 py-2.5">
+                                            <div class="font-medium">{inv.invoice_number}</div>
+                                            <div class="text-xs text-muted-foreground">{formatDate(inv.created_at)}</div>
+                                        </td>
+                                        <td class="px-4 py-2.5">
+                                            <div class="font-medium">{inv.tenant_name}</div>
+                                            <div class="text-xs text-muted-foreground">{inv.tenant_slug}</div>
+                                        </td>
+                                        <td class="px-4 py-2.5">{inv.plan_name || '-'}</td>
+                                        <td class="px-4 py-2.5 text-right font-semibold">{formatRupiah(inv.amount)}</td>
+                                        <td class="px-4 py-2.5 text-xs">{formatDate(inv.due_date)}</td>
+                                        <td class="px-4 py-2.5">
+                                            <Badge variant={invoiceBadge(inv).variant}>{invoiceBadge(inv).label}</Badge>
+                                        </td>
+                                        <td class="px-4 py-2.5">
+                                            {#if inv.payment_proof_url}
+                                                <a href={inv.payment_proof_url} target="_blank" rel="noreferrer" class="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                                                    Lihat Bukti
+                                                </a>
+                                            {:else}
+                                                <span class="text-xs text-muted-foreground">-</span>
+                                            {/if}
+                                        </td>
+                                        <td class="px-4 py-2.5">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger><Button variant="ghost" size="icon"><MoreHorizontal class="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    {#if inv.payment_proof_url}
+                                                        <DropdownMenuItem onclick={() => window.open(inv.payment_proof_url, '_blank')}><FileText class="h-4 w-4 mr-2" />Lihat Bukti</DropdownMenuItem>
+                                                    {/if}
+                                                    {#if inv.status !== 'paid'}
+                                                        <DropdownMenuItem onclick={() => markInvoicePaid(inv)}><CheckCircle2 class="h-4 w-4 mr-2" />Mark Paid</DropdownMenuItem>
+                                                    {/if}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </td>
+                                    </tr>
+                                {:else}
+                                    <tr><td colspan="8" class="px-4 py-8 text-center text-muted-foreground">Belum ada invoice subscription.</td></tr>
+                                {/each}
+                            </tbody>
+                        </table>
+                    </div>
+                    {#if invoicePagination?.last_page > 1}
+                        <div class="flex items-center justify-between px-4 py-3 border-t">
+                            <span class="text-xs text-muted-foreground">Page {invoicePagination.page} of {invoicePagination.last_page} ({invoicePagination.total} total)</span>
+                            <div class="flex gap-1">
+                                <Button variant="outline" size="sm" disabled={invoicePagination.page <= 1} onclick={() => loadInvoices(invoicePagination.page - 1)}>Prev</Button>
+                                <Button variant="outline" size="sm" disabled={invoicePagination.page >= invoicePagination.last_page} onclick={() => loadInvoices(invoicePagination.page + 1)}>Next</Button>
+                            </div>
+                        </div>
+                    {/if}
+                </CardContent>
+            </Card>
         {/if}
 
         <!-- ============ PAYMENT TAB ============ -->

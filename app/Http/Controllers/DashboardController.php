@@ -305,7 +305,7 @@ class DashboardController extends Controller
             + (float) $summaryStatsByScope['year']['revenue_charter']
             + (float) $summaryStatsByScope['year']['revenue_luggage'];
 
-        // Booking BOP estimate from route-level BOP
+        // Booking BOP from unique departures, using schedule BOP before route fallback.
         $stats['bop_booking_month'] = $this->estimateBookingBop(
             $datePeriods['month'][0], $datePeriods['month'][1], $summaryStatsByScope,
         );
@@ -714,6 +714,7 @@ class DashboardController extends Controller
                 $bookingRevenueByDate = $this->bookingRevenueByDateRange($start, $anchorDate);
                 $charterRevenueByDate = $this->charterRevenueByDateRange($start, $anchorDate);
                 $luggageRevenueByDate = $this->luggageRevenueByDateRange($start, $anchorDate);
+                $bookingBopByDate = $this->bookingBopByDateRange($start, $anchorDate);
                 $charterBopByDate = $this->charterBopByDateRange($start, $anchorDate);
 
                 for ($i = 6; $i >= 0; $i--) {
@@ -722,6 +723,7 @@ class DashboardController extends Controller
                     $bookingRevenue = $bookingRevenueByDate[$dayKey] ?? 0.0;
                     $charterRevenue = $charterRevenueByDate[$dayKey] ?? 0.0;
                     $luggageRevenue = $luggageRevenueByDate[$dayKey] ?? 0.0;
+                    $bookingBop = $bookingBopByDate[$dayKey] ?? 0.0;
                     $charterBop = $charterBopByDate[$dayKey] ?? 0.0;
                     $totalRevenue = $bookingRevenue + $charterRevenue + $luggageRevenue;
 
@@ -732,8 +734,9 @@ class DashboardController extends Controller
                         'booking_revenue' => $bookingRevenue,
                         'charter_revenue' => $charterRevenue,
                         'luggage_revenue' => $luggageRevenue,
+                        'booking_bop' => $bookingBop,
                         'charter_bop' => $charterBop,
-                        'margin' => $totalRevenue - $charterBop,
+                        'margin' => $totalRevenue - $bookingBop - $charterBop,
                     ];
                 }
 
@@ -756,6 +759,7 @@ class DashboardController extends Controller
                 $bookingRevenueByMonth = $this->bookingRevenueByMonthRange($yearStart, $yearEnd);
                 $charterRevenueByMonth = $this->charterRevenueByMonthRange($yearStart, $yearEnd);
                 $luggageRevenueByMonth = $this->luggageRevenueByMonthRange($yearStart, $yearEnd);
+                $bookingBopByMonth = $this->bookingBopByMonthRange($yearStart, $yearEnd);
                 $charterBopByMonth = $this->charterBopByMonthRange($yearStart, $yearEnd);
 
                 for ($month = 1; $month <= $endMonth; $month++) {
@@ -764,6 +768,7 @@ class DashboardController extends Controller
                     $bookingRevenue = $bookingRevenueByMonth[$monthKey] ?? 0.0;
                     $charterRevenue = $charterRevenueByMonth[$monthKey] ?? 0.0;
                     $luggageRevenue = $luggageRevenueByMonth[$monthKey] ?? 0.0;
+                    $bookingBop = $bookingBopByMonth[$monthKey] ?? 0.0;
                     $charterBop = $charterBopByMonth[$monthKey] ?? 0.0;
                     $totalRevenue = $bookingRevenue + $charterRevenue + $luggageRevenue;
 
@@ -774,8 +779,9 @@ class DashboardController extends Controller
                         'booking_revenue' => $bookingRevenue,
                         'charter_revenue' => $charterRevenue,
                         'luggage_revenue' => $luggageRevenue,
+                        'booking_bop' => $bookingBop,
                         'charter_bop' => $charterBop,
-                        'margin' => $totalRevenue - $charterBop,
+                        'margin' => $totalRevenue - $bookingBop - $charterBop,
                     ];
                 }
 
@@ -866,6 +872,54 @@ class DashboardController extends Controller
             ->pluck('total', 'period')
             ->mapWithKeys(static fn ($value, $key): array => [(string) $key => (float) $value])
             ->all();
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    private function bookingBopByDateRange(Carbon $start, Carbon $end): array
+    {
+        $departures = $this->bookingDeparturesForBop($start->toDateString(), $end->toDateString());
+        $lookup = $this->bookingBopLookup($departures);
+        $totals = [];
+
+        foreach ($departures as $departure) {
+            $date = trim((string) ($departure->tanggal ?? ''));
+            if ($date === '') {
+                continue;
+            }
+
+            $totals[$date] = ($totals[$date] ?? 0.0) + $this->bookingDepartureBop($departure, $lookup);
+        }
+
+        return $totals;
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    private function bookingBopByMonthRange(Carbon $start, Carbon $end): array
+    {
+        $departures = $this->bookingDeparturesForBop($start->toDateString(), $end->toDateString());
+        $lookup = $this->bookingBopLookup($departures);
+        $totals = [];
+
+        foreach ($departures as $departure) {
+            $date = trim((string) ($departure->tanggal ?? ''));
+            if ($date === '') {
+                continue;
+            }
+
+            try {
+                $month = (string) Carbon::parse($date)->format('n');
+            } catch (\Throwable) {
+                continue;
+            }
+
+            $totals[$month] = ($totals[$month] ?? 0.0) + $this->bookingDepartureBop($departure, $lookup);
+        }
+
+        return $totals;
     }
 
     /**
@@ -1175,56 +1229,209 @@ class DashboardController extends Controller
         return $query->orderBy('name')->get();
     }
 
-    /**
-     * Estimate booking BOP from route-level BOP data, proportional to booking volume.
-     */
     private function estimateBookingBop(string $dateStart, string $dateEnd, array $scopeStats, string $scopeKey = 'month'): float
     {
-        if (! Schema::hasTable('routes') || ! Schema::hasColumn('routes', 'bop')) {
-            return 0.0;
-        }
+        $departures = $this->bookingDeparturesForBop($dateStart, $dateEnd);
+        $lookup = $this->bookingBopLookup($departures);
 
+        return (float) $departures->sum(fn ($departure): float => $this->bookingDepartureBop($departure, $lookup));
+    }
+
+    private function bookingDeparturesForBop(string $dateStart, string $dateEnd): \Illuminate\Support\Collection
+    {
         if (! Schema::hasTable('bookings')) {
-            return 0.0;
+            return collect();
         }
 
-        $bookingRoutes = $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
+        return $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
             ->where('status', '!=', 'canceled')
             ->whereBetween('tanggal', [$dateStart, $dateEnd])
-            ->select('rute')
             ->distinct()
-            ->pluck('rute')
-            ->all();
+            ->get([
+                Schema::hasColumn('bookings', 'route_id') ? 'route_id' : DB::raw('NULL as route_id'),
+                'rute',
+                'tanggal',
+                'jam',
+                'unit',
+            ]);
+    }
 
-        if (empty($bookingRoutes)) {
-            return 0.0;
+    /**
+     * @return array{schedule_route: array<string, float>, schedule_name: array<string, float>, route_id: array<int, float>, route_name: array<string, float>}
+     */
+    private function bookingBopLookup(\Illuminate\Support\Collection $departures): array
+    {
+        $lookup = [
+            'schedule_route' => [],
+            'schedule_name' => [],
+            'route_id' => [],
+            'route_name' => [],
+        ];
+
+        if ($departures->isEmpty()) {
+            return $lookup;
         }
-
-        $routeQuery = DB::table('routes');
-        $this->applyTenantScopeIfExists($routeQuery, 'routes');
 
         $scope = PoolScope::forCurrentUser($this->activePoolId);
-        if (! ($scope['all'] ?? true)) {
-            $routeIds = $scope['route_ids'] ?? [];
-            if ($routeIds === []) {
-                return 0.0;
+        $routeIds = $departures
+            ->pluck('route_id')
+            ->map(static fn ($value): int => (int) $value)
+            ->filter(static fn (int $value): bool => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (Schema::hasTable('routes') && Schema::hasColumn('routes', 'bop')) {
+            $routeQuery = DB::table('routes');
+            $this->applyTenantScopeIfExists($routeQuery, 'routes');
+
+            if (! ($scope['all'] ?? true)) {
+                $scopedRouteIds = $scope['route_ids'] ?? [];
+                if ($scopedRouteIds === []) {
+                    $routeQuery->whereRaw('1 = 0');
+                } else {
+                    $routeQuery->whereIn('id', $scopedRouteIds);
+                }
             }
 
-            $routeQuery->whereIn('id', $routeIds);
+            $routeSelect = [
+                'id',
+                'name',
+                Schema::hasColumn('routes', 'origin') ? 'origin' : DB::raw('NULL as origin'),
+                Schema::hasColumn('routes', 'destination') ? 'destination' : DB::raw('NULL as destination'),
+                'bop',
+            ];
+
+            foreach ($routeQuery->get($routeSelect) as $route) {
+                $routeId = (int) ($route->id ?? 0);
+                $bop = (float) ($route->bop ?? 0);
+                if ($routeId > 0) {
+                    $lookup['route_id'][$routeId] = $bop;
+                }
+
+                foreach ($this->routeNameCandidates($route) as $candidate) {
+                    $key = $this->normalizeRouteKey($candidate);
+                    if ($key !== '') {
+                        $lookup['route_name'][$key] = $bop;
+                    }
+                }
+            }
         }
 
-        $routeBopSum = (float) $routeQuery
-            ->whereIn('name', $bookingRoutes)
-            ->sum('bop');
+        if (Schema::hasTable('schedules') && Schema::hasColumn('schedules', 'bop')) {
+            $scheduleQuery = DB::table('schedules')->where('bop', '>', 0);
+            $this->applyTenantScopeIfExists($scheduleQuery, 'schedules');
 
-        // Scale daily BOP proportionally relative to monthly
-        if ($scopeKey === 'day' && ($scopeStats['month']['total_bookings'] ?? 1) > 0) {
-            $dayCount = (int) ($scopeStats['day']['total_bookings'] ?? 0);
-            $monthCount = max(1, (int) ($scopeStats['month']['total_bookings'] ?? 1));
-            $routeBopSum = $routeBopSum * ($dayCount / $monthCount);
+            $scheduleHasRouteId = Schema::hasColumn('schedules', 'route_id');
+            if (! ($scope['all'] ?? true)) {
+                $scopedRouteIds = $scope['route_ids'] ?? [];
+                $scopedRouteNames = $scope['route_names'] ?? [];
+                if ($scheduleHasRouteId && $scopedRouteIds !== []) {
+                    $scheduleQuery->whereIn('route_id', $scopedRouteIds);
+                } elseif ($scopedRouteNames !== []) {
+                    $scheduleQuery->whereIn('rute', $scopedRouteNames);
+                } else {
+                    $scheduleQuery->whereRaw('1 = 0');
+                }
+            }
+
+            $scheduleSelect = [
+                $scheduleHasRouteId ? 'route_id' : DB::raw('NULL as route_id'),
+                'rute',
+                'dow',
+                'jam',
+                'bop',
+            ];
+
+            foreach ($scheduleQuery->get($scheduleSelect) as $schedule) {
+                $dow = (int) ($schedule->dow ?? -1);
+                $time = $this->normalizeTimeKey((string) ($schedule->jam ?? ''));
+                $bop = (float) ($schedule->bop ?? 0);
+
+                if ($dow < 0 || $time === '' || $bop <= 0) {
+                    continue;
+                }
+
+                $routeId = (int) ($schedule->route_id ?? 0);
+                if ($routeId > 0) {
+                    $lookup['schedule_route'][$routeId.'|'.$dow.'|'.$time] = $bop;
+                }
+
+                $routeKey = $this->normalizeRouteKey((string) ($schedule->rute ?? ''));
+                if ($routeKey !== '') {
+                    $lookup['schedule_name'][$routeKey.'|'.$dow.'|'.$time] = $bop;
+                }
+            }
         }
 
-        return $routeBopSum;
+        return $lookup;
+    }
+
+    /**
+     * @param array{schedule_route: array<string, float>, schedule_name: array<string, float>, route_id: array<int, float>, route_name: array<string, float>} $lookup
+     */
+    private function bookingDepartureBop(object $departure, array $lookup): float
+    {
+        $routeId = (int) ($departure->route_id ?? 0);
+        $routeKey = $this->normalizeRouteKey((string) ($departure->rute ?? ''));
+        $time = $this->normalizeTimeKey((string) ($departure->jam ?? ''));
+
+        try {
+            $dow = Carbon::parse((string) ($departure->tanggal ?? ''))->dayOfWeek;
+        } catch (\Throwable) {
+            $dow = -1;
+        }
+
+        if ($dow >= 0 && $time !== '') {
+            if ($routeId > 0) {
+                $scheduleKey = $routeId.'|'.$dow.'|'.$time;
+                if (isset($lookup['schedule_route'][$scheduleKey])) {
+                    return (float) $lookup['schedule_route'][$scheduleKey];
+                }
+            }
+
+            if ($routeKey !== '') {
+                $scheduleKey = $routeKey.'|'.$dow.'|'.$time;
+                if (isset($lookup['schedule_name'][$scheduleKey])) {
+                    return (float) $lookup['schedule_name'][$scheduleKey];
+                }
+            }
+        }
+
+        if ($routeId > 0 && isset($lookup['route_id'][$routeId])) {
+            return (float) $lookup['route_id'][$routeId];
+        }
+
+        return $routeKey !== '' ? (float) ($lookup['route_name'][$routeKey] ?? 0) : 0.0;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function routeNameCandidates(object $route): array
+    {
+        $candidates = [(string) ($route->name ?? '')];
+        $origin = trim((string) ($route->origin ?? ''));
+        $destination = trim((string) ($route->destination ?? ''));
+
+        if ($origin !== '' && $destination !== '') {
+            $candidates[] = $origin.' - '.$destination;
+        }
+
+        return $candidates;
+    }
+
+    private function normalizeRouteKey(string $route): string
+    {
+        $normalized = mb_strtoupper(trim($route));
+        $normalized = str_replace(['=>', '->'], '-', $normalized);
+
+        return preg_replace('/\s+/', '', $normalized) ?? $normalized;
+    }
+
+    private function normalizeTimeKey(string $time): string
+    {
+        return substr(trim($time), 0, 5);
     }
 
     /**

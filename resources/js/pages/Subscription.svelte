@@ -54,6 +54,7 @@
         paid_at: string | null;
         payment_method: string;
         payment_proof: string | null;
+        payment_proof_url: string | null;
         created_at: string;
     };
 
@@ -407,6 +408,12 @@
                                 <p class="mt-1 text-sm text-muted-foreground">
                                     Invoice {invoiceInVerification.invoice_number} sudah memiliki bukti upload.
                                 </p>
+                                {#if invoiceInVerification.payment_proof_url}
+                                    <a href={invoiceInVerification.payment_proof_url} target="_blank" rel="noreferrer" class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                                        Lihat bukti pembayaran
+                                        <ExternalLink class="h-3.5 w-3.5" />
+                                    </a>
+                                {/if}
                             </div>
                         </CardContent>
                     </Card>
@@ -501,7 +508,13 @@
                                                             Bayar
                                                         </Button>
                                                     {:else if invoice.payment_proof}
-                                                        <span class="text-xs text-emerald-700 dark:text-emerald-300">Bukti terupload</span>
+                                                        {#if invoice.payment_proof_url}
+                                                            <a href={invoice.payment_proof_url} target="_blank" rel="noreferrer" class="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                                                                Lihat Bukti
+                                                            </a>
+                                                        {:else}
+                                                            <span class="text-xs text-emerald-700 dark:text-emerald-300">Bukti terupload</span>
+                                                        {/if}
                                                     {:else}
                                                         <span class="text-xs text-muted-foreground">-</span>
                                                     {/if}

@@ -11,7 +11,7 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import { Armchair, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
+    import { Armchair, CheckCircle2, MailX, MoreHorizontal, Pencil, Send, Trash2 } from 'lucide-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
     import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -3517,6 +3517,52 @@
             error = e instanceof Error ? e.message : 'Gagal simpan user.';
         } finally {
             clearSubmitKey('user');
+        }
+    };
+
+    const runUserVerificationAction = async (
+        row: UserRow,
+        action: 'verify' | 'unverify' | 'send-verification',
+    ) => {
+        message = '';
+        error = '';
+
+        const labels = {
+            verify: {
+                loading: 'Memverifikasi user...',
+                success: 'User berhasil diverifikasi.',
+                done: 'User verified.',
+            },
+            unverify: {
+                loading: 'Membatalkan verifikasi user...',
+                success: 'Verifikasi user dibatalkan.',
+                done: 'User unverified.',
+            },
+            'send-verification': {
+                loading: 'Mengirim link verifikasi...',
+                success: 'Link verifikasi terkirim.',
+                done: 'Verification email sent.',
+            },
+        }[action];
+
+        try {
+            await runWithFeedback(
+                async () => {
+                    await api('POST', `/api/admin/users/${row.id}/${action}`);
+                },
+                {
+                    loadingMessage: labels.loading,
+                    successMessage: labels.success,
+                    errorMessage: 'Gagal memperbarui status verifikasi user.',
+                },
+            );
+            message = labels.done;
+            await loadUsers();
+        } catch (e) {
+            error =
+                e instanceof Error
+                    ? e.message
+                    : 'Gagal memperbarui status verifikasi user.';
         }
     };
 
@@ -8665,6 +8711,21 @@
                                                     <Pencil class="mr-2 h-3.5 w-3.5" />
                                                     Edit
                                                 </DropdownMenuItem>
+                                                {#if row.email_verified_at}
+                                                    <DropdownMenuItem onclick={() => void runUserVerificationAction(row, 'unverify')}>
+                                                        <MailX class="mr-2 h-3.5 w-3.5" />
+                                                        Unverify
+                                                    </DropdownMenuItem>
+                                                {:else}
+                                                    <DropdownMenuItem onclick={() => void runUserVerificationAction(row, 'verify')}>
+                                                        <CheckCircle2 class="mr-2 h-3.5 w-3.5" />
+                                                        Verify
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onclick={() => void runUserVerificationAction(row, 'send-verification')}>
+                                                        <Send class="mr-2 h-3.5 w-3.5" />
+                                                        Kirim Link
+                                                    </DropdownMenuItem>
+                                                {/if}
                                                 <DropdownMenuItem onclick={() => void removeItem(`/api/admin/users/${row.id}`, 'User deleted.')}>
                                                     <Trash2 class="mr-2 h-3.5 w-3.5" />
                                                     Hapus
@@ -8885,6 +8946,39 @@
                                                             />
                                                             Edit
                                                         </DropdownMenuItem>
+                                                        {#if row.email_verified_at}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void runUserVerificationAction(
+                                                                        row,
+                                                                        'unverify',
+                                                                    )}
+                                                            >
+                                                                <MailX class="mr-2 h-3.5 w-3.5" />
+                                                                Unverify
+                                                            </DropdownMenuItem>
+                                                        {:else}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void runUserVerificationAction(
+                                                                        row,
+                                                                        'verify',
+                                                                    )}
+                                                            >
+                                                                <CheckCircle2 class="mr-2 h-3.5 w-3.5" />
+                                                                Verify
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void runUserVerificationAction(
+                                                                        row,
+                                                                        'send-verification',
+                                                                    )}
+                                                            >
+                                                                <Send class="mr-2 h-3.5 w-3.5" />
+                                                                Kirim Link
+                                                            </DropdownMenuItem>
+                                                        {/if}
                                                         <DropdownMenuItem
                                                             onclick={() =>
                                                                 void removeItem(
