@@ -35,11 +35,16 @@ class SubscriptionPaymentController extends Controller
                 ->map(function ($inv) use ($hasPaymentProofColumn, $hasDueDateColumn, $hasPaidAtColumn) {
                     $paymentProof = $hasPaymentProofColumn ? ($inv->payment_proof ?? null) : null;
 
+                    $status = (string) $inv->status;
+                    if ($status === 'pending' && $paymentProof !== null && trim($paymentProof) !== '') {
+                        $status = 'verification';
+                    }
+
                     return [
                         'id' => (int) $inv->id,
                         'invoice_number' => (string) $inv->invoice_number,
                         'amount' => (float) $inv->amount,
-                        'status' => (string) $inv->status,
+                        'status' => $status,
                         'due_date' => $hasDueDateColumn ? ($inv->due_date ?? null) : null,
                         'paid_at' => $hasPaidAtColumn ? ($inv->paid_at ?? null) : null,
                         'payment_method' => (string) ($inv->payment_method ?? ''),
@@ -157,6 +162,9 @@ class SubscriptionPaymentController extends Controller
         if (! $tenantSub || $tenantSub['tenant_id'] !== (int) $invoice->tenant_id) {
             return response()->json(['success' => false, 'error' => 'Akses ditolak.'], 403);
         }
+        if ((string) $invoice->status === 'paid') {
+            return response()->json(['success' => false, 'error' => 'Invoice sudah lunas.'], 422);
+        }
 
         // Store the proof file
         $file = $request->file('proof_file');
@@ -170,7 +178,7 @@ class SubscriptionPaymentController extends Controller
         DB::table('invoice_subscriptions')->where('id', $invoiceId)->update([
             'payment_proof' => $path,
             'payment_method' => trim((string) $request->input('payment_method')),
-            'status' => 'pending', // waiting for admin verification
+            'status' => 'verification',
             'updated_at' => now(),
         ]);
 

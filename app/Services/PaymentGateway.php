@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -63,28 +64,42 @@ class PaymentGateway
             return false;
         }
 
-        DB::table('invoice_subscriptions')->where('id', $invoiceId)->update([
-            'status' => 'paid',
-            'paid_at' => now(),
-            'payment_method' => $paymentMethod,
-            'updated_at' => now(),
-        ]);
+        DB::transaction(function () use ($invoiceId, $invoice, $paymentMethod): void {
+            DB::table('invoice_subscriptions')->where('id', $invoiceId)->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+                'payment_method' => $paymentMethod,
+                'updated_at' => now(),
+            ]);
 
-        // Extend subscription
-        if ($invoice->subscription_id > 0 && Schema::hasTable('subscriptions')) {
-            $sub = DB::table('subscriptions')->where('id', (int) $invoice->subscription_id)->first();
-            if ($sub) {
-                $newEndsAt = now()->addMonth()->toDateString();
-                if (($sub->billing_interval ?? 'monthly') === 'yearly') {
-                    $newEndsAt = now()->addYear()->toDateString();
+            if ($invoice->subscription_id > 0 && Schema::hasTable('subscriptions')) {
+                $sub = DB::table('subscriptions')->where('id', (int) $invoice->subscription_id)->first();
+                if ($sub) {
+                    $base = now()->toDateString();
+                    if (! empty($sub->ends_at) && CarbonImmutable::parse((string) $sub->ends_at)->isFuture()) {
+                        $base = (string) $sub->ends_at;
+                    }
+
+                    $newEndsAt = ($sub->billing_interval ?? 'monthly') === 'yearly'
+                        ? CarbonImmutable::parse($base)->addYear()->toDateString()
+                        : CarbonImmutable::parse($base)->addMonth()->toDateString();
+
+                    DB::table('subscriptions')->where('id', $sub->id)->update([
+                        'status' => 'active',
+                        'starts_at' => $sub->starts_at ?: now()->toDateString(),
+                        'ends_at' => $newEndsAt,
+                        'updated_at' => now(),
+                    ]);
                 }
-                DB::table('subscriptions')->where('id', $sub->id)->update([
+            }
+
+            if (Schema::hasTable('tenants')) {
+                DB::table('tenants')->where('id', (int) $invoice->tenant_id)->update([
                     'status' => 'active',
-                    'ends_at' => $newEndsAt,
                     'updated_at' => now(),
                 ]);
             }
-        }
+        });
 
         Log::info("Invoice #{$invoice->invoice_number} marked as paid via {$paymentMethod}");
 

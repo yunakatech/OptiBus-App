@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Support\AccessControl;
+use App\Support\PoolScope;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -12,6 +15,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -21,7 +25,42 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(RegisterResponseContract::class, function () {
+            return new class implements RegisterResponseContract
+            {
+                public function toResponse($request)
+                {
+                    if ($request->wantsJson()) {
+                        return new JsonResponse('', 201);
+                    }
+
+                    $userId = (int) ($request->user()?->id ?? auth()->id() ?? 0);
+                    if ($userId <= 0) {
+                        return redirect()->route('subscription.index');
+                    }
+
+                    $tenantId = PoolScope::tenantId($userId);
+                    $subscriptionStatus = '';
+                    if ($tenantId > 0 && Schema::hasTable('subscriptions')) {
+                        $subscriptionStatus = (string) (DB::table('subscriptions')
+                            ->where('tenant_id', $tenantId)
+                            ->orderByRaw("CASE status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'pending_payment' THEN 2 WHEN 'past_due' THEN 3 ELSE 4 END")
+                            ->orderByDesc('created_at')
+                            ->value('status') ?? '');
+                    }
+
+                    if (in_array($subscriptionStatus, ['pending_payment', 'past_due', 'suspended', 'canceled', 'expired'], true)) {
+                        return redirect()->route('subscription.index');
+                    }
+
+                    if (AccessControl::can($userId, 'dashboard.view')) {
+                        return redirect()->route('dashboard');
+                    }
+
+                    return redirect()->route('subscription.index');
+                }
+            };
+        });
     }
 
     /**
@@ -64,9 +103,12 @@ class FortifyServiceProvider extends ServiceProvider
             // Store registration source for the provisioning listener.
             $plan = trim((string) $request->query('plan', ''));
             $intent = trim((string) $request->query('intent', ''));
-            $intent = in_array($intent, ['trial', 'payment'], true)
+            if ($intent === 'payment') {
+                $intent = 'paid';
+            }
+            $intent = in_array($intent, ['trial', 'paid'], true)
                 ? $intent
-                : ($plan !== '' ? 'payment' : 'trial');
+                : ($plan !== '' ? 'paid' : 'trial');
 
             if ($intent === 'trial') {
                 $plan = 'starter';

@@ -267,7 +267,7 @@
                             <div class="flex items-center gap-2"><Route class="h-4 w-4 text-[#0d7066]" /> {limitLabel(plan.max_routes, 'rute')}</div>
                             <div class="flex items-center gap-2"><UsersRound class="h-4 w-4 text-[#0d7066]" /> {limitLabel(plan.max_users, 'user')}</div>
                         </div>
-                        <a href={isAuthenticated ? subscriptionHref : `/register?plan=${plan.slug}&intent=payment`} class={`mt-6 inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
+                        <a href={isAuthenticated ? subscriptionHref : `/register?plan=${plan.slug}&intent=paid`} class={`mt-6 inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
                             {isAuthenticated ? 'Kelola paket' : `Pilih ${plan.name}`}
                         </a>
                     </article>

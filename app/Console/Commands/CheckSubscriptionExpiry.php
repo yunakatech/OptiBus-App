@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
 class CheckSubscriptionExpiry extends Command
 {
     protected $signature = 'subscription:check-expired';
-    protected $description = 'Check and update subscription statuses: trial→expired, active→past_due, past_due→suspended, suspended→canceled';
+    protected $description = 'Check and update subscription and tenant billing statuses';
 
     public function handle(): int
     {
@@ -20,9 +21,9 @@ class CheckSubscriptionExpiry extends Command
         }
 
         $today = now()->toDateString();
+        $todayDate = CarbonImmutable::parse($today);
         $updated = 0;
 
-        // 1. Trial → Expired (trial ended)
         $trialExpired = DB::table('subscriptions')
             ->where('status', 'trial')
             ->whereNotNull('trial_ends_at')
@@ -36,7 +37,6 @@ class CheckSubscriptionExpiry extends Command
             $this->info("{$trialExpired} trial subscriptions expired.");
         }
 
-        // 2. Active → Past Due (billing period ended)
         $pastDue = DB::table('subscriptions')
             ->where('status', 'active')
             ->whereNotNull('ends_at')
@@ -50,41 +50,65 @@ class CheckSubscriptionExpiry extends Command
             $this->info("{$pastDue} subscriptions moved to past_due.");
         }
 
-        // 3. Past Due → Suspended (grace period expired)
-        $suspended = DB::table('subscriptions')
+        $suspended = 0;
+        $pastDueRows = DB::table('subscriptions')
             ->where('status', 'past_due')
             ->whereNotNull('ends_at')
-            ->whereRaw("DATE(ends_at, '+' || COALESCE(grace_period_days, 7) || ' days') < ?", [$today])
-            ->update([
-                'status' => 'suspended',
-                'updated_at' => now(),
-            ]);
+            ->get(['id', 'ends_at', 'grace_period_days']);
+
+        foreach ($pastDueRows as $sub) {
+            $graceDays = (int) ($sub->grace_period_days ?? 7);
+            if (CarbonImmutable::parse((string) $sub->ends_at)->addDays($graceDays)->lt($todayDate)) {
+                $suspended += DB::table('subscriptions')->where('id', $sub->id)->update([
+                    'status' => 'suspended',
+                    'updated_at' => now(),
+                ]);
+            }
+        }
         $updated += $suspended;
         if ($suspended > 0) {
-            $this->info("{$suspended} subscriptions suspended (grace period expired).");
+            $this->info("{$suspended} subscriptions suspended.");
         }
 
-        // 4. Suspended → Canceled (30 days after suspension)
-        $canceled = DB::table('subscriptions')
+        $canceled = 0;
+        $suspendedRows = DB::table('subscriptions')
             ->where('status', 'suspended')
-            ->whereRaw("DATE(updated_at, '+30 days') < ?", [$today])
-            ->update([
-                'status' => 'canceled',
-                'canceled_at' => now(),
-                'updated_at' => now(),
-            ]);
+            ->get(['id', 'updated_at']);
+
+        foreach ($suspendedRows as $sub) {
+            if (CarbonImmutable::parse((string) $sub->updated_at)->addDays(30)->lt($todayDate)) {
+                $canceled += DB::table('subscriptions')->where('id', $sub->id)->update([
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
         $updated += $canceled;
         if ($canceled > 0) {
-            $this->info("{$canceled} subscriptions canceled (30 days elapsed).");
+            $this->info("{$canceled} subscriptions canceled.");
         }
 
-        // 5. Sync tenant status
+        if (Schema::hasTable('invoice_subscriptions') && Schema::hasColumn('invoice_subscriptions', 'due_date')) {
+            $overdueInvoices = DB::table('invoice_subscriptions')
+                ->where('status', 'pending')
+                ->whereDate('due_date', '<', $today)
+                ->update([
+                    'status' => 'overdue',
+                    'updated_at' => now(),
+                ]);
+            $updated += $overdueInvoices;
+            if ($overdueInvoices > 0) {
+                $this->info("{$overdueInvoices} invoices marked overdue.");
+            }
+        }
+
         $this->syncTenantStatuses();
 
         if ($updated === 0) {
             $this->info('No subscription status changes needed.');
         } else {
-            $this->info("Total: {$updated} subscriptions updated.");
+            $this->info("Total: {$updated} billing records updated.");
         }
 
         return 0;
@@ -103,7 +127,19 @@ class CheckSubscriptionExpiry extends Command
             return;
         }
 
-        // Suspended/canceled subscriptions → sync tenant status
+        $pendingTenants = DB::table('subscriptions')
+            ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
+            ->where('subscriptions.status', 'pending_payment')
+            ->where('tenants.status', '!=', 'pending_payment')
+            ->pluck('tenants.id');
+
+        foreach ($pendingTenants as $tenantId) {
+            DB::table('tenants')->where('id', $tenantId)->update([
+                'status' => 'pending_payment',
+                'updated_at' => now(),
+            ]);
+        }
+
         $tenantsToSuspend = DB::table('subscriptions')
             ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
             ->where('subscriptions.status', 'suspended')
