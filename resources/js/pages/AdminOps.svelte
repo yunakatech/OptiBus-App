@@ -5,353 +5,88 @@
                 title: 'Admin Ops',
                 href: '/admin-ops',
             },
-        ],
-    };
-</script>
+                        <div class="hidden overflow-x-auto md:block">
+                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[1900px] w-full border-separate border-spacing-0 text-sm">
+                                <svelte:fragment slot="row" let:row let:index let:columns>
+                                    {@const gross = driverGrossMargin(row)}
+                                    {@const net = driverNetMargin(row)}
+                                    {@const achievement = driverAchievement(row)}
+                                    {@const status = driverStatus(row)}
 
-<script lang="ts">
-    import { page, router } from '@inertiajs/svelte';
-    import {
-        Armchair,
-        ArrowUpRight,
-        CalendarDays,
-        CheckCircle2,
-        Clock3,
-        MailX,
-        MoreHorizontal,
-        Pencil,
-        Plus,
-        Route,
-        Send,
-        Trash2,
-        Wallet,
-    } from 'lucide-svelte';
-    import { onDestroy, onMount, tick } from 'svelte';
-    import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
-    import DataTable from '@/components/terminal/DataTable.svelte';
-    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
-    import EntityBadge from '@/components/terminal/EntityBadge.svelte';
-    import AppHead from '@/components/AppHead.svelte';
-    import { Badge } from '@/components/ui/badge';
-    import { Button } from '@/components/ui/button';
-    import {
-        Card,
-        CardContent,
-        CardHeader,
-        CardTitle,
-    } from '@/components/ui/card';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuTrigger,
-    } from '@/components/ui/dropdown-menu';
-    import { Input } from '@/components/ui/input';
-    import { LoadingButton } from '@/components/ui/loading-button';
-    import { hasPermission } from '@/lib/access';
-    import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
-    import {
-        formatCurrencyDisplay,
-        formatCurrencyInput as formatSharedCurrencyInput,
-        parseCurrencyInput as parseSharedCurrencyInput,
-    } from '@/lib/currency';
-    import { loadFlatpickr } from '@/lib/flatpickr';
-    import type { FlatpickrInstance } from '@/lib/flatpickr';
+                                    <td class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[0]?.leftOffset ?? '0px'}`}>
+                                        <div class="font-semibold text-foreground">{row.nama}</div>
+                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontributor driver bulan ini</div>
+                                    </td>
 
-    type Stats = {
-        routes: number;
-        schedules: number;
-        drivers: number;
-        luggage_services: number;
-        segments: number;
-        customers: number;
-        armadas: number;
-        pools: number;
-        cancellations: number;
-    };
-    type RouteRow = {
-        id: number;
-        name: string;
-        origin: string | null;
-        destination: string | null;
-        bop: number;
-        charter_revenue: number;
-        departure_revenue: number;
-        luggage_revenue: number;
-        revenue: number;
-        charter_bop: number;
-        departure_bop: number;
-        fixed_cost: number;
-        target_revenue: number;
-    };
-    type UnitRow = {
-        id: number;
-        nopol: string;
-        merek: string | null;
-        type: string | null;
-        category: string | null;
-        tahun: number | null;
-        warna: string | null;
-        kapasitas: number | null;
-        status: string | null;
-        layout: string | null;
-    };
-    type ScheduleRow = {
-        id: number;
-        route_id: number | null;
-        route_name: string | null;
-        rute: string;
-        dow: number;
-        jam: string;
-        units: number;
-        bop: number;
-        unit_label: string | null;
-        unit_id: number | null;
-        nopol: string | null;
-        unit_options?: Array<{
-            unit_no: number;
-            label: string;
-            unit_id: number | null;
-            nopol?: string | null;
-        }>;
-    };
-    type ScheduleDayGroup = {
-        dow: number;
-        rows: ScheduleRow[];
-        totalUnits: number;
-        bopTotal: number;
-        firstDeparture: string | null;
-        lastDeparture: string | null;
-    };
-    type ScheduleRouteGroup = {
-        key: string;
-        routeId: number;
-        route: string;
-        total: number;
-        totalUnits: number;
-        bopTotal: number;
-        activeDays: number;
-        firstDeparture: string | null;
-        lastDeparture: string | null;
-        days: ScheduleDayGroup[];
-    };
-    type ScheduleRouteSelectOption = {
-        id: number;
-        name: string;
-        value: string;
-    };
-    type ScheduleOverview = {
-        routes: number;
-        total: number;
-        totalUnits: number;
-        bopTotal: number;
-        activeDays: number;
-        firstDeparture: string | null;
-        lastDeparture: string | null;
-    };
-    type DriverRow = {
-        id: number;
-        nama: string;
-        phone: string | null;
-        unit_id: number | null;
-        armada_id: number | null;
-        nopol: string | null;
-        target_revenue_bulanan: number;
-        charter_revenue: number;
-        departure_revenue: number;
-        luggage_revenue: number;
-        revenue: number;
-        charter_bop: number;
-        departure_bop: number;
-        bop: number;
-        fixed_cost: number;
-    };
-    type ServiceRow = { id: number; name: string };
-    type SegmentRow = {
-        id: number;
-        route_id: number;
-        rute: string;
-        origin: string | null;
-        destination: string | null;
-        harga: number;
-        route_name: string | null;
-    };
-    type CustomerRow = {
-        id: number;
-        name: string;
-        phone: string;
-        pickup_point: string | null;
-        gmaps: string | null;
-    };
-    type Pagination = {
-        page: number;
-        per_page: number;
-        total: number;
-        last_page: number;
-    };
-    type SettingsQuery = {
-        q?: string;
-        page?: number;
-        per_page?: number;
-        route_id?: number;
-        rute?: string;
-    };
-    type SettingsDataPayload = {
-        tab?: string;
-        schedules?: ScheduleRow[];
-        drivers?: DriverRow[];
-        segments?: SegmentRow[];
-        armadas?: ArmadaRow[];
-        pools?: PoolRow[];
-        users?: UserRow[];
-        roles?: RoleOption[];
-        routes?: RouteRow[];
-        can_manage?: boolean;
-        pagination?: Pagination;
-        route_id?: number;
-        rute?: string;
-    };
-    type SettingsMastersPayload = {
-        tab?: string;
-        routes?: RouteRow[];
-        units?: UnitRow[];
-        armadas?: ArmadaRow[];
-        pools?: PoolRow[];
-        roles?: RoleOption[];
-        categories?: string[];
-        can_manage_pools?: boolean;
-    };
-    type CustomerImportSummary = {
-        created: number;
-        updated: number;
-        skipped: number;
-        errors: string[];
-    };
-    type ArmadaRow = {
-        id: number;
-        merk: string | null;
-        tahun: number | null;
-        warna: string | null;
-        nopol: string;
-        nomor_rangka: string | null;
-        kategori: string | null;
-        ac_type: string;
-        platform_gps: string | null;
-        api_gps: string | null;
-        charter_revenue: number;
-        departure_revenue: number;
-        luggage_revenue: number;
-        revenue: number;
-        charter_bop: number;
-        departure_bop: number;
-        bop: number;
-        fixed_cost: number;
-        target_bulanan: number;
-    };
-    type UserRow = {
-        id: number;
-        name: string;
-        email: string;
-        email_verified_at: string | null;
-        created_at: string | null;
-        is_super_admin: boolean;
-        pool_ids: number[];
-        pool_names: string[];
-        role_ids: number[];
-        role_names: string[];
-    };
-    type RoleOption = {
-        id: number;
-        name: string;
-        slug: string;
-        description: string;
-    };
-    type PoolRow = {
-        id: number;
-        name: string;
-        code: string;
-        target_revenue: number;
-        status: string;
-        notes: string;
-        created_at: string;
-        route_ids: number[];
-        route_names: string[];
-        charter_revenue: number;
-        departure_revenue: number;
-        luggage_revenue: number;
-        revenue: number;
-        charter_bop: number;
-        departure_bop: number;
-        bop: number;
-        fixed_cost: number;
-    };
-    type CancellationRow = {
-        tag: string;
-        title: string;
-        meta: string;
-        actor: string;
-        created_at: string;
-    };
-    type ReportKind = 'booking' | 'charter' | 'bagasi';
-    type ReportSummary = {
-        from: string;
-        to: string;
-        type: ReportKind;
-        total_rows: number;
-        revenue_total: number;
-        pool_id?: number;
-        pool_name?: string;
-        target_revenue?: number;
-    };
-    type BookingReportRow = {
-        id: number;
-        tanggal: string;
-        jam: string;
-        name: string;
-        phone: string;
-        rute: string;
-        pickup_point: string;
-        unit: string;
-        seat: string;
-        pembayaran: string;
-        status: string;
-        discount: number;
-        total: number;
-    };
-    type CharterReportRow = {
-        id: number;
-        start_date: string;
-        end_date: string;
-        departure_time: string;
-        name: string;
-        phone: string;
-        pickup_point: string;
-        drop_point: string;
-        driver_name: string;
-        layanan: string;
-        payment_status: string;
-        bop_status: string;
-        status: string;
-        unit_nopol: string;
-        armada_nopol: string;
-        total: number;
-    };
-    type LuggageReportRow = {
-        id: number;
-        tanggal: string;
-        created_at: string;
-        kode_resi: string;
-        sender_name: string;
-        sender_phone: string;
-        receiver_name: string;
-        receiver_phone: string;
-        quantity: number;
-        payment_status: string;
-        status: string;
-        service_name: string;
-        total: number;
-    };
-    type ReportRow = BookingReportRow | CharterReportRow | LuggageReportRow;
+                                    <td class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[1]?.leftOffset ?? '0px'}`}>
+                                        <div class="font-medium text-foreground">{row.phone ?? '-'}</div>
+                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontak operasional</div>
+                                    </td>
+
+                                    <td class="sticky left-[380px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[2]?.leftOffset ?? '0px'}`}>
+                                        <EntityBadge code={row.nopol ?? '-'} />
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+
+                                    <td class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right">
+                                        <div class="text-sm font-semibold text-emerald-800 tabular-nums">{formatCurrency(Number(row.revenue || 0))}</div>
+                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80">Total</div>
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+
+                                    <td class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right">
+                                        <div class="text-sm font-semibold text-amber-800 tabular-nums">{formatCurrency(Number(row.bop || 0))}</div>
+                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80">Total</div>
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(gross)}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+
+                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
+                                        <div class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}>{formatCurrency(net)}</div>
+                                        <div class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}>{net >= 0 ? 'Positif' : 'Minus'}</div>
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.target_revenue_bulanan || 0))}</td>
+                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
+                                        <div class="text-sm font-semibold tabular-nums">{achievement.toFixed(1)}%</div>
+                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Pencapaian</div>
+                                    </td>
+
+                                    <td class="border-b border-r border-border/60 px-3 py-4 text-center">
+                                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
+                                    </td>
+                                </svelte:fragment>
+
+                                <svelte:fragment slot="actions" let:row let:index let:columns>
+                                    {#if canWriteTab('drivers')}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                <MoreHorizontal class="h-4 w-4" />
+                                                <span class="sr-only">Aksi driver</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                            <DropdownMenuItem onclick={() => editDriver(row)}>
+                                                <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onclick={() => void removeItem(`/api/admin/drivers/${row.id}`, 'Driver deleted.') }>
+                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                Hapus
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    {/if}
+                                </svelte:fragment>
+                            </DataTable>
+                        </div>
     type LayoutCellType = 'seat' | 'empty' | 'driver';
     type LayoutCell = {
         type: LayoutCellType;
@@ -1286,6 +1021,42 @@
 
         return categories;
     });
+    const driversColumns = [
+        { key: 'nama', label: 'Nama Driver', width: 'w-[220px]', sticky: 'left' },
+        { key: 'phone', label: 'Kontak', width: 'w-[160px]', sticky: 'left' },
+        { key: 'nopol', label: 'Nopol Unit', width: 'w-[170px]', sticky: 'left' },
+        { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
+        { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
+        { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
+        { key: 'revenue', label: 'Total Revenue', align: 'right', numeric: true },
+        { key: 'charter_bop', label: 'Charter BOP', align: 'right', numeric: true },
+        { key: 'departure_bop', label: 'Keberangkatan BOP', align: 'right', numeric: true },
+        { key: 'bop', label: 'Total BOP', align: 'right', numeric: true },
+        { key: 'gross', label: 'Gross', align: 'right', numeric: true },
+        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true },
+        { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
+        { key: 'target_revenue_bulanan', label: 'Target Revenue', align: 'right', numeric: true },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true },
+        { key: 'status', label: 'Status', align: 'center' },
+    ];
+
+    const poolsColumns = [
+        { key: 'name', label: 'Pool', width: 'w-[240px]', sticky: 'left' },
+        { key: 'routes', label: 'Rute', width: 'w-[320px]', sticky: 'left' },
+        { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
+        { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
+        { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
+        { key: 'revenue', label: 'Total Revenue', align: 'right', numeric: true },
+        { key: 'charter_bop', label: 'Charter BOP', align: 'right', numeric: true },
+        { key: 'departure_bop', label: 'Keberangkatan BOP', align: 'right', numeric: true },
+        { key: 'bop', label: 'Total BOP', align: 'right', numeric: true },
+        { key: 'gross', label: 'Gross', align: 'right', numeric: true },
+        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true },
+        { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
+        { key: 'target_revenue', label: 'Target Revenue', align: 'right', numeric: true },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true },
+        { key: 'status', label: 'Status', align: 'center' },
+    ];
     const filteredArmadaTemplateOptions = $derived.by<UnitRow[]>(() => {
         const keyword = armadaTemplateSearch.trim().toLowerCase();
 
@@ -4114,24 +3885,10 @@
             {#if usesHybridSettings('drivers') || usesHybridSettings('pools')}
                 <div class="flex flex-col gap-2 md:flex-row">
                     {#if activeTab === 'drivers'}
-                        <Input
-                            placeholder="Cari nama, telepon, atau nopol driver"
-                            bind:value={driverSearch}
-                        />
+                        <TerminalFilter bind:query={driverSearch} placeholder="Cari nama, telepon, atau nopol driver" on:search={() => reloadSettingsWithInertia(1)} />
                     {:else}
-                        <Input
-                            placeholder="Cari nama, kode, atau catatan pool"
-                            bind:value={poolSearch}
-                        />
+                        <TerminalFilter bind:query={poolSearch} placeholder="Cari nama, kode, atau catatan pool" on:search={() => reloadSettingsWithInertia(1)} />
                     {/if}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="md:min-w-[120px]"
-                        onclick={() => reloadSettingsWithInertia(1)}
-                    >
-                        Search
-                    </Button>
                 </div>
             {/if}
             {#if hasFormTab(activeTab) && canWriteTab(activeTab)}
@@ -5886,355 +5643,67 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <table
-                                class="min-w-[1900px] w-full border-separate border-spacing-0 text-sm"
-                            >
-                                <thead>
-                                    <tr
-                                        class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground"
-                                    >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky left-0 z-30 w-[220px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
-                                            >Nama Driver</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky left-[220px] z-30 w-[160px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
-                                            >Kontak</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky left-[380px] z-30 w-[170px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
-                                            >Nopol Unit</th
-                                        >
-                                        <th
-                                            colspan="4"
-                                            class="border-b border-r border-border/70 bg-emerald-50/70 px-3 py-3 text-center font-semibold text-emerald-800"
-                                            >Revenue</th
-                                        >
-                                        <th
-                                            colspan="3"
-                                            class="border-b border-r border-border/70 bg-amber-50/80 px-3 py-3 text-center font-semibold text-amber-800"
-                                            >BOP</th
-                                        >
-                                        <th
-                                            colspan="3"
-                                            class="border-b border-r border-border/70 bg-sky-50/80 px-3 py-3 text-center font-semibold text-sky-800"
-                                            >Margin</th
-                                        >
-                                        <th
-                                            colspan="2"
-                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-3 text-center font-semibold text-slate-700"
-                                            >Target</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-4 text-center font-semibold text-slate-700"
-                                            >Status</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky right-0 z-30 w-[92px] border-b border-l border-border/70 bg-background px-3 py-4 text-center font-semibold"
-                                            >Aksi</th
-                                        >
-                                    </tr>
-                                    <tr
-                                        class="bg-muted/20 text-[11px] font-semibold text-foreground/80"
-                                    >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Charter</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Keberangkatan</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Bagasi</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Total Revenue</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Charter</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Keberangkatan</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Total BOP</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Gross</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Fixed Cost</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Net Margin</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Target Revenue</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Achievement</th
-                                        >
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each drivers as row (row.id)}
-                                        {@const gross = driverGrossMargin(row)}
-                                        {@const net = driverNetMargin(row)}
-                                        {@const achievement =
-                                            driverAchievement(row)}
-                                        {@const status = driverStatus(row)}
-                                        <tr
-                                            class="group transition hover:bg-muted/15"
-                                        >
-                                            <td
-                                                class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="font-semibold text-foreground"
-                                                >
-                                                    {row.nama}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    Kontributor driver bulan ini
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="font-medium text-foreground"
-                                                >
-                                                    {row.phone ?? '-'}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    Kontak operasional
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="sticky left-[380px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="inline-flex rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-xs font-semibold"
-                                                >
-                                                    {row.nopol ?? '-'}
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.charter_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.departure_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.luggage_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold text-emerald-800 tabular-nums"
-                                                >
-                                                    {formatCurrency(
-                                                        Number(
-                                                            row.revenue || 0,
-                                                        ),
-                                                    )}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80"
-                                                >
-                                                    Total
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.charter_bop || 0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.departure_bop || 0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold text-amber-800 tabular-nums"
-                                                >
-                                                    {formatCurrency(
-                                                        Number(row.bop || 0),
-                                                    )}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80"
-                                                >
-                                                    Total
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(gross)}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(row.fixed_cost || 0),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}
-                                                >
-                                                    {formatCurrency(net)}
-                                                </div>
-                                                <div
-                                                    class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}
-                                                >
-                                                    {net >= 0
-                                                        ? 'Positif'
-                                                        : 'Minus'}
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.target_revenue_bulanan ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold tabular-nums"
-                                                >
-                                                    {achievement.toFixed(1)}%
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground"
-                                                >
-                                                    Pencapaian
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-center"
-                                            >
-                                                <span
-                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                                                        status === 'Tercapai'
-                                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                                            : 'border-amber-200 bg-amber-50 text-amber-700'
-                                                    }`}
-                                                >
-                                                    {status}
-                                                </span>
-                                            </td>
-                                            <td
-                                                class="sticky right-0 z-20 border-b border-l border-border/60 bg-background px-3 py-4 text-center group-hover:bg-muted/15"
-                                            >
-                                                {#if canWriteTab('drivers')}
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-8 w-8 rounded-full border border-border/70"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-4 w-4"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi driver</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                editDriver(row)}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/drivers/${row.id}`,
-                                                                    'Driver deleted.',
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                                {/if}
-                                            </td>
-                                        </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
+                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[1900px]">
+                                <svelte:fragment slot="row" let:row let:index let:columns>
+                                    {@const gross = driverGrossMargin(row)}
+                                    {@const net = driverNetMargin(row)}
+                                    {@const achievement = driverAchievement(row)}
+                                    {@const status = driverStatus(row)}
+
+                                    <td class="py-3 px-4 align-top">
+                                        <div class="font-semibold text-foreground">{row.nama}</div>
+                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontributor driver bulan ini</div>
+                                    </td>
+
+                                    <td class="py-3 px-4 align-top">
+                                        <div class="font-medium text-foreground">{row.phone ?? '-'}</div>
+                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontak operasional</div>
+                                    </td>
+
+                                    <td class="py-3 px-4 align-top">
+                                        <EntityBadge code={row.nopol ?? '-'} />
+                                    </td>
+
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(gross)}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(net)}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_revenue_bulanan || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
+                                    </td>
+
+                                    <td class="py-3 px-4 text-center">
+                                        {#if canWriteTab('drivers')}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi driver</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                <DropdownMenuItem onclick={() => editDriver(row)}>
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/drivers/${row.id}`, 'Driver deleted.') }>
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        {/if}
+                                    </td>
+                                </svelte:fragment>
+                            </DataTable>
                         </div>
                     </div>
                 {/if}
@@ -8534,370 +8003,69 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto lg:block">
-                            <table
-                                class="min-w-[2060px] w-full border-separate border-spacing-0 text-sm"
-                            >
-                                <thead>
-                                    <tr
-                                        class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground"
-                                    >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky left-0 z-30 w-[240px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
-                                            >Pool</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky left-[240px] z-30 w-[320px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
-                                            >Rute</th
-                                        >
-                                        <th
-                                            colspan="4"
-                                            class="border-b border-r border-border/70 bg-emerald-50/70 px-3 py-3 text-center font-semibold text-emerald-800"
-                                            >Revenue</th
-                                        >
-                                        <th
-                                            colspan="3"
-                                            class="border-b border-r border-border/70 bg-amber-50/80 px-3 py-3 text-center font-semibold text-amber-800"
-                                            >BOP</th
-                                        >
-                                        <th
-                                            colspan="3"
-                                            class="border-b border-r border-border/70 bg-sky-50/80 px-3 py-3 text-center font-semibold text-sky-800"
-                                            >Margin</th
-                                        >
-                                        <th
-                                            colspan="2"
-                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-3 text-center font-semibold text-slate-700"
-                                            >Target</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-4 text-center font-semibold text-slate-700"
-                                            >Status</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky right-0 z-30 w-[92px] border-b border-l border-border/70 bg-background px-3 py-4 text-center font-semibold"
-                                            >Aksi</th
-                                        >
-                                    </tr>
-                                    <tr
-                                        class="bg-muted/20 text-[11px] font-semibold text-foreground/80"
-                                    >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Charter</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Keberangkatan</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Bagasi</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Total Revenue</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Charter</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Keberangkatan</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Total BOP</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Gross</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Fixed Cost</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Net Margin</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Target Revenue</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Achievement</th
-                                        >
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each pools as row (row.id)}
-                                        {@const gross =
-                                            financialGrossMargin(row)}
-                                        {@const net = financialNetMargin(row)}
-                                        {@const achievement =
-                                            financialAchievement(row)}
-                                        {@const healthStatus =
-                                            financialStatus(row)}
-                                        <tr
-                                            class="group transition hover:bg-muted/15"
-                                        >
-                                            <td
-                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="font-semibold text-foreground"
-                                                >
-                                                    {row.name}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    {row.code || 'Tanpa kode'}
-                                                </div>
-                                                <span
-                                                    class={`mt-3 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
-                                                >
-                                                    {row.status === 'active'
-                                                        ? 'Aktif'
-                                                        : 'Nonaktif'}
-                                                </span>
-                                            </td>
-                                            <td
-                                                class="sticky left-[240px] z-10 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="line-clamp-2 text-sm text-foreground"
-                                                >
-                                                    {formatPoolRoutes(row)}
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.charter_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.departure_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.luggage_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold text-emerald-800 tabular-nums"
-                                                >
-                                                    {formatCurrency(
-                                                        Number(
-                                                            row.revenue || 0,
-                                                        ),
-                                                    )}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80"
-                                                >
-                                                    Total
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.charter_bop || 0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.departure_bop || 0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold text-amber-800 tabular-nums"
-                                                >
-                                                    {formatCurrency(
-                                                        Number(row.bop || 0),
-                                                    )}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80"
-                                                >
-                                                    Total
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(gross)}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(row.fixed_cost || 0),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}
-                                                >
-                                                    {formatCurrency(net)}
-                                                </div>
-                                                <div
-                                                    class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}
-                                                >
-                                                    {net >= 0
-                                                        ? 'Positif'
-                                                        : 'Minus'}
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.target_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold tabular-nums"
-                                                >
-                                                    {achievement.toFixed(1)}%
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground"
-                                                >
-                                                    Pencapaian
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-center"
-                                            >
-                                                <span
-                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                                                        healthStatus ===
-                                                        'Tercapai'
-                                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                                            : 'border-amber-200 bg-amber-50 text-amber-700'
-                                                    }`}
-                                                >
-                                                    {healthStatus}
-                                                </span>
-                                            </td>
-                                            <td
-                                                class="relative sticky right-0 z-20 border-b border-l border-border/60 bg-background px-3 py-4 text-center group-hover:bg-muted/15"
-                                            >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-8 w-8 rounded-full border border-border/70"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-4 w-4"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi pool</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() => {
-                                                                poolForm = {
-                                                                    id: row.id,
-                                                                    name: row.name,
-                                                                    code: row.code,
-                                                                    target_revenue:
-                                                                        formatRupiahInput(
-                                                                            row.target_revenue,
-                                                                        ),
-                                                                    fixed_cost:
-                                                                        formatRupiahInput(
-                                                                            row.fixed_cost,
-                                                                        ),
-                                                                    status:
-                                                                        row.status ||
-                                                                        'active',
-                                                                    notes:
-                                                                        row.notes ||
-                                                                        '',
-                                                                    route_ids: [
-                                                                        ...(row.route_ids ??
-                                                                            []),
-                                                                    ],
-                                                                };
-                                                                setFormMode(
-                                                                    'form',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/pools/${row.id}`,
-                                                                    'Pool deleted.',
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
-                                        </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
+                            <DataTable columns={poolsColumns} rows={pools} class="min-w-[2060px]">
+                                <svelte:fragment slot="row" let:row let:index>
+                                    {@const gross = financialGrossMargin(row)}
+                                    {@const net = financialNetMargin(row)}
+                                    {@const achievement = financialAchievement(row)}
+                                    {@const healthStatus = financialStatus(row)}
+
+                                    <td class="py-3 px-4 align-top">
+                                        <div class="font-semibold text-foreground">{row.name}</div>
+                                        <div class="mt-1 text-[11px] text-muted-foreground">{row.code || 'Tanpa kode'}</div>
+                                        <span class={`mt-3 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
+                                    </td>
+
+                                    <td class="py-3 px-4 align-top"><div class="line-clamp-2 text-sm text-foreground">{formatPoolRoutes(row)}</div></td>
+
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(gross)}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(net)}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
+                                    <td class="py-3 px-4 text-center"><span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
+
+                                    <td class="py-3 px-4 text-center">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi pool</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                <DropdownMenuItem onclick={() => {
+                                                    poolForm = {
+                                                        id: row.id,
+                                                        name: row.name,
+                                                        code: row.code,
+                                                        target_revenue: formatRupiahInput(row.target_revenue),
+                                                        fixed_cost: formatRupiahInput(row.fixed_cost),
+                                                        status: row.status || 'active',
+                                                        notes: row.notes || '',
+                                                        route_ids: [...(row.route_ids ?? [])],
+                                                    };
+                                                    setFormMode('form');
+                                                }}>
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/pools/${row.id}`, 'Pool deleted.') }>
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </td>
+                                </svelte:fragment>
+                            </DataTable>
                         </div>
                     </div>
                 {/if}
