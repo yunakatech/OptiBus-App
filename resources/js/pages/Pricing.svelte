@@ -103,6 +103,9 @@
 
     const plans = $derived(((page.props.plans ?? []) as Plan[]).length > 0 ? ((page.props.plans ?? []) as Plan[]) : fallbackPlans);
     const allFeatureNames = $derived([...new Set(plans.flatMap((plan) => plan.features?.map((feature) => feature.name) ?? []))].filter(Boolean));
+    const isAuthenticated = $derived(Boolean(page.props.auth?.user));
+    const appHref = '/dashboard';
+    const subscriptionHref = '/subscription';
 
     const buyingGuides = [
         { title: 'Starter', body: 'Cocok untuk 1 armada, rute terbatas, dan satu admin utama.' },
@@ -142,10 +145,14 @@
             <div class="hidden items-center gap-7 text-sm font-medium text-[#4b5a56] md:flex">
                 <a href="/" class="hover:text-[#17201f]">Landing</a>
                 <a href="#compare" class="hover:text-[#17201f]">Perbandingan</a>
-                <a href="/login" class="hover:text-[#17201f]">Login</a>
+                {#if isAuthenticated}
+                    <a href={appHref} class="hover:text-[#17201f]">Dashboard</a>
+                {:else}
+                    <a href="/login" class="hover:text-[#17201f]">Login</a>
+                {/if}
             </div>
-            <a href="/register?plan=starter&intent=trial" class="inline-flex h-9 items-center justify-center rounded-md bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]">
-                Mulai trial
+            <a href={isAuthenticated ? appHref : '/register?plan=starter&intent=trial'} class="inline-flex h-9 items-center justify-center rounded-md bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]">
+                {isAuthenticated ? 'Dashboard' : 'Mulai trial'}
             </a>
         </div>
     </nav>
@@ -219,8 +226,8 @@
                             {/if}
                         </div>
 
-                        <a href={`/register?plan=${plan.slug}&intent=payment`} class={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
-                            Pilih {plan.name} <ArrowRight class="ml-2 h-4 w-4" />
+                        <a href={isAuthenticated ? subscriptionHref : `/register?plan=${plan.slug}&intent=payment`} class={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
+                            {isAuthenticated ? 'Kelola paket' : `Pilih ${plan.name}`} <ArrowRight class="ml-2 h-4 w-4" />
                         </a>
                     </article>
                 {/each}
@@ -312,8 +319,8 @@
                     <p class="text-sm font-semibold uppercase text-[#a8dccd]">Trial 14 hari</p>
                     <h2 class="mt-2 text-3xl font-semibold tracking-normal text-white">Mulai dengan paket yang paling dekat dengan kondisi saat ini.</h2>
                 </div>
-                <a href="/register?plan=starter&intent=trial" class="inline-flex h-11 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb]">
-                    Daftar sekarang <ArrowRight class="ml-2 h-4 w-4" />
+                <a href={isAuthenticated ? subscriptionHref : '/register?plan=starter&intent=trial'} class="inline-flex h-11 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb]">
+                    {isAuthenticated ? 'Kelola subscription' : 'Daftar sekarang'} <ArrowRight class="ml-2 h-4 w-4" />
                 </a>
             </div>
         </section>
@@ -324,8 +331,13 @@
             <span>Qbus - Paket SaaS operasional travel.</span>
             <div class="flex gap-5">
                 <a href="/" class="hover:text-[#17201f]">Landing</a>
-                <a href="/login" class="hover:text-[#17201f]">Login</a>
-                <a href="/register?plan=starter&intent=trial" class="hover:text-[#17201f]">Daftar</a>
+                {#if isAuthenticated}
+                    <a href={appHref} class="hover:text-[#17201f]">Dashboard</a>
+                    <a href={subscriptionHref} class="hover:text-[#17201f]">Subscription</a>
+                {:else}
+                    <a href="/login" class="hover:text-[#17201f]">Login</a>
+                    <a href="/register?plan=starter&intent=trial" class="hover:text-[#17201f]">Daftar</a>
+                {/if}
             </div>
         </div>
     </footer>
