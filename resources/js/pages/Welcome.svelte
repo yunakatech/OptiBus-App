@@ -77,6 +77,9 @@
 
     const plans = $derived(((page.props.plans ?? []) as Plan[]).length > 0 ? ((page.props.plans ?? []) as Plan[]) : fallbackPlans);
     const featuredPlans = $derived(plans.slice(0, 3));
+    const isAuthenticated = $derived(Boolean(page.props.auth?.user));
+    const appHref = '/dashboard';
+    const subscriptionHref = '/subscription';
 
     const workflow = [
         { label: 'Booking', value: 'Seat, pelanggan, pickup', icon: Ticket },
@@ -119,9 +122,11 @@
                 <a href="/pricing" class="hover:text-[#17201f]">Pricing</a>
             </div>
             <div class="flex items-center gap-2">
-                <a href="/login" class="hidden rounded-md px-3 py-2 text-sm font-semibold text-[#4b5a56] hover:bg-white md:inline-flex">Login</a>
-                <a href="/register?plan=starter&intent=trial" class="inline-flex h-9 items-center justify-center rounded-md bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]">
-                    Mulai trial
+                {#if !isAuthenticated}
+                    <a href="/login" class="hidden rounded-md px-3 py-2 text-sm font-semibold text-[#4b5a56] hover:bg-white md:inline-flex">Login</a>
+                {/if}
+                <a href={isAuthenticated ? appHref : '/register?plan=starter&intent=trial'} class="inline-flex h-9 items-center justify-center rounded-md bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]">
+                    {isAuthenticated ? 'Dashboard' : 'Mulai trial'}
                 </a>
             </div>
         </div>
@@ -143,8 +148,8 @@
                         Qbus menyatukan booking seat, carter, bagasi, pembayaran, pool, rute, dan target revenue dalam dashboard yang siap dipakai tim lapangan.
                     </p>
                     <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                        <a href="/register?plan=starter&intent=trial" class="inline-flex h-11 items-center justify-center rounded-md bg-[#103d3a] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]">
-                            Mulai trial gratis <ArrowRight class="ml-2 h-4 w-4" />
+                        <a href={isAuthenticated ? appHref : '/register?plan=starter&intent=trial'} class="inline-flex h-11 items-center justify-center rounded-md bg-[#103d3a] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]">
+                            {isAuthenticated ? 'Buka dashboard' : 'Mulai trial gratis'} <ArrowRight class="ml-2 h-4 w-4" />
                         </a>
                         <a href="/pricing" class="inline-flex h-11 items-center justify-center rounded-md border border-[#bac5bd] bg-white px-5 text-sm font-semibold text-[#17201f] hover:bg-[#eef2eb]">
                             Bandingkan paket
@@ -262,8 +267,8 @@
                             <div class="flex items-center gap-2"><Route class="h-4 w-4 text-[#0d7066]" /> {limitLabel(plan.max_routes, 'rute')}</div>
                             <div class="flex items-center gap-2"><UsersRound class="h-4 w-4 text-[#0d7066]" /> {limitLabel(plan.max_users, 'user')}</div>
                         </div>
-                        <a href={`/register?plan=${plan.slug}&intent=payment`} class={`mt-6 inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
-                            Pilih {plan.name}
+                        <a href={isAuthenticated ? subscriptionHref : `/register?plan=${plan.slug}&intent=payment`} class={`mt-6 inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
+                            {isAuthenticated ? 'Kelola paket' : `Pilih ${plan.name}`}
                         </a>
                     </article>
                 {/each}
@@ -276,8 +281,8 @@
                     <p class="text-sm font-semibold uppercase text-[#a8dccd]">Siap dipakai tim operasional</p>
                     <h2 class="mt-2 text-3xl font-semibold tracking-normal text-white">Rapikan booking, pembayaran, dan laporan minggu ini.</h2>
                 </div>
-                <a href="/register?plan=starter&intent=trial" class="inline-flex h-11 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb]">
-                    Mulai trial <ArrowRight class="ml-2 h-4 w-4" />
+                <a href={isAuthenticated ? appHref : '/register?plan=starter&intent=trial'} class="inline-flex h-11 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb]">
+                    {isAuthenticated ? 'Buka dashboard' : 'Mulai trial'} <ArrowRight class="ml-2 h-4 w-4" />
                 </a>
             </div>
         </section>
@@ -288,8 +293,13 @@
             <span>Qbus - Sistem operasional travel.</span>
             <div class="flex gap-5">
                 <a href="/pricing" class="hover:text-[#17201f]">Pricing</a>
-                <a href="/login" class="hover:text-[#17201f]">Login</a>
-                <a href="/register?plan=starter&intent=trial" class="hover:text-[#17201f]">Daftar</a>
+                {#if isAuthenticated}
+                    <a href={appHref} class="hover:text-[#17201f]">Dashboard</a>
+                    <a href={subscriptionHref} class="hover:text-[#17201f]">Subscription</a>
+                {:else}
+                    <a href="/login" class="hover:text-[#17201f]">Login</a>
+                    <a href="/register?plan=starter&intent=trial" class="hover:text-[#17201f]">Daftar</a>
+                {/if}
             </div>
         </div>
     </footer>
