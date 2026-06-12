@@ -552,12 +552,12 @@
         </div>
         <section class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/70 dark:bg-slate-950">
             <div class="grid gap-0 lg:grid-cols-[1.05fr_1.35fr]">
-                <div class="border-b border-slate-200/80 bg-slate-950 p-4 text-white dark:border-slate-800 lg:border-b-0 lg:border-r">
+                <div class="border-b border-slate-200/80 bg-slate-900 p-4 text-slate-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] dark:border-slate-800 lg:border-b-0 lg:border-r">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-[11px] font-semibold uppercase text-slate-300">Command Center</p>
-                            <h3 class="mt-1 text-2xl font-semibold leading-tight md:text-3xl">{toCurrency(activeTotalRevenue)}</h3>
-                            <p class="mt-1 text-xs text-slate-300">Total revenue {activeSummaryPeriod.subtitle_label}</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200/80">Command Center</p>
+                            <h3 class="mt-1 text-2xl font-semibold leading-tight text-white md:text-3xl">{toCurrency(activeTotalRevenue)}</h3>
+                            <p class="mt-1 text-xs text-slate-200/80">Total revenue {activeSummaryPeriod.subtitle_label}</p>
                         </div>
                         <a href="/reports" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20" aria-label="Buka laporan revenue">
                             <ArrowRight class="h-4 w-4" />
@@ -565,13 +565,13 @@
                     </div>
 
                     <div class="mt-5 grid grid-cols-2 gap-2">
-                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
-                            <p class="text-[11px] text-slate-300">Target</p>
-                            <p class="mt-1 text-sm font-semibold">{toCurrency(activeSummaryStats.target_revenue || stats.target_revenue_month)}</p>
+                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-[2px]">
+                            <p class="text-[11px] text-slate-200/80">Target</p>
+                            <p class="mt-1 text-sm font-semibold text-white">{toCurrency(activeSummaryStats.target_revenue || stats.target_revenue_month)}</p>
                         </div>
-                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3">
-                            <p class="text-[11px] text-slate-300">Achievement</p>
-                            <p class="mt-1 text-sm font-semibold">{activeSummaryStats.achievement_percent || stats.achievement_percent}%</p>
+                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-[2px]">
+                            <p class="text-[11px] text-slate-200/80">Achievement</p>
+                            <p class="mt-1 text-sm font-semibold text-white">{activeSummaryStats.achievement_percent || stats.achievement_percent}%</p>
                         </div>
                     </div>
 
@@ -583,30 +583,30 @@
                 <div class="p-3 md:p-4">
                     <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                         {#each commandMetrics() as metric (metric.key)}
-                            <a href={metric.href} class="group rounded-2xl border border-slate-200 bg-slate-50/70 p-3 transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/70">
+                            <a href={metric.href} class="group rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/80">
                                 <div class="flex items-start justify-between gap-2">
-                                    <p class="text-[11px] font-semibold uppercase text-muted-foreground">{metric.label}</p>
-                                    <ArrowRight class="h-3.5 w-3.5 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{metric.label}</p>
+                                    <ArrowRight class="h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary dark:text-slate-500" />
                                 </div>
-                                <p class="mt-2 break-words text-lg font-semibold text-foreground">{metric.value}</p>
-                                <p class="mt-1 text-[11px] text-muted-foreground">{metric.meta}</p>
+                                <p class="mt-2 break-words text-lg font-semibold text-slate-900 dark:text-slate-50">{metric.value}</p>
+                                <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{metric.meta}</p>
                             </a>
                         {/each}
                     </div>
 
                     <div class="mt-3 grid gap-3 lg:grid-cols-[1fr_0.85fr]">
-                        <div class="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+                        <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
                             <div class="mb-3 flex items-center justify-between gap-2">
-                                <p class="text-xs font-semibold text-foreground">Revenue Channel</p>
-                                <span class="text-[11px] text-muted-foreground">{activeSummaryPeriod.current_label}</span>
+                                <p class="text-xs font-semibold text-slate-900 dark:text-slate-50">Revenue Channel</p>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">{activeSummaryPeriod.current_label}</span>
                             </div>
                             <div class="space-y-2">
                                 {#each revenueChannels() as channel (channel.key)}
                                     {@const width = activeTotalRevenue > 0 ? Math.max(8, Math.round((Number(channel.value || 0) / activeTotalRevenue) * 100)) : 8}
                                     <a href={channel.href} class="block rounded-xl border border-transparent px-2 py-1.5 transition hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-800 dark:hover:bg-slate-900">
                                         <div class="flex items-center justify-between gap-3 text-xs">
-                                            <span class="font-medium text-foreground">{channel.label}</span>
-                                            <span class="font-semibold text-foreground">{toCurrency(channel.value)}</span>
+                                            <span class="font-medium text-slate-700 dark:text-slate-200">{channel.label}</span>
+                                            <span class="font-semibold text-slate-900 dark:text-slate-50">{toCurrency(channel.value)}</span>
                                         </div>
                                         <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                             <div class="h-full rounded-full bg-primary/75" style={`width:${width}%`}></div>
@@ -616,24 +616,24 @@
                             </div>
                         </div>
 
-                        <div class="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
-                            <p class="text-xs font-semibold text-foreground">Unit Economics</p>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                            <p class="text-xs font-semibold text-slate-900 dark:text-slate-50">Unit Economics</p>
                             <div class="mt-3 space-y-2 text-xs">
                                 <div class="flex items-center justify-between gap-3">
-                                    <span class="text-muted-foreground">Revenue</span>
-                                    <span class="font-semibold text-foreground">{toCurrency(activeTotalRevenue)}</span>
+                                    <span class="text-slate-500 dark:text-slate-400">Revenue</span>
+                                    <span class="font-semibold text-slate-900 dark:text-slate-50">{toCurrency(activeTotalRevenue)}</span>
                                 </div>
                                 <div class="flex items-center justify-between gap-3">
-                                    <span class="text-muted-foreground">BOP Booking</span>
+                                    <span class="text-slate-500 dark:text-slate-400">BOP Booking</span>
                                     <span class="font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_booking)}</span>
                                 </div>
                                 <div class="flex items-center justify-between gap-3">
-                                    <span class="text-muted-foreground">BOP Carter</span>
+                                    <span class="text-slate-500 dark:text-slate-400">BOP Carter</span>
                                     <span class="font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_charter)}</span>
                                 </div>
                                 <div class="border-t border-slate-200 pt-2 dark:border-slate-800">
                                     <div class="flex items-center justify-between gap-3">
-                                        <span class="font-medium text-foreground">Margin Total</span>
+                                        <span class="font-medium text-slate-900 dark:text-slate-50">Margin Total</span>
                                         <span class={`font-semibold ${activeTotalMargin >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}>{toCurrency(activeTotalMargin)}</span>
                                     </div>
                                 </div>
