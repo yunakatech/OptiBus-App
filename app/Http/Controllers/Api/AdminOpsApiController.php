@@ -2121,40 +2121,46 @@ class AdminOpsApiController extends Controller
             $payload['status'] = (string) $data['status'];
         }
 
-        if ($id > 0) {
-            $charterUpdate = DB::table('charters')->where('id', $id);
-            $this->applyWriteTenantScopeIfExists($charterUpdate, 'charters');
-            $charterUpdate->update($payload);
+        try {
+            if ($id > 0) {
+                $charterUpdate = DB::table('charters')->where('id', $id);
+                $this->applyWriteTenantScopeIfExists($charterUpdate, 'charters');
+                $charterUpdate->update($payload);
+                $this->syncCustomerCharterFromCharterPayload($payload);
+                $this->syncMasterCarterFromCharterPayload($payload);
+                ActivityLog::write(
+                    'CHARTER',
+                    'Carter '.$this->charterIdentityLabel($payload + $before).' diperbarui',
+                    $this->charterChangeSummary($before, $payload + $before),
+                    $this->activityActor(),
+                    ['charter_id' => $id],
+                );
+
+                return $this->ok(['message' => 'Charter updated.', 'id' => $id]);
+            }
+
+            if ($hasStatusColumn && ! isset($payload['status'])) {
+                $payload['status'] = 'active';
+            }
+            $payload = array_merge($payload, $this->tenantPayload('charters'));
+
+            $newId = DB::table('charters')->insertGetId(array_merge($payload, ['created_at' => now()]));
             $this->syncCustomerCharterFromCharterPayload($payload);
             $this->syncMasterCarterFromCharterPayload($payload);
             ActivityLog::write(
                 'CHARTER',
-                'Carter '.$this->charterIdentityLabel($payload + $before).' diperbarui',
-                $this->charterChangeSummary($before, $payload + $before),
+                'Carter baru: '.$this->charterIdentityLabel($payload),
+                $this->charterCreateSummary($payload),
                 $this->activityActor(),
-                ['charter_id' => $id],
+                ['charter_id' => $newId],
             );
 
-            return $this->ok(['message' => 'Charter updated.', 'id' => $id]);
+            return $this->ok(['message' => 'Charter created.', 'id' => $newId], 201);
+        } catch (QueryException $e) {
+            return $this->error('Gagal menyimpan data carter. Periksa relasi pool, armada, atau customer terkait.', 422, [
+                'detail' => $e->getMessage(),
+            ]);
         }
-
-        if ($hasStatusColumn && ! isset($payload['status'])) {
-            $payload['status'] = 'active';
-        }
-        $payload = array_merge($payload, $this->tenantPayload('charters'));
-
-        $newId = DB::table('charters')->insertGetId(array_merge($payload, ['created_at' => now()]));
-        $this->syncCustomerCharterFromCharterPayload($payload);
-        $this->syncMasterCarterFromCharterPayload($payload);
-        ActivityLog::write(
-            'CHARTER',
-            'Carter baru: '.$this->charterIdentityLabel($payload),
-            $this->charterCreateSummary($payload),
-            $this->activityActor(),
-            ['charter_id' => $newId],
-        );
-
-        return $this->ok(['message' => 'Charter created.', 'id' => $newId], 201);
     }
 
     public function chartersDelete(int $id): JsonResponse
@@ -3410,20 +3416,38 @@ class AdminOpsApiController extends Controller
             'notes' => $this->nullable($data['notes'] ?? null),
         ];
 
-        if ($id > 0) {
-            DB::table('master_carter')->where('id', $id)->update($payload);
+        try {
+            if ($id > 0) {
+                $routeUpdate = DB::table('master_carter')->where('id', $id);
+                $this->applyTenantScopeIfExists($routeUpdate, 'master_carter');
+                if (! $routeUpdate->exists()) {
+                    return $this->error('Rute carter not found.', 404);
+                }
 
-            return $this->ok(['message' => 'Rute carter updated.', 'id' => $id]);
+                $routeUpdate->update($payload);
+
+                return $this->ok(['message' => 'Rute carter updated.', 'id' => $id]);
+            }
+
+            $newId = DB::table('master_carter')->insertGetId(array_merge($payload, $this->tenantPayload('master_carter'), ['created_at' => now()]));
+
+            return $this->ok(['message' => 'Rute carter created.', 'id' => $newId], 201);
+        } catch (QueryException $e) {
+            return $this->error('Gagal menyimpan master carter.', 422, [
+                'detail' => $e->getMessage(),
+            ]);
         }
-
-        $newId = DB::table('master_carter')->insertGetId(array_merge($payload, $this->tenantPayload('master_carter'), ['created_at' => now()]));
-
-        return $this->ok(['message' => 'Rute carter created.', 'id' => $newId], 201);
     }
 
     public function charterRoutesMasterDelete(int $id): JsonResponse
     {
-        DB::table('master_carter')->where('id', $id)->delete();
+        $routeDelete = DB::table('master_carter')->where('id', $id);
+        $this->applyTenantScopeIfExists($routeDelete, 'master_carter');
+        if (! $routeDelete->exists()) {
+            return $this->error('Rute carter not found.', 404);
+        }
+
+        $routeDelete->delete();
 
         return $this->ok(['message' => 'Rute carter deleted.']);
     }
