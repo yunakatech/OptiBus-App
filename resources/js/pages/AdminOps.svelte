@@ -1,356 +1,62 @@
-﻿<script module lang="ts">
-    export const layout = {
-        breadcrumbs: [
-            {
-                title: 'Admin Ops',
-                href: '/admin-ops',
-            },
-                        <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[1900px] w-full border-separate border-spacing-0 text-sm">
-                                <svelte:fragment slot="row" let:row let:index let:columns>
-                                    {@const gross = driverGrossMargin(row)}
-                                    {@const net = driverNetMargin(row)}
-                                    {@const achievement = driverAchievement(row)}
-                                    {@const status = driverStatus(row)}
+﻿                        <div class="hidden overflow-x-auto md:block">
+                            <DataTable columns={routesColumns} rows={routes} class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm">
+                                <svelte:fragment slot="row" let:row let:index>
+                                    {@const gross = financialGrossMargin(row)}
+                                    {@const net = financialNetMargin(row)}
+                                    {@const achievement = financialAchievement(row)}
+                                    {@const status = financialStatus(row)}
 
-                                    <td class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[0]?.leftOffset ?? '0px'}`}>
-                                        <div class="font-semibold text-foreground">{row.nama}</div>
-                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontributor driver bulan ini</div>
+                                    <td class="py-3 px-4 align-top">
+                                        <div class="font-semibold text-foreground">{row.name}</div>
+                                        <div class="mt-1 text-[11px] text-muted-foreground">Rute master untuk jadwal dan segment</div>
                                     </td>
 
-                                    <td class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[1]?.leftOffset ?? '0px'}`}>
-                                        <div class="font-medium text-foreground">{row.phone ?? '-'}</div>
-                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontak operasional</div>
+                                    <td class="py-3 px-4 align-top">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.origin ?? 'Origin belum diatur'}</span>
+                                            <span class="text-muted-foreground">→</span>
+                                            <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.destination ?? 'Destination belum diatur'}</span>
+                                        </div>
+                                        <div class="mt-2 text-[11px] text-muted-foreground">Jalur ini dipakai sebagai acuan relasi jadwal keberangkatan dan segment harga.</div>
                                     </td>
 
-                                    <td class="sticky left-[380px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[2]?.leftOffset ?? '0px'}`}>
-                                        <EntityBadge code={row.nopol ?? '-'} />
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(gross)}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(net)}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
+                                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
+                                    <td class="py-3 px-4 text-center"><span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span></td>
+
+                                    <td class="py-3 px-4 text-center">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi rute induk</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                <DropdownMenuItem onclick={() => editRoute(row)}>
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/routes/${row.id}`, 'Route deleted.') }>
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-
-                                    <td class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right">
-                                        <div class="text-sm font-semibold text-emerald-800 tabular-nums">{formatCurrency(Number(row.revenue || 0))}</div>
-                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80">Total</div>
-                                    </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-
-                                    <td class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right">
-                                        <div class="text-sm font-semibold text-amber-800 tabular-nums">{formatCurrency(Number(row.bop || 0))}</div>
-                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80">Total</div>
-                                    </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(gross)}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-
-                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
-                                        <div class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}>{formatCurrency(net)}</div>
-                                        <div class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}>{net >= 0 ? 'Positif' : 'Minus'}</div>
-                                    </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.target_revenue_bulanan || 0))}</td>
-                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
-                                        <div class="text-sm font-semibold tabular-nums">{achievement.toFixed(1)}%</div>
-                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Pencapaian</div>
-                                    </td>
-
-                                    <td class="border-b border-r border-border/60 px-3 py-4 text-center">
-                                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
-                                    </td>
-                                </svelte:fragment>
-
-                                <svelte:fragment slot="actions" let:row let:index let:columns>
-                                    {#if canWriteTab('drivers')}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                                <MoreHorizontal class="h-4 w-4" />
-                                                <span class="sr-only">Aksi driver</span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                            <DropdownMenuItem onclick={() => editDriver(row)}>
-                                                <Pencil class="mr-2 h-3.5 w-3.5" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onclick={() => void removeItem(`/api/admin/drivers/${row.id}`, 'Driver deleted.') }>
-                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                                Hapus
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    {/if}
                                 </svelte:fragment>
                             </DataTable>
                         </div>
-    type LayoutCellType = 'seat' | 'empty' | 'driver';
-    type LayoutCell = {
-        type: LayoutCellType;
-        label: string;
-        fixed?: boolean;
-        hidden?: boolean;
-        seatNumber?: number;
-        colspan?: number;
-        marker?: 'aisle' | 'slot';
-        seatStyle?: 'standard' | 'sleeper';
-    };
-    type LayoutGrid = LayoutCell[][];
-    type LayoutPattern =
-        | '2-2'
-        | '2-1'
-        | '1-1'
-        | '2-3'
-        | '3-0'
-        | '4-0'
-        | 'sleep'
-        | 'empty';
-
-    let {
-        stats,
-        initialTab = null,
-        lockedMenuView: lockedFromServer = false,
-        initialMode = null,
-        initialRecordId = null,
-        settingsQuery = null,
-        settingsData = null,
-        settingsMasters = null,
-    }: {
-        stats: Stats;
-        initialTab?: TabName | null;
-        lockedMenuView?: boolean;
-        initialMode?: string | null;
-        initialRecordId?: number | null;
-        settingsQuery?: SettingsQuery | null;
-        settingsData?: SettingsDataPayload | null;
-        settingsMasters?: SettingsMastersPayload | null;
-    } = $props();
-
-    const days = [
-        'Minggu',
-        'Senin',
-        'Selasa',
-        'Rabu',
-        'Kamis',
-        "Jum'at",
-        'Sabtu',
-    ];
-    const tabs = [
-        'routes',
-        'schedules',
-        'drivers',
-        'services',
-        'segments',
-        'customers',
-        'units',
-        'armadas',
-        'pools',
-        'users',
-        'cancellations',
-        'reports',
-    ] as const;
-    type TabName = (typeof tabs)[number];
-    type ViewMode = 'data' | 'form' | 'view' | 'layout';
-    const hybridSettingsTabs: TabName[] = [
-        'schedules',
-        'drivers',
-        'segments',
-        'armadas',
-        'pools',
-        'users',
-    ];
-    const isHybridSettingsTab = (tab: TabName) =>
-        hybridSettingsTabs.includes(tab);
-    const tabTitle = (tab: TabName) => {
-        if (tab === 'routes') {
-            return 'Rute Induk';
-        }
-
-        if (tab === 'schedules') {
-            return 'Jadwal';
-        }
-
-        if (tab === 'drivers') {
-            return 'Driver';
-        }
-
-        if (tab === 'services') {
-            return 'Tarif Bagasi';
-        }
-
-        if (tab === 'segments') {
-            return 'Segment';
-        }
-
-        if (tab === 'customers') {
-            return 'Reguler';
-        }
-
-        if (tab === 'units') {
-            return 'Kategori Armada';
-        }
-
-        if (tab === 'armadas') {
-            return 'Armada';
-        }
-
-        if (tab === 'pools') {
-            return 'Pool';
-        }
-
-        if (tab === 'users') {
-            return 'Users';
-        }
-
-        if (tab === 'cancellations') {
-            return 'Logs';
-        }
-
-        return 'Laporan';
-    };
-
-    type TabGroup = {
-        title: string;
-        description: string;
-        tabs: Array<{
-            tab: TabName;
-            label: string;
-            permission: string | string[];
-        }>;
-    };
-
-    const tabGroups: TabGroup[] = [
-        {
-            title: 'Master Data',
-            description: 'Referensi utama yang dipakai oleh jadwal dan operasional harian.',
-            tabs: [
-                { tab: 'routes', label: 'Rute Induk', permission: 'master.view' },
-                { tab: 'schedules', label: 'Jadwal', permission: 'master.view' },
-                { tab: 'segments', label: 'Segment', permission: 'master.view' },
-                { tab: 'services', label: 'Tarif Bagasi', permission: 'master.view' },
-                { tab: 'customers', label: 'Reguler', permission: 'customer.view' },
-            ],
-        },
-        {
-            title: 'Armada & Akses',
-            description: 'Kelola driver, kategori armada, unit, armada, dan akun pengguna.',
-            tabs: [
-                { tab: 'drivers', label: 'Driver', permission: 'driver.view' },
-                { tab: 'units', label: 'Kategori Armada', permission: 'master.view' },
-                { tab: 'armadas', label: 'Armada', permission: 'armada.view' },
-                { tab: 'pools', label: 'Pool', permission: 'pool.manage' },
-                { tab: 'users', label: 'Users', permission: 'user.manage' },
-            ],
-        },
-        {
-            title: 'Audit & Rekap',
-            description: 'Pantau log aktivitas, pembatalan, dan ringkasan laporan.',
-            tabs: [
-                { tab: 'cancellations', label: 'Logs', permission: 'logs.view' },
-                { tab: 'reports', label: 'Laporan', permission: 'report.view' },
-            ],
-        },
-    ];
-
-    const permissions = $derived(page.props.auth?.permissions ?? []);
-    const visibleTabGroups = $derived(
-        tabGroups
-            .map((group) => ({
-                ...group,
-                tabs: group.tabs.filter((item) =>
-                    hasPermission(permissions, item.permission),
-                ),
-            }))
-            .filter((group) => group.tabs.length > 0),
-    );
-    const tabGroupFor = (tab: TabName) =>
-        visibleTabGroups.find((group) =>
-            group.tabs.some((item) => item.tab === tab),
-        ) ??
-        tabGroups.find((group) => group.tabs.some((item) => item.tab === tab)) ??
-        tabGroups[0];
-    const canOpenTab = (tab: TabName) =>
-        visibleTabGroups.some((group) =>
-            group.tabs.some((item) => item.tab === tab),
-        );
-    const firstVisibleTab = () => visibleTabGroups[0]?.tabs[0]?.tab ?? 'routes';
-
-    let activeTab = $state<TabName>('routes');
-    let activeMode = $state<ViewMode>('data');
-    let lockedMenuView = $state(false);
-    let busy = $state(false);
-    let message = $state('');
-    let error = $state('');
-    let savingService = $state(false);
-    let pendingDeleteKey = $state('');
-    let activeSubmitKey = $state('');
-
-    const setSubmitKey = (key: string) => {
-        activeSubmitKey = key;
-    };
-
-    const clearSubmitKey = (key: string) => {
-        if (activeSubmitKey === key) {
-            activeSubmitKey = '';
-        }
-    };
-
-    const isSubmitActive = (key: string) => activeSubmitKey === key;
-
-    let routes = $state<RouteRow[]>([]);
-    let schedules = $state<ScheduleRow[]>([]);
-    let drivers = $state<DriverRow[]>([]);
-    let services = $state<ServiceRow[]>([]);
-    let segments = $state<SegmentRow[]>([]);
-    let customers = $state<CustomerRow[]>([]);
-    let armadas = $state<ArmadaRow[]>([]);
-    let pools = $state<PoolRow[]>([]);
-    let canManagePools = $state(true);
-    let users = $state<UserRow[]>([]);
-    let roles = $state<RoleOption[]>([]);
-    let cancellations = $state<CancellationRow[]>([]);
-    let units = $state<UnitRow[]>([]);
-    let customerImportInput = $state<HTMLInputElement | null>(null);
-    let customerImporting = $state(false);
-    let customerImportSummary = $state<CustomerImportSummary | null>(null);
-    let customerMeta = $state<Pagination>({
-        page: 1,
-        per_page: 20,
-        total: 0,
-        last_page: 1,
-    });
-    let settingsMeta = $state<Pagination>({
-        page: 1,
-        per_page: 20,
-        total: 0,
-        last_page: 1,
-    });
-    let settingsQueryHydrated = $state(false);
-
-    let routeForm = $state({
-        id: 0,
-        name: '',
-        origin: '',
-        destination: '',
-        target_revenue: '',
-        fixed_cost: '',
-    });
-    let scheduleForm = $state({
-        id: 0,
-        rute: '',
-        dow: 1,
-        jam: '08:00',
-        units: 1,
-        bop: '',
-        unit_id: 0,
-        unit_ids: [0],
-        unit_labels: ['Unit 1'],
-    });
-    let selectedScheduleRoute = $state('');
-    let selectedScheduleRouteId = $state(0);
     let selectedSegmentRouteId = $state(0);
     let driverForm = $state({
         id: 0,
@@ -1043,6 +749,23 @@
     const poolsColumns = [
         { key: 'name', label: 'Pool', width: 'w-[240px]', sticky: 'left' },
         { key: 'routes', label: 'Rute', width: 'w-[320px]', sticky: 'left' },
+        { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
+        { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
+        { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
+        { key: 'revenue', label: 'Total Revenue', align: 'right', numeric: true },
+        { key: 'charter_bop', label: 'Charter BOP', align: 'right', numeric: true },
+        { key: 'departure_bop', label: 'Keberangkatan BOP', align: 'right', numeric: true },
+        { key: 'bop', label: 'Total BOP', align: 'right', numeric: true },
+        { key: 'gross', label: 'Gross', align: 'right', numeric: true },
+        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true },
+        { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
+        { key: 'target_revenue', label: 'Target Revenue', align: 'right', numeric: true },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true },
+        { key: 'status', label: 'Status', align: 'center' },
+    ];
+    const routesColumns = [
+        { key: 'name', label: 'Rute Induk', width: 'w-[220px]', sticky: 'left' },
+        { key: 'direction', label: 'Arah Perjalanan', width: 'w-[300px]', sticky: 'left' },
         { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
         { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
         { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
@@ -4215,357 +3938,84 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <table
-                                class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm"
-                            >
-                                <thead>
-                                    <tr
-                                        class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground"
-                                    >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky left-0 z-30 w-[220px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
-                                            >Rute Induk</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky left-[220px] z-30 w-[300px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold"
-                                            >Arah Perjalanan</th
-                                        >
-                                        <th
-                                            colspan="4"
-                                            class="border-b border-r border-border/70 bg-emerald-50/70 px-3 py-3 text-center font-semibold text-emerald-800"
-                                            >Revenue</th
-                                        >
-                                        <th
-                                            colspan="3"
-                                            class="border-b border-r border-border/70 bg-amber-50/80 px-3 py-3 text-center font-semibold text-amber-800"
-                                            >BOP</th
-                                        >
-                                        <th
-                                            colspan="3"
-                                            class="border-b border-r border-border/70 bg-sky-50/80 px-3 py-3 text-center font-semibold text-sky-800"
-                                            >Margin</th
-                                        >
-                                        <th
-                                            colspan="2"
-                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-3 text-center font-semibold text-slate-700"
-                                            >Target</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-4 text-center font-semibold text-slate-700"
-                                            >Status</th
-                                        >
-                                        <th
-                                            rowspan="2"
-                                            class="sticky right-0 z-30 w-[92px] border-b border-l border-border/70 bg-background px-3 py-4 text-center font-semibold"
-                                            >Aksi</th
-                                        >
-                                    </tr>
-                                    <tr
-                                        class="bg-muted/20 text-[11px] font-semibold text-foreground/80"
-                                    >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Charter</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Keberangkatan</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Bagasi</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Total Revenue</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Charter</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Keberangkatan</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Total BOP</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Gross</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Fixed Cost</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Net Margin</th
-                                        >
-                                        <th
-                                            class="border-b border-border/70 px-3 py-3 text-right"
-                                            >Target Revenue</th
-                                        >
-                                        <th
-                                            class="border-b border-r border-border/70 px-3 py-3 text-right"
-                                            >Achievement</th
-                                        >
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each routes as row (row.id)}
-                                        {@const gross =
-                                            financialGrossMargin(row)}
-                                        {@const net = financialNetMargin(row)}
-                                        {@const achievement =
-                                            financialAchievement(row)}
-                                        {@const status = financialStatus(row)}
-                                        <tr
-                                            class="group transition hover:bg-muted/15"
-                                        >
-                                            <td
-                                                class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="font-semibold text-foreground"
-                                                >
-                                                    {row.name}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    Rute master untuk jadwal dan
-                                                    segment
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="flex flex-wrap items-center gap-2"
-                                                >
-                                                    <span
-                                                        class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
-                                                        >{row.origin ??
-                                                            'Origin belum diatur'}</span
-                                                    >
-                                                    <span
-                                                        class="text-muted-foreground"
-                                                        >→</span
-                                                    >
-                                                    <span
-                                                        class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
-                                                        >{row.destination ??
-                                                            'Destination belum diatur'}</span
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="mt-2 text-[11px] text-muted-foreground"
-                                                >
-                                                    Jalur ini dipakai sebagai
-                                                    acuan relasi jadwal
-                                                    keberangkatan dan segment
-                                                    harga.
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.charter_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.departure_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.luggage_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold text-emerald-800 tabular-nums"
-                                                >
-                                                    {formatCurrency(
-                                                        Number(
-                                                            row.revenue || 0,
-                                                        ),
-                                                    )}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80"
-                                                >
-                                                    Total
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.charter_bop || 0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.departure_bop || 0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold text-amber-800 tabular-nums"
-                                                >
-                                                    {formatCurrency(
-                                                        Number(row.bop || 0),
-                                                    )}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80"
-                                                >
-                                                    Total
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(gross)}</td
-                                            >
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(row.fixed_cost || 0),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}
-                                                >
-                                                    {formatCurrency(net)}
-                                                </div>
-                                                <div
-                                                    class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}
-                                                >
-                                                    {net >= 0
-                                                        ? 'Positif'
-                                                        : 'Minus'}
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums"
-                                                >{formatCurrency(
-                                                    Number(
-                                                        row.target_revenue ||
-                                                            0,
-                                                    ),
-                                                )}</td
-                                            >
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-right"
-                                            >
-                                                <div
-                                                    class="text-sm font-semibold tabular-nums"
-                                                >
-                                                    {achievement.toFixed(1)}%
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground"
-                                                >
-                                                    Pencapaian
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-r border-border/60 px-3 py-4 text-center"
-                                            >
-                                                <span
-                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                                                        status === 'Tercapai'
-                                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                                            : 'border-amber-200 bg-amber-50 text-amber-700'
-                                                    }`}
-                                                >
-                                                    {status}
-                                                </span>
-                                            </td>
-                                            <td
-                                                class="sticky right-0 z-20 border-b border-l border-border/60 bg-background px-3 py-4 text-center group-hover:bg-muted/15"
-                                            >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-8 w-8 rounded-full border border-border/70"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-4 w-4"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi rute induk</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                editRoute(row)}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/routes/${row.id}`,
-                                                                    'Route deleted.',
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
-                                        </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
+                            <DataTable columns={routesColumns} rows={routes} class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm">
+                                <svelte:fragment slot="row" let:row let:index let:columns>
+                                    {@const gross = financialGrossMargin(row)}
+                                    {@const net = financialNetMargin(row)}
+                                    {@const achievement = financialAchievement(row)}
+                                    {@const status = financialStatus(row)}
+
+                                    <td class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[0]?.leftOffset ?? '0px'}`}>
+                                        <div class="font-semibold text-foreground">{row.name}</div>
+                                        <div class="mt-1 text-[11px] text-muted-foreground">Rute master untuk jadwal dan segment</div>
+                                    </td>
+
+                                    <td class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[1]?.leftOffset ?? '0px'}`}>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.origin ?? 'Origin belum diatur'}</span>
+                                            <span class="text-muted-foreground">→</span>
+                                            <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.destination ?? 'Destination belum diatur'}</span>
+                                        </div>
+                                        <div class="mt-2 text-[11px] text-muted-foreground">Jalur ini dipakai sebagai acuan relasi jadwal keberangkatan dan segment harga.</div>
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+
+                                    <td class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right">
+                                        <div class="text-sm font-semibold text-emerald-800 tabular-nums">{formatCurrency(Number(row.revenue || 0))}</div>
+                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80">Total</div>
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+
+                                    <td class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right">
+                                        <div class="text-sm font-semibold text-amber-800 tabular-nums">{formatCurrency(Number(row.bop || 0))}</div>
+                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80">Total</div>
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(gross)}</td>
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+
+                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
+                                        <div class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}>{formatCurrency(net)}</div>
+                                        <div class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}>{net >= 0 ? 'Positif' : 'Minus'}</div>
+                                    </td>
+
+                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
+                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
+                                        <div class="text-sm font-semibold tabular-nums">{achievement.toFixed(1)}%</div>
+                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Pencapaian</div>
+                                    </td>
+
+                                    <td class="border-b border-r border-border/60 px-3 py-4 text-center">
+                                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
+                                    </td>
+                                </svelte:fragment>
+
+                                <svelte:fragment slot="actions" let:row let:index>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                <MoreHorizontal class="h-4 w-4" />
+                                                <span class="sr-only">Aksi rute induk</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                            <DropdownMenuItem onclick={() => editRoute(row)}>
+                                                <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onclick={() => void removeItem(`/api/admin/routes/${row.id}`, 'Route deleted.') }>
+                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                Hapus
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </svelte:fragment>
+                            </DataTable>
                         </div>
                     </div>
                 {/if}
