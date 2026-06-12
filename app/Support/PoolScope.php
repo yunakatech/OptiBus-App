@@ -92,7 +92,7 @@ class PoolScope
      * Get the current tenant's subscription info.
      * Returns null if SaaS tables aren't ready or user is super admin.
      *
-     * @return array{tenant_id: int, tenant_name: string, tenant_status: string, plan_id: int, plan_name: string, plan_slug: string, subscription_status: string, trial_ends_at: string|null, ends_at: string|null}|null
+     * @return array{subscription_id: int, tenant_id: int, tenant_name: string, tenant_status: string, plan_id: int, plan_name: string, plan_slug: string, subscription_status: string, trial_ends_at: string|null, ends_at: string|null}|null
      */
     public static function tenantSubscription(?int $userId = null): ?array
     {
@@ -108,6 +108,7 @@ class PoolScope
             ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'pending_payment' THEN 2 WHEN 'past_due' THEN 3 WHEN 'suspended' THEN 4 ELSE 5 END")
             ->orderByDesc('subscriptions.created_at')
             ->select(
+                'subscriptions.id as subscription_id',
                 'subscriptions.tenant_id',
                 'tenants.name as tenant_name',
                 'tenants.status as tenant_status',
@@ -125,6 +126,7 @@ class PoolScope
         }
 
         return [
+            'subscription_id' => (int) $sub->subscription_id,
             'tenant_id' => (int) $sub->tenant_id,
             'tenant_name' => (string) $sub->tenant_name,
             'tenant_status' => (string) ($sub->tenant_status ?? ''),

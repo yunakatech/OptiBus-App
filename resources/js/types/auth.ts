@@ -31,8 +31,10 @@ export type ActivePool = {
 };
 
 export type TenantSubscription = {
+    subscription_id?: number;
     tenant_id: number;
     tenant_name: string;
+    tenant_status?: string;
     plan_id: number;
     plan_name: string;
     plan_slug: string;

@@ -47,6 +47,7 @@ class AccessControl
             'pool.manage' => ['name' => 'Kelola Pool', 'group' => 'Akses'],
             'user.manage' => ['name' => 'Kelola User', 'group' => 'Akses'],
             'role.manage' => ['name' => 'Kelola Role', 'group' => 'Akses'],
+            'platform.manage' => ['name' => 'Kelola Platform SaaS', 'group' => 'Platform'],
             'logs.view' => ['name' => 'Lihat Logs', 'group' => 'Audit'],
         ];
     }
@@ -78,6 +79,23 @@ class AccessControl
                     'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking',
                     'customer.view', 'customer.create', 'customer.update', 'report.view', 'payment.update',
                     'master.view', 'driver.view', 'armada.view', 'logs.view',
+                ],
+            ],
+            'tenant-owner' => [
+                'name' => 'Tenant Owner',
+                'description' => 'Pemilik tenant dengan akses kelola pool, user, dan operasional tenant.',
+                'permissions' => [
+                    'dashboard.view',
+                    'booking.view', 'booking.create', 'booking.update', 'booking.delete', 'booking.print',
+                    'charter.view', 'charter.create', 'charter.update', 'charter.delete', 'charter.print',
+                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.delete', 'luggage.print', 'luggage.tracking',
+                    'customer.view', 'customer.create', 'customer.update', 'customer.delete', 'customer.import',
+                    'report.view', 'report.export', 'payment.update',
+                    'master.view', 'master.manage',
+                    'driver.view', 'driver.manage',
+                    'armada.view', 'armada.manage',
+                    'pool.manage', 'user.manage',
+                    'logs.view',
                 ],
             ],
             'operator-booking' => [

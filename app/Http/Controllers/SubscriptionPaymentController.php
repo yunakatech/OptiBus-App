@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\PaymentGateway;
+use App\Support\PaymentSettings;
 use App\Support\PoolScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,8 @@ class SubscriptionPaymentController extends Controller
         $tenantSub = PoolScope::tenantSubscription();
         $invoices = [];
         $currentPlan = null;
+
+        $this->syncPendingPaymentInvoice($tenantSub);
 
         if ($tenantSub && Schema::hasTable('invoice_subscriptions')) {
             $hasPaymentProofColumn = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
@@ -64,36 +67,6 @@ class SubscriptionPaymentController extends Controller
             ? DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get()
             : collect();
 
-        // Manual payment config — read from DB settings, fallback to config file
-        $getSetting = function (string $key, string $default): string {
-            if (! Schema::hasTable('settings')) {
-                return $default;
-            }
-            return (string) (DB::table('settings')->where('key', $key)->value('value') ?? $default);
-        };
-
-        $qrisImagePath = $getSetting('payment.qris_image_path', '');
-        $paymentConfig = [
-            'qris' => [
-                'enabled' => true,
-                'merchant_name' => $getSetting('payment.qris_merchant_name', config('payment.qris.merchant_name', 'Qbus Indonesia')),
-                'image_url' => $qrisImagePath !== '' ? asset($qrisImagePath) : asset(config('payment.qris.image_path', 'images/qris.png')),
-                'note' => $getSetting('payment.qris_note', config('payment.qris.note', '')),
-            ],
-            'bank_transfer' => [
-                'enabled' => true,
-                'accounts' => collect([1, 2, 3])->map(function ($i) use ($getSetting): array {
-                    return [
-                        'bank_name' => $getSetting("payment.bank_{$i}_name", config("payment.bank_transfer.accounts.".($i - 1).".bank_name", '')),
-                        'account_number' => $getSetting("payment.bank_{$i}_number", config("payment.bank_transfer.accounts.".($i - 1).".account_number", '')),
-                        'account_holder' => $getSetting("payment.bank_{$i}_holder", config("payment.bank_transfer.accounts.".($i - 1).".account_holder", '')),
-                        'note' => 'Transfer sesuai nominal paket dan upload bukti.',
-                    ];
-                })->filter(fn ($acc) => ! empty($acc['account_number']) && ! empty($acc['bank_name']))->values()->all(),
-            ],
-            'upload_max_kb' => (int) config('payment.upload.max_size_kb', 2048),
-        ];
-
         return Inertia::render('Subscription', [
             'tenant_subscription' => $tenantSub,
             'invoices' => $invoices,
@@ -113,8 +86,84 @@ class SubscriptionPaymentController extends Controller
                 'price_yearly' => (float) $p->price_yearly,
                 'description' => (string) ($p->description ?? ''),
             ])->all(),
-            'payment_config' => $paymentConfig,
+            'payment_config' => PaymentSettings::all(),
+            'account_access' => $this->accountAccess(),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $tenantSub
+     */
+    private function syncPendingPaymentInvoice(?array $tenantSub): void
+    {
+        if (! $tenantSub || ($tenantSub['subscription_status'] ?? '') !== 'pending_payment') {
+            return;
+        }
+
+        if (! Schema::hasTable('invoice_subscriptions') || ! Schema::hasTable('subscriptions') || ! Schema::hasTable('plans')) {
+            return;
+        }
+
+        $subscriptionId = (int) ($tenantSub['subscription_id'] ?? 0);
+        if ($subscriptionId <= 0) {
+            return;
+        }
+
+        $hasActiveInvoice = DB::table('invoice_subscriptions')
+            ->where('subscription_id', $subscriptionId)
+            ->whereIn('status', ['pending', 'verification', 'overdue'])
+            ->exists();
+        if ($hasActiveInvoice) {
+            return;
+        }
+
+        $subscription = DB::table('subscriptions')
+            ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->where('subscriptions.id', $subscriptionId)
+            ->select('subscriptions.*', 'plans.price_monthly', 'plans.price_yearly')
+            ->first();
+        if (! $subscription) {
+            return;
+        }
+
+        $amount = ($subscription->billing_interval ?? 'monthly') === 'yearly'
+            ? (float) $subscription->price_yearly
+            : (float) $subscription->price_monthly;
+        if ($amount <= 0) {
+            return;
+        }
+
+        PaymentGateway::createInvoice(
+            (int) $subscription->tenant_id,
+            (int) $subscription->id,
+            $amount,
+            now()->addDay()->toDateString(),
+        );
+    }
+
+    /**
+     * @return array{tenant_id: int, pool_count: int, role_names: array<int, string>}
+     */
+    private function accountAccess(): array
+    {
+        $userId = (int) (auth()->id() ?? 0);
+        $roleNames = [];
+        if ($userId > 0 && Schema::hasTable('user_role') && Schema::hasTable('roles')) {
+            $roleNames = DB::table('user_role')
+                ->join('roles', 'user_role.role_id', '=', 'roles.id')
+                ->where('user_role.user_id', $userId)
+                ->orderBy('roles.name')
+                ->pluck('roles.name')
+                ->map(static fn ($value) => (string) $value)
+                ->values()
+                ->all();
+        }
+
+        return [
+            'tenant_id' => $userId > 0 ? PoolScope::tenantId($userId) : 0,
+            'pool_count' => $userId > 0 ? count(PoolScope::userPoolIds($userId)) : 0,
+            'role_names' => $roleNames,
+        ];
     }
 
     private function paymentProofUrl(?string $path): ?string

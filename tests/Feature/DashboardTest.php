@@ -303,13 +303,38 @@ class DashboardTest extends TestCase
     {
         $existing = (int) (DB::table('tenants')->where('slug', $slug)->value('id') ?? 0);
         if ($existing > 0) {
+            $this->ensureTenantSubscription($existing);
+
             return $existing;
         }
 
-        return (int) DB::table('tenants')->insertGetId([
+        $tenantId = (int) DB::table('tenants')->insertGetId([
             'name' => strtoupper(str_replace('-', ' ', $slug)),
             'slug' => $slug,
             'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->ensureTenantSubscription($tenantId);
+
+        return $tenantId;
+    }
+
+    private function ensureTenantSubscription(int $tenantId): void
+    {
+        if (DB::table('subscriptions')->where('tenant_id', $tenantId)->exists()) {
+            return;
+        }
+
+        $planId = (int) DB::table('plans')->where('slug', 'starter')->value('id');
+        DB::table('subscriptions')->insert([
+            'tenant_id' => $tenantId,
+            'plan_id' => $planId,
+            'status' => 'active',
+            'starts_at' => now()->toDateString(),
+            'ends_at' => now()->addMonth()->toDateString(),
+            'billing_interval' => 'monthly',
+            'grace_period_days' => 7,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

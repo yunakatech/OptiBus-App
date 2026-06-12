@@ -36,6 +36,7 @@
     import { Label } from '@/components/ui/label';
 
     type TenantSub = {
+        subscription_id?: number;
         tenant_id: number;
         tenant_name: string;
         tenant_status?: string;
@@ -77,9 +78,23 @@
     };
 
     type PaymentConfig = {
-        qris: { enabled: boolean; merchant_name: string; image_url: string; note: string };
+        qris: {
+            enabled: boolean;
+            merchant_name: string;
+            image_url: string;
+            image_path?: string;
+            has_image?: boolean;
+            storage_status?: string;
+            note: string;
+        };
         bank_transfer: { enabled: boolean; accounts: BankAccount[] };
         upload_max_kb: number;
+    };
+
+    type AccountAccess = {
+        tenant_id: number;
+        pool_count: number;
+        role_names: string[];
     };
 
     type BadgeMeta = {
@@ -92,10 +107,15 @@
     const currentPlan = $derived((page.props.current_plan ?? null) as Plan | null);
     const plans = $derived((page.props.plans ?? []) as Plan[]);
     const paymentConfig = $derived((page.props.payment_config ?? {
-        qris: { enabled: false, merchant_name: '', image_url: '', note: '' },
+        qris: { enabled: false, merchant_name: '', image_url: '', has_image: false, storage_status: '', note: '' },
         bank_transfer: { enabled: false, accounts: [] },
         upload_max_kb: 2048,
     }) as PaymentConfig);
+    const accountAccess = $derived((page.props.account_access ?? {
+        tenant_id: 0,
+        pool_count: 0,
+        role_names: [],
+    }) as AccountAccess);
 
     const pendingInvoices = $derived(invoices.filter((invoice) => ['pending', 'overdue'].includes(invoice.status) && !invoice.payment_proof));
     const payableInvoice = $derived(
@@ -109,6 +129,24 @@
     const canAccessDashboard = $derived(tenantSub?.subscription_status === 'trial' || tenantSub?.subscription_status === 'active');
     const paymentMethodsCount = $derived(
         Number(paymentConfig.qris.enabled) + Number(paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0),
+    );
+    const activeBillingTitle = $derived(
+        payableInvoice
+            ? 'Pembayaran perlu diselesaikan'
+            : invoiceInVerification
+                ? 'Pembayaran sedang diverifikasi'
+                : paidInvoices[0]
+                    ? 'Langganan sudah lunas'
+                    : 'Belum ada invoice aktif',
+    );
+    const activeBillingDescription = $derived(
+        payableInvoice
+            ? `${payableInvoice.invoice_number} jatuh tempo ${formatDate(payableInvoice.due_date)}`
+            : invoiceInVerification
+                ? `${invoiceInVerification.invoice_number} menunggu verifikasi admin`
+                : paidInvoices[0]
+                    ? `${paidInvoices[0].invoice_number} lunas pada ${formatDate(paidInvoices[0].paid_at)}`
+                    : 'Invoice akan muncul otomatis setelah memilih paket berbayar.',
     );
 
     let showPaymentModal = $state(false);
@@ -230,8 +268,9 @@
         return `Transfer ${account.bank_name} ${account.account_number}`;
     }
 
-    async function uploadProof() {
-        if (!proofFile || !payingInvoice) {
+    async function uploadProof(invoiceOverride: Invoice | null = null) {
+        const invoice = invoiceOverride ?? payingInvoice;
+        if (!proofFile || !invoice) {
             return;
         }
 
@@ -244,7 +283,7 @@
         formData.append('payment_method', selectedPaymentMethodLabel());
 
         try {
-            const response = await fetch(`/api/subscription/upload-proof/${payingInvoice.id}`, {
+            const response = await fetch(`/api/subscription/upload-proof/${invoice.id}`, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -294,6 +333,17 @@
     function handleQrisError(event: Event) {
         const img = event.target as HTMLImageElement;
         img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect fill="#f8fafc" width="192" height="192"/><text x="96" y="100" text-anchor="middle" fill="#64748b" font-size="14">QRIS</text></svg>');
+    }
+
+    function qrisStorageLabel(status: string | undefined): string {
+        const labels: Record<string, string> = {
+            ready: 'QRIS siap dipakai',
+            missing_link: 'QRIS sudah diupload, storage link belum aktif',
+            missing_file: 'QRIS belum diupload',
+            external: 'QRIS eksternal',
+        };
+
+        return labels[status ?? ''] ?? 'Status QRIS belum diketahui';
     }
 
     onDestroy(() => {
@@ -398,48 +448,202 @@
                     </CardContent>
                 </Card>
 
-                {#if payableInvoice}
-                    <Card class="border-amber-200 bg-amber-50/40 dark:border-amber-400/20 dark:bg-amber-950/10">
-                        <CardContent class="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+                <Card class={payableInvoice ? 'border-amber-200 bg-amber-50/40 dark:border-amber-400/20 dark:bg-amber-950/10' : 'overflow-hidden'}>
+                    <CardHeader class="border-b bg-background/70">
+                        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                             <div class="flex gap-3">
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-100">
-                                    <Receipt class="h-5 w-5" />
+                                <div class={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${payableInvoice ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-100' : invoiceInVerification ? 'bg-sky-100 text-sky-700 dark:bg-sky-400/10 dark:text-sky-100' : paidInvoices[0] ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-100' : 'bg-muted text-muted-foreground'}`}>
+                                    {#if payableInvoice}
+                                        <Receipt class="h-5 w-5" />
+                                    {:else if invoiceInVerification}
+                                        <FileCheck2 class="h-5 w-5" />
+                                    {:else if paidInvoices[0]}
+                                        <CheckCircle2 class="h-5 w-5" />
+                                    {:else}
+                                        <AlertTriangle class="h-5 w-5" />
+                                    {/if}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-foreground">Invoice perlu dibayar</p>
-                                    <p class="mt-1 text-sm text-muted-foreground">
-                                        {payableInvoice.invoice_number} jatuh tempo {formatDate(payableInvoice.due_date)}
-                                    </p>
-                                    <p class="mt-2 text-xl font-semibold text-foreground">
-                                        {formatRupiah(payableInvoice.amount)}
-                                    </p>
+                                    <CardTitle class="text-xl">{activeBillingTitle}</CardTitle>
+                                    <CardDescription class="mt-1">{activeBillingDescription}</CardDescription>
                                 </div>
                             </div>
-                            <Button class="h-10 rounded-lg" onclick={() => openPayment(payableInvoice)}>
-                                <Banknote class="mr-2 h-4 w-4" />
-                                Bayar Sekarang
-                            </Button>
+                            {#if payableInvoice}
+                                <div class="rounded-lg border bg-background px-4 py-3 text-right">
+                                    <p class="text-xs text-muted-foreground">Total invoice</p>
+                                    <p class="mt-1 text-2xl font-semibold text-foreground">{formatRupiah(payableInvoice.amount)}</p>
+                                </div>
+                            {/if}
+                        </div>
+                    </CardHeader>
+
+                    {#if payableInvoice}
+                        <CardContent class="grid gap-4 p-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,1fr)]">
+                            <div class="space-y-3">
+                                <div class="rounded-lg border bg-background p-3">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p class="text-xs text-muted-foreground">Invoice</p>
+                                            <p class="mt-1 font-semibold text-foreground">{payableInvoice.invoice_number}</p>
+                                        </div>
+                                        <Badge variant={invoiceStatusBadge(payableInvoice.status).variant}>
+                                            {invoiceStatusBadge(payableInvoice.status).label}
+                                        </Badge>
+                                    </div>
+                                    <div class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                                        <div class="rounded-md bg-muted/40 p-3">
+                                            <p class="text-xs text-muted-foreground">Jatuh tempo</p>
+                                            <p class="mt-1 font-medium text-foreground">{formatDate(payableInvoice.due_date)}</p>
+                                        </div>
+                                        <div class="rounded-md bg-muted/40 p-3">
+                                            <p class="text-xs text-muted-foreground">Metode aktif</p>
+                                            <p class="mt-1 font-medium text-foreground">{paymentMethodsCount} metode</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2 rounded-lg border bg-background p-1">
+                                    {#if paymentConfig.qris.enabled}
+                                        <button
+                                            type="button"
+                                            onclick={() => paymentTab = 'qris'}
+                                            class={`flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium ${paymentTab === 'qris' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                                        >
+                                            <QrCode class="h-4 w-4" />
+                                            QRIS
+                                        </button>
+                                    {/if}
+                                    {#if paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0}
+                                        <button
+                                            type="button"
+                                            onclick={() => paymentTab = 'transfer'}
+                                            class={`flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium ${paymentTab === 'transfer' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                                        >
+                                            <Landmark class="h-4 w-4" />
+                                            Transfer
+                                        </button>
+                                    {/if}
+                                </div>
+
+                                {#if paymentTab === 'qris' && paymentConfig.qris.enabled}
+                                    <div class="rounded-lg border bg-white p-4 text-slate-950 shadow-sm dark:bg-white">
+                                        <div class="flex flex-col items-center gap-3">
+                                            {#if paymentConfig.qris.image_url}
+                                                <img
+                                                    src={paymentConfig.qris.image_url}
+                                                    alt="QRIS {paymentConfig.qris.merchant_name}"
+                                                    class="h-56 w-56 object-contain"
+                                                    onerror={handleQrisError}
+                                                />
+                                            {:else}
+                                                <div class="flex h-56 w-56 items-center justify-center rounded-lg border border-dashed text-sm text-slate-500">
+                                                    QRIS belum tersedia
+                                                </div>
+                                            {/if}
+                                            <div class="text-center">
+                                                <p class="font-semibold">{paymentConfig.qris.merchant_name || 'Merchant Qbus'}</p>
+                                                <p class="mt-1 text-xs text-slate-500">{qrisStorageLabel(paymentConfig.qris.storage_status)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/if}
+
+                                {#if paymentTab === 'transfer' && paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0}
+                                    <div class="space-y-2">
+                                        {#each paymentConfig.bank_transfer.accounts as account, index}
+                                            <div
+                                                role="button"
+                                                tabindex="0"
+                                                onclick={() => selectedBank = index}
+                                                onkeydown={(event) => { if (event.key === 'Enter' || event.key === ' ') selectedBank = index; }}
+                                                class={`w-full cursor-pointer rounded-lg border bg-background p-3 text-left transition ${selectedBank === index ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/30'}`}
+                                            >
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p class="font-semibold text-foreground">{account.bank_name}</p>
+                                                        <p class="mt-1 font-mono text-lg tracking-normal">{account.account_number}</p>
+                                                        <p class="mt-1 text-xs text-muted-foreground">a.n. {account.account_holder}</p>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-8 w-8 rounded-lg"
+                                                        onclick={(event) => { event.stopPropagation(); copyText(account.account_number); }}
+                                                        aria-label="Salin nomor rekening"
+                                                    >
+                                                        {#if copiedAccount === account.account_number}
+                                                            <Check class="h-4 w-4 text-emerald-600" />
+                                                        {:else}
+                                                            <Copy class="h-4 w-4" />
+                                                        {/if}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
+
+                            <div class="rounded-lg border bg-background p-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-semibold text-foreground">Upload bukti pembayaran</p>
+                                        <p class="mt-1 text-sm text-muted-foreground">
+                                            JPG, PNG, atau PDF maksimal {paymentConfig.upload_max_kb}KB.
+                                        </p>
+                                    </div>
+                                    <Upload class="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <label class="mt-4 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-4 py-4 text-sm hover:bg-muted/30">
+                                    <Upload class="h-4 w-4 shrink-0 text-muted-foreground" />
+                                    {#if proofFile}
+                                        <span class="min-w-0 truncate font-medium text-emerald-700 dark:text-emerald-300">{proofFile.name}</span>
+                                    {:else}
+                                        <span class="min-w-0 truncate text-muted-foreground">Pilih file bukti pembayaran</span>
+                                    {/if}
+                                    <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden" onchange={selectProofFile} />
+                                </label>
+
+                                <Button class="mt-3 h-10 w-full rounded-lg" onclick={() => uploadProof(payableInvoice)} disabled={!proofFile || uploading}>
+                                    {#if uploading}
+                                        Mengupload...
+                                    {:else}
+                                        <Upload class="mr-2 h-4 w-4" />
+                                        Kirim Bukti Pembayaran
+                                    {/if}
+                                </Button>
+
+                                {#if uploadMessage}
+                                    <div class={`mt-3 rounded-lg px-4 py-2 text-sm ${uploadMessage.toLowerCase().includes('berhasil') ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-200' : 'bg-destructive/10 text-destructive'}`}>
+                                        {uploadMessage}
+                                    </div>
+                                {/if}
+                            </div>
                         </CardContent>
-                    </Card>
-                {:else if invoiceInVerification}
-                    <Card class="border-sky-200 bg-sky-50/50 dark:border-sky-400/20 dark:bg-sky-950/10">
-                        <CardContent class="flex items-start gap-3 p-4">
-                            <FileCheck2 class="mt-0.5 h-5 w-5 shrink-0 text-sky-700 dark:text-sky-200" />
-                            <div>
-                                <p class="font-semibold text-foreground">Bukti pembayaran sedang diverifikasi</p>
+                    {:else if invoiceInVerification}
+                        <CardContent class="p-4">
+                            <div class="rounded-lg border bg-background p-4">
+                                <p class="font-semibold text-foreground">Bukti pembayaran sudah dikirim</p>
                                 <p class="mt-1 text-sm text-muted-foreground">
-                                    Invoice {invoiceInVerification.invoice_number} sudah memiliki bukti upload.
+                                    Admin SaaS akan memverifikasi invoice ini sebelum akses operasional aktif.
                                 </p>
                                 {#if invoiceInVerification.payment_proof_url}
-                                    <a href={invoiceInVerification.payment_proof_url} target="_blank" rel="noreferrer" class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                                    <a href={invoiceInVerification.payment_proof_url} target="_blank" rel="noreferrer" class="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">
                                         Lihat bukti pembayaran
                                         <ExternalLink class="h-3.5 w-3.5" />
                                     </a>
                                 {/if}
                             </div>
                         </CardContent>
-                    </Card>
-                {/if}
+                    {:else if !paidInvoices[0] && tenantSub.subscription_status === 'pending_payment'}
+                        <CardContent class="p-4">
+                            <div class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                Invoice belum tersedia. Sistem akan mencoba membuat invoice otomatis dari subscription pending payment.
+                            </div>
+                        </CardContent>
+                    {/if}
+                </Card>
 
                 <Card>
                     <CardHeader>
@@ -568,13 +772,32 @@
                     <CardContent class="space-y-3">
                         {#if paymentConfig.qris.enabled}
                             <div class="rounded-lg border border-border/70 p-3">
-                                <div class="flex items-center gap-2 font-semibold text-foreground">
-                                    <QrCode class="h-4 w-4" />
-                                    QRIS
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border bg-white p-1">
+                                        {#if paymentConfig.qris.image_url}
+                                            <img
+                                                src={paymentConfig.qris.image_url}
+                                                alt="QRIS {paymentConfig.qris.merchant_name}"
+                                                class="h-12 w-12 object-contain"
+                                                onerror={handleQrisError}
+                                            />
+                                        {:else}
+                                            <QrCode class="h-6 w-6 text-slate-400" />
+                                        {/if}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 font-semibold text-foreground">
+                                            <QrCode class="h-4 w-4" />
+                                            QRIS
+                                        </div>
+                                        <p class="mt-1 truncate text-sm text-muted-foreground">
+                                            {paymentConfig.qris.merchant_name || 'Merchant Qbus'}
+                                        </p>
+                                        <p class="mt-1 text-xs text-muted-foreground">
+                                            {qrisStorageLabel(paymentConfig.qris.storage_status)}
+                                        </p>
+                                    </div>
                                 </div>
-                                <p class="mt-1 text-sm text-muted-foreground">
-                                    {paymentConfig.qris.merchant_name || 'Merchant Qbus'}
-                                </p>
                             </div>
                         {/if}
 
@@ -627,6 +850,33 @@
                         <p>{paidInvoices.length} invoice sudah lunas dari {invoices.length} invoice terakhir.</p>
                     </CardContent>
                 </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="text-lg">Akses Akun</CardTitle>
+                        <CardDescription>Mapping tenant, pool, dan role aktif akun ini.</CardDescription>
+                    </CardHeader>
+                    <CardContent class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between gap-3 rounded-lg border p-3">
+                            <span class="text-muted-foreground">Tenant ID</span>
+                            <span class="font-semibold text-foreground">#{accountAccess.tenant_id || tenantSub.tenant_id}</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 rounded-lg border p-3">
+                            <span class="text-muted-foreground">Pool terhubung</span>
+                            <span class="font-semibold text-foreground">{accountAccess.pool_count}</span>
+                        </div>
+                        <div class="rounded-lg border p-3">
+                            <span class="text-muted-foreground">Role</span>
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                {#each accountAccess.role_names as role}
+                                    <Badge variant="outline">{role}</Badge>
+                                {:else}
+                                    <span class="text-xs text-muted-foreground">Belum ada role</span>
+                                {/each}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     {/if}
@@ -675,7 +925,7 @@
                             QRIS
                         </button>
                     {/if}
-                    {#if paymentConfig.bank_transfer.enabled}
+                    {#if paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0}
                         <button
                             type="button"
                             onclick={() => paymentTab = 'transfer'}
@@ -704,7 +954,7 @@
                     </div>
                 {/if}
 
-                {#if paymentTab === 'transfer' && paymentConfig.bank_transfer.enabled}
+                {#if paymentTab === 'transfer' && paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0}
                     <div class="space-y-2">
                         {#each paymentConfig.bank_transfer.accounts as account, index}
                             <button
