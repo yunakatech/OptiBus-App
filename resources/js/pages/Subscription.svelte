@@ -22,6 +22,7 @@
         Upload,
         X,
     } from 'lucide-svelte';
+    import { onDestroy } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -118,6 +119,7 @@
     let uploadMessage = $state('');
     let copiedAccount = $state('');
     let copyResetTimer: number | undefined = undefined;
+    let uploadCloseTimer: number | undefined = undefined;
 
     function formatRupiah(value: number): string {
         return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
@@ -256,9 +258,14 @@
             }
 
             uploadMessage = data.message || 'Bukti pembayaran berhasil diupload.';
-            window.setTimeout(() => {
+            if (uploadCloseTimer) {
+                window.clearTimeout(uploadCloseTimer);
+            }
+
+            uploadCloseTimer = window.setTimeout(() => {
                 showPaymentModal = false;
                 window.location.reload();
+                uploadCloseTimer = undefined;
             }, 1200);
         } catch (error: any) {
             uploadMessage = error.message || 'Network error';
@@ -284,6 +291,15 @@
         const img = event.target as HTMLImageElement;
         img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect fill="#f8fafc" width="192" height="192"/><text x="96" y="100" text-anchor="middle" fill="#64748b" font-size="14">QRIS</text></svg>');
     }
+
+    onDestroy(() => {
+        if (copyResetTimer) {
+            window.clearTimeout(copyResetTimer);
+        }
+        if (uploadCloseTimer) {
+            window.clearTimeout(uploadCloseTimer);
+        }
+    });
 
     function closePaymentModal() {
         showPaymentModal = false;

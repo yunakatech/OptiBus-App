@@ -90,16 +90,25 @@ class ActivityLog
         );
     }
 
-    public static function count(int $poolId = 0): int
+    public static function count(int $poolId = 0, ?int $max = null): int
     {
         $scope = PoolScope::forCurrentUser($poolId);
+        $max = $max !== null ? max(1, $max) : null;
 
         if (self::usesDatabase()) {
             if ($scope['all']) {
-                return (int) DB::table('activity_logs')->count();
+                $query = DB::table('activity_logs')->where('title', '!=', '');
+
+                if ($max !== null) {
+                    return (int) DB::query()
+                        ->fromSub($query->limit($max), 'capped_activity_logs')
+                        ->count();
+                }
+
+                return (int) $query->count();
             }
 
-            return self::countFromDatabase($scope);
+            return self::countFromDatabase($scope, $max);
         }
 
         $path = storage_path('logs/activity.log');
@@ -117,6 +126,9 @@ class ActivityLog
             $row = self::parseJsonLine($line);
             if ($row !== null && self::isVisibleForScope($row, $scope)) {
                 $count += 1;
+                if ($max !== null && $count >= $max) {
+                    break;
+                }
             }
         }
 
@@ -174,7 +186,7 @@ class ActivityLog
     private static function recentFromDatabase(int $limit, int $offset, array $scope): array
     {
         if ($scope['all']) {
-            return DB::table('activity_logs')
+            return self::databaseQueryForScope($scope)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($offset)
@@ -230,7 +242,7 @@ class ActivityLog
     /**
      * @param array<string, mixed> $scope
      */
-    private static function countFromDatabase(array $scope): int
+    private static function countFromDatabase(array $scope, ?int $max = null): int
     {
         $count = 0;
         $offset = 0;
@@ -252,6 +264,9 @@ class ActivityLog
                 $item = self::databaseRow($row);
                 if ($item['title'] !== '' && self::isVisibleForScope($item, $scope)) {
                     $count += 1;
+                    if ($max !== null && $count >= $max) {
+                        break 2;
+                    }
                 }
             }
 
@@ -286,18 +301,14 @@ class ActivityLog
      */
     private static function databaseQueryForScope(array $scope): \Illuminate\Database\Query\Builder
     {
-        $query = DB::table('activity_logs');
+        $query = DB::table('activity_logs')->where('title', '!=', '');
         $tenantId = (int) ($scope['tenant_id'] ?? 0);
 
         if (
             $tenantId > 0
             && Schema::hasColumn('activity_logs', 'tenant_id')
         ) {
-            $query->where(function ($builder) use ($tenantId): void {
-                $builder
-                    ->where('tenant_id', $tenantId)
-                    ->orWhereNull('tenant_id');
-            });
+            $query->where('tenant_id', $tenantId);
         }
 
         return $query;

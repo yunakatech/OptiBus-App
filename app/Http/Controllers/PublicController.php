@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,21 +41,23 @@ class PublicController extends Controller
             return [];
         }
 
-        return DB::table('plans')
+        $plans = DB::table('plans')
             ->where('is_active', true)
             ->orderBy('sort_order')
-            ->get()
-            ->map(function ($p) {
-                // Get feature list for this plan
-                $features = [];
-                if (Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
-                    $features = DB::table('plan_feature')
-                        ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
-                        ->where('plan_feature.plan_id', $p->id)
-                        ->orderBy('feature_gates.feature_group')
-                        ->orderBy('feature_gates.feature_name')
-                        ->select('feature_gates.feature_name', 'feature_gates.feature_group', 'plan_feature.max_value')
-                        ->get()
+            ->get();
+
+        $featuresByPlan = collect();
+        if ($plans->isNotEmpty() && Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
+            $featuresByPlan = DB::table('plan_feature')
+                ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
+                ->whereIn('plan_feature.plan_id', $plans->pluck('id')->all())
+                ->orderBy('feature_gates.feature_group')
+                ->orderBy('feature_gates.feature_name')
+                ->select('plan_feature.plan_id', 'feature_gates.feature_name', 'feature_gates.feature_group', 'plan_feature.max_value')
+                ->get()
+                ->groupBy('plan_id')
+                ->map(function (Collection $rows): array {
+                    return $rows
                         ->map(fn ($f) => [
                             'name' => (string) $f->feature_name,
                             'group' => (string) $f->feature_group,
@@ -62,8 +65,11 @@ class PublicController extends Controller
                             'limit' => $f->max_value,
                         ])
                         ->all();
-                }
+                });
+        }
 
+        return $plans
+            ->map(function ($p) use ($featuresByPlan) {
                 return [
                     'id' => (int) $p->id,
                     'name' => (string) $p->name,
@@ -76,7 +82,7 @@ class PublicController extends Controller
                     'max_armadas' => (int) $p->max_armadas,
                     'max_routes' => (int) $p->max_routes,
                     'max_drivers' => (int) $p->max_drivers,
-                    'features' => $features,
+                    'features' => $featuresByPlan->get($p->id, []),
                 ];
             })
             ->all();

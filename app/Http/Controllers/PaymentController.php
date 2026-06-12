@@ -42,19 +42,17 @@ class PaymentController extends Controller
     {
         $filters = $this->filters($request);
         $query = $this->paymentUnionQuery($filters);
-        $rows = $query === null
-            ? collect()
+        $rowsQuery = $query === null
+            ? null
             : DB::query()
                 ->fromSub($query, 'payment_rows')
                 ->orderByDesc('trx_date')
                 ->orderByDesc('trx_time')
                 ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->get()
-                ->map(fn (object $row): array => $this->publicRow($row));
+                ->orderByDesc('id');
         $filename = 'pembayaran-'.$filters['status'].'-'.$filters['source'].'-'.now()->format('Ymd-His').'.csv';
 
-        return response()->streamDownload(function () use ($rows): void {
+        return response()->streamDownload(function () use ($rowsQuery): void {
             $out = fopen('php://output', 'w');
             if ($out === false) {
                 return;
@@ -80,7 +78,14 @@ class PaymentController extends Controller
                 'Dibuat',
             ]);
 
-            foreach ($rows as $row) {
+            if ($rowsQuery === null) {
+                fclose($out);
+
+                return;
+            }
+
+            foreach ($rowsQuery->cursor() as $rawRow) {
+                $row = $this->publicRow($rawRow);
                 fputcsv($out, [
                     $row['source_label'] ?? '',
                     $row['code'] ?? '',
@@ -142,13 +147,14 @@ class PaymentController extends Controller
         $perPage = max(10, min(50, (int) $filters['per_page']));
         $total = 0;
         $rows = [];
+        $query = $this->paymentUnionQuery($filters);
 
-        if ($this->paymentUnionQuery($filters) !== null) {
-            $totalQuery = DB::query()->fromSub($this->paymentUnionQuery($filters), 'payment_rows');
+        if ($query !== null) {
+            $totalQuery = DB::query()->fromSub(clone $query, 'payment_rows');
             $total = (int) $totalQuery->count();
 
             $rows = DB::query()
-                ->fromSub($this->paymentUnionQuery($filters), 'payment_rows')
+                ->fromSub($query, 'payment_rows')
                 ->orderByDesc('trx_date')
                 ->orderByDesc('trx_time')
                 ->orderByDesc('created_at')

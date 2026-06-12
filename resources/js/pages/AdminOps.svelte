@@ -686,6 +686,7 @@
     let armadaCategories = $state<string[]>([]);
     let armadaTemplateSearch = $state('');
     let armadaTemplateLookupOpen = $state(false);
+    let armadaTemplateBlurTimer: ReturnType<typeof setTimeout> | null = null;
     let armadaViewId = $state<number>(0);
     let layoutUnitId = $state<number>(0);
     let layoutTemplateSearch = $state('');
@@ -2960,8 +2961,13 @@
     };
 
     const onArmadaTemplateBlur = () => {
-        setTimeout(() => {
+        if (armadaTemplateBlurTimer) {
+            clearTimeout(armadaTemplateBlurTimer);
+        }
+
+        armadaTemplateBlurTimer = setTimeout(() => {
             armadaTemplateLookupOpen = false;
+            armadaTemplateBlurTimer = null;
         }, 120);
     };
     const resetPoolForm = () =>
@@ -3697,6 +3703,9 @@
     });
 
     onDestroy(() => {
+        if (armadaTemplateBlurTimer) {
+            clearTimeout(armadaTemplateBlurTimer);
+        }
         destroyScheduleTimePicker();
         destroyReportPickers();
     });

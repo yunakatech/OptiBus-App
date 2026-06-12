@@ -7,6 +7,27 @@ use Illuminate\Support\Facades\Schema;
 
 class FeatureGate
 {
+    /** @var array<string, object|null> */
+    private static array $currentPlanCache = [];
+
+    /** @var array<string, int> */
+    private static array $featureGateIdCache = [];
+
+    /** @var array<string, object|null> */
+    private static array $planFeatureCache = [];
+
+    /** @var array<string, mixed> */
+    private static array $featureMaxValueCache = [];
+
+    /** @var array<string, int> */
+    private static array $resourceCountCache = [];
+
+    /** @var array<string, string> */
+    private static array $planNameCache = [];
+
+    /** @var array<string, array<string, array{max: int|null, current: int, feature_name: string}>> */
+    private static array $usageLimitsCache = [];
+
     /**
      * Check if the feature gating system is ready.
      */
@@ -16,6 +37,17 @@ class FeatureGate
             && Schema::hasTable('plan_feature')
             && Schema::hasTable('subscriptions')
             && Schema::hasTable('plans');
+    }
+
+    public static function flushRequestCache(): void
+    {
+        self::$currentPlanCache = [];
+        self::$featureGateIdCache = [];
+        self::$planFeatureCache = [];
+        self::$featureMaxValueCache = [];
+        self::$resourceCountCache = [];
+        self::$planNameCache = [];
+        self::$usageLimitsCache = [];
     }
 
     /**
@@ -43,7 +75,6 @@ class FeatureGate
      */
     public static function currentPlan(?int $userId = null): ?object
     {
-        static $cache = [];
         $userId ??= (int) (auth()->id() ?? 0);
 
         // Super admins bypass feature gates
@@ -56,33 +87,32 @@ class FeatureGate
             return null;
         }
 
-        $cacheKey = "t{$tenantId}";
-        if (isset($cache[$cacheKey])) {
-            return $cache[$cacheKey];
+        $cacheKey = self::requestCacheKey("plan:t{$tenantId}");
+        if (array_key_exists($cacheKey, self::$currentPlanCache)) {
+            return self::$currentPlanCache[$cacheKey];
         }
 
         $sub = DB::table('subscriptions')
-            ->where('tenant_id', $tenantId)
-            ->whereIn('status', ['trial', 'active', 'past_due'])
-            ->orderByRaw("FIELD(status, 'active', 'trial', 'past_due')")
-            ->select('plan_id', 'status')
+            ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->where('subscriptions.tenant_id', $tenantId)
+            ->whereIn('subscriptions.status', ['trial', 'active', 'past_due'])
+            ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END")
+            ->select('subscriptions.plan_id', 'subscriptions.status', 'plans.slug as plan_slug')
             ->first();
 
         if (! $sub) {
-            $cache[$cacheKey] = (object) ['plan_id' => 0, 'plan_slug' => '', 'status' => 'inactive'];
+            self::$currentPlanCache[$cacheKey] = (object) ['plan_id' => 0, 'plan_slug' => '', 'status' => 'inactive'];
 
-            return $cache[$cacheKey];
+            return self::$currentPlanCache[$cacheKey];
         }
 
-        $planSlug = (string) (DB::table('plans')->where('id', (int) $sub->plan_id)->value('slug') ?? '');
-
-        $cache[$cacheKey] = (object) [
+        self::$currentPlanCache[$cacheKey] = (object) [
             'plan_id' => (int) $sub->plan_id,
-            'plan_slug' => $planSlug,
+            'plan_slug' => (string) ($sub->plan_slug ?? ''),
             'status' => (string) $sub->status,
         ];
 
-        return $cache[$cacheKey];
+        return self::$currentPlanCache[$cacheKey];
     }
 
     /**
@@ -121,21 +151,14 @@ class FeatureGate
             return false;
         }
 
-        // Get the feature gate ID
-        $featureGateId = DB::table('feature_gates')
-            ->where('feature_key', $featureKey)
-            ->value('id');
+        $featureGateId = self::featureGateId($featureKey);
 
         if (! $featureGateId) {
             // Feature gate not registered → assume core feature (allowed)
             return true;
         }
 
-        // Check if the plan includes this feature
-        $mapping = DB::table('plan_feature')
-            ->where('plan_id', $plan->plan_id)
-            ->where('feature_gate_id', $featureGateId)
-            ->first();
+        $mapping = self::planFeatureMapping((int) $plan->plan_id, $featureGateId);
 
         if (! $mapping) {
             return false;
@@ -197,12 +220,7 @@ class FeatureGate
             return false;
         }
 
-        // Get max_value from plan_feature
-        $maxValue = DB::table('plan_feature')
-            ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
-            ->where('plan_feature.plan_id', $plan->plan_id)
-            ->where('feature_gates.feature_key', $resourceKey)
-            ->value('plan_feature.max_value');
+        $maxValue = self::maxValueForFeature((int) $plan->plan_id, $resourceKey);
 
         // null = unlimited
         if ($maxValue === null) {
@@ -220,15 +238,13 @@ class FeatureGate
         }
 
         if (Schema::hasColumn($tableName, $tenantColumn)) {
-            $currentCount = (int) DB::table($tableName)
-                ->where($tenantColumn, $tenantId)
-                ->count();
+            $currentCount = self::resourceCount($tableName, $tenantColumn, $tenantId);
 
             return ($currentCount + $increment) <= (int) $maxValue;
         }
 
         // Fallback: count all (no tenant column)
-        $currentCount = (int) DB::table($tableName)->count();
+        $currentCount = self::resourceCount($tableName, '', 0);
 
         return ($currentCount + $increment) <= (int) $maxValue;
     }
@@ -265,6 +281,11 @@ class FeatureGate
             return [];
         }
 
+        $cacheKey = self::requestCacheKey('usage:'.$tenantId.':'.$plan->plan_id);
+        if (array_key_exists($cacheKey, self::$usageLimitsCache)) {
+            return self::$usageLimitsCache[$cacheKey];
+        }
+
         $mappings = DB::table('plan_feature')
             ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
             ->where('plan_feature.plan_id', $plan->plan_id)
@@ -287,9 +308,7 @@ class FeatureGate
             $current = 0;
 
             if ($info && Schema::hasTable($info['table']) && Schema::hasColumn($info['table'], $info['column'])) {
-                $current = (int) DB::table($info['table'])
-                    ->where($info['column'], $tenantId)
-                    ->count();
+                $current = self::resourceCount($info['table'], $info['column'], $tenantId);
             }
 
             $limits[$mapping->feature_key] = [
@@ -299,7 +318,7 @@ class FeatureGate
             ];
         }
 
-        return $limits;
+        return self::$usageLimitsCache[$cacheKey] = $limits;
     }
 
     /**
@@ -316,18 +335,95 @@ class FeatureGate
             return 'Tidak ada langganan aktif.';
         }
 
-        $maxValue = DB::table('plan_feature')
-            ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
-            ->where('plan_feature.plan_id', $plan->plan_id)
-            ->where('feature_gates.feature_key', $resourceKey)
-            ->value('plan_feature.max_value');
+        $maxValue = self::maxValueForFeature((int) $plan->plan_id, $resourceKey);
 
         if ($maxValue === null) {
             return null; // unlimited — no message needed
         }
 
-        $planName = DB::table('plans')->where('id', $plan->plan_id)->value('name') ?? 'saat ini';
+        $planName = self::planName((int) $plan->plan_id);
 
         return "Batas maksimal tercapai untuk paket {$planName}. Silakan upgrade paket untuk menambah kapasitas.";
+    }
+
+    private static function featureGateId(string $featureKey): int
+    {
+        $featureKey = trim($featureKey);
+        $cacheKey = self::requestCacheKey('feature-gate:'.$featureKey);
+        if (array_key_exists($cacheKey, self::$featureGateIdCache)) {
+            return self::$featureGateIdCache[$cacheKey];
+        }
+
+        return self::$featureGateIdCache[$cacheKey] = (int) (DB::table('feature_gates')
+            ->where('feature_key', $featureKey)
+            ->value('id') ?? 0);
+    }
+
+    private static function planFeatureMapping(int $planId, int $featureGateId): ?object
+    {
+        $cacheKey = self::requestCacheKey("plan-feature:{$planId}:{$featureGateId}");
+        if (array_key_exists($cacheKey, self::$planFeatureCache)) {
+            return self::$planFeatureCache[$cacheKey];
+        }
+
+        return self::$planFeatureCache[$cacheKey] = DB::table('plan_feature')
+            ->where('plan_id', $planId)
+            ->where('feature_gate_id', $featureGateId)
+            ->first();
+    }
+
+    private static function maxValueForFeature(int $planId, string $featureKey): mixed
+    {
+        $featureKey = trim($featureKey);
+        $cacheKey = self::requestCacheKey("feature-max:{$planId}:{$featureKey}");
+        if (array_key_exists($cacheKey, self::$featureMaxValueCache)) {
+            return self::$featureMaxValueCache[$cacheKey];
+        }
+
+        return self::$featureMaxValueCache[$cacheKey] = DB::table('plan_feature')
+            ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
+            ->where('plan_feature.plan_id', $planId)
+            ->where('feature_gates.feature_key', $featureKey)
+            ->value('plan_feature.max_value');
+    }
+
+    private static function resourceCount(string $tableName, string $tenantColumn, int $tenantId): int
+    {
+        $cacheKey = self::requestCacheKey("resource-count:{$tableName}:{$tenantColumn}:{$tenantId}");
+        if (array_key_exists($cacheKey, self::$resourceCountCache)) {
+            return self::$resourceCountCache[$cacheKey];
+        }
+
+        $query = DB::table($tableName);
+        if ($tenantColumn !== '' && $tenantId > 0) {
+            $query->where($tenantColumn, $tenantId);
+        }
+
+        return self::$resourceCountCache[$cacheKey] = (int) $query->count();
+    }
+
+    private static function planName(int $planId): string
+    {
+        $cacheKey = self::requestCacheKey('plan-name:'.$planId);
+        if (array_key_exists($cacheKey, self::$planNameCache)) {
+            return self::$planNameCache[$cacheKey];
+        }
+
+        return self::$planNameCache[$cacheKey] = (string) (DB::table('plans')->where('id', $planId)->value('name') ?? 'saat ini');
+    }
+
+    private static function requestCacheKey(string $key): string
+    {
+        $requestId = 'cli';
+
+        try {
+            if (app()->bound('request')) {
+                $requestId = (string) spl_object_id(app('request'));
+            }
+        } catch (\Throwable) {
+            $requestId = 'cli';
+        }
+
+        return $requestId.':'.$key;
     }
 }

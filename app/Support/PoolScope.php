@@ -8,12 +8,32 @@ use Illuminate\Support\Facades\Schema;
 
 class PoolScope
 {
+    /** @var array<string, int> */
+    private static array $tenantIdCache = [];
+
+    /** @var array<string, int> */
+    private static array $userTenantColumnCache = [];
+
+    /** @var array<string, array<int, int>> */
+    private static array $userPoolIdsCache = [];
+
+    /** @var array<string, array<string, mixed>> */
+    private static array $scopeCache = [];
+
     public static function tablesReady(): bool
     {
         return Schema::hasTable('pools')
             && Schema::hasTable('pool_route')
             && Schema::hasTable('pool_user')
             && Schema::hasTable('routes');
+    }
+
+    public static function flushRequestCache(): void
+    {
+        self::$tenantIdCache = [];
+        self::$userTenantColumnCache = [];
+        self::$userPoolIdsCache = [];
+        self::$scopeCache = [];
     }
 
     /**
@@ -27,28 +47,31 @@ class PoolScope
             return 0;
         }
 
+        $cacheKey = self::requestCacheKey('tenant:'.$userId);
+        if (array_key_exists($cacheKey, self::$tenantIdCache)) {
+            return self::$tenantIdCache[$cacheKey];
+        }
+
         // Super admins bypass tenant scope → return 0 (all tenants)
         if (AccessControl::userIsSuperAdmin($userId)) {
-            return 0;
+            return self::$tenantIdCache[$cacheKey] = 0;
         }
 
         // Check user-level tenant_id first
-        if (Schema::hasTable('users') && Schema::hasColumn('users', 'tenant_id')) {
-            $userTenantId = (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0);
-            if ($userTenantId > 0) {
-                return $userTenantId;
-            }
+        $userTenantId = self::userTenantIdFromColumn($userId);
+        if ($userTenantId > 0) {
+            return self::$tenantIdCache[$cacheKey] = $userTenantId;
         }
 
         // Fallback: derive tenant_id from user's assigned pools
         if (self::tablesReady() && Schema::hasColumn('pools', 'tenant_id')) {
             $poolIds = self::userPoolIds($userId);
             if ($poolIds !== []) {
-                return (int) (DB::table('pools')->whereIn('id', $poolIds)->value('tenant_id') ?? 0);
+                return self::$tenantIdCache[$cacheKey] = (int) (DB::table('pools')->whereIn('id', $poolIds)->value('tenant_id') ?? 0);
             }
         }
 
-        return 0;
+        return self::$tenantIdCache[$cacheKey] = 0;
     }
 
     /**
@@ -134,19 +157,24 @@ class PoolScope
             }
         }
 
+        $userId ??= (int) (auth()->id() ?? 0);
+        $cacheKey = self::requestCacheKey('scope:'.$userId.':'.$poolId.':'.($useSessionPool ? '1' : '0'));
+        if (array_key_exists($cacheKey, self::$scopeCache)) {
+            return self::$scopeCache[$cacheKey];
+        }
+
         if (! self::tablesReady()) {
-            return $fallback;
+            return self::$scopeCache[$cacheKey] = $fallback;
         }
 
         if ((int) DB::table('pools')->count() === 0) {
-            return $fallback;
+            return self::$scopeCache[$cacheKey] = $fallback;
         }
 
-        $userId ??= (int) (auth()->id() ?? 0);
         $isSuperAdmin = AccessControl::userIsSuperAdmin($userId);
         $tenantId = self::tenantId($userId);
         if ($isSuperAdmin && $poolId <= 0) {
-            return $fallback;
+            return self::$scopeCache[$cacheKey] = $fallback;
         }
 
         $poolQuery = DB::table('pools')
@@ -165,7 +193,7 @@ class PoolScope
         if (! $isSuperAdmin) {
             $userPoolIds = self::userPoolIds($userId);
             if ($userPoolIds === []) {
-                return self::emptyScope('Belum Ada Pool');
+                return self::$scopeCache[$cacheKey] = self::emptyScope('Belum Ada Pool');
             }
 
             $poolQuery->whereIn('id', $userPoolIds);
@@ -175,7 +203,7 @@ class PoolScope
         $poolIds = $pools->pluck('id')->map(static fn ($value) => (int) $value)->values()->all();
 
         if ($poolIds === []) {
-            return self::emptyScope('Pool Tidak Tersedia');
+            return self::$scopeCache[$cacheKey] = self::emptyScope('Pool Tidak Tersedia');
         }
 
         $routes = DB::table('pool_route as pr')
@@ -210,7 +238,7 @@ class PoolScope
             }
         }
 
-        return [
+        $scope = [
             'all' => false,
             'pool_ids' => $poolIds,
             'route_ids' => $routes->pluck('id')->map(static fn ($value) => (int) $value)->unique()->values()->all(),
@@ -220,6 +248,8 @@ class PoolScope
             'target_revenue' => (float) $pools->sum('target_revenue'),
             'tenant_id' => $tenantId,
         ];
+
+        return self::$scopeCache[$cacheKey] = $scope;
     }
 
     public static function cacheKey(int $poolId = 0, ?int $userId = null): string
@@ -630,18 +660,24 @@ class PoolScope
             return [];
         }
 
-        return DB::table('pool_user as pu')
+        $cacheKey = self::requestCacheKey('user-pools:'.$userId);
+        if (array_key_exists($cacheKey, self::$userPoolIdsCache)) {
+            return self::$userPoolIdsCache[$cacheKey];
+        }
+
+        $isSuperAdmin = AccessControl::userIsSuperAdmin($userId);
+        $userTenantId = self::userTenantIdFromColumn($userId);
+
+        return self::$userPoolIdsCache[$cacheKey] = DB::table('pool_user as pu')
             ->join('pools as p', 'pu.pool_id', '=', 'p.id')
             ->where('pu.user_id', $userId)
             ->where('p.status', 'active')
             ->when(
-                ! AccessControl::userIsSuperAdmin($userId)
-                && Schema::hasTable('users')
-                && Schema::hasColumn('users', 'tenant_id')
+                ! $isSuperAdmin
                 && Schema::hasColumn('pools', 'tenant_id')
-                && (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0) > 0,
-                function (Builder $query) use ($userId): void {
-                    $query->where('p.tenant_id', (int) DB::table('users')->where('id', $userId)->value('tenant_id'));
+                && $userTenantId > 0,
+                function (Builder $query) use ($userTenantId): void {
+                    $query->where('p.tenant_id', $userTenantId);
                 },
             )
             ->pluck('pu.pool_id')
@@ -841,6 +877,35 @@ class PoolScope
             'target_revenue' => 0.0,
             'tenant_id' => 0,
         ];
+    }
+
+    private static function userTenantIdFromColumn(int $userId): int
+    {
+        $cacheKey = self::requestCacheKey('user-tenant-column:'.$userId);
+        if (array_key_exists($cacheKey, self::$userTenantColumnCache)) {
+            return self::$userTenantColumnCache[$cacheKey];
+        }
+
+        if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'tenant_id')) {
+            return self::$userTenantColumnCache[$cacheKey] = 0;
+        }
+
+        return self::$userTenantColumnCache[$cacheKey] = (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0);
+    }
+
+    private static function requestCacheKey(string $key): string
+    {
+        $requestId = 'cli';
+
+        try {
+            if (app()->bound('request')) {
+                $requestId = (string) spl_object_id(app('request'));
+            }
+        } catch (\Throwable) {
+            $requestId = 'cli';
+        }
+
+        return $requestId.':'.$key;
     }
 
     private static function qualifiedColumn(string $alias, string $column): string

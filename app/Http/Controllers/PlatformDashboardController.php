@@ -124,12 +124,41 @@ class PlatformDashboardController extends Controller
             return [];
         }
 
-        $tenants = DB::table('tenants')
+        $query = DB::table('tenants')
             ->leftJoin('subscriptions', function ($join) {
                 $join->on('tenants.id', '=', 'subscriptions.tenant_id')
                     ->whereRaw('subscriptions.id = (SELECT id FROM subscriptions s2 WHERE s2.tenant_id = tenants.id ORDER BY s2.created_at DESC LIMIT 1)');
             })
-            ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
+            ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id');
+
+        $hasUsersTenant = Schema::hasColumn('users', 'tenant_id');
+        $hasPoolsTenant = Schema::hasColumn('pools', 'tenant_id');
+
+        if ($hasUsersTenant) {
+            $query->leftJoinSub(
+                DB::table('users')
+                    ->select('tenant_id', DB::raw('COUNT(*) as user_count'))
+                    ->groupBy('tenant_id'),
+                'tenant_user_counts',
+                'tenant_user_counts.tenant_id',
+                '=',
+                'tenants.id',
+            );
+        }
+
+        if ($hasPoolsTenant) {
+            $query->leftJoinSub(
+                DB::table('pools')
+                    ->select('tenant_id', DB::raw('COUNT(*) as pool_count'))
+                    ->groupBy('tenant_id'),
+                'tenant_pool_counts',
+                'tenant_pool_counts.tenant_id',
+                '=',
+                'tenants.id',
+            );
+        }
+
+        $tenants = $query
             ->select(
                 'tenants.id',
                 'tenants.name',
@@ -140,22 +169,14 @@ class PlatformDashboardController extends Controller
                 'subscriptions.ends_at',
                 'plans.name as plan_name',
                 'plans.slug as plan_slug',
+                $hasUsersTenant ? DB::raw('COALESCE(tenant_user_counts.user_count, 0) as user_count') : DB::raw('0 as user_count'),
+                $hasPoolsTenant ? DB::raw('COALESCE(tenant_pool_counts.pool_count, 0) as pool_count') : DB::raw('0 as pool_count'),
             )
             ->orderBy('tenants.created_at', 'desc')
             ->limit(50)
             ->get();
 
         return $tenants->map(function ($t) {
-            $userCount = 0;
-            $poolCount = 0;
-
-            if (Schema::hasColumn('users', 'tenant_id')) {
-                $userCount = (int) DB::table('users')->where('tenant_id', $t->id)->count();
-            }
-            if (Schema::hasColumn('pools', 'tenant_id')) {
-                $poolCount = (int) DB::table('pools')->where('tenant_id', $t->id)->count();
-            }
-
             return [
                 'id' => (int) $t->id,
                 'name' => (string) $t->name,
@@ -165,8 +186,8 @@ class PlatformDashboardController extends Controller
                 'plan_name' => (string) ($t->plan_name ?? '—'),
                 'plan_slug' => (string) ($t->plan_slug ?? ''),
                 'ends_at' => $t->ends_at,
-                'user_count' => $userCount,
-                'pool_count' => $poolCount,
+                'user_count' => (int) ($t->user_count ?? 0),
+                'pool_count' => (int) ($t->pool_count ?? 0),
                 'created_at' => $t->created_at,
             ];
         })->all();
