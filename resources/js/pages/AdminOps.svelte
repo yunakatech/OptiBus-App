@@ -11,7 +11,21 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import { Armchair, CheckCircle2, MailX, MoreHorizontal, Pencil, Send, Trash2 } from 'lucide-svelte';
+    import {
+        Armchair,
+        ArrowUpRight,
+        CalendarDays,
+        CheckCircle2,
+        Clock3,
+        MailX,
+        MoreHorizontal,
+        Pencil,
+        Plus,
+        Route,
+        Send,
+        Trash2,
+        Wallet,
+    } from 'lucide-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
     import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -98,16 +112,39 @@
             nopol?: string | null;
         }>;
     };
-    type ScheduleDayGroup = { dow: number; rows: ScheduleRow[] };
+    type ScheduleDayGroup = {
+        dow: number;
+        rows: ScheduleRow[];
+        totalUnits: number;
+        bopTotal: number;
+        firstDeparture: string | null;
+        lastDeparture: string | null;
+    };
     type ScheduleRouteGroup = {
+        key: string;
+        routeId: number;
         route: string;
         total: number;
+        totalUnits: number;
+        bopTotal: number;
+        activeDays: number;
+        firstDeparture: string | null;
+        lastDeparture: string | null;
         days: ScheduleDayGroup[];
     };
     type ScheduleRouteSelectOption = {
         id: number;
         name: string;
         value: string;
+    };
+    type ScheduleOverview = {
+        routes: number;
+        total: number;
+        totalUnits: number;
+        bopTotal: number;
+        activeDays: number;
+        firstDeparture: string | null;
+        lastDeparture: string | null;
     };
     type DriverRow = {
         id: number;
@@ -766,28 +803,62 @@
         routeRows: RouteRow[],
         scheduleRows: ScheduleRow[],
     ): string[] => {
-        const names: string[] = [];
+        const names = new Set<string>();
         routeRows.forEach((row) => {
             const name = String(row.name ?? '').trim();
 
-            if (name !== '' && !names.includes(name)) {
-                names.push(name);
+            if (name !== '') {
+                names.add(name);
             }
         });
         scheduleRows.forEach((row) => {
             const name = String(row.route_name ?? row.rute ?? '').trim();
 
-            if (name !== '' && !names.includes(name)) {
-                names.push(name);
+            if (name !== '') {
+                names.add(name);
             }
         });
 
-        return names.sort((a, b) => a.localeCompare(b, 'id'));
+        return Array.from(names).sort((a, b) => a.localeCompare(b, 'id'));
     };
     const scheduleRouteValue = (routeId: number, routeName: string) =>
         Number(routeId || 0) > 0
             ? `id:${Number(routeId)}`
             : `name:${scheduleRouteKey(routeName)}`;
+    const scheduleRouteBucketKey = (routeId: number, routeName: string) =>
+        scheduleRouteValue(routeId, routeName);
+    const createScheduleDayGroup = (dow: number): ScheduleDayGroup => ({
+        dow,
+        rows: [],
+        totalUnits: 0,
+        bopTotal: 0,
+        firstDeparture: null,
+        lastDeparture: null,
+    });
+    const emptyScheduleDayGroups = Array.from({ length: 7 }, (_, dow) =>
+        createScheduleDayGroup(dow),
+    );
+    const updateScheduleWindow = (
+        current: string | null,
+        next: string,
+        direction: 'min' | 'max',
+    ) => {
+        if (next === '') {
+            return current;
+        }
+
+        if (current === null) {
+            return next;
+        }
+
+        return direction === 'min'
+            ? current.localeCompare(next) <= 0
+                ? current
+                : next
+            : current.localeCompare(next) >= 0
+              ? current
+              : next;
+    };
     const collectScheduleRouteSelectOptions = (
         routeRows: RouteRow[],
         scheduleRows: ScheduleRow[],
@@ -829,11 +900,70 @@
             .toUpperCase()
             .replace(/=>|->|\u2192|\u2013|\u2014/g, '-')
             .replace(/\s+/g, '');
+    const scheduleRouteNameLookup = $derived.by(() => {
+        const lookup = new Map<number, string>();
+
+        routes.forEach((row) => {
+            const id = Number(row.id || 0);
+            const name = String(row.name ?? '').trim();
+
+            if (id > 0 && name !== '' && !lookup.has(id)) {
+                lookup.set(id, name);
+            }
+        });
+
+        schedules.forEach((row) => {
+            const id = Number(row.route_id ?? 0);
+            const name = String(row.route_name ?? row.rute ?? '').trim();
+
+            if (id > 0 && name !== '' && !lookup.has(id)) {
+                lookup.set(id, name);
+            }
+        });
+
+        return lookup;
+    });
+    const scheduleRouteIdLookup = $derived.by(() => {
+        const lookup = new Map<string, number>();
+        const remember = (routeName: string, routeId: number) => {
+            const key = scheduleRouteKey(routeName);
+            const id = Number(routeId || 0);
+
+            if (key !== '' && id > 0 && !lookup.has(key)) {
+                lookup.set(key, id);
+            }
+        };
+
+        routes.forEach((row) => remember(String(row.name ?? ''), Number(row.id)));
+        schedules.forEach((row) =>
+            remember(
+                String(row.route_name ?? row.rute ?? ''),
+                Number(row.route_id ?? 0),
+            ),
+        );
+
+        return lookup;
+    });
+    const scheduleRouteCanonicalNameLookup = $derived.by(() => {
+        const lookup = new Map<string, string>();
+        const remember = (routeName: string) => {
+            const name = String(routeName ?? '').trim();
+            const key = scheduleRouteKey(name);
+
+            if (key !== '' && name !== '' && !lookup.has(key)) {
+                lookup.set(key, name);
+            }
+        };
+
+        routes.forEach((row) => remember(String(row.name ?? '')));
+        schedules.forEach((row) =>
+            remember(String(row.route_name ?? row.rute ?? '')),
+        );
+
+        return lookup;
+    });
     const scheduleRouteNameById = (routeId: number): string =>
-        String(
-            routes.find((row) => Number(row.id) === Number(routeId))?.name ??
-                '',
-        ).trim();
+        String(scheduleRouteNameLookup.get(Number(routeId || 0)) ?? '').trim();
     const scheduleRouteIdByName = (routeName: string): number => {
         const key = scheduleRouteKey(routeName);
 
@@ -841,18 +971,7 @@
             return 0;
         }
 
-        const route = routes.find((row) => scheduleRouteKey(row.name) === key);
-        if (route) {
-            return Number(route.id || 0);
-        }
-
-        const schedule = schedules.find(
-            (row) =>
-                scheduleRouteKey(row.route_name ?? row.rute) === key &&
-                Number(row.route_id ?? 0) > 0,
-        );
-
-        return Number(schedule?.route_id ?? 0);
+        return Number(scheduleRouteIdLookup.get(key) ?? 0);
     };
     const canonicalScheduleRouteName = (
         routeName: string,
@@ -865,9 +984,52 @@
         }
 
         const key = scheduleRouteKey(routeName);
-        const route = routes.find((row) => scheduleRouteKey(row.name) === key);
 
-        return String(route?.name ?? routeName).trim();
+        return String(
+            scheduleRouteCanonicalNameLookup.get(key) ?? routeName,
+        ).trim();
+    };
+    const findScheduleRouteOption = (
+        routeName: string,
+        routeId = 0,
+    ): ScheduleRouteSelectOption | null => {
+        const normalizedId = Number(routeId || 0);
+
+        if (normalizedId > 0) {
+            const optionById = scheduleRouteSelectOptions.find(
+                (option) => Number(option.id) === normalizedId,
+            );
+
+            if (optionById) {
+                return optionById;
+            }
+        }
+
+        const key = scheduleRouteKey(
+            canonicalScheduleRouteName(routeName, normalizedId) || routeName,
+        );
+
+        if (key === '') {
+            return null;
+        }
+
+        return (
+            scheduleRouteSelectOptions.find(
+                (option) => scheduleRouteKey(option.name) === key,
+            ) ?? null
+        );
+    };
+    const formatScheduleWindow = (
+        firstDeparture: string | null,
+        lastDeparture: string | null,
+    ) => {
+        if (firstDeparture && lastDeparture) {
+            return firstDeparture === lastDeparture
+                ? firstDeparture
+                : `${firstDeparture} - ${lastDeparture}`;
+        }
+
+        return firstDeparture ?? lastDeparture ?? 'Belum diatur';
     };
 
     const scheduleRouteOptions = $derived(
@@ -885,38 +1047,140 @@
             : '',
     );
     const scheduleRouteGroups = $derived.by<ScheduleRouteGroup[]>(() => {
-        const groups: Record<string, ScheduleRow[]> = {};
+        const groups = new Map<string, ScheduleRouteGroup>();
 
         for (const row of schedules) {
-            const routeName = String(row.route_name ?? row.rute ?? '').trim();
+            const routeId = Number(
+                row.route_id ??
+                    scheduleRouteIdByName(row.route_name ?? row.rute),
+            );
+            const routeName = canonicalScheduleRouteName(
+                String(row.route_name ?? row.rute ?? ''),
+                routeId,
+            );
 
             if (routeName === '') {
                 continue;
             }
 
-            const bucket = groups[routeName] ?? [];
-            bucket.push(row);
-            groups[routeName] = bucket;
+            const key = scheduleRouteBucketKey(routeId, routeName);
+            const jam = String(row.jam ?? '').slice(0, 5);
+            const units = Number(row.units || 0);
+            const bop = Number(row.bop || 0);
+            const dayIndex = Math.max(0, Math.min(6, Number(row.dow ?? 0)));
+            let group = groups.get(key);
+
+            if (!group) {
+                group = {
+                    key,
+                    routeId,
+                    route: routeName,
+                    total: 0,
+                    totalUnits: 0,
+                    bopTotal: 0,
+                    activeDays: 0,
+                    firstDeparture: null,
+                    lastDeparture: null,
+                    days: Array.from({ length: 7 }, (_, dow) =>
+                        createScheduleDayGroup(dow),
+                    ),
+                };
+                groups.set(key, group);
+            }
+
+            const day = group.days[dayIndex];
+            day.rows.push(row);
+            day.totalUnits += units;
+            day.bopTotal += bop;
+            day.firstDeparture = updateScheduleWindow(
+                day.firstDeparture,
+                jam,
+                'min',
+            );
+            day.lastDeparture = updateScheduleWindow(
+                day.lastDeparture,
+                jam,
+                'max',
+            );
+
+            group.total += 1;
+            group.totalUnits += units;
+            group.bopTotal += bop;
+            group.firstDeparture = updateScheduleWindow(
+                group.firstDeparture,
+                jam,
+                'min',
+            );
+            group.lastDeparture = updateScheduleWindow(
+                group.lastDeparture,
+                jam,
+                'max',
+            );
         }
 
-        return Object.entries(groups)
-            .sort((a, b) => a[0].localeCompare(b[0], 'id'))
-            .map(([route, rows]) => ({
-                route,
-                total: rows.length,
-                days: Array.from({ length: 7 }, (_, dow) => ({
-                    dow,
-                    rows: rows
-                        .filter((row) => row.dow === dow)
+        return Array.from(groups.values())
+            .map((group) => ({
+                ...group,
+                activeDays: group.days.filter((day) => day.rows.length > 0)
+                    .length,
+                days: group.days.map((day) => ({
+                    ...day,
+                    rows: day.rows
+                        .slice()
                         .sort((a, b) => a.jam.localeCompare(b.jam)),
                 })),
-            }));
+            }))
+            .sort((a, b) => a.route.localeCompare(b.route, 'id'));
     });
-    const activeScheduleGroup = $derived(
-        scheduleRouteGroups.find(
-            (group) => group.route === selectedScheduleRoute,
-        ) ?? null,
-    );
+    const activeScheduleGroup = $derived.by(() => {
+        const selected = findScheduleRouteOption(
+            selectedScheduleRoute,
+            selectedScheduleRouteId,
+        );
+
+        if (!selected) {
+            return null;
+        }
+
+        const key = scheduleRouteBucketKey(selected.id, selected.name);
+
+        return (
+            scheduleRouteGroups.find((group) => group.key === key) ?? null
+        );
+    });
+    const scheduleOverview = $derived.by<ScheduleOverview>(() => {
+        const summary: ScheduleOverview = {
+            routes: scheduleRouteGroups.length,
+            total: 0,
+            totalUnits: 0,
+            bopTotal: 0,
+            activeDays: 0,
+            firstDeparture: null,
+            lastDeparture: null,
+        };
+
+        for (const group of scheduleRouteGroups) {
+            summary.total += group.total;
+            summary.totalUnits += group.totalUnits;
+            summary.bopTotal += group.bopTotal;
+            summary.activeDays += group.activeDays;
+            summary.firstDeparture = updateScheduleWindow(
+                summary.firstDeparture,
+                group.firstDeparture ?? '',
+                'min',
+            );
+            summary.lastDeparture = updateScheduleWindow(
+                summary.lastDeparture,
+                group.lastDeparture ?? '',
+                'max',
+            );
+        }
+
+        return summary;
+    });
+    const scheduleSummary = $derived.by<
+        ScheduleRouteGroup | ScheduleOverview
+    >(() => activeScheduleGroup ?? scheduleOverview);
     const selectedSegmentRoute = $derived(
         routes.find((route) => route.id === Number(selectedSegmentRouteId)) ??
             null,
@@ -2148,34 +2412,33 @@
         isHybridSettingsTab(tab);
 
     const syncScheduleSelection = () => {
-        const routeNames = collectScheduleRouteNames(routes, schedules);
-        const fallbackRoute = routeNames[0] ?? '';
+        const fallbackOption = scheduleRouteSelectOptions[0] ?? null;
 
-        if (routeNames.length === 0) {
+        if (!fallbackOption) {
+            selectedScheduleRoute = '';
+            selectedScheduleRouteId = 0;
             return;
         }
 
+        const selectedOption =
+            findScheduleRouteOption(
+                selectedScheduleRoute,
+                selectedScheduleRouteId,
+            ) ?? fallbackOption;
+        selectedScheduleRoute = selectedOption.name;
+        selectedScheduleRouteId = selectedOption.id;
+
+        const formOption = findScheduleRouteOption(
+            scheduleForm.rute,
+            scheduleRouteIdByName(scheduleForm.rute),
+        );
         const canonicalRoute = canonicalScheduleRouteName(
             selectedScheduleRoute,
             selectedScheduleRouteId,
         );
-        const selectedExists =
-            canonicalRoute !== '' && routeNames.includes(canonicalRoute);
 
-        if (!selectedExists) {
-            selectedScheduleRoute = fallbackRoute;
-        } else {
-            selectedScheduleRoute = canonicalRoute;
-        }
-
-        selectedScheduleRouteId = scheduleRouteIdByName(selectedScheduleRoute);
-
-        const formRouteExists =
-            scheduleForm.rute !== '' && routeNames.includes(scheduleForm.rute);
-
-        if (!formRouteExists) {
-            scheduleForm.rute = selectedScheduleRoute || fallbackRoute;
-        }
+        scheduleForm.rute =
+            formOption?.name ?? canonicalRoute ?? fallbackOption.name;
     };
 
     const hydrateSettingsData = (payload: SettingsDataPayload) => {
@@ -4533,34 +4796,175 @@
 
             {#if activeTab === 'schedules'}
                 <div class="space-y-4">
-                    <div
-                        class="grid gap-3 md:grid-cols-[minmax(240px,1fr)_auto]"
+                    <section
+                        class="overflow-hidden rounded-2xl border border-border/70 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm"
                     >
-                        <select
-                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                            value={selectedScheduleRouteValue}
-                            onchange={(event) => {
-                                void selectScheduleRoute(
-                                    (
-                                        event.currentTarget as HTMLSelectElement
-                                    ).value,
-                                );
-                            }}
-                        >
-                            <option value="">Pilih rute</option>
-                            {#each scheduleRouteSelectOptions as route (route.value)}
-                                <option value={route.value}
-                                    >{route.name}</option
+                        <div class="space-y-5 px-5 py-5">
+                            <div
+                                class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+                            >
+                                <div class="space-y-2">
+                                    <p
+                                        class="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-700"
+                                    >
+                                        Workspace Keberangkatan
+                                    </p>
+                                    <div class="space-y-2">
+                                        <h3
+                                            class="text-xl font-semibold tracking-tight text-foreground"
+                                        >
+                                            Jadwal mingguan lebih mudah dipindai
+                                        </h3>
+                                        <p
+                                            class="max-w-3xl text-sm text-muted-foreground"
+                                        >
+                                            Pilih rute untuk mengatur jam
+                                            berangkat, jumlah unit, layout kursi,
+                                            dan BOP tanpa harus membaca tabel
+                                            panjang.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="grid gap-3 md:min-w-[420px] md:grid-cols-[minmax(0,1fr)_auto]"
                                 >
-                            {/each}
-                        </select>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onclick={() => void setTab('routes')}
-                            >Kelola rute</Button
-                        >
-                    </div>
+                                    <label class="space-y-1.5">
+                                        <span
+                                            class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                            >Rute aktif</span
+                                        >
+                                        <select
+                                            class="h-10 rounded-lg border border-input bg-background/95 px-3 text-sm shadow-sm"
+                                            value={selectedScheduleRouteValue}
+                                            disabled={scheduleRouteSelectOptions.length ===
+                                                0}
+                                            onchange={(event) => {
+                                                void selectScheduleRoute(
+                                                    (
+                                                        event.currentTarget as HTMLSelectElement
+                                                    ).value,
+                                                );
+                                            }}
+                                        >
+                                            <option value="">Pilih rute</option>
+                                            {#each scheduleRouteSelectOptions as route (route.value)}
+                                                <option value={route.value}
+                                                    >{route.name}</option
+                                                >
+                                            {/each}
+                                        </select>
+                                    </label>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-10 self-end"
+                                        onclick={() => void setTab('routes')}
+                                    >
+                                        <Route class="mr-2 h-4 w-4" />
+                                        Kelola Rute
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                <div
+                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-center gap-3 text-muted-foreground"
+                                    >
+                                        <Route class="h-4 w-4 text-sky-600" />
+                                        <span
+                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                                            >Rute tersedia</span
+                                        >
+                                    </div>
+                                    <p
+                                        class="mt-3 text-2xl font-semibold text-foreground"
+                                    >
+                                        {scheduleOverview.routes}
+                                    </p>
+                                    <p class="mt-1 text-xs text-muted-foreground">
+                                        {selectedScheduleRoute
+                                            ? selectedScheduleRoute
+                                            : 'Belum ada rute yang dipilih'}
+                                    </p>
+                                </div>
+                                <div
+                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-center gap-3 text-muted-foreground"
+                                    >
+                                        <CalendarDays
+                                            class="h-4 w-4 text-emerald-600"
+                                        />
+                                        <span
+                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                                            >Jadwal aktif</span
+                                        >
+                                    </div>
+                                    <p
+                                        class="mt-3 text-2xl font-semibold text-foreground"
+                                    >
+                                        {scheduleSummary.total}
+                                    </p>
+                                    <p class="mt-1 text-xs text-muted-foreground">
+                                        {activeScheduleGroup
+                                            ? `${activeScheduleGroup.activeDays} hari operasional`
+                                            : 'Semua jadwal dari seluruh rute'}
+                                    </p>
+                                </div>
+                                <div
+                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-center gap-3 text-muted-foreground"
+                                    >
+                                        <Armchair
+                                            class="h-4 w-4 text-violet-600"
+                                        />
+                                        <span
+                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                                            >Total unit</span
+                                        >
+                                    </div>
+                                    <p
+                                        class="mt-3 text-2xl font-semibold text-foreground"
+                                    >
+                                        {scheduleSummary.totalUnits}
+                                    </p>
+                                    <p class="mt-1 text-xs text-muted-foreground">
+                                        Alokasi unit terjadwal minggu ini
+                                    </p>
+                                </div>
+                                <div
+                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-center gap-3 text-muted-foreground"
+                                    >
+                                        <Wallet class="h-4 w-4 text-amber-600" />
+                                        <span
+                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                                            >BOP terjadwal</span
+                                        >
+                                    </div>
+                                    <p
+                                        class="mt-3 text-xl font-semibold text-foreground"
+                                    >
+                                        {formatCurrency(scheduleSummary.bopTotal)}
+                                    </p>
+                                    <p class="mt-1 text-xs text-muted-foreground">
+                                        Window jam {formatScheduleWindow(
+                                            scheduleSummary.firstDeparture,
+                                            scheduleSummary.lastDeparture,
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
                     {#if activeMode === 'form'}
                         <form onsubmit={saveSchedule}>
@@ -4768,122 +5172,170 @@
 
                     {#if activeMode === 'data' && !selectedScheduleRoute}
                         <div
-                            class="rounded-2xl border border-dashed border-border/80 bg-muted/10 px-4 py-5 text-sm text-muted-foreground"
-                        >
-                            Pilih rute dulu untuk mengatur jadwal Senin sampai
-                            Minggu.
-                        </div>
-                    {:else if activeMode === 'data'}
-                        <div
-                            class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                            class="rounded-2xl border border-dashed border-border/80 bg-muted/10 px-5 py-6"
                         >
                             <div
-                                class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(37,99,235,0.05),rgba(15,23,42,0.03))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
+                                class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
                             >
-                                <div>
-                                    <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
-                                    >
-                                        Jadwal Mingguan
+                                <div class="space-y-1.5">
+                                    <p class="text-sm font-semibold text-foreground">
+                                        Pilih rute untuk mulai mengatur
+                                        keberangkatan.
                                     </p>
-                                    <h3 class="mt-1 text-lg font-semibold">
-                                        {selectedScheduleRoute}
-                                    </h3>
-                                    <p
-                                        class="mt-1 max-w-3xl text-sm text-muted-foreground"
-                                    >
-                                        Tiap kartu hari diringkas untuk
-                                        menampilkan jam, unit, dan BOP tanpa
-                                        membuat layar laptop terasa penuh.
+                                    <p class="text-sm text-muted-foreground">
+                                        Setelah rute dipilih, panel mingguan akan
+                                        menampilkan semua slot keberangkatan dari
+                                        Minggu sampai Sabtu dalam satu layar.
                                     </p>
                                 </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onclick={() => void setTab('routes')}
+                                >
+                                    <ArrowUpRight class="mr-2 h-4 w-4" />
+                                    Buka Master Rute
+                                </Button>
+                            </div>
+                        </div>
+                    {:else if activeMode === 'data'}
+                        <div class="space-y-4">
+                            <div
+                                class="flex flex-wrap items-center gap-2 text-xs"
+                            >
                                 <Badge
                                     variant="secondary"
-                                    class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
+                                    class="rounded-full px-3 py-1 font-semibold uppercase tracking-wide"
                                 >
-                                    {activeScheduleGroup?.total ?? 0} jadwal aktif
+                                    {selectedScheduleRoute}
+                                </Badge>
+                                <Badge
+                                    variant="outline"
+                                    class="rounded-full px-3 py-1 text-muted-foreground"
+                                >
+                                    {activeScheduleGroup?.total ?? 0} jadwal
+                                </Badge>
+                                <Badge
+                                    variant="outline"
+                                    class="rounded-full px-3 py-1 text-muted-foreground"
+                                >
+                                    {activeScheduleGroup?.totalUnits ?? 0} unit
+                                </Badge>
+                                <Badge
+                                    variant="outline"
+                                    class="rounded-full px-3 py-1 text-muted-foreground"
+                                >
+                                    <Clock3 class="mr-1.5 h-3.5 w-3.5" />
+                                    {formatScheduleWindow(
+                                        activeScheduleGroup?.firstDeparture ??
+                                            null,
+                                        activeScheduleGroup?.lastDeparture ??
+                                            null,
+                                    )}
                                 </Badge>
                             </div>
+
                             <div
-                                class="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                                class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
                             >
-                                {#each Array.from({ length: 7 }, (_, dow) => dow) as dow (dow)}
-                                    {@const dayRows =
-                                        activeScheduleGroup?.days.find(
-                                            (day) => day.dow === dow,
-                                        )?.rows ?? []}
+                                {#each (activeScheduleGroup?.days ?? emptyScheduleDayGroups) as day (day.dow)}
                                     <div
-                                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/90 shadow-sm"
+                                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                                     >
                                         <div
-                                            class="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/15 px-4 py-3"
+                                            class="flex items-start justify-between gap-3 border-b border-border/60 bg-[linear-gradient(135deg,rgba(241,245,249,0.92),rgba(255,255,255,0.98))] px-4 py-3"
                                         >
-                                            <div>
+                                            <div class="space-y-1">
                                                 <p
-                                                    class="text-sm font-semibold"
+                                                    class="text-sm font-semibold text-foreground"
                                                 >
-                                                    {days[dow]}
+                                                    {days[day.dow]}
                                                 </p>
                                                 <p
                                                     class="text-[11px] text-muted-foreground"
                                                 >
-                                                    {dayRows.length} jadwal
+                                                    {day.rows.length > 0
+                                                        ? `${formatScheduleWindow(day.firstDeparture, day.lastDeparture)} • ${day.totalUnits} unit`
+                                                        : 'Belum ada jadwal'}
                                                 </p>
                                             </div>
-                                            {#if canWriteTab('schedules')}
-                                                <Button
-                                                    type="button"
+                                            <div class="flex items-center gap-2">
+                                                <Badge
                                                     variant="outline"
-                                                    size="sm"
-                                                    onclick={() =>
-                                                        openCreateSchedule(dow)}
-                                                    >Tambah</Button
+                                                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                 >
-                                            {/if}
+                                                    {day.rows.length}
+                                                </Badge>
+                                                {#if canWriteTab('schedules')}
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        class="h-8 gap-1.5 rounded-full px-3"
+                                                        onclick={() =>
+                                                            openCreateSchedule(
+                                                                day.dow,
+                                                            )}
+                                                    >
+                                                        <Plus
+                                                            class="h-3.5 w-3.5"
+                                                        />
+                                                        Tambah
+                                                    </Button>
+                                                {/if}
+                                            </div>
                                         </div>
-                                        {#if dayRows.length === 0}
-                                            <div
-                                                class="px-4 py-5 text-xs text-muted-foreground"
-                                            >
-                                                Belum ada jadwal.
+                                        {#if day.rows.length === 0}
+                                            <div class="px-4 py-6">
+                                                <div
+                                                    class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-5 text-center"
+                                                >
+                                                    <p
+                                                        class="text-sm font-medium text-foreground"
+                                                    >
+                                                        Belum ada slot
+                                                        keberangkatan
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 text-xs text-muted-foreground"
+                                                    >
+                                                        Tambahkan jam
+                                                        keberangkatan untuk hari
+                                                        ini supaya tim operasional
+                                                        bisa langsung memakainya.
+                                                    </p>
+                                                </div>
                                             </div>
                                         {:else}
                                             <div class="space-y-3 p-4">
-                                                {#each dayRows as row (row.id)}
-                                                    {@const rowOptions = (
-                                                        row.unit_options ?? []
-                                                    )
-                                                        .slice()
-                                                        .sort(
-                                                            (a, b) =>
-                                                                Number(
-                                                                    a.unit_no,
-                                                                ) -
-                                                                Number(
-                                                                    b.unit_no,
-                                                                ),
-                                                        )}
-                                                    <div
-                                                        class="rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(248,250,252,0.95),rgba(241,245,249,0.82))] p-3 text-xs shadow-sm"
+                                                {#each day.rows as row (row.id)}
+                                                    {@const rowOptions =
+                                                        row.unit_options ?? []}
+                                                    <article
+                                                        class="rounded-2xl border border-slate-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] p-3 text-xs shadow-[0_18px_45px_-30px_rgba(15,23,42,0.4)]"
                                                     >
                                                         <div
                                                             class="flex items-start justify-between gap-3"
                                                         >
-                                                            <div>
-                                                                <p
-                                                                    class="text-base font-semibold text-foreground"
-                                                                >
-                                                                    {row.jam}
-                                                                </p>
+                                                            <div class="space-y-2">
                                                                 <div
-                                                                    class="mt-2 flex flex-wrap gap-2"
+                                                                    class="flex items-center gap-2"
                                                                 >
+                                                                    <p
+                                                                        class="text-lg font-semibold text-foreground"
+                                                                    >
+                                                                        {row.jam}
+                                                                    </p>
                                                                     <span
                                                                         class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700"
                                                                     >
                                                                         {row.units}
                                                                         unit
                                                                     </span>
+                                                                </div>
+                                                                <div
+                                                                    class="flex flex-wrap gap-2"
+                                                                >
                                                                     <span
                                                                         class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
                                                                     >
@@ -4894,87 +5346,117 @@
                                                                             ),
                                                                         )}
                                                                     </span>
+                                                                    <span
+                                                                        class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700"
+                                                                    >
+                                                                        {rowOptions.length >
+                                                                        0
+                                                                            ? `${rowOptions.length} layout`
+                                                                            : 'Layout dasar'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                             {#if canWriteTab('schedules')}
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger
-                                                                    asChild
-                                                                >
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        class="h-8 w-8 rounded-full border border-border/70"
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger
+                                                                        asChild
                                                                     >
-                                                                        <MoreHorizontal
-                                                                            class="h-4 w-4"
-                                                                        />
-                                                                        <span
-                                                                            class="sr-only"
-                                                                            >Aksi
-                                                                            jadwal</span
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            class="h-8 w-8 rounded-full border border-border/70"
                                                                         >
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent
-                                                                    align="end"
-                                                                    sideOffset={8}
-                                                                    class="z-[120] w-44"
-                                                                >
-                                                                    <DropdownMenuItem
-                                                                        onclick={() =>
-                                                                            openEditSchedule(
-                                                                                row,
-                                                                            )}
+                                                                            <MoreHorizontal
+                                                                                class="h-4 w-4"
+                                                                            />
+                                                                            <span
+                                                                                class="sr-only"
+                                                                                >Aksi
+                                                                                jadwal</span
+                                                                            >
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent
+                                                                        align="end"
+                                                                        sideOffset={8}
+                                                                        class="z-[120] w-44"
                                                                     >
-                                                                        <Pencil
-                                                                            class="mr-2 h-3.5 w-3.5"
-                                                                        />
-                                                                        Edit
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem
-                                                                        onclick={() =>
-                                                                            void removeItem(
-                                                                                `/api/admin/schedules/${row.id}`,
-                                                                                'Schedule deleted.',
-                                                                            )}
-                                                                    >
-                                                                        <Trash2
-                                                                            class="mr-2 h-3.5 w-3.5"
-                                                                        />
-                                                                        Hapus
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
+                                                                        <DropdownMenuItem
+                                                                            onclick={() =>
+                                                                                openEditSchedule(
+                                                                                    row,
+                                                                                )}
+                                                                        >
+                                                                            <Pencil
+                                                                                class="mr-2 h-3.5 w-3.5"
+                                                                            />
+                                                                            Edit
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            onclick={() =>
+                                                                                void removeItem(
+                                                                                    `/api/admin/schedules/${row.id}`,
+                                                                                    'Schedule deleted.',
+                                                                                )}
+                                                                        >
+                                                                            <Trash2
+                                                                                class="mr-2 h-3.5 w-3.5"
+                                                                            />
+                                                                            Hapus
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
                                                             {/if}
                                                         </div>
                                                         <div
-                                                            class="mt-3 rounded-xl border border-border/60 bg-background/80 p-3"
+                                                            class="mt-3 rounded-xl border border-border/60 bg-background/85 p-3"
                                                         >
-                                                            <p
-                                                                class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                                            <div
+                                                                class="flex items-center justify-between gap-3"
                                                             >
-                                                                Konfigurasi Unit
-                                                            </p>
+                                                                <p
+                                                                    class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                                                >
+                                                                    Konfigurasi
+                                                                    Unit
+                                                                </p>
+                                                                <span
+                                                                    class="text-[11px] text-muted-foreground"
+                                                                >
+                                                                    {row.unit_label ||
+                                                                        row.nopol ||
+                                                                        'Belum ada label'}
+                                                                </span>
+                                                            </div>
                                                             {#if rowOptions.length > 0}
                                                                 <div
-                                                                    class="mt-2 space-y-2"
+                                                                    class="mt-3 space-y-2"
                                                                 >
                                                                     {#each rowOptions as item (`schedule-unit-${row.id}-${item.unit_no}`)}
                                                                         <div
-                                                                            class="flex items-start justify-between gap-3"
+                                                                            class="flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-muted/10 px-3 py-2"
                                                                         >
                                                                             <div
-                                                                                class="font-medium text-foreground"
+                                                                                class="space-y-0.5"
                                                                             >
-                                                                                {item.unit_no}.
-                                                                                {item.label}
+                                                                                <p
+                                                                                    class="font-medium text-foreground"
+                                                                                >
+                                                                                    {item.unit_no}.
+                                                                                    {item.label}
+                                                                                </p>
+                                                                                <p
+                                                                                    class="text-[11px] text-muted-foreground"
+                                                                                >
+                                                                                    Layout
+                                                                                    keberangkatan
+                                                                                </p>
                                                                             </div>
                                                                             <div
                                                                                 class="text-right text-[11px] text-muted-foreground"
                                                                             >
-                                                                                {item.nopol ??
+                                                                                {item.nopol ||
                                                                                     'Layout belum dipilih'}
                                                                             </div>
                                                                         </div>
@@ -4984,13 +5466,16 @@
                                                                 <p
                                                                     class="mt-2 text-[11px] text-muted-foreground"
                                                                 >
-                                                                    {row.unit_label ||
-                                                                        row.nopol ||
-                                                                        'Belum ada label unit.'}
+                                                                    Unit ini
+                                                                    masih memakai
+                                                                    label default
+                                                                    dan belum
+                                                                    memilih layout
+                                                                    khusus.
                                                                 </p>
                                                             {/if}
                                                         </div>
-                                                    </div>
+                                                    </article>
                                                 {/each}
                                             </div>
                                         {/if}
