@@ -10,12 +10,11 @@
 </script>
 
 <script lang="ts">
-    import { page, router } from '@inertiajs/svelte';
+    import { page } from '@inertiajs/svelte';
     import {
         Ban,
         Building2,
         CheckCircle2,
-        ChevronDown,
         CreditCard,
         Edit3,
         FileText,
@@ -25,6 +24,8 @@
         RefreshCw,
         RotateCcw,
         Search,
+        ShieldCheck,
+        TrendingUp,
         XCircle,
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
@@ -96,6 +97,10 @@
     let paymentSettings = $state<any>(null);
     let payBusy = $state(false);
     let payMessage = $state('');
+
+    const shellClass = 'rounded-[28px] border border-slate-200/70 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/80';
+    const panelClass = 'rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
+    const tableShellClass = 'overflow-hidden rounded-2xl border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
 
     async function loadPaymentSettings() {
         payBusy = true;
@@ -350,84 +355,135 @@
 
 <AppHead title="SaaS Management" />
 
-<div class="space-y-6 pb-8">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight">SaaS Management</h1>
-            <p class="text-muted-foreground mt-1">Kelola tenant, subscription, dan paket langganan</p>
-        </div>
-        <div class="flex items-center gap-2">
-            {#if summary}
-                <Badge variant="outline">{summary.tenant_count} Tenants</Badge>
-                <Badge variant="secondary">{summary.active_subscription_count} Active</Badge>
-                <Badge variant="outline">{summary.plan_count} Plans</Badge>
-                <Badge variant="outline">{summary.invoice_pending_count ?? 0} Pending</Badge>
-                <Badge variant="secondary">{summary.invoice_verification_count ?? 0} Verifikasi</Badge>
-                <Badge variant={(summary.invoice_overdue_count ?? 0) > 0 ? 'destructive' : 'outline'}>{summary.invoice_overdue_count ?? 0} Overdue</Badge>
-            {/if}
-        </div>
-    </div>
-
-    {#if !saasTablesReady}
-        <Card>
-            <CardContent class="py-12 text-center">
-                <Package class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 class="text-lg font-semibold">Tabel SaaS Belum Tersedia</h3>
-                <p class="text-muted-foreground mt-1">Jalankan migrasi database terlebih dahulu.</p>
-            </CardContent>
-        </Card>
-    {:else}
+<div class="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(248,250,252,0.94)_0%,rgba(255,255,255,1)_34%,rgba(248,250,252,0.96)_100%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_24%),linear-gradient(180deg,#020617_0%,#0f172a_45%,#020617_100%)]">
+    <div class="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        {#if !saasTablesReady}
+            <Card class={panelClass}>
+                <CardContent class="py-14 text-center">
+                    <Package class="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 class="mt-4 text-lg font-semibold">Tabel SaaS Belum Tersedia</h3>
+                    <p class="mt-1 text-sm text-muted-foreground">Jalankan migrasi database dulu.</p>
+                </CardContent>
+            </Card>
+        {:else}
         <!-- Flash Messages -->
         {#if error}
-            <div class="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">{error}</div>
+            <div class="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
         {/if}
         {#if message}
-            <div class="bg-green-100 text-green-800 rounded-lg px-4 py-3 text-sm flex items-center justify-between">
+            <div class="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
                 {message}
-                <button onclick={() => message = ''} class="text-green-600 hover:text-green-800">&times;</button>
+                <button onclick={() => message = ''} class="text-emerald-600 hover:text-emerald-800">×</button>
             </div>
         {/if}
 
-        <!-- Tab Bar -->
-        <div class="flex gap-1 border-b">
-            {#each [
-                { key: 'tenants', label: 'Tenants', icon: Building2 },
-                { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
-                { key: 'plans', label: 'Plans', icon: Package },
-                { key: 'billing', label: 'Billing', icon: FileText },
-                { key: 'payment', label: 'Metode Pembayaran', icon: CreditCard },
-            ] as tab}
-                <button
-                    onclick={() => switchTab(tab.key as TabName)}
-                    class="flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
-                        {activeTab === tab.key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
-                >
-                    <tab.icon class="h-4 w-4" />
-                    {tab.label}
-                </button>
-            {/each}
-        </div>
+        <!-- Header -->
+        <section class={shellClass}>
+            <div class="relative isolate overflow-hidden rounded-[28px]">
+                <div class="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),transparent_35%,rgba(59,130,246,0.07))] dark:bg-[linear-gradient(135deg,rgba(148,163,184,0.08),transparent_35%,rgba(56,189,248,0.12))]"></div>
+                <div class="relative grid gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-end">
+                    <div class="space-y-4">
+                        <div class="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+                            <ShieldCheck class="h-3.5 w-3.5 text-sky-500" />
+                            SaaS Command Center
+                        </div>
+                        <div class="space-y-2">
+                            <h1 class="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">SaaS Management</h1>
+                            <p class="max-w-2xl text-sm text-muted-foreground sm:text-base">
+                                Panel operasional untuk tenant, subscription, plan, billing, dan payment. Semua state kebaca, semua kerjaan kepegang dari satu layar.
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            {#if summary}
+                                <Badge variant="outline">{summary.tenant_count} tenants</Badge>
+                                <Badge variant="secondary">{summary.active_subscription_count} active</Badge>
+                                <Badge variant="outline">{summary.plan_count} plans</Badge>
+                                <Badge variant="outline">{summary.invoice_pending_count ?? 0} pending</Badge>
+                                <Badge variant="secondary">{summary.invoice_verification_count ?? 0} verifikasi</Badge>
+                                <Badge variant={(summary.invoice_overdue_count ?? 0) > 0 ? 'destructive' : 'outline'}>{summary.invoice_overdue_count ?? 0} overdue</Badge>
+                            {/if}
+                            <Badge variant={saasTablesReady ? 'default' : 'outline'}>{saasTablesReady ? 'tables ready' : 'migrasi needed'}</Badge>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+                        {#each [
+                            { label: 'Tenants', value: summary?.tenant_count ?? 0, note: 'Registry aktif', icon: Building2, tone: 'border-sky-200 bg-sky-50/80 text-sky-700 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300' },
+                            { label: 'Active Subscriptions', value: summary?.active_subscription_count ?? 0, note: 'Tenant jalan', icon: CreditCard, tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300' },
+                            { label: 'Plans', value: summary?.plan_count ?? 0, note: 'Skema paket', icon: Package, tone: 'border-violet-200 bg-violet-50/80 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300' },
+                            { label: 'Pending Invoice', value: summary?.invoice_pending_count ?? 0, note: 'Antrian bayar', icon: FileText, tone: 'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300' },
+                            { label: 'Verification', value: summary?.invoice_verification_count ?? 0, note: 'Bukti masuk', icon: CheckCircle2, tone: 'border-cyan-200 bg-cyan-50/80 text-cyan-700 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-300' },
+                            { label: 'Paid This Month', value: summary?.invoice_paid_month_count ?? 0, note: 'Arus sehat', icon: TrendingUp, tone: 'border-rose-200 bg-rose-50/80 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300' },
+                        ] as item}
+                            <div class="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/65">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
+                                        <p class="mt-2 text-2xl font-semibold tracking-tight text-foreground">{item.value}</p>
+                                        <p class="mt-1 text-xs text-muted-foreground">{item.note}</p>
+                                    </div>
+                                    <div class={`rounded-2xl border p-2 ${item.tone}`}>
+                                        <item.icon class="h-4 w-4" />
+                                    </div>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <nav class="sticky top-4 z-20">
+            <div class="rounded-[24px] border border-slate-200/70 bg-white/86 p-2 shadow-[0_18px_60px_-40px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/82">
+                <div class="flex gap-2 overflow-x-auto">
+                    {#each [
+                        { key: 'tenants', label: 'Tenants', icon: Building2, meta: summary?.tenant_count ?? 0 },
+                        { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard, meta: summary?.active_subscription_count ?? 0 },
+                        { key: 'plans', label: 'Plans', icon: Package, meta: summary?.plan_count ?? 0 },
+                        { key: 'billing', label: 'Billing', icon: FileText, meta: summary?.invoice_pending_count ?? 0 },
+                        { key: 'payment', label: 'Metode Pembayaran', icon: CreditCard, meta: 'QRIS' },
+                    ] as tab}
+                        <button
+                            onclick={() => switchTab(tab.key as TabName)}
+                            aria-current={activeTab === tab.key ? 'page' : undefined}
+                            class={`group flex min-w-[150px] items-center gap-3 rounded-full border px-4 py-3 text-sm font-medium transition
+                                ${activeTab === tab.key
+                                    ? 'border-slate-900 bg-slate-900 text-white shadow-[0_12px_30px_-16px_rgba(15,23,42,0.7)] dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950'
+                                    : 'border-slate-200 bg-white/80 text-muted-foreground hover:border-slate-300 hover:text-foreground dark:border-slate-800 dark:bg-slate-950/60 dark:hover:border-slate-700'}`}
+                        >
+                            <tab.icon class={`h-4 w-4 ${activeTab === tab.key ? 'text-white dark:text-slate-950' : 'text-sky-500'}`} />
+                            <span>{tab.label}</span>
+                            <span class={`ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${activeTab === tab.key ? 'bg-white/15 text-white dark:bg-slate-900/10 dark:text-slate-950' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
+                                {tab.meta}
+                            </span>
+                        </button>
+                    {/each}
+                </div>
+            </div>
+        </nav>
 
         <!-- ============ TENANTS TAB ============ -->
         {#if activeTab === 'tenants'}
-            <div class="flex items-center gap-3">
-                <div class="relative flex-1 max-w-sm">
-                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        class="pl-9"
-                        placeholder="Cari tenant..."
-                        bind:value={searchQuery}
-                        onchange={() => loadTenants()}
-                    />
+            <section class="space-y-4">
+                <div class="flex flex-col gap-4 rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tenant registry</p>
+                        <h2 class="text-lg font-semibold text-foreground">Kelola workspace tenant</h2>
+                        <p class="text-sm text-muted-foreground">Cari, tambah, suspend, atau cek subscription dari satu panel.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="relative w-full max-w-sm">
+                            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input class="pl-9" placeholder="Cari tenant..." bind:value={searchQuery} onchange={() => loadTenants()} />
+                        </div>
+                        <Button variant="outline" size="icon" onclick={() => { searchQuery = ''; loadTenants(); }}><RefreshCw class="h-4 w-4" /></Button>
+                        <Button onclick={() => openTenantForm()}><Plus class="h-4 w-4 mr-1" /> Tambah Tenant</Button>
+                    </div>
                 </div>
-                <Button variant="outline" size="icon" onclick={() => { searchQuery = ''; loadTenants(); }}><RefreshCw class="h-4 w-4" /></Button>
-                <Button onclick={() => openTenantForm()}><Plus class="h-4 w-4 mr-1" /> Tambah Tenant</Button>
-            </div>
 
             <!-- Tenant Form Modal -->
             {#if showTenantForm}
-                <Card>
+                <Card class={panelClass}>
                     <CardHeader>
                         <CardTitle>{editingTenant ? 'Edit Tenant' : 'Tambah Tenant Baru'}</CardTitle>
                     </CardHeader>
@@ -477,24 +533,24 @@
             {/if}
 
             <!-- Tenant Table -->
-            <Card>
+            <Card class={tableShellClass}>
                 <CardContent class="p-0">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
-                            <thead>
-                                <tr class="border-b text-left">
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Nama</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Paket</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Status</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground text-right">Users</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground text-right">Pools</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Berlangganan</th>
+                            <thead class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60">
+                                <tr class="border-b border-slate-200 text-left dark:border-slate-800">
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Nama</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Paket</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Status</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground text-right">Users</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground text-right">Pools</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Berlangganan</th>
                                     <th class="px-4 py-3 w-16"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {#each tenants as t}
-                                    <tr class="border-b last:border-0 hover:bg-muted/30">
+                                    <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40">
                                         <td class="px-4 py-2.5">
                                             <div class="font-medium">{t.name}</div>
                                             <div class="text-xs text-muted-foreground">{t.slug}</div>
@@ -546,31 +602,40 @@
                     {/if}
                 </CardContent>
             </Card>
+            </section>
         {/if}
 
         <!-- ============ SUBSCRIPTIONS TAB ============ -->
         {#if activeTab === 'subscriptions'}
-            <div class="flex items-center gap-3 flex-wrap">
-                <div class="relative flex-1 max-w-sm">
-                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input class="pl-9" placeholder="Cari tenant..." bind:value={searchQuery} onchange={() => loadSubscriptions()} />
+            <section class="space-y-4">
+                <div class="flex flex-col gap-4 rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Subscription desk</p>
+                        <h2 class="text-lg font-semibold text-foreground">Kelola lifecycle langganan</h2>
+                        <p class="text-sm text-muted-foreground">Filter status, ubah plan, dan kontrol tenant dari satu daftar.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="relative w-full max-w-sm">
+                            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input class="pl-9" placeholder="Cari tenant..." bind:value={searchQuery} onchange={() => loadSubscriptions()} />
+                        </div>
+                        <select bind:value={statusFilter} onchange={() => loadSubscriptions()} class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                            <option value="">Semua Status</option>
+                            <option value="pending_payment">Pending Payment</option>
+                            <option value="trial">Trial</option>
+                            <option value="active">Active</option>
+                            <option value="past_due">Past Due</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="canceled">Canceled</option>
+                        </select>
+                        <Button variant="outline" size="icon" onclick={() => { searchQuery = ''; statusFilter = ''; loadSubscriptions(); }}><RefreshCw class="h-4 w-4" /></Button>
+                        <Button onclick={() => openSubForm()}><Plus class="h-4 w-4 mr-1" /> Tambah Subscription</Button>
+                    </div>
                 </div>
-                <select bind:value={statusFilter} onchange={() => loadSubscriptions()} class="rounded-md border px-3 py-2 text-sm">
-                    <option value="">Semua Status</option>
-                    <option value="pending_payment">Pending Payment</option>
-                    <option value="trial">Trial</option>
-                    <option value="active">Active</option>
-                    <option value="past_due">Past Due</option>
-                    <option value="suspended">Suspended</option>
-                    <option value="canceled">Canceled</option>
-                </select>
-                <Button variant="outline" size="icon" onclick={() => { searchQuery = ''; statusFilter = ''; loadSubscriptions(); }}><RefreshCw class="h-4 w-4" /></Button>
-                <Button onclick={() => openSubForm()}><Plus class="h-4 w-4 mr-1" /> Tambah Subscription</Button>
-            </div>
 
             <!-- Sub Form Modal -->
             {#if showSubForm}
-                <Card>
+                <Card class={panelClass}>
                     <CardHeader><CardTitle>{editingSub ? 'Edit Subscription' : 'Tambah Subscription'}</CardTitle></CardHeader>
                     <CardContent>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -625,24 +690,24 @@
                 </Card>
             {/if}
 
-            <Card>
+            <Card class={tableShellClass}>
                 <CardContent class="p-0">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
-                            <thead>
-                                <tr class="border-b text-left">
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Tenant</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Paket</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Status</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Mulai</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Berakhir</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground text-right">Harga</th>
+                            <thead class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60">
+                                <tr class="border-b border-slate-200 text-left dark:border-slate-800">
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Tenant</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Paket</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Status</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Mulai</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Berakhir</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground text-right">Harga</th>
                                     <th class="px-4 py-3 w-16"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {#each subscriptions as s}
-                                    <tr class="border-b last:border-0 hover:bg-muted/30">
+                                    <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40">
                                         <td class="px-4 py-2.5 font-medium">{s.tenant_name}</td>
                                         <td class="px-4 py-2.5"><Badge variant="outline">{s.plan_name}</Badge></td>
                                         <td class="px-4 py-2.5"><Badge variant={statusBadge(s.status).variant}>{statusBadge(s.status).label}</Badge></td>
@@ -684,14 +749,22 @@
                     {/if}
                 </CardContent>
             </Card>
+            </section>
         {/if}
 
         <!-- ============ PLANS TAB ============ -->
         {#if activeTab === 'plans'}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <section class="space-y-4">
+                <div class="rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Plan matrix</p>
+                    <h2 class="mt-1 text-lg font-semibold text-foreground">Atur paket dan limit produk</h2>
+                    <p class="text-sm text-muted-foreground">Harga, limit resource, dan fitur premium dipelihara di sini.</p>
+                </div>
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {#each plans as plan}
                     {@const isEditing = editingPlan?.id === plan.id}
-                    <Card class={plan.is_active ? '' : 'opacity-60'}>
+                    <Card class={`${panelClass} ${plan.is_active ? '' : 'opacity-70'}`}>
                         <CardHeader>
                             <div class="flex items-center justify-between">
                                 <div>
@@ -770,10 +843,18 @@
                     </Card>
                 {/each}
             </div>
+            </section>
         {/if}
 
         <!-- ============ BILLING TAB ============ -->
         {#if activeTab === 'billing'}
+            <section class="space-y-4">
+                <div class="rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Billing queue</p>
+                    <h2 class="mt-1 text-lg font-semibold text-foreground">Invoice subscription dan verifikasi pembayaran</h2>
+                    <p class="text-sm text-muted-foreground">Pantau antrian bayar, bukti transfer, dan invoice yang butuh aksi.</p>
+                </div>
+
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 {#each [
                     { label: 'Pending', value: invoiceSummary.pending ?? 0, meta: 'Belum upload bukti' },
@@ -782,7 +863,7 @@
                     { label: 'Overdue', value: invoiceSummary.overdue ?? 0, meta: 'Lewat jatuh tempo' },
                     { label: 'Nominal Pending', value: formatRupiah(invoiceSummary.total_amount_pending ?? 0), meta: 'Outstanding' },
                 ] as item}
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                    <div class="rounded-2xl border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
                         <p class="text-xs font-medium text-muted-foreground">{item.label}</p>
                         <p class="mt-2 text-xl font-semibold text-foreground">{item.value}</p>
                         <p class="mt-1 text-xs text-muted-foreground">{item.meta}</p>
@@ -790,12 +871,12 @@
                 {/each}
             </div>
 
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3 rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
                 <div class="relative flex-1 max-w-sm">
                     <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input class="pl-9" placeholder="Cari invoice atau tenant..." bind:value={searchQuery} onchange={() => loadInvoices()} />
                 </div>
-                <select bind:value={statusFilter} onchange={() => loadInvoices()} class="rounded-md border px-3 py-2 text-sm">
+                <select bind:value={statusFilter} onchange={() => loadInvoices()} class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950">
                     <option value="">Semua Status</option>
                     <option value="pending">Pending</option>
                     <option value="verification">Perlu Verifikasi</option>
@@ -807,25 +888,25 @@
                 <Button variant="outline" size="icon" onclick={() => { searchQuery = ''; statusFilter = ''; loadInvoices(); }}><RefreshCw class="h-4 w-4" /></Button>
             </div>
 
-            <Card>
+            <Card class={tableShellClass}>
                 <CardContent class="p-0">
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[920px] text-sm">
-                            <thead>
-                                <tr class="border-b text-left">
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Invoice</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Tenant</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Paket</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground text-right">Nominal</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Due Date</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Status</th>
-                                    <th class="px-4 py-3 font-medium text-muted-foreground">Bukti</th>
+                            <thead class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60">
+                                <tr class="border-b border-slate-200 text-left dark:border-slate-800">
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Invoice</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Tenant</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Paket</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground text-right">Nominal</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Due Date</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Status</th>
+                                    <th class="px-4 py-3 font-semibold text-muted-foreground">Bukti</th>
                                     <th class="px-4 py-3 w-16"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {#each invoices as inv}
-                                    <tr class="border-b last:border-0 hover:bg-muted/30">
+                                    <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40">
                                         <td class="px-4 py-2.5">
                                             <div class="font-medium">{inv.invoice_number}</div>
                                             <div class="text-xs text-muted-foreground">{formatDate(inv.created_at)}</div>
@@ -880,105 +961,124 @@
                     {/if}
                 </CardContent>
             </Card>
+            </section>
         {/if}
 
         <!-- ============ PAYMENT TAB ============ -->
         {#if activeTab === 'payment'}
-            {#if payMessage}
-                <div class="bg-green-50 text-green-700 rounded-lg px-4 py-3 text-sm">{payMessage}</div>
-            {/if}
+            <section class="space-y-4">
+                <div class="rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                    <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Payment workspace</p>
+                            <h2 class="mt-1 text-lg font-semibold text-foreground">Metode Pembayaran</h2>
+                            <p class="text-sm text-muted-foreground">QRIS tampil langsung ke tenant, bank transfer tetap jadi fallback manual.</p>
+                        </div>
+                        <Badge variant={paymentSettings?.qris?.has_image ? 'default' : 'outline'}>
+                            {qrisStatusLabel(paymentSettings?.qris?.storage_status)}
+                        </Badge>
+                    </div>
+                </div>
 
-            <form onsubmit={(e) => { e.preventDefault(); savePaymentSettings(e.target as HTMLFormElement); }}>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- QRIS -->
-                    <Card>
-                        <CardHeader>
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <CardTitle>QRIS</CardTitle>
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        Ditampilkan di halaman Subscription tenant.
-                                    </p>
-                                </div>
-                                <Badge variant={paymentSettings?.qris?.has_image ? 'default' : 'outline'}>
-                                    {qrisStatusLabel(paymentSettings?.qris?.storage_status)}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent class="space-y-4">
-                            <div>
-                                <Label class="text-xs">Nama Merchant</Label>
-                                <Input name="qris_merchant_name" value={paymentSettings?.qris?.merchant_name ?? ''} placeholder="Qbus Indonesia" />
-                            </div>
-                            <div>
-                                <Label class="text-xs">QRIS Image</Label>
-                                <div class="mt-2 grid gap-3 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center">
-                                    {#if paymentSettings?.qris?.image_url}
-                                        <div class="rounded-lg border bg-white p-2 shadow-sm">
-                                            <img src={paymentSettings.qris.image_url} alt="QRIS" class="h-24 w-24 object-contain" />
-                                        </div>
-                                    {:else}
-                                        <div class="flex h-28 w-28 items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
-                                            QRIS kosong
-                                        </div>
-                                    {/if}
-                                    <div class="space-y-2">
-                                        <Input type="file" name="qris_image" accept="image/png,image/jpeg" />
-                                        <p class="text-xs text-muted-foreground">
-                                            Upload gambar QRIS. Format PNG/JPG, max 1MB.
+                {#if payMessage}
+                    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">{payMessage}</div>
+                {/if}
+
+                <form onsubmit={(e) => { e.preventDefault(); savePaymentSettings(e.target as HTMLFormElement); }}>
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <!-- QRIS -->
+                        <Card class={panelClass}>
+                            <CardHeader>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <CardTitle>QRIS</CardTitle>
+                                        <p class="mt-1 text-xs text-muted-foreground">
+                                            Dipakai tenant saat bayar subscription.
                                         </p>
-                                        {#if paymentSettings?.qris?.storage_status === 'missing_link'}
-                                            <p class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-                                                Jalankan command production: php artisan storage:link
-                                            </p>
-                                        {:else if paymentSettings?.qris?.storage_status === 'missing_file'}
-                                            <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-                                                Upload QRIS baru agar tenant bisa scan langsung dari Subscription.
-                                            </p>
+                                    </div>
+                                    <Badge variant={paymentSettings?.qris?.has_image ? 'default' : 'outline'}>
+                                        {qrisStatusLabel(paymentSettings?.qris?.storage_status)}
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent class="space-y-4">
+                                <div class="grid gap-4 md:grid-cols-[144px_minmax(0,1fr)] md:items-start">
+                                    <div class="flex items-center justify-center rounded-2xl border border-slate-200/70 bg-slate-50/90 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+                                        {#if paymentSettings?.qris?.image_url}
+                                            <img src={paymentSettings.qris.image_url} alt="QRIS" class="h-32 w-32 object-contain" />
+                                        {:else}
+                                            <div class="flex h-32 w-32 items-center justify-center rounded-xl border border-dashed text-center text-xs text-muted-foreground">
+                                                QRIS kosong
+                                            </div>
                                         {/if}
                                     </div>
-                                </div>
-                            </div>
-                            <div>
-                                <Label class="text-xs">Catatan QRIS</Label>
-                                <Input name="qris_note" value={paymentSettings?.qris?.note ?? ''} placeholder="Scan QRIS di bawah dan masukkan nominal sesuai paket." />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Bank Transfer -->
-                    <Card>
-                        <CardHeader><CardTitle>Rekening Bank</CardTitle></CardHeader>
-                        <CardContent class="space-y-4">
-                            {#each [1, 2, 3] as i}
-                                {@const accounts = paymentSettings?.bank_transfer?.accounts ?? []}
-                                {@const acc = accounts[i - 1] ?? {}}
-                                <div class="border rounded-lg p-3 space-y-2">
-                                    <div class="font-medium text-sm">Rekening #{i}</div>
-                                    <div>
-                                        <Label class="text-xs">Nama Bank</Label>
-                                        <Input name={`bank_${i}_name`} value={acc.bank_name ?? ''} placeholder="BCA" />
-                                    </div>
-                                    <div>
-                                        <Label class="text-xs">Nomor Rekening</Label>
-                                        <Input name={`bank_${i}_number`} value={acc.account_number ?? ''} placeholder="1234567890" />
-                                    </div>
-                                    <div>
-                                        <Label class="text-xs">Atas Nama</Label>
-                                        <Input name={`bank_${i}_holder`} value={acc.account_holder ?? ''} placeholder="PT Qbus Indonesia" />
+                                    <div class="space-y-3">
+                                        <div>
+                                            <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Nama Merchant</Label>
+                                            <Input name="qris_merchant_name" value={paymentSettings?.qris?.merchant_name ?? ''} placeholder="Qbus Indonesia" />
+                                        </div>
+                                        <div>
+                                            <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Upload QRIS</Label>
+                                            <Input type="file" name="qris_image" accept="image/png,image/jpeg" />
+                                        </div>
                                     </div>
                                 </div>
-                            {/each}
-                        </CardContent>
-                    </Card>
-                </div>
+                                <div class="space-y-2">
+                                    <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Catatan QRIS</Label>
+                                    <Input name="qris_note" value={paymentSettings?.qris?.note ?? ''} placeholder="Scan QRIS di bawah dan masukkan nominal sesuai paket." />
+                                </div>
+                                {#if paymentSettings?.qris?.storage_status === 'missing_link'}
+                                    <p class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+                                        Jalankan command production: php artisan storage:link
+                                    </p>
+                                {:else if paymentSettings?.qris?.storage_status === 'missing_file'}
+                                    <p class="rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs text-muted-foreground dark:border-slate-700">
+                                        Upload QRIS baru agar tenant bisa scan langsung dari Subscription.
+                                    </p>
+                                {/if}
+                            </CardContent>
+                        </Card>
 
-                <div class="flex justify-end mt-6">
-                    <Button type="submit" disabled={payBusy}>
-                        {payBusy ? 'Menyimpan...' : 'Simpan Pengaturan Pembayaran'}
-                    </Button>
-                </div>
-            </form>
+                        <!-- Bank Transfer -->
+                        <Card class={panelClass}>
+                            <CardHeader><CardTitle>Rekening Bank</CardTitle></CardHeader>
+                            <CardContent class="space-y-4">
+                                {#each [1, 2, 3] as i}
+                                    {@const accounts = paymentSettings?.bank_transfer?.accounts ?? []}
+                                    {@const acc = accounts[i - 1] ?? {}}
+                                    <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+                                        <div class="mb-3 flex items-center justify-between">
+                                            <div class="font-medium text-sm text-foreground">Rekening #{i}</div>
+                                            <Badge variant="outline">Manual</Badge>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Nama Bank</Label>
+                                                <Input name={`bank_${i}_name`} value={acc.bank_name ?? ''} placeholder="BCA" />
+                                            </div>
+                                            <div>
+                                                <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Nomor Rekening</Label>
+                                                <Input name={`bank_${i}_number`} value={acc.account_number ?? ''} placeholder="1234567890" />
+                                            </div>
+                                            <div>
+                                                <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Atas Nama</Label>
+                                                <Input name={`bank_${i}_holder`} value={acc.account_holder ?? ''} placeholder="PT Qbus Indonesia" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/each}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div class="flex justify-end pt-6">
+                        <Button type="submit" disabled={payBusy}>
+                            {payBusy ? 'Menyimpan...' : 'Simpan Pengaturan Pembayaran'}
+                        </Button>
+                    </div>
+                </form>
+            </section>
         {/if}
-    {/if}
+        {/if}
+    </div>
 </div>
