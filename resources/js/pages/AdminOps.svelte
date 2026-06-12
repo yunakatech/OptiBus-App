@@ -799,6 +799,23 @@
         }
     });
 
+    $effect(() => {
+        try {
+            const group = tabGroupFor(activeTab);
+            const isMasterGroup = group && group.title === 'Master Data';
+
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(
+                    new CustomEvent('set-theme', {
+                        detail: { theme: isMasterGroup ? 'terminal' : null },
+                    }),
+                );
+            }
+        } catch {
+            // ignore
+        }
+    });
+
     const collectScheduleRouteNames = (
         routeRows: RouteRow[],
         scheduleRows: ScheduleRow[],
