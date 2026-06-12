@@ -1134,6 +1134,105 @@ class AdminOpsApiTest extends TestCase
         $this->deleteJson(route('api.admin.assignments.delete', ['id' => $assignmentId]))->assertOk();
     }
 
+    public function test_charter_save_survives_legacy_customer_phone_conflicts_in_other_tenant(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $tenantId = $this->defaultTenantId();
+        $otherTenantId = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Konflik',
+            'slug' => 'tenant-konflik',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL CHARTER',
+            'code' => 'CHT',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => DB::table('routes')->insertGetId([
+                'tenant_id' => $tenantId,
+                'name' => 'PINRANG - MAKASSAR',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'created_at' => now(),
+            ]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $conflictPoolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $otherTenantId,
+            'name' => 'POOL KONFLIK',
+            'code' => 'CFK',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('customer_charter')->insert([
+            'tenant_id' => $otherTenantId,
+            'pool_id' => $conflictPoolId,
+            'nama' => 'CHARTER KONFLIK',
+            'no_hp' => '08128888000',
+            'alamat' => 'Tenant Konflik',
+            'company' => 'PT KONFLIK',
+            'created_at' => now(),
+        ]);
+
+        if (Schema::hasTable('customer_charter')) {
+            DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS tmp_customer_charter_no_hp_unique ON customer_charter (no_hp)');
+        }
+
+        $charter = $this->postJson(route('api.admin.charters.save'), [
+            'pool_id' => $poolId,
+            'name' => 'ROMBONGAN KONFLIK',
+            'company_name' => 'PT KONFLIK',
+            'phone' => '08128888000',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'departure_time' => '09:00',
+            'pickup_point' => 'Pinrang',
+            'drop_point' => 'Makassar',
+            'price' => 2500000,
+            'layanan' => 'Regular',
+            'bop_price' => 300000,
+            'payment_status' => 'DP',
+        ])->assertCreated()->json();
+
+        $charterId = (int) ($charter['id'] ?? 0);
+        $this->assertTrue($charterId > 0);
+
+        $this->postJson(route('api.admin.charters.save'), [
+            'id' => $charterId,
+            'pool_id' => $poolId,
+            'name' => 'ROMBONGAN KONFLIK UPDATE',
+            'company_name' => 'PT KONFLIK UPDATE',
+            'phone' => '08128888000',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'departure_time' => '10:00',
+            'pickup_point' => 'Terminal Pinrang',
+            'drop_point' => 'Makassar',
+            'price' => 2750000,
+            'layanan' => 'Regular',
+            'bop_price' => 320000,
+            'payment_status' => 'DP',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('charters', [
+            'id' => $charterId,
+            'name' => 'ROMBONGAN KONFLIK UPDATE',
+            'company_name' => 'PT KONFLIK UPDATE',
+        ]);
+    }
+
     public function test_admin_charter_rejects_pool_that_conflicts_with_mapped_route(): void
     {
         $this->actingAsSuperAdmin();
