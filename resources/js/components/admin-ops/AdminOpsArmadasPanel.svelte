@@ -4,6 +4,9 @@
     import { Button } from '@/components/ui/button';
     import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
+    import DataTable from '@/components/terminal/DataTable.svelte';
+    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+    import EntityBadge from '@/components/terminal/EntityBadge.svelte';
 
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
     type ArmadaRow = {
@@ -67,6 +70,18 @@
     } = $props();
 
     let armadaFiltersExpanded = $state(false);
+
+    const columns = [
+        { key: 'nopol', label: 'Nopol', width: 'w-[180px]', sticky: 'left', leftOffset: '0px' },
+        { key: 'profil', label: 'Profil Armada', width: 'w-[260px]', sticky: 'left', leftOffset: '180px' },
+        { key: 'gps', label: 'GPS & Tracking', width: 'w-[220px]', sticky: 'left', leftOffset: '440px' },
+        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true },
+        { key: 'bop', label: 'BOP', align: 'right', numeric: true },
+        { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
+        { key: 'target', label: 'Target', align: 'right', numeric: true },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true },
+        { key: 'status', label: 'Status', align: 'center' },
+    ];
 </script>
 
 {#if activeMode === 'view'}
@@ -121,8 +136,7 @@
         </Button>
     </div>
     <div class={armadaFiltersExpanded ? 'flex flex-col gap-2 md:flex-row' : 'hidden md:flex md:gap-2'}>
-        <Input placeholder="Cari merk / nopol / kategori / platform GPS" bind:value={armadaSearch} />
-        <Button type="button" onclick={() => void loadArmadas()}>Search</Button>
+        <TerminalFilter bind:query={armadaSearch} placeholder="Cari merk / nopol / kategori / platform GPS" on:search={() => void loadArmadas()} />
     </div>
     <div class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm">
         <div class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(14,165,233,0.05),rgba(15,23,42,0.035))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
@@ -152,10 +166,8 @@
                 <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-foreground">{row.nopol}</p>
-                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
-                                {row.merk ?? 'Armada tanpa merek'}
-                            </p>
+                            <EntityBadge code={row.nopol} class="text-sm" />
+                            <p class="mt-0.5 truncate text-xs text-muted-foreground">{row.merk ?? 'Armada tanpa merek'}</p>
                         </div>
                         <div class="flex shrink-0 items-center gap-1.5">
                             <span
@@ -260,128 +272,76 @@
         </div>
 
         <div class="hidden overflow-x-auto md:block">
-            <table class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm">
-                <thead>
-                    <tr class="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-                        <th rowspan="2" class="sticky left-0 z-30 w-[180px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold">Nopol</th>
-                        <th rowspan="2" class="sticky left-[180px] z-30 w-[260px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold">Profil Armada</th>
-                        <th rowspan="2" class="sticky left-[440px] z-30 w-[220px] border-b border-r border-border/70 bg-background px-4 py-4 text-left font-semibold">GPS & Tracking</th>
-                        <th colspan="4" class="border-b border-r border-border/70 bg-emerald-50/70 px-3 py-3 text-center font-semibold text-emerald-800">Revenue</th>
-                        <th colspan="3" class="border-b border-r border-border/70 bg-amber-50/80 px-3 py-3 text-center font-semibold text-amber-800">BOP</th>
-                        <th colspan="3" class="border-b border-r border-border/70 bg-sky-50/80 px-3 py-3 text-center font-semibold text-sky-800">Margin</th>
-                        <th colspan="2" class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-3 text-center font-semibold text-slate-700">Target</th>
-                        <th rowspan="2" class="border-b border-r border-border/70 bg-slate-100/90 px-3 py-4 text-center font-semibold text-slate-700">Status</th>
-                        <th rowspan="2" class="sticky right-0 z-30 w-[96px] border-b border-l border-border/70 bg-background px-3 py-4 text-center font-semibold">Aksi</th>
-                    </tr>
-                    <tr class="bg-muted/20 text-[11px] font-semibold text-foreground/80">
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Charter</th>
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Keberangkatan</th>
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Bagasi</th>
-                        <th class="border-b border-r border-border/70 px-3 py-3 text-right">Total Revenue</th>
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Charter</th>
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Keberangkatan</th>
-                        <th class="border-b border-r border-border/70 px-3 py-3 text-right">Total BOP</th>
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Gross</th>
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Fixed Cost</th>
-                        <th class="border-b border-r border-border/70 px-3 py-3 text-right">Net Margin</th>
-                        <th class="border-b border-border/70 px-3 py-3 text-right">Target Revenue</th>
-                        <th class="border-b border-r border-border/70 px-3 py-3 text-right">Achievement</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each armadas as row (row.id)}
-                        {@const gross = armadaGrossMargin(row)}
-                        {@const net = armadaNetMargin(row)}
-                        {@const achievement = armadaAchievement(row)}
-                        {@const status = armadaStatus(row)}
-                        <tr class="group transition hover:bg-muted/15">
-                            <td class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15">
-                                <div class="font-semibold text-foreground">{row.nopol}</div>
-                                <div class="mt-1 text-[11px] text-muted-foreground">{row.nomor_rangka ?? 'Nomor rangka belum tersedia'}</div>
-                            </td>
-                            <td class="sticky left-[180px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15">
-                                <div class="font-medium text-foreground">{row.merk ?? 'Armada tanpa merek'}</div>
-                                <div class="mt-1 text-xs text-muted-foreground">{row.warna ?? '-'} · {row.tahun ?? 0}</div>
-                                <div class="mt-3 flex flex-wrap gap-2">
-                                    <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${categoryTone(row.kategori)}`}>
-                                        {normalizeUnitCategory(row.kategori)}
-                                    </span>
-                                    <span class="rounded-full border border-border/70 bg-muted/25 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-                                        {row.ac_type}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="sticky left-[440px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15">
-                                <div class="font-medium text-foreground">{row.platform_gps ?? '-'}</div>
-                                <div class="mt-1 break-all text-[11px] text-muted-foreground">{row.api_gps ?? 'API GPS belum diatur'}</div>
-                            </td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-                            <td class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right">
-                                <div class="text-sm font-semibold text-emerald-800 tabular-nums">{formatCurrency(Number(row.revenue || 0))}</div>
-                                <div class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80">Total</div>
-                            </td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-                            <td class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right">
-                                <div class="text-sm font-semibold text-amber-800 tabular-nums">{formatCurrency(Number(row.bop || 0))}</div>
-                                <div class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80">Total</div>
-                            </td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(gross)}</td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-                            <td class="border-b border-r border-border/60 px-3 py-4 text-right">
-                                <div class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}>{formatCurrency(net)}</div>
-                                <div class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}>
-                                    {net >= 0 ? 'Positif' : 'Minus'}
-                                </div>
-                            </td>
-                            <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.target_bulanan || 0))}</td>
-                            <td class="border-b border-r border-border/60 px-3 py-4 text-right">
-                                <div class="text-sm font-semibold tabular-nums">{achievement.toFixed(1)}%</div>
-                                <div class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Pencapaian</div>
-                            </td>
-                            <td class="border-b border-r border-border/60 px-3 py-4 text-center">
-                                <span
-                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                                        status === 'Tercapai'
-                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                            : 'border-amber-200 bg-amber-50 text-amber-700'
-                                    }`}
-                                >
-                                    {status}
-                                </span>
-                            </td>
-                            <td class="sticky right-0 z-20 border-b border-l border-border/60 bg-background px-3 py-4 text-center group-hover:bg-muted/15">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                            <MoreHorizontal class="h-4 w-4" />
-                                            <span class="sr-only">Aksi armada</span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                        <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
-                                            <Eye class="mr-2 h-3.5 w-3.5" />
-                                            Lihat Detail
-                                        </DropdownMenuItem>
-                                        {#if canManage}
-                                            <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
-                                                <Pencil class="mr-2 h-3.5 w-3.5" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
-                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                                Hapus
-                                            </DropdownMenuItem>
-                                        {/if}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
+            <DataTable {columns} rows={armadas} class="min-w-full">
+                <svelte:fragment slot="row" let:row let:index>
+                    {@const gross = armadaGrossMargin(row)}
+                    {@const net = armadaNetMargin(row)}
+                    {@const achievement = armadaAchievement(row)}
+                    {@const status = armadaStatus(row)}
+
+                    <td class="py-3 px-4 align-top">
+                        <EntityBadge code={row.nopol} class="text-sm" />
+                        <div class="mt-1 text-[11px] text-muted-foreground">{row.nomor_rangka ?? 'Nomor rangka belum tersedia'}</div>
+                    </td>
+
+                    <td class="py-3 px-4 align-top">
+                        <div class="font-medium text-foreground">{row.merk ?? 'Armada tanpa merek'}</div>
+                        <div class="mt-1 text-xs text-muted-foreground">{row.warna ?? '-'} · {row.tahun ?? 0}</div>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${categoryTone(row.kategori)}`}>
+                                {normalizeUnitCategory(row.kategori)}
+                            </span>
+                            <span class="rounded-full border border-border/70 bg-muted/25 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                                {row.ac_type}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td class="py-3 px-4 align-top">
+                        <div class="font-medium text-foreground">{row.platform_gps ?? '-'}</div>
+                        <div class="mt-1 break-all text-[11px] text-muted-foreground">{row.api_gps ?? 'API GPS belum diatur'}</div>
+                    </td>
+
+                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(net)}</td>
+                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_bulanan || 0))}</td>
+                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
+
+                    <td class="py-3 px-4 text-center">
+                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                            {status}
+                        </span>
+                    </td>
+
+                    <td class="py-3 px-4 text-center">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                    <MoreHorizontal class="h-4 w-4" />
+                                    <span class="sr-only">Aksi armada</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
+                                    <Eye class="mr-2 h-3.5 w-3.5" />
+                                    Lihat Detail
+                                </DropdownMenuItem>
+                                {#if canManage}
+                                    <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
+                                        <Pencil class="mr-2 h-3.5 w-3.5" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                        Hapus
+                                    </DropdownMenuItem>
+                                {/if}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </td>
+                </svelte:fragment>
+            </DataTable>
         </div>
     </div>
 {/if}
