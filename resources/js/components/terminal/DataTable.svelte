@@ -40,7 +40,7 @@
         <tbody class="divide-y divide-slate-800 text-sm">
             {#each rows as row, idx (row.id ?? idx)}
                 <tr class="hover:bg-[#222d4f] transition-colors group">
-                    <slot name="row" row={row} index={idx}>
+                    <slot name="row" row={row} index={idx} columns={computedColumns}>
                         {#each columns as col}
                             <td
                                 class={cn(
@@ -56,7 +56,7 @@
                         {/each}
 
                         <td class="py-3 px-4 text-right">
-                            <slot name="actions" row={row} index={idx}>
+                            <slot name="actions" row={row} index={idx} columns={computedColumns}>
                                 <div class="opacity-80 group-hover:opacity-100 transition-opacity flex justify-end gap-3">
                                     <button class="text-xs font-medium text-accent hover:underline focus:outline-none">Ubah</button>
                                     <span class="text-slate-700">|</span>
