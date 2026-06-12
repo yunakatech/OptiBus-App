@@ -28,6 +28,9 @@
     } from 'lucide-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
     import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
+    import DataTable from '@/components/terminal/DataTable.svelte';
+    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+    import EntityBadge from '@/components/terminal/EntityBadge.svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
