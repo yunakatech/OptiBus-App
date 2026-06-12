@@ -38,6 +38,7 @@
     type TenantSub = {
         tenant_id: number;
         tenant_name: string;
+        tenant_status?: string;
         plan_id: number;
         plan_name: string;
         plan_slug: string;
@@ -96,15 +97,16 @@
         upload_max_kb: 2048,
     }) as PaymentConfig);
 
-    const pendingInvoices = $derived(invoices.filter((invoice) => invoice.status === 'pending'));
+    const pendingInvoices = $derived(invoices.filter((invoice) => ['pending', 'overdue'].includes(invoice.status) && !invoice.payment_proof));
     const payableInvoice = $derived(
-        pendingInvoices.find((invoice) => !invoice.payment_proof) ?? pendingInvoices[0] ?? null,
+        pendingInvoices[0] ?? null,
     );
     const invoiceInVerification = $derived(
-        pendingInvoices.find((invoice) => invoice.payment_proof) ?? null,
+        invoices.find((invoice) => invoice.status === 'verification' || (invoice.status === 'pending' && invoice.payment_proof)) ?? null,
     );
     const paidInvoices = $derived(invoices.filter((invoice) => invoice.status === 'paid'));
     const subscriptionMeta = $derived(statusBadge(tenantSub?.subscription_status ?? ''));
+    const canAccessDashboard = $derived(tenantSub?.subscription_status === 'trial' || tenantSub?.subscription_status === 'active');
     const paymentMethodsCount = $derived(
         Number(paymentConfig.qris.enabled) + Number(paymentConfig.bank_transfer.enabled && paymentConfig.bank_transfer.accounts.length > 0),
     );
@@ -140,6 +142,7 @@
     function statusBadge(status: string): BadgeMeta {
         const map: Record<string, BadgeMeta> = {
             trial: { variant: 'secondary', label: 'Trial' },
+            pending_payment: { variant: 'outline', label: 'Menunggu Pembayaran' },
             active: { variant: 'default', label: 'Aktif' },
             past_due: { variant: 'outline', label: 'Jatuh Tempo' },
             suspended: { variant: 'destructive', label: 'Ditangguhkan' },
@@ -153,6 +156,7 @@
     function invoiceStatusBadge(status: string): BadgeMeta {
         const map: Record<string, BadgeMeta> = {
             pending: { variant: 'secondary', label: 'Menunggu' },
+            verification: { variant: 'outline', label: 'Verifikasi' },
             paid: { variant: 'default', label: 'Lunas' },
             overdue: { variant: 'destructive', label: 'Overdue' },
             failed: { variant: 'destructive', label: 'Gagal' },
@@ -321,14 +325,16 @@
                 Kelola status paket, invoice, dan upload bukti pembayaran tenant.
             </p>
         </div>
-        <Button asChild variant="outline" class="h-9 w-fit rounded-lg">
-            {#snippet children(props)}
-                <Link {...props} href="/dashboard">
-                    Ke Dashboard
-                    <ExternalLink class="ml-1.5 h-3.5 w-3.5" />
-                </Link>
-            {/snippet}
-        </Button>
+        {#if canAccessDashboard}
+            <Button asChild variant="outline" class="h-9 w-fit rounded-lg">
+                {#snippet children(props)}
+                    <Link {...props} href="/dashboard">
+                        Ke Dashboard
+                        <ExternalLink class="ml-1.5 h-3.5 w-3.5" />
+                    </Link>
+                {/snippet}
+            </Button>
+        {/if}
     </div>
 
     {#if !tenantSub}
@@ -505,7 +511,7 @@
                                                     {formatRupiah(invoice.amount)}
                                                 </td>
                                                 <td class="px-3 py-3">
-                                                    {#if invoice.payment_proof && invoice.status === 'pending'}
+                                                    {#if invoice.status === 'verification' || (invoice.payment_proof && invoice.status === 'pending')}
                                                         <Badge variant="secondary">Verifikasi</Badge>
                                                     {:else}
                                                         <Badge variant={invoiceStatusBadge(invoice.status).variant}>
@@ -514,7 +520,7 @@
                                                     {/if}
                                                 </td>
                                                 <td class="px-3 py-3 text-right">
-                                                    {#if invoice.status === 'pending' && !invoice.payment_proof}
+                                                    {#if ['pending', 'overdue'].includes(invoice.status) && !invoice.payment_proof}
                                                         <Button
                                                             size="sm"
                                                             variant="outline"

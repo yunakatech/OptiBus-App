@@ -44,7 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('platform.dashboard');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'subscription.active'])->group(function () {
     Route::get('dashboard', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
     Route::inertia('menu', 'Menu')->name('menu.index');
     Route::get('bookings', BookingController::class)->middleware('permission:booking.view')->name('bookings.index');

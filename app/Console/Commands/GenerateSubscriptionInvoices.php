@@ -20,7 +20,6 @@ class GenerateSubscriptionInvoices extends Command
             return 1;
         }
 
-        $today = now()->toDateString();
         $dueThreshold = now()->addDays(7)->toDateString();
         $generated = 0;
 
@@ -37,8 +36,7 @@ class GenerateSubscriptionInvoices extends Command
             // Check if a pending invoice already exists for this period
             $exists = DB::table('invoice_subscriptions')
                 ->where('subscription_id', $sub->id)
-                ->where('status', 'pending')
-                ->where('due_date', '>=', $today)
+                ->whereIn('status', ['pending', 'verification', 'overdue'])
                 ->exists();
 
             if ($exists) {

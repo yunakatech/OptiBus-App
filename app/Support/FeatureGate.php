@@ -380,11 +380,39 @@ class FeatureGate
             return self::$featureMaxValueCache[$cacheKey];
         }
 
-        return self::$featureMaxValueCache[$cacheKey] = DB::table('plan_feature')
+        $mappedValue = DB::table('plan_feature')
             ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
             ->where('plan_feature.plan_id', $planId)
             ->where('feature_gates.feature_key', $featureKey)
             ->value('plan_feature.max_value');
+
+        if ($mappedValue !== null) {
+            return self::$featureMaxValueCache[$cacheKey] = $mappedValue;
+        }
+
+        return self::$featureMaxValueCache[$cacheKey] = self::planColumnLimit($planId, $featureKey);
+    }
+
+    private static function planColumnLimit(int $planId, string $featureKey): mixed
+    {
+        $column = [
+            'master.routes' => 'max_routes',
+            'master.armadas' => 'max_armadas',
+            'master.drivers' => 'max_drivers',
+            'tenant.multiple_pools' => 'max_pools',
+            'user.management' => 'max_users',
+        ][$featureKey] ?? null;
+
+        if ($column === null || ! Schema::hasColumn('plans', $column)) {
+            return null;
+        }
+
+        $value = DB::table('plans')->where('id', $planId)->value($column);
+        if ($value === null || (int) $value <= 0) {
+            return null;
+        }
+
+        return (int) $value;
     }
 
     private static function resourceCount(string $tableName, string $tenantColumn, int $tenantId): int

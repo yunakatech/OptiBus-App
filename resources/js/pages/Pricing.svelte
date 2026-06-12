@@ -226,7 +226,7 @@
                             {/if}
                         </div>
 
-                        <a href={isAuthenticated ? subscriptionHref : `/register?plan=${plan.slug}&intent=payment`} class={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
+                        <a href={isAuthenticated ? subscriptionHref : `/register?plan=${plan.slug}&intent=paid`} class={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}>
                             {isAuthenticated ? 'Kelola paket' : `Pilih ${plan.name}`} <ArrowRight class="ml-2 h-4 w-4" />
                         </a>
                     </article>

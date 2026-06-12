@@ -51,16 +51,23 @@ class AdminOpsSaasController extends Controller
                     ->count();
                 $invoiceSummary['invoice_verification_count'] = $hasPaymentProof
                     ? (int) DB::table('invoice_subscriptions')
-                        ->where('status', 'pending')
-                        ->whereNotNull('payment_proof')
-                        ->where('payment_proof', '!=', '')
+                        ->where(function ($verification): void {
+                            $verification
+                                ->where('status', 'verification')
+                                ->orWhere(function ($legacy): void {
+                                    $legacy
+                                        ->where('status', 'pending')
+                                        ->whereNotNull('payment_proof')
+                                        ->where('payment_proof', '!=', '');
+                                });
+                        })
                         ->count()
                     : 0;
                 $overdueQuery = DB::table('invoice_subscriptions')->where('status', 'overdue');
                 if ($hasDueDate) {
                     $overdueQuery->orWhere(function ($overdue): void {
-                        $overdue
-                            ->where('status', 'pending')
+                            $overdue
+                            ->whereIn('status', ['pending', 'verification'])
                             ->whereDate('due_date', '<', now()->toDateString());
                     });
                 }

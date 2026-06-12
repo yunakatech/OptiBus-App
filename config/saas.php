@@ -16,7 +16,7 @@ return [
     | Set to false during initial SaaS migration to keep all features open.
     |
     */
-    'feature_gating_enabled' => env('SAAS_FEATURE_GATING', false),
+    'feature_gating_enabled' => env('SAAS_FEATURE_GATING_ENABLED', env('SAAS_FEATURE_GATING', false)),
 
     /*
     |--------------------------------------------------------------------------

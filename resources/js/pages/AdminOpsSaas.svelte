@@ -308,14 +308,14 @@
     }
 
     function statusBadge(status: string): { variant: 'default' | 'destructive' | 'outline' | 'secondary'; label: string } {
-        const map: Record<string, any> = { trial: { variant: 'secondary', label: 'Trial' }, active: { variant: 'default', label: 'Active' }, past_due: { variant: 'outline', label: 'Past Due' }, suspended: { variant: 'destructive', label: 'Suspended' }, canceled: { variant: 'destructive', label: 'Canceled' }, expired: { variant: 'outline', label: 'Expired' } };
+        const map: Record<string, any> = { pending_payment: { variant: 'outline', label: 'Pending Payment' }, trial: { variant: 'secondary', label: 'Trial' }, active: { variant: 'default', label: 'Active' }, past_due: { variant: 'outline', label: 'Past Due' }, suspended: { variant: 'destructive', label: 'Suspended' }, canceled: { variant: 'destructive', label: 'Canceled' }, expired: { variant: 'outline', label: 'Expired' } };
         return map[status] ?? { variant: 'outline', label: status };
     }
 
     function invoiceBadge(invoice: any): { variant: 'default' | 'destructive' | 'outline' | 'secondary'; label: string } {
         if (invoice.status === 'paid') return { variant: 'default', label: 'Lunas' };
         if (invoice.status === 'overdue') return { variant: 'destructive', label: 'Overdue' };
-        if (invoice.status === 'pending' && invoice.payment_proof) return { variant: 'secondary', label: 'Verifikasi' };
+        if (invoice.status === 'verification' || (invoice.status === 'pending' && invoice.payment_proof)) return { variant: 'secondary', label: 'Verifikasi' };
         if (invoice.status === 'pending') return { variant: 'outline', label: 'Pending' };
         return { variant: 'outline', label: invoice.status || '-' };
     }
@@ -546,6 +546,7 @@
                 </div>
                 <select bind:value={statusFilter} onchange={() => loadSubscriptions()} class="rounded-md border px-3 py-2 text-sm">
                     <option value="">Semua Status</option>
+                    <option value="pending_payment">Pending Payment</option>
                     <option value="trial">Trial</option>
                     <option value="active">Active</option>
                     <option value="past_due">Past Due</option>
@@ -584,6 +585,7 @@
                             <div>
                                 <Label>Status</Label>
                                 <select bind:value={subForm.status} class="w-full rounded-md border px-3 py-2 text-sm">
+                                    <option value="pending_payment">Pending Payment</option>
                                     <option value="trial">Trial</option>
                                     <option value="active">Active</option>
                                     <option value="past_due">Past Due</option>

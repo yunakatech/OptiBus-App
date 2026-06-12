@@ -92,7 +92,7 @@ class PoolScope
      * Get the current tenant's subscription info.
      * Returns null if SaaS tables aren't ready or user is super admin.
      *
-     * @return array{tenant_id: int, tenant_name: string, plan_id: int, plan_name: string, plan_slug: string, subscription_status: string, trial_ends_at: string|null, ends_at: string|null}|null
+     * @return array{tenant_id: int, tenant_name: string, tenant_status: string, plan_id: int, plan_name: string, plan_slug: string, subscription_status: string, trial_ends_at: string|null, ends_at: string|null}|null
      */
     public static function tenantSubscription(?int $userId = null): ?array
     {
@@ -105,9 +105,12 @@ class PoolScope
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
             ->where('subscriptions.tenant_id', $tenantId)
+            ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'pending_payment' THEN 2 WHEN 'past_due' THEN 3 WHEN 'suspended' THEN 4 ELSE 5 END")
+            ->orderByDesc('subscriptions.created_at')
             ->select(
                 'subscriptions.tenant_id',
                 'tenants.name as tenant_name',
+                'tenants.status as tenant_status',
                 'subscriptions.plan_id',
                 'plans.name as plan_name',
                 'plans.slug as plan_slug',
@@ -124,6 +127,7 @@ class PoolScope
         return [
             'tenant_id' => (int) $sub->tenant_id,
             'tenant_name' => (string) $sub->tenant_name,
+            'tenant_status' => (string) ($sub->tenant_status ?? ''),
             'plan_id' => (int) $sub->plan_id,
             'plan_name' => (string) $sub->plan_name,
             'plan_slug' => (string) $sub->plan_slug,

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\PaymentGateway;
+use App\Services\TenantProvisioningService;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\FeatureGate;
@@ -7350,7 +7352,7 @@ class AdminOpsApiController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],
             'domain' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', Rule::in(['active', 'suspended', 'canceled'])],
+            'status' => ['nullable', Rule::in(['pending_payment', 'active', 'suspended', 'canceled'])],
             'target_revenue' => ['nullable', 'numeric', 'min:0'],
             // For new tenants, optionally set initial plan
             'plan_id' => ['nullable', 'integer', 'min:1', 'exists:plans,id'],
@@ -7368,56 +7370,42 @@ class AdminOpsApiController extends Controller
             'target_revenue' => (float) ($data['target_revenue'] ?? 0),
         ];
 
-        return DB::transaction(function () use ($id, $payload, $data): JsonResponse {
-            $isNew = $id <= 0;
-
-            if ($id > 0) {
-                DB::table('tenants')->where('id', $id)->update(array_merge($payload, ['updated_at' => now()]));
-                $tenantId = $id;
-            } else {
-                $tenantId = (int) DB::table('tenants')->insertGetId(array_merge($payload, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]));
-            }
-
-            // Auto-create subscription for new tenants
-            if ($isNew) {
-                $planId = (int) ($data['plan_id'] ?? DB::table('plans')->where('slug', config('saas.default_plan', 'starter'))->value('id') ?? 1);
-                $trialDays = (int) ($data['trial_days'] ?? config('saas.trial_days', 14));
-                $trialEndsAt = $trialDays > 0 ? now()->addDays($trialDays)->toDateString() : null;
-
-                DB::table('subscriptions')->insert([
-                    'tenant_id' => $tenantId,
-                    'plan_id' => $planId,
-                    'status' => $trialDays > 0 ? 'trial' : 'active',
-                    'trial_ends_at' => $trialEndsAt,
-                    'starts_at' => now()->toDateString(),
-                    'ends_at' => $trialDays > 0 ? $trialEndsAt : now()->addMonth()->toDateString(),
+        if ($id <= 0) {
+            try {
+                $result = app(TenantProvisioningService::class)->provisionStandaloneTenant([
+                    ...$payload,
+                    'plan_id' => $data['plan_id'] ?? null,
+                    'trial_days' => $data['trial_days'] ?? config('saas.trial_days', 14),
                     'billing_interval' => 'monthly',
-                    'grace_period_days' => config('saas.grace_period_days', 7),
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]);
 
-                // Create default pool for new tenant
-                if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'tenant_id')) {
-                    DB::table('pools')->insert([
-                        'name' => strtoupper($payload['name'].' Pool'),
-                        'code' => $payload['slug'].'-pool',
-                        'tenant_id' => $tenantId,
-                        'status' => 'active',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
+                return $this->ok([
+                    'message' => 'Tenant created.',
+                    'id' => (int) $result['tenant_id'],
+                    'subscription_status' => $result['subscription_status'] ?? null,
+                    'invoice_id' => $result['invoice_id'] ?? 0,
+                ], 201);
+            } catch (\Throwable $e) {
+                return $this->error('Gagal membuat tenant: '.$e->getMessage(), 422);
             }
+        }
 
-            return $this->ok([
-                'message' => $isNew ? 'Tenant created.' : 'Tenant updated.',
-                'id' => $tenantId,
-            ], $isNew ? 201 : 200);
-        });
+        $updatePayload = [
+            'name' => $payload['name'],
+            'slug' => $payload['slug'],
+        ];
+        foreach (['email', 'phone', 'address', 'domain', 'status', 'target_revenue'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $updatePayload[$field] = $payload[$field];
+            }
+        }
+
+        DB::table('tenants')->where('id', $id)->update(array_merge($updatePayload, ['updated_at' => now()]));
+
+        return $this->ok([
+            'message' => 'Tenant updated.',
+            'id' => $id,
+        ]);
     }
 
     public function tenantsDelete(int $id): JsonResponse
@@ -7446,7 +7434,7 @@ class AdminOpsApiController extends Controller
             if (Schema::hasTable('subscriptions')) {
                 DB::table('subscriptions')
                     ->where('tenant_id', $id)
-                    ->whereIn('status', ['trial', 'active', 'past_due'])
+                    ->whereIn('status', ['pending_payment', 'trial', 'active', 'past_due'])
                     ->update([
                         'status' => 'canceled',
                         'canceled_at' => now(),
@@ -7528,7 +7516,7 @@ class AdminOpsApiController extends Controller
             'subscriptions' => $subscriptions,
             'tenants' => $tenants,
             'plans' => $plans,
-            'status_options' => ['trial', 'active', 'past_due', 'suspended', 'canceled', 'expired'],
+            'status_options' => ['pending_payment', 'trial', 'active', 'past_due', 'suspended', 'canceled', 'expired'],
             'pagination' => $result['meta'],
         ]);
     }
@@ -7548,7 +7536,7 @@ class AdminOpsApiController extends Controller
             'id' => ['nullable', 'integer', 'min:1'],
             'tenant_id' => ['required_without:id', 'integer', 'min:1', 'exists:tenants,id'],
             'plan_id' => ['nullable', 'integer', 'min:1', 'exists:plans,id'],
-            'status' => ['nullable', Rule::in(['trial', 'active', 'past_due', 'suspended', 'canceled'])],
+            'status' => ['nullable', Rule::in(['pending_payment', 'trial', 'active', 'past_due', 'suspended', 'canceled', 'expired'])],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date'],
             'billing_interval' => ['nullable', Rule::in(['monthly', 'yearly'])],
@@ -7807,10 +7795,16 @@ class AdminOpsApiController extends Controller
 
         if ($status !== '') {
             if ($status === 'verification' && $hasPaymentProofColumn) {
-                $query
-                    ->where('invoice_subscriptions.status', 'pending')
-                    ->whereNotNull('invoice_subscriptions.payment_proof')
-                    ->where('invoice_subscriptions.payment_proof', '!=', '');
+                $query->where(function (Builder $verification): void {
+                    $verification
+                        ->where('invoice_subscriptions.status', 'verification')
+                        ->orWhere(function (Builder $legacy): void {
+                            $legacy
+                                ->where('invoice_subscriptions.status', 'pending')
+                                ->whereNotNull('invoice_subscriptions.payment_proof')
+                                ->where('invoice_subscriptions.payment_proof', '!=', '');
+                        });
+                });
             } elseif ($status === 'pending' && $hasPaymentProofColumn) {
                 $query
                     ->where('invoice_subscriptions.status', 'pending')
@@ -7825,7 +7819,7 @@ class AdminOpsApiController extends Controller
                         ->where('invoice_subscriptions.status', 'overdue')
                         ->orWhere(function (Builder $pendingOverdue) {
                             $pendingOverdue
-                                ->where('invoice_subscriptions.status', 'pending')
+                                ->whereIn('invoice_subscriptions.status', ['pending', 'verification'])
                                 ->whereDate('invoice_subscriptions.due_date', '<', now()->toDateString());
                         });
                 });
@@ -7852,6 +7846,10 @@ class AdminOpsApiController extends Controller
 
         $invoices = collect($result['data'])->map(function ($inv) {
             $paymentProof = trim((string) ($inv->payment_proof ?? ''));
+            $status = (string) $inv->status;
+            if ($status === 'pending' && $paymentProof !== '') {
+                $status = 'verification';
+            }
 
             return [
                 'id' => (int) $inv->id,
@@ -7861,7 +7859,7 @@ class AdminOpsApiController extends Controller
                 'subscription_id' => (int) $inv->subscription_id,
                 'invoice_number' => (string) $inv->invoice_number,
                 'amount' => (float) $inv->amount,
-                'status' => (string) $inv->status,
+                'status' => $status,
                 'due_date' => $inv->due_date ?? null,
                 'paid_at' => $inv->paid_at ?? null,
                 'payment_method' => $inv->payment_method ?? null,
@@ -7914,9 +7912,16 @@ class AdminOpsApiController extends Controller
         $verification = 0;
         if ($hasPaymentProofColumn) {
             $verification = (int) (clone $base)
-                ->where('status', 'pending')
-                ->whereNotNull('payment_proof')
-                ->where('payment_proof', '!=', '')
+                ->where(function (Builder $query): void {
+                    $query
+                        ->where('status', 'verification')
+                        ->orWhere(function (Builder $legacy): void {
+                            $legacy
+                                ->where('status', 'pending')
+                                ->whereNotNull('payment_proof')
+                                ->where('payment_proof', '!=', '');
+                        });
+                })
                 ->count();
         }
 
@@ -7932,7 +7937,7 @@ class AdminOpsApiController extends Controller
         if ($hasDueDateColumn) {
             $overdue->orWhere(function (Builder $query): void {
                 $query
-                    ->where('status', 'pending')
+                    ->whereIn('status', ['pending', 'verification'])
                     ->whereDate('due_date', '<', now()->toDateString());
             });
         }
@@ -7943,7 +7948,7 @@ class AdminOpsApiController extends Controller
             'paid_month' => $paidMonth,
             'overdue' => (int) $overdue->count(),
             'total_amount_pending' => (float) (clone $base)
-                ->whereIn('status', ['pending', 'overdue'])
+                ->whereIn('status', ['pending', 'verification', 'overdue'])
                 ->sum('amount'),
         ];
     }
@@ -7985,28 +7990,7 @@ class AdminOpsApiController extends Controller
             'payment_method' => ['nullable', 'string', 'max:50'],
         ]);
 
-        DB::table('invoice_subscriptions')->where('id', $id)->update([
-            'status' => 'paid',
-            'paid_at' => now(),
-            'payment_method' => $this->nullable($data['payment_method'] ?? 'Manual Transfer'),
-            'updated_at' => now(),
-        ]);
-
-        // If this invoice is for an active subscription, extend the end date
-        if ($invoice->subscription_id > 0 && Schema::hasTable('subscriptions')) {
-            $sub = DB::table('subscriptions')->where('id', (int) $invoice->subscription_id)->first();
-            if ($sub && in_array($sub->status, ['trial', 'active', 'past_due'])) {
-                $newEndsAt = now()->addMonth()->toDateString();
-                if ($sub->billing_interval === 'yearly') {
-                    $newEndsAt = now()->addYear()->toDateString();
-                }
-                DB::table('subscriptions')->where('id', $sub->id)->update([
-                    'status' => 'active',
-                    'ends_at' => $newEndsAt,
-                    'updated_at' => now(),
-                ]);
-            }
-        }
+        PaymentGateway::markInvoicePaid($id, (string) ($this->nullable($data['payment_method'] ?? 'Manual Transfer') ?? 'Manual Transfer'));
 
         return $this->ok(['message' => 'Invoice marked as paid.']);
     }

@@ -37,7 +37,7 @@ class RegistrationTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('auth/Register')
                 ->where('selectedPlan', 'pro')
-                ->where('registrationIntent', 'payment')
+                ->where('registrationIntent', 'paid')
                 ->has('plans')
             );
     }
@@ -131,12 +131,38 @@ class RegistrationTest extends TestCase
         $this->assertNotNull($plan);
         $this->assertNotNull($subscription);
         $this->assertSame((int) $plan->id, (int) $subscription->plan_id);
-        $this->assertSame('active', (string) $subscription->status);
+        $tenant = DB::table('tenants')->where('id', $tenantId)->first();
+
+        $this->assertNotNull($tenant);
+        $this->assertSame('pending_payment', (string) $tenant->status);
+        $this->assertSame('pending_payment', (string) $subscription->status);
         $this->assertNull($subscription->trial_ends_at);
 
         $this->assertNotNull($invoice);
         $this->assertSame('pending', (string) $invoice->status);
         $this->assertSame((int) $subscription->id, (int) $invoice->subscription_id);
         $this->assertEquals((float) $plan->price_monthly, (float) $invoice->amount);
+    }
+
+    public function test_payment_registration_is_locked_to_subscription_until_paid(): void
+    {
+        $this->post(route('register.store'), [
+            'name' => 'Locked User',
+            'email' => 'locked@example.com',
+            'travel_name' => 'Locked Travel',
+            'phone' => '085233334445',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'plan' => 'pro',
+            'registration_intent' => 'paid',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        User::where('email', 'locked@example.com')->update(['email_verified_at' => now()]);
+        $this->actingAs(User::where('email', 'locked@example.com')->firstOrFail());
+
+        $this->get(route('dashboard'))->assertRedirect(route('subscription.index', absolute: false));
     }
 }

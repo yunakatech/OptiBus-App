@@ -22,7 +22,7 @@
     import { store } from '@/routes/register';
 
     type Plan = { id: number; name: string; slug: string; price_monthly: number; description: string };
-    type RegistrationIntent = 'trial' | 'payment';
+    type RegistrationIntent = 'trial' | 'paid' | 'payment';
 
     let {
         passwordRules = '',
@@ -39,14 +39,14 @@
     // svelte-ignore state_referenced_locally
     let selectedPlan = $state(selectedPlanProp || 'starter');
     // svelte-ignore state_referenced_locally
-    let registrationIntent = $state<RegistrationIntent>(registrationIntentProp === 'payment' ? 'payment' : 'trial');
+    let registrationIntent = $state<RegistrationIntent>(registrationIntentProp === 'paid' || registrationIntentProp === 'payment' ? 'paid' : 'trial');
     let showPlanSelector = $state(false);
 
     onMount(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const intentParam = urlParams.get('intent');
-        if (intentParam === 'trial' || intentParam === 'payment') {
-            registrationIntent = intentParam;
+        if (intentParam === 'trial' || intentParam === 'paid' || intentParam === 'payment') {
+            registrationIntent = intentParam === 'payment' ? 'paid' : intentParam;
         }
 
         const planParam = urlParams.get('plan');
@@ -64,7 +64,7 @@
 
     const currentPlan = $derived(plans.find((p) => p.slug === selectedPlan));
     const isTrialFlow = $derived(registrationIntent === 'trial');
-    const isPaymentFlow = $derived(registrationIntent === 'payment');
+    const isPaymentFlow = $derived(registrationIntent === 'paid' || registrationIntent === 'payment');
     const submitLabel = $derived(isTrialFlow ? 'Mulai Trial Starter' : 'Daftar & Lanjut Pembayaran');
     const flowLabel = $derived(isTrialFlow ? 'Trial 14 hari' : 'Checkout paket');
     const flowTitle = $derived(isTrialFlow ? 'Mulai dari Starter trial' : `Aktifkan paket ${currentPlan?.name ?? 'pilihan'}`);
@@ -172,7 +172,7 @@
                     {/if}
                 </div>
                 <input type="hidden" name="plan" value={selectedPlan} />
-                <input type="hidden" name="registration_intent" value={registrationIntent} />
+                <input type="hidden" name="registration_intent" value={isPaymentFlow ? 'paid' : 'trial'} />
                 {#if planHelpText}
                     <p class="text-xs text-muted-foreground">{planHelpText}</p>
                 {/if}
