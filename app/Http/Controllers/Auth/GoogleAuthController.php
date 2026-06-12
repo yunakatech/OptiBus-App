@@ -91,13 +91,14 @@ class GoogleAuthController extends Controller
             if ((int) DB::table('roles')->count() === 0) {
                 AccessControl::syncDefaults();
             }
-            AccessControl::ensureDefaultRoleReady('admin-pool');
+            AccessControl::ensureDefaultRoleReady('tenant-owner');
 
             if (DB::table('user_role')->where('user_id', $userId)->exists()) {
                 return;
             }
 
-            $roleId = DB::table('roles')->where('slug', 'admin-pool')->value('id')
+            $roleId = DB::table('roles')->where('slug', 'tenant-owner')->value('id')
+                ?? DB::table('roles')->where('slug', 'admin-pool')->value('id')
                 ?? DB::table('roles')->where('slug', '!=', 'super-admin')->orderBy('id')->value('id');
 
             if ($roleId) {

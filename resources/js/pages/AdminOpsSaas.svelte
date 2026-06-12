@@ -118,6 +118,17 @@
         payBusy = false;
     }
 
+    function qrisStatusLabel(status: string | undefined): string {
+        const labels: Record<string, string> = {
+            ready: 'QRIS tersedia',
+            missing_link: 'File ada, storage link belum aktif',
+            missing_file: 'File QRIS belum tersedia',
+            external: 'QRIS eksternal',
+        };
+
+        return labels[status ?? ''] ?? 'Status QRIS belum diketahui';
+    }
+
     // ─── Init ───
     onMount(() => {
         activeTab = initialTab ?? 'tenants';
@@ -881,21 +892,52 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- QRIS -->
                     <Card>
-                        <CardHeader><CardTitle>QRIS</CardTitle></CardHeader>
-                        <CardContent class="space-y-3">
+                        <CardHeader>
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <CardTitle>QRIS</CardTitle>
+                                    <p class="mt-1 text-xs text-muted-foreground">
+                                        Ditampilkan di halaman Subscription tenant.
+                                    </p>
+                                </div>
+                                <Badge variant={paymentSettings?.qris?.has_image ? 'default' : 'outline'}>
+                                    {qrisStatusLabel(paymentSettings?.qris?.storage_status)}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent class="space-y-4">
                             <div>
                                 <Label class="text-xs">Nama Merchant</Label>
                                 <Input name="qris_merchant_name" value={paymentSettings?.qris?.merchant_name ?? ''} placeholder="Qbus Indonesia" />
                             </div>
                             <div>
                                 <Label class="text-xs">QRIS Image</Label>
-                                <div class="flex items-center gap-3">
+                                <div class="mt-2 grid gap-3 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center">
                                     {#if paymentSettings?.qris?.image_url}
-                                        <img src={paymentSettings.qris.image_url} alt="QRIS" class="w-24 h-24 object-contain border rounded" />
+                                        <div class="rounded-lg border bg-white p-2 shadow-sm">
+                                            <img src={paymentSettings.qris.image_url} alt="QRIS" class="h-24 w-24 object-contain" />
+                                        </div>
+                                    {:else}
+                                        <div class="flex h-28 w-28 items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
+                                            QRIS kosong
+                                        </div>
                                     {/if}
-                                    <Input type="file" name="qris_image" accept="image/png,image/jpeg" />
+                                    <div class="space-y-2">
+                                        <Input type="file" name="qris_image" accept="image/png,image/jpeg" />
+                                        <p class="text-xs text-muted-foreground">
+                                            Upload gambar QRIS. Format PNG/JPG, max 1MB.
+                                        </p>
+                                        {#if paymentSettings?.qris?.storage_status === 'missing_link'}
+                                            <p class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                                                Jalankan command production: php artisan storage:link
+                                            </p>
+                                        {:else if paymentSettings?.qris?.storage_status === 'missing_file'}
+                                            <p class="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+                                                Upload QRIS baru agar tenant bisa scan langsung dari Subscription.
+                                            </p>
+                                        {/if}
+                                    </div>
                                 </div>
-                                <p class="text-xs text-muted-foreground mt-1">Upload gambar QRIS. Format PNG/JPG, max 1MB.</p>
                             </div>
                             <div>
                                 <Label class="text-xs">Catatan QRIS</Label>

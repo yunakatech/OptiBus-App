@@ -57,8 +57,8 @@
                         <button onclick={dismiss} class="text-amber-500 hover:text-amber-700 shrink-0"><X class="h-4 w-4" /></button>
                     </div>
                     <div class="flex gap-2 mt-3">
-                        <a href="/admin-ops/saas/plans" class="text-sm text-amber-700 dark:text-amber-300 underline hover:text-amber-900">
-                            Lihat paket →
+                        <a href="/subscription" class="text-sm text-amber-700 dark:text-amber-300 underline hover:text-amber-900">
+                            Kelola langganan
                         </a>
                     </div>
                 </div>

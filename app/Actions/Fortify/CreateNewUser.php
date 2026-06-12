@@ -51,7 +51,7 @@ class CreateNewUser implements CreatesNewUsers
     }
 
     /**
-     * Assign the "Admin Pool" role to a newly registered user.
+     * Assign the tenant owner role to a newly registered user.
      * Runs synchronously before the login redirect.
      */
     private function assignDefaultRole(int $userId): void
@@ -65,14 +65,15 @@ class CreateNewUser implements CreatesNewUsers
             if ((int) DB::table('roles')->count() === 0) {
                 AccessControl::syncDefaults();
             }
-            AccessControl::ensureDefaultRoleReady('admin-pool');
+            AccessControl::ensureDefaultRoleReady('tenant-owner');
 
             // Skip if user already has a role (double-safety with event listener)
             if (DB::table('user_role')->where('user_id', $userId)->exists()) {
                 return;
             }
 
-            $roleId = DB::table('roles')->where('slug', 'admin-pool')->value('id')
+            $roleId = DB::table('roles')->where('slug', 'tenant-owner')->value('id')
+                ?? DB::table('roles')->where('slug', 'admin-pool')->value('id')
                 ?? DB::table('roles')->where('slug', '!=', 'super-admin')->orderBy('id')->value('id');
 
             if ($roleId) {

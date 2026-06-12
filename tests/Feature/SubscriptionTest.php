@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class SubscriptionTest extends TestCase
@@ -59,6 +60,36 @@ class SubscriptionTest extends TestCase
             'status' => 'active',
         ]);
         $this->assertSame($tenantId, (int) DB::table('users')->where('id', $tenantUser->id)->value('tenant_id'));
+    }
+
+    public function test_subscription_page_resyncs_missing_pending_invoice_and_exposes_payment_workspace_props(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('payment/qris.png', 'qris');
+        DB::table('settings')->updateOrInsert(
+            ['key' => 'payment.qris_image_path'],
+            ['value' => 'storage/payment/qris.png'],
+        );
+
+        [$user, , $tenantId, $subscriptionId] = $this->tenantWithPendingInvoice();
+        DB::table('invoice_subscriptions')->where('subscription_id', $subscriptionId)->delete();
+
+        $this->actingAs($user)
+            ->get(route('subscription.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Subscription')
+                ->where('tenant_subscription.tenant_id', $tenantId)
+                ->where('tenant_subscription.subscription_id', $subscriptionId)
+                ->where('payment_config.qris.has_image', true)
+                ->where('account_access.tenant_id', $tenantId)
+                ->where('invoices.0.status', 'pending'));
+
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'tenant_id' => $tenantId,
+            'subscription_id' => $subscriptionId,
+            'status' => 'pending',
+        ]);
     }
 
     /**

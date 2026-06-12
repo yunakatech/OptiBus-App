@@ -171,15 +171,13 @@
             title: 'Platform Dashboard',
             href: '/platform/dashboard',
             icon: BarChart3,
-            permission: 'pool.manage',
-            superAdminOnly: true,
+            permission: 'platform.manage',
         },
         {
             title: 'SaaS',
             href: '/admin-ops/saas',
             icon: Building2,
-            permission: 'pool.manage',
-            superAdminOnly: true,
+            permission: 'platform.manage',
         },
         {
             title: 'Users',
