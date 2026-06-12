@@ -1186,7 +1186,7 @@ class DashboardController extends Controller
 
         return [
             'items' => $items,
-            'total' => ActivityLog::count($this->activePoolId),
+            'total' => ActivityLog::count($this->activePoolId, $visibleCount + 1),
             'visible_count' => count($items),
         ];
     }

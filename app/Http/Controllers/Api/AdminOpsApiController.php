@@ -7241,18 +7241,48 @@ class AdminOpsApiController extends Controller
                     ->whereRaw('subscriptions.id = (SELECT id FROM subscriptions s2 WHERE s2.tenant_id = tenants.id ORDER BY s2.created_at DESC LIMIT 1)');
             })
             ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
-            ->select(
-                'tenants.*',
-                'subscriptions.id as subscription_id',
-                'subscriptions.status as subscription_status',
-                'subscriptions.trial_ends_at',
-                'subscriptions.starts_at',
-                'subscriptions.ends_at',
-                'subscriptions.billing_interval',
-                'plans.name as plan_name',
-                'plans.slug as plan_slug',
-            )
             ->orderBy('tenants.created_at', 'desc');
+
+        $hasUsersTenant = Schema::hasColumn('users', 'tenant_id');
+        $hasPoolsTenant = Schema::hasColumn('pools', 'tenant_id');
+
+        if ($hasUsersTenant) {
+            $query->leftJoinSub(
+                DB::table('users')
+                    ->select('tenant_id', DB::raw('COUNT(*) as user_count'))
+                    ->groupBy('tenant_id'),
+                'tenant_user_counts',
+                'tenant_user_counts.tenant_id',
+                '=',
+                'tenants.id',
+            );
+        }
+
+        if ($hasPoolsTenant) {
+            $query->leftJoinSub(
+                DB::table('pools')
+                    ->select('tenant_id', DB::raw('COUNT(*) as pool_count'))
+                    ->groupBy('tenant_id'),
+                'tenant_pool_counts',
+                'tenant_pool_counts.tenant_id',
+                '=',
+                'tenants.id',
+            );
+        }
+
+        $query->select(
+            'tenants.*',
+            'subscriptions.id as subscription_id',
+            'subscriptions.status as subscription_status',
+            'subscriptions.trial_ends_at',
+            'subscriptions.starts_at',
+            'subscriptions.ends_at',
+            'subscriptions.billing_interval',
+            'plans.name as plan_name',
+            'plans.slug as plan_slug',
+            $hasUsersTenant ? DB::raw('COALESCE(tenant_user_counts.user_count, 0) as user_count') : DB::raw('0 as user_count'),
+            $hasPoolsTenant ? DB::raw('COALESCE(tenant_pool_counts.pool_count, 0) as pool_count') : DB::raw('0 as pool_count'),
+        );
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -7267,9 +7297,6 @@ class AdminOpsApiController extends Controller
         [$page, $perPage] = $this->paginationParams($request);
         $result = $this->paginateQuery($query, $page, $perPage);
         $tenants = collect($result['data'])->map(function ($t) {
-            $userCount = Schema::hasColumn('users', 'tenant_id') ? (int) DB::table('users')->where('tenant_id', $t->id)->count() : 0;
-            $poolCount = Schema::hasColumn('pools', 'tenant_id') ? (int) DB::table('pools')->where('tenant_id', $t->id)->count() : 0;
-
             return [
                 'id' => (int) $t->id,
                 'name' => (string) ($t->name ?? ''),
@@ -7289,8 +7316,8 @@ class AdminOpsApiController extends Controller
                 'billing_interval' => (string) ($t->billing_interval ?? 'monthly'),
                 'plan_name' => (string) ($t->plan_name ?? 'Belum Ada'),
                 'plan_slug' => (string) ($t->plan_slug ?? ''),
-                'user_count' => $userCount,
-                'pool_count' => $poolCount,
+                'user_count' => (int) ($t->user_count ?? 0),
+                'pool_count' => (int) ($t->pool_count ?? 0),
                 'created_at' => $t->created_at,
             ];
         })->all();
@@ -7596,23 +7623,27 @@ class AdminOpsApiController extends Controller
 
         $plans = DB::table('plans')
             ->orderBy('sort_order')
-            ->get()
-            ->map(function ($p) {
-                $features = [];
-                if (Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
-                    $features = DB::table('plan_feature')
-                        ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
-                        ->where('plan_feature.plan_id', $p->id)
-                        ->select(
-                            'feature_gates.feature_key',
-                            'feature_gates.feature_name',
-                            'feature_gates.feature_group',
-                            'feature_gates.is_core',
-                            'plan_feature.max_value',
-                        )
-                        ->orderBy('feature_gates.feature_group')
-                        ->orderBy('feature_gates.feature_name')
-                        ->get()
+            ->get();
+
+        $featuresByPlan = collect();
+        if ($plans->isNotEmpty() && Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
+            $featuresByPlan = DB::table('plan_feature')
+                ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
+                ->whereIn('plan_feature.plan_id', $plans->pluck('id')->all())
+                ->select(
+                    'plan_feature.plan_id',
+                    'feature_gates.feature_key',
+                    'feature_gates.feature_name',
+                    'feature_gates.feature_group',
+                    'feature_gates.is_core',
+                    'plan_feature.max_value',
+                )
+                ->orderBy('feature_gates.feature_group')
+                ->orderBy('feature_gates.feature_name')
+                ->get()
+                ->groupBy('plan_id')
+                ->map(function (Collection $rows): array {
+                    return $rows
                         ->map(function ($f) {
                             return [
                                 'feature_key' => (string) $f->feature_key,
@@ -7623,8 +7654,11 @@ class AdminOpsApiController extends Controller
                             ];
                         })
                         ->all();
-                }
+                });
+        }
 
+        $plans = $plans
+            ->map(function ($p) use ($featuresByPlan) {
                 return [
                     'id' => (int) $p->id,
                     'name' => (string) $p->name,
@@ -7649,7 +7683,7 @@ class AdminOpsApiController extends Controller
                     'support_priority' => (string) $p->support_priority,
                     'sort_order' => (int) $p->sort_order,
                     'is_active' => (bool) $p->is_active,
-                    'features' => $features,
+                    'features' => $featuresByPlan->get($p->id, []),
                 ];
             })
             ->all();
