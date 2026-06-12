@@ -8,6 +8,7 @@ use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\PoolScope;
 use App\Support\RoleAccessData;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,17 +81,7 @@ class AdminOpsController extends Controller
         ];
 
         if (! $lockedMenuView) {
-            $stats = [
-                'routes' => Schema::hasTable('routes') ? DB::table('routes')->count() : 0,
-                'schedules' => Schema::hasTable('schedules') ? DB::table('schedules')->count() : 0,
-                'drivers' => Schema::hasTable('drivers') ? DB::table('drivers')->count() : 0,
-                'luggage_services' => Schema::hasTable('luggage_services') ? DB::table('luggage_services')->count() : 0,
-                'segments' => Schema::hasTable('segments') ? DB::table('segments')->count() : 0,
-                'customers' => Schema::hasTable('customers') ? DB::table('customers')->count() : 0,
-                'armadas' => Schema::hasTable('armadas') ? DB::table('armadas')->count() : 0,
-                'pools' => Schema::hasTable('pools') ? DB::table('pools')->count() : 0,
-                'cancellations' => ActivityLog::count(),
-            ];
+            $stats = $this->scopedStats();
         }
 
         $component = 'AdminOps';
@@ -289,6 +280,7 @@ class AdminOpsController extends Controller
 
         $query = DB::table('routes')->orderBy('name');
         PoolScope::applyRouteScope($query, 'routes.id', 'routes.name');
+        $this->applyTenantScopeIfExists($query, 'routes');
 
         return $query
             ->get(['id', 'name', 'origin', 'destination'])
@@ -300,6 +292,75 @@ class AdminOpsController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function scopedStats(): array
+    {
+        return [
+            'routes' => $this->countScoped('routes', function (Builder $query): void {
+                PoolScope::applyRouteScope($query, 'routes.id', 'routes.name');
+                $this->applyTenantScopeIfExists($query, 'routes');
+            }),
+            'schedules' => $this->countScoped('schedules', function (Builder $query): void {
+                PoolScope::applyRouteScope(
+                    $query,
+                    Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '',
+                    'schedules.rute',
+                );
+                $this->applyTenantScopeIfExists($query, 'schedules');
+            }),
+            'drivers' => $this->countScoped('drivers', function (Builder $query): void {
+                $this->applyTenantScopeIfExists($query, 'drivers');
+            }),
+            'luggage_services' => $this->countScoped('luggage_services', function (Builder $query): void {
+                $this->applyTenantScopeIfExists($query, 'luggage_services');
+            }),
+            'segments' => $this->countScoped('segments', function (Builder $query): void {
+                PoolScope::applyRouteScope($query, 'segments.route_id', 'segments.rute');
+                $this->applyTenantScopeIfExists($query, 'segments');
+            }),
+            'customers' => $this->countScoped('customers', function (Builder $query): void {
+                PoolScope::applyCustomerScope($query, 'customers');
+                $this->applyTenantScopeIfExists($query, 'customers');
+            }),
+            'armadas' => $this->countScoped('armadas', function (Builder $query): void {
+                $this->applyTenantScopeIfExists($query, 'armadas');
+            }),
+            'pools' => $this->countScoped('pools', function (Builder $query): void {
+                $this->applyTenantScopeIfExists($query, 'pools');
+                if (! AccessControl::userIsSuperAdmin((int) (auth()->id() ?? 0)) && PoolScope::tablesReady()) {
+                    $poolIds = PoolScope::userPoolIds();
+                    $poolIds === []
+                        ? $query->whereRaw('1 = 0')
+                        : $query->whereIn('pools.id', $poolIds);
+                }
+            }),
+            'cancellations' => ActivityLog::count(),
+        ];
+    }
+
+    private function countScoped(string $table, callable $scope): int
+    {
+        if (! Schema::hasTable($table)) {
+            return 0;
+        }
+
+        $query = DB::table($table);
+        $scope($query);
+
+        return (int) $query->count();
+    }
+
+    private function applyTenantScopeIfExists(Builder $query, string $table): void
+    {
+        if (! Schema::hasColumn($table, 'tenant_id')) {
+            return;
+        }
+
+        PoolScope::applyTenantScope($query, $table.'.tenant_id');
     }
 
     /**

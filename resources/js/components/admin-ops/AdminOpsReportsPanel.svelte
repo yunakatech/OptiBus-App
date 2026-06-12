@@ -192,6 +192,7 @@
         from: string,
         to: string,
         poolId: number,
+        routeId: number,
     ) => {
         const encodedFrom = encodeURIComponent(from);
         const encodedTo = encodeURIComponent(to);
@@ -199,14 +200,18 @@
             Number(poolId || 0) > 0
                 ? `&pool_id=${encodeURIComponent(String(poolId))}`
                 : '';
+        const routeSuffix =
+            Number(routeId || 0) > 0
+                ? `&route_id=${encodeURIComponent(String(routeId))}`
+                : '';
 
         if (type === 'booking') {
-            return `/api/admin/reports/bookings-csv?from=${encodedFrom}&to=${encodedTo}${poolSuffix}`;
+            return `/api/admin/reports/bookings-csv?from=${encodedFrom}&to=${encodedTo}${poolSuffix}${routeSuffix}`;
         }
 
         const revenueType = type === 'bagasi' ? 'bagasi' : 'charter';
 
-        return `/api/admin/reports/revenue-csv?from=${encodedFrom}&to=${encodedTo}&type=${revenueType}${poolSuffix}`;
+        return `/api/admin/reports/revenue-csv?from=${encodedFrom}&to=${encodedTo}&type=${revenueType}${poolSuffix}${routeSuffix}`;
     };
 
     const exportLabel = (type: ReportKind) =>
@@ -309,6 +314,7 @@
                             reportFrom,
                             reportTo,
                             reportPoolId,
+                            reportRouteId,
                         )}
                         class="inline-flex h-11 items-center justify-center rounded-2xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition hover:bg-muted/25"
                     >
