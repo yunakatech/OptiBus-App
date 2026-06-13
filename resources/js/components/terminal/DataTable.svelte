@@ -1,14 +1,38 @@
 <script lang="ts">
+    import type { Snippet } from 'svelte';
     import { cn } from '@/lib/utils';
+
+    type TableColumn = {
+        key: string;
+        label?: string;
+        align?: string;
+        width?: string;
+        sticky?: string;
+        leftOffset?: string;
+        rightOffset?: string;
+        numeric?: boolean;
+    };
+
+    type TableRow = Record<string, any>;
+
+    type TableSnippetProps = {
+        row: TableRow;
+        index: number;
+        columns: TableColumn[];
+    };
 
     let {
         columns = [],
         rows = [],
         class: className = '',
+        row,
+        actions,
     }: {
-        columns?: Array<{ key: string; label?: string; align?: string; width?: string; sticky?: string; leftOffset?: string; rightOffset?: string; numeric?: boolean }>;
-        rows?: any[];
+        columns?: TableColumn[];
+        rows?: TableRow[];
         class?: string;
+        row?: Snippet<[TableSnippetProps]>;
+        actions?: Snippet<[TableSnippetProps]>;
     } = $props();
 
     let computedColumns = $derived(columns);
@@ -39,10 +63,13 @@
         </thead>
 
         <tbody class="divide-y divide-slate-800 text-sm">
-            {#each rows as row, idx (row.id ?? idx)}
+            {#each rows as entry, idx (entry.id ?? idx)}
+                {@const snippetProps = { row: entry, index: idx, columns: computedColumns }}
                 <tr class="hover:bg-[#222d4f] transition-colors group">
-                    <slot name="row" row={row} index={idx} columns={computedColumns}>
-                        {#each columns as col}
+                    {#if row}
+                        {@render row(snippetProps)}
+                    {:else}
+                        {#each computedColumns as col}
                             <td
                                 class={cn(
                                     'py-3 px-4 align-middle',
@@ -52,20 +79,22 @@
                                 )}
                                 style={col.sticky === 'left' ? `left: ${col.leftOffset ?? '0px'}` : col.sticky === 'right' ? `right: ${col.rightOffset ?? '0px'}` : undefined}
                             >
-                                {String(row[col.key] ?? '')}
+                                {String(entry[col.key] ?? '')}
                             </td>
                         {/each}
+                    {/if}
 
-                        <td class="py-3 px-4 text-right">
-                            <slot name="actions" row={row} index={idx} columns={computedColumns}>
-                                <div class="opacity-80 group-hover:opacity-100 transition-opacity flex justify-end gap-3">
-                                    <button class="text-xs font-medium text-accent hover:underline focus:outline-none">Ubah</button>
-                                    <span class="text-slate-700">|</span>
-                                    <button class="text-xs font-medium text-red-400 hover:underline focus:outline-none">Hapus</button>
-                                </div>
-                            </slot>
-                        </td>
-                    </slot>
+                    <td class="py-3 px-4 text-right">
+                        {#if actions}
+                            {@render actions(snippetProps)}
+                        {:else}
+                            <div class="opacity-80 group-hover:opacity-100 transition-opacity flex justify-end gap-3">
+                                <button class="text-xs font-medium text-accent hover:underline focus:outline-none">Ubah</button>
+                                <span class="text-slate-700">|</span>
+                                <button class="text-xs font-medium text-red-400 hover:underline focus:outline-none">Hapus</button>
+                            </div>
+                        {/if}
+                    </td>
                 </tr>
             {/each}
         </tbody>

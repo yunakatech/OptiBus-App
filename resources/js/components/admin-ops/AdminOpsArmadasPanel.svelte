@@ -273,11 +273,11 @@
 
         <div class="hidden overflow-x-auto md:block">
             <DataTable {columns} rows={armadas} class="min-w-full">
-                <svelte:fragment slot="row" let:row let:index>
-                    {@const gross = armadaGrossMargin(row)}
-                    {@const net = armadaNetMargin(row)}
-                    {@const achievement = armadaAchievement(row)}
-                    {@const status = armadaStatus(row)}
+                {#snippet row({ row })}
+                    {@const gross = armadaGrossMargin(row as ArmadaRow)}
+                    {@const net = armadaNetMargin(row as ArmadaRow)}
+                    {@const achievement = armadaAchievement(row as ArmadaRow)}
+                    {@const status = armadaStatus(row as ArmadaRow)}
 
                     <td class="py-3 px-4 align-top">
                         <EntityBadge code={row.nopol} class="text-sm" />
@@ -313,34 +313,34 @@
                             {status}
                         </span>
                     </td>
+                {/snippet}
 
-                    <td class="py-3 px-4 text-center">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                    <MoreHorizontal class="h-4 w-4" />
-                                    <span class="sr-only">Aksi armada</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
-                                    <Eye class="mr-2 h-3.5 w-3.5" />
-                                    Lihat Detail
+                {#snippet actions({ row })}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                <MoreHorizontal class="h-4 w-4" />
+                                <span class="sr-only">Aksi armada</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                            <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
+                                <Eye class="mr-2 h-3.5 w-3.5" />
+                                Lihat Detail
+                            </DropdownMenuItem>
+                            {#if canManage}
+                                <DropdownMenuItem onclick={() => openArmadaEditor(row as ArmadaRow)}>
+                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                    Edit
                                 </DropdownMenuItem>
-                                {#if canManage}
-                                    <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
-                                        <Pencil class="mr-2 h-3.5 w-3.5" />
-                                        Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
-                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                        Hapus
-                                    </DropdownMenuItem>
-                                {/if}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </td>
-                </svelte:fragment>
+                                <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                    Hapus
+                                </DropdownMenuItem>
+                            {/if}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                {/snippet}
             </DataTable>
         </div>
     </div>

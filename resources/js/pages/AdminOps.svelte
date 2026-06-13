@@ -4498,11 +4498,11 @@
                         </div>
                         <div class="hidden overflow-x-auto md:block">
                             <DataTable columns={routesColumns} rows={routes} class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm">
-                                <svelte:fragment slot="row" let:row let:index let:columns>
-                                    {@const gross = financialGrossMargin(row)}
-                                    {@const net = financialNetMargin(row)}
-                                    {@const achievement = financialAchievement(row)}
-                                    {@const status = financialStatus(row)}
+                                {#snippet row({ row, columns })}
+                                    {@const gross = financialGrossMargin(row as RouteRow)}
+                                    {@const net = financialNetMargin(row as RouteRow)}
+                                    {@const achievement = financialAchievement(row as RouteRow)}
+                                    {@const status = financialStatus(row as RouteRow)}
 
                                     <td class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[0]?.leftOffset ?? '0px'}`}>
                                         <div class="font-semibold text-foreground">{row.name}</div>
@@ -4552,9 +4552,9 @@
                                     <td class="border-b border-r border-border/60 px-3 py-4 text-center">
                                         <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
                                     </td>
-                                </svelte:fragment>
+                                {/snippet}
 
-                                <svelte:fragment slot="actions" let:row let:index>
+                                {#snippet actions({ row })}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
@@ -4563,7 +4563,7 @@
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                            <DropdownMenuItem onclick={() => editRoute(row)}>
+                                            <DropdownMenuItem onclick={() => editRoute(row as RouteRow)}>
                                                 <Pencil class="mr-2 h-3.5 w-3.5" />
                                                 Edit
                                             </DropdownMenuItem>
@@ -4573,7 +4573,7 @@
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                </svelte:fragment>
+                                {/snippet}
                             </DataTable>
                         </div>
                     </div>
@@ -5653,11 +5653,11 @@
                         </div>
                         <div class="hidden overflow-x-auto md:block">
                             <DataTable columns={driversColumns} rows={drivers} class="min-w-[1900px]">
-                                <svelte:fragment slot="row" let:row let:index let:columns>
-                                    {@const gross = driverGrossMargin(row)}
-                                    {@const net = driverNetMargin(row)}
-                                    {@const achievement = driverAchievement(row)}
-                                    {@const status = driverStatus(row)}
+                                {#snippet row({ row })}
+                                    {@const gross = driverGrossMargin(row as DriverRow)}
+                                    {@const net = driverNetMargin(row as DriverRow)}
+                                    {@const achievement = driverAchievement(row as DriverRow)}
+                                    {@const status = driverStatus(row as DriverRow)}
 
                                     <td class="py-3 px-4 align-top">
                                         <div class="font-semibold text-foreground">{row.nama}</div>
@@ -5688,9 +5688,10 @@
                                     <td class="py-3 px-4 text-center">
                                         <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
                                     </td>
+                                {/snippet}
 
-                                    <td class="py-3 px-4 text-center">
-                                        {#if canWriteTab('drivers')}
+                                {#snippet actions({ row })}
+                                    {#if canWriteTab('drivers')}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
@@ -5699,7 +5700,7 @@
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                                <DropdownMenuItem onclick={() => editDriver(row)}>
+                                                <DropdownMenuItem onclick={() => editDriver(row as DriverRow)}>
                                                     <Pencil class="mr-2 h-3.5 w-3.5" />
                                                     Edit
                                                 </DropdownMenuItem>
@@ -5709,9 +5710,8 @@
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
-                                        {/if}
-                                    </td>
-                                </svelte:fragment>
+                                    {/if}
+                                {/snippet}
                             </DataTable>
                         </div>
                     </div>
@@ -8013,11 +8013,11 @@
                         </div>
                         <div class="hidden overflow-x-auto lg:block">
                             <DataTable columns={poolsColumns} rows={pools} class="min-w-[2060px]">
-                                <svelte:fragment slot="row" let:row let:index>
-                                    {@const gross = financialGrossMargin(row)}
-                                    {@const net = financialNetMargin(row)}
-                                    {@const achievement = financialAchievement(row)}
-                                    {@const healthStatus = financialStatus(row)}
+                                {#snippet row({ row })}
+                                    {@const gross = financialGrossMargin(row as PoolRow)}
+                                    {@const net = financialNetMargin(row as PoolRow)}
+                                    {@const achievement = financialAchievement(row as PoolRow)}
+                                    {@const healthStatus = financialStatus(row as PoolRow)}
 
                                     <td class="py-3 px-4 align-top">
                                         <div class="font-semibold text-foreground">{row.name}</div>
@@ -8025,7 +8025,7 @@
                                         <span class={`mt-3 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
                                     </td>
 
-                                    <td class="py-3 px-4 align-top"><div class="line-clamp-2 text-sm text-foreground">{formatPoolRoutes(row)}</div></td>
+                                    <td class="py-3 px-4 align-top"><div class="line-clamp-2 text-sm text-foreground">{formatPoolRoutes(row as PoolRow)}</div></td>
 
                                     <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
                                     <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
@@ -8040,40 +8040,40 @@
                                     <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
                                     <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
                                     <td class="py-3 px-4 text-center"><span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
+                                {/snippet}
 
-                                    <td class="py-3 px-4 text-center">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                                    <MoreHorizontal class="h-4 w-4" />
-                                                    <span class="sr-only">Aksi pool</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                                <DropdownMenuItem onclick={() => {
-                                                    poolForm = {
-                                                        id: row.id,
-                                                        name: row.name,
-                                                        code: row.code,
-                                                        target_revenue: formatRupiahInput(row.target_revenue),
-                                                        fixed_cost: formatRupiahInput(row.fixed_cost),
-                                                        status: row.status || 'active',
-                                                        notes: row.notes || '',
-                                                        route_ids: [...(row.route_ids ?? [])],
-                                                    };
-                                                    setFormMode('form');
-                                                }}>
-                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/pools/${row.id}`, 'Pool deleted.') }>
-                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                                    Hapus
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </td>
-                                </svelte:fragment>
+                                {#snippet actions({ row })}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                <MoreHorizontal class="h-4 w-4" />
+                                                <span class="sr-only">Aksi pool</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                            <DropdownMenuItem onclick={() => {
+                                                poolForm = {
+                                                    id: row.id,
+                                                    name: row.name,
+                                                    code: row.code,
+                                                    target_revenue: formatRupiahInput(row.target_revenue),
+                                                    fixed_cost: formatRupiahInput(row.fixed_cost),
+                                                    status: row.status || 'active',
+                                                    notes: row.notes || '',
+                                                    route_ids: [...(row.route_ids ?? [])],
+                                                };
+                                                setFormMode('form');
+                                            }}>
+                                                <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onclick={() => void removeItem(`/api/admin/pools/${row.id}`, 'Pool deleted.') }>
+                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                Hapus
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                {/snippet}
                             </DataTable>
                         </div>
                     </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import type { Snippet } from 'svelte';
     import { Input } from '@/components/ui/input';
     import { Button } from '@/components/ui/button';
     import { cn } from '@/lib/utils';
@@ -8,10 +9,12 @@
         query = $bindable(''),
         placeholder = 'Cari...',
         class: className = '',
+        extras,
     }: {
         query?: string;
         placeholder?: string;
         class?: string;
+        extras?: Snippet;
     } = $props();
 
     const dispatch = createEventDispatcher();
@@ -26,6 +29,6 @@
 
     <div class="flex items-center gap-2">
         <Button size="sm" onclick={doSearch}>Cari</Button>
-        <slot name="extras" />
+        {@render extras?.()}
     </div>
 </div>
