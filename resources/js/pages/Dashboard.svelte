@@ -1090,122 +1090,126 @@
         <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
         <div class="space-y-2.5 xl:col-span-2">
             <Card class="h-fit overflow-visible border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
-                <CardHeader class="space-y-1 pb-1">
+                <CardHeader class="space-y-1 pb-2 sm:pb-1">
                     <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                         <div class="min-w-0">
                             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{activeTrendEyebrow}</p>
-                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">{activeTrendTitle}</CardTitle>
+                            <CardTitle class="mt-1 text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-[1.65rem]">{activeTrendTitle}</CardTitle>
                             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{activeTrendRangeLabel}</p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 lg:justify-end">
-                            <div class="inline-flex rounded-full border border-border/70 bg-background/80 p-1 shadow-sm">
+                        <div class="flex w-full flex-wrap items-stretch gap-2 sm:items-center lg:w-auto lg:justify-end">
+                            <div class="inline-flex w-full rounded-full border border-border/70 bg-background/80 p-1 shadow-sm sm:w-auto">
                                 <button
                                     type="button"
-                                    class={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${trendMode === 'monthly' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
+                                    class={`flex-1 rounded-full px-3 py-1 text-[11px] font-semibold transition sm:flex-none ${trendMode === 'monthly' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
                                     onclick={() => setTrendMode('monthly')}
                                 >
                                     Bulanan
                                 </button>
                                 <button
                                     type="button"
-                                    class={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${trendMode === 'daily' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
+                                    class={`flex-1 rounded-full px-3 py-1 text-[11px] font-semibold transition sm:flex-none ${trendMode === 'daily' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
                                     onclick={() => setTrendMode('daily')}
                                 >
                                     Harian
                                 </button>
                             </div>
-                            <div class="rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60">
+                            <div class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none">
                                 <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Total Revenue</p>
-                                <p class="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50">{toCurrency(activeTrendRevenueTotal)}</p>
+                                <p class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-slate-50">{toCurrency(activeTrendRevenueTotal)}</p>
                             </div>
-                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(activeTrendTransactionsTotal)} TRX</Badge>
+                            <Badge variant="outline" class="shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(activeTrendTransactionsTotal)} TRX</Badge>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent class="overflow-visible pt-0 pb-3">
-                    <div class="overflow-visible rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
+                    <div class="overflow-visible rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-2.5 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] sm:rounded-[24px] sm:p-3 md:p-4">
                         <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                             <span>{trendMode === 'daily' ? 'Revenue harian' : 'Revenue bulanan'}</span>
-                            <span class="normal-case tracking-normal">Hover / tap titik</span>
+                            <span class="normal-case tracking-normal">{lineChartPoints.length} titik</span>
                         </div>
 
-                        <div class="relative h-[228px] overflow-visible pt-14 md:h-[244px] md:pt-16" role="presentation" onmouseleave={() => hoverTrendPoint(null)}>
-                            {#if activeTrendTooltip}
-                                <div
-                                    class={`pointer-events-none absolute z-10 w-[228px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeTrendTooltip.align)}`}
-                                    style={`left:${activeTrendTooltip.left}%; top:0px`}
-                                >
-                                    <p class="text-sm font-semibold">{trendLabel(activeTrendTooltip.row)}</p>
-                                    <div class="mt-2 space-y-1 text-[12px]">
-                                        <div class="flex items-center justify-between gap-3">
-                                            <span class="text-white/68">Keberangkatan</span>
-                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.booking_revenue || 0)}</span>
-                                        </div>
-                                        <div class="flex items-center justify-between gap-3">
-                                            <span class="text-white/68">Bagasi</span>
-                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.luggage_revenue || 0)}</span>
-                                        </div>
-                                        <div class="flex items-center justify-between gap-3">
-                                            <span class="text-white/68">Carter</span>
-                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.charter_revenue || 0)}</span>
-                                        </div>
-                                        <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
-                                            <span class="text-white/68">Total</span>
-                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.revenue)}</span>
-                                        </div>
-                                    </div>
-                                    <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeTrendTooltip.align)}`}></span>
-                                </div>
-                            {/if}
-
-                            <div class="absolute top-14 bottom-6 left-0 w-[72px] md:top-16 md:w-[84px]" aria-hidden="true">
-                                {#each lineChartTicks as tick (`trend-tick-${tick.y}`)}
-                                    <div class="absolute left-0 -translate-y-1/2 text-[9px] leading-tight font-medium text-slate-400 dark:text-slate-500" style={`top:${tick.y}%`}>
-                                        {toCurrency(tick.value)}
-                                    </div>
-                                {/each}
-                            </div>
-
-                            <div class="absolute top-14 right-1 bottom-6 left-[76px] overflow-visible md:top-16 md:left-[88px]">
-                                <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full overflow-visible">
-                                    {#each lineChartTicks as tick (`trend-grid-${tick.y}`)}
-                                        <line x1="0" y1={tick.y} x2="100" y2={tick.y} stroke="currentColor" class="text-slate-200/90 dark:text-slate-800" stroke-dasharray="2 3"></line>
-                                    {/each}
-                                    {#if lineAreaPath}
-                                        <path d={lineAreaPath} fill="url(#dailyRevenueAreaCompact)"></path>
-                                        <defs>
-                                            <linearGradient id="dailyRevenueAreaCompact" x1="0" x2="0" y1="0" y2="1">
-                                                <stop offset="0%" stop-color="rgb(14 165 233 / 0.32)"></stop>
-                                                <stop offset="100%" stop-color="rgb(14 165 233 / 0.02)"></stop>
-                                            </linearGradient>
-                                        </defs>
-                                    {/if}
-                                    {#if linePath}
-                                        <path d={linePath} fill="none" stroke="rgb(37 99 235)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path>
-                                    {/if}
-                                </svg>
-
-                                {#each lineChartPoints as point, index (point.key)}
-                                    <button
-                                        type="button"
-                                        class={`absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-sm outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500/45 dark:border-slate-950 ${trendSelectedClass(point.row)}`}
-                                        style={`left:${point.x}%; top:${point.y}%`}
-                                        onclick={() => togglePinnedTrendPoint(point.row)}
-                                        onmouseenter={() => hoverTrendPoint(point.row)}
-                                        onfocus={() => hoverTrendPoint(point.row)}
-                                        onmouseleave={() => hoverTrendPoint(null)}
-                                        onblur={() => hoverTrendPoint(null)}
-                                        aria-label={`${trendLabel(point.row)} ${toCurrency(point.row.revenue)}`}
+                        <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]">
+                            <div class={`relative h-[214px] overflow-visible pt-14 md:h-[244px] md:min-w-0 md:pt-16 ${trendMode === 'daily' ? 'min-w-[560px]' : 'min-w-[460px]'}`} role="presentation" onmouseleave={() => hoverTrendPoint(null)}>
+                                {#if activeTrendTooltip}
+                                    <div
+                                        class={`pointer-events-none absolute z-10 w-[240px] max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass(activeTrendTooltip.align)}`}
+                                        style={`left:${activeTrendTooltip.left}%; top:0px`}
                                     >
-                                        <span class="sr-only">{trendLabel(point.row)}</span>
-                                    </button>
-
-                                    {#if showLineAxisLabel(index)}
-                                        <div class="absolute top-[calc(100%+0.35rem)] -translate-x-1/2 text-[10px] font-medium text-slate-500 dark:text-slate-400" style={`left:${point.x}%`}>
-                                            {point.row.label}
+                                        <p class="text-sm font-semibold">{trendLabel(activeTrendTooltip.row)}</p>
+                                        <div class="mt-2 space-y-1 text-[12px]">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-white/68">Keberangkatan</span>
+                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.booking_revenue || 0)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-white/68">Bagasi</span>
+                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.luggage_revenue || 0)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-white/68">Carter</span>
+                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.charter_revenue || 0)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
+                                                <span class="text-white/68">Total</span>
+                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.revenue)}</span>
+                                            </div>
                                         </div>
-                                    {/if}
-                                {/each}
+                                        <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeTrendTooltip.align)}`}></span>
+                                    </div>
+                                {/if}
+
+                                <div class="absolute top-14 bottom-6 left-0 w-[86px] md:top-16 md:w-[92px]" aria-hidden="true">
+                                    {#each lineChartTicks as tick (`trend-tick-${tick.y}`)}
+                                        <div class="absolute right-0 max-w-[84px] -translate-y-1/2 text-right text-[8px] leading-tight font-medium text-slate-400 dark:text-slate-500 sm:text-[9px]" style={`top:${tick.y}%`}>
+                                            {toCurrency(tick.value)}
+                                        </div>
+                                    {/each}
+                                </div>
+
+                                <div class="absolute top-14 right-1 bottom-6 left-[92px] overflow-visible md:top-16 md:left-[100px]">
+                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full overflow-visible">
+                                        {#each lineChartTicks as tick (`trend-grid-${tick.y}`)}
+                                            <line x1="0" y1={tick.y} x2="100" y2={tick.y} stroke="currentColor" class="text-slate-200/90 dark:text-slate-800" stroke-dasharray="2 3"></line>
+                                        {/each}
+                                        {#if lineAreaPath}
+                                            <path d={lineAreaPath} fill="url(#dailyRevenueAreaCompact)"></path>
+                                            <defs>
+                                                <linearGradient id="dailyRevenueAreaCompact" x1="0" x2="0" y1="0" y2="1">
+                                                    <stop offset="0%" stop-color="rgb(14 165 233 / 0.32)"></stop>
+                                                    <stop offset="100%" stop-color="rgb(14 165 233 / 0.02)"></stop>
+                                                </linearGradient>
+                                            </defs>
+                                        {/if}
+                                        {#if linePath}
+                                            <path d={linePath} fill="none" stroke="rgb(37 99 235)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        {/if}
+                                    </svg>
+
+                                    {#each lineChartPoints as point, index (point.key)}
+                                        <button
+                                            type="button"
+                                            class="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full bg-transparent outline-hidden transition hover:scale-105 focus-visible:ring-2 focus-visible:ring-blue-500/45"
+                                            style={`left:${point.x}%; top:${point.y}%`}
+                                            onclick={() => togglePinnedTrendPoint(point.row)}
+                                            onmouseenter={() => hoverTrendPoint(point.row)}
+                                            onfocus={() => hoverTrendPoint(point.row)}
+                                            onmouseleave={() => hoverTrendPoint(null)}
+                                            onblur={() => hoverTrendPoint(null)}
+                                            aria-label={`${trendLabel(point.row)} ${toCurrency(point.row.revenue)}`}
+                                            aria-pressed={activeTrendTooltipKey === trendKey(point.row)}
+                                        >
+                                            <span class={`block h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-500 shadow-sm dark:border-slate-950 ${trendSelectedClass(point.row)}`}></span>
+                                            <span class="sr-only">{trendLabel(point.row)}</span>
+                                        </button>
+
+                                        {#if showLineAxisLabel(index)}
+                                            <div class="absolute top-[calc(100%+0.35rem)] max-w-14 -translate-x-1/2 truncate text-center text-[10px] font-medium text-slate-500 dark:text-slate-400" style={`left:${point.x}%`}>
+                                                {point.row.label}
+                                            </div>
+                                        {/if}
+                                    {/each}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1213,23 +1217,23 @@
             </Card>
 
             <Card class="h-fit overflow-visible border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
-                <CardHeader class="space-y-1 pb-1">
+                <CardHeader class="space-y-1 pb-2 sm:pb-1">
                     <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                        <div>
+                        <div class="min-w-0">
                             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{heatmapYearLabel}</p>
-                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">Transactions & Revenue</CardTitle>
+                            <CardTitle class="mt-1 text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-[1.65rem]">Transactions & Revenue</CardTitle>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 md:justify-end">
-                            <div class="rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60">
+                        <div class="flex w-full flex-wrap items-stretch gap-2 sm:items-center md:w-auto md:justify-end">
+                            <div class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none">
                                 <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Total Revenue</p>
-                                <p class="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50">{toCurrency(yearlyRevenueTotal)}</p>
+                                <p class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-slate-50">{toCurrency(yearlyRevenueTotal)}</p>
                             </div>
-                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(yearlyTransactionsTotal)} TRX</Badge>
+                            <Badge variant="outline" class="shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(yearlyTransactionsTotal)} TRX</Badge>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent class="overflow-visible pt-0 pb-3">
-                    <div class="overflow-visible rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
+                    <div class="overflow-visible rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-2.5 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] sm:rounded-[24px] sm:p-3 md:p-4">
                         <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                             <span>Contribution graph</span>
                             <div class="hidden items-center gap-1 md:flex">
@@ -1247,11 +1251,11 @@
                             </div>
                         </div>
 
-                        <div class="overflow-x-auto pb-1">
-                            <div class="relative min-w-[640px] pt-14 md:min-w-[760px] md:pt-16" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
+                        <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]">
+                            <div class="relative min-w-[1040px] pt-16 md:min-w-[760px] md:pt-16" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
                                 {#if activeHeatmapTooltip}
                                     <div
-                                        class={`pointer-events-none absolute top-0 z-10 w-[228px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
+                                        class={`pointer-events-none absolute top-0 z-10 w-[240px] max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
                                         style={`left:${activeHeatmapTooltip.left}%`}
                                     >
                                         <p class="text-sm font-semibold">{activeHeatmapTooltip.row.name ?? activeHeatmapTooltip.row.date}</p>
@@ -1288,23 +1292,24 @@
                                     {/each}
                                 </div>
 
-                                <div class="grid grid-flow-col auto-cols-[14px] grid-rows-7 gap-[4px] pt-2 md:auto-cols-[14px]">
+                                <div class="grid grid-flow-col auto-cols-[20px] grid-rows-7 gap-[5px] pt-2 md:auto-cols-[14px] md:gap-[4px]">
                                     {#each heatmapContributionCells as cell (cell.key)}
                                         {#if cell.item}
                                             {@const day = cell.item}
                                             <button
                                                 type="button"
-                                                class={`h-3.5 w-3.5 rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
+                                                class={`h-5 w-5 touch-manipulation rounded-[5px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 md:rounded-[4px] ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
                                                 onclick={() => togglePinnedHeatmapDay(day)}
                                                 onmouseenter={() => hoverHeatmapDay(day)}
                                                 onfocus={() => hoverHeatmapDay(day)}
                                                 onmouseleave={() => hoverHeatmapDay(null)}
                                                 onblur={() => hoverHeatmapDay(null)}
                                                 aria-label={`${day.name ?? day.date} ${toCurrency(day.revenue)}`}
+                                                aria-pressed={activeHeatmapTooltipKey === heatmapKey(day)}
                                                 disabled={day.is_future}
                                             ></button>
                                         {:else}
-                                            <div class="h-3.5 w-3.5 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"></div>
+                                            <div class="h-5 w-5 rounded-[5px] bg-transparent md:h-3.5 md:w-3.5 md:rounded-[4px]"></div>
                                         {/if}
                                     {/each}
                                 </div>
