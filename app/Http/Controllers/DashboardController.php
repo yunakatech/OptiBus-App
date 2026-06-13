@@ -28,20 +28,6 @@ class DashboardController extends Controller
         $resolveDashboardSummary = function () use ($today, &$dashboardSummary): array {
             return $dashboardSummary ??= $this->dashboardSummary($today);
         };
-        $trendAnchor = null;
-        $resolveTrendAnchor = function () use ($today, &$trendAnchor): Carbon {
-            if ($trendAnchor instanceof Carbon) {
-                return $trendAnchor;
-            }
-
-            $latestActivityDate = $this->latestActivityDate();
-            $trendAnchor = $latestActivityDate && $latestActivityDate->lt($today->copy()->subDays(6))
-                ? $latestActivityDate->copy()
-                : $today->copy();
-
-            return $trendAnchor;
-        };
-
         $recentActivity = null;
         $resolveRecentActivity = function () use (&$recentActivity): array {
             return $recentActivity ??= $this->recentActivity();
@@ -85,13 +71,13 @@ class DashboardController extends Controller
                     'subtitle_label' => 'tahun ini',
                 ],
             ],
-            'dailyTrend' => Inertia::defer(function () use ($resolveTrendAnchor, $deferredPoolId): array {
+            'dailyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
-                return $this->dailyTrend($resolveTrendAnchor());
+                return $this->dailyTrend($today);
             }, 'dashboard-data'),
-            'monthlyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+            'yearlyHeatmap' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
-                return $this->monthlyTrend($today);
+                return $this->yearlyHeatmap($today);
             }, 'dashboard-data'),
             'recentActivity' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
@@ -710,26 +696,33 @@ class DashboardController extends Controller
             now()->addMinutes(2),
             function () use ($anchorDate): array {
                 $rows = [];
-                $start = $anchorDate->copy()->subDays(6)->startOfDay();
+                $start = $anchorDate->copy()->subDays(29)->startOfDay();
                 $bookingRevenueByDate = $this->bookingRevenueByDateRange($start, $anchorDate);
                 $charterRevenueByDate = $this->charterRevenueByDateRange($start, $anchorDate);
                 $luggageRevenueByDate = $this->luggageRevenueByDateRange($start, $anchorDate);
+                $bookingCountByDate = $this->bookingCountByDateRange($start, $anchorDate);
+                $charterCountByDate = $this->charterCountByDateRange($start, $anchorDate);
+                $luggageCountByDate = $this->luggageCountByDateRange($start, $anchorDate);
                 $bookingBopByDate = $this->bookingBopByDateRange($start, $anchorDate);
                 $charterBopByDate = $this->charterBopByDateRange($start, $anchorDate);
 
-                for ($i = 6; $i >= 0; $i--) {
+                for ($i = 29; $i >= 0; $i--) {
                     $day = $anchorDate->copy()->subDays($i);
                     $dayKey = $day->toDateString();
                     $bookingRevenue = $bookingRevenueByDate[$dayKey] ?? 0.0;
                     $charterRevenue = $charterRevenueByDate[$dayKey] ?? 0.0;
                     $luggageRevenue = $luggageRevenueByDate[$dayKey] ?? 0.0;
+                    $transactionCount = (int) ($bookingCountByDate[$dayKey] ?? 0)
+                        + (int) ($charterCountByDate[$dayKey] ?? 0)
+                        + (int) ($luggageCountByDate[$dayKey] ?? 0);
                     $bookingBop = $bookingBopByDate[$dayKey] ?? 0.0;
                     $charterBop = $charterBopByDate[$dayKey] ?? 0.0;
                     $totalRevenue = $bookingRevenue + $charterRevenue + $luggageRevenue;
 
                     $rows[] = [
-                        'label' => strtoupper($day->translatedFormat('D')),
+                        'label' => $day->translatedFormat('d M'),
                         'date' => $day->translatedFormat('d M'),
+                        'transaction_count' => $transactionCount,
                         'revenue' => $totalRevenue,
                         'booking_revenue' => $bookingRevenue,
                         'charter_revenue' => $charterRevenue,
@@ -745,36 +738,48 @@ class DashboardController extends Controller
         );
     }
 
-    private function monthlyTrend(Carbon $yearAnchor): array
+    private function yearlyHeatmap(Carbon $yearAnchor): array
     {
         return Cache::remember(
-            'dashboard:monthly-trend:'.$yearAnchor->format('Y-m').':'.PoolScope::cacheKey($this->activePoolId),
+            'dashboard:yearly-heatmap:'.$yearAnchor->format('Y').':'.PoolScope::cacheKey($this->activePoolId),
             now()->addMinutes(2),
             function () use ($yearAnchor): array {
                 $rows = [];
                 $year = (int) $yearAnchor->format('Y');
-                $endMonth = (int) $yearAnchor->format('n');
                 $yearStart = Carbon::create($year, 1, 1)->startOfMonth();
-                $yearEnd = $yearAnchor->copy()->endOfMonth();
-                $bookingRevenueByMonth = $this->bookingRevenueByMonthRange($yearStart, $yearEnd);
-                $charterRevenueByMonth = $this->charterRevenueByMonthRange($yearStart, $yearEnd);
-                $luggageRevenueByMonth = $this->luggageRevenueByMonthRange($yearStart, $yearEnd);
-                $bookingBopByMonth = $this->bookingBopByMonthRange($yearStart, $yearEnd);
-                $charterBopByMonth = $this->charterBopByMonthRange($yearStart, $yearEnd);
+                $yearEnd = $yearAnchor->copy()->endOfYear();
+                $queryEnd = $yearAnchor->copy()->endOfDay();
+                $bookingRevenueByDate = $this->bookingRevenueByDateRange($yearStart, $queryEnd);
+                $charterRevenueByDate = $this->charterRevenueByDateRange($yearStart, $queryEnd);
+                $luggageRevenueByDate = $this->luggageRevenueByDateRange($yearStart, $queryEnd);
+                $bookingCountByDate = $this->bookingCountByDateRange($yearStart, $queryEnd);
+                $charterCountByDate = $this->charterCountByDateRange($yearStart, $queryEnd);
+                $luggageCountByDate = $this->luggageCountByDateRange($yearStart, $queryEnd);
+                $bookingBopByDate = $this->bookingBopByDateRange($yearStart, $queryEnd);
+                $charterBopByDate = $this->charterBopByDateRange($yearStart, $queryEnd);
 
-                for ($month = 1; $month <= $endMonth; $month++) {
-                    $start = Carbon::create($year, $month, 1)->startOfMonth();
-                    $monthKey = (string) $month;
-                    $bookingRevenue = $bookingRevenueByMonth[$monthKey] ?? 0.0;
-                    $charterRevenue = $charterRevenueByMonth[$monthKey] ?? 0.0;
-                    $luggageRevenue = $luggageRevenueByMonth[$monthKey] ?? 0.0;
-                    $bookingBop = $bookingBopByMonth[$monthKey] ?? 0.0;
-                    $charterBop = $charterBopByMonth[$monthKey] ?? 0.0;
+                for ($day = $yearStart->copy(); $day->lte($yearEnd); $day->addDay()) {
+                    $dayKey = $day->toDateString();
+                    $bookingRevenue = $bookingRevenueByDate[$dayKey] ?? 0.0;
+                    $charterRevenue = $charterRevenueByDate[$dayKey] ?? 0.0;
+                    $luggageRevenue = $luggageRevenueByDate[$dayKey] ?? 0.0;
+                    $bookingBop = $bookingBopByDate[$dayKey] ?? 0.0;
+                    $charterBop = $charterBopByDate[$dayKey] ?? 0.0;
+                    $transactionCount = (int) ($bookingCountByDate[$dayKey] ?? 0)
+                        + (int) ($charterCountByDate[$dayKey] ?? 0)
+                        + (int) ($luggageCountByDate[$dayKey] ?? 0);
                     $totalRevenue = $bookingRevenue + $charterRevenue + $luggageRevenue;
 
                     $rows[] = [
-                        'label' => strtoupper($start->translatedFormat('M')),
-                        'name' => $start->translatedFormat('F Y'),
+                        'label' => $day->translatedFormat('d M'),
+                        'name' => $day->translatedFormat('l, d F Y'),
+                        'date' => $dayKey,
+                        'month_label' => $day->translatedFormat('F'),
+                        'month_short' => strtoupper($day->translatedFormat('M')),
+                        'day_number' => (int) $day->format('j'),
+                        'day_of_week' => (int) $day->dayOfWeek,
+                        'transaction_count' => $transactionCount,
+                        'is_future' => $day->gt($yearAnchor),
                         'revenue' => $totalRevenue,
                         'booking_revenue' => $bookingRevenue,
                         'charter_revenue' => $charterRevenue,
@@ -850,6 +855,69 @@ class DashboardController extends Controller
             ->groupBy(DB::raw($dateExpression))
             ->pluck('total', 'period')
             ->map(static fn ($value): float => (float) $value)
+            ->all();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function bookingCountByDateRange(Carbon $start, Carbon $end): array
+    {
+        if (! Schema::hasTable('bookings')) {
+            return [];
+        }
+
+        return $this->scopedBookingQuery('bookings', 'rute', $this->activePoolId)
+            ->where('status', '!=', 'canceled')
+            ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
+            ->selectRaw('tanggal as period, COUNT(*) as total')
+            ->groupBy('tanggal')
+            ->pluck('total', 'period')
+            ->map(static fn ($value): int => (int) $value)
+            ->all();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function charterCountByDateRange(Carbon $start, Carbon $end): array
+    {
+        if (! Schema::hasTable('charters')) {
+            return [];
+        }
+
+        $query = $this->scopedCharterQuery('charters', '', $this->activePoolId)
+            ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+            ->selectRaw('start_date as period, COUNT(*) as total')
+            ->groupBy('start_date');
+
+        $this->applyActiveCharterFilter($query);
+
+        return $query->pluck('total', 'period')
+            ->map(static fn ($value): int => (int) $value)
+            ->all();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function luggageCountByDateRange(Carbon $start, Carbon $end): array
+    {
+        if (! Schema::hasTable('luggages')) {
+            return [];
+        }
+
+        $dateExpression = $this->dateExpression('created_at');
+        $query = $this->scopedLuggageQuery('luggages', '', $this->activePoolId)
+            ->whereBetween('created_at', [$start->toDateTimeString(), $end->copy()->endOfDay()->toDateTimeString()]);
+
+        $this->applyActiveLuggageFilter($query);
+
+        return $query
+            ->selectRaw("{$dateExpression} as period, COUNT(*) as total")
+            ->groupBy(DB::raw($dateExpression))
+            ->pluck('total', 'period')
+            ->map(static fn ($value): int => (int) $value)
             ->all();
     }
 
