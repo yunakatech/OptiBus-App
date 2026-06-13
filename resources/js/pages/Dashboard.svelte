@@ -862,7 +862,7 @@
 
 <AppHead title="Dashboard" />
 
-<div class="flex h-full flex-1 flex-col gap-2 overflow-x-hidden rounded-xl px-2 py-2 md:gap-3 md:p-4">
+<div class="flex h-full flex-1 flex-col gap-2 overflow-x-clip rounded-xl px-2 py-2 md:gap-3 md:p-4">
     <div class="space-y-2">
         <div class="flex flex-col gap-2 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-3 py-2.5 shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.9))] md:flex-row md:items-end md:justify-between md:rounded-3xl md:px-4 md:py-3">
             <div class="space-y-0.5 md:space-y-1">
@@ -1281,7 +1281,7 @@
                             </div>
                         </div>
 
-                        <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]">
+                        <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]" role="region" aria-label="Grafik kontribusi tahunan — geser untuk melihat semua bulan" tabindex="0">
                             <div class="relative min-w-[760px] pt-16 md:min-w-[760px] md:pt-16" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
                                 {#if activeHeatmapTooltip}
                                     {#key activeHeatmapTooltipKey}
@@ -1324,13 +1324,13 @@
                                     {/each}
                                 </div>
 
-                                <div class="grid grid-flow-col auto-cols-[13px] grid-rows-7 gap-[3px] pt-2 md:auto-cols-[14px] md:gap-[4px]">
+                                <div class="grid grid-flow-col auto-cols-[16px] grid-rows-7 gap-[4px] pt-2 md:auto-cols-[14px] md:gap-[4px]">
                                     {#each heatmapContributionCells as cell (cell.key)}
                                         {#if cell.item}
                                             {@const day = cell.item}
                                             <button
                                                 type="button"
-                                                class={`h-3.5 w-3.5 touch-manipulation rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
+                                                class={`h-4 w-4 touch-manipulation rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
                                                 onclick={() => togglePinnedHeatmapDay(day)}
                                                 onmouseenter={() => hoverHeatmapDay(day)}
                                                 onfocus={() => hoverHeatmapDay(day)}
@@ -1341,11 +1341,16 @@
                                                 disabled={day.is_future}
                                             ></button>
                                         {:else}
-                                            <div class="h-3.5 w-3.5 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"></div>
+                                            <div class="h-4 w-4 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"></div>
                                         {/if}
                                     {/each}
                                 </div>
                             </div>
+                        </div>
+                        <div class="mt-2 flex items-center justify-center gap-1 text-[10px] text-muted-foreground md:hidden">
+                            <span>←</span>
+                            Geser untuk melihat semua bulan
+                            <span>→</span>
                         </div>
                     </div>
                 </CardContent>
