@@ -1,62 +1,621 @@
-﻿                        <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={routesColumns} rows={routes} class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm">
-                                <svelte:fragment slot="row" let:row let:index>
-                                    {@const gross = financialGrossMargin(row)}
-                                    {@const net = financialNetMargin(row)}
-                                    {@const achievement = financialAchievement(row)}
-                                    {@const status = financialStatus(row)}
+<script module lang="ts">
+    export const layout = {
+        breadcrumbs: [
+            {
+                title: 'Admin Ops',
+                href: '/admin-ops',
+            },
+        ],
+    };
+</script>
 
-                                    <td class="py-3 px-4 align-top">
-                                        <div class="font-semibold text-foreground">{row.name}</div>
-                                        <div class="mt-1 text-[11px] text-muted-foreground">Rute master untuk jadwal dan segment</div>
-                                    </td>
+<script lang="ts">
+    import { page, router } from '@inertiajs/svelte';
+    import {
+        Armchair,
+        ArrowUpRight,
+        CalendarDays,
+        CheckCircle2,
+        Clock3,
+        MailX,
+        MoreHorizontal,
+        Pencil,
+        Plus,
+        Route,
+        Send,
+        Trash2,
+        Wallet,
+    } from 'lucide-svelte';
+    import { onDestroy, onMount, tick } from 'svelte';
+    import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
+    import AppHead from '@/components/AppHead.svelte';
+    import { Badge } from '@/components/ui/badge';
+    import { Button } from '@/components/ui/button';
+    import {
+        Card,
+        CardContent,
+        CardHeader,
+        CardTitle,
+    } from '@/components/ui/card';
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuTrigger,
+    } from '@/components/ui/dropdown-menu';
+    import { Input } from '@/components/ui/input';
+    import { LoadingButton } from '@/components/ui/loading-button';
+    import DataTable from '@/components/terminal/DataTable.svelte';
+    import EntityBadge from '@/components/terminal/EntityBadge.svelte';
+    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+    import { hasPermission } from '@/lib/access';
+    import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
+    import {
+        formatCurrencyDisplay,
+        formatCurrencyInput as formatSharedCurrencyInput,
+        parseCurrencyInput as parseSharedCurrencyInput,
+    } from '@/lib/currency';
+    import { loadFlatpickr } from '@/lib/flatpickr';
+    import type { FlatpickrInstance } from '@/lib/flatpickr';
 
-                                    <td class="py-3 px-4 align-top">
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.origin ?? 'Origin belum diatur'}</span>
-                                            <span class="text-muted-foreground">→</span>
-                                            <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.destination ?? 'Destination belum diatur'}</span>
-                                        </div>
-                                        <div class="mt-2 text-[11px] text-muted-foreground">Jalur ini dipakai sebagai acuan relasi jadwal keberangkatan dan segment harga.</div>
-                                    </td>
+    type Stats = {
+        routes: number;
+        schedules: number;
+        drivers: number;
+        luggage_services: number;
+        segments: number;
+        customers: number;
+        armadas: number;
+        pools: number;
+        cancellations: number;
+    };
+    type RouteRow = {
+        id: number;
+        name: string;
+        origin: string | null;
+        destination: string | null;
+        bop: number;
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        fixed_cost: number;
+        target_revenue: number;
+    };
+    type UnitRow = {
+        id: number;
+        nopol: string;
+        merek: string | null;
+        type: string | null;
+        category: string | null;
+        tahun: number | null;
+        warna: string | null;
+        kapasitas: number | null;
+        status: string | null;
+        layout: string | null;
+    };
+    type ScheduleRow = {
+        id: number;
+        route_id: number | null;
+        route_name: string | null;
+        rute: string;
+        dow: number;
+        jam: string;
+        units: number;
+        bop: number;
+        unit_label: string | null;
+        unit_id: number | null;
+        nopol: string | null;
+        unit_options?: Array<{
+            unit_no: number;
+            label: string;
+            unit_id: number | null;
+            nopol?: string | null;
+        }>;
+    };
+    type ScheduleDayGroup = {
+        dow: number;
+        rows: ScheduleRow[];
+        totalUnits: number;
+        bopTotal: number;
+        firstDeparture: string | null;
+        lastDeparture: string | null;
+    };
+    type ScheduleRouteGroup = {
+        key: string;
+        routeId: number;
+        route: string;
+        total: number;
+        totalUnits: number;
+        bopTotal: number;
+        activeDays: number;
+        firstDeparture: string | null;
+        lastDeparture: string | null;
+        days: ScheduleDayGroup[];
+    };
+    type ScheduleRouteSelectOption = {
+        id: number;
+        name: string;
+        value: string;
+    };
+    type ScheduleOverview = {
+        routes: number;
+        total: number;
+        totalUnits: number;
+        bopTotal: number;
+        activeDays: number;
+        firstDeparture: string | null;
+        lastDeparture: string | null;
+    };
+    type DriverRow = {
+        id: number;
+        nama: string;
+        phone: string | null;
+        unit_id: number | null;
+        armada_id: number | null;
+        nopol: string | null;
+        target_revenue_bulanan: number;
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        bop: number;
+        fixed_cost: number;
+    };
+    type ServiceRow = { id: number; name: string };
+    type SegmentRow = {
+        id: number;
+        route_id: number;
+        rute: string;
+        origin: string | null;
+        destination: string | null;
+        harga: number;
+        route_name: string | null;
+    };
+    type CustomerRow = {
+        id: number;
+        name: string;
+        phone: string;
+        pickup_point: string | null;
+        gmaps: string | null;
+    };
+    type Pagination = {
+        page: number;
+        per_page: number;
+        total: number;
+        last_page: number;
+    };
+    type SettingsQuery = {
+        q?: string;
+        page?: number;
+        per_page?: number;
+        route_id?: number;
+        rute?: string;
+    };
+    type SettingsDataPayload = {
+        tab?: string;
+        schedules?: ScheduleRow[];
+        drivers?: DriverRow[];
+        segments?: SegmentRow[];
+        armadas?: ArmadaRow[];
+        pools?: PoolRow[];
+        users?: UserRow[];
+        roles?: RoleOption[];
+        routes?: RouteRow[];
+        can_manage?: boolean;
+        pagination?: Pagination;
+        route_id?: number;
+        rute?: string;
+    };
+    type SettingsMastersPayload = {
+        tab?: string;
+        routes?: RouteRow[];
+        units?: UnitRow[];
+        armadas?: ArmadaRow[];
+        pools?: PoolRow[];
+        roles?: RoleOption[];
+        categories?: string[];
+        can_manage_pools?: boolean;
+    };
+    type CustomerImportSummary = {
+        created: number;
+        updated: number;
+        skipped: number;
+        errors: string[];
+    };
+    type ArmadaRow = {
+        id: number;
+        merk: string | null;
+        tahun: number | null;
+        warna: string | null;
+        nopol: string;
+        nomor_rangka: string | null;
+        kategori: string | null;
+        ac_type: string;
+        platform_gps: string | null;
+        api_gps: string | null;
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        bop: number;
+        fixed_cost: number;
+        target_bulanan: number;
+    };
+    type UserRow = {
+        id: number;
+        name: string;
+        email: string;
+        email_verified_at: string | null;
+        created_at: string | null;
+        is_super_admin: boolean;
+        pool_ids: number[];
+        pool_names: string[];
+        role_ids: number[];
+        role_names: string[];
+    };
+    type RoleOption = {
+        id: number;
+        name: string;
+        slug: string;
+        description: string;
+    };
+    type PoolRow = {
+        id: number;
+        name: string;
+        code: string;
+        target_revenue: number;
+        status: string;
+        notes: string;
+        created_at: string;
+        route_ids: number[];
+        route_names: string[];
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        bop: number;
+        fixed_cost: number;
+    };
+    type CancellationRow = {
+        tag: string;
+        title: string;
+        meta: string;
+        actor: string;
+        created_at: string;
+    };
+    type ReportKind = 'booking' | 'charter' | 'bagasi';
+    type ReportSummary = {
+        from: string;
+        to: string;
+        type: ReportKind;
+        total_rows: number;
+        revenue_total: number;
+        pool_id?: number;
+        pool_name?: string;
+        target_revenue?: number;
+    };
+    type BookingReportRow = {
+        id: number;
+        tanggal: string;
+        jam: string;
+        name: string;
+        phone: string;
+        rute: string;
+        pickup_point: string;
+        unit: string;
+        seat: string;
+        pembayaran: string;
+        status: string;
+        discount: number;
+        total: number;
+    };
+    type CharterReportRow = {
+        id: number;
+        start_date: string;
+        end_date: string;
+        departure_time: string;
+        name: string;
+        phone: string;
+        pickup_point: string;
+        drop_point: string;
+        driver_name: string;
+        layanan: string;
+        payment_status: string;
+        bop_status: string;
+        status: string;
+        unit_nopol: string;
+        armada_nopol: string;
+        total: number;
+    };
+    type LuggageReportRow = {
+        id: number;
+        tanggal: string;
+        created_at: string;
+        kode_resi: string;
+        sender_name: string;
+        sender_phone: string;
+        receiver_name: string;
+        receiver_phone: string;
+        quantity: number;
+        payment_status: string;
+        status: string;
+        service_name: string;
+        total: number;
+    };
+    type ReportRow = BookingReportRow | CharterReportRow | LuggageReportRow;
+    type LayoutCellType = 'seat' | 'empty' | 'driver';
+    type LayoutCell = {
+        type: LayoutCellType;
+        label: string;
+        fixed?: boolean;
+        hidden?: boolean;
+        seatNumber?: number;
+        colspan?: number;
+        marker?: 'aisle' | 'slot';
+        seatStyle?: 'standard' | 'sleeper';
+    };
+    type LayoutGrid = LayoutCell[][];
+    type LayoutPattern =
+        | '2-2'
+        | '2-1'
+        | '1-1'
+        | '2-3'
+        | '3-0'
+        | '4-0'
+        | 'sleep'
+        | 'empty';
 
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(gross)}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(net)}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
-                                    <td class="py-3 px-4 text-center"><span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span></td>
+    let {
+        stats,
+        initialTab = null,
+        lockedMenuView: lockedFromServer = false,
+        initialMode = null,
+        initialRecordId = null,
+        settingsQuery = null,
+        settingsData = null,
+        settingsMasters = null,
+    }: {
+        stats: Stats;
+        initialTab?: TabName | null;
+        lockedMenuView?: boolean;
+        initialMode?: string | null;
+        initialRecordId?: number | null;
+        settingsQuery?: SettingsQuery | null;
+        settingsData?: SettingsDataPayload | null;
+        settingsMasters?: SettingsMastersPayload | null;
+    } = $props();
 
-                                    <td class="py-3 px-4 text-center">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                                    <MoreHorizontal class="h-4 w-4" />
-                                                    <span class="sr-only">Aksi rute induk</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                                <DropdownMenuItem onclick={() => editRoute(row)}>
-                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/routes/${row.id}`, 'Route deleted.') }>
-                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                                    Hapus
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </td>
-                                </svelte:fragment>
-                            </DataTable>
-                        </div>
+    const days = [
+        'Minggu',
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        "Jum'at",
+        'Sabtu',
+    ];
+    const tabs = [
+        'routes',
+        'schedules',
+        'drivers',
+        'services',
+        'segments',
+        'customers',
+        'units',
+        'armadas',
+        'pools',
+        'users',
+        'cancellations',
+        'reports',
+    ] as const;
+    type TabName = (typeof tabs)[number];
+    type ViewMode = 'data' | 'form' | 'view' | 'layout';
+    const hybridSettingsTabs: TabName[] = [
+        'schedules',
+        'drivers',
+        'segments',
+        'armadas',
+        'pools',
+        'users',
+    ];
+    const isHybridSettingsTab = (tab: TabName) =>
+        hybridSettingsTabs.includes(tab);
+    const tabTitle = (tab: TabName) => {
+        if (tab === 'routes') {
+            return 'Rute Induk';
+        }
+
+        if (tab === 'schedules') {
+            return 'Jadwal';
+        }
+
+        if (tab === 'drivers') {
+            return 'Driver';
+        }
+
+        if (tab === 'services') {
+            return 'Tarif Bagasi';
+        }
+
+        if (tab === 'segments') {
+            return 'Segment';
+        }
+
+        if (tab === 'customers') {
+            return 'Reguler';
+        }
+
+        if (tab === 'units') {
+            return 'Kategori Armada';
+        }
+
+        if (tab === 'armadas') {
+            return 'Armada';
+        }
+
+        if (tab === 'pools') {
+            return 'Pool';
+        }
+
+        if (tab === 'users') {
+            return 'Users';
+        }
+
+        if (tab === 'cancellations') {
+            return 'Logs';
+        }
+
+        return 'Laporan';
+    };
+
+    type TabGroup = {
+        title: string;
+        description: string;
+        tabs: Array<{
+            tab: TabName;
+            label: string;
+            permission: string | string[];
+        }>;
+    };
+
+    const tabGroups: TabGroup[] = [
+        {
+            title: 'Master Data',
+            description: 'Referensi utama yang dipakai oleh jadwal dan operasional harian.',
+            tabs: [
+                { tab: 'routes', label: 'Rute Induk', permission: 'master.view' },
+                { tab: 'schedules', label: 'Jadwal', permission: 'master.view' },
+                { tab: 'segments', label: 'Segment', permission: 'master.view' },
+                { tab: 'services', label: 'Tarif Bagasi', permission: 'master.view' },
+                { tab: 'customers', label: 'Reguler', permission: 'customer.view' },
+            ],
+        },
+        {
+            title: 'Armada & Akses',
+            description: 'Kelola driver, kategori armada, unit, armada, dan akun pengguna.',
+            tabs: [
+                { tab: 'drivers', label: 'Driver', permission: 'driver.view' },
+                { tab: 'units', label: 'Kategori Armada', permission: 'master.view' },
+                { tab: 'armadas', label: 'Armada', permission: 'armada.view' },
+                { tab: 'pools', label: 'Pool', permission: 'pool.manage' },
+                { tab: 'users', label: 'Users', permission: 'user.manage' },
+            ],
+        },
+        {
+            title: 'Audit & Rekap',
+            description: 'Pantau log aktivitas, pembatalan, dan ringkasan laporan.',
+            tabs: [
+                { tab: 'cancellations', label: 'Logs', permission: 'logs.view' },
+                { tab: 'reports', label: 'Laporan', permission: 'report.view' },
+            ],
+        },
+    ];
+
+    const permissions = $derived(page.props.auth?.permissions ?? []);
+    const visibleTabGroups = $derived(
+        tabGroups
+            .map((group) => ({
+                ...group,
+                tabs: group.tabs.filter((item) =>
+                    hasPermission(permissions, item.permission),
+                ),
+            }))
+            .filter((group) => group.tabs.length > 0),
+    );
+    const tabGroupFor = (tab: TabName) =>
+        visibleTabGroups.find((group) =>
+            group.tabs.some((item) => item.tab === tab),
+        ) ??
+        tabGroups.find((group) => group.tabs.some((item) => item.tab === tab)) ??
+        tabGroups[0];
+    const canOpenTab = (tab: TabName) =>
+        visibleTabGroups.some((group) =>
+            group.tabs.some((item) => item.tab === tab),
+        );
+    const firstVisibleTab = () => visibleTabGroups[0]?.tabs[0]?.tab ?? 'routes';
+
+    let activeTab = $state<TabName>('routes');
+    let activeMode = $state<ViewMode>('data');
+    let lockedMenuView = $state(false);
+    let busy = $state(false);
+    let message = $state('');
+    let error = $state('');
+    let savingService = $state(false);
+    let pendingDeleteKey = $state('');
+    let activeSubmitKey = $state('');
+
+    const setSubmitKey = (key: string) => {
+        activeSubmitKey = key;
+    };
+
+    const clearSubmitKey = (key: string) => {
+        if (activeSubmitKey === key) {
+            activeSubmitKey = '';
+        }
+    };
+
+    const isSubmitActive = (key: string) => activeSubmitKey === key;
+
+    let routes = $state<RouteRow[]>([]);
+    let schedules = $state<ScheduleRow[]>([]);
+    let drivers = $state<DriverRow[]>([]);
+    let services = $state<ServiceRow[]>([]);
+    let segments = $state<SegmentRow[]>([]);
+    let customers = $state<CustomerRow[]>([]);
+    let armadas = $state<ArmadaRow[]>([]);
+    let pools = $state<PoolRow[]>([]);
+    let canManagePools = $state(true);
+    let users = $state<UserRow[]>([]);
+    let roles = $state<RoleOption[]>([]);
+    let cancellations = $state<CancellationRow[]>([]);
+    let units = $state<UnitRow[]>([]);
+    let customerImportInput = $state<HTMLInputElement | null>(null);
+    let customerImporting = $state(false);
+    let customerImportSummary = $state<CustomerImportSummary | null>(null);
+    let customerMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
+    let settingsMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
+    let settingsQueryHydrated = $state(false);
+
+    let routeForm = $state({
+        id: 0,
+        name: '',
+        origin: '',
+        destination: '',
+        target_revenue: '',
+        fixed_cost: '',
+    });
+    let scheduleForm = $state({
+        id: 0,
+        rute: '',
+        dow: 1,
+        jam: '08:00',
+        units: 1,
+        bop: '',
+        unit_id: 0,
+        unit_ids: [0],
+        unit_labels: ['Unit 1'],
+    });
+    let selectedScheduleRoute = $state('');
+    let selectedScheduleRouteId = $state(0);
     let selectedSegmentRouteId = $state(0);
     let driverForm = $state({
         id: 0,
