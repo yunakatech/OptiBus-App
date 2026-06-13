@@ -84,12 +84,12 @@
 
 <AppHead title="Menu" />
 
-<div class="min-h-full w-full bg-background px-3 pt-3 pb-6 md:px-4">
+<div class="min-h-full w-full bg-background px-4 pt-3 pb-28 md:px-4 md:pb-4">
     <div class="mx-auto w-full max-w-6xl space-y-6">
         {#each visibleMenuSections as section (section.label)}
             <section class="space-y-3">
                 <h2 class="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{section.label}</h2>
-                <div class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
                     {#each section.items as item (item.href)}
                         <Link
                             href={toUrl(item.href)}
