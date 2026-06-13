@@ -97,6 +97,22 @@
         }>;
     };
 
+    type HeatmapContributionCell = {
+        key: string;
+        item: HeatmapItem | null;
+        columnIndex: number;
+        rowIndex: number;
+        left: number;
+    };
+
+    type HeatmapMonthMarker = {
+        key: string;
+        label: string;
+        left: number;
+    };
+
+    type ChartTooltipAlign = 'start' | 'center' | 'end';
+
     type ActivityItem = {
         title: string;
         meta: string;
@@ -196,42 +212,45 @@
         summaryPeriodByScope?: Record<'day' | 'month' | 'year', SummaryPeriodMeta>;
     } = $props();
 
-    const maxDaily = $derived(Math.max(1, ...dailyTrend.map((item) => Number(item.revenue || 0))));
-    const maxHeatmap = $derived(
+    const maxDailyRevenue = $derived(Math.max(0, ...dailyTrend.map((item) => Number(item.revenue || 0))));
+    const lineScaleMax = $derived(maxDailyRevenue > 0 ? maxDailyRevenue : 1);
+    const visibleHeatmapDays = $derived(yearlyHeatmap.filter((item) => !item.is_future));
+    const maxHeatmapRevenue = $derived(
         Math.max(
             1,
-            ...yearlyHeatmap
-                .filter((item) => !item.is_future)
-                .map((item) => Number(item.revenue || 0)),
+            ...visibleHeatmapDays.map((item) => Number(item.revenue || 0)),
         ),
     );
     const upcomingCharterOverflow = $derived(
         Math.max(Number(upcomingCharterReminder.total || 0) - Number(upcomingCharterReminder.visible_count || 0), 0),
     );
     const recentActivityOverflow = $derived(Math.max(Number(recentActivityTotal || 0) - Number(recentActivityVisibleCount || 0), 0));
+    const recent30DayRevenueTotal = $derived(
+        dailyTrend.reduce((total, item) => total + Number(item.revenue || 0), 0),
+    );
+    const recent30DayTransactionsTotal = $derived(
+        dailyTrend.reduce((total, item) => total + Number(item.transaction_count || 0), 0),
+    );
+    const yearlyRevenueTotal = $derived(
+        visibleHeatmapDays.reduce((total, item) => total + Number(item.revenue || 0), 0),
+    );
+    const yearlyTransactionsTotal = $derived(
+        visibleHeatmapDays.reduce((total, item) => total + Number(item.transaction_count || 0), 0),
+    );
 
     const dailyKey = (row: TrendItem) => `daily-${row.label}-${row.date ?? ''}`;
     const heatmapKey = (row: HeatmapItem) => `heatmap-${row.date}`;
 
-    let selectedDailyKey = $state<string>('');
-    let selectedHeatmapKey = $state<string>('');
+    let hoveredDailyKey = $state<string>('');
+    let pinnedDailyKey = $state<string>('');
+    let hoveredHeatmapKey = $state<string>('');
+    let pinnedHeatmapKey = $state<string>('');
     let selectedSummaryScope = $state<'day' | 'month' | 'year'>('month');
 
-    const selectedDaily = $derived.by(() => dailyTrend.find((row) => dailyKey(row) === selectedDailyKey) ?? null);
-    const selectedHeatmap = $derived.by(
-        () => yearlyHeatmap.find((row) => heatmapKey(row) === selectedHeatmapKey) ?? null,
-    );
-    const activeDailyTrendRow = $derived(selectedDaily ?? dailyTrend.at(-1) ?? null);
-    const activeHeatmapDay = $derived.by(() => {
-        if (selectedHeatmap && !selectedHeatmap.is_future) {
-            return selectedHeatmap;
-        }
-
-        const visibleDays = yearlyHeatmap.filter((row) => !row.is_future);
-        return visibleDays.at(-1) ?? null;
-    });
+    const activeDailyTooltipKey = $derived(pinnedDailyKey || hoveredDailyKey);
+    const activeHeatmapTooltipKey = $derived(pinnedHeatmapKey || hoveredHeatmapKey);
     const heatmapYearLabel = $derived(
-        activeHeatmapDay?.date ? new Date(`${activeHeatmapDay.date}T00:00:00`).getFullYear() : new Date().getFullYear(),
+        visibleHeatmapDays[0]?.date ? new Date(`${visibleHeatmapDays[0].date}T00:00:00`).getFullYear() : new Date().getFullYear(),
     );
     const activeSummaryStats = $derived(summaryStatsByScope[selectedSummaryScope] ?? summaryStatsByScope.month);
     const activeSummaryComparison = $derived(
@@ -254,7 +273,7 @@
     const lineChartPoints = $derived.by(() =>
         dailyTrend.map((row, index) => {
             const x = dailyTrend.length <= 1 ? 50 : (index / (dailyTrend.length - 1)) * 100;
-            const y = 100 - Math.min(100, Math.max(0, (Number(row.revenue || 0) / maxDaily) * 100));
+            const y = 100 - Math.min(100, Math.max(0, (Number(row.revenue || 0) / lineScaleMax) * 100));
 
             return {
                 key: dailyKey(row),
@@ -280,61 +299,87 @@
             : '',
     );
     const lineChartTicks = $derived.by(() =>
-        [1, 0.75, 0.5, 0.25, 0].map((factor) => ({
+        [1, 0.66, 0.33, 0].map((factor) => ({
             y: (1 - factor) * 100,
-            value: maxDaily * factor,
+            value: maxDailyRevenue * factor,
         })),
     );
-    const heatmapMonthGroups = $derived.by(() => {
-        const groups = new Map<string, HeatmapMonthGroup>();
+    const lineAxisIndexes = $derived.by(() => {
+        if (lineChartPoints.length === 0) {
+            return new Set<number>();
+        }
 
-        yearlyHeatmap.forEach((row) => {
-            const monthKey = row.date.slice(0, 7);
-            const group = groups.get(monthKey) ?? {
-                key: monthKey,
-                label: row.month_label ?? monthKey,
-                shortLabel: row.month_short ?? row.month_label ?? monthKey,
-                totalRevenue: 0,
-                totalTransactions: 0,
-                cells: [],
-            };
+        const indexes = new Set<number>([0, lineChartPoints.length - 1]);
+        const targetCount = Math.min(5, lineChartPoints.length);
 
-            if (group.cells.length === 0) {
-                const monthStart = new Date(`${monthKey}-01T00:00:00`);
-                const offset = Number.isNaN(monthStart.getTime()) ? 0 : monthStart.getDay();
+        for (let step = 1; step < targetCount - 1; step += 1) {
+            indexes.add(
+                Math.round((step / (targetCount - 1)) * (lineChartPoints.length - 1)),
+            );
+        }
 
-                for (let index = 0; index < offset; index += 1) {
-                    group.cells.push({
-                        key: `${monthKey}-offset-${index}`,
-                        item: null,
-                    });
-                }
-            }
-
-            group.totalRevenue += Number(row.revenue || 0);
-            group.totalTransactions += Number(row.transaction_count || 0);
-            group.cells.push({
-                key: heatmapKey(row),
-                item: row,
-            });
-            groups.set(monthKey, group);
-        });
-
-        return Array.from(groups.values()).map((group) => {
-            const remainder = group.cells.length % 7;
-
-            if (remainder !== 0) {
-                for (let index = remainder; index < 7; index += 1) {
-                    group.cells.push({
-                        key: `${group.key}-tail-${index}`,
-                        item: null,
-                    });
-                }
-            }
-
-            return group;
-        });
+        return indexes;
     });
+    const heatmapContributionColumns = $derived.by(() => {
+        const columns: Array<{
+            key: string;
+            cells: Array<HeatmapItem | null>;
+        }> = [];
+        let weekCells = Array<HeatmapItem | null>(7).fill(null);
+
+        yearlyHeatmap.forEach((row, index) => {
+            const dayOfWeek = Number(row.day_of_week ?? 0);
+
+            if (index > 0 && dayOfWeek === 0) {
+                columns.push({
+                    key: `heatmap-week-${columns.length}`,
+                    cells: weekCells,
+                });
+                weekCells = Array<HeatmapItem | null>(7).fill(null);
+            }
+
+            weekCells[dayOfWeek] = row;
+        });
+
+        if (weekCells.some((cell) => cell !== null)) {
+            columns.push({
+                key: `heatmap-week-${columns.length}`,
+                cells: weekCells,
+            });
+        }
+
+        return columns;
+    });
+    const heatmapContributionCells = $derived.by<HeatmapContributionCell[]>(() => {
+        const totalColumns = Math.max(heatmapContributionColumns.length, 1);
+
+        return heatmapContributionColumns.flatMap((column, columnIndex) =>
+            column.cells.map((item, rowIndex) => ({
+                key: item ? heatmapKey(item) : `${column.key}-empty-${rowIndex}`,
+                item,
+                columnIndex,
+                rowIndex,
+                left: ((columnIndex + 0.5) / totalColumns) * 100,
+            })),
+        );
+    });
+    const heatmapMonthMarkers = $derived.by<HeatmapMonthMarker[]>(() =>
+        heatmapContributionColumns.flatMap((column, columnIndex) => {
+            const monthStart = column.cells.find((item) => item?.day_number === 1);
+
+            if (!monthStart) {
+                return [];
+            }
+
+            return [
+                {
+                    key: `${monthStart.date}-marker`,
+                    label: monthStart.month_short ?? monthStart.month_label ?? '',
+                    left: ((columnIndex + 0.5) / Math.max(heatmapContributionColumns.length, 1)) * 100,
+                },
+            ];
+        }),
+    );
 
     const toCurrency = (value: number) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
     const toCompactCurrency = (value: number) => {
@@ -417,47 +462,101 @@
     };
 
     const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
-    const selectDailyPoint = (row: TrendItem) => {
-        const key = dailyKey(row);
-
-        if (isMobileViewport() && selectedDailyKey === key) {
-            selectedDailyKey = '';
-            return;
+    const clampPercent = (value: number, min: number, max: number) =>
+        Math.min(Math.max(value, min), max);
+    const tooltipAlignFor = (left: number): ChartTooltipAlign => {
+        if (left <= 18) {
+            return 'start';
         }
 
-        selectedDailyKey = key;
+        if (left >= 82) {
+            return 'end';
+        }
+
+        return 'center';
     };
-    const selectHeatmapDay = (row: HeatmapItem) => {
+    const tooltipTranslateClass = (align: ChartTooltipAlign) =>
+        align === 'start'
+            ? 'translate-x-0'
+            : align === 'end'
+              ? '-translate-x-full'
+              : '-translate-x-1/2';
+    const tooltipArrowClass = (align: ChartTooltipAlign) =>
+        align === 'start'
+            ? 'left-5'
+            : align === 'end'
+              ? 'right-5'
+              : 'left-1/2 -translate-x-1/2';
+    const hoverDailyPoint = (row: TrendItem | null) => {
+        hoveredDailyKey = row ? dailyKey(row) : '';
+    };
+    const togglePinnedDailyPoint = (row: TrendItem) => {
+        const key = dailyKey(row);
+
+        pinnedDailyKey = pinnedDailyKey === key ? '' : key;
+        hoveredDailyKey = key;
+    };
+    const hoverHeatmapDay = (row: HeatmapItem | null) => {
+        hoveredHeatmapKey = row && !row.is_future ? heatmapKey(row) : '';
+    };
+    const togglePinnedHeatmapDay = (row: HeatmapItem) => {
         if (row.is_future) {
             return;
         }
 
         const key = heatmapKey(row);
-
-        if (isMobileViewport() && selectedHeatmapKey === key) {
-            selectedHeatmapKey = '';
-            return;
-        }
-
-        selectedHeatmapKey = key;
+        pinnedHeatmapKey = pinnedHeatmapKey === key ? '' : key;
+        hoveredHeatmapKey = key;
     };
     const updateSummaryScope = (scope: 'day' | 'month' | 'year') => {
         selectedSummaryScope = scope;
     };
 
-    const trendBreakdown = (row: TrendItem) => [
-        { label: 'Booking', value: Number(row.booking_revenue || 0) },
-        { label: 'Carter', value: Number(row.charter_revenue || 0) },
-        { label: 'Bagasi', value: Number(row.luggage_revenue || 0) },
-        { label: 'BOP Booking', value: Number(row.booking_bop || 0) },
-        { label: 'BOP Carter', value: Number(row.charter_bop || 0) },
-        { label: 'Margin', value: Number(row.margin || 0) },
-    ];
+    const activeDailyTooltip = $derived.by(() => {
+        if (!activeDailyTooltipKey) {
+            return null;
+        }
 
+        const point = lineChartPoints.find((item) => item.key === activeDailyTooltipKey);
+
+        if (!point) {
+            return null;
+        }
+
+        const left = clampPercent(point.x, 8, 92);
+
+        return {
+            row: point.row,
+            left,
+            top: clampPercent(point.y - 12, 10, 78),
+            align: tooltipAlignFor(left),
+        };
+    });
+    const activeHeatmapTooltip = $derived.by(() => {
+        if (!activeHeatmapTooltipKey) {
+            return null;
+        }
+
+        const cell = heatmapContributionCells.find(
+            (item) => item.key === activeHeatmapTooltipKey && item.item,
+        );
+
+        if (!cell?.item) {
+            return null;
+        }
+
+        const left = clampPercent(cell.left, 8, 92);
+
+        return {
+            row: cell.item,
+            left,
+            align: tooltipAlignFor(left),
+        };
+    });
     const dailySelectedClass = (row: TrendItem) =>
-        selectedDailyKey === dailyKey(row) ? 'ring-4 ring-sky-500/25' : '';
+        activeDailyTooltipKey === dailyKey(row) ? 'ring-4 ring-sky-500/20' : '';
     const heatmapSelectedClass = (row: HeatmapItem) =>
-        selectedHeatmapKey === heatmapKey(row)
+        activeHeatmapTooltipKey === heatmapKey(row)
             ? 'ring-2 ring-sky-500/60 ring-offset-2 ring-offset-white dark:ring-offset-slate-950'
             : 'ring-1 ring-slate-200/70 dark:ring-slate-800';
     const heatmapToneClass = (row: HeatmapItem) => {
@@ -471,7 +570,7 @@
             return 'bg-slate-100 text-slate-400 dark:bg-slate-800/90 dark:text-slate-500';
         }
 
-        const ratio = revenue / maxHeatmap;
+        const ratio = revenue / maxHeatmapRevenue;
 
         if (ratio >= 0.75) {
             return 'bg-sky-600 text-white shadow-[0_6px_18px_-10px_rgba(2,132,199,0.9)]';
@@ -487,8 +586,7 @@
 
         return 'bg-cyan-100 text-cyan-900 dark:bg-cyan-500/20 dark:text-cyan-100';
     };
-    const showLineAxisLabel = (index: number, length: number) =>
-        index === 0 || index === length - 1 || index % 5 === 0;
+    const showLineAxisLabel = (index: number) => lineAxisIndexes.has(index);
 
     const dashboardMetricCards = () => [
         {
@@ -915,7 +1013,7 @@
         {#snippet fallback()}
             <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start" aria-label="Memuat data dashboard">
                 <div class="space-y-2.5 xl:col-span-2">
-                    {#each Array.from({ length: 3 }) as _, index (`dashboard-main-skeleton-${index}`)}
+                    {#each Array.from({ length: 2 }) as _, index (`dashboard-main-skeleton-${index}`)}
                         <Card class="overflow-hidden">
                             <CardContent class="space-y-3 p-4">
                                 <div class="h-4 w-40 animate-pulse rounded-full bg-muted"></div>
@@ -953,192 +1051,181 @@
         <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
         <div class="space-y-2.5 xl:col-span-2">
             <Card class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
-                <CardHeader class="space-y-1 pb-2">
-                    <div class="flex items-start justify-between gap-3">
+                <CardHeader class="space-y-1 pb-1">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <CardTitle class="text-sm md:text-base">Last 30 days Revenue</CardTitle>
-                            <CardDescription class="text-xs">Line chart pendapatan harian 30 hari terakhir</CardDescription>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Last 30 days</p>
+                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">Revenue</CardTitle>
                         </div>
-                        {#if activeDailyTrendRow}
-                            <Badge variant="secondary">{formatCompactNumber(activeDailyTrendRow.transaction_count || 0)} transaksi</Badge>
-                        {/if}
+                        <div class="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] font-semibold">{toCompactCurrency(recent30DayRevenueTotal)}</Badge>
+                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(recent30DayTransactionsTotal)} TRX</Badge>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent class="pt-0 pb-3">
-                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-                        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 shadow-inner dark:border-slate-800 dark:bg-slate-950/60">
-                            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-                                <div>
-                                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Revenue trajectory</p>
-                                    <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">{toCurrency(stats.revenue_total_month)}</p>
-                                </div>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Klik titik untuk detail hari</p>
-                            </div>
-
-                            <div class="relative h-[280px]">
-                                <div class="absolute inset-y-3 left-0 w-11">
-                                    {#each lineChartTicks as tick (`daily-tick-${tick.y}`)}
-                                        <div class="absolute left-0 -translate-y-1/2 text-[10px] font-medium text-slate-400 dark:text-slate-500" style={`top:${tick.y}%`}>
-                                            {toCompactCurrency(tick.value)}
-                                        </div>
-                                    {/each}
-                                </div>
-
-                                <div class="absolute inset-y-3 left-12 right-2 overflow-visible">
-                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full overflow-visible">
-                                        {#each lineChartTicks as tick (`daily-grid-${tick.y}`)}
-                                            <line x1="0" y1={tick.y} x2="100" y2={tick.y} stroke="currentColor" class="text-slate-200 dark:text-slate-800" stroke-dasharray="2 3"></line>
-                                        {/each}
-                                        {#if lineAreaPath}
-                                            <path d={lineAreaPath} fill="url(#dailyRevenueArea)"></path>
-                                            <defs>
-                                                <linearGradient id="dailyRevenueArea" x1="0" x2="0" y1="0" y2="1">
-                                                    <stop offset="0%" stop-color="rgb(14 165 233 / 0.34)"></stop>
-                                                    <stop offset="100%" stop-color="rgb(14 165 233 / 0.03)"></stop>
-                                                </linearGradient>
-                                            </defs>
-                                        {/if}
-                                        {#if linePath}
-                                            <path d={linePath} fill="none" stroke="rgb(14 165 233)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                        {/if}
-                                    </svg>
-
-                                    {#each lineChartPoints as point, index (point.key)}
-                                        <button
-                                            type="button"
-                                            class={`group absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-500 shadow-sm outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/50 dark:border-slate-950 ${dailySelectedClass(point.row)}`}
-                                            style={`left:${point.x}%; top:${point.y}%`}
-                                            onclick={() => selectDailyPoint(point.row)}
-                                            title={`${point.row.date ?? point.row.label} - ${toCurrency(point.row.revenue)}`}
-                                            aria-label={`${point.row.date ?? point.row.label} ${toCurrency(point.row.revenue)}`}
-                                        >
-                                            <span class="sr-only">{point.row.date ?? point.row.label}</span>
-                                            <span class="pointer-events-none absolute bottom-[calc(100%+0.65rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left text-[11px] shadow-xl md:group-hover:block dark:border-slate-800 dark:bg-slate-950">
-                                                <span class="block font-semibold text-slate-900 dark:text-slate-50">{point.row.date ?? point.row.label}</span>
-                                                <span class="mt-0.5 block text-slate-500 dark:text-slate-400">{toCurrency(point.row.revenue)}</span>
-                                                <span class="block text-[10px] text-slate-400 dark:text-slate-500">{formatCompactNumber(point.row.transaction_count || 0)} transaksi</span>
-                                            </span>
-                                        </button>
-
-                                        {#if showLineAxisLabel(index, lineChartPoints.length)}
-                                            <div class="absolute top-[calc(100%+0.6rem)] -translate-x-1/2 text-[10px] font-medium text-slate-500 dark:text-slate-400" style={`left:${point.x}%`}>
-                                                {point.row.date ?? point.row.label}
-                                            </div>
-                                        {/if}
-                                    {/each}
-                                </div>
-                            </div>
+                    <div class="rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
+                        <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            <span>Revenue trajectory</span>
+                            <span class="normal-case tracking-normal">Hover / tap titik</span>
                         </div>
 
-                        {#if activeDailyTrendRow}
-                            <div class="rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/80">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Selected day</p>
-                                <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-50">{activeDailyTrendRow.date ?? activeDailyTrendRow.label}</h3>
-                                <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">{toCurrency(activeDailyTrendRow.revenue)}</p>
-                                <div class="mt-2 flex flex-wrap items-center gap-2">
-                                    <Badge variant="outline">{formatCompactNumber(activeDailyTrendRow.transaction_count || 0)} transaksi</Badge>
-                                    <Badge variant="secondary">{toCompactCurrency(activeDailyTrendRow.margin || 0)} margin</Badge>
+                        <div class="relative h-[220px] md:h-[236px]" role="presentation" onmouseleave={() => hoverDailyPoint(null)}>
+                            {#if activeDailyTooltip}
+                                <div
+                                    class={`pointer-events-none absolute z-10 w-[188px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeDailyTooltip.align)}`}
+                                    style={`left:${activeDailyTooltip.left}%; top:${activeDailyTooltip.top}%`}
+                                >
+                                    <p class="text-sm font-semibold">{activeDailyTooltip.row.date ?? activeDailyTooltip.row.label}</p>
+                                    <p class="mt-2 text-[11px] uppercase tracking-[0.14em] text-white/65">Revenue</p>
+                                    <p class="mt-0.5 text-base font-semibold">{toCurrency(activeDailyTooltip.row.revenue)}</p>
+                                    <p class="mt-1 text-[12px] text-white/78">Transactions: {formatCompactNumber(activeDailyTooltip.row.transaction_count || 0)}</p>
+                                    <p class="text-[11px] text-white/58">Margin: {toCompactCurrency(activeDailyTooltip.row.margin || 0)}</p>
+                                    <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeDailyTooltip.align)}`}></span>
                                 </div>
+                            {/if}
 
-                                <div class="mt-4 grid gap-2">
-                                    {#each trendBreakdown(activeDailyTrendRow) as item (`daily-selected-${item.label}`)}
-                                        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-[11px] text-slate-500 dark:text-slate-400">{item.label}</span>
-                                                <span class="text-sm font-semibold text-slate-900 dark:text-slate-50">{toCurrency(item.value)}</span>
-                                            </div>
-                                        </div>
-                                    {/each}
-                                </div>
+                            <div class="absolute inset-y-3 left-0 w-10">
+                                {#each lineChartTicks as tick (`daily-tick-${tick.y}`)}
+                                    <div class="absolute left-0 -translate-y-1/2 text-[10px] font-medium text-slate-400 dark:text-slate-500" style={`top:${tick.y}%`}>
+                                        {toCompactCurrency(tick.value)}
+                                    </div>
+                                {/each}
                             </div>
-                        {/if}
+
+                            <div class="absolute inset-y-3 left-11 right-1 overflow-visible">
+                                <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full overflow-visible">
+                                    {#each lineChartTicks as tick (`daily-grid-${tick.y}`)}
+                                        <line x1="0" y1={tick.y} x2="100" y2={tick.y} stroke="currentColor" class="text-slate-200/90 dark:text-slate-800" stroke-dasharray="2 3"></line>
+                                    {/each}
+                                    {#if lineAreaPath}
+                                        <path d={lineAreaPath} fill="url(#dailyRevenueAreaCompact)"></path>
+                                        <defs>
+                                            <linearGradient id="dailyRevenueAreaCompact" x1="0" x2="0" y1="0" y2="1">
+                                                <stop offset="0%" stop-color="rgb(14 165 233 / 0.32)"></stop>
+                                                <stop offset="100%" stop-color="rgb(14 165 233 / 0.02)"></stop>
+                                            </linearGradient>
+                                        </defs>
+                                    {/if}
+                                    {#if linePath}
+                                        <path d={linePath} fill="none" stroke="rgb(37 99 235)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    {/if}
+                                </svg>
+
+                                {#each lineChartPoints as point, index (point.key)}
+                                    <button
+                                        type="button"
+                                        class={`absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-sm outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500/45 dark:border-slate-950 ${dailySelectedClass(point.row)}`}
+                                        style={`left:${point.x}%; top:${point.y}%`}
+                                        onclick={() => togglePinnedDailyPoint(point.row)}
+                                        onmouseenter={() => hoverDailyPoint(point.row)}
+                                        onfocus={() => hoverDailyPoint(point.row)}
+                                        onmouseleave={() => hoverDailyPoint(null)}
+                                        onblur={() => hoverDailyPoint(null)}
+                                        aria-label={`${point.row.date ?? point.row.label} ${toCurrency(point.row.revenue)}`}
+                                    >
+                                        <span class="sr-only">{point.row.date ?? point.row.label}</span>
+                                    </button>
+
+                                    {#if showLineAxisLabel(index)}
+                                        <div class="absolute top-[calc(100%+0.35rem)] -translate-x-1/2 text-[10px] font-medium text-slate-500 dark:text-slate-400" style={`left:${point.x}%`}>
+                                            {point.row.date ?? point.row.label}
+                                        </div>
+                                    {/if}
+                                {/each}
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
 
             <Card class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
-                <CardHeader class="space-y-1 pb-2">
-                    <div class="flex items-start justify-between gap-3">
+                <CardHeader class="space-y-1 pb-1">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <CardTitle class="text-sm md:text-base">{heatmapYearLabel} Transactions & Revenue</CardTitle>
-                            <CardDescription class="text-xs">Heatmap kontribusi harian model contribution graph per bulan</CardDescription>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{heatmapYearLabel}</p>
+                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">Transactions & Revenue</CardTitle>
                         </div>
-                        <div class="hidden items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 px-2.5 py-1 text-[10px] font-medium text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-400 md:flex">
-                            <span>Rendah</span>
-                            {#each [
-                                'bg-slate-100 dark:bg-slate-800/90',
-                                'bg-cyan-100 dark:bg-cyan-500/20',
-                                'bg-sky-200 dark:bg-sky-500/30',
-                                'bg-sky-400 dark:bg-sky-500',
-                                'bg-sky-600',
-                            ] as tone (`heatmap-legend-${tone}`)}
-                                <span class={`h-3 w-3 rounded-[4px] ${tone}`}></span>
-                            {/each}
-                            <span>Tinggi</span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] font-semibold">{toCompactCurrency(yearlyRevenueTotal)}</Badge>
+                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(yearlyTransactionsTotal)} TRX</Badge>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent class="pt-0 pb-3">
-                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_300px]">
-                        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 shadow-inner dark:border-slate-800 dark:bg-slate-950/60">
-                            <div class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-                                {#each heatmapMonthGroups as month (month.key)}
-                                    <div class="rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/75">
-                                        <div class="mb-3 flex items-start justify-between gap-2">
-                                            <div>
-                                                <p class="text-sm font-semibold text-slate-900 dark:text-slate-50">{month.label}</p>
-                                                <p class="text-[10px] text-slate-500 dark:text-slate-400">{formatCompactNumber(month.totalTransactions)} transaksi</p>
-                                            </div>
-                                            <p class="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{toCompactCurrency(month.totalRevenue)}</p>
-                                        </div>
-
-                                        <div class="grid grid-flow-col auto-cols-max grid-rows-7 gap-1">
-                                            {#each month.cells as cell (cell.key)}
-                                                {#if cell.item}
-                                                    {@const day = cell.item}
-                                                    <button
-                                                        type="button"
-                                                        class={`h-3.5 w-3.5 rounded-[5px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/40 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
-                                                        onclick={() => selectHeatmapDay(day)}
-                                                        title={`${day.name ?? day.date} - ${toCurrency(day.revenue)} - ${formatCompactNumber(day.transaction_count || 0)} transaksi`}
-                                                        aria-label={`${day.name ?? day.date} ${toCurrency(day.revenue)}`}
-                                                    ></button>
-                                                {:else}
-                                                    <div class="h-3.5 w-3.5 rounded-[5px] bg-transparent"></div>
-                                                {/if}
-                                            {/each}
-                                        </div>
-                                    </div>
+                    <div class="rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
+                        <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            <span>Contribution graph</span>
+                            <div class="hidden items-center gap-1 md:flex">
+                                <span>Low</span>
+                                {#each [
+                                    'bg-slate-100 dark:bg-slate-800/90',
+                                    'bg-cyan-100 dark:bg-cyan-500/20',
+                                    'bg-sky-200 dark:bg-sky-500/30',
+                                    'bg-sky-400 dark:bg-sky-500',
+                                    'bg-sky-600',
+                                ] as tone (`heatmap-legend-compact-${tone}`)}
+                                    <span class={`h-3 w-3 rounded-[4px] ${tone}`}></span>
                                 {/each}
+                                <span>High</span>
                             </div>
                         </div>
 
-                        {#if activeHeatmapDay}
-                            <div class="rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/80">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Selected day</p>
-                                <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-50">{activeHeatmapDay.name ?? activeHeatmapDay.date}</h3>
-                                <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">{toCurrency(activeHeatmapDay.revenue)}</p>
-                                <div class="mt-2 flex flex-wrap items-center gap-2">
-                                    <Badge variant="secondary">{formatCompactNumber(activeHeatmapDay.transaction_count || 0)} transaksi</Badge>
-                                    <Badge variant="outline">{activeHeatmapDay.month_label ?? '-'}</Badge>
-                                </div>
-
-                                <div class="mt-4 grid gap-2">
-                                    {#each trendBreakdown(activeHeatmapDay) as item (`heatmap-selected-${item.label}`)}
-                                        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
+                        <div class="overflow-x-auto pb-1">
+                            <div class="relative min-w-[760px] pt-11" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
+                                {#if activeHeatmapTooltip}
+                                    <div
+                                        class={`pointer-events-none absolute top-0 z-10 w-[210px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
+                                        style={`left:${activeHeatmapTooltip.left}%`}
+                                    >
+                                        <p class="text-sm font-semibold">{activeHeatmapTooltip.row.name ?? activeHeatmapTooltip.row.date}</p>
+                                        <div class="mt-2 space-y-1 text-[12px]">
                                             <div class="flex items-center justify-between gap-3">
-                                                <span class="text-[11px] text-slate-500 dark:text-slate-400">{item.label}</span>
-                                                <span class="text-sm font-semibold text-slate-900 dark:text-slate-50">{toCurrency(item.value)}</span>
+                                                <span class="text-white/68">TPV</span>
+                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.revenue)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-white/68">TRX</span>
+                                                <span class="font-semibold">{formatCompactNumber(activeHeatmapTooltip.row.transaction_count || 0)}</span>
                                             </div>
                                         </div>
+                                        <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeHeatmapTooltip.align)}`}></span>
+                                    </div>
+                                {/if}
+
+                                <div class="absolute inset-x-0 top-0 h-5">
+                                    {#each heatmapMonthMarkers as marker (marker.key)}
+                                        <span
+                                            class={`absolute top-0 text-[11px] font-medium text-slate-500 dark:text-slate-400 ${tooltipTranslateClass(tooltipAlignFor(marker.left))}`}
+                                            style={`left:${marker.left}%`}
+                                        >
+                                            {marker.label}
+                                        </span>
                                     {/each}
                                 </div>
 
-                                <p class="mt-4 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                                    Kotak makin gelap artinya revenue harian makin besar. Klik hari lain untuk baca breakdown channel dan margin.
-                                </p>
+                                <div class="grid grid-flow-col auto-cols-[12px] grid-rows-7 gap-[3px] pt-2 md:auto-cols-[14px]">
+                                    {#each heatmapContributionCells as cell (cell.key)}
+                                        {#if cell.item}
+                                            {@const day = cell.item}
+                                            <button
+                                                type="button"
+                                                class={`h-3 w-3 rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
+                                                onclick={() => togglePinnedHeatmapDay(day)}
+                                                onmouseenter={() => hoverHeatmapDay(day)}
+                                                onfocus={() => hoverHeatmapDay(day)}
+                                                onmouseleave={() => hoverHeatmapDay(null)}
+                                                onblur={() => hoverHeatmapDay(null)}
+                                                aria-label={`${day.name ?? day.date} ${toCurrency(day.revenue)}`}
+                                                disabled={day.is_future}
+                                            ></button>
+                                        {:else}
+                                            <div class="h-3 w-3 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"></div>
+                                        {/if}
+                                    {/each}
+                                </div>
                             </div>
-                        {/if}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
