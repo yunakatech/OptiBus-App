@@ -1,16 +1,17 @@
 <script lang="ts">
     import { cn } from '@/lib/utils';
-    import type { Snippet } from 'svelte';
 
     let {
         columns = [],
         rows = [],
         class: className = '',
     }: {
-        columns?: Array<{ key: string; label?: string; align?: string; width?: string; sticky?: 'left' | 'right'; leftOffset?: string; rightOffset?: string; numeric?: boolean }>;
-        rows?: Array<Record<string, any>>;
+        columns?: Array<{ key: string; label?: string; align?: string; width?: string; sticky?: string; leftOffset?: string; rightOffset?: string; numeric?: boolean }>;
+        rows?: any[];
         class?: string;
     } = $props();
+
+    let computedColumns = $derived(columns);
 </script>
 
 <div class={cn('w-full overflow-x-auto', className)}>

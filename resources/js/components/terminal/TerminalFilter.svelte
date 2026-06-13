@@ -4,7 +4,15 @@
     import { Button } from '@/components/ui/button';
     import { cn } from '@/lib/utils';
 
-    let { query = '', placeholder = 'Cari...', class: className = '' }: { query?: string; placeholder?: string; class?: string } = $props();
+    let {
+        query = $bindable(''),
+        placeholder = 'Cari...',
+        class: className = '',
+    }: {
+        query?: string;
+        placeholder?: string;
+        class?: string;
+    } = $props();
 
     const dispatch = createEventDispatcher();
 
@@ -17,7 +25,7 @@
     </div>
 
     <div class="flex items-center gap-2">
-        <Button size="sm" on:click={doSearch}>Cari</Button>
+        <Button size="sm" onclick={doSearch}>Cari</Button>
         <slot name="extras" />
     </div>
 </div>
