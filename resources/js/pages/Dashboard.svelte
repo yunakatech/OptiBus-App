@@ -257,8 +257,8 @@
     let pinnedHeatmapKey = $state<string>('');
     let selectedSummaryScope = $state<'day' | 'month' | 'year'>('month');
 
-    const activeTrendTooltipKey = $derived(pinnedTrendKey || hoveredTrendKey);
-    const activeHeatmapTooltipKey = $derived(pinnedHeatmapKey || hoveredHeatmapKey);
+    const activeTrendTooltipKey = $derived(hoveredTrendKey || pinnedTrendKey);
+    const activeHeatmapTooltipKey = $derived(hoveredHeatmapKey || pinnedHeatmapKey);
     const heatmapYearLabel = $derived(
         visibleHeatmapDays[0]?.date ? new Date(`${visibleHeatmapDays[0].date}T00:00:00`).getFullYear() : new Date().getFullYear(),
     );
@@ -270,6 +270,22 @@
     );
     const activeTrendRangeLabel = $derived(
         trendMode === 'daily' ? '30 hari terakhir' : 'Jan - Des',
+    );
+    const activeTrendDataSignature = $derived(
+        `${selectedPoolId}|${trendMode}|${activeTrendRows
+            .map(
+                (row) =>
+                    `${trendKey(row)}:${Number(row.revenue || 0)}:${Number(row.booking_revenue || 0)}:${Number(row.luggage_revenue || 0)}:${Number(row.charter_revenue || 0)}`,
+            )
+            .join('|')}`,
+    );
+    const heatmapDataSignature = $derived(
+        `${selectedPoolId}|${visibleHeatmapDays
+            .map(
+                (row) =>
+                    `${heatmapKey(row)}:${Number(row.revenue || 0)}:${Number(row.booking_revenue || 0)}:${Number(row.luggage_revenue || 0)}:${Number(row.charter_revenue || 0)}`,
+            )
+            .join('|')}`,
     );
     const activeSummaryStats = $derived(summaryStatsByScope[selectedSummaryScope] ?? summaryStatsByScope.month);
     const activeSummaryComparison = $derived(
@@ -550,6 +566,18 @@
     const updateSummaryScope = (scope: 'day' | 'month' | 'year') => {
         selectedSummaryScope = scope;
     };
+
+    $effect(() => {
+        activeTrendDataSignature;
+        hoveredTrendKey = '';
+        pinnedTrendKey = '';
+    });
+
+    $effect(() => {
+        heatmapDataSignature;
+        hoveredHeatmapKey = '';
+        pinnedHeatmapKey = '';
+    });
 
     const activeTrendTooltip = $derived.by(() => {
         if (!activeTrendTooltipKey) {
@@ -834,7 +862,7 @@
 
 <AppHead title="Dashboard" />
 
-<div class="flex h-full flex-1 flex-col gap-2 overflow-x-hidden rounded-xl p-2.5 md:gap-3 md:p-4">
+<div class="flex h-full flex-1 flex-col gap-2 overflow-x-hidden rounded-xl px-2 py-2 md:gap-3 md:p-4">
     <div class="space-y-2">
         <div class="flex flex-col gap-2 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-3 py-2.5 shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.9))] md:flex-row md:items-end md:justify-between md:rounded-3xl md:px-4 md:py-3">
             <div class="space-y-0.5 md:space-y-1">
@@ -852,7 +880,7 @@
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                     Perbandingan vs {activeSummaryPeriod.previous_label}
                 </div>
-                <div class="inline-flex rounded-2xl border border-border/70 bg-white/80 p-0.5 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 md:p-1">
+                <div class="grid w-full grid-cols-3 rounded-2xl border border-border/70 bg-white/80 p-0.5 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 md:w-auto md:p-1">
                     {#each [
                         { key: 'day', label: 'Hari Ini' },
                         { key: 'month', label: 'Bulan Ini' },
@@ -860,7 +888,7 @@
                     ] as option (`summary-scope-${option.key}`)}
                         <button
                             type="button"
-                            class={`rounded-xl px-2.5 py-1.5 text-[10px] font-medium transition md:px-3 md:text-[11px] ${
+                            class={`rounded-xl px-2 py-1.5 text-center text-[10px] font-medium transition md:px-3 md:text-[11px] ${
                                 selectedSummaryScope === option.key
                                     ? 'bg-primary text-primary-foreground shadow-sm'
                                     : 'text-muted-foreground hover:bg-muted/60'
@@ -873,13 +901,13 @@
                 </div>
             </div>
         </div>
-        <section class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/70 dark:bg-slate-950">
+        <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/70 dark:bg-slate-950 md:rounded-3xl">
             <div class="grid gap-0 lg:grid-cols-[1.05fr_1.35fr]">
-                <div class="border-b border-slate-200/80 bg-slate-900 p-4 text-slate-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] dark:border-slate-800 lg:border-b-0 lg:border-r">
+                <div class="border-b border-slate-200/80 bg-slate-900 p-3 text-slate-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] dark:border-slate-800 md:p-4 lg:border-b-0 lg:border-r">
                     <div class="flex items-start justify-between gap-3">
-                        <div>
+                        <div class="min-w-0">
                             <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200/80">Command Center</p>
-                            <h3 class="mt-1 text-2xl font-semibold leading-tight text-white md:text-3xl">{toCurrency(activeTotalRevenue)}</h3>
+                            <h3 class="mt-1 break-words text-xl font-semibold leading-tight text-white md:text-3xl">{toCurrency(activeTotalRevenue)}</h3>
                             <p class="mt-1 text-xs text-slate-200/80">Total revenue {activeSummaryPeriod.subtitle_label}</p>
                         </div>
                         <a href="/reports" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20" aria-label="Buka laporan revenue">
@@ -887,12 +915,12 @@
                         </a>
                     </div>
 
-                    <div class="mt-5 grid grid-cols-2 gap-2">
-                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-[2px]">
+                    <div class="mt-4 grid grid-cols-2 gap-2 md:mt-5">
+                        <div class="min-w-0 rounded-2xl border border-white/10 bg-white/10 p-2.5 backdrop-blur-[2px] md:p-3">
                             <p class="text-[11px] text-slate-200/80">Target</p>
-                            <p class="mt-1 text-sm font-semibold text-white">{toCurrency(activeSummaryStats.target_revenue || stats.target_revenue_month)}</p>
+                            <p class="mt-1 break-words text-sm font-semibold text-white">{toCurrency(activeSummaryStats.target_revenue || stats.target_revenue_month)}</p>
                         </div>
-                        <div class="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-[2px]">
+                        <div class="min-w-0 rounded-2xl border border-white/10 bg-white/10 p-2.5 backdrop-blur-[2px] md:p-3">
                             <p class="text-[11px] text-slate-200/80">Achievement</p>
                             <p class="mt-1 text-sm font-semibold text-white">{activeSummaryStats.achievement_percent || stats.achievement_percent}%</p>
                         </div>
@@ -904,14 +932,14 @@
                 </div>
 
                 <div class="p-3 md:p-4">
-                    <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="grid grid-cols-2 gap-2 xl:grid-cols-4">
                         {#each commandMetrics() as metric (metric.key)}
-                            <a href={metric.href} class="group rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/80">
+                            <a href={metric.href} class="group min-w-0 rounded-2xl border border-slate-200 bg-white/90 p-2.5 shadow-sm transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/80 md:p-3">
                                 <div class="flex items-start justify-between gap-2">
                                     <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{metric.label}</p>
                                     <ArrowRight class="h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary dark:text-slate-500" />
                                 </div>
-                                <p class="mt-2 break-words text-lg font-semibold text-slate-900 dark:text-slate-50">{metric.value}</p>
+                                <p class="mt-2 break-words text-base font-semibold text-slate-900 dark:text-slate-50 md:text-lg">{metric.value}</p>
                                 <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{metric.meta}</p>
                             </a>
                         {/each}
@@ -927,9 +955,9 @@
                                 {#each revenueChannels() as channel (channel.key)}
                                     {@const width = activeTotalRevenue > 0 ? Math.max(8, Math.round((Number(channel.value || 0) / activeTotalRevenue) * 100)) : 8}
                                     <a href={channel.href} class="block rounded-xl border border-transparent px-2 py-1.5 transition hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-800 dark:hover:bg-slate-900">
-                                        <div class="flex items-center justify-between gap-3 text-xs">
-                                            <span class="font-medium text-slate-700 dark:text-slate-200">{channel.label}</span>
-                                            <span class="font-semibold text-slate-900 dark:text-slate-50">{toCurrency(channel.value)}</span>
+                                        <div class="flex items-start justify-between gap-3 text-xs">
+                                            <span class="min-w-0 font-medium text-slate-700 dark:text-slate-200">{channel.label}</span>
+                                            <span class="min-w-0 break-words text-right font-semibold text-slate-900 dark:text-slate-50">{toCurrency(channel.value)}</span>
                                         </div>
                                         <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                             <div class="h-full rounded-full bg-primary/75" style={`width:${width}%`}></div>
@@ -942,22 +970,22 @@
                         <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
                             <p class="text-xs font-semibold text-slate-900 dark:text-slate-50">Unit Economics</p>
                             <div class="mt-3 space-y-2 text-xs">
-                                <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-start justify-between gap-3">
                                     <span class="text-slate-500 dark:text-slate-400">Revenue</span>
-                                    <span class="font-semibold text-slate-900 dark:text-slate-50">{toCurrency(activeTotalRevenue)}</span>
+                                    <span class="min-w-0 break-words text-right font-semibold text-slate-900 dark:text-slate-50">{toCurrency(activeTotalRevenue)}</span>
                                 </div>
-                                <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-start justify-between gap-3">
                                     <span class="text-slate-500 dark:text-slate-400">BOP Booking</span>
-                                    <span class="font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_booking)}</span>
+                                    <span class="min-w-0 break-words text-right font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_booking)}</span>
                                 </div>
-                                <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-start justify-between gap-3">
                                     <span class="text-slate-500 dark:text-slate-400">BOP Carter</span>
-                                    <span class="font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_charter)}</span>
+                                    <span class="min-w-0 break-words text-right font-semibold text-rose-600 dark:text-rose-300">{toCurrency(activeSummaryStats.bop_charter)}</span>
                                 </div>
                                 <div class="border-t border-slate-200 pt-2 dark:border-slate-800">
-                                    <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-start justify-between gap-3">
                                         <span class="font-medium text-slate-900 dark:text-slate-50">Margin Total</span>
-                                        <span class={`font-semibold ${activeTotalMargin >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}>{toCurrency(activeTotalMargin)}</span>
+                                        <span class={`min-w-0 break-words text-right font-semibold ${activeTotalMargin >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}>{toCurrency(activeTotalMargin)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1132,31 +1160,33 @@
                         <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]">
                             <div class={`relative h-[214px] overflow-visible pt-14 md:h-[244px] md:min-w-0 md:pt-16 ${trendMode === 'daily' ? 'min-w-[560px]' : 'min-w-[460px]'}`} role="presentation" onmouseleave={() => hoverTrendPoint(null)}>
                                 {#if activeTrendTooltip}
-                                    <div
-                                        class={`pointer-events-none absolute z-10 w-[240px] max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass(activeTrendTooltip.align)}`}
-                                        style={`left:${activeTrendTooltip.left}%; top:0px`}
-                                    >
-                                        <p class="text-sm font-semibold">{trendLabel(activeTrendTooltip.row)}</p>
-                                        <div class="mt-2 space-y-1 text-[12px]">
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Keberangkatan</span>
-                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.booking_revenue || 0)}</span>
+                                    {#key activeTrendTooltipKey}
+                                        <div
+                                            class={`pointer-events-none absolute z-10 w-[240px] max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass(activeTrendTooltip.align)}`}
+                                            style={`left:${activeTrendTooltip.left}%; top:0px`}
+                                        >
+                                            <p class="text-sm font-semibold">{trendLabel(activeTrendTooltip.row)}</p>
+                                            <div class="mt-2 space-y-1 text-[12px]">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-white/68">Keberangkatan</span>
+                                                    <span class="font-semibold">{toCurrency(activeTrendTooltip.row.booking_revenue || 0)}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-white/68">Bagasi</span>
+                                                    <span class="font-semibold">{toCurrency(activeTrendTooltip.row.luggage_revenue || 0)}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-white/68">Carter</span>
+                                                    <span class="font-semibold">{toCurrency(activeTrendTooltip.row.charter_revenue || 0)}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
+                                                    <span class="text-white/68">Total</span>
+                                                    <span class="font-semibold">{toCurrency(activeTrendTooltip.row.revenue)}</span>
+                                                </div>
                                             </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Bagasi</span>
-                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.luggage_revenue || 0)}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Carter</span>
-                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.charter_revenue || 0)}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
-                                                <span class="text-white/68">Total</span>
-                                                <span class="font-semibold">{toCurrency(activeTrendTooltip.row.revenue)}</span>
-                                            </div>
+                                            <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeTrendTooltip.align)}`}></span>
                                         </div>
-                                        <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeTrendTooltip.align)}`}></span>
-                                    </div>
+                                    {/key}
                                 {/if}
 
                                 <div class="absolute top-14 bottom-6 left-0 w-[86px] md:top-16 md:w-[92px]" aria-hidden="true">
@@ -1252,33 +1282,35 @@
                         </div>
 
                         <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]">
-                            <div class="relative min-w-[1040px] pt-16 md:min-w-[760px] md:pt-16" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
+                            <div class="relative min-w-[760px] pt-16 md:min-w-[760px] md:pt-16" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
                                 {#if activeHeatmapTooltip}
-                                    <div
-                                        class={`pointer-events-none absolute top-0 z-10 w-[240px] max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
-                                        style={`left:${activeHeatmapTooltip.left}%`}
-                                    >
-                                        <p class="text-sm font-semibold">{activeHeatmapTooltip.row.name ?? activeHeatmapTooltip.row.date}</p>
-                                        <div class="mt-2 space-y-1 text-[12px]">
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Keberangkatan</span>
-                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.booking_revenue || 0)}</span>
+                                    {#key activeHeatmapTooltipKey}
+                                        <div
+                                            class={`pointer-events-none absolute top-0 z-10 w-[240px] max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
+                                            style={`left:${activeHeatmapTooltip.left}%`}
+                                        >
+                                            <p class="text-sm font-semibold">{activeHeatmapTooltip.row.name ?? activeHeatmapTooltip.row.date}</p>
+                                            <div class="mt-2 space-y-1 text-[12px]">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-white/68">Keberangkatan</span>
+                                                    <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.booking_revenue || 0)}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-white/68">Bagasi</span>
+                                                    <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.luggage_revenue || 0)}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <span class="text-white/68">Carter</span>
+                                                    <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.charter_revenue || 0)}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
+                                                    <span class="text-white/68">Total</span>
+                                                    <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.revenue)}</span>
+                                                </div>
                                             </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Bagasi</span>
-                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.luggage_revenue || 0)}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Carter</span>
-                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.charter_revenue || 0)}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
-                                                <span class="text-white/68">Total</span>
-                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.revenue)}</span>
-                                            </div>
+                                            <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeHeatmapTooltip.align)}`}></span>
                                         </div>
-                                        <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeHeatmapTooltip.align)}`}></span>
-                                    </div>
+                                    {/key}
                                 {/if}
 
                                 <div class="absolute inset-x-0 top-0 h-5">
@@ -1292,13 +1324,13 @@
                                     {/each}
                                 </div>
 
-                                <div class="grid grid-flow-col auto-cols-[20px] grid-rows-7 gap-[5px] pt-2 md:auto-cols-[14px] md:gap-[4px]">
+                                <div class="grid grid-flow-col auto-cols-[13px] grid-rows-7 gap-[3px] pt-2 md:auto-cols-[14px] md:gap-[4px]">
                                     {#each heatmapContributionCells as cell (cell.key)}
                                         {#if cell.item}
                                             {@const day = cell.item}
                                             <button
                                                 type="button"
-                                                class={`h-5 w-5 touch-manipulation rounded-[5px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 md:rounded-[4px] ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
+                                                class={`h-3.5 w-3.5 touch-manipulation rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
                                                 onclick={() => togglePinnedHeatmapDay(day)}
                                                 onmouseenter={() => hoverHeatmapDay(day)}
                                                 onfocus={() => hoverHeatmapDay(day)}
@@ -1309,7 +1341,7 @@
                                                 disabled={day.is_future}
                                             ></button>
                                         {:else}
-                                            <div class="h-5 w-5 rounded-[5px] bg-transparent md:h-3.5 md:w-3.5 md:rounded-[4px]"></div>
+                                            <div class="h-3.5 w-3.5 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"></div>
                                         {/if}
                                     {/each}
                                 </div>
@@ -1368,13 +1400,13 @@
         <div class="space-y-2.5 xl:col-span-1">
             <Card class="overflow-hidden">
                 <CardHeader class="space-y-1 pb-2">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="min-w-0">
                             <CardTitle class="text-sm md:text-base">Info Carter 7 Hari Kedepan</CardTitle>
                             <CardDescription class="text-xs">Reminder charter terdekat, diurutkan dari tanggal paling dekat</CardDescription>
                         </div>
                         {#if upcomingCharterReminder.total > 0}
-                            <Badge variant="secondary">{upcomingCharterReminder.total} data</Badge>
+                            <Badge variant="secondary" class="w-fit shrink-0">{upcomingCharterReminder.total} data</Badge>
                         {/if}
                     </div>
                 </CardHeader>
@@ -1396,7 +1428,7 @@
                                             {item.company_name || item.phone || 'Customer charter'}
                                         </p>
                                     </div>
-                                    <span class="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-700">
+                                    <span class="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-700">
                                         {charterReminderTag(item)}
                                     </span>
                                 </div>
@@ -1411,7 +1443,7 @@
                         {#if upcomingCharterOverflow > 0}
                             <a
                                 href="/charters"
-                                class="flex items-center justify-between rounded-xl border border-dashed border-cyan-300/70 bg-cyan-50/70 px-3 py-2 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100/80"
+                                class="flex flex-col gap-1 rounded-xl border border-dashed border-cyan-300/70 bg-cyan-50/70 px-3 py-2 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100/80 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <span>Lihat {upcomingCharterOverflow} reminder lainnya</span>
                                 <span>Ke menu Carter</span>
@@ -1438,11 +1470,11 @@
                     {:else}
                         {#each departuresToday as item, idx (`departure-${idx}-${item.rute}-${item.jam}-${item.unit}`)}
                             <div class="rounded-md border p-2.5">
-                                <div class="mb-1 flex items-center justify-between gap-2">
+                                <div class="mb-1 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                     <p class="text-xs font-semibold md:text-sm">{item.jam} - Unit {item.unit}</p>
-                                    <Badge variant="secondary">{item.total_bookings} booking</Badge>
+                                    <Badge variant="secondary" class="w-fit shrink-0">{item.total_bookings} booking</Badge>
                                 </div>
-                                <div class="flex items-end justify-between gap-2">
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                                     <div class="min-w-0 space-y-0.5">
                                         <p class="truncate text-xs text-muted-foreground">{item.rute}</p>
                                         <p class="truncate text-[11px] text-muted-foreground">
@@ -1453,7 +1485,7 @@
                                         type="button"
                                         size="sm"
                                         variant="outline"
-                                        class="h-7 rounded-md px-2 text-[11px]"
+                                        class="h-8 w-full rounded-md px-2 text-[11px] sm:h-7 sm:w-auto"
                                         onclick={() => void copyDepartureData(item)}
                                         disabled={copyingDepartureKey === departureCopyKey(item)}
                                     >
@@ -1516,12 +1548,12 @@
             <Card class="hidden h-fit xl:block">
                 <CardHeader class="space-y-1 pb-2">
                     <div class="flex items-start justify-between gap-3">
-                        <div>
+                        <div class="min-w-0">
                             <CardTitle class="text-sm md:text-base">Aktivitas Terbaru</CardTitle>
                             <CardDescription class="text-xs">Update terbaru dari sistem</CardDescription>
                         </div>
                         {#if recentActivityTotal > 0}
-                            <Badge variant="secondary">{recentActivityTotal} log</Badge>
+                            <Badge variant="secondary" class="shrink-0">{recentActivityTotal} log</Badge>
                         {/if}
                     </div>
                 </CardHeader>
@@ -1559,13 +1591,13 @@
 
         <Card class="order-last h-fit xl:hidden">
             <CardHeader class="space-y-1 pb-2">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0">
                         <CardTitle class="text-sm md:text-base">Aktivitas Terbaru</CardTitle>
                         <CardDescription class="text-xs">Update terbaru dari sistem</CardDescription>
                     </div>
                     {#if recentActivityTotal > 0}
-                        <Badge variant="secondary">{recentActivityTotal} log</Badge>
+                        <Badge variant="secondary" class="w-fit shrink-0">{recentActivityTotal} log</Badge>
                     {/if}
                 </div>
             </CardHeader>
@@ -1575,18 +1607,18 @@
                 {:else}
                     {#each recentActivity as item, idx (`activity-mobile-${idx}-${item.tag}`)}
                         <div class="rounded-md border p-2.5">
-                            <div class="mb-1 flex items-center justify-between gap-2">
-                                <Badge variant="secondary">{item.tag}</Badge>
-                                <span class="text-xs text-muted-foreground">{item.time}</span>
+                            <div class="mb-1 flex items-start justify-between gap-2">
+                                <Badge variant="secondary" class="max-w-[70%] truncate">{item.tag}</Badge>
+                                <span class="shrink-0 text-xs text-muted-foreground">{item.time}</span>
                             </div>
-                            <p class="text-xs font-semibold md:text-sm">{item.title}</p>
-                            <p class="text-xs text-muted-foreground">{item.meta}</p>
+                            <p class="break-words text-xs font-semibold md:text-sm">{item.title}</p>
+                            <p class="break-words text-xs text-muted-foreground">{item.meta}</p>
                         </div>
                     {/each}
                     {#if recentActivityOverflow > 0}
                         <a
                             href="/admin-ops/cancellations"
-                            class="flex items-center justify-between rounded-xl border border-dashed border-border/70 bg-muted/25 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted/40"
+                            class="flex flex-col gap-1 rounded-xl border border-dashed border-border/70 bg-muted/25 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
                         >
                             <span>Lihat {recentActivityOverflow} aktivitas lainnya</span>
                             <span>Ke menu Log</span>
