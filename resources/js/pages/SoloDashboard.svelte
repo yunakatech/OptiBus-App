@@ -7,8 +7,11 @@
 </script>
 
 <script lang="ts">
-    import { page, router } from '@inertiajs/svelte';
-    import { BusFront, CircleDollarSign, CreditCard, Package, Phone, Plus, Wallet } from 'lucide-svelte';
+    import { Link, page } from '@inertiajs/svelte';
+    import BusFront from 'lucide-svelte/icons/bus-front';
+    import Package from 'lucide-svelte/icons/package';
+    import Phone from 'lucide-svelte/icons/phone';
+    import Wallet from 'lucide-svelte/icons/wallet';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -50,17 +53,29 @@
 
     <!-- Quick actions -->
     <div class="grid grid-cols-3 gap-2">
-        <Button variant="outline" class="flex-col gap-1 py-3 h-auto" href="/bookings">
-            <BusFront class="h-5 w-5" />
-            <span class="text-xs">Order</span>
+        <Button variant="outline" class="flex-col gap-1 py-3 h-auto" asChild>
+            {#snippet children(props)}
+                <Link {...props} href="/bookings" class="flex flex-col items-center gap-1 py-3 h-auto">
+                    <BusFront class="h-5 w-5" />
+                    <span class="text-xs">Order</span>
+                </Link>
+            {/snippet}
         </Button>
-        <Button variant="outline" class="flex-col gap-1 py-3 h-auto" href="/charters/form">
-            <Wallet class="h-5 w-5" />
-            <span class="text-xs">Carter</span>
+        <Button variant="outline" class="flex-col gap-1 py-3 h-auto" asChild>
+            {#snippet children(props)}
+                <Link {...props} href="/charters/form" class="flex flex-col items-center gap-1 py-3 h-auto">
+                    <Wallet class="h-5 w-5" />
+                    <span class="text-xs">Carter</span>
+                </Link>
+            {/snippet}
         </Button>
-        <Button variant="outline" class="flex-col gap-1 py-3 h-auto" href="/luggages/form">
-            <Package class="h-5 w-5" />
-            <span class="text-xs">Barang</span>
+        <Button variant="outline" class="flex-col gap-1 py-3 h-auto" asChild>
+            {#snippet children(props)}
+                <Link {...props} href="/luggages/form" class="flex flex-col items-center gap-1 py-3 h-auto">
+                    <Package class="h-5 w-5" />
+                    <span class="text-xs">Barang</span>
+                </Link>
+            {/snippet}
         </Button>
     </div>
 
