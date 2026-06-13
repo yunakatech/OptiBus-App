@@ -67,12 +67,34 @@
         date?: string;
         name?: string;
         revenue: number;
+        transaction_count?: number;
         booking_revenue?: number;
         charter_revenue?: number;
         luggage_revenue?: number;
         booking_bop?: number;
         charter_bop?: number;
         margin?: number;
+    };
+
+    type HeatmapItem = TrendItem & {
+        date: string;
+        month_label?: string;
+        month_short?: string;
+        day_number?: number;
+        day_of_week?: number;
+        is_future?: boolean;
+    };
+
+    type HeatmapMonthGroup = {
+        key: string;
+        label: string;
+        shortLabel: string;
+        totalRevenue: number;
+        totalTransactions: number;
+        cells: Array<{
+            key: string;
+            item: HeatmapItem | null;
+        }>;
     };
 
     type ActivityItem = {
@@ -136,7 +158,7 @@
         selectedPoolId = 0,
         selectedPoolName = 'Semua Pool',
         dailyTrend = [],
-        monthlyTrend = [],
+        yearlyHeatmap = [],
         recentActivity = [],
         departuresToday = [],
         upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
@@ -163,7 +185,7 @@
         selectedPoolId?: number;
         selectedPoolName?: string;
         dailyTrend?: TrendItem[];
-        monthlyTrend?: TrendItem[];
+        yearlyHeatmap?: HeatmapItem[];
         recentActivity?: ActivityItem[];
         departuresToday?: DepartureItem[];
         upcomingCharterReminder?: UpcomingCharterReminder;
@@ -175,22 +197,41 @@
     } = $props();
 
     const maxDaily = $derived(Math.max(1, ...dailyTrend.map((item) => Number(item.revenue || 0))));
-    const maxMonthly = $derived(Math.max(1, ...monthlyTrend.map((item) => Number(item.revenue || 0))));
+    const maxHeatmap = $derived(
+        Math.max(
+            1,
+            ...yearlyHeatmap
+                .filter((item) => !item.is_future)
+                .map((item) => Number(item.revenue || 0)),
+        ),
+    );
     const upcomingCharterOverflow = $derived(
         Math.max(Number(upcomingCharterReminder.total || 0) - Number(upcomingCharterReminder.visible_count || 0), 0),
     );
     const recentActivityOverflow = $derived(Math.max(Number(recentActivityTotal || 0) - Number(recentActivityVisibleCount || 0), 0));
 
     const dailyKey = (row: TrendItem) => `daily-${row.label}-${row.date ?? ''}`;
-    const monthlyKey = (row: TrendItem) => `month-${row.label}-${row.name ?? ''}`;
+    const heatmapKey = (row: HeatmapItem) => `heatmap-${row.date}`;
 
     let selectedDailyKey = $state<string>('');
-    let selectedMonthlyKey = $state<string>('');
+    let selectedHeatmapKey = $state<string>('');
     let selectedSummaryScope = $state<'day' | 'month' | 'year'>('month');
 
     const selectedDaily = $derived.by(() => dailyTrend.find((row) => dailyKey(row) === selectedDailyKey) ?? null);
-    const selectedMonthly = $derived.by(
-        () => monthlyTrend.find((row) => monthlyKey(row) === selectedMonthlyKey) ?? null,
+    const selectedHeatmap = $derived.by(
+        () => yearlyHeatmap.find((row) => heatmapKey(row) === selectedHeatmapKey) ?? null,
+    );
+    const activeDailyTrendRow = $derived(selectedDaily ?? dailyTrend.at(-1) ?? null);
+    const activeHeatmapDay = $derived.by(() => {
+        if (selectedHeatmap && !selectedHeatmap.is_future) {
+            return selectedHeatmap;
+        }
+
+        const visibleDays = yearlyHeatmap.filter((row) => !row.is_future);
+        return visibleDays.at(-1) ?? null;
+    });
+    const heatmapYearLabel = $derived(
+        activeHeatmapDay?.date ? new Date(`${activeHeatmapDay.date}T00:00:00`).getFullYear() : new Date().getFullYear(),
     );
     const activeSummaryStats = $derived(summaryStatsByScope[selectedSummaryScope] ?? summaryStatsByScope.month);
     const activeSummaryComparison = $derived(
@@ -210,8 +251,111 @@
             + Number(summaryComparisonByScope.month?.revenue_charter || 0)
             + Number(summaryComparisonByScope.month?.revenue_luggage || 0),
     );
+    const lineChartPoints = $derived.by(() =>
+        dailyTrend.map((row, index) => {
+            const x = dailyTrend.length <= 1 ? 50 : (index / (dailyTrend.length - 1)) * 100;
+            const y = 100 - Math.min(100, Math.max(0, (Number(row.revenue || 0) / maxDaily) * 100));
+
+            return {
+                key: dailyKey(row),
+                row,
+                index,
+                x,
+                y,
+            };
+        }),
+    );
+    const linePath = $derived.by(() =>
+        lineChartPoints.length
+            ? lineChartPoints
+                  .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
+                  .join(' ')
+            : '',
+    );
+    const lineAreaPath = $derived.by(() =>
+        lineChartPoints.length
+            ? `M ${lineChartPoints[0].x} 100 ${lineChartPoints
+                  .map((point) => `L ${point.x} ${point.y}`)
+                  .join(' ')} L ${lineChartPoints[lineChartPoints.length - 1].x} 100 Z`
+            : '',
+    );
+    const lineChartTicks = $derived.by(() =>
+        [1, 0.75, 0.5, 0.25, 0].map((factor) => ({
+            y: (1 - factor) * 100,
+            value: maxDaily * factor,
+        })),
+    );
+    const heatmapMonthGroups = $derived.by(() => {
+        const groups = new Map<string, HeatmapMonthGroup>();
+
+        yearlyHeatmap.forEach((row) => {
+            const monthKey = row.date.slice(0, 7);
+            const group = groups.get(monthKey) ?? {
+                key: monthKey,
+                label: row.month_label ?? monthKey,
+                shortLabel: row.month_short ?? row.month_label ?? monthKey,
+                totalRevenue: 0,
+                totalTransactions: 0,
+                cells: [],
+            };
+
+            if (group.cells.length === 0) {
+                const monthStart = new Date(`${monthKey}-01T00:00:00`);
+                const offset = Number.isNaN(monthStart.getTime()) ? 0 : monthStart.getDay();
+
+                for (let index = 0; index < offset; index += 1) {
+                    group.cells.push({
+                        key: `${monthKey}-offset-${index}`,
+                        item: null,
+                    });
+                }
+            }
+
+            group.totalRevenue += Number(row.revenue || 0);
+            group.totalTransactions += Number(row.transaction_count || 0);
+            group.cells.push({
+                key: heatmapKey(row),
+                item: row,
+            });
+            groups.set(monthKey, group);
+        });
+
+        return Array.from(groups.values()).map((group) => {
+            const remainder = group.cells.length % 7;
+
+            if (remainder !== 0) {
+                for (let index = remainder; index < 7; index += 1) {
+                    group.cells.push({
+                        key: `${group.key}-tail-${index}`,
+                        item: null,
+                    });
+                }
+            }
+
+            return group;
+        });
+    });
 
     const toCurrency = (value: number) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+    const toCompactCurrency = (value: number) => {
+        const amount = Number(value || 0);
+        const sign = amount < 0 ? '-' : '';
+        const absolute = Math.abs(amount);
+
+        if (absolute >= 1_000_000_000) {
+            return `${sign}Rp ${(absolute / 1_000_000_000).toFixed(1).replace('.0', '')}B`;
+        }
+
+        if (absolute >= 1_000_000) {
+            return `${sign}Rp ${(absolute / 1_000_000).toFixed(1).replace('.0', '')}M`;
+        }
+
+        if (absolute >= 1_000) {
+            return `${sign}Rp ${(absolute / 1_000).toFixed(0)}K`;
+        }
+
+        return toCurrency(amount);
+    };
     const normalizeJam = (value: string) => String(value || '').trim();
     const isCanceledBooking = (status: string | null | undefined) =>
         String(status || '').trim().toLowerCase() === 'canceled';
@@ -273,17 +417,29 @@
     };
 
     const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
-    const selectDailyOnMobile = (row: TrendItem) => {
-        if (isMobileViewport()) {
-            const key = dailyKey(row);
-            selectedDailyKey = selectedDailyKey === key ? '' : key;
+    const selectDailyPoint = (row: TrendItem) => {
+        const key = dailyKey(row);
+
+        if (isMobileViewport() && selectedDailyKey === key) {
+            selectedDailyKey = '';
+            return;
         }
+
+        selectedDailyKey = key;
     };
-    const selectMonthlyOnMobile = (row: TrendItem) => {
-        if (isMobileViewport()) {
-            const key = monthlyKey(row);
-            selectedMonthlyKey = selectedMonthlyKey === key ? '' : key;
+    const selectHeatmapDay = (row: HeatmapItem) => {
+        if (row.is_future) {
+            return;
         }
+
+        const key = heatmapKey(row);
+
+        if (isMobileViewport() && selectedHeatmapKey === key) {
+            selectedHeatmapKey = '';
+            return;
+        }
+
+        selectedHeatmapKey = key;
     };
     const updateSummaryScope = (scope: 'day' | 'month' | 'year') => {
         selectedSummaryScope = scope;
@@ -299,9 +455,40 @@
     ];
 
     const dailySelectedClass = (row: TrendItem) =>
-        selectedDailyKey === dailyKey(row) ? 'ring-2 ring-primary/35 bg-primary/5' : '';
-    const monthlySelectedClass = (row: TrendItem) =>
-        selectedMonthlyKey === monthlyKey(row) ? 'ring-2 ring-emerald-500/35 bg-emerald-500/5' : '';
+        selectedDailyKey === dailyKey(row) ? 'ring-4 ring-sky-500/25' : '';
+    const heatmapSelectedClass = (row: HeatmapItem) =>
+        selectedHeatmapKey === heatmapKey(row)
+            ? 'ring-2 ring-sky-500/60 ring-offset-2 ring-offset-white dark:ring-offset-slate-950'
+            : 'ring-1 ring-slate-200/70 dark:ring-slate-800';
+    const heatmapToneClass = (row: HeatmapItem) => {
+        if (row.is_future) {
+            return 'bg-slate-100/80 text-slate-300 dark:bg-slate-900 dark:text-slate-700';
+        }
+
+        const revenue = Number(row.revenue || 0);
+
+        if (revenue <= 0) {
+            return 'bg-slate-100 text-slate-400 dark:bg-slate-800/90 dark:text-slate-500';
+        }
+
+        const ratio = revenue / maxHeatmap;
+
+        if (ratio >= 0.75) {
+            return 'bg-sky-600 text-white shadow-[0_6px_18px_-10px_rgba(2,132,199,0.9)]';
+        }
+
+        if (ratio >= 0.45) {
+            return 'bg-sky-400 text-sky-950 dark:bg-sky-500 dark:text-white';
+        }
+
+        if (ratio >= 0.2) {
+            return 'bg-sky-200 text-sky-950 dark:bg-sky-500/30 dark:text-sky-100';
+        }
+
+        return 'bg-cyan-100 text-cyan-900 dark:bg-cyan-500/20 dark:text-cyan-100';
+    };
+    const showLineAxisLabel = (index: number, length: number) =>
+        index === 0 || index === length - 1 || index % 5 === 0;
 
     const dashboardMetricCards = () => [
         {
@@ -717,7 +904,7 @@
     <Deferred
         data={[
             'dailyTrend',
-            'monthlyTrend',
+            'yearlyHeatmap',
             'recentActivity',
             'recentActivityTotal',
             'recentActivityVisibleCount',
@@ -765,132 +952,193 @@
 
         <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
         <div class="space-y-2.5 xl:col-span-2">
-            <Card class="h-fit">
+            <Card class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
                 <CardHeader class="space-y-1 pb-2">
-                    <CardTitle class="text-sm md:text-base">Tren Revenue Harian</CardTitle>
-                    <CardDescription class="text-xs">7 hari terakhir (booking + carter + bagasi)</CardDescription>
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <CardTitle class="text-sm md:text-base">Last 30 days Revenue</CardTitle>
+                            <CardDescription class="text-xs">Line chart pendapatan harian 30 hari terakhir</CardDescription>
+                        </div>
+                        {#if activeDailyTrendRow}
+                            <Badge variant="secondary">{formatCompactNumber(activeDailyTrendRow.transaction_count || 0)} transaksi</Badge>
+                        {/if}
+                    </div>
                 </CardHeader>
                 <CardContent class="pt-0 pb-3">
-                    {#if selectedDaily}
-                        <div class="mb-3 rounded-2xl border border-primary/15 bg-primary/5 px-3 py-3 text-[11px] md:hidden">
-                            <div class="mb-2 flex items-start justify-between gap-3">
+                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+                        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 shadow-inner dark:border-slate-800 dark:bg-slate-950/60">
+                            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                                 <div>
-                                    <p class="font-semibold leading-tight text-foreground">{selectedDaily.label} {selectedDaily.date ?? ''}</p>
-                                    <p class="mt-0.5 text-[10px] text-muted-foreground">Total {toCurrency(selectedDaily.revenue)}</p>
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Revenue trajectory</p>
+                                    <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">{toCurrency(stats.revenue_total_month)}</p>
                                 </div>
-                                <button
-                                    type="button"
-                                    class="rounded-full border border-primary/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground dark:bg-slate-900/80"
-                                    onclick={() => (selectedDailyKey = '')}
-                                >
-                                    Tutup
-                                </button>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Klik titik untuk detail hari</p>
                             </div>
-                            <div class="grid gap-2 sm:grid-cols-3">
-                                {#each trendBreakdown(selectedDaily) as item (`selected-daily-panel-${item.label}`)}
-                                    <div class="rounded-xl border border-primary/10 bg-white/80 px-2.5 py-2 dark:bg-slate-900/80">
-                                        <p class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{item.label}</p>
-                                        <p class="mt-1 font-semibold text-foreground">{toCurrency(item.value)}</p>
-                                    </div>
-                                {/each}
-                            </div>
-                            <p class="mt-2 text-[10px] text-muted-foreground">Sentuh batang lain untuk melihat hari yang berbeda.</p>
-                        </div>
-                    {/if}
-                    <div class="grid grid-cols-7 items-end gap-1 md:gap-1.5">
-                        {#each dailyTrend as row (dailyKey(row))}
-                            <div class="flex flex-col items-center justify-end gap-1">
-                                <button
-                                    type="button"
-                                    class={`group relative flex h-11 w-full items-end rounded-sm outline-hidden ring-ring/40 focus-visible:ring-2 md:h-14 ${dailySelectedClass(row)}`}
-                                    style="touch-action: manipulation;"
-                                    onclick={() => selectDailyOnMobile(row)}
-                                    title={`${row.label} ${row.date ?? ''} - ${toCurrency(row.revenue)}`}
-                                    aria-label={`${row.label} ${row.date ?? ''} ${toCurrency(row.revenue)}`}
-                                >
-                                    <div
-                                        class="w-full rounded-sm bg-primary/75 transition-opacity group-hover:opacity-90"
-                                        style={`height:${Math.max(6, Math.round((Number(row.revenue || 0) / maxDaily) * 100))}%`}
-                                    ></div>
-                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg dark:bg-slate-900 md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
-                                        <p>{row.label} {row.date ?? ''}</p>
-                                        <p class="text-muted-foreground">Total {toCurrency(row.revenue)}</p>
-                                        {#each trendBreakdown(row) as item (`daily-breakdown-${row.label}-${item.label}`)}
-                                            <div class="flex items-center justify-between gap-4 text-[10px] text-muted-foreground">
-                                                <span>{item.label}</span>
-                                                <span>{toCurrency(item.value)}</span>
-                                            </div>
+
+                            <div class="relative h-[280px]">
+                                <div class="absolute inset-y-3 left-0 w-11">
+                                    {#each lineChartTicks as tick (`daily-tick-${tick.y}`)}
+                                        <div class="absolute left-0 -translate-y-1/2 text-[10px] font-medium text-slate-400 dark:text-slate-500" style={`top:${tick.y}%`}>
+                                            {toCompactCurrency(tick.value)}
+                                        </div>
+                                    {/each}
+                                </div>
+
+                                <div class="absolute inset-y-3 left-12 right-2 overflow-visible">
+                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full overflow-visible">
+                                        {#each lineChartTicks as tick (`daily-grid-${tick.y}`)}
+                                            <line x1="0" y1={tick.y} x2="100" y2={tick.y} stroke="currentColor" class="text-slate-200 dark:text-slate-800" stroke-dasharray="2 3"></line>
                                         {/each}
-                                    </div>
-                                </button>
-                                <p class="text-[10px] font-medium leading-none text-muted-foreground md:text-[11px]">{row.label}</p>
+                                        {#if lineAreaPath}
+                                            <path d={lineAreaPath} fill="url(#dailyRevenueArea)"></path>
+                                            <defs>
+                                                <linearGradient id="dailyRevenueArea" x1="0" x2="0" y1="0" y2="1">
+                                                    <stop offset="0%" stop-color="rgb(14 165 233 / 0.34)"></stop>
+                                                    <stop offset="100%" stop-color="rgb(14 165 233 / 0.03)"></stop>
+                                                </linearGradient>
+                                            </defs>
+                                        {/if}
+                                        {#if linePath}
+                                            <path d={linePath} fill="none" stroke="rgb(14 165 233)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        {/if}
+                                    </svg>
+
+                                    {#each lineChartPoints as point, index (point.key)}
+                                        <button
+                                            type="button"
+                                            class={`group absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-500 shadow-sm outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/50 dark:border-slate-950 ${dailySelectedClass(point.row)}`}
+                                            style={`left:${point.x}%; top:${point.y}%`}
+                                            onclick={() => selectDailyPoint(point.row)}
+                                            title={`${point.row.date ?? point.row.label} - ${toCurrency(point.row.revenue)}`}
+                                            aria-label={`${point.row.date ?? point.row.label} ${toCurrency(point.row.revenue)}`}
+                                        >
+                                            <span class="sr-only">{point.row.date ?? point.row.label}</span>
+                                            <span class="pointer-events-none absolute bottom-[calc(100%+0.65rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left text-[11px] shadow-xl md:group-hover:block dark:border-slate-800 dark:bg-slate-950">
+                                                <span class="block font-semibold text-slate-900 dark:text-slate-50">{point.row.date ?? point.row.label}</span>
+                                                <span class="mt-0.5 block text-slate-500 dark:text-slate-400">{toCurrency(point.row.revenue)}</span>
+                                                <span class="block text-[10px] text-slate-400 dark:text-slate-500">{formatCompactNumber(point.row.transaction_count || 0)} transaksi</span>
+                                            </span>
+                                        </button>
+
+                                        {#if showLineAxisLabel(index, lineChartPoints.length)}
+                                            <div class="absolute top-[calc(100%+0.6rem)] -translate-x-1/2 text-[10px] font-medium text-slate-500 dark:text-slate-400" style={`left:${point.x}%`}>
+                                                {point.row.date ?? point.row.label}
+                                            </div>
+                                        {/if}
+                                    {/each}
+                                </div>
                             </div>
-                        {/each}
+                        </div>
+
+                        {#if activeDailyTrendRow}
+                            <div class="rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/80">
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Selected day</p>
+                                <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-50">{activeDailyTrendRow.date ?? activeDailyTrendRow.label}</h3>
+                                <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">{toCurrency(activeDailyTrendRow.revenue)}</p>
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <Badge variant="outline">{formatCompactNumber(activeDailyTrendRow.transaction_count || 0)} transaksi</Badge>
+                                    <Badge variant="secondary">{toCompactCurrency(activeDailyTrendRow.margin || 0)} margin</Badge>
+                                </div>
+
+                                <div class="mt-4 grid gap-2">
+                                    {#each trendBreakdown(activeDailyTrendRow) as item (`daily-selected-${item.label}`)}
+                                        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-[11px] text-slate-500 dark:text-slate-400">{item.label}</span>
+                                                <span class="text-sm font-semibold text-slate-900 dark:text-slate-50">{toCurrency(item.value)}</span>
+                                            </div>
+                                        </div>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
                     </div>
                 </CardContent>
             </Card>
 
-            <Card class="h-fit">
+            <Card class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
                 <CardHeader class="space-y-1 pb-2">
-                    <CardTitle class="text-sm md:text-base">Tren Revenue Bulanan</CardTitle>
-                    <CardDescription class="text-xs">Tahun berjalan</CardDescription>
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <CardTitle class="text-sm md:text-base">{heatmapYearLabel} Transactions & Revenue</CardTitle>
+                            <CardDescription class="text-xs">Heatmap kontribusi harian model contribution graph per bulan</CardDescription>
+                        </div>
+                        <div class="hidden items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 px-2.5 py-1 text-[10px] font-medium text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-400 md:flex">
+                            <span>Rendah</span>
+                            {#each [
+                                'bg-slate-100 dark:bg-slate-800/90',
+                                'bg-cyan-100 dark:bg-cyan-500/20',
+                                'bg-sky-200 dark:bg-sky-500/30',
+                                'bg-sky-400 dark:bg-sky-500',
+                                'bg-sky-600',
+                            ] as tone (`heatmap-legend-${tone}`)}
+                                <span class={`h-3 w-3 rounded-[4px] ${tone}`}></span>
+                            {/each}
+                            <span>Tinggi</span>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent class="pt-0 pb-3">
-                    {#if selectedMonthly}
-                        <div class="mb-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 px-3 py-3 text-[11px] md:hidden">
-                            <div class="mb-2 flex items-start justify-between gap-3">
-                                <div>
-                                    <p class="font-semibold leading-tight text-foreground">{selectedMonthly.name ?? selectedMonthly.label}</p>
-                                    <p class="mt-0.5 text-[10px] text-muted-foreground">Total {toCurrency(selectedMonthly.revenue)}</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    class="rounded-full border border-emerald-500/15 bg-white/80 px-2 py-1 text-[10px] font-medium text-muted-foreground dark:bg-slate-900/80"
-                                    onclick={() => (selectedMonthlyKey = '')}
-                                >
-                                    Tutup
-                                </button>
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-3">
-                                {#each trendBreakdown(selectedMonthly) as item (`selected-monthly-panel-${item.label}`)}
-                                    <div class="rounded-xl border border-emerald-500/10 bg-white/80 px-2.5 py-2 dark:bg-slate-900/80">
-                                        <p class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{item.label}</p>
-                                        <p class="mt-1 font-semibold text-foreground">{toCurrency(item.value)}</p>
+                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_300px]">
+                        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 shadow-inner dark:border-slate-800 dark:bg-slate-950/60">
+                            <div class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                                {#each heatmapMonthGroups as month (month.key)}
+                                    <div class="rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/75">
+                                        <div class="mb-3 flex items-start justify-between gap-2">
+                                            <div>
+                                                <p class="text-sm font-semibold text-slate-900 dark:text-slate-50">{month.label}</p>
+                                                <p class="text-[10px] text-slate-500 dark:text-slate-400">{formatCompactNumber(month.totalTransactions)} transaksi</p>
+                                            </div>
+                                            <p class="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{toCompactCurrency(month.totalRevenue)}</p>
+                                        </div>
+
+                                        <div class="grid grid-flow-col auto-cols-max grid-rows-7 gap-1">
+                                            {#each month.cells as cell (cell.key)}
+                                                {#if cell.item}
+                                                    {@const day = cell.item}
+                                                    <button
+                                                        type="button"
+                                                        class={`h-3.5 w-3.5 rounded-[5px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/40 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
+                                                        onclick={() => selectHeatmapDay(day)}
+                                                        title={`${day.name ?? day.date} - ${toCurrency(day.revenue)} - ${formatCompactNumber(day.transaction_count || 0)} transaksi`}
+                                                        aria-label={`${day.name ?? day.date} ${toCurrency(day.revenue)}`}
+                                                    ></button>
+                                                {:else}
+                                                    <div class="h-3.5 w-3.5 rounded-[5px] bg-transparent"></div>
+                                                {/if}
+                                            {/each}
+                                        </div>
                                     </div>
                                 {/each}
                             </div>
-                            <p class="mt-2 text-[10px] text-muted-foreground">Sentuh batang lain untuk melihat bulan yang berbeda.</p>
                         </div>
-                    {/if}
-                    <div class="grid grid-cols-6 gap-1 md:grid-cols-12 md:gap-1.5">
-                        {#each monthlyTrend as row (monthlyKey(row))}
-                            <div class="flex flex-col items-center justify-end gap-1">
-                                <button
-                                    type="button"
-                                    class={`group relative flex h-10 w-full items-end rounded-sm outline-hidden ring-ring/40 focus-visible:ring-2 md:h-12 ${monthlySelectedClass(row)}`}
-                                    style="touch-action: manipulation;"
-                                    onclick={() => selectMonthlyOnMobile(row)}
-                                    title={`${row.name ?? row.label} - ${toCurrency(row.revenue)}`}
-                                    aria-label={`${row.name ?? row.label} ${toCurrency(row.revenue)}`}
-                                >
-                                    <div
-                                        class="w-full rounded-sm bg-emerald-500/75 transition-opacity group-hover:opacity-90"
-                                        style={`height:${Math.max(6, Math.round((Number(row.revenue || 0) / maxMonthly) * 100))}%`}
-                                    ></div>
-                                    <div class="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-1/2 hidden w-max -translate-x-1/2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg dark:bg-slate-900 md:block md:opacity-0 md:transition md:duration-150 md:group-hover:opacity-100">
-                                        <p>{row.name ?? row.label}</p>
-                                        <p class="text-muted-foreground">Total {toCurrency(row.revenue)}</p>
-                                        {#each trendBreakdown(row) as item (`monthly-breakdown-${row.label}-${item.label}`)}
-                                            <div class="flex items-center justify-between gap-4 text-[10px] text-muted-foreground">
-                                                <span>{item.label}</span>
-                                                <span>{toCurrency(item.value)}</span>
+
+                        {#if activeHeatmapDay}
+                            <div class="rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/80">
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Selected day</p>
+                                <h3 class="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-50">{activeHeatmapDay.name ?? activeHeatmapDay.date}</h3>
+                                <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">{toCurrency(activeHeatmapDay.revenue)}</p>
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <Badge variant="secondary">{formatCompactNumber(activeHeatmapDay.transaction_count || 0)} transaksi</Badge>
+                                    <Badge variant="outline">{activeHeatmapDay.month_label ?? '-'}</Badge>
+                                </div>
+
+                                <div class="mt-4 grid gap-2">
+                                    {#each trendBreakdown(activeHeatmapDay) as item (`heatmap-selected-${item.label}`)}
+                                        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-[11px] text-slate-500 dark:text-slate-400">{item.label}</span>
+                                                <span class="text-sm font-semibold text-slate-900 dark:text-slate-50">{toCurrency(item.value)}</span>
                                             </div>
-                                        {/each}
-                                    </div>
-                                </button>
-                                <p class="text-[10px] font-medium leading-none text-muted-foreground md:text-[11px]">{row.label}</p>
+                                        </div>
+                                    {/each}
+                                </div>
+
+                                <p class="mt-4 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                                    Kotak makin gelap artinya revenue harian makin besar. Klik hari lain untuk baca breakdown channel dan margin.
+                                </p>
                             </div>
-                        {/each}
+                        {/if}
                     </div>
                 </CardContent>
             </Card>
