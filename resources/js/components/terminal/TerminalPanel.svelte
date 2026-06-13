@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Snippet } from 'svelte';
     import { Card, CardHeader, CardContent, CardTitle, CardAction } from '@/components/ui/card';
     import { cn } from '@/lib/utils';
 
@@ -6,10 +7,14 @@
         title = '',
         subtitle = '',
         class: className = '',
+        actions,
+        children,
     }: {
         title?: string;
         subtitle?: string;
         class?: string;
+        actions?: Snippet;
+        children?: Snippet;
     } = $props();
 </script>
 
@@ -26,12 +31,12 @@
             </div>
 
             <CardAction>
-                <slot name="actions" />
+                {@render actions?.()}
             </CardAction>
         </CardHeader>
 
         <CardContent>
-            <slot />
+            {@render children?.()}
         </CardContent>
     </Card>
 </div>
