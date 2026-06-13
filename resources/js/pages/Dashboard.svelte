@@ -174,6 +174,7 @@
         pools = [] as PoolOption[],
         selectedPoolId = 0,
         selectedPoolName = 'Semua Pool',
+        dailyTrend = [],
         monthlyTrend = [],
         yearlyHeatmap = [],
         recentActivity = [],
@@ -201,6 +202,7 @@
         pools?: PoolOption[];
         selectedPoolId?: number;
         selectedPoolName?: string;
+        dailyTrend?: TrendItem[];
         monthlyTrend?: TrendItem[];
         yearlyHeatmap?: HeatmapItem[];
         recentActivity?: ActivityItem[];
@@ -213,7 +215,14 @@
         summaryPeriodByScope?: Record<'day' | 'month' | 'year', SummaryPeriodMeta>;
     } = $props();
 
-    const maxTrendRevenue = $derived(Math.max(0, ...monthlyTrend.map((item) => Number(item.revenue || 0))));
+    let trendMode = $state<'monthly' | 'daily'>('monthly');
+
+    const activeTrendRows = $derived(
+        trendMode === 'daily' ? dailyTrend : monthlyTrend,
+    );
+    const maxTrendRevenue = $derived(
+        Math.max(0, ...activeTrendRows.map((item) => Number(item.revenue || 0))),
+    );
     const lineScaleMax = $derived(maxTrendRevenue > 0 ? maxTrendRevenue : 1);
     const visibleHeatmapDays = $derived(yearlyHeatmap.filter((item) => !item.is_future));
     const maxHeatmapRevenue = $derived(
@@ -226,11 +235,11 @@
         Math.max(Number(upcomingCharterReminder.total || 0) - Number(upcomingCharterReminder.visible_count || 0), 0),
     );
     const recentActivityOverflow = $derived(Math.max(Number(recentActivityTotal || 0) - Number(recentActivityVisibleCount || 0), 0));
-    const monthlyTrendRevenueTotal = $derived(
-        monthlyTrend.reduce((total, item) => total + Number(item.revenue || 0), 0),
+    const activeTrendRevenueTotal = $derived(
+        activeTrendRows.reduce((total, item) => total + Number(item.revenue || 0), 0),
     );
-    const monthlyTrendTransactionsTotal = $derived(
-        monthlyTrend.reduce((total, item) => total + Number(item.transaction_count || 0), 0),
+    const activeTrendTransactionsTotal = $derived(
+        activeTrendRows.reduce((total, item) => total + Number(item.transaction_count || 0), 0),
     );
     const yearlyRevenueTotal = $derived(
         visibleHeatmapDays.reduce((total, item) => total + Number(item.revenue || 0), 0),
@@ -253,6 +262,15 @@
     const heatmapYearLabel = $derived(
         visibleHeatmapDays[0]?.date ? new Date(`${visibleHeatmapDays[0].date}T00:00:00`).getFullYear() : new Date().getFullYear(),
     );
+    const activeTrendTitle = $derived(
+        trendMode === 'daily' ? 'Daily Revenue' : 'Monthly Revenue',
+    );
+    const activeTrendEyebrow = $derived(
+        trendMode === 'daily' ? 'Last 30 days' : `${heatmapYearLabel}`,
+    );
+    const activeTrendRangeLabel = $derived(
+        trendMode === 'daily' ? '30 hari terakhir' : 'Jan - Des',
+    );
     const activeSummaryStats = $derived(summaryStatsByScope[selectedSummaryScope] ?? summaryStatsByScope.month);
     const activeSummaryComparison = $derived(
         summaryComparisonByScope[selectedSummaryScope] ?? summaryComparisonByScope.month,
@@ -272,8 +290,8 @@
             + Number(summaryComparisonByScope.month?.revenue_luggage || 0),
     );
     const lineChartPoints = $derived.by(() =>
-        monthlyTrend.map((row, index) => {
-            const x = monthlyTrend.length <= 1 ? 50 : (index / (monthlyTrend.length - 1)) * 100;
+        activeTrendRows.map((row, index) => {
+            const x = activeTrendRows.length <= 1 ? 50 : (index / (activeTrendRows.length - 1)) * 100;
             const y = 100 - Math.min(100, Math.max(0, (Number(row.revenue || 0) / lineScaleMax) * 100));
 
             return {
@@ -300,7 +318,7 @@
             : '',
     );
     const lineChartTicks = $derived.by(() =>
-        [1, 0.66, 0.33, 0].map((factor) => ({
+        [1, 0.5, 0].map((factor) => ({
             y: (1 - factor) * 100,
             value: maxTrendRevenue * factor,
         })),
@@ -446,6 +464,11 @@
     };
 
     const formatCompactNumber = (value: number) => Number(value || 0).toLocaleString('id-ID');
+    const setTrendMode = (mode: 'monthly' | 'daily') => {
+        trendMode = mode;
+        hoveredTrendKey = '';
+        pinnedTrendKey = '';
+    };
 
     const metricTrend = (current: number, previous: number, formatter: (value: number) => string, previousLabel = activeSummaryPeriod.previous_label) => {
         const delta = Number(current || 0) - Number(previous || 0);
@@ -544,7 +567,6 @@
         return {
             row: point.row,
             left,
-            top: clampPercent(point.y - 12, 10, 78),
             align: tooltipAlignFor(left),
         };
     });
@@ -1017,6 +1039,7 @@
 
     <Deferred
         data={[
+            'dailyTrend',
             'monthlyTrend',
             'yearlyHeatmap',
             'recentActivity',
@@ -1066,31 +1089,51 @@
 
         <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
         <div class="space-y-2.5 xl:col-span-2">
-            <Card class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
+            <Card class="h-fit overflow-visible border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
                 <CardHeader class="space-y-1 pb-1">
-                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                        <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{heatmapYearLabel}</p>
-                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">Monthly Revenue</CardTitle>
+                    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{activeTrendEyebrow}</p>
+                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">{activeTrendTitle}</CardTitle>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{activeTrendRangeLabel}</p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] font-semibold">{toCompactCurrency(monthlyTrendRevenueTotal)}</Badge>
-                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(monthlyTrendTransactionsTotal)} TRX</Badge>
+                        <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+                            <div class="inline-flex rounded-full border border-border/70 bg-background/80 p-1 shadow-sm">
+                                <button
+                                    type="button"
+                                    class={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${trendMode === 'monthly' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
+                                    onclick={() => setTrendMode('monthly')}
+                                >
+                                    Bulanan
+                                </button>
+                                <button
+                                    type="button"
+                                    class={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${trendMode === 'daily' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
+                                    onclick={() => setTrendMode('daily')}
+                                >
+                                    Harian
+                                </button>
+                            </div>
+                            <div class="rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60">
+                                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Total Revenue</p>
+                                <p class="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50">{toCurrency(activeTrendRevenueTotal)}</p>
+                            </div>
+                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(activeTrendTransactionsTotal)} TRX</Badge>
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent class="pt-0 pb-3">
-                    <div class="rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
+                <CardContent class="overflow-visible pt-0 pb-3">
+                    <div class="overflow-visible rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
                         <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                            <span>Revenue bulanan</span>
+                            <span>{trendMode === 'daily' ? 'Revenue harian' : 'Revenue bulanan'}</span>
                             <span class="normal-case tracking-normal">Hover / tap titik</span>
                         </div>
 
-                        <div class="relative h-[220px] md:h-[236px]" role="presentation" onmouseleave={() => hoverTrendPoint(null)}>
+                        <div class="relative h-[228px] overflow-visible pt-14 md:h-[244px] md:pt-16" role="presentation" onmouseleave={() => hoverTrendPoint(null)}>
                             {#if activeTrendTooltip}
                                 <div
                                     class={`pointer-events-none absolute z-10 w-[228px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeTrendTooltip.align)}`}
-                                    style={`left:${activeTrendTooltip.left}%; top:${activeTrendTooltip.top}%`}
+                                    style={`left:${activeTrendTooltip.left}%; top:0px`}
                                 >
                                     <p class="text-sm font-semibold">{trendLabel(activeTrendTooltip.row)}</p>
                                     <div class="mt-2 space-y-1 text-[12px]">
@@ -1110,30 +1153,22 @@
                                             <span class="text-white/68">Total</span>
                                             <span class="font-semibold">{toCurrency(activeTrendTooltip.row.revenue)}</span>
                                         </div>
-                                        <div class="flex items-center justify-between gap-3">
-                                            <span class="text-white/68">Transaksi</span>
-                                            <span class="font-semibold">{formatCompactNumber(activeTrendTooltip.row.transaction_count || 0)}</span>
-                                        </div>
-                                        <div class="flex items-center justify-between gap-3">
-                                            <span class="text-white/68">Margin</span>
-                                            <span class="font-semibold">{toCompactCurrency(activeTrendTooltip.row.margin || 0)}</span>
-                                        </div>
                                     </div>
                                     <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeTrendTooltip.align)}`}></span>
                                 </div>
                             {/if}
 
-                            <div class="absolute inset-y-3 left-0 w-10">
-                                {#each lineChartTicks as tick (`daily-tick-${tick.y}`)}
-                                    <div class="absolute left-0 -translate-y-1/2 text-[10px] font-medium text-slate-400 dark:text-slate-500" style={`top:${tick.y}%`}>
-                                        {toCompactCurrency(tick.value)}
+                            <div class="absolute top-14 bottom-6 left-0 w-[72px] md:top-16 md:w-[84px]" aria-hidden="true">
+                                {#each lineChartTicks as tick (`trend-tick-${tick.y}`)}
+                                    <div class="absolute left-0 -translate-y-1/2 text-[9px] leading-tight font-medium text-slate-400 dark:text-slate-500" style={`top:${tick.y}%`}>
+                                        {toCurrency(tick.value)}
                                     </div>
                                 {/each}
                             </div>
 
-                            <div class="absolute inset-y-3 left-11 right-1 overflow-visible">
+                            <div class="absolute top-14 right-1 bottom-6 left-[76px] overflow-visible md:top-16 md:left-[88px]">
                                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full overflow-visible">
-                                    {#each lineChartTicks as tick (`daily-grid-${tick.y}`)}
+                                    {#each lineChartTicks as tick (`trend-grid-${tick.y}`)}
                                         <line x1="0" y1={tick.y} x2="100" y2={tick.y} stroke="currentColor" class="text-slate-200/90 dark:text-slate-800" stroke-dasharray="2 3"></line>
                                     {/each}
                                     {#if lineAreaPath}
@@ -1177,21 +1212,24 @@
                 </CardContent>
             </Card>
 
-            <Card class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
+            <Card class="h-fit overflow-visible border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]">
                 <CardHeader class="space-y-1 pb-1">
                     <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                         <div>
                             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{heatmapYearLabel}</p>
                             <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">Transactions & Revenue</CardTitle>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] font-semibold">{toCompactCurrency(yearlyRevenueTotal)}</Badge>
+                        <div class="flex flex-wrap items-center gap-2 md:justify-end">
+                            <div class="rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60">
+                                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Total Revenue</p>
+                                <p class="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50">{toCurrency(yearlyRevenueTotal)}</p>
+                            </div>
                             <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(yearlyTransactionsTotal)} TRX</Badge>
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent class="pt-0 pb-3">
-                    <div class="rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
+                <CardContent class="overflow-visible pt-0 pb-3">
+                    <div class="overflow-visible rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
                         <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                             <span>Contribution graph</span>
                             <div class="hidden items-center gap-1 md:flex">
@@ -1210,7 +1248,7 @@
                         </div>
 
                         <div class="overflow-x-auto pb-1">
-                            <div class="relative min-w-[760px] pt-11" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
+                            <div class="relative min-w-[640px] pt-14 md:min-w-[760px] md:pt-16" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
                                 {#if activeHeatmapTooltip}
                                     <div
                                         class={`pointer-events-none absolute top-0 z-10 w-[228px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
@@ -1234,14 +1272,6 @@
                                                 <span class="text-white/68">Total</span>
                                                 <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.revenue)}</span>
                                             </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Transaksi</span>
-                                                <span class="font-semibold">{formatCompactNumber(activeHeatmapTooltip.row.transaction_count || 0)}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">Margin</span>
-                                                <span class="font-semibold">{toCompactCurrency(activeHeatmapTooltip.row.margin || 0)}</span>
-                                            </div>
                                         </div>
                                         <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeHeatmapTooltip.align)}`}></span>
                                     </div>
@@ -1258,13 +1288,13 @@
                                     {/each}
                                 </div>
 
-                                <div class="grid grid-flow-col auto-cols-[12px] grid-rows-7 gap-[3px] pt-2 md:auto-cols-[14px]">
+                                <div class="grid grid-flow-col auto-cols-[14px] grid-rows-7 gap-[4px] pt-2 md:auto-cols-[14px]">
                                     {#each heatmapContributionCells as cell (cell.key)}
                                         {#if cell.item}
                                             {@const day = cell.item}
                                             <button
                                                 type="button"
-                                                class={`h-3 w-3 rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
+                                                class={`h-3.5 w-3.5 rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
                                                 onclick={() => togglePinnedHeatmapDay(day)}
                                                 onmouseenter={() => hoverHeatmapDay(day)}
                                                 onfocus={() => hoverHeatmapDay(day)}
@@ -1274,7 +1304,7 @@
                                                 disabled={day.is_future}
                                             ></button>
                                         {:else}
-                                            <div class="h-3 w-3 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"></div>
+                                            <div class="h-3.5 w-3.5 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"></div>
                                         {/if}
                                     {/each}
                                 </div>
