@@ -136,7 +136,6 @@ class DashboardTest extends TestCase
                     ->where('summaryStatsByScope.day.revenue_booking', 90000)
                     ->where('summaryStatsByScope.day.revenue_luggage', 350000)
                     ->missingAll([
-                        'dailyTrend',
                         'monthlyTrend',
                         'recentActivity',
                         'recentActivityTotal',
@@ -145,7 +144,6 @@ class DashboardTest extends TestCase
                         'upcomingCharterReminder',
                     ])
                     ->loadDeferredProps('dashboard-data', fn (Assert $reload) => $reload
-                        ->has('dailyTrend')
                         ->has('monthlyTrend')
                         ->has('recentActivity')
                         ->has('recentActivityTotal')

@@ -64,6 +64,7 @@
 
     type TrendItem = {
         label: string;
+        month_key?: string;
         date?: string;
         name?: string;
         revenue: number;
@@ -173,7 +174,7 @@
         pools = [] as PoolOption[],
         selectedPoolId = 0,
         selectedPoolName = 'Semua Pool',
-        dailyTrend = [],
+        monthlyTrend = [],
         yearlyHeatmap = [],
         recentActivity = [],
         departuresToday = [],
@@ -200,7 +201,7 @@
         pools?: PoolOption[];
         selectedPoolId?: number;
         selectedPoolName?: string;
-        dailyTrend?: TrendItem[];
+        monthlyTrend?: TrendItem[];
         yearlyHeatmap?: HeatmapItem[];
         recentActivity?: ActivityItem[];
         departuresToday?: DepartureItem[];
@@ -212,8 +213,8 @@
         summaryPeriodByScope?: Record<'day' | 'month' | 'year', SummaryPeriodMeta>;
     } = $props();
 
-    const maxDailyRevenue = $derived(Math.max(0, ...dailyTrend.map((item) => Number(item.revenue || 0))));
-    const lineScaleMax = $derived(maxDailyRevenue > 0 ? maxDailyRevenue : 1);
+    const maxTrendRevenue = $derived(Math.max(0, ...monthlyTrend.map((item) => Number(item.revenue || 0))));
+    const lineScaleMax = $derived(maxTrendRevenue > 0 ? maxTrendRevenue : 1);
     const visibleHeatmapDays = $derived(yearlyHeatmap.filter((item) => !item.is_future));
     const maxHeatmapRevenue = $derived(
         Math.max(
@@ -225,11 +226,11 @@
         Math.max(Number(upcomingCharterReminder.total || 0) - Number(upcomingCharterReminder.visible_count || 0), 0),
     );
     const recentActivityOverflow = $derived(Math.max(Number(recentActivityTotal || 0) - Number(recentActivityVisibleCount || 0), 0));
-    const recent30DayRevenueTotal = $derived(
-        dailyTrend.reduce((total, item) => total + Number(item.revenue || 0), 0),
+    const monthlyTrendRevenueTotal = $derived(
+        monthlyTrend.reduce((total, item) => total + Number(item.revenue || 0), 0),
     );
-    const recent30DayTransactionsTotal = $derived(
-        dailyTrend.reduce((total, item) => total + Number(item.transaction_count || 0), 0),
+    const monthlyTrendTransactionsTotal = $derived(
+        monthlyTrend.reduce((total, item) => total + Number(item.transaction_count || 0), 0),
     );
     const yearlyRevenueTotal = $derived(
         visibleHeatmapDays.reduce((total, item) => total + Number(item.revenue || 0), 0),
@@ -238,16 +239,16 @@
         visibleHeatmapDays.reduce((total, item) => total + Number(item.transaction_count || 0), 0),
     );
 
-    const dailyKey = (row: TrendItem) => `daily-${row.label}-${row.date ?? ''}`;
+    const trendKey = (row: TrendItem) => `trend-${row.month_key ?? row.label}-${row.name ?? row.date ?? ''}`;
     const heatmapKey = (row: HeatmapItem) => `heatmap-${row.date}`;
 
-    let hoveredDailyKey = $state<string>('');
-    let pinnedDailyKey = $state<string>('');
+    let hoveredTrendKey = $state<string>('');
+    let pinnedTrendKey = $state<string>('');
     let hoveredHeatmapKey = $state<string>('');
     let pinnedHeatmapKey = $state<string>('');
     let selectedSummaryScope = $state<'day' | 'month' | 'year'>('month');
 
-    const activeDailyTooltipKey = $derived(pinnedDailyKey || hoveredDailyKey);
+    const activeTrendTooltipKey = $derived(pinnedTrendKey || hoveredTrendKey);
     const activeHeatmapTooltipKey = $derived(pinnedHeatmapKey || hoveredHeatmapKey);
     const heatmapYearLabel = $derived(
         visibleHeatmapDays[0]?.date ? new Date(`${visibleHeatmapDays[0].date}T00:00:00`).getFullYear() : new Date().getFullYear(),
@@ -271,12 +272,12 @@
             + Number(summaryComparisonByScope.month?.revenue_luggage || 0),
     );
     const lineChartPoints = $derived.by(() =>
-        dailyTrend.map((row, index) => {
-            const x = dailyTrend.length <= 1 ? 50 : (index / (dailyTrend.length - 1)) * 100;
+        monthlyTrend.map((row, index) => {
+            const x = monthlyTrend.length <= 1 ? 50 : (index / (monthlyTrend.length - 1)) * 100;
             const y = 100 - Math.min(100, Math.max(0, (Number(row.revenue || 0) / lineScaleMax) * 100));
 
             return {
-                key: dailyKey(row),
+                key: trendKey(row),
                 row,
                 index,
                 x,
@@ -301,20 +302,34 @@
     const lineChartTicks = $derived.by(() =>
         [1, 0.66, 0.33, 0].map((factor) => ({
             y: (1 - factor) * 100,
-            value: maxDailyRevenue * factor,
+            value: maxTrendRevenue * factor,
         })),
     );
     const lineAxisIndexes = $derived.by(() => {
-        if (lineChartPoints.length === 0) {
+        const totalPoints = lineChartPoints.length;
+
+        if (totalPoints === 0) {
             return new Set<number>();
         }
 
-        const indexes = new Set<number>([0, lineChartPoints.length - 1]);
-        const targetCount = Math.min(5, lineChartPoints.length);
+        if (totalPoints <= 12) {
+            const indexes = new Set<number>();
+
+            for (let index = 0; index < totalPoints; index += 2) {
+                indexes.add(index);
+            }
+
+            indexes.add(totalPoints - 1);
+
+            return indexes;
+        }
+
+        const indexes = new Set<number>([0, totalPoints - 1]);
+        const targetCount = Math.min(5, totalPoints);
 
         for (let step = 1; step < targetCount - 1; step += 1) {
             indexes.add(
-                Math.round((step / (targetCount - 1)) * (lineChartPoints.length - 1)),
+                Math.round((step / (targetCount - 1)) * (totalPoints - 1)),
             );
         }
 
@@ -487,14 +502,15 @@
             : align === 'end'
               ? 'right-5'
               : 'left-1/2 -translate-x-1/2';
-    const hoverDailyPoint = (row: TrendItem | null) => {
-        hoveredDailyKey = row ? dailyKey(row) : '';
+    const trendLabel = (row: TrendItem) => row.name ?? row.date ?? row.label;
+    const hoverTrendPoint = (row: TrendItem | null) => {
+        hoveredTrendKey = row ? trendKey(row) : '';
     };
-    const togglePinnedDailyPoint = (row: TrendItem) => {
-        const key = dailyKey(row);
+    const togglePinnedTrendPoint = (row: TrendItem) => {
+        const key = trendKey(row);
 
-        pinnedDailyKey = pinnedDailyKey === key ? '' : key;
-        hoveredDailyKey = key;
+        pinnedTrendKey = pinnedTrendKey === key ? '' : key;
+        hoveredTrendKey = key;
     };
     const hoverHeatmapDay = (row: HeatmapItem | null) => {
         hoveredHeatmapKey = row && !row.is_future ? heatmapKey(row) : '';
@@ -512,12 +528,12 @@
         selectedSummaryScope = scope;
     };
 
-    const activeDailyTooltip = $derived.by(() => {
-        if (!activeDailyTooltipKey) {
+    const activeTrendTooltip = $derived.by(() => {
+        if (!activeTrendTooltipKey) {
             return null;
         }
 
-        const point = lineChartPoints.find((item) => item.key === activeDailyTooltipKey);
+        const point = lineChartPoints.find((item) => item.key === activeTrendTooltipKey);
 
         if (!point) {
             return null;
@@ -553,8 +569,8 @@
             align: tooltipAlignFor(left),
         };
     });
-    const dailySelectedClass = (row: TrendItem) =>
-        activeDailyTooltipKey === dailyKey(row) ? 'ring-4 ring-sky-500/20' : '';
+    const trendSelectedClass = (row: TrendItem) =>
+        activeTrendTooltipKey === trendKey(row) ? 'ring-4 ring-sky-500/20' : '';
     const heatmapSelectedClass = (row: HeatmapItem) =>
         activeHeatmapTooltipKey === heatmapKey(row)
             ? 'ring-2 ring-sky-500/60 ring-offset-2 ring-offset-white dark:ring-offset-slate-950'
@@ -1001,7 +1017,7 @@
 
     <Deferred
         data={[
-            'dailyTrend',
+            'monthlyTrend',
             'yearlyHeatmap',
             'recentActivity',
             'recentActivityTotal',
@@ -1054,34 +1070,56 @@
                 <CardHeader class="space-y-1 pb-1">
                     <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Last 30 days</p>
-                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">Revenue</CardTitle>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{heatmapYearLabel}</p>
+                            <CardTitle class="mt-1 text-[1.65rem] font-semibold tracking-tight text-slate-950 dark:text-slate-50">Monthly Revenue</CardTitle>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] font-semibold">{toCompactCurrency(recent30DayRevenueTotal)}</Badge>
-                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(recent30DayTransactionsTotal)} TRX</Badge>
+                            <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] font-semibold">{toCompactCurrency(monthlyTrendRevenueTotal)}</Badge>
+                            <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-semibold">{formatCompactNumber(monthlyTrendTransactionsTotal)} TRX</Badge>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent class="pt-0 pb-3">
                     <div class="rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4">
                         <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                            <span>Revenue trajectory</span>
+                            <span>Revenue bulanan</span>
                             <span class="normal-case tracking-normal">Hover / tap titik</span>
                         </div>
 
-                        <div class="relative h-[220px] md:h-[236px]" role="presentation" onmouseleave={() => hoverDailyPoint(null)}>
-                            {#if activeDailyTooltip}
+                        <div class="relative h-[220px] md:h-[236px]" role="presentation" onmouseleave={() => hoverTrendPoint(null)}>
+                            {#if activeTrendTooltip}
                                 <div
-                                    class={`pointer-events-none absolute z-10 w-[188px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeDailyTooltip.align)}`}
-                                    style={`left:${activeDailyTooltip.left}%; top:${activeDailyTooltip.top}%`}
+                                    class={`pointer-events-none absolute z-10 w-[228px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeTrendTooltip.align)}`}
+                                    style={`left:${activeTrendTooltip.left}%; top:${activeTrendTooltip.top}%`}
                                 >
-                                    <p class="text-sm font-semibold">{activeDailyTooltip.row.date ?? activeDailyTooltip.row.label}</p>
-                                    <p class="mt-2 text-[11px] uppercase tracking-[0.14em] text-white/65">Revenue</p>
-                                    <p class="mt-0.5 text-base font-semibold">{toCurrency(activeDailyTooltip.row.revenue)}</p>
-                                    <p class="mt-1 text-[12px] text-white/78">Transactions: {formatCompactNumber(activeDailyTooltip.row.transaction_count || 0)}</p>
-                                    <p class="text-[11px] text-white/58">Margin: {toCompactCurrency(activeDailyTooltip.row.margin || 0)}</p>
-                                    <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeDailyTooltip.align)}`}></span>
+                                    <p class="text-sm font-semibold">{trendLabel(activeTrendTooltip.row)}</p>
+                                    <div class="mt-2 space-y-1 text-[12px]">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-white/68">Keberangkatan</span>
+                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.booking_revenue || 0)}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-white/68">Bagasi</span>
+                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.luggage_revenue || 0)}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-white/68">Carter</span>
+                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.charter_revenue || 0)}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
+                                            <span class="text-white/68">Total</span>
+                                            <span class="font-semibold">{toCurrency(activeTrendTooltip.row.revenue)}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-white/68">Transaksi</span>
+                                            <span class="font-semibold">{formatCompactNumber(activeTrendTooltip.row.transaction_count || 0)}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-white/68">Margin</span>
+                                            <span class="font-semibold">{toCompactCurrency(activeTrendTooltip.row.margin || 0)}</span>
+                                        </div>
+                                    </div>
+                                    <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeTrendTooltip.align)}`}></span>
                                 </div>
                             {/if}
 
@@ -1115,21 +1153,21 @@
                                 {#each lineChartPoints as point, index (point.key)}
                                     <button
                                         type="button"
-                                        class={`absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-sm outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500/45 dark:border-slate-950 ${dailySelectedClass(point.row)}`}
+                                        class={`absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow-sm outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500/45 dark:border-slate-950 ${trendSelectedClass(point.row)}`}
                                         style={`left:${point.x}%; top:${point.y}%`}
-                                        onclick={() => togglePinnedDailyPoint(point.row)}
-                                        onmouseenter={() => hoverDailyPoint(point.row)}
-                                        onfocus={() => hoverDailyPoint(point.row)}
-                                        onmouseleave={() => hoverDailyPoint(null)}
-                                        onblur={() => hoverDailyPoint(null)}
-                                        aria-label={`${point.row.date ?? point.row.label} ${toCurrency(point.row.revenue)}`}
+                                        onclick={() => togglePinnedTrendPoint(point.row)}
+                                        onmouseenter={() => hoverTrendPoint(point.row)}
+                                        onfocus={() => hoverTrendPoint(point.row)}
+                                        onmouseleave={() => hoverTrendPoint(null)}
+                                        onblur={() => hoverTrendPoint(null)}
+                                        aria-label={`${trendLabel(point.row)} ${toCurrency(point.row.revenue)}`}
                                     >
-                                        <span class="sr-only">{point.row.date ?? point.row.label}</span>
+                                        <span class="sr-only">{trendLabel(point.row)}</span>
                                     </button>
 
                                     {#if showLineAxisLabel(index)}
                                         <div class="absolute top-[calc(100%+0.35rem)] -translate-x-1/2 text-[10px] font-medium text-slate-500 dark:text-slate-400" style={`left:${point.x}%`}>
-                                            {point.row.date ?? point.row.label}
+                                            {point.row.label}
                                         </div>
                                     {/if}
                                 {/each}
@@ -1175,18 +1213,34 @@
                             <div class="relative min-w-[760px] pt-11" role="presentation" onmouseleave={() => hoverHeatmapDay(null)}>
                                 {#if activeHeatmapTooltip}
                                     <div
-                                        class={`pointer-events-none absolute top-0 z-10 w-[210px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
+                                        class={`pointer-events-none absolute top-0 z-10 w-[228px] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
                                         style={`left:${activeHeatmapTooltip.left}%`}
                                     >
                                         <p class="text-sm font-semibold">{activeHeatmapTooltip.row.name ?? activeHeatmapTooltip.row.date}</p>
                                         <div class="mt-2 space-y-1 text-[12px]">
                                             <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">TPV</span>
+                                                <span class="text-white/68">Keberangkatan</span>
+                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.booking_revenue || 0)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-white/68">Bagasi</span>
+                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.luggage_revenue || 0)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-white/68">Carter</span>
+                                                <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.charter_revenue || 0)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3 border-t border-white/12 pt-1">
+                                                <span class="text-white/68">Total</span>
                                                 <span class="font-semibold">{toCurrency(activeHeatmapTooltip.row.revenue)}</span>
                                             </div>
                                             <div class="flex items-center justify-between gap-3">
-                                                <span class="text-white/68">TRX</span>
+                                                <span class="text-white/68">Transaksi</span>
                                                 <span class="font-semibold">{formatCompactNumber(activeHeatmapTooltip.row.transaction_count || 0)}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-3">
+                                                <span class="text-white/68">Margin</span>
+                                                <span class="font-semibold">{toCompactCurrency(activeHeatmapTooltip.row.margin || 0)}</span>
                                             </div>
                                         </div>
                                         <span class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeHeatmapTooltip.align)}`}></span>

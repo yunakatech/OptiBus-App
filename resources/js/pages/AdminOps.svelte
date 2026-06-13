@@ -804,13 +804,10 @@
 
     $effect(() => {
         try {
-            const group = tabGroupFor(activeTab);
-            const isMasterGroup = group && group.title === 'Master Data';
-
             if (typeof window !== 'undefined') {
                 window.dispatchEvent(
                     new CustomEvent('set-theme', {
-                        detail: { theme: isMasterGroup ? 'terminal' : null },
+                        detail: { theme: null },
                     }),
                 );
             }
@@ -4197,9 +4194,7 @@
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveRoute}
                     >
-                        <div
-                            class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(249,115,22,0.08),rgba(15,23,42,0.03))] px-5 py-4"
-                        >
+                        <div class="border-b border-border/70 bg-muted/20 px-5 py-4">
                             <p
                                 class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                             >
@@ -4313,9 +4308,7 @@
                     <div
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div
-                            class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),rgba(249,115,22,0.06))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
-                        >
+                        <div class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
                             <div>
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
@@ -4354,9 +4347,7 @@
                                 <article
                                     class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-sm"
                                 >
-                                    <div
-                                        class="bg-[linear-gradient(135deg,rgba(249,115,22,0.10),rgba(15,23,42,0.02))] p-3"
-                                    >
+                                    <div class="bg-muted/20 p-3">
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
                                                 <p class="truncate text-sm font-semibold text-foreground">
@@ -4497,7 +4488,7 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={routesColumns} rows={routes} class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm">
+                            <DataTable columns={routesColumns} rows={routes} class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm" tone="default">
                                 {#snippet row({ row, columns })}
                                     {@const gross = financialGrossMargin(row as RouteRow)}
                                     {@const net = financialNetMargin(row as RouteRow)}
@@ -4582,17 +4573,13 @@
 
             {#if activeTab === 'schedules'}
                 <div class="space-y-4">
-                    <section
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm"
-                    >
+                    <section class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm">
                         <div class="space-y-5 px-5 py-5">
                             <div
                                 class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
                             >
                                 <div class="space-y-2">
-                                    <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-700"
-                                    >
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                                         Workspace Keberangkatan
                                     </p>
                                     <div class="space-y-2">
@@ -4760,7 +4747,7 @@
                                     ? 'Perbarui jadwal keberangkatan'
                                     : 'Tambah jadwal keberangkatan baru'}
                                 description="Atur hari, jam, jumlah unit, dan BOP. Konfigurasi kategori armada per unit akan dipakai langsung oleh dropdown kursi di booking."
-                                toneClass="bg-[linear-gradient(135deg,rgba(37,99,235,0.08),rgba(15,23,42,0.03))]"
+                                toneClass="bg-muted/20"
                                 bodyClass="space-y-4"
                             >
                                 <input
@@ -5029,7 +5016,7 @@
                                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                                     >
                                         <div
-                                            class="flex items-start justify-between gap-3 border-b border-border/60 bg-[linear-gradient(135deg,rgba(241,245,249,0.92),rgba(255,255,255,0.98))] px-4 py-3"
+                                            class="flex items-start justify-between gap-3 border-b border-border/60 bg-muted/10 px-4 py-3"
                                         >
                                             <div class="space-y-1">
                                                 <p
@@ -5098,7 +5085,7 @@
                                                     {@const rowOptions =
                                                         row.unit_options ?? []}
                                                     <article
-                                                        class="rounded-2xl border border-slate-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] p-3 text-xs shadow-[0_18px_45px_-30px_rgba(15,23,42,0.4)]"
+                                                        class="rounded-2xl border border-border/70 bg-card/95 p-3 text-xs shadow-[0_18px_45px_-30px_rgba(15,23,42,0.16)]"
                                                     >
                                                         <div
                                                             class="flex items-start justify-between gap-3"
@@ -5724,9 +5711,7 @@
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveService}
                     >
-                        <div
-                            class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(15,23,42,0.03))] px-5 py-4"
-                        >
+                        <div class="border-b border-border/70 bg-muted/20 px-5 py-4">
                             <p
                                 class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                             >
@@ -5782,9 +5767,7 @@
                     <div
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div
-                            class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(16,185,129,0.06),rgba(15,23,42,0.03))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
-                        >
+                        <div class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
                             <div>
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
@@ -6057,7 +6040,7 @@
                                     : 'Tambah segment rute baru'}
                                 description={`Segment ini akan ditautkan ke rute induk ${selectedSegmentRoute.name}, jadi arah perjalanan dan harga perlu dibuat sejelas mungkin.`}
                                 badgeText={`${segments.length} segment aktif`}
-                                toneClass="bg-[linear-gradient(135deg,rgba(251,191,36,0.08),rgba(15,23,42,0.03))]"
+                                toneClass="bg-muted/20"
                                 bodyClass="space-y-4"
                             >
                                 <input
@@ -6154,9 +6137,7 @@
                         <div
                             class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                         >
-                            <div
-                                class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(251,191,36,0.08),rgba(15,23,42,0.03))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
-                            >
+                            <div class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
                                 <div>
                                     <p
                                         class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
@@ -6426,9 +6407,7 @@
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveCustomer}
                     >
-                        <div
-                            class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(251,191,36,0.08),rgba(15,23,42,0.03))] px-5 py-4"
-                        >
+                        <div class="border-b border-border/70 bg-muted/20 px-5 py-4">
                             <p
                                 class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                             >
@@ -6517,9 +6496,7 @@
                     <div
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div
-                            class="flex flex-col gap-4 border-b border-border/70 bg-[linear-gradient(135deg,rgba(251,191,36,0.06),rgba(15,23,42,0.03))] px-5 py-4"
-                        >
+                        <div class="flex flex-col gap-4 border-b border-border/70 bg-muted/20 px-5 py-4">
                             <div
                                 class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
                             >
