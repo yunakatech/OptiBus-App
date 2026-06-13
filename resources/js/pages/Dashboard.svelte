@@ -1125,7 +1125,7 @@
                             <CardTitle class="mt-1 text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-[1.65rem]">{activeTrendTitle}</CardTitle>
                             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{activeTrendRangeLabel}</p>
                         </div>
-                        <div class="flex w-full flex-wrap items-stretch gap-2 sm:items-center lg:w-auto lg:justify-end">
+                        <div class="flex w-full flex-wrap items-center gap-2 sm:items-center lg:w-auto lg:justify-end">
                             <div class="inline-flex w-full rounded-full border border-border/70 bg-background/80 p-1 shadow-sm sm:w-auto">
                                 <button
                                     type="button"
@@ -1157,7 +1157,7 @@
                             <span class="normal-case tracking-normal">{lineChartPoints.length} titik</span>
                         </div>
 
-                        <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]">
+                        <div class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]" role="region" aria-label="Grafik revenue — geser untuk melihat semua data" tabindex="0">
                             <div class={`relative h-[214px] overflow-visible pt-14 md:h-[244px] md:min-w-0 md:pt-16 ${trendMode === 'daily' ? 'min-w-[560px]' : 'min-w-[460px]'}`} role="presentation" onmouseleave={() => hoverTrendPoint(null)}>
                                 {#if activeTrendTooltip}
                                     {#key activeTrendTooltipKey}
@@ -1241,6 +1241,11 @@
                                     {/each}
                                 </div>
                             </div>
+                        </div>
+                        <div class="mt-2 flex items-center justify-center gap-1 text-[10px] text-muted-foreground md:hidden">
+                            <span>←</span>
+                            Geser untuk melihat semua {trendMode === 'daily' ? 'hari' : 'bulan'}
+                            <span>→</span>
                         </div>
                     </div>
                 </CardContent>
