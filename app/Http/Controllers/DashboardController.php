@@ -71,6 +71,10 @@ class DashboardController extends Controller
                     'subtitle_label' => 'tahun ini',
                 ],
             ],
+            'dailyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $this->dailyTrend($today);
+            }, 'dashboard-data'),
             'monthlyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
                 return $this->monthlyTrend($today);
