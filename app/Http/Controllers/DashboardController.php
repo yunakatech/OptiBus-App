@@ -71,9 +71,9 @@ class DashboardController extends Controller
                     'subtitle_label' => 'tahun ini',
                 ],
             ],
-            'dailyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+            'monthlyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
-                return $this->dailyTrend($today);
+                return $this->monthlyTrend($today);
             }, 'dashboard-data'),
             'yearlyHeatmap' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
@@ -734,6 +734,102 @@ class DashboardController extends Controller
                 }
 
                 return $rows;
+            },
+        );
+    }
+
+    private function monthlyTrend(Carbon $yearAnchor): array
+    {
+        return Cache::remember(
+            'dashboard:monthly-trend:'.$yearAnchor->format('Y').':'.PoolScope::cacheKey($this->activePoolId),
+            now()->addMinutes(2),
+            function () use ($yearAnchor): array {
+                $year = (int) $yearAnchor->format('Y');
+                $yearStart = Carbon::create($year, 1, 1)->startOfDay();
+                $queryEnd = $yearAnchor->copy()->endOfDay();
+
+                $bookingRevenueByDate = $this->bookingRevenueByDateRange($yearStart, $queryEnd);
+                $charterRevenueByDate = $this->charterRevenueByDateRange($yearStart, $queryEnd);
+                $luggageRevenueByDate = $this->luggageRevenueByDateRange($yearStart, $queryEnd);
+                $bookingCountByDate = $this->bookingCountByDateRange($yearStart, $queryEnd);
+                $charterCountByDate = $this->charterCountByDateRange($yearStart, $queryEnd);
+                $luggageCountByDate = $this->luggageCountByDateRange($yearStart, $queryEnd);
+                $bookingBopByDate = $this->bookingBopByDateRange($yearStart, $queryEnd);
+                $charterBopByDate = $this->charterBopByDateRange($yearStart, $queryEnd);
+
+                $months = [];
+
+                for ($month = 1; $month <= 12; $month++) {
+                    $monthDate = Carbon::create($year, $month, 1)->startOfMonth();
+                    $monthKey = $monthDate->format('Y-m');
+
+                    $months[$monthKey] = [
+                        'label' => strtoupper($monthDate->translatedFormat('M')),
+                        'name' => $monthDate->translatedFormat('F Y'),
+                        'month_key' => $monthKey,
+                        'transaction_count' => 0,
+                        'revenue' => 0.0,
+                        'booking_revenue' => 0.0,
+                        'charter_revenue' => 0.0,
+                        'luggage_revenue' => 0.0,
+                        'booking_bop' => 0.0,
+                        'charter_bop' => 0.0,
+                        'margin' => 0.0,
+                    ];
+                }
+
+                $accumulate = function (array $values, string $field) use (&$months): void {
+                    foreach ($values as $period => $value) {
+                        $monthKey = substr((string) $period, 0, 7);
+
+                        if (! isset($months[$monthKey])) {
+                            continue;
+                        }
+
+                        $months[$monthKey][$field] += (float) $value;
+                    }
+                };
+
+                $accumulate($bookingRevenueByDate, 'booking_revenue');
+                $accumulate($charterRevenueByDate, 'charter_revenue');
+                $accumulate($luggageRevenueByDate, 'luggage_revenue');
+                $accumulate($bookingBopByDate, 'booking_bop');
+                $accumulate($charterBopByDate, 'charter_bop');
+
+                foreach ($bookingCountByDate as $period => $value) {
+                    $monthKey = substr((string) $period, 0, 7);
+
+                    if (isset($months[$monthKey])) {
+                        $months[$monthKey]['transaction_count'] += (int) $value;
+                    }
+                }
+
+                foreach ($charterCountByDate as $period => $value) {
+                    $monthKey = substr((string) $period, 0, 7);
+
+                    if (isset($months[$monthKey])) {
+                        $months[$monthKey]['transaction_count'] += (int) $value;
+                    }
+                }
+
+                foreach ($luggageCountByDate as $period => $value) {
+                    $monthKey = substr((string) $period, 0, 7);
+
+                    if (isset($months[$monthKey])) {
+                        $months[$monthKey]['transaction_count'] += (int) $value;
+                    }
+                }
+
+                return array_values(array_map(static function (array $row): array {
+                    $row['revenue'] = (float) $row['booking_revenue']
+                        + (float) $row['charter_revenue']
+                        + (float) $row['luggage_revenue'];
+                    $row['margin'] = (float) $row['revenue']
+                        - (float) $row['booking_bop']
+                        - (float) $row['charter_bop'];
+
+                    return $row;
+                }, $months));
             },
         );
     }
