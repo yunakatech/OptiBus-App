@@ -270,7 +270,6 @@ class PlatformDashboardController extends Controller
         if (! Schema::hasTable('invoice_subscriptions')) {
             return [
                 'pending_count' => 0,
-                'verification_count' => 0,
                 'overdue_count' => 0,
                 'paid_month_count' => 0,
                 'paid_month_amount' => 0.0,
@@ -278,24 +277,10 @@ class PlatformDashboardController extends Controller
             ];
         }
 
-        $hasPaymentProof = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
         $hasDueDate = Schema::hasColumn('invoice_subscriptions', 'due_date');
         $hasPaidAt = Schema::hasColumn('invoice_subscriptions', 'paid_at');
 
         $pending = DB::table('invoice_subscriptions')->where('status', 'pending');
-        if ($hasPaymentProof) {
-            $pending->where(function ($query): void {
-                $query->whereNull('payment_proof')->orWhere('payment_proof', '');
-            });
-        }
-
-        $verificationCount = $hasPaymentProof
-            ? (int) DB::table('invoice_subscriptions')
-                ->where('status', 'pending')
-                ->whereNotNull('payment_proof')
-                ->where('payment_proof', '!=', '')
-                ->count()
-            : 0;
 
         $overdue = DB::table('invoice_subscriptions')->where('status', 'overdue');
         if ($hasDueDate) {
@@ -313,7 +298,6 @@ class PlatformDashboardController extends Controller
 
         return [
             'pending_count' => (int) $pending->count(),
-            'verification_count' => $verificationCount,
             'overdue_count' => (int) $overdue->count(),
             'paid_month_count' => (int) (clone $paidMonth)->count(),
             'paid_month_amount' => (float) (clone $paidMonth)->sum('amount'),
@@ -329,8 +313,8 @@ class PlatformDashboardController extends Controller
             return [];
         }
 
-        $hasPaymentProof = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
         $hasDueDate = Schema::hasColumn('invoice_subscriptions', 'due_date');
+        $hasGatewayStatus = Schema::hasColumn('invoice_subscriptions', 'gateway_status');
 
         $query = DB::table('invoice_subscriptions')
             ->join('tenants', 'invoice_subscriptions.tenant_id', '=', 'tenants.id')
@@ -343,9 +327,9 @@ class PlatformDashboardController extends Controller
                 'invoice_subscriptions.amount',
                 'invoice_subscriptions.status',
                 Schema::hasColumn('invoice_subscriptions', 'due_date') ? 'invoice_subscriptions.due_date' : DB::raw('NULL as due_date'),
+                $hasGatewayStatus ? 'invoice_subscriptions.gateway_status' : DB::raw('NULL as gateway_status'),
                 'tenants.name as tenant_name',
                 'plans.name as plan_name',
-                $hasPaymentProof ? 'invoice_subscriptions.payment_proof' : DB::raw('NULL as payment_proof'),
             )
             ->orderByRaw("CASE WHEN invoice_subscriptions.status = 'overdue' THEN 0 ELSE 1 END");
 
@@ -368,9 +352,9 @@ class PlatformDashboardController extends Controller
                     'plan_name' => (string) ($invoice->plan_name ?? '-'),
                     'amount' => (float) $invoice->amount,
                     'status' => (string) $invoice->status,
+                    'gateway_status' => (string) ($invoice->gateway_status ?? ''),
                     'due_date' => $invoice->due_date,
                     'days_overdue' => $dueDate ? max(0, (int) $dueDate->diffInDays($today, false)) : 0,
-                    'has_payment_proof' => trim((string) ($invoice->payment_proof ?? '')) !== '',
                 ];
             })
             ->all();

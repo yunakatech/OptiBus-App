@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 class PaymentSettings
 {
     /**
+     * Legacy manual payment settings. SaaS subscription billing uses Mayar.
+     *
      * @return array{
      *     qris: array{enabled: bool, merchant_name: string, image_url: string, image_path: string, has_image: bool, storage_status: string, note: string},
      *     bank_transfer: array{enabled: bool, accounts: array<int, array{bank_name: string, account_number: string, account_holder: string, note: string}>},
@@ -32,7 +34,7 @@ class PaymentSettings
 
         return [
             'qris' => [
-                'enabled' => (bool) config('payment.qris.enabled', true),
+                'enabled' => (bool) config('payment.qris.enabled', false),
                 'merchant_name' => self::get('payment.qris_merchant_name', config('payment.qris.merchant_name', 'OptiBus Indonesia')),
                 'image_url' => $qrisImage['url'],
                 'image_path' => $qrisPath,
@@ -41,7 +43,7 @@ class PaymentSettings
                 'note' => self::get('payment.qris_note', config('payment.qris.note', '')),
             ],
             'bank_transfer' => [
-                'enabled' => (bool) config('payment.bank_transfer.enabled', true),
+                'enabled' => (bool) config('payment.bank_transfer.enabled', false),
                 'accounts' => $accounts,
             ],
             'upload_max_kb' => (int) config('payment.upload.max_size_kb', 2048),
@@ -87,7 +89,7 @@ class PaymentSettings
                 'bank_name' => self::get("payment.bank_{$i}_name", config('payment.bank_transfer.accounts.'.($i - 1).'.bank_name', '')),
                 'account_number' => self::get("payment.bank_{$i}_number", config('payment.bank_transfer.accounts.'.($i - 1).'.account_number', '')),
                 'account_holder' => self::get("payment.bank_{$i}_holder", config('payment.bank_transfer.accounts.'.($i - 1).'.account_holder', '')),
-                'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                'note' => 'Legacy manual payment setting. SaaS billing uses Mayar.',
             ];
         })->all();
     }

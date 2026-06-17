@@ -63,7 +63,6 @@ class EnsureTenantSubscriptionActive
     {
         return $request->routeIs(
             'subscription.index',
-            'api.subscription.upload-proof',
             'logout',
             'verification.*',
             'profile.*',

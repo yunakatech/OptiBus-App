@@ -9,7 +9,6 @@ use App\Services\TenantProvisioningService;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\FeatureGate;
-use App\Support\PaymentSettings;
 use App\Support\PoolScope;
 use App\Support\RoleAccessData;
 use Carbon\Carbon;
@@ -23,7 +22,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -7778,7 +7776,6 @@ class AdminOpsApiController extends Controller
         $status = trim((string) $request->query('status', ''));
         $tenantId = (int) $request->query('tenant_id', 0);
         $q = trim((string) $request->query('q', ''));
-        $hasPaymentProofColumn = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
         $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
         $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
 
@@ -7795,32 +7792,13 @@ class AdminOpsApiController extends Controller
             ->orderBy('invoice_subscriptions.created_at', 'desc');
 
         if ($status !== '') {
-            if ($status === 'verification' && $hasPaymentProofColumn) {
-                $query->where(function (Builder $verification): void {
-                    $verification
-                        ->where('invoice_subscriptions.status', 'verification')
-                        ->orWhere(function (Builder $legacy): void {
-                            $legacy
-                                ->where('invoice_subscriptions.status', 'pending')
-                                ->whereNotNull('invoice_subscriptions.payment_proof')
-                                ->where('invoice_subscriptions.payment_proof', '!=', '');
-                        });
-                });
-            } elseif ($status === 'pending' && $hasPaymentProofColumn) {
-                $query
-                    ->where('invoice_subscriptions.status', 'pending')
-                    ->where(function (Builder $pending) {
-                        $pending
-                            ->whereNull('invoice_subscriptions.payment_proof')
-                            ->orWhere('invoice_subscriptions.payment_proof', '');
-                    });
-            } elseif ($status === 'overdue' && $hasDueDateColumn) {
+            if ($status === 'overdue' && $hasDueDateColumn) {
                 $query->where(function (Builder $overdue) {
                     $overdue
                         ->where('invoice_subscriptions.status', 'overdue')
                         ->orWhere(function (Builder $pendingOverdue) {
                             $pendingOverdue
-                                ->whereIn('invoice_subscriptions.status', ['pending', 'verification'])
+                                ->where('invoice_subscriptions.status', 'pending')
                                 ->whereDate('invoice_subscriptions.due_date', '<', now()->toDateString());
                         });
                 });
@@ -7846,12 +7824,6 @@ class AdminOpsApiController extends Controller
         $result = $this->paginateQuery($query, $page, $perPage);
 
         $invoices = collect($result['data'])->map(function ($inv) {
-            $paymentProof = trim((string) ($inv->payment_proof ?? ''));
-            $status = (string) $inv->status;
-            if ($status === 'pending' && $paymentProof !== '') {
-                $status = 'verification';
-            }
-
             return [
                 'id' => (int) $inv->id,
                 'tenant_id' => (int) $inv->tenant_id,
@@ -7860,12 +7832,15 @@ class AdminOpsApiController extends Controller
                 'subscription_id' => (int) $inv->subscription_id,
                 'invoice_number' => (string) $inv->invoice_number,
                 'amount' => (float) $inv->amount,
-                'status' => $status,
+                'status' => (string) $inv->status,
                 'due_date' => $inv->due_date ?? null,
                 'paid_at' => $inv->paid_at ?? null,
                 'payment_method' => $inv->payment_method ?? null,
-                'payment_proof' => $paymentProof,
-                'payment_proof_url' => $this->paymentProofUrl($paymentProof),
+                'payment_gateway' => $inv->payment_gateway ?? 'Mayar',
+                'gateway_reference' => $inv->gateway_reference ?? null,
+                'gateway_checkout_url' => $inv->gateway_checkout_url ?? null,
+                'gateway_status' => $inv->gateway_status ?? null,
+                'gateway_paid_at' => $inv->gateway_paid_at ?? null,
                 'plan_name' => (string) ($inv->plan_name ?? ''),
                 'notes' => $inv->notes ?? null,
                 'created_at' => $inv->created_at ?? null,
@@ -7874,8 +7849,8 @@ class AdminOpsApiController extends Controller
 
         return $this->ok([
             'invoices' => $invoices,
-            'summary' => $this->invoiceSummary($hasPaymentProofColumn, $hasDueDateColumn, $hasPaidAtColumn),
-            'status_options' => ['pending', 'verification', 'paid', 'overdue', 'failed', 'refunded'],
+            'summary' => $this->invoiceSummary($hasDueDateColumn, $hasPaidAtColumn),
+            'status_options' => ['pending', 'paid', 'overdue', 'failed', 'refunded'],
             'pagination' => $result['meta'],
         ]);
     }
@@ -7897,34 +7872,11 @@ class AdminOpsApiController extends Controller
     /**
      * @return array{pending: int, verification: int, paid_month: int, overdue: int, total_amount_pending: float}
      */
-    private function invoiceSummary(bool $hasPaymentProofColumn, bool $hasDueDateColumn, bool $hasPaidAtColumn): array
+    private function invoiceSummary(bool $hasDueDateColumn, bool $hasPaidAtColumn): array
     {
         $base = DB::table('invoice_subscriptions');
 
         $pending = (clone $base)->where('status', 'pending');
-        if ($hasPaymentProofColumn) {
-            $pending->where(function (Builder $query): void {
-                $query
-                    ->whereNull('payment_proof')
-                    ->orWhere('payment_proof', '');
-            });
-        }
-
-        $verification = 0;
-        if ($hasPaymentProofColumn) {
-            $verification = (int) (clone $base)
-                ->where(function (Builder $query): void {
-                    $query
-                        ->where('status', 'verification')
-                        ->orWhere(function (Builder $legacy): void {
-                            $legacy
-                                ->where('status', 'pending')
-                                ->whereNotNull('payment_proof')
-                                ->where('payment_proof', '!=', '');
-                        });
-                })
-                ->count();
-        }
 
         $paidMonth = 0;
         if ($hasPaidAtColumn) {
@@ -7938,38 +7890,20 @@ class AdminOpsApiController extends Controller
         if ($hasDueDateColumn) {
             $overdue->orWhere(function (Builder $query): void {
                 $query
-                    ->whereIn('status', ['pending', 'verification'])
+                    ->where('status', 'pending')
                     ->whereDate('due_date', '<', now()->toDateString());
             });
         }
 
         return [
             'pending' => (int) $pending->count(),
-            'verification' => $verification,
+            'verification' => 0,
             'paid_month' => $paidMonth,
             'overdue' => (int) $overdue->count(),
             'total_amount_pending' => (float) (clone $base)
-                ->whereIn('status', ['pending', 'verification', 'overdue'])
+                ->whereIn('status', ['pending', 'overdue'])
                 ->sum('amount'),
         ];
-    }
-
-    private function paymentProofUrl(?string $path): ?string
-    {
-        $path = trim((string) $path);
-        if ($path === '') {
-            return null;
-        }
-
-        if (Str::startsWith($path, ['http://', 'https://', '/'])) {
-            return $path;
-        }
-
-        if (Str::startsWith($path, 'storage/')) {
-            return asset($path);
-        }
-
-        return Storage::disk('public')->url($path);
     }
 
     public function invoicesMarkPaid(int $id, Request $request): JsonResponse
@@ -7991,7 +7925,7 @@ class AdminOpsApiController extends Controller
             'payment_method' => ['nullable', 'string', 'max:50'],
         ]);
 
-        PaymentGateway::markInvoicePaid($id, (string) ($this->nullable($data['payment_method'] ?? 'Manual Transfer') ?? 'Manual Transfer'));
+        PaymentGateway::markInvoicePaid($id, (string) ($this->nullable($data['payment_method'] ?? 'Admin Correction') ?? 'Admin Correction'));
 
         return $this->ok(['message' => 'Invoice marked as paid.']);
     }
@@ -8013,44 +7947,26 @@ class AdminOpsApiController extends Controller
             return $response;
         }
 
-        $data = $request->validate([
-            'qris_merchant_name' => ['nullable', 'string', 'max:120'],
-            'qris_note' => ['nullable', 'string', 'max:255'],
-            'bank_1_name' => ['nullable', 'string', 'max:50'],
-            'bank_1_number' => ['nullable', 'string', 'max:50'],
-            'bank_1_holder' => ['nullable', 'string', 'max:120'],
-            'bank_2_name' => ['nullable', 'string', 'max:50'],
-            'bank_2_number' => ['nullable', 'string', 'max:50'],
-            'bank_2_holder' => ['nullable', 'string', 'max:120'],
-            'bank_3_name' => ['nullable', 'string', 'max:50'],
-            'bank_3_number' => ['nullable', 'string', 'max:50'],
-            'bank_3_holder' => ['nullable', 'string', 'max:120'],
+        return $this->ok([
+            'message' => 'Mayar dikonfigurasi melalui environment server.',
+            'settings' => $this->loadPaymentSettings(),
         ]);
-
-        // Handle QRIS image upload
-        if ($request->hasFile('qris_image')) {
-            $request->validate(['qris_image' => ['image', 'max:1024']]); // max 1MB
-            PaymentSettings::saveQrisImage($request->file('qris_image'));
-        }
-
-        PaymentSettings::save('payment.qris_merchant_name', trim((string) ($data['qris_merchant_name'] ?? '')));
-        PaymentSettings::save('payment.qris_note', trim((string) ($data['qris_note'] ?? '')));
-        PaymentSettings::save('payment.bank_1_name', trim((string) ($data['bank_1_name'] ?? '')));
-        PaymentSettings::save('payment.bank_1_number', trim((string) ($data['bank_1_number'] ?? '')));
-        PaymentSettings::save('payment.bank_1_holder', trim((string) ($data['bank_1_holder'] ?? '')));
-        PaymentSettings::save('payment.bank_2_name', trim((string) ($data['bank_2_name'] ?? '')));
-        PaymentSettings::save('payment.bank_2_number', trim((string) ($data['bank_2_number'] ?? '')));
-        PaymentSettings::save('payment.bank_2_holder', trim((string) ($data['bank_2_holder'] ?? '')));
-        PaymentSettings::save('payment.bank_3_name', trim((string) ($data['bank_3_name'] ?? '')));
-        PaymentSettings::save('payment.bank_3_number', trim((string) ($data['bank_3_number'] ?? '')));
-        PaymentSettings::save('payment.bank_3_holder', trim((string) ($data['bank_3_holder'] ?? '')));
-
-        return $this->ok(['message' => 'Pengaturan pembayaran disimpan.', 'settings' => $this->loadPaymentSettings()]);
     }
 
     private function loadPaymentSettings(): array
     {
-        return PaymentSettings::all(includeEmptyBankAccounts: true);
+        $apiKey = trim((string) config('mayar.api_key'));
+        $apiUrl = rtrim((string) config('mayar.api_url', 'https://api.mayar.id'), '/');
+
+        return [
+            'gateway' => 'Mayar',
+            'enabled' => (bool) config('mayar.enabled', false),
+            'configured' => $apiKey !== '',
+            'api_url' => $apiUrl,
+            'payment_create_path' => (string) config('mayar.payment_create_path', '/hl/v1/payment/create'),
+            'webhook_url' => route('api.webhooks.mayar', absolute: true),
+            'webhook_secret_configured' => trim((string) config('mayar.webhook_secret')) !== '',
+        ];
     }
 
     private function ok(array $data = [], int $status = 200): JsonResponse
