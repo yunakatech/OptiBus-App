@@ -38,7 +38,7 @@
             return () => {};
         }
 
-        const media = window.matchMedia('(max-width: 768px)');
+        const media = window.matchMedia('(max-width: 767.98px)');
         const update = () => set(media.matches);
         update();
         media.addEventListener('change', update);
@@ -60,7 +60,7 @@
 
     const toggleSidebar = () => {
         if ($isMobile) {
-            setOpenMobile(!$openMobile);
+            setOpenMobile(false);
         } else {
             setOpen(!$open);
         }
