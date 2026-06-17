@@ -257,14 +257,14 @@
         <section class="hero">
             <div class="brand-block">
                 @if(!empty($invoice['logo_data_uri']))
-                    <img class="brand-logo" src="{{ $invoice['logo_data_uri'] }}" alt="Qbus">
+                    <img class="brand-logo" src="{{ $invoice['logo_data_uri'] }}" alt="OptiBus">
                 @endif
                 <div class="brand-copy">
                     <div class="eyebrow">Invoice Carter</div>
                     <h1>{{ $invoice['invoice_code'] ?? '-' }}</h1>
                     <div class="muted">
                         {{ $invoice['name'] ?? '-' }}<br>
-                        {{ $invoice['company_name'] ?? 'Customer charter' }}{{ !empty($invoice['phone']) ? ' • '.$invoice['phone'] : '' }}
+                        {{ $invoice['company_name'] ?? 'Customer charter' }}{{ !empty($invoice['phone']) ? ' â€¢ '.$invoice['phone'] : '' }}
                     </div>
                 </div>
             </div>
@@ -355,7 +355,7 @@
         @endif
 
         <div class="doc-footer">
-            <div>Dicetak dari sistem Qbus</div>
+            <div>Dicetak dari sistem OptiBus</div>
             <div>{{ $invoice['invoice_code'] ?? '-' }}</div>
         </div>
     </div>

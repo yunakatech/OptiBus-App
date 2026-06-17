@@ -1,13 +1,13 @@
 # Render + Neon Deploy Guide
 
-Panduan ini disusun untuk repo `yunakatech/Qbus` dengan target hosting Render dan database Neon.
+Panduan ini disusun untuk repo `yunakatech/OptiBus` dengan target hosting Render dan database Neon.
 
 ## 1. Arahkan remote Git ke repo GitHub baru
 
 Jika local repo Anda masih menunjuk ke starter kit bawaan, ubah `origin` ke repo baru:
 
 ```bash
-git remote set-url origin https://github.com/yunakatech/Qbus.git
+git remote set-url origin https://github.com/yunakatech/OptiBus.git
 ```
 
 Verifikasi:
@@ -48,7 +48,7 @@ Pilih salah satu dari dua cara berikut.
 
 1. Login ke Render.
 2. Pilih `New` -> `Blueprint`.
-3. Hubungkan repo `yunakatech/Qbus`.
+3. Hubungkan repo `yunakatech/OptiBus`.
 4. Render akan membaca `render.yaml`.
 5. Saat diminta mengisi env yang `sync: false`, isi:
 
@@ -61,7 +61,7 @@ DB_URL=postgresql://cabooq_app:your-password@ep-xxxxxx.ap-southeast-1.aws.neon.t
 ### Opsi B: Manual Web Service
 
 1. Pilih `New` -> `Web Service`.
-2. Hubungkan repo `yunakatech/Qbus`.
+2. Hubungkan repo `yunakatech/OptiBus`.
 3. Pilih runtime `Docker`.
 4. Region pilih `Singapore`.
 5. Aktifkan auto deploy untuk branch `main`.
@@ -69,7 +69,7 @@ DB_URL=postgresql://cabooq_app:your-password@ep-xxxxxx.ap-southeast-1.aws.neon.t
 7. Tambahkan environment variables berikut:
 
 ```env
-APP_NAME=Qbus
+APP_NAME=OptiBus
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:...
@@ -111,7 +111,7 @@ Periksa endpoint berikut:
 ## 7. Catatan penting
 
 - Setup ini memakai `php artisan serve` agar deploy Render gratis tetap sederhana.
-- Jika nama service `qbus` sudah dipakai, ubah nama service saat membuat Web Service di Render lalu sesuaikan `APP_URL`.
+- Jika nama service `OptiBus` sudah dipakai, ubah nama service saat membuat Web Service di Render lalu sesuaikan `APP_URL`.
 - `QUEUE_CONNECTION` diset `sync` karena Render Free tidak ideal untuk worker terpisah.
 - Export PDF sekarang sudah mendukung binary Linux lewat env `BROWSER_BINARY`, dan image Docker memasang Chromium.
 - Penyimpanan lokal di Render bersifat ephemeral. Jangan simpan file penting permanen di disk lokal.

@@ -7,7 +7,7 @@
         <meta name="theme-color" content="#0f766e">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-title" content="Qbus">
+        <meta name="apple-mobile-web-app-title" content="OptiBus">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="format-detection" content="telephone=no">
 
@@ -30,7 +30,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.ts'])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Qbus') }}</title>
+            <title>{{ config('app.name', 'OptiBus') }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

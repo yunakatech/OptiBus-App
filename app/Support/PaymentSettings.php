@@ -33,7 +33,7 @@ class PaymentSettings
         return [
             'qris' => [
                 'enabled' => (bool) config('payment.qris.enabled', true),
-                'merchant_name' => self::get('payment.qris_merchant_name', config('payment.qris.merchant_name', 'Qbus Indonesia')),
+                'merchant_name' => self::get('payment.qris_merchant_name', config('payment.qris.merchant_name', 'OptiBus Indonesia')),
                 'image_url' => $qrisImage['url'],
                 'image_path' => $qrisPath,
                 'has_image' => $qrisImage['has_image'],

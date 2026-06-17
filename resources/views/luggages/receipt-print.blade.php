@@ -248,10 +248,10 @@
             <header class="receipt-head">
                 @if (!empty($document['logo_data_uri']))
                     <div class="logo-shell">
-                        <img src="{{ $document['logo_data_uri'] }}" alt="Qbus" class="logo">
+                        <img src="{{ $document['logo_data_uri'] }}" alt="OptiBus" class="logo">
                     </div>
                 @endif
-                <p class="eyebrow">Qbus Baggage</p>
+                <p class="eyebrow">OptiBus Baggage</p>
                 <h1>{{ $document['title'] }}</h1>
                 <div class="subtitle">Resi thermal operasional pickup dan serah terima bagasi.</div>
                 <div class="receipt-code">{{ $document['kode_resi'] ?: '-' }}</div>

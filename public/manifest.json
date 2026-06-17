@@ -1,8 +1,8 @@
 {
     "id": "/",
-    "name": "Qbus Booking & Operations",
-    "short_name": "Qbus",
-    "description": "Qbus booking and operations workspace.",
+    "name": "OptiBus Booking & Operations",
+    "short_name": "OptiBus",
+    "description": "OptiBus booking and operations workspace.",
     "start_url": "/login",
     "scope": "/",
     "display": "fullscreen",

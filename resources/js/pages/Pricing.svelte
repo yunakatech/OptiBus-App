@@ -1,7 +1,7 @@
 <script module lang="ts">
     export const layout = {
         title: 'Paket & Harga',
-        description: 'Pilih paket Qbus sesuai ukuran operasional travel Anda.',
+        description: 'Pilih paket OptiBus sesuai ukuran operasional travel Anda.',
     };
 </script>
 
@@ -132,14 +132,14 @@
 </script>
 
 <svelte:head>
-    <title>Paket & Harga - Qbus</title>
-    <meta name="description" content="Bandingkan paket Starter, Pro, dan Fleet untuk sistem operasional travel Qbus." />
+    <title>Paket & Harga - OptiBus</title>
+    <meta name="description" content="Bandingkan paket Starter, Pro, dan Fleet untuk sistem operasional travel OptiBus." />
 </svelte:head>
 
 <div class="min-h-screen bg-[#f7f8f4] text-[#17201f]">
     <nav class="sticky top-0 z-40 border-b border-[#d9ded4] bg-[#f7f8f4]/92 backdrop-blur">
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <a href="/" class="flex items-center" aria-label="Qbus">
+            <a href="/" class="flex items-center" aria-label="OptiBus">
                 <AppLogo />
             </a>
             <div class="hidden items-center gap-7 text-sm font-medium text-[#4b5a56] md:flex">
@@ -328,7 +328,7 @@
 
     <footer class="border-t border-[#d9ded4] bg-[#f7f8f4]">
         <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-[#53615d] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-            <span>Qbus - Paket SaaS operasional travel.</span>
+            <span>OptiBus - Paket SaaS operasional travel.</span>
             <div class="flex gap-5">
                 <a href="/" class="hover:text-[#17201f]">Landing</a>
                 {#if isAuthenticated}

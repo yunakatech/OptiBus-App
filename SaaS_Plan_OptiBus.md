@@ -1,10 +1,10 @@
-# SaaS Plan Qbus
+# SaaS Plan OptiBus
 
 ## 1. Ringkasan Produk
 
-**Qbus** adalah platform SaaS untuk membantu driver, pemilik travel kecil, dan operator mobil lintas daerah dalam mengelola booking seat, booking bagasi dan carter, jadwal keberangkatan, jadwal carter, data pelanggan, status pembayaran, manifest perjalanan, dan laporan pendapatan.
+**OptiBus** adalah platform SaaS untuk membantu driver, pemilik travel kecil, dan operator mobil lintas daerah dalam mengelola booking seat, booking bagasi dan carter, jadwal keberangkatan, jadwal carter, data pelanggan, status pembayaran, manifest perjalanan, dan laporan pendapatan.
 
-Qbus dibuat untuk menyelesaikan masalah umum driver mobil lintas daerah yang masih mencatat booking secara manual melalui WhatsApp, buku catatan, atau spreadsheet sederhana.
+OptiBus dibuat untuk menyelesaikan masalah umum driver mobil lintas daerah yang masih mencatat booking secara manual melalui WhatsApp, buku catatan, atau spreadsheet sederhana.
 
 ---
 
@@ -74,17 +74,17 @@ Kebutuhan utama:
 
 ## 4. Value Proposition
 
-Qbus membantu driver dan travel kecil berpindah dari pencatatan manual ke sistem digital sederhana.
+OptiBus membantu driver dan travel kecil berpindah dari pencatatan manual ke sistem digital sederhana.
 
-> Qbus membantu driver mobil lintas daerah mencatat booking seat, bagasi, pembayaran, dan pendapatan secara rapi dalam satu platform berlangganan bulanan.
+> OptiBus membantu driver mobil lintas daerah mencatat booking seat, bagasi, pembayaran, dan pendapatan secara rapi dalam satu platform berlangganan bulanan.
 
 Slogan:
 
-> Dari catatan WhatsApp dan buku tulis, pindah ke sistem booking rapi dengan Qbus.
+> Dari catatan WhatsApp dan buku tulis, pindah ke sistem booking rapi dengan OptiBus.
 
 ---
 
-## 5. Modul Utama SaaS Qbus
+## 5. Modul Utama SaaS OptiBus
 
 ## 5.1 Modul Auth dan Akun
 
@@ -108,7 +108,7 @@ Role lanjutan:
 
 - Agen
 - Finance
-- Super Admin Qbus
+- Super Admin OptiBus
 
 ---
 
@@ -187,11 +187,11 @@ Fitur:
 
 Contoh rute:
 
-- Pinrang → Makassar
-- Makassar → Pinrang
-- Parepare → Makassar
-- Bone → Makassar
-- Toraja → Makassar
+- Pinrang â†’ Makassar
+- Makassar â†’ Pinrang
+- Parepare â†’ Makassar
+- Bone â†’ Makassar
+- Toraja â†’ Makassar
 
 ---
 
@@ -476,8 +476,8 @@ Setiap driver atau travel mendapatkan halaman publik.
 Contoh URL:
 
 ```text
-qbus.id/mandiritrans
-qbus.id/travel/mandiritrans
+OptiBus.id/mandiritrans
+OptiBus.id/travel/mandiritrans
 ```
 
 Isi halaman:
@@ -524,9 +524,9 @@ Channel notifikasi:
 
 ---
 
-## 5.16 Modul Admin Qbus
+## 5.16 Modul Admin OptiBus
 
-Digunakan oleh pengelola platform Qbus.
+Digunakan oleh pengelola platform OptiBus.
 
 Fitur:
 
@@ -556,7 +556,7 @@ Metric SaaS:
 
 ## 6. Paket Langganan
 
-## 6.1 Qbus Starter
+## 6.1 OptiBus Starter
 
 Target:
 
@@ -581,7 +581,7 @@ Fitur:
 
 ---
 
-## 6.2 Qbus Pro
+## 6.2 OptiBus Pro
 
 Target:
 
@@ -609,7 +609,7 @@ Fitur:
 
 ---
 
-## 6.3 Qbus Fleet
+## 6.3 OptiBus Fleet
 
 Target:
 
@@ -645,17 +645,17 @@ Fitur:
 | Tambahan Kendaraan | Rp20.000/kendaraan/bulan | Untuk fleet yang berkembang |
 | Custom Domain | Rp50.000/bulan | Contoh booking.namatravel.com |
 | Advanced Report | Rp75.000/bulan | Laporan detail dan grafik |
-| Branding Halaman Booking | Rp50.000/bulan | Hilangkan branding Qbus |
+| Branding Halaman Booking | Rp50.000/bulan | Hilangkan branding OptiBus |
 
 ---
 
 ## 7. Roadmap Pengembangan
 
-## 7.1 Phase 1 — MVP
+## 7.1 Phase 1 â€” MVP
 
 Tujuan:
 
-Menguji apakah driver mau menggunakan dan membayar Qbus.
+Menguji apakah driver mau menggunakan dan membayar OptiBus.
 
 Fitur MVP:
 
@@ -683,7 +683,7 @@ Output MVP:
 
 ---
 
-## 7.2 Phase 2 — SaaS Monetization
+## 7.2 Phase 2 â€” SaaS Monetization
 
 Tujuan:
 
@@ -697,12 +697,12 @@ Fitur:
 4. Pembayaran via QRIS/payment gateway
 5. Grace period
 6. Pembatasan fitur sesuai paket
-7. Dashboard admin Qbus
+7. Dashboard admin OptiBus
 8. Reminder subscription expired
 
 ---
 
-## 7.3 Phase 3 — Public Booking Page
+## 7.3 Phase 3 â€” Public Booking Page
 
 Tujuan:
 
@@ -720,7 +720,7 @@ Fitur:
 
 ---
 
-## 7.4 Phase 4 — Fleet Management
+## 7.4 Phase 4 â€” Fleet Management
 
 Tujuan:
 
@@ -738,11 +738,11 @@ Fitur:
 
 ---
 
-## 7.5 Phase 5 — Automation dan Marketplace
+## 7.5 Phase 5 â€” Automation dan Marketplace
 
 Tujuan:
 
-Mengembangkan Qbus menjadi ekosistem booking transportasi lokal.
+Mengembangkan OptiBus menjadi ekosistem booking transportasi lokal.
 
 Fitur:
 
@@ -910,7 +910,7 @@ Tabel utama:
 ## 11.2 Flow Booking Penumpang
 
 1. Penumpang menghubungi driver via WhatsApp.
-2. Driver membuka jadwal di Qbus.
+2. Driver membuka jadwal di OptiBus.
 3. Driver memilih seat kosong.
 4. Driver mengisi data penumpang.
 5. Driver memilih status pembayaran.
@@ -1018,7 +1018,7 @@ Metric yang perlu dipantau:
 | Risiko | Solusi |
 |---|---|
 | Driver tidak terbiasa pakai aplikasi | Buat UI sangat sederhana dan mobile-first |
-| Driver tetap nyaman pakai WhatsApp | Integrasikan Qbus dengan alur WhatsApp manual |
+| Driver tetap nyaman pakai WhatsApp | Integrasikan OptiBus dengan alur WhatsApp manual |
 | Driver keberatan bayar | Berikan trial dan paket murah |
 | Data tidak diinput konsisten | Buat input booking super cepat |
 | Internet tidak stabil | Buat halaman ringan dan cache data penting |
@@ -1112,7 +1112,7 @@ Menu untuk Owner:
 9. Subscription
 10. Pengaturan
 
-Menu untuk Admin Qbus:
+Menu untuk Admin OptiBus:
 
 1. Dashboard Platform
 2. Tenant
@@ -1147,7 +1147,7 @@ Menu untuk Admin Qbus:
 
 ## 20. Kesimpulan
 
-Qbus sebaiknya dibangun secara bertahap sebagai SaaS operasional untuk driver mobil lintas daerah dan travel kecil.
+OptiBus sebaiknya dibangun secara bertahap sebagai SaaS operasional untuk driver mobil lintas daerah dan travel kecil.
 
 Fokus pertama bukan marketplace besar, tetapi sistem sederhana untuk:
 
@@ -1163,4 +1163,4 @@ MVP terbaik:
 
 > Dashboard driver + jadwal keberangkatan + booking seat + booking bagasi + status pembayaran + manifest + laporan pendapatan + subscription bulanan.
 
-Setelah MVP terbukti digunakan dan driver bersedia membayar, Qbus dapat dikembangkan menjadi platform yang lebih besar dengan halaman booking publik, WhatsApp API, fleet management, dan marketplace travel lokal.
+Setelah MVP terbukti digunakan dan driver bersedia membayar, OptiBus dapat dikembangkan menjadi platform yang lebih besar dengan halaman booking publik, WhatsApp API, fleet management, dan marketplace travel lokal.

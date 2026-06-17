@@ -18,7 +18,7 @@ return new class extends Migration
         }
 
         DB::table('customers')->insert([
-            'name' => 'CUSTOMER DUMMY QBUS',
+            'name' => 'CUSTOMER DUMMY OPTIBUS',
             'phone' => $phone,
             'pickup_point' => 'Terminal Kayuringin',
             'gmaps' => 'https://maps.google.com/?q=Terminal+Kayuringin',
@@ -34,7 +34,7 @@ return new class extends Migration
 
         DB::table('customers')
             ->where('phone', '081234567890')
-            ->where('name', 'CUSTOMER DUMMY QBUS')
+            ->where('name', 'CUSTOMER DUMMY OPTIBUS')
             ->delete();
     }
 };

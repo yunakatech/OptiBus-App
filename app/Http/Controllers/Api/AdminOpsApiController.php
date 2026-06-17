@@ -944,7 +944,7 @@ class AdminOpsApiController extends Controller
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['name', 'phone', 'pickup_point', 'gmaps']);
-            fputcsv($out, ['Customer Contoh Qbus', '081234567890', 'Terminal Kayuringin', 'https://maps.google.com/?q=Terminal+Kayuringin']);
+            fputcsv($out, ['Customer Contoh OptiBus', '081234567890', 'Terminal Kayuringin', 'https://maps.google.com/?q=Terminal+Kayuringin']);
             fclose($out);
         }, 'template-customer-reguler.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }

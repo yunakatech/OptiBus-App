@@ -147,10 +147,10 @@
 </script>
 
 <svelte:head>
-    <title>Qbus - Sistem Operasional Travel</title>
+    <title>OptiBus - Sistem Operasional Travel</title>
     <meta
         name="description"
-        content="Qbus membantu travel mengelola booking seat, carter, bagasi, pembayaran, pool, dan laporan revenue dalam satu sistem."
+        content="OptiBus membantu travel mengelola booking seat, carter, bagasi, pembayaran, pool, dan laporan revenue dalam satu sistem."
     />
 </svelte:head>
 
@@ -161,7 +161,7 @@
         <div
             class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
         >
-            <a href="/" class="flex items-center" aria-label="Qbus">
+            <a href="/" class="flex items-center" aria-label="OptiBus">
                 <AppLogo />
             </a>
             <div
@@ -216,7 +216,7 @@
                     <p
                         class="mt-5 max-w-2xl text-base leading-8 text-[#4b5a56] sm:text-lg"
                     >
-                        Qbus menyatukan booking seat, carter, bagasi,
+                        OptiBus menyatukan booking seat, carter, bagasi,
                         pembayaran, pool, rute, dan target revenue dalam
                         dashboard yang siap dipakai tim lapangan.
                     </p>
@@ -287,7 +287,7 @@
                     >
                         <img
                             src="/landing/iphone-12-pro-wooden-hands.png"
-                            alt="Mockup aplikasi Qbus di iPhone saat memilih kursi perjalanan"
+                            alt="Mockup aplikasi OptiBus di iPhone saat memilih kursi perjalanan"
                             width="3000"
                             height="2250"
                             loading="eager"
@@ -487,7 +487,7 @@
         <div
             class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-[#53615d] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8"
         >
-            <span>Qbus - Sistem operasional travel.</span>
+            <span>OptiBus - Sistem operasional travel.</span>
             <div class="flex gap-5">
                 <a href="/pricing" class="hover:text-[#17201f]">Pricing</a>
                 {#if isAuthenticated}

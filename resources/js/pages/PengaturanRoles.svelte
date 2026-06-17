@@ -565,7 +565,7 @@
                         </h1>
                         <p class="max-w-2xl text-sm text-muted-foreground">
                             Buat role baru, atur permission per menu, dan jaga
-                            akses operasional Qbus tetap rapi per tim.
+                            akses operasional OptiBus tetap rapi per tim.
                         </p>
                     </div>
                 </div>

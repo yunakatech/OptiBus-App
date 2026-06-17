@@ -1,13 +1,13 @@
-# Ringkasan Konsep SaaS Qbus dan Qbus Solo Driver
+# Ringkasan Konsep SaaS OptiBus dan OptiBus Solo Driver
 
 ## Visi Produk
 
-Qbus dikembangkan sebagai SaaS operasional transportasi berbasis cloud untuk membantu pelaku transportasi mengelola order, jadwal, customer, kendaraan, pembayaran, dan laporan dari satu sistem.
+OptiBus dikembangkan sebagai SaaS operasional transportasi berbasis cloud untuk membantu pelaku transportasi mengelola order, jadwal, customer, kendaraan, pembayaran, dan laporan dari satu sistem.
 
 Produk SaaS utama:
 
 ```text
-Qbus Cloud
+OptiBus Cloud
 ```
 
 Tagline:
@@ -42,12 +42,12 @@ Tenant Scope -> Pool Scope -> Role Permission
 Paket awal yang akan dibuat lebih dulu:
 
 ```text
-Qbus Solo Driver
+OptiBus Solo Driver
 ```
 
 Paket ini ditujukan untuk driver mobil daerah yang memakai kendaraan pribadi untuk jasa transportasi, carter/private trip, antar jemput, dan kirim barang ringan.
 
-## Qbus Solo Driver
+## OptiBus Solo Driver
 
 Fokus utama Solo Driver:
 
@@ -291,7 +291,7 @@ plan_type = solo_driver
 Rekomendasi paket:
 
 ```text
-Qbus Solo Driver
+OptiBus Solo Driver
 ```
 
 Limit:
@@ -341,4 +341,3 @@ Ditunda dulu:
 - Search customer otomatis.
 - Copy/share WhatsApp selalu tersedia.
 - Dashboard langsung menampilkan jadwal terdekat.
-

@@ -1,7 +1,7 @@
 <script module lang="ts">
     export const layout = {
         title: 'Daftar Akun',
-        description: 'Daftar trial atau lanjutkan pembayaran paket Qbus.',
+        description: 'Daftar trial atau lanjutkan pembayaran paket OptiBus.',
     };
 </script>
 
