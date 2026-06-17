@@ -45,7 +45,7 @@
     class="mobile-safe-header grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-sidebar-border/70 bg-background/95 px-4 backdrop-blur transition-[width,height] ease-linear supports-[backdrop-filter]:bg-background/85 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-6 md:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:[html[data-density=compact]_&]:h-14 md:[html[data-density=compact]_&]:px-4"
 >
     <div class="flex min-w-0 items-center gap-2">
-        <SidebarTrigger class="-ml-1" />
+        <SidebarTrigger class="-ml-1 hidden md:inline-flex" />
 
         <MobileSettingsMenuButton />
 
@@ -77,7 +77,12 @@
             class="h-9 gap-2 rounded-full px-4"
         >
             {#snippet children(props)}
-                <Link {...props} href={toUrl('/booking-console')} prefetch cacheFor={30000}>
+                <Link
+                    {...props}
+                    href={toUrl('/booking-console')}
+                    prefetch
+                    cacheFor={30000}
+                >
                     <Monitor class="size-4" />
                     <span>Booking Console</span>
                 </Link>
@@ -85,8 +90,13 @@
         </Button>
     </div>
 
-    <div class="flex min-w-0 items-center gap-2 justify-self-end md:col-start-3">
-        <PoolSwitcher compact class="hidden min-[380px]:block w-[8.5rem] min-[420px]:w-[10rem] md:hidden" />
+    <div
+        class="flex min-w-0 items-center gap-2 justify-self-end md:col-start-3"
+    >
+        <PoolSwitcher
+            compact
+            class="hidden min-[380px]:block w-[8.5rem] min-[420px]:w-[10rem] md:hidden"
+        />
         <ProfileMenu user={auth.user} />
     </div>
 </header>

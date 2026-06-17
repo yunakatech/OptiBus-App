@@ -92,18 +92,6 @@
         is_future?: boolean;
     };
 
-    type HeatmapMonthGroup = {
-        key: string;
-        label: string;
-        shortLabel: string;
-        totalRevenue: number;
-        totalTransactions: number;
-        cells: Array<{
-            key: string;
-            item: HeatmapItem | null;
-        }>;
-    };
-
     type HeatmapContributionCell = {
         key: string;
         item: HeatmapItem | null;
@@ -326,15 +314,22 @@
 
         return `${date.getFullYear()}-${month}`;
     });
-    const visibleHeatmapDays = $derived(
+    const currentMonthHeatmapDays = $derived(
         yearlyHeatmap.filter(
             (item) => !item.is_future && item.date?.startsWith(currentMonthKey),
         ),
     );
-    const maxHeatmapRevenue = $derived(
+    const yearlyHeatmapDays = $derived(yearlyHeatmap);
+    const maxYearlyHeatmapRevenue = $derived(
         Math.max(
             1,
-            ...visibleHeatmapDays.map((item) => Number(item.revenue || 0)),
+            ...yearlyHeatmapDays.map((item) => Number(item.revenue || 0)),
+        ),
+    );
+    const maxCurrentMonthHeatmapRevenue = $derived(
+        Math.max(
+            1,
+            ...currentMonthHeatmapDays.map((item) => Number(item.revenue || 0)),
         ),
     );
     const upcomingCharterOverflow = $derived(
@@ -352,31 +347,21 @@
         ),
     );
     const activeTrendRevenueTotal = $derived(
-        activeTrendRows.reduce(
-            (total, item) => total + Number(item.revenue || 0),
-            0,
-        ),
-    );
-    const activeTrendTransactionsTotal = $derived(
-        activeTrendRows.reduce(
-            (total, item) => total + Number(item.transaction_count || 0),
-            0,
-        ),
+        trendMode === 'monthly'
+            ? Number(stats.revenue_total_year || 0)
+            : activeTrendRows.reduce(
+                  (total, item) => total + Number(item.revenue || 0),
+                  0,
+              ),
     );
     const currentMonthRevenueTotal = $derived(
-        visibleHeatmapDays.reduce(
+        currentMonthHeatmapDays.reduce(
             (total, item) => total + Number(item.revenue || 0),
-            0,
-        ),
-    );
-    const currentMonthTransactionsTotal = $derived(
-        visibleHeatmapDays.reduce(
-            (total, item) => total + Number(item.transaction_count || 0),
             0,
         ),
     );
     const visibleRevenueDays = $derived(
-        visibleHeatmapDays.filter((item) => Number(item.revenue || 0) > 0),
+        currentMonthHeatmapDays.filter((item) => Number(item.revenue || 0) > 0),
     );
 
     const trendKey = (row: TrendItem) =>
@@ -394,9 +379,9 @@
         hoveredHeatmapKey || pinnedHeatmapKey,
     );
     const heatmapMonthLabel = $derived(
-        visibleHeatmapDays[0]?.date
+        currentMonthHeatmapDays[0]?.date
             ? new Date(
-                  `${visibleHeatmapDays[0].date}T00:00:00`,
+                  `${currentMonthHeatmapDays[0].date}T00:00:00`,
               ).toLocaleDateString('id-ID', {
                   month: 'long',
                   year: 'numeric',
@@ -406,8 +391,9 @@
     const activeTrendTitle = $derived(
         trendMode === 'daily' ? 'Daily Revenue' : 'Monthly Revenue',
     );
+    const heatmapYearLabel = $derived(`${new Date().getFullYear()}`);
     const activeTrendEyebrow = $derived(
-        trendMode === 'daily' ? 'Last 30 days' : `${new Date().getFullYear()}`,
+        trendMode === 'daily' ? '30 Hari Terakhir' : 'Tahun Berjalan',
     );
     const activeTrendRangeLabel = $derived(
         trendMode === 'daily' ? '30 hari terakhir' : 'Jan - Des',
@@ -421,7 +407,7 @@
             .join('|')}`,
     );
     const heatmapDataSignature = $derived(
-        `${selectedPoolId}|${visibleHeatmapDays
+        `${selectedPoolId}|${yearlyHeatmapDays
             .map(
                 (row) =>
                     `${heatmapKey(row)}:${Number(row.revenue || 0)}:${Number(row.booking_revenue || 0)}:${Number(row.luggage_revenue || 0)}:${Number(row.charter_revenue || 0)}`,
@@ -531,14 +517,14 @@
 
         return indexes;
     });
-    const heatmapContributionColumns = $derived.by(() => {
+    const buildHeatmapContributionColumns = (rows: HeatmapItem[]) => {
         const columns: Array<{
             key: string;
             cells: Array<HeatmapItem | null>;
         }> = [];
         let weekCells = Array<HeatmapItem | null>(7).fill(null);
 
-        visibleHeatmapDays.forEach((row, index) => {
+        rows.forEach((row, index) => {
             const dayOfWeek = Number(row.day_of_week ?? 0);
 
             if (index > 0 && dayOfWeek === 0) {
@@ -560,24 +546,39 @@
         }
 
         return columns;
-    });
-    const heatmapContributionCells = $derived.by<HeatmapContributionCell[]>(
-        () => {
-            const totalColumns = Math.max(heatmapContributionColumns.length, 1);
-
-            return heatmapContributionColumns.flatMap((column, columnIndex) =>
-                column.cells.map((item, rowIndex) => ({
-                    key: item
-                        ? heatmapKey(item)
-                        : `${column.key}-empty-${rowIndex}`,
-                    item,
-                    columnIndex,
-                    rowIndex,
-                    left: ((columnIndex + 0.5) / totalColumns) * 100,
-                })),
-            );
-        },
+    };
+    const heatmapContributionColumns = $derived.by(() =>
+        buildHeatmapContributionColumns(yearlyHeatmapDays),
     );
+    const mobileHeatmapContributionColumns = $derived.by(() =>
+        buildHeatmapContributionColumns(currentMonthHeatmapDays),
+    );
+    const heatmapCellsFromColumns = (
+        columns: Array<{
+            key: string;
+            cells: Array<HeatmapItem | null>;
+        }>,
+    ): HeatmapContributionCell[] => {
+        const totalColumns = Math.max(columns.length, 1);
+
+        return columns.flatMap((column, columnIndex) =>
+            column.cells.map((item, rowIndex) => ({
+                key: item
+                    ? heatmapKey(item)
+                    : `${column.key}-empty-${rowIndex}`,
+                item,
+                columnIndex,
+                rowIndex,
+                left: ((columnIndex + 0.5) / totalColumns) * 100,
+            })),
+        );
+    };
+    const heatmapContributionCells = $derived.by<HeatmapContributionCell[]>(
+        () => heatmapCellsFromColumns(heatmapContributionColumns),
+    );
+    const mobileHeatmapContributionCells = $derived.by<
+        HeatmapContributionCell[]
+    >(() => heatmapCellsFromColumns(mobileHeatmapContributionColumns));
     const heatmapMonthMarkers = $derived.by<HeatmapMonthMarker[]>(() =>
         heatmapContributionColumns.flatMap((column, columnIndex) => {
             const monthStart = column.cells.find(
@@ -635,8 +636,6 @@
         return `H-${item.day_diff}`;
     };
 
-    const formatCompactNumber = (value: number) =>
-        Number(value || 0).toLocaleString('id-ID');
     const setTrendMode = (mode: 'monthly' | 'daily') => {
         trendMode = mode;
         hoveredTrendKey = '';
@@ -734,7 +733,10 @@
             return null;
         }
 
-        const cell = heatmapContributionCells.find(
+        const tooltipCells = isMobileViewport()
+            ? [...mobileHeatmapContributionCells, ...heatmapContributionCells]
+            : [...heatmapContributionCells, ...mobileHeatmapContributionCells];
+        const cell = tooltipCells.find(
             (item) => item.key === activeHeatmapTooltipKey && item.item,
         );
 
@@ -756,7 +758,7 @@
         activeHeatmapTooltipKey === heatmapKey(row)
             ? 'ring-2 ring-sky-500/60 ring-offset-2 ring-offset-white dark:ring-offset-slate-950'
             : 'ring-1 ring-slate-200/70 dark:ring-slate-800';
-    const heatmapToneClass = (row: HeatmapItem) => {
+    const heatmapToneClass = (row: HeatmapItem, maxRevenue: number) => {
         if (row.is_future) {
             return 'bg-slate-100/80 text-slate-300 dark:bg-slate-900 dark:text-slate-700';
         }
@@ -767,7 +769,7 @@
             return 'bg-slate-100 text-slate-400 dark:bg-slate-800/90 dark:text-slate-500';
         }
 
-        const ratio = revenue / maxHeatmapRevenue;
+        const ratio = revenue / maxRevenue;
 
         if (ratio >= 0.75) {
             return 'bg-sky-600 text-white shadow-[0_6px_18px_-10px_rgba(2,132,199,0.9)]';
@@ -1063,90 +1065,131 @@
                 </div>
 
                 <div class="p-3 md:p-4">
-                    <div class="grid gap-2 sm:grid-cols-2">
+                    <div class="space-y-3">
+                        <div>
+                            <p
+                                class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400"
+                            >
+                                Insight Cepat
+                            </p>
+                            <p
+                                class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                Snapshot penting tanpa membuka laporan.
+                            </p>
+                        </div>
                         <a
                             href="/reports"
-                            class="group rounded-2xl border border-slate-200 bg-slate-50/80 p-3 transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/70"
+                            class="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
                         >
-                            <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
                                 >
-                                    Revenue Bulan Ini
+                                    Pendapatan Bulan Ini
                                 </p>
-                                <ArrowRight
-                                    class="h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                                />
-                            </div>
-                            <p
-                                class="mt-2 break-words text-base font-semibold text-slate-900 dark:text-slate-50"
-                            >
-                                {toCurrency(stats.revenue_total_month)}
-                            </p>
-                            <p
-                                class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
-                            >
-                                Terkunci ke periode berjalan
-                            </p>
-                        </a>
-                        <div
-                            class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70"
-                        >
-                            <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
-                            >
-                                Armada Aktif
-                            </p>
-                            <p
-                                class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-50"
-                            >
-                                {stats.live_fleet} unit
-                            </p>
-                            <p
-                                class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
-                            >
-                                Hari ini
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70 sm:col-span-2"
-                        >
-                            <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
-                            >
-                                Rute Teratas
-                            </p>
-                            <p
-                                class="mt-2 truncate text-base font-semibold text-slate-900 dark:text-slate-50"
-                            >
-                                {stats.top_route}
-                            </p>
-                            <p
-                                class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
-                            >
-                                {stats.top_route_count} booking
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70 sm:col-span-2"
-                        >
-                            <div
-                                class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400"
-                            >
-                                <span>Pencapaian Target</span>
-                                <span
-                                    >{activeSummaryStats.achievement_percent ||
-                                        stats.achievement_percent}%</span
+                                <p
+                                    class="mt-1 break-words text-base font-semibold text-slate-900 dark:text-slate-50"
                                 >
+                                    {toCurrency(stats.revenue_total_month)}
+                                </p>
+                                <p
+                                    class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
+                                >
+                                    Periode berjalan
+                                </p>
+                            </div>
+                            <ArrowRight
+                                class="mt-1 h-3.5 w-3.5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                            />
+                        </a>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div
+                                class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
+                            >
+                                <p
+                                    class="text-[11px] text-slate-500 dark:text-slate-400"
+                                >
+                                    Hari Ini
+                                </p>
+                                <p
+                                    class="mt-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-50"
+                                >
+                                    {toCurrency(stats.revenue_total_today)}
+                                </p>
                             </div>
                             <div
-                                class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+                                class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
                             >
-                                <div
-                                    class="h-full rounded-full bg-primary transition-all"
-                                    style={`width:${activeAchievementWidth}%`}
-                                ></div>
+                                <p
+                                    class="text-[11px] text-slate-500 dark:text-slate-400"
+                                >
+                                    Armada Aktif
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50"
+                                >
+                                    {stats.live_fleet} unit
+                                </p>
                             </div>
+                        </div>
+                        <div
+                            class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p
+                                        class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
+                                    >
+                                        Rute Teratas
+                                    </p>
+                                    <p
+                                        class="mt-1 truncate text-sm font-semibold text-slate-900 dark:text-slate-50"
+                                    >
+                                        {stats.top_route}
+                                    </p>
+                                </div>
+                                <span
+                                    class="shrink-0 rounded-full bg-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                >
+                                    {stats.top_route_count}
+                                </span>
+                            </div>
+                        </div>
+                        <div
+                            class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-400"
+                            >
+                                <span>Pendapatan Tahun Ini</span>
+                                <span
+                                    class="font-semibold text-slate-900 dark:text-slate-50"
+                                >
+                                    {toCurrency(stats.revenue_total_year)}
+                                </span>
+                            </div>
+                            {#if stats.target_revenue_month > 0}
+                                <div
+                                    class="mt-3 flex items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-400"
+                                >
+                                    <span>Pencapaian Target</span>
+                                    <span
+                                        class="font-semibold text-slate-900 dark:text-slate-50"
+                                    >
+                                        {activeSummaryStats.achievement_percent ||
+                                            stats.achievement_percent}%
+                                    </span>
+                                </div>
+                                <div
+                                    class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+                                >
+                                    <div
+                                        class="h-full rounded-full bg-primary transition-all"
+                                        style={`width:${activeAchievementWidth}%`}
+                                    ></div>
+                                </div>
+                            {/if}
                         </div>
                     </div>
                 </div>
@@ -1268,12 +1311,14 @@
                                     </button>
                                 </div>
                                 <div
-                                    class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none"
+                                    class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none"
                                 >
                                     <p
                                         class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                                     >
-                                        Total Revenue
+                                        {trendMode === 'daily'
+                                            ? 'Total 30 Hari'
+                                            : 'Total Tahun Ini'}
                                     </p>
                                     <p
                                         class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-slate-50"
@@ -1281,13 +1326,6 @@
                                         {toCurrency(activeTrendRevenueTotal)}
                                     </p>
                                 </div>
-                                <Badge
-                                    variant="outline"
-                                    class="shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold"
-                                    >{formatCompactNumber(
-                                        activeTrendTransactionsTotal,
-                                    )} TRX</Badge
-                                >
                             </div>
                         </div>
                     </CardHeader>
@@ -1309,12 +1347,12 @@
                             </div>
 
                             <div
-                                class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]"
+                                class="w-full overflow-visible pb-2"
                                 role="region"
-                                aria-label="Grafik revenue â€” geser untuk melihat semua data"
+                                aria-label="Grafik revenue"
                             >
                                 <div
-                                    class={`relative h-[214px] overflow-visible pt-14 md:h-[244px] md:min-w-0 md:pt-16 ${trendMode === 'daily' ? 'min-w-[560px]' : 'min-w-[460px]'}`}
+                                    class="relative h-[214px] min-w-0 overflow-visible pt-14 md:h-[244px] md:pt-16"
                                     role="presentation"
                                     onmouseleave={() => hoverTrendPoint(null)}
                                 >
@@ -1410,7 +1448,7 @@
                                     {/if}
 
                                     <div
-                                        class="absolute top-14 bottom-6 left-0 w-[86px] md:top-16 md:w-[92px]"
+                                        class="absolute top-14 bottom-6 left-0 w-[58px] md:top-16 md:w-[92px]"
                                         aria-hidden="true"
                                     >
                                         {#each lineChartTicks as tick (`trend-tick-${tick.y}`)}
@@ -1424,7 +1462,7 @@
                                     </div>
 
                                     <div
-                                        class="absolute top-14 right-1 bottom-6 left-[92px] overflow-visible md:top-16 md:left-[100px]"
+                                        class="absolute top-14 right-1 bottom-6 left-[62px] overflow-visible md:top-16 md:left-[100px]"
                                     >
                                         <svg
                                             viewBox="0 0 100 100"
@@ -1511,7 +1549,7 @@
 
                                             {#if showLineAxisLabel(index)}
                                                 <div
-                                                    class="absolute top-[calc(100%+0.35rem)] max-w-14 -translate-x-1/2 truncate text-center text-[10px] font-medium text-slate-500 dark:text-slate-400"
+                                                    class="absolute top-[calc(100%+0.35rem)] max-w-12 -translate-x-1/2 truncate text-center text-[9px] font-medium text-slate-500 dark:text-slate-400 md:max-w-14 md:text-[10px]"
                                                     style={`left:${point.x}%`}
                                                 >
                                                     {point.row.label}
@@ -1520,15 +1558,6 @@
                                         {/each}
                                     </div>
                                 </div>
-                            </div>
-                            <div
-                                class="mt-2 flex items-center justify-center gap-1 text-[10px] text-muted-foreground md:hidden"
-                            >
-                                <span>â†</span>
-                                Geser untuk melihat semua {trendMode === 'daily'
-                                    ? 'hari'
-                                    : 'bulan'}
-                                <span>â†’</span>
                             </div>
                         </div>
                     </CardContent>
@@ -1554,33 +1583,45 @@
                                 <p
                                     class="mt-1 text-xs text-slate-500 dark:text-slate-400"
                                 >
-                                    {heatmapMonthLabel}
+                                    <span class="md:hidden"
+                                        >{heatmapMonthLabel}</span
+                                    >
+                                    <span class="hidden md:inline"
+                                        >Tahun {heatmapYearLabel}</span
+                                    >
                                 </p>
                             </div>
                             <div
                                 class="flex w-full flex-wrap items-stretch gap-2 sm:items-center md:w-auto md:justify-end"
                             >
                                 <div
-                                    class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none"
+                                    class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none"
                                 >
                                     <p
                                         class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                                     >
-                                        Total Revenue
+                                        <span class="md:hidden"
+                                            >Total Bulan Ini</span
+                                        >
+                                        <span class="hidden md:inline"
+                                            >Total Tahun Ini</span
+                                        >
                                     </p>
                                     <p
                                         class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-slate-50"
                                     >
-                                        {toCurrency(currentMonthRevenueTotal)}
+                                        <span class="md:hidden">
+                                            {toCurrency(
+                                                currentMonthRevenueTotal,
+                                            )}
+                                        </span>
+                                        <span class="hidden md:inline">
+                                            {toCurrency(
+                                                stats.revenue_total_year,
+                                            )}
+                                        </span>
                                     </p>
                                 </div>
-                                <Badge
-                                    variant="outline"
-                                    class="shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold"
-                                    >{formatCompactNumber(
-                                        currentMonthTransactionsTotal,
-                                    )} TRX</Badge
-                                >
                             </div>
                         </div>
                     </CardHeader>
@@ -1591,7 +1632,11 @@
                             <div
                                 class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
                             >
-                                <span>Kalender bulan ini</span>
+                                <span class="md:hidden">Kalender bulan ini</span
+                                >
+                                <span class="hidden md:inline"
+                                    >Kalender tahun berjalan</span
+                                >
                                 <div class="hidden items-center gap-1 md:flex">
                                     <span>Low</span>
                                     {#each ['bg-slate-100 dark:bg-slate-800/90', 'bg-cyan-100 dark:bg-cyan-500/20', 'bg-sky-200 dark:bg-sky-500/30', 'bg-sky-400 dark:bg-sky-500', 'bg-sky-600'] as tone (`heatmap-legend-compact-${tone}`)}
@@ -1604,12 +1649,12 @@
                             </div>
 
                             <div
-                                class="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]"
+                                class="w-full overflow-visible pb-2 md:overflow-x-auto md:overscroll-x-contain md:[scrollbar-width:thin]"
                                 role="region"
-                                aria-label="Grafik transaksi revenue bulan berjalan"
+                                aria-label="Grafik transaksi revenue"
                             >
                                 <div
-                                    class="relative min-w-[390px] pt-12 md:min-w-[520px] md:pt-14"
+                                    class="relative pt-12 md:min-w-[760px] md:pt-14"
                                     role="presentation"
                                     onmouseleave={() => hoverHeatmapDay(null)}
                                 >
@@ -1705,7 +1750,9 @@
                                         {/key}
                                     {/if}
 
-                                    <div class="absolute inset-x-0 top-0 h-5">
+                                    <div
+                                        class="absolute inset-x-0 top-0 hidden h-5 md:block"
+                                    >
                                         {#each heatmapMonthMarkers as marker (marker.key)}
                                             <span
                                                 class={`absolute top-0 text-[11px] font-medium text-slate-500 dark:text-slate-400 ${tooltipTranslateClass(tooltipAlignFor(marker.left))}`}
@@ -1717,14 +1764,14 @@
                                     </div>
 
                                     <div
-                                        class="grid grid-flow-col auto-cols-[16px] grid-rows-7 gap-[4px] pt-2 md:auto-cols-[14px] md:gap-[4px]"
+                                        class="grid grid-flow-col auto-cols-fr grid-rows-7 gap-[4px] pt-2 md:hidden"
                                     >
-                                        {#each heatmapContributionCells as cell (cell.key)}
+                                        {#each mobileHeatmapContributionCells as cell (cell.key)}
                                             {#if cell.item}
                                                 {@const day = cell.item}
                                                 <button
                                                     type="button"
-                                                    class={`h-4 w-4 touch-manipulation rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 md:h-3.5 md:w-3.5 ${heatmapToneClass(day)} ${heatmapSelectedClass(day)}`}
+                                                    class={`aspect-square min-h-0 w-full touch-manipulation rounded-[4px] outline-hidden transition hover:scale-105 focus-visible:ring-2 focus-visible:ring-sky-500/45 ${heatmapToneClass(day, maxCurrentMonthHeatmapRevenue)} ${heatmapSelectedClass(day)}`}
                                                     onclick={() =>
                                                         togglePinnedHeatmapDay(
                                                             day,
@@ -1744,7 +1791,41 @@
                                                 ></button>
                                             {:else}
                                                 <div
-                                                    class="h-4 w-4 rounded-[4px] bg-transparent md:h-3.5 md:w-3.5"
+                                                    class="aspect-square w-full rounded-[4px] bg-transparent"
+                                                ></div>
+                                            {/if}
+                                        {/each}
+                                    </div>
+
+                                    <div
+                                        class="hidden grid-flow-col auto-cols-[14px] grid-rows-7 gap-[4px] pt-2 md:grid"
+                                    >
+                                        {#each heatmapContributionCells as cell (cell.key)}
+                                            {#if cell.item}
+                                                {@const day = cell.item}
+                                                <button
+                                                    type="button"
+                                                    class={`h-3.5 w-3.5 touch-manipulation rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 ${heatmapToneClass(day, maxYearlyHeatmapRevenue)} ${heatmapSelectedClass(day)}`}
+                                                    onclick={() =>
+                                                        togglePinnedHeatmapDay(
+                                                            day,
+                                                        )}
+                                                    onmouseenter={() =>
+                                                        hoverHeatmapDay(day)}
+                                                    onfocus={() =>
+                                                        hoverHeatmapDay(day)}
+                                                    onmouseleave={() =>
+                                                        hoverHeatmapDay(null)}
+                                                    onblur={() =>
+                                                        hoverHeatmapDay(null)}
+                                                    aria-label={`${day.name ?? day.date} ${toCurrency(day.revenue)}`}
+                                                    aria-pressed={activeHeatmapTooltipKey ===
+                                                        heatmapKey(day)}
+                                                    disabled={day.is_future}
+                                                ></button>
+                                            {:else}
+                                                <div
+                                                    class="h-3.5 w-3.5 rounded-[4px] bg-transparent"
                                                 ></div>
                                             {/if}
                                         {/each}
@@ -1814,97 +1895,6 @@
                                     {/each}
                                 {/if}
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card class="hidden h-fit xl:block">
-                    <CardHeader class="space-y-1 pb-2">
-                        <CardTitle class="text-sm md:text-base"
-                            >Insight Cepat</CardTitle
-                        >
-                        <CardDescription class="text-xs"
-                            >Snapshot operasional & finansial</CardDescription
-                        >
-                    </CardHeader>
-                    <CardContent
-                        class="grid gap-2.5 pt-0 text-sm xl:grid-cols-2"
-                    >
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Rute Teratas
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {stats.top_route}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                {stats.top_route_count} booking
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Armada Aktif Hari Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {stats.live_fleet} unit
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Pendapatan Hari Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {toCurrency(stats.revenue_total_today)}
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Pendapatan Bulan Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {toCurrency(stats.revenue_total_month)}
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Margin Bulan Ini
-                            </p>
-                            <p
-                                class="text-sm font-semibold text-green-700 dark:text-green-300"
-                            >
-                                {toCurrency(stats.margin_total_month)}
-                            </p>
-                        </div>
-                        {#if stats.target_revenue_month > 0}
-                            <div class="rounded-md border p-2.5">
-                                <p class="text-xs text-muted-foreground">
-                                    Target & Pencapaian
-                                </p>
-                                <p class="text-sm font-semibold">
-                                    {toCurrency(stats.target_revenue_month)}
-                                </p>
-                                <div
-                                    class="mt-1.5 h-1.5 rounded-full bg-muted/80"
-                                >
-                                    <div
-                                        class="h-1.5 rounded-full bg-purple-500/70"
-                                        style={`width:${Math.min(stats.achievement_percent, 100)}%`}
-                                    ></div>
-                                </div>
-                                <p
-                                    class="mt-0.5 text-[10px] text-muted-foreground"
-                                >
-                                    {stats.achievement_percent}% tercapai
-                                </p>
-                            </div>
-                        {/if}
-                        <div class="rounded-md border p-2.5 xl:col-span-2">
-                            <p class="text-xs text-muted-foreground">
-                                Pendapatan Tahun Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {toCurrency(stats.revenue_total_year)}
-                            </p>
                         </div>
                     </CardContent>
                 </Card>
@@ -2081,95 +2071,6 @@
                                 </div>
                             {/each}
                         {/if}
-                    </CardContent>
-                </Card>
-
-                <Card class="xl:hidden">
-                    <CardHeader class="space-y-1 pb-2">
-                        <CardTitle class="text-sm md:text-base"
-                            >Insight Cepat</CardTitle
-                        >
-                        <CardDescription class="text-xs"
-                            >Snapshot operasional & finansial</CardDescription
-                        >
-                    </CardHeader>
-                    <CardContent class="space-y-2.5 pt-0 text-sm">
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Rute Teratas
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {stats.top_route}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                {stats.top_route_count} booking
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Armada Aktif Hari Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {stats.live_fleet} unit
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Pendapatan Hari Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {toCurrency(stats.revenue_total_today)}
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Pendapatan Bulan Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {toCurrency(stats.revenue_total_month)}
-                            </p>
-                        </div>
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Margin Bulan Ini
-                            </p>
-                            <p
-                                class="text-sm font-semibold text-green-700 dark:text-green-300"
-                            >
-                                {toCurrency(stats.margin_total_month)}
-                            </p>
-                        </div>
-                        {#if stats.target_revenue_month > 0}
-                            <div class="rounded-md border p-2.5">
-                                <p class="text-xs text-muted-foreground">
-                                    Target & Pencapaian
-                                </p>
-                                <p class="text-sm font-semibold">
-                                    {toCurrency(stats.target_revenue_month)}
-                                </p>
-                                <div
-                                    class="mt-1.5 h-1.5 rounded-full bg-muted/80"
-                                >
-                                    <div
-                                        class="h-1.5 rounded-full bg-purple-500/70"
-                                        style={`width:${Math.min(stats.achievement_percent, 100)}%`}
-                                    ></div>
-                                </div>
-                                <p
-                                    class="mt-0.5 text-[10px] text-muted-foreground"
-                                >
-                                    {stats.achievement_percent}% tercapai
-                                </p>
-                            </div>
-                        {/if}
-                        <div class="rounded-md border p-2.5">
-                            <p class="text-xs text-muted-foreground">
-                                Pendapatan Tahun Ini
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {toCurrency(stats.revenue_total_year)}
-                            </p>
-                        </div>
                     </CardContent>
                 </Card>
 
