@@ -39,6 +39,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'api/webhooks/mayar',
+        ]);
+
         $middleware->redirectUsersTo(function (HttpRequest $request): string {
             $userId = (int) ($request->user()?->id ?? 0);
 

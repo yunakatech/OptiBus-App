@@ -1,9 +1,10 @@
 <?php
 
 /**
- * Manual Payment Configuration
+ * Legacy manual payment configuration.
  *
- * QRIS statis + Transfer bank untuk pembayaran subscription.
+ * SaaS subscription billing uses Mayar. These values are kept only for
+ * backward compatibility or non-SaaS operational flows that still read them.
  */
 
 return [
@@ -19,10 +20,10 @@ return [
     |
     */
     'qris' => [
-        'enabled' => env('PAYMENT_QRIS_ENABLED', true),
+        'enabled' => env('PAYMENT_QRIS_ENABLED', false),
         'merchant_name' => env('PAYMENT_QRIS_MERCHANT_NAME', 'OptiBus Indonesia'),
         'image_path' => env('PAYMENT_QRIS_IMAGE', 'images/qris.png'),
-        'note' => 'Scan QRIS di bawah dan masukkan nominal sesuai paket yang dipilih.',
+        'note' => 'Legacy manual payment setting. SaaS billing uses Mayar.',
     ],
 
     /*
@@ -31,25 +32,25 @@ return [
     |--------------------------------------------------------------------------
     */
     'bank_transfer' => [
-        'enabled' => env('PAYMENT_TRANSFER_ENABLED', true),
+        'enabled' => env('PAYMENT_TRANSFER_ENABLED', false),
         'accounts' => [
             [
                 'bank_name' => env('PAYMENT_BANK_1_NAME', 'BCA'),
                 'account_number' => env('PAYMENT_BANK_1_NUMBER', '1234567890'),
                 'account_holder' => env('PAYMENT_BANK_1_HOLDER', 'PT OptiBus Indonesia'),
-                'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                'note' => 'Legacy manual payment setting. SaaS billing uses Mayar.',
             ],
             [
                 'bank_name' => env('PAYMENT_BANK_2_NAME', 'BRI'),
                 'account_number' => env('PAYMENT_BANK_2_NUMBER', '0987654321'),
                 'account_holder' => env('PAYMENT_BANK_2_HOLDER', 'PT OptiBus Indonesia'),
-                'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                'note' => 'Legacy manual payment setting. SaaS billing uses Mayar.',
             ],
             [
                 'bank_name' => env('PAYMENT_BANK_3_NAME', 'Mandiri'),
                 'account_number' => env('PAYMENT_BANK_3_NUMBER', '1122334455'),
                 'account_holder' => env('PAYMENT_BANK_3_HOLDER', 'PT OptiBus Indonesia'),
-                'note' => 'Transfer sesuai nominal paket dan upload bukti.',
+                'note' => 'Legacy manual payment setting. SaaS billing uses Mayar.',
             ],
         ],
     ],

@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminOpsMasterController;
 use App\Http\Controllers\Api\AdminOpsApiController;
 use App\Http\Controllers\Api\BookingApiController;
 use App\Http\Controllers\Api\OperationsApiController;
+use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CharterDocumentController;
 use App\Http\Controllers\DashboardController;
@@ -34,6 +35,7 @@ Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
 
 // Public API — no auth required
 Route::get('api/plans', [\App\Http\Controllers\Api\PublicApiController::class, 'plans'])->name('api.plans');
+Route::post('api/webhooks/mayar', [PaymentWebhookController::class, 'mayar'])->name('api.webhooks.mayar');
 
 Route::get('style.css', [StaticAssetController::class, 'style'])->name('style.css');
 
@@ -108,7 +110,6 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
 
     // Subscription & Payment (tenant self-service)
     Route::get('subscription', [\App\Http\Controllers\SubscriptionPaymentController::class, 'index'])->name('subscription.index');
-    Route::post('api/subscription/upload-proof/{invoiceId}', [\App\Http\Controllers\SubscriptionPaymentController::class, 'uploadProof'])->name('api.subscription.upload-proof');
 
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');

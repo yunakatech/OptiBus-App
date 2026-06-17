@@ -38,7 +38,7 @@ class PaymentGateway
             return 0;
         }
 
-        return (int) DB::table('invoice_subscriptions')->insertGetId([
+        $payload = [
             'tenant_id' => $tenantId,
             'subscription_id' => $subscriptionId,
             'invoice_number' => self::generateInvoiceNumber(),
@@ -47,7 +47,23 @@ class PaymentGateway
             'due_date' => $dueDate,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ];
+
+        if (Schema::hasColumn('invoice_subscriptions', 'payment_gateway')) {
+            $payload['payment_gateway'] = 'Mayar';
+        }
+
+        if (Schema::hasColumn('invoice_subscriptions', 'gateway_status')) {
+            $payload['gateway_status'] = 'pending';
+        }
+
+        $invoiceId = (int) DB::table('invoice_subscriptions')->insertGetId($payload);
+
+        if ($invoiceId > 0) {
+            app(MayarGateway::class)->createCheckoutForInvoice($invoiceId);
+        }
+
+        return $invoiceId;
     }
 
     /**
@@ -65,12 +81,28 @@ class PaymentGateway
         }
 
         DB::transaction(function () use ($invoiceId, $invoice, $paymentMethod): void {
-            DB::table('invoice_subscriptions')->where('id', $invoiceId)->update([
+            $invoiceUpdate = [
                 'status' => 'paid',
                 'paid_at' => now(),
                 'payment_method' => $paymentMethod,
                 'updated_at' => now(),
-            ]);
+            ];
+
+            if (Schema::hasColumn('invoice_subscriptions', 'payment_gateway')) {
+                $invoiceUpdate['payment_gateway'] = $paymentMethod === 'Mayar'
+                    ? 'Mayar'
+                    : ($invoice->payment_gateway ?? $paymentMethod);
+            }
+
+            if (Schema::hasColumn('invoice_subscriptions', 'gateway_status')) {
+                $invoiceUpdate['gateway_status'] = 'paid';
+            }
+
+            if (Schema::hasColumn('invoice_subscriptions', 'gateway_paid_at')) {
+                $invoiceUpdate['gateway_paid_at'] = now();
+            }
+
+            DB::table('invoice_subscriptions')->where('id', $invoiceId)->update($invoiceUpdate);
 
             if ($invoice->subscription_id > 0 && Schema::hasTable('subscriptions')) {
                 $sub = DB::table('subscriptions')->where('id', (int) $invoice->subscription_id)->first();
@@ -108,16 +140,15 @@ class PaymentGateway
 
     /**
      * Create a Midtrans Snap token for the payment.
-     * Falls back to manual transfer if Midtrans is not configured.
+     * Legacy Midtrans helper. SaaS billing now uses Mayar checkout links.
      */
     public static function createSnapToken(int $invoiceId): ?array
     {
         $serverKey = config('midtrans.server_key');
         if ($serverKey === '' || $serverKey === null) {
-            // Midtrans not configured — fallback to manual
             return [
-                'mode' => 'manual',
-                'message' => 'Silakan transfer ke rekening yang tertera.',
+                'mode' => 'disabled',
+                'message' => 'SaaS billing uses Mayar checkout links.',
             ];
         }
 

@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Services\PaymentGateway;
-use App\Support\PaymentSettings;
+use App\Services\MayarGateway;
 use App\Support\PoolScope;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,32 +25,28 @@ class SubscriptionPaymentController extends Controller
         $this->syncPendingPaymentInvoice($tenantSub);
 
         if ($tenantSub && Schema::hasTable('invoice_subscriptions')) {
-            $hasPaymentProofColumn = Schema::hasColumn('invoice_subscriptions', 'payment_proof');
             $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
             $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
+            $hasGatewayColumns = Schema::hasColumn('invoice_subscriptions', 'gateway_checkout_url');
             $invoices = DB::table('invoice_subscriptions')
                 ->where('tenant_id', $tenantSub['tenant_id'])
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
                 ->get()
-                ->map(function ($inv) use ($hasPaymentProofColumn, $hasDueDateColumn, $hasPaidAtColumn) {
-                    $paymentProof = $hasPaymentProofColumn ? ($inv->payment_proof ?? null) : null;
-
-                    $status = (string) $inv->status;
-                    if ($status === 'pending' && $paymentProof !== null && trim($paymentProof) !== '') {
-                        $status = 'verification';
-                    }
-
+                ->map(function ($inv) use ($hasDueDateColumn, $hasPaidAtColumn, $hasGatewayColumns) {
                     return [
                         'id' => (int) $inv->id,
                         'invoice_number' => (string) $inv->invoice_number,
                         'amount' => (float) $inv->amount,
-                        'status' => $status,
+                        'status' => (string) $inv->status,
                         'due_date' => $hasDueDateColumn ? ($inv->due_date ?? null) : null,
                         'paid_at' => $hasPaidAtColumn ? ($inv->paid_at ?? null) : null,
                         'payment_method' => (string) ($inv->payment_method ?? ''),
-                        'payment_proof' => $paymentProof,
-                        'payment_proof_url' => $this->paymentProofUrl($paymentProof),
+                        'payment_gateway' => (string) ($inv->payment_gateway ?? 'Mayar'),
+                        'gateway_reference' => $hasGatewayColumns ? (string) ($inv->gateway_reference ?? '') : '',
+                        'gateway_checkout_url' => $hasGatewayColumns ? (string) ($inv->gateway_checkout_url ?? '') : '',
+                        'gateway_status' => $hasGatewayColumns ? (string) ($inv->gateway_status ?? '') : '',
+                        'gateway_paid_at' => $hasGatewayColumns ? ($inv->gateway_paid_at ?? null) : null,
                         'created_at' => $inv->created_at,
                     ];
                 })
@@ -86,7 +80,6 @@ class SubscriptionPaymentController extends Controller
                 'price_yearly' => (float) $p->price_yearly,
                 'description' => (string) ($p->description ?? ''),
             ])->all(),
-            'payment_config' => PaymentSettings::all(),
             'account_access' => $this->accountAccess(),
         ]);
     }
@@ -109,11 +102,19 @@ class SubscriptionPaymentController extends Controller
             return;
         }
 
-        $hasActiveInvoice = DB::table('invoice_subscriptions')
+        $activeInvoice = DB::table('invoice_subscriptions')
             ->where('subscription_id', $subscriptionId)
-            ->whereIn('status', ['pending', 'verification', 'overdue'])
-            ->exists();
-        if ($hasActiveInvoice) {
+            ->whereIn('status', ['pending', 'overdue'])
+            ->orderByDesc('created_at')
+            ->first();
+        if ($activeInvoice) {
+            if (
+                Schema::hasColumn('invoice_subscriptions', 'gateway_checkout_url')
+                && trim((string) ($activeInvoice->gateway_checkout_url ?? '')) === ''
+            ) {
+                app(MayarGateway::class)->createCheckoutForInvoice((int) $activeInvoice->id);
+            }
+
             return;
         }
 
@@ -164,77 +165,5 @@ class SubscriptionPaymentController extends Controller
             'pool_count' => $userId > 0 ? count(PoolScope::userPoolIds($userId)) : 0,
             'role_names' => $roleNames,
         ];
-    }
-
-    private function paymentProofUrl(?string $path): ?string
-    {
-        $path = trim((string) $path);
-        if ($path === '') {
-            return null;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
-            return $path;
-        }
-
-        if (str_starts_with($path, 'storage/')) {
-            return asset($path);
-        }
-
-        return Storage::disk('public')->url($path);
-    }
-
-    /**
-     * Upload bukti pembayaran untuk invoice.
-     * POST /api/subscription/upload-proof/{invoiceId}
-     */
-    public function uploadProof(int $invoiceId, Request $request): \Illuminate\Http\JsonResponse
-    {
-        if (! Schema::hasTable('invoice_subscriptions') || ! Schema::hasColumn('invoice_subscriptions', 'payment_proof')) {
-            return response()->json(['success' => false, 'error' => 'Kolom bukti pembayaran belum tersedia. Jalankan migrasi database.'], 409);
-        }
-
-        $maxKb = (int) config('payment.upload.max_size_kb', 2048);
-
-        $request->validate([
-            'proof_file' => ['required', 'file', 'max:'.$maxKb, 'mimes:jpg,jpeg,png,pdf'],
-            'payment_method' => ['required', 'string', 'max:50'],
-        ]);
-
-        $invoice = DB::table('invoice_subscriptions')->where('id', $invoiceId)->first();
-        if (! $invoice) {
-            return response()->json(['success' => false, 'error' => 'Invoice tidak ditemukan.'], 404);
-        }
-
-        // Verify tenant owns this invoice
-        $tenantSub = PoolScope::tenantSubscription();
-        if (! $tenantSub || $tenantSub['tenant_id'] !== (int) $invoice->tenant_id) {
-            return response()->json(['success' => false, 'error' => 'Akses ditolak.'], 403);
-        }
-        if ((string) $invoice->status === 'paid') {
-            return response()->json(['success' => false, 'error' => 'Invoice sudah lunas.'], 422);
-        }
-
-        // Store the proof file
-        $file = $request->file('proof_file');
-        $path = $file->storeAs(
-            'payment-proofs',
-            'inv-'.$invoiceId.'-'.time().'.'.$file->getClientOriginalExtension(),
-            'public',
-        );
-
-        // Update invoice with proof
-        DB::table('invoice_subscriptions')->where('id', $invoiceId)->update([
-            'payment_proof' => $path,
-            'payment_method' => trim((string) $request->input('payment_method')),
-            'status' => 'verification',
-            'updated_at' => now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Bukti pembayaran berhasil diupload. Menunggu verifikasi admin.',
-            'proof_url' => Storage::disk('public')->url($path),
-        ]);
     }
 }

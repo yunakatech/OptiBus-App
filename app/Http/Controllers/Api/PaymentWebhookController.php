@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\MayarGateway;
 use App\Services\PaymentGateway;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,5 +28,22 @@ class PaymentWebhookController extends Controller
         }
 
         return response()->json(['status' => 'ignored'], 200);
+    }
+
+    /**
+     * Handle Mayar payment webhook.
+     * POST /api/webhooks/mayar
+     */
+    public function mayar(Request $request, MayarGateway $mayar): JsonResponse
+    {
+        $payload = $request->all();
+        $result = $mayar->handleWebhook($payload);
+
+        Log::info('Mayar webhook handled', [
+            'status' => $result['status'] ?? 'unknown',
+            'invoice_id' => $result['invoice_id'] ?? null,
+        ]);
+
+        return response()->json($result, 200);
     }
 }
