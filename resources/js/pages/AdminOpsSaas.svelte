@@ -44,7 +44,7 @@
 
     type TabName = 'tenants' | 'subscriptions' | 'plans' | 'billing' | 'payment';
 
-    // ─── Props ───
+    // â”€â”€â”€ Props â”€â”€â”€
     let { tab: initialTab = null, summary = null, saasTablesReady = false }: {
         tab?: TabName | null;
         summary?: {
@@ -59,7 +59,7 @@
         saasTablesReady?: boolean;
     } = $props();
 
-    // ─── State ───
+    // â”€â”€â”€ State â”€â”€â”€
     let activeTab = $state<TabName>('tenants');
     let busy = $state(false);
     let error = $state('');
@@ -134,7 +134,7 @@
         return labels[status ?? ''] ?? 'Status QRIS belum diketahui';
     }
 
-    // ─── Init ───
+    // â”€â”€â”€ Init â”€â”€â”€
     onMount(() => {
         activeTab = initialTab ?? 'tenants';
         if (activeTab === 'tenants') loadTenants();
@@ -157,7 +157,7 @@
         else if (tab === 'payment') loadPaymentSettings();
     }
 
-    // ─── API helpers ───
+    // â”€â”€â”€ API helpers â”€â”€â”€
     async function apiFetch(url: string, options?: RequestInit) {
         busy = true;
         error = '';
@@ -174,7 +174,7 @@
         }
     }
 
-    // ─── Tenants ───
+    // â”€â”€â”€ Tenants â”€â”€â”€
     async function loadTenants(pageNum = 1) {
         const params = new URLSearchParams({ paginate: '1', page: String(pageNum), per_page: '15' });
         if (searchQuery) params.set('q', searchQuery);
@@ -225,7 +225,7 @@
         apiFetch('/api/admin/tenants', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' }, body: JSON.stringify({ id: tenant.id, name: tenant.name, slug: tenant.slug, status: newStatus }) }).then(d => { if (d?.success) loadTenants(tenantPagination?.page ?? 1); });
     }
 
-    // ─── Subscriptions ───
+    // â”€â”€â”€ Subscriptions â”€â”€â”€
     async function loadSubscriptions(pageNum = 1) {
         const params = new URLSearchParams({ paginate: '1', page: String(pageNum), per_page: '15' });
         if (statusFilter) params.set('status', statusFilter);
@@ -262,7 +262,7 @@
         if (data?.success) { message = data.message; loadSubscriptions(subPagination?.page ?? 1); }
     }
 
-    // ─── Plans ───
+    // â”€â”€â”€ Plans â”€â”€â”€
     async function loadPlans() {
         const data = await apiFetch('/api/admin/plans');
         if (data) { plans = data.plans ?? []; }
@@ -297,7 +297,7 @@
         if (data?.success) { message = data.message; editingPlan = null; loadPlans(); }
     }
 
-    // ─── Helpers ───
+    // â”€â”€â”€ Helpers â”€â”€â”€
     async function loadInvoices(pageNum = 1) {
         const params = new URLSearchParams({ paginate: '1', page: String(pageNum), per_page: '15' });
         if (statusFilter) params.set('status', statusFilter);
@@ -373,7 +373,7 @@
         {#if message}
             <div class="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
                 {message}
-                <button onclick={() => message = ''} class="text-emerald-600 hover:text-emerald-800">×</button>
+                <button onclick={() => message = ''} class="text-emerald-600 hover:text-emerald-800">Ã—</button>
             </div>
         {/if}
 
@@ -569,7 +569,7 @@
                                             {#if t.ends_at}
                                                 {formatDate(t.ends_at)}
                                             {:else}
-                                                —
+                                                â€”
                                             {/if}
                                         </td>
                                         <td class="px-4 py-2.5">
@@ -815,11 +815,11 @@
                                     <div class="text-xs text-muted-foreground">{formatRupiah(plan.price_yearly)}/thn</div>
                                 </div>
                                 <div class="space-y-1 text-sm">
-                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Armada</span><span class="font-medium">{plan.max_armadas || '∞'}</span></div>
-                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Rute</span><span class="font-medium">{plan.max_routes || '∞'}</span></div>
-                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Pool</span><span class="font-medium">{plan.max_pools || '∞'}</span></div>
-                                    <div class="flex justify-between"><span class="text-muted-foreground">Max User</span><span class="font-medium">{plan.max_users || '∞'}</span></div>
-                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Driver</span><span class="font-medium">{plan.max_drivers || '∞'}</span></div>
+                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Armada</span><span class="font-medium">{plan.max_armadas || 'âˆž'}</span></div>
+                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Rute</span><span class="font-medium">{plan.max_routes || 'âˆž'}</span></div>
+                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Pool</span><span class="font-medium">{plan.max_pools || 'âˆž'}</span></div>
+                                    <div class="flex justify-between"><span class="text-muted-foreground">Max User</span><span class="font-medium">{plan.max_users || 'âˆž'}</span></div>
+                                    <div class="flex justify-between"><span class="text-muted-foreground">Max Driver</span><span class="font-medium">{plan.max_drivers || 'âˆž'}</span></div>
                                 </div>
                                 <hr class="my-2" />
                                 <div class="space-y-1 text-xs">
@@ -1015,7 +1015,7 @@
                                     <div class="space-y-3">
                                         <div>
                                             <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Nama Merchant</Label>
-                                            <Input name="qris_merchant_name" value={paymentSettings?.qris?.merchant_name ?? ''} placeholder="Qbus Indonesia" />
+                                            <Input name="qris_merchant_name" value={paymentSettings?.qris?.merchant_name ?? ''} placeholder="OptiBus Indonesia" />
                                         </div>
                                         <div>
                                             <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Upload QRIS</Label>
@@ -1062,7 +1062,7 @@
                                             </div>
                                             <div>
                                                 <Label class="text-xs uppercase tracking-[0.14em] text-muted-foreground">Atas Nama</Label>
-                                                <Input name={`bank_${i}_holder`} value={acc.account_holder ?? ''} placeholder="PT Qbus Indonesia" />
+                                                <Input name={`bank_${i}_holder`} value={acc.account_holder ?? ''} placeholder="PT OptiBus Indonesia" />
                                             </div>
                                         </div>
                                     </div>

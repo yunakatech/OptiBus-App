@@ -257,7 +257,7 @@
         }
 
         if (paymentTab === 'qris') {
-            return `QRIS - ${paymentConfig.qris.merchant_name || 'Qbus'}`;
+            return `QRIS - ${paymentConfig.qris.merchant_name || 'OptiBus'}`;
         }
 
         const account = paymentConfig.bank_transfer.accounts[selectedBank];
@@ -417,7 +417,7 @@
                                     {currentPlan?.name ?? tenantSub.plan_name}
                                 </CardTitle>
                                 <CardDescription class="mt-1">
-                                    {currentPlan?.description || 'Paket operasional Qbus untuk tenant ini.'}
+                                    {currentPlan?.description || 'Paket operasional OptiBus untuk tenant ini.'}
                                 </CardDescription>
                             </div>
                             <div class="rounded-lg border bg-background px-3 py-2 text-right">
@@ -541,7 +541,7 @@
                                                 </div>
                                             {/if}
                                             <div class="text-center">
-                                                <p class="font-semibold">{paymentConfig.qris.merchant_name || 'Merchant Qbus'}</p>
+                                                <p class="font-semibold">{paymentConfig.qris.merchant_name || 'Merchant OptiBus'}</p>
                                                 <p class="mt-1 text-xs text-slate-500">{qrisStorageLabel(paymentConfig.qris.storage_status)}</p>
                                             </div>
                                         </div>
@@ -791,7 +791,7 @@
                                             QRIS
                                         </div>
                                         <p class="mt-1 truncate text-sm text-muted-foreground">
-                                            {paymentConfig.qris.merchant_name || 'Merchant Qbus'}
+                                            {paymentConfig.qris.merchant_name || 'Merchant OptiBus'}
                                         </p>
                                         <p class="mt-1 text-xs text-muted-foreground">
                                             {qrisStorageLabel(paymentConfig.qris.storage_status)}

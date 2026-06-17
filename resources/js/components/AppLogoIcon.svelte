@@ -1,7 +1,7 @@
 <script lang="ts">
     let {
         class: className = '',
-        alt = 'Qbus',
+        alt = 'OptiBus',
         ...rest
     }: {
         class?: string;
@@ -11,7 +11,7 @@
 </script>
 
 <img
-    src="/branding/qbus-logo-mark.png"
+    src="/branding/OptiBus-logo-mark.png"
     alt={alt}
     class={className}
     loading="eager"

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * QBUS SaaS Configuration
+ * OptiBus SaaS Configuration
  *
  * Controls SaaS-specific behavior across the application.
  */

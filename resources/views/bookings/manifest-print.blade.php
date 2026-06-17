@@ -271,10 +271,10 @@
             <div class="hero">
                 <div class="brand-block">
                     @if (!empty($manifest['logo_data_uri']))
-                        <img src="{{ $manifest['logo_data_uri'] }}" alt="Qbus" class="brand-logo">
+                        <img src="{{ $manifest['logo_data_uri'] }}" alt="OptiBus" class="brand-logo">
                     @endif
                     <div class="brand-copy">
-                        <div class="eyebrow">Qbus Manifest</div>
+                        <div class="eyebrow">OptiBus Manifest</div>
                         <h1>{{ $manifest['title'] }}</h1>
                         <div class="muted">Dokumen resmi daftar penumpang aktif, bagasi terpasang, dan history cancel untuk satu keberangkatan.</div>
                     </div>
@@ -487,7 +487,7 @@
             </div>
 
             <div class="doc-footer">
-                <div>Qbus Booking &amp; Operations Workspace</div>
+                <div>OptiBus Booking &amp; Operations Workspace</div>
                 <div>Generated {{ now()->format('d/m/Y H:i') }}</div>
             </div>
         </section>

@@ -27,8 +27,8 @@
             class="relative z-20 flex items-center text-lg font-medium"
         >
             <img
-                src="/branding/qbus-logo-full.png"
-                alt="Qbus Booking & Operations Workspace"
+                src="/branding/OptiBus-logo-full.png"
+                alt="OptiBus Booking & Operations Workspace"
                 class="h-auto w-[240px] object-contain"
                 loading="eager"
                 decoding="async"

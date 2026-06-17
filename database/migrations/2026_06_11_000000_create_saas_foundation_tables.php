@@ -143,7 +143,7 @@ return new class extends Migration
     {
         // --- Default Tenant ---
         $tenantId = DB::table('tenants')->insertGetId([
-            'name' => 'Qbus Default',
+            'name' => 'OptiBus Default',
             'slug' => 'qbus-default',
             'status' => 'active',
             'created_at' => now(),

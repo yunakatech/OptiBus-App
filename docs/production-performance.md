@@ -1,4 +1,4 @@
-# Qbus Production Performance Notes
+# OptiBus Production Performance Notes
 
 Panduan ini untuk deployment Laravel + Svelte/Inertia di Render, Neon PostgreSQL, dan Cloudflare tanpa hardcode domain aplikasi.
 
@@ -17,7 +17,7 @@ Panduan ini untuk deployment Laravel + Svelte/Inertia di Render, Neon PostgreSQL
 Gunakan pooled connection Neon untuk request web:
 
 ```env
-APP_NAME=Qbus
+APP_NAME=OptiBus
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://your-domain.example.com
@@ -29,7 +29,7 @@ DB_URL=postgresql://DB_USER:DB_PASSWORD@DB_POOLER_HOST/DB_NAME?sslmode=require&c
 DB_SSLMODE=require
 DB_SCHEMA=public
 DB_PERSISTENT=false
-DB_APPLICATION_NAME=qbus-render
+DB_APPLICATION_NAME=OptiBus-render
 
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true

@@ -13,7 +13,7 @@ class HeadlessPdf
     public static function renderHtmlToPdf(string $html, string $outputPath, array $options = []): void
     {
         $browser = self::resolveBrowserBinary();
-        $tempHtml = tempnam(sys_get_temp_dir(), 'qbus-pdf-');
+        $tempHtml = tempnam(sys_get_temp_dir(), 'OptiBus-pdf-');
 
         if ($tempHtml === false) {
             throw new RuntimeException('Gagal menyiapkan file sementara untuk PDF.');
@@ -22,7 +22,7 @@ class HeadlessPdf
         $htmlPath = $tempHtml.'.html';
         @rename($tempHtml, $htmlPath);
 
-        $wrappedHtml = self::normalizeHtml($html, $options['title'] ?? 'Qbus PDF');
+        $wrappedHtml = self::normalizeHtml($html, $options['title'] ?? 'OptiBus PDF');
         file_put_contents($htmlPath, $wrappedHtml);
 
         $fileUrl = 'file:///'.str_replace('\\', '/', ltrim($htmlPath, '\\/'));

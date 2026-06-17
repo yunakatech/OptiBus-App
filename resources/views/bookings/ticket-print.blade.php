@@ -216,12 +216,12 @@
             <div class="hero">
                 <div class="brand-row">
                     <div class="brand-copy">
-                        <div class="eyebrow">Qbus Ticket</div>
+                        <div class="eyebrow">OptiBus Ticket</div>
                         <h1>Tiket Keberangkatan</h1>
                         <div class="sub">Dokumen tiket perjalanan penumpang untuk keberangkatan terjadwal.</div>
                     </div>
                     @if (!empty($ticket['logo_data_uri']))
-                        <img src="{{ $ticket['logo_data_uri'] }}" alt="Qbus" class="brand-logo">
+                        <img src="{{ $ticket['logo_data_uri'] }}" alt="OptiBus" class="brand-logo">
                     @endif
                 </div>
                 <div class="codes">
@@ -282,7 +282,7 @@
 
                 <div class="signatures">
                     <div class="signature-card">
-                        <div class="signature-role">Petugas Qbus</div>
+                        <div class="signature-role">Petugas OptiBus</div>
                         <div class="signature-space"></div>
                         <div class="signature-name">______________________</div>
                     </div>
@@ -294,7 +294,7 @@
                 </div>
 
                 <div class="doc-footer">
-                    <div>Qbus Booking &amp; Operations Workspace</div>
+                    <div>OptiBus Booking &amp; Operations Workspace</div>
                     <div>Generated {{ now()->format('d/m/Y H:i') }}</div>
                 </div>
             </div>

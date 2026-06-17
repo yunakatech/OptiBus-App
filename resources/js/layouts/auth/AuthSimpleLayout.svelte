@@ -30,8 +30,8 @@
                     class="flex flex-col items-center gap-2 font-medium"
                 >
                     <img
-                        src="/branding/qbus-logo-full.png"
-                        alt="Qbus Booking & Operations Workspace"
+                        src="/branding/OptiBus-logo-full.png"
+                        alt="OptiBus Booking & Operations Workspace"
                         class="mb-1 h-auto w-[210px] object-contain"
                         loading="eager"
                         decoding="async"

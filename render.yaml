@@ -1,7 +1,7 @@
 services:
   - type: web
     runtime: docker
-    name: qbus
+    name: optibus
     branch: main
     plan: free
     region: singapore
@@ -9,7 +9,7 @@ services:
     healthCheckPath: /up
     envVars:
       - key: APP_NAME
-        value: Qbus
+        value: OptiBus
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
@@ -39,7 +39,7 @@ services:
       - key: DB_PERSISTENT
         value: "false"
       - key: DB_APPLICATION_NAME
-        value: qbus-render
+        value: optibus-render
       - key: SESSION_DRIVER
         value: database
       - key: SESSION_SECURE_COOKIE

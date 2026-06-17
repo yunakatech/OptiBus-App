@@ -7,7 +7,7 @@ import { initializeFlashToast } from '@/lib/flash-toast';
 import { initializeInertiaLoading } from '@/lib/inertia-loading';
 import { initializeTheme } from '@/lib/theme.svelte';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Qbus';
+const appName = import.meta.env.VITE_APP_NAME || 'OptiBus';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

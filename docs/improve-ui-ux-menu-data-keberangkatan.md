@@ -1,4 +1,4 @@
-Data Keberangkatan Qbus saat ini, tampilannya sudah cukup bersih dengan gaya modern (light mode dan rounded corners). Namun, untuk aplikasi operasional (back-office/workspace) yang padat informasi, ada beberapa aspek UI/UX yang bisa ditingkatkan agar lebih efisien, mengurangi lelah mata, dan mempercepat kerja admin.
+Data Keberangkatan OptiBus saat ini, tampilannya sudah cukup bersih dengan gaya modern (light mode dan rounded corners). Namun, untuk aplikasi operasional (back-office/workspace) yang padat informasi, ada beberapa aspek UI/UX yang bisa ditingkatkan agar lebih efisien, mengurangi lelah mata, dan mempercepat kerja admin.
 
 Berikut adalah beberapa rekomendasi improvement UI/UX tampilan desktop menu data keberangkatan yang bisa diterapkan:
 
@@ -38,36 +38,36 @@ Jam	Kode / Rute	Driver & Armada	Info Manifest / Pembayaran	Aksi
 DEP-260612-0900
 
 
-PINRANG → MAKASSAR
+PINRANG â†’ MAKASSAR
 
 NAHAR
 
 
 <small style="color:gray">DD 7151 RZ (Unit 1)</small>
 
-<span style="color:green">● 3 Kursi</span> · <span style="color:red">2 Belum Lunas</span>
+<span style="color:green">â— 3 Kursi</span> Â· <span style="color:red">2 Belum Lunas</span>
 
 
 <small>BOP: Rp 245.000</small>
 
-[···]
+[Â·Â·Â·]
 17:00	
 DEP-260612-1700
 
 
-PINRANG → MAKASSAR
+PINRANG â†’ MAKASSAR
 
 SARDI
 
 
 <small style="color:gray">B 7214 SDB (Unit 1)</small>
 
-<span style="color:green">● 6 Kursi</span> · <span style="color:green">Lunas</span>
+<span style="color:green">â— 6 Kursi</span> Â· <span style="color:green">Lunas</span>
 
 
 <small>BOP: Rp 270.000</small>
 
-[···]
+[Â·Â·Â·]
 Dengan mengubahnya menjadi berbasis tabel/list berkelompok seperti di atas, admin bisa melihat lebih banyak jadwal sekaligus dalam satu layar tanpa harus banyak melakukan scrolling.
 
 Apakah ada bagian spesifik dari halaman ini (seperti alur Booking Console atau filter tanggal) yang ingin Anda bedah lebih dalam UX-nya?
@@ -114,7 +114,7 @@ Contoh Ilustrasi Perubahan Struktur Halaman
 Jika diubah menjadi layout yang lebih efisien, strukturnya akan terlihat seperti ini:
 
 +-----------------------------------------------------------------------------------------+
-| [Kembali]  RUTE: PINRANG → MAKASSAR (Kam, 11 Jun - 16:00)           [Print] [Copy] [...] |
+| [Kembali]  RUTE: PINRANG â†’ MAKASSAR (Kam, 11 Jun - 16:00)           [Print] [Copy] [...] |
 +-----------------------------------------------------------------------------------------+
 | Ringkasan: Total: 2 | Aktif: 1 | Cancel: 1 | Lunas: 1 | Belum Lunas: 1 (Rp 120.000)     |
 +-----------------------------------------------------------------------------------------+

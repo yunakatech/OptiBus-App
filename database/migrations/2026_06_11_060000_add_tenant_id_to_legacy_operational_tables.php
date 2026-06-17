@@ -97,7 +97,7 @@ return new class extends Migration
 
         if ($tenantOne) {
             DB::table('tenants')->where('id', 1)->update([
-                'name' => 'Qbus Default',
+                'name' => 'OptiBus Default',
                 'slug' => 'qbus-default',
                 'status' => 'active',
                 'updated_at' => $now,
@@ -108,7 +108,7 @@ return new class extends Migration
 
         DB::table('tenants')->insert([
             'id' => 1,
-            'name' => 'Qbus Default',
+            'name' => 'OptiBus Default',
             'slug' => 'qbus-default',
             'status' => 'active',
             'created_at' => $now,

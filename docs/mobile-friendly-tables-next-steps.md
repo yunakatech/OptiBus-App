@@ -1,4 +1,4 @@
-# Tahap Berikutnya Mobile Friendly Tabel Qbus
+# Tahap Berikutnya Mobile Friendly Tabel OptiBus
 
 Dokumen ini merangkum pekerjaan lanjutan agar semua submenu Pengaturan dan Laporan yang masih memakai tabel besar menjadi konsisten mobile-friendly.
 
