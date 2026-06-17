@@ -155,27 +155,43 @@
 </svelte:head>
 
 <div class="min-h-screen bg-[#f7f8f4] text-[#17201f]">
-    <nav
-        class="sticky top-0 z-40 border-b border-[#d9ded4] bg-[#f7f8f4]/92 backdrop-blur"
-    >
+    <nav class="sticky top-0 z-40 bg-[#f7f8f4]/78 py-3 backdrop-blur-xl">
         <div
-            class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+            class="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8"
         >
-            <a href="/" class="flex items-center" aria-label="OptiBus">
+            <a
+                href="/"
+                class="flex h-12 items-center rounded-full border border-[#d9ded4]/80 bg-white/80 px-3 shadow-[0_10px_28px_-24px_rgba(23,32,31,0.9)] transition hover:border-[#b9c5bd] hover:bg-white"
+                aria-label="OptiBus"
+            >
                 <AppLogo />
             </a>
             <div
-                class="hidden items-center gap-7 text-sm font-medium text-[#4b5a56] md:flex"
+                class="hidden items-center gap-1 rounded-full border border-[#d9ded4]/90 bg-white/72 p-1 text-sm font-semibold text-[#4b5a56] shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70 md:flex"
             >
-                <a href="#workflow" class="hover:text-[#17201f]">Workflow</a>
-                <a href="#fitur" class="hover:text-[#17201f]">Fitur</a>
-                <a href="/pricing" class="hover:text-[#17201f]">Pricing</a>
+                <a
+                    href="#workflow"
+                    class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    >Workflow</a
+                >
+                <a
+                    href="#fitur"
+                    class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    >Fitur</a
+                >
+                <a
+                    href="/pricing"
+                    class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    >Pricing</a
+                >
             </div>
-            <div class="flex items-center gap-2">
+            <div
+                class="flex items-center gap-1.5 rounded-full border border-[#d9ded4]/90 bg-white/74 p-1 shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70"
+            >
                 {#if !isAuthenticated}
                     <a
                         href="/login"
-                        class="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-[#4b5a56] hover:bg-white"
+                        class="inline-flex h-10 items-center justify-center rounded-full px-3 text-sm font-semibold text-[#4b5a56] transition hover:bg-[#eef2eb] hover:text-[#17201f] sm:px-4"
                         >Login</a
                     >
                 {/if}
@@ -183,7 +199,7 @@
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-9 items-center justify-center rounded-md bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]"
+                    class="inline-flex h-10 items-center justify-center rounded-full bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-[0_12px_26px_-18px_rgba(16,61,58,0.9)] transition hover:-translate-y-0.5 hover:bg-[#0b2f2c] sm:px-5"
                 >
                     {isAuthenticated ? 'Dashboard' : 'Mulai trial'}
                 </a>
@@ -286,7 +302,7 @@
                         class="relative mx-auto w-full max-w-[520px] sm:max-w-[560px] lg:max-w-[520px] xl:max-w-[560px]"
                     >
                         <img
-                            src="/landing/iphone-12-pro-wooden-hands.png"
+                            src="/landing/iPhone 12 Pro (Wooden Hands).webp"
                             alt="Mockup aplikasi OptiBus di iPhone saat memilih kursi perjalanan"
                             width="3000"
                             height="2250"
