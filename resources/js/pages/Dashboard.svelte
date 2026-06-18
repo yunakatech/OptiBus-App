@@ -146,6 +146,7 @@
         selectedPoolId = 0,
         selectedPoolName = 'Semua Pool',
         dailyTrend = [],
+        monthlyTrend = [],
         recentActivity = [],
         departuresToday = [],
         upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
@@ -250,6 +251,7 @@
         selectedPoolId?: number;
         selectedPoolName?: string;
         dailyTrend?: TrendItem[];
+        monthlyTrend?: TrendItem[];
         recentActivity?: ActivityItem[];
         departuresToday?: DepartureItem[];
         upcomingCharterReminder?: UpcomingCharterReminder;
@@ -270,6 +272,7 @@
     } = $props();
 
     const activeTrendRows = $derived(dailyTrend);
+    const operationalTrendSourceRows = $derived(monthlyTrend);
     const maxTrendRevenue = $derived(
         Math.max(
             0,
@@ -305,17 +308,22 @@
     );
     const nextCharter = $derived(upcomingCharterReminder.items[0] ?? null);
     const hasTrendTransactionCounts = $derived(
-        activeTrendRows.some((item) => Number(item.transaction_count || 0) > 0),
+        operationalTrendSourceRows.some(
+            (item) => Number(item.transaction_count || 0) > 0,
+        ),
     );
     const operationalTrendRows = $derived(
-        activeTrendRows.map((item, index) => ({
+        operationalTrendSourceRows.map((item, index) => ({
             key: `ops-${item.date ?? item.label}-${index}`,
             label: item.label,
-            name: item.name ?? item.date ?? item.label,
+            name: item.name ?? item.month_key ?? item.label,
             value: hasTrendTransactionCounts
                 ? Number(item.transaction_count || 0)
-                : index === activeTrendRows.length - 1
-                  ? Math.max(departuresToday.length, departuresTodayTotalBookings)
+                : index === operationalTrendSourceRows.length - 1
+                  ? Math.max(
+                        departuresToday.length,
+                        departuresTodayTotalBookings,
+                    )
                   : 0,
         })),
     );
@@ -905,6 +913,7 @@
     <Deferred
         data={[
             'dailyTrend',
+            'monthlyTrend',
             'recentActivity',
             'recentActivityTotal',
             'recentActivityVisibleCount',
@@ -1255,7 +1264,7 @@
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400"
                                 >
-                                    Operasional Harian
+                                    Tahun Berjalan
                                 </p>
                                 <CardTitle
                                     class="mt-1 text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-[1.65rem]"
@@ -1264,8 +1273,7 @@
                                 <p
                                     class="mt-1 text-xs text-slate-500 dark:text-slate-400"
                                 >
-                                    Volume aktivitas 30 hari, dari transaksi atau
-                                    keberangkatan hari ini.
+                                    Volume aktivitas bulanan selama tahun ini.
                                 </p>
                             </div>
                             <div
@@ -1292,16 +1300,16 @@
                             <div
                                 class="mb-3 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
                             >
-                                <span>Aktivitas harian</span>
+                                <span>Aktivitas bulanan</span>
                                 <span class="normal-case tracking-normal"
-                                    >{operationalTrendRows.length} titik</span
+                                    >{operationalTrendRows.length} bulan</span
                                 >
                             </div>
 
                             <div
                                 class="grid h-[190px] grid-flow-col auto-cols-fr items-end gap-1.5 md:h-[220px] md:gap-2"
                                 role="img"
-                                aria-label="Grafik aktivitas operasional harian"
+                                aria-label="Grafik aktivitas operasional tahun berjalan"
                             >
                                 {#each operationalTrendRows as row, index (row.key)}
                                     {@const height = Math.max(
@@ -1334,7 +1342,7 @@
                                             index ===
                                                 operationalTrendRows.length -
                                                     1 ||
-                                            index % 7 === 0}
+                                            index % 2 === 0}
                                             <span
                                                 class="truncate text-center text-[9px] font-medium text-slate-500 dark:text-slate-400"
                                             >
