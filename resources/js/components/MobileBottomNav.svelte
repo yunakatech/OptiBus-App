@@ -2,6 +2,7 @@
     import { page, router } from '@inertiajs/svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import BusFront from 'lucide-svelte/icons/bus-front';
+    import CreditCard from 'lucide-svelte/icons/credit-card';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import Monitor from 'lucide-svelte/icons/monitor';
     import Tickets from 'lucide-svelte/icons/tickets';
@@ -48,10 +49,20 @@
             permission: 'luggage.view',
         },
     ];
+    const billingItems: NavItem[] = [
+        {
+            title: 'Langganan',
+            href: '/subscription',
+            icon: CreditCard,
+        },
+    ];
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
+    const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
     const visibleMainItems = $derived(
-        mainItems.filter((item) => hasPermission(permissions, item.permission)),
+        billingLocked
+            ? billingItems
+            : mainItems.filter((item) => hasPermission(permissions, item.permission)),
     );
     const navCount = $derived(Math.max(visibleMainItems.length, 1));
     let rememberedActiveHref = $state<string>(toUrl(dashboard()));

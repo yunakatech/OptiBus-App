@@ -16,6 +16,62 @@ class SubscriptionTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_trial_starter_shares_unlocked_billing_access(): void
+    {
+        [$user, $tenantId, $subscriptionId] = $this->tenantWithSubscription(
+            planSlug: 'starter',
+            tenantStatus: 'active',
+            subscriptionStatus: 'trial',
+            trialEndsAt: now()->addDays(14)->toDateString(),
+            endsAt: now()->addDays(14)->toDateString(),
+        );
+
+        $this->actingAs($user)
+            ->get(route('subscription.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('tenant_subscription.tenant_id', $tenantId)
+                ->where('tenant_subscription.subscription_id', $subscriptionId)
+                ->where('auth.billing_access.allowed', true)
+                ->where('auth.billing_access.locked', false)
+                ->where('auth.billing_access.reason', 'allowed')
+                ->where('auth.billing_access.plan_slug', 'starter')
+                ->where('auth.billing_access.is_trial', true));
+    }
+
+    public function test_expired_trial_locks_operational_routes_and_is_shared_to_frontend(): void
+    {
+        [$user] = $this->tenantWithSubscription(
+            planSlug: 'starter',
+            tenantStatus: 'active',
+            subscriptionStatus: 'trial',
+            trialEndsAt: now()->subDay()->toDateString(),
+            endsAt: now()->subDay()->toDateString(),
+        );
+
+        $this->actingAs($user)
+            ->getJson(route('api.bookings.routes-by-date'))
+            ->assertStatus(402)
+            ->assertJsonPath('billing_access.locked', true)
+            ->assertJsonPath('billing_access.reason', 'trial_expired');
+
+        $this->actingAs($user)
+            ->get(route('subscription.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('auth.billing_access.locked', true)
+                ->where('auth.billing_access.reason', 'trial_expired'));
+    }
+
+    public function test_pending_payment_redirects_operational_html_to_subscription(): void
+    {
+        [$user] = $this->tenantWithPendingSubscription();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('subscription.index'));
+    }
+
     public function test_pending_subscription_creates_invoice_and_mayar_checkout_url(): void
     {
         config([
@@ -97,6 +153,57 @@ class SubscriptionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('invoices.0.gateway_status', 'payment_link_error')
                 ->where('invoices.0.gateway_checkout_url', ''));
+    }
+
+    public function test_subscription_checkout_creates_mayar_invoice_for_selected_plan(): void
+    {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+        ]);
+
+        Http::fake([
+            'https://api.mayar.id/hl/v1/payment/create' => Http::response([
+                'data' => [
+                    'id' => 'pay_fleet_123',
+                    'linkPayment' => 'https://mayar.test/pay/pay_fleet_123',
+                    'status' => 'open',
+                ],
+            ]),
+        ]);
+
+        [$user, $tenantId] = $this->tenantWithSubscription(
+            planSlug: 'starter',
+            tenantStatus: 'active',
+            subscriptionStatus: 'trial',
+            trialEndsAt: now()->subDay()->toDateString(),
+            endsAt: now()->subDay()->toDateString(),
+        );
+        $fleetPlanId = (int) DB::table('plans')->where('slug', 'fleet')->value('id');
+
+        $this->actingAs($user)
+            ->post(route('subscription.checkout'), [
+                'plan_slug' => 'fleet',
+                'billing_interval' => 'monthly',
+            ])
+            ->assertRedirect('https://mayar.test/pay/pay_fleet_123');
+
+        $this->assertDatabaseHas('tenants', [
+            'id' => $tenantId,
+            'status' => 'pending_payment',
+        ]);
+        $this->assertDatabaseHas('subscriptions', [
+            'tenant_id' => $tenantId,
+            'plan_id' => $fleetPlanId,
+            'status' => 'pending_payment',
+            'billing_interval' => 'monthly',
+        ]);
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'tenant_id' => $tenantId,
+            'payment_gateway' => 'Mayar',
+            'gateway_reference' => 'pay_fleet_123',
+            'gateway_checkout_url' => 'https://mayar.test/pay/pay_fleet_123',
+        ]);
     }
 
     public function test_mayar_paid_webhook_activates_pending_tenant_and_subscription(): void
@@ -212,6 +319,43 @@ class SubscriptionTest extends TestCase
             'status' => 'pending_payment',
             'starts_at' => null,
             'ends_at' => null,
+            'billing_interval' => 'monthly',
+            'grace_period_days' => 7,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        DB::table('users')->where('id', $user->id)->update(['tenant_id' => $tenantId]);
+
+        return [$user->fresh(), $tenantId, $subscriptionId];
+    }
+
+    /**
+     * @return array{0: User, 1: int, 2: int}
+     */
+    private function tenantWithSubscription(
+        string $planSlug,
+        string $tenantStatus,
+        string $subscriptionStatus,
+        ?string $trialEndsAt,
+        ?string $endsAt,
+    ): array {
+        $planId = (int) DB::table('plans')->where('slug', $planSlug)->value('id');
+        $tenantId = (int) DB::table('tenants')->insertGetId([
+            'name' => 'Billing Travel',
+            'slug' => 'billing-travel-'.uniqid(),
+            'email' => 'billing@example.com',
+            'status' => $tenantStatus,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $subscriptionId = (int) DB::table('subscriptions')->insertGetId([
+            'tenant_id' => $tenantId,
+            'plan_id' => $planId,
+            'status' => $subscriptionStatus,
+            'trial_ends_at' => $trialEndsAt,
+            'starts_at' => $subscriptionStatus === 'pending_payment' ? null : now()->subDays(2)->toDateString(),
+            'ends_at' => $endsAt,
             'billing_interval' => 'monthly',
             'grace_period_days' => 7,
             'created_at' => now(),

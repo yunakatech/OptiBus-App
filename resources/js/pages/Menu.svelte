@@ -64,15 +64,31 @@
             ],
         },
     ] as const;
+    const billingMenuSections = [
+        {
+            label: 'Akun',
+            items: [
+                {
+                    title: 'Langganan',
+                    href: '/subscription',
+                    icon: CreditCard,
+                },
+            ],
+        },
+    ] as const;
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
     const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
+    const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
     const visibleMenuSections = $derived(
-        menuSections
+        (billingLocked ? billingMenuSections : menuSections)
             .map((section) => ({
                 ...section,
                 items: section.items.filter((item) =>
-                    hasPermission(permissions, item.permission) &&
+                    hasPermission(
+                        permissions,
+                        'permission' in item ? item.permission : undefined,
+                    ) &&
                     (!('superAdminOnly' in item) ||
                         !item.superAdminOnly ||
                         isSuperAdmin),

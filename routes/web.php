@@ -110,6 +110,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
 
     // Subscription & Payment (tenant self-service)
     Route::get('subscription', [\App\Http\Controllers\SubscriptionPaymentController::class, 'index'])->name('subscription.index');
+    Route::post('subscription/checkout', [\App\Http\Controllers\SubscriptionPaymentController::class, 'checkout'])->name('subscription.checkout');
 
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');

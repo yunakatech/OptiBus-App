@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Support\AccessControl;
 use App\Support\PoolScope;
+use App\Support\TenantBillingAccess;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,6 +41,7 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $userId = (int) ($user?->id ?? 0);
         $tenantSubscription = $userId > 0 ? PoolScope::tenantSubscription($userId) : null;
+        $billingAccess = $userId > 0 ? TenantBillingAccess::forUser($userId) : null;
         $poolSwitcherScope = $userId > 0 ? PoolScope::forCurrentUser(0, $userId, false) : null;
 
         // Tenant-filtered pools for global pool switcher (cached 30s)
@@ -119,6 +121,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $activePoolName,
                 ] : null,
                 'tenant_subscription' => $tenantSubscription,
+                'billing_access' => $billingAccess,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

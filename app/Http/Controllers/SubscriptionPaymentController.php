@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\PaymentGateway;
 use App\Services\MayarGateway;
+use App\Services\PaymentGateway;
 use App\Support\PoolScope;
+use App\Support\TenantBillingAccess;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class SubscriptionPaymentController extends Controller
 {
@@ -81,7 +85,96 @@ class SubscriptionPaymentController extends Controller
                 'description' => (string) ($p->description ?? ''),
             ])->all(),
             'account_access' => $this->accountAccess(),
+            'billing_access' => TenantBillingAccess::forUser(),
         ]);
+    }
+
+    /**
+     * Create a Mayar checkout invoice for the selected SaaS plan.
+     * POST /subscription/checkout
+     */
+    public function checkout(Request $request): RedirectResponse|HttpResponse
+    {
+        $tenantId = PoolScope::tenantId();
+        if ($tenantId <= 0 || ! Schema::hasTable('plans') || ! Schema::hasTable('subscriptions')) {
+            return back()->with('status', 'billing_missing_tenant');
+        }
+
+        $data = $request->validate([
+            'plan_slug' => ['required', 'string', 'in:starter,pro,fleet'],
+            'billing_interval' => ['nullable', 'string', 'in:monthly,yearly'],
+        ]);
+
+        $billingInterval = ($data['billing_interval'] ?? 'monthly') === 'yearly' ? 'yearly' : 'monthly';
+        $plan = DB::table('plans')
+            ->where('slug', $data['plan_slug'])
+            ->where('is_active', true)
+            ->first();
+        if (! $plan) {
+            return back()->with('status', 'billing_plan_missing');
+        }
+
+        $amount = $billingInterval === 'yearly'
+            ? (float) $plan->price_yearly
+            : (float) $plan->price_monthly;
+        if ($amount <= 0) {
+            return back()->with('status', 'billing_plan_free');
+        }
+
+        $invoiceId = DB::transaction(function () use ($tenantId, $plan, $billingInterval, $amount): int {
+            DB::table('tenants')->where('id', $tenantId)->update([
+                'status' => 'pending_payment',
+                'updated_at' => now(),
+            ]);
+
+            DB::table('subscriptions')
+                ->where('tenant_id', $tenantId)
+                ->whereIn('status', ['trial', 'active', 'past_due'])
+                ->update([
+                    'status' => 'expired',
+                    'updated_at' => now(),
+                ]);
+
+            $subscriptionId = (int) DB::table('subscriptions')->insertGetId([
+                'tenant_id' => $tenantId,
+                'plan_id' => (int) $plan->id,
+                'status' => 'pending_payment',
+                'trial_ends_at' => null,
+                'starts_at' => null,
+                'ends_at' => null,
+                'billing_interval' => $billingInterval,
+                'grace_period_days' => config('saas.grace_period_days', 7),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return PaymentGateway::createInvoice(
+                $tenantId,
+                $subscriptionId,
+                $amount,
+                now()->addDay()->toDateString(),
+            );
+        });
+
+        if ($invoiceId <= 0) {
+            return back()->with('status', 'billing_invoice_failed');
+        }
+
+        $checkoutUrl = Schema::hasColumn('invoice_subscriptions', 'gateway_checkout_url')
+            ? (string) (DB::table('invoice_subscriptions')->where('id', $invoiceId)->value('gateway_checkout_url') ?? '')
+            : '';
+
+        if ($checkoutUrl !== '' && $request->header('X-Inertia')) {
+            return Inertia::location($checkoutUrl);
+        }
+
+        if ($checkoutUrl !== '') {
+            return redirect()->away($checkoutUrl);
+        }
+
+        return redirect()
+            ->route('subscription.index')
+            ->with('status', 'payment_link_error');
     }
 
     /**
