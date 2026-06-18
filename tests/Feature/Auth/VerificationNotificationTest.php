@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Listeners\SendSafeEmailVerificationNotification;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
+use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 class VerificationNotificationTest extends TestCase
@@ -56,5 +59,48 @@ class VerificationNotificationTest extends TestCase
         event(new Registered($user));
 
         Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_resend_verification_notification_gracefully_handles_mail_failures(): void
+    {
+        $user = Mockery::mock(User::class)->makePartial();
+        $user->forceFill([
+            'id' => 999,
+            'email' => 'broken-mail@example.com',
+        ]);
+        $user->shouldReceive('hasVerifiedEmail')->andReturn(false);
+        $user->shouldReceive('sendEmailVerificationNotification')
+            ->once()
+            ->andThrow(new RuntimeException('SMTP down'));
+
+        $this->actingAs($user)
+            ->post(route('verification.send'))
+            ->assertRedirect();
+
+        $this->assertSame('verification-link-failed', session('status'));
+    }
+
+    public function test_safe_verification_listener_handles_mail_failures(): void
+    {
+        $user = new class
+        {
+            public int $id = 7;
+            public string $email = 'listener-fail@example.com';
+
+            public function hasVerifiedEmail(): bool
+            {
+                return false;
+            }
+
+            public function sendEmailVerificationNotification(): void
+            {
+                throw new RuntimeException('SMTP down');
+            }
+        };
+
+        $listener = new SendSafeEmailVerificationNotification();
+        $listener->handle(new Registered($user));
+
+        $this->assertTrue(true);
     }
 }

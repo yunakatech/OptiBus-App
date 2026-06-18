@@ -29,6 +29,11 @@
         A new verification link has been sent to the email address you provided
         during registration.
     </div>
+{:else if status === 'verification-link-failed'}
+    <div class="mb-4 text-center text-sm font-medium text-destructive">
+        We could not send the verification email right now. Please try again in a
+        moment.
+    </div>
 {/if}
 
 <Form {...send.form()} class="space-y-6 text-center">
