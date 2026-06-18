@@ -51,6 +51,6 @@ services:
       - key: FILESYSTEM_DISK
         value: local
       - key: MAIL_MAILER
-        value: log
+        value: smtp
       - key: RUN_MIGRATIONS
         value: "true"
