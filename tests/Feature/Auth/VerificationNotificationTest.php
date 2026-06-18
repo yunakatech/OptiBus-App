@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Listeners\SendSafeEmailVerificationNotification;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -80,27 +79,19 @@ class VerificationNotificationTest extends TestCase
         $this->assertSame('verification-link-failed', session('status'));
     }
 
-    public function test_safe_verification_listener_handles_mail_failures(): void
+    public function test_user_verification_notification_records_mail_failures(): void
     {
-        $user = new class
-        {
-            public int $id = 7;
-            public string $email = 'listener-fail@example.com';
+        $user = Mockery::mock(User::class)->makePartial();
+        $user->forceFill([
+            'id' => 7,
+            'email' => 'listener-fail@example.com',
+        ]);
+        $user->shouldReceive('notify')
+            ->once()
+            ->andThrow(new RuntimeException('SMTP down'));
 
-            public function hasVerifiedEmail(): bool
-            {
-                return false;
-            }
+        $user->sendEmailVerificationNotification();
 
-            public function sendEmailVerificationNotification(): void
-            {
-                throw new RuntimeException('SMTP down');
-            }
-        };
-
-        $listener = new SendSafeEmailVerificationNotification();
-        $listener->handle(new Registered($user));
-
-        $this->assertTrue(true);
+        $this->assertTrue($user->emailVerificationSendFailed());
     }
 }
