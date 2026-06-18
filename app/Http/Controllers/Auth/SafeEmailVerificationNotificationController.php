@@ -16,31 +16,42 @@ class SafeEmailVerificationNotificationController extends Controller
      */
     public function store(Request $request)
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        $user = $request->user();
+
+        if ($user->hasVerifiedEmail()) {
             return $request->wantsJson()
                 ? new JsonResponse('', 204)
                 : app(RedirectAsIntended::class, ['name' => 'email-verification']);
         }
 
         try {
-            $request->user()->sendEmailVerificationNotification();
+            $user->sendEmailVerificationNotification();
         } catch (\Throwable $e) {
             Log::warning('email.verification.send_failed', [
-                'user_id' => (int) ($request->user()?->id ?? 0),
-                'email' => (string) ($request->user()?->email ?? ''),
+                'user_id' => (int) ($user?->id ?? 0),
+                'email' => (string) ($user?->email ?? ''),
                 'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
 
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'message' => 'Unable to send the verification email right now. Please try again later.',
-                ], 503);
-            }
+            return $this->failedResponse($request);
+        }
 
-            return back()->with('status', 'verification-link-failed');
+        if (method_exists($user, 'emailVerificationSendFailed') && $user->emailVerificationSendFailed()) {
+            return $this->failedResponse($request);
         }
 
         return app(EmailVerificationNotificationSentResponse::class);
+    }
+
+    private function failedResponse(Request $request)
+    {
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Unable to send the verification email right now. Please try again later.',
+            ], 503);
+        }
+
+        return back()->with('status', 'verification-link-failed');
     }
 }

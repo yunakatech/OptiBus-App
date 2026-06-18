@@ -2,16 +2,13 @@
 
 namespace App\Providers;
 
-use App\Listeners\CreateTenantOnRegistration;
-use App\Listeners\SendSafeEmailVerificationNotification;
+use App\Http\Controllers\Auth\SafeEmailVerificationNotificationController;
 use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use Carbon\CarbonImmutable;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -27,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(
             EmailVerificationNotificationController::class,
-            \App\Http\Controllers\Auth\SafeEmailVerificationNotificationController::class,
+            SafeEmailVerificationNotificationController::class,
         );
     }
 
@@ -39,17 +36,6 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configurePerformanceTelemetry();
         $this->flushRequestScopedCachesOnTerminate();
-        $this->registerEventListeners();
-    }
-
-    /**
-     * Register event listeners.
-     */
-    protected function registerEventListeners(): void
-    {
-        // Auto-provision tenant + subscription on user registration
-        Event::listen(Registered::class, CreateTenantOnRegistration::class);
-        Event::listen(Registered::class, SendSafeEmailVerificationNotification::class);
     }
 
     /**
