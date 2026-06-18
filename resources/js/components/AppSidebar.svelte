@@ -174,6 +174,11 @@
             permission: 'platform.manage',
         },
         {
+            title: 'Langganan',
+            href: '/subscription',
+            icon: CreditCard,
+        },
+        {
             title: 'SaaS',
             href: '/admin-ops/saas',
             icon: Building2,
@@ -229,11 +234,14 @@
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
     const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
+    const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
+    const homeHref = $derived(billingLocked ? '/subscription' : toUrl(dashboard()));
     const visibleSections = $derived(
         mainSections
             .map((section) => ({
                 ...section,
                 items: section.items.filter((item) =>
+                    (!billingLocked || toUrl(item.href) === '/subscription') &&
                     hasPermission(permissions, item.permission) &&
                     (!item.superAdminOnly || isSuperAdmin),
                 ),
@@ -254,7 +262,7 @@
                     {#snippet children(props)}
                         <Link
                             {...props}
-                            href={toUrl(dashboard())}
+                            href={homeHref}
                             class={`${props.class} justify-center`}
                             prefetch
                             cacheFor={30000}
@@ -264,7 +272,9 @@
                     {/snippet}
                 </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem class="px-1 group-data-[collapsible=icon]:hidden">
+            <SidebarMenuItem
+                class={`px-1 group-data-[collapsible=icon]:hidden ${billingLocked ? 'hidden' : ''}`}
+            >
                 <PoolSwitcher />
             </SidebarMenuItem>
         </SidebarMenu>

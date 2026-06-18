@@ -43,6 +43,23 @@ export type TenantSubscription = {
     ends_at: string | null;
 };
 
+export type BillingAccess = {
+    allowed: boolean;
+    locked: boolean;
+    reason: string;
+    tenant_id: number;
+    tenant_status: string;
+    subscription_id: number | null;
+    subscription_status: string;
+    plan_id: number | null;
+    plan_slug: string;
+    plan_name: string;
+    is_trial: boolean;
+    trial_ends_at: string | null;
+    ends_at: string | null;
+    redirect_url: string;
+};
+
 export type Auth = {
     user: User;
     permissions: string[];
@@ -50,6 +67,7 @@ export type Auth = {
     pool_scope?: PoolScope | null;
     active_pool?: ActivePool | null;
     tenant_subscription?: TenantSubscription | null;
+    billing_access?: BillingAccess | null;
 };
 
 export type TwoFactorConfigContent = {

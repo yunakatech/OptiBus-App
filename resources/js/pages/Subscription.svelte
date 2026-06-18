@@ -5,7 +5,7 @@
 </script>
 
 <script lang="ts">
-    import { Link, page } from '@inertiajs/svelte';
+    import { Link, page, router } from '@inertiajs/svelte';
     import {
         AlertTriangle,
         CheckCircle2,
@@ -63,6 +63,18 @@
         description: string;
     };
 
+    type BillingAccess = {
+        allowed: boolean;
+        locked: boolean;
+        reason: string;
+        plan_slug: string;
+        plan_name: string;
+        is_trial: boolean;
+        trial_ends_at: string | null;
+        ends_at: string | null;
+        redirect_url: string;
+    };
+
     type AccountAccess = {
         tenant_id: number;
         pool_count: number;
@@ -89,6 +101,11 @@
             role_names: [],
         }) as AccountAccess,
     );
+    const billingAccess = $derived(
+        (page.props.auth?.billing_access ?? page.props.billing_access ?? null) as
+            | BillingAccess
+            | null,
+    );
 
     const payableInvoice = $derived(
         invoices.find((invoice) =>
@@ -101,10 +118,16 @@
     const subscriptionMeta = $derived(
         statusBadge(tenantSub?.subscription_status ?? ''),
     );
-    const canAccessDashboard = $derived(
-        tenantSub?.subscription_status === 'trial' ||
-            tenantSub?.subscription_status === 'active',
+    const subscriptionMetaLabel = $derived(
+        tenantSub?.subscription_status === 'trial' &&
+            tenantSub.plan_slug === 'starter'
+            ? 'Trial Starter'
+            : subscriptionMeta.label,
     );
+    const canAccessDashboard = $derived(
+        Boolean(billingAccess?.allowed),
+    );
+    const canChoosePlan = $derived(Boolean(billingAccess?.locked && !payableInvoice));
     const paymentLinkReady = $derived(
         Boolean(payableInvoice?.gateway_checkout_url),
     );
@@ -130,6 +153,7 @@
               ? `${latestPaidInvoice.invoice_number} lunas pada ${formatDate(latestPaidInvoice.paid_at)}.`
               : 'Invoice akan muncul otomatis setelah memilih paket berbayar.',
     );
+    let checkoutPlanSlug = $state('');
 
     function formatRupiah(value: number): string {
         return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
@@ -210,12 +234,41 @@
 
     function planStateLabel(plan: Plan): string {
         if (plan.slug === currentPlan?.slug) {
-            return 'Paket aktif';
+            return tenantSub?.subscription_status === 'trial'
+                ? 'Trial Starter'
+                : 'Paket aktif';
+        }
+
+        if (billingAccess?.locked) {
+            return plan.price_monthly > (currentPlan?.price_monthly ?? 0)
+                ? 'Upgrade tersedia'
+                : 'Pilih paket';
         }
 
         return plan.price_monthly > (currentPlan?.price_monthly ?? 0)
-            ? 'Upgrade via admin'
-            : 'Downgrade via admin';
+            ? 'Upgrade tersedia'
+            : 'Downgrade tersedia';
+    }
+
+    function startCheckout(plan: Plan): void {
+        if (checkoutPlanSlug !== '') {
+            return;
+        }
+
+        checkoutPlanSlug = plan.slug;
+        router.post(
+            '/subscription/checkout',
+            {
+                plan_slug: plan.slug,
+                billing_interval: 'monthly',
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    checkoutPlanSlug = '';
+                },
+            },
+        );
     }
 </script>
 
@@ -274,7 +327,7 @@
                             <div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <Badge variant={subscriptionMeta.variant}
-                                        >{subscriptionMeta.label}</Badge
+                                        >{subscriptionMetaLabel}</Badge
                                     >
                                     <span class="text-xs text-muted-foreground"
                                         >{tenantSub.tenant_name}</span
@@ -486,7 +539,9 @@
                     <CardHeader>
                         <CardTitle class="text-lg">Paket Tersedia</CardTitle>
                         <CardDescription
-                            >Perbandingan paket yang bisa digunakan tenant.</CardDescription
+                            >Trial memakai Starter selama 14 hari. Starter
+                            berbayar, Pro, dan Fleet aktif setelah checkout
+                            Mayar lunas.</CardDescription
                         >
                     </CardHeader>
                     <CardContent>
@@ -527,14 +582,31 @@
                                     >
                                         {plan.description}
                                     </p>
-                                    <Badge
-                                        variant={plan.slug === currentPlan?.slug
-                                            ? 'default'
-                                            : 'outline'}
-                                        class="mt-3 w-full justify-center"
-                                    >
-                                        {planStateLabel(plan)}
-                                    </Badge>
+                                    {#if canChoosePlan}
+                                        <Button
+                                            type="button"
+                                            variant={plan.slug === currentPlan?.slug
+                                                ? 'default'
+                                                : 'outline'}
+                                            class="mt-3 h-9 w-full rounded-lg"
+                                            disabled={checkoutPlanSlug !== ''}
+                                            onclick={() => startCheckout(plan)}
+                                        >
+                                            {checkoutPlanSlug === plan.slug
+                                                ? 'Membuat checkout...'
+                                                : `Pilih ${plan.name}`}
+                                        </Button>
+                                    {:else}
+                                        <Badge
+                                            variant={plan.slug ===
+                                            currentPlan?.slug
+                                                ? 'default'
+                                                : 'outline'}
+                                            class="mt-3 w-full justify-center"
+                                        >
+                                            {planStateLabel(plan)}
+                                        </Badge>
+                                    {/if}
                                 </div>
                             {/each}
                         </div>

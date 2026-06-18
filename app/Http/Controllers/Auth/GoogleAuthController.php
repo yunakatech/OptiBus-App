@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\PaymentGateway;
 use App\Support\AccessControl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -150,28 +151,38 @@ class GoogleAuthController extends Controller
             }
 
             DB::transaction(function () use ($userId, $name, $email, $tenantSlug, $plan, $trialDays): void {
+                $requiresPayment = $trialDays <= 0 && (float) ($plan->price_monthly ?? 0) > 0;
                 $tenantId = DB::table('tenants')->insertGetId([
                     'name' => $name,
                     'slug' => $tenantSlug,
                     'email' => $email,
-                    'status' => 'active',
+                    'status' => $requiresPayment ? 'pending_payment' : 'active',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
                 $trialEndsAt = $trialDays > 0 ? now()->addDays($trialDays)->toDateString() : null;
-                DB::table('subscriptions')->insert([
+                $subscriptionId = (int) DB::table('subscriptions')->insertGetId([
                     'tenant_id' => $tenantId,
                     'plan_id' => (int) $plan->id,
-                    'status' => $trialDays > 0 ? 'trial' : 'active',
+                    'status' => $trialDays > 0 ? 'trial' : ($requiresPayment ? 'pending_payment' : 'active'),
                     'trial_ends_at' => $trialEndsAt,
-                    'starts_at' => now()->toDateString(),
-                    'ends_at' => $trialDays > 0 ? $trialEndsAt : now()->addMonth()->toDateString(),
+                    'starts_at' => $requiresPayment ? null : now()->toDateString(),
+                    'ends_at' => $trialDays > 0 ? $trialEndsAt : ($requiresPayment ? null : now()->addMonth()->toDateString()),
                     'billing_interval' => 'monthly',
                     'grace_period_days' => config('saas.grace_period_days', 7),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                if ($requiresPayment) {
+                    PaymentGateway::createInvoice(
+                        (int) $tenantId,
+                        $subscriptionId,
+                        (float) $plan->price_monthly,
+                        now()->addDay()->toDateString(),
+                    );
+                }
 
                 if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'tenant_id')) {
                     $poolId = DB::table('pools')->insertGetId([

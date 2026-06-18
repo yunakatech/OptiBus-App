@@ -5,7 +5,7 @@ namespace App\Providers;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Support\AccessControl;
-use App\Support\PoolScope;
+use App\Support\TenantBillingAccess;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,17 +39,8 @@ class FortifyServiceProvider extends ServiceProvider
                         return redirect()->route('subscription.index');
                     }
 
-                    $tenantId = PoolScope::tenantId($userId);
-                    $subscriptionStatus = '';
-                    if ($tenantId > 0 && Schema::hasTable('subscriptions')) {
-                        $subscriptionStatus = (string) (DB::table('subscriptions')
-                            ->where('tenant_id', $tenantId)
-                            ->orderByRaw("CASE status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'pending_payment' THEN 2 WHEN 'past_due' THEN 3 ELSE 4 END")
-                            ->orderByDesc('created_at')
-                            ->value('status') ?? '');
-                    }
-
-                    if (in_array($subscriptionStatus, ['pending_payment', 'past_due', 'suspended', 'canceled', 'expired'], true)) {
+                    $billingAccess = TenantBillingAccess::forUser($userId);
+                    if ($billingAccess['locked'] ?? false) {
                         return redirect()->route('subscription.index');
                     }
 

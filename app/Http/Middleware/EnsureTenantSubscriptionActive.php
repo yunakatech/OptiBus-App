@@ -3,10 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Support\AccessControl;
-use App\Support\PoolScope;
+use App\Support\TenantBillingAccess;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -28,21 +27,9 @@ class EnsureTenantSubscriptionActive
             return $next($request);
         }
 
-        $tenantId = PoolScope::tenantId($userId);
-        if ($tenantId <= 0) {
-            return $next($request);
-        }
+        $billingAccess = TenantBillingAccess::forUser($userId);
 
-        $tenantStatus = (string) (DB::table('tenants')->where('id', $tenantId)->value('status') ?? '');
-        $subscriptionStatus = (string) (DB::table('subscriptions')
-            ->where('tenant_id', $tenantId)
-            ->orderByDesc('created_at')
-            ->value('status') ?? '');
-
-        $tenantOk = $tenantStatus === '' || $tenantStatus === 'active';
-        $subscriptionOk = in_array($subscriptionStatus, ['trial', 'active'], true);
-
-        if ($tenantOk && $subscriptionOk) {
+        if (! ($billingAccess['locked'] ?? false)) {
             return $next($request);
         }
 
@@ -51,8 +38,7 @@ class EnsureTenantSubscriptionActive
                 'success' => false,
                 'error' => 'Langganan tenant belum aktif. Selesaikan pembayaran di halaman subscription.',
                 'redirect_url' => route('subscription.index', absolute: false),
-                'tenant_status' => $tenantStatus,
-                'subscription_status' => $subscriptionStatus,
+                'billing_access' => $billingAccess,
             ], 402);
         }
 
@@ -63,6 +49,7 @@ class EnsureTenantSubscriptionActive
     {
         return $request->routeIs(
             'subscription.index',
+            'subscription.checkout',
             'logout',
             'verification.*',
             'profile.*',
