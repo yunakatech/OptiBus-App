@@ -7,6 +7,7 @@ use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Auto-provision tenant + subscription on user registration
         Event::listen(Registered::class, CreateTenantOnRegistration::class);
+        Event::listen(Registered::class, SendEmailVerificationNotification::class);
     }
 
     /**
