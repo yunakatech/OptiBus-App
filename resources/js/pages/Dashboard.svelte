@@ -1,4 +1,4 @@
-﻿<script module lang="ts">
+<script module lang="ts">
     import { dashboard } from '@/routes';
 
     export const layout = {
@@ -83,29 +83,6 @@
         margin?: number;
     };
 
-    type HeatmapItem = TrendItem & {
-        date: string;
-        month_label?: string;
-        month_short?: string;
-        day_number?: number;
-        day_of_week?: number;
-        is_future?: boolean;
-    };
-
-    type HeatmapContributionCell = {
-        key: string;
-        item: HeatmapItem | null;
-        columnIndex: number;
-        rowIndex: number;
-        left: number;
-    };
-
-    type HeatmapMonthMarker = {
-        key: string;
-        label: string;
-        left: number;
-    };
-
     type ChartTooltipAlign = 'start' | 'center' | 'end';
 
     type ActivityItem = {
@@ -169,8 +146,6 @@
         selectedPoolId = 0,
         selectedPoolName = 'Semua Pool',
         dailyTrend = [],
-        monthlyTrend = [],
-        yearlyHeatmap = [],
         recentActivity = [],
         departuresToday = [],
         upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
@@ -275,8 +250,6 @@
         selectedPoolId?: number;
         selectedPoolName?: string;
         dailyTrend?: TrendItem[];
-        monthlyTrend?: TrendItem[];
-        yearlyHeatmap?: HeatmapItem[];
         recentActivity?: ActivityItem[];
         departuresToday?: DepartureItem[];
         upcomingCharterReminder?: UpcomingCharterReminder;
@@ -296,11 +269,7 @@
         >;
     } = $props();
 
-    let trendMode = $state<'monthly' | 'daily'>('monthly');
-
-    const activeTrendRows = $derived(
-        trendMode === 'daily' ? dailyTrend : monthlyTrend,
-    );
+    const activeTrendRows = $derived(dailyTrend);
     const maxTrendRevenue = $derived(
         Math.max(
             0,
@@ -308,30 +277,6 @@
         ),
     );
     const lineScaleMax = $derived(maxTrendRevenue > 0 ? maxTrendRevenue : 1);
-    const currentMonthKey = $derived.by(() => {
-        const date = new Date();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-
-        return `${date.getFullYear()}-${month}`;
-    });
-    const currentMonthHeatmapDays = $derived(
-        yearlyHeatmap.filter(
-            (item) => !item.is_future && item.date?.startsWith(currentMonthKey),
-        ),
-    );
-    const yearlyHeatmapDays = $derived(yearlyHeatmap);
-    const maxYearlyHeatmapRevenue = $derived(
-        Math.max(
-            1,
-            ...yearlyHeatmapDays.map((item) => Number(item.revenue || 0)),
-        ),
-    );
-    const maxCurrentMonthHeatmapRevenue = $derived(
-        Math.max(
-            1,
-            ...currentMonthHeatmapDays.map((item) => Number(item.revenue || 0)),
-        ),
-    );
     const upcomingCharterOverflow = $derived(
         Math.max(
             Number(upcomingCharterReminder.total || 0) -
@@ -344,93 +289,64 @@
             Number(recentActivityTotal || 0) -
                 Number(recentActivityVisibleCount || 0),
             0,
-        ),
-    );
-    const activeTrendRevenueTotal = $derived(
-        trendMode === 'monthly'
-            ? Number(stats.revenue_total_year || 0)
-            : activeTrendRows.reduce(
-                  (total, item) => total + Number(item.revenue || 0),
-                  0,
               ),
     );
-    const currentMonthRevenueTotal = $derived(
-        currentMonthHeatmapDays.reduce(
+    const activeTrendRevenueTotal = $derived(
+        activeTrendRows.reduce(
             (total, item) => total + Number(item.revenue || 0),
             0,
         ),
     );
-    const visibleRevenueDays = $derived(
-        currentMonthHeatmapDays.filter((item) => Number(item.revenue || 0) > 0),
+    const departuresTodayTotalBookings = $derived(
+        departuresToday.reduce(
+            (total, item) => total + Number(item.total_bookings || 0),
+            0,
+        ),
+    );
+    const nextCharter = $derived(upcomingCharterReminder.items[0] ?? null);
+    const hasTrendTransactionCounts = $derived(
+        activeTrendRows.some((item) => Number(item.transaction_count || 0) > 0),
+    );
+    const operationalTrendRows = $derived(
+        activeTrendRows.map((item, index) => ({
+            key: `ops-${item.date ?? item.label}-${index}`,
+            label: item.label,
+            name: item.name ?? item.date ?? item.label,
+            value: hasTrendTransactionCounts
+                ? Number(item.transaction_count || 0)
+                : index === activeTrendRows.length - 1
+                  ? Math.max(departuresToday.length, departuresTodayTotalBookings)
+                  : 0,
+        })),
+    );
+    const maxOperationalActivity = $derived(
+        Math.max(1, ...operationalTrendRows.map((item) => item.value)),
     );
 
     const trendKey = (row: TrendItem) =>
         `trend-${row.month_key ?? row.label}-${row.name ?? row.date ?? ''}`;
-    const heatmapKey = (row: HeatmapItem) => `heatmap-${row.date}`;
 
     let hoveredTrendKey = $state<string>('');
     let pinnedTrendKey = $state<string>('');
-    let hoveredHeatmapKey = $state<string>('');
-    let pinnedHeatmapKey = $state<string>('');
-    let selectedSummaryScope = $state<'day' | 'month' | 'year'>('month');
 
     const activeTrendTooltipKey = $derived(hoveredTrendKey || pinnedTrendKey);
-    const activeHeatmapTooltipKey = $derived(
-        hoveredHeatmapKey || pinnedHeatmapKey,
-    );
-    const heatmapMonthLabel = $derived(
-        currentMonthHeatmapDays[0]?.date
-            ? new Date(
-                  `${currentMonthHeatmapDays[0].date}T00:00:00`,
-              ).toLocaleDateString('id-ID', {
-                  month: 'long',
-                  year: 'numeric',
-              })
-            : summaryPeriodByScope.month.current_label,
-    );
-    const activeTrendTitle = $derived(
-        trendMode === 'daily' ? 'Daily Revenue' : 'Monthly Revenue',
-    );
-    const heatmapYearLabel = $derived(`${new Date().getFullYear()}`);
-    const activeTrendEyebrow = $derived(
-        trendMode === 'daily' ? '30 Hari Terakhir' : 'Tahun Berjalan',
-    );
-    const activeTrendRangeLabel = $derived(
-        trendMode === 'daily' ? '30 hari terakhir' : 'Jan - Des',
-    );
     const activeTrendDataSignature = $derived(
-        `${selectedPoolId}|${trendMode}|${activeTrendRows
+        `${selectedPoolId}|daily|${activeTrendRows
             .map(
                 (row) =>
                     `${trendKey(row)}:${Number(row.revenue || 0)}:${Number(row.booking_revenue || 0)}:${Number(row.luggage_revenue || 0)}:${Number(row.charter_revenue || 0)}`,
             )
             .join('|')}`,
     );
-    const heatmapDataSignature = $derived(
-        `${selectedPoolId}|${yearlyHeatmapDays
-            .map(
-                (row) =>
-                    `${heatmapKey(row)}:${Number(row.revenue || 0)}:${Number(row.booking_revenue || 0)}:${Number(row.luggage_revenue || 0)}:${Number(row.charter_revenue || 0)}`,
-            )
-            .join('|')}`,
-    );
-    const activeSummaryStats = $derived(
-        summaryStatsByScope[selectedSummaryScope] ?? summaryStatsByScope.month,
-    );
+    const activeSummaryStats = $derived(summaryStatsByScope.month);
     const activeSummaryPeriod = $derived(
-        summaryPeriodByScope[selectedSummaryScope] ??
-            summaryPeriodByScope.month,
+        summaryPeriodByScope.month,
     );
     const activeTotalRevenue = $derived(
         Number(activeSummaryStats.revenue_booking || 0) +
             Number(activeSummaryStats.revenue_charter || 0) +
             Number(activeSummaryStats.revenue_luggage || 0),
     );
-    const activeTotalBop = $derived(
-        Number(activeSummaryStats.bop_booking || 0) +
-            Number(activeSummaryStats.bop_charter || 0),
-    );
-    const activeTotalMargin = $derived(activeTotalRevenue - activeTotalBop);
     const activeAchievementWidth = $derived(
         Math.min(
             Math.max(Number(activeSummaryStats.achievement_percent || 0), 0),
@@ -517,92 +433,6 @@
 
         return indexes;
     });
-    const buildHeatmapContributionColumns = (rows: HeatmapItem[]) => {
-        const columns: Array<{
-            key: string;
-            cells: Array<HeatmapItem | null>;
-        }> = [];
-        let weekCells = Array<HeatmapItem | null>(7).fill(null);
-
-        rows.forEach((row, index) => {
-            const dayOfWeek = Number(row.day_of_week ?? 0);
-
-            if (index > 0 && dayOfWeek === 0) {
-                columns.push({
-                    key: `heatmap-week-${columns.length}`,
-                    cells: weekCells,
-                });
-                weekCells = Array<HeatmapItem | null>(7).fill(null);
-            }
-
-            weekCells[dayOfWeek] = row;
-        });
-
-        if (weekCells.some((cell) => cell !== null)) {
-            columns.push({
-                key: `heatmap-week-${columns.length}`,
-                cells: weekCells,
-            });
-        }
-
-        return columns;
-    };
-    const heatmapContributionColumns = $derived.by(() =>
-        buildHeatmapContributionColumns(yearlyHeatmapDays),
-    );
-    const mobileHeatmapContributionColumns = $derived.by(() =>
-        buildHeatmapContributionColumns(currentMonthHeatmapDays),
-    );
-    const heatmapCellsFromColumns = (
-        columns: Array<{
-            key: string;
-            cells: Array<HeatmapItem | null>;
-        }>,
-    ): HeatmapContributionCell[] => {
-        const totalColumns = Math.max(columns.length, 1);
-
-        return columns.flatMap((column, columnIndex) =>
-            column.cells.map((item, rowIndex) => ({
-                key: item
-                    ? heatmapKey(item)
-                    : `${column.key}-empty-${rowIndex}`,
-                item,
-                columnIndex,
-                rowIndex,
-                left: ((columnIndex + 0.5) / totalColumns) * 100,
-            })),
-        );
-    };
-    const heatmapContributionCells = $derived.by<HeatmapContributionCell[]>(
-        () => heatmapCellsFromColumns(heatmapContributionColumns),
-    );
-    const mobileHeatmapContributionCells = $derived.by<
-        HeatmapContributionCell[]
-    >(() => heatmapCellsFromColumns(mobileHeatmapContributionColumns));
-    const heatmapMonthMarkers = $derived.by<HeatmapMonthMarker[]>(() =>
-        heatmapContributionColumns.flatMap((column, columnIndex) => {
-            const monthStart = column.cells.find(
-                (item) => item?.day_number === 1,
-            );
-
-            if (!monthStart) {
-                return [];
-            }
-
-            return [
-                {
-                    key: `${monthStart.date}-marker`,
-                    label:
-                        monthStart.month_short ?? monthStart.month_label ?? '',
-                    left:
-                        ((columnIndex + 0.5) /
-                            Math.max(heatmapContributionColumns.length, 1)) *
-                        100,
-                },
-            ];
-        }),
-    );
-
     const toCurrency = (value: number) =>
         `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
     const normalizeJam = (value: string) => String(value || '').trim();
@@ -636,14 +466,6 @@
         return `H-${item.day_diff}`;
     };
 
-    const setTrendMode = (mode: 'monthly' | 'daily') => {
-        trendMode = mode;
-        hoveredTrendKey = '';
-        pinnedTrendKey = '';
-    };
-
-    const isMobileViewport = () =>
-        typeof window !== 'undefined' && window.innerWidth < 768;
     const clampPercent = (value: number, min: number, max: number) =>
         Math.min(Math.max(value, min), max);
     const tooltipAlignFor = (left: number): ChartTooltipAlign => {
@@ -679,32 +501,10 @@
         pinnedTrendKey = pinnedTrendKey === key ? '' : key;
         hoveredTrendKey = key;
     };
-    const hoverHeatmapDay = (row: HeatmapItem | null) => {
-        hoveredHeatmapKey = row && !row.is_future ? heatmapKey(row) : '';
-    };
-    const togglePinnedHeatmapDay = (row: HeatmapItem) => {
-        if (row.is_future) {
-            return;
-        }
-
-        const key = heatmapKey(row);
-        pinnedHeatmapKey = pinnedHeatmapKey === key ? '' : key;
-        hoveredHeatmapKey = key;
-    };
-    const updateSummaryScope = (scope: 'day' | 'month' | 'year') => {
-        selectedSummaryScope = scope;
-    };
-
     $effect(() => {
         activeTrendDataSignature;
         hoveredTrendKey = '';
         pinnedTrendKey = '';
-    });
-
-    $effect(() => {
-        heatmapDataSignature;
-        hoveredHeatmapKey = '';
-        pinnedHeatmapKey = '';
     });
 
     const activeTrendTooltip = $derived.by(() => {
@@ -728,63 +528,8 @@
             align: tooltipAlignFor(left),
         };
     });
-    const activeHeatmapTooltip = $derived.by(() => {
-        if (!activeHeatmapTooltipKey) {
-            return null;
-        }
-
-        const tooltipCells = isMobileViewport()
-            ? [...mobileHeatmapContributionCells, ...heatmapContributionCells]
-            : [...heatmapContributionCells, ...mobileHeatmapContributionCells];
-        const cell = tooltipCells.find(
-            (item) => item.key === activeHeatmapTooltipKey && item.item,
-        );
-
-        if (!cell?.item) {
-            return null;
-        }
-
-        const left = clampPercent(cell.left, 8, 92);
-
-        return {
-            row: cell.item,
-            left,
-            align: tooltipAlignFor(left),
-        };
-    });
     const trendSelectedClass = (row: TrendItem) =>
         activeTrendTooltipKey === trendKey(row) ? 'ring-4 ring-sky-500/20' : '';
-    const heatmapSelectedClass = (row: HeatmapItem) =>
-        activeHeatmapTooltipKey === heatmapKey(row)
-            ? 'ring-2 ring-sky-500/60 ring-offset-2 ring-offset-white dark:ring-offset-slate-950'
-            : 'ring-1 ring-slate-200/70 dark:ring-slate-800';
-    const heatmapToneClass = (row: HeatmapItem, maxRevenue: number) => {
-        if (row.is_future) {
-            return 'bg-slate-100/80 text-slate-300 dark:bg-slate-900 dark:text-slate-700';
-        }
-
-        const revenue = Number(row.revenue || 0);
-
-        if (revenue <= 0) {
-            return 'bg-slate-100 text-slate-400 dark:bg-slate-800/90 dark:text-slate-500';
-        }
-
-        const ratio = revenue / maxRevenue;
-
-        if (ratio >= 0.75) {
-            return 'bg-sky-600 text-white shadow-[0_6px_18px_-10px_rgba(2,132,199,0.9)]';
-        }
-
-        if (ratio >= 0.45) {
-            return 'bg-sky-400 text-sky-950 dark:bg-sky-500 dark:text-white';
-        }
-
-        if (ratio >= 0.2) {
-            return 'bg-sky-200 text-sky-950 dark:bg-sky-500/30 dark:text-sky-100';
-        }
-
-        return 'bg-cyan-100 text-cyan-900 dark:bg-cyan-500/20 dark:text-cyan-100';
-    };
     const showLineAxisLabel = (index: number) => lineAxisIndexes.has(index);
 
     const revenueChannels = () => [
@@ -903,7 +648,7 @@
                 <h2
                     class="text-base font-semibold tracking-tight text-foreground md:text-lg"
                 >
-                    Performa Booking dan Pendapatan
+                    Operasional Hari Ini
                 </h2>
                 {#if selectedPoolId > 0}
                     <p class="text-[11px] text-muted-foreground">
@@ -920,27 +665,7 @@
                     class="hidden items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground dark:border-slate-700/70 dark:bg-slate-900/70 sm:flex md:self-auto"
                 >
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    Perbandingan vs {activeSummaryPeriod.previous_label}
-                </div>
-                <div
-                    class="grid w-full grid-cols-3 rounded-2xl border border-border/70 bg-white/80 p-0.5 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 md:w-auto md:p-1"
-                >
-                    {#each [{ key: 'day', label: 'Hari Ini' }, { key: 'month', label: 'Bulan Ini' }, { key: 'year', label: 'Tahun Ini' }] as option (`summary-scope-${option.key}`)}
-                        <button
-                            type="button"
-                            class={`rounded-xl px-2 py-1.5 text-center text-[10px] font-medium transition md:px-3 md:text-[11px] ${
-                                selectedSummaryScope === option.key
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:bg-muted/60'
-                            }`}
-                            onclick={() =>
-                                updateSummaryScope(
-                                    option.key as 'day' | 'month' | 'year',
-                                )}
-                        >
-                            {option.label}
-                        </button>
-                    {/each}
+                    Fokus: jadwal, armada, carter, dan revenue harian
                 </div>
             </div>
         </div>
@@ -961,10 +686,10 @@
                             <h3
                                 class="mt-1 break-words text-xl font-semibold leading-tight text-white md:text-3xl"
                             >
-                                {toCurrency(activeTotalRevenue)}
+                                {toCurrency(stats.revenue_total_today)}
                             </h3>
                             <p class="mt-1 text-xs text-slate-200/80">
-                                Total revenue {activeSummaryPeriod.subtitle_label}
+                                Revenue hari ini
                             </p>
                         </div>
                         <a
@@ -1020,7 +745,7 @@
                                 Revenue Channel
                             </p>
                             <span class="text-[11px] text-slate-300/80"
-                                >{activeSummaryPeriod.current_label}</span
+                                >{summaryPeriodByScope.month.current_label}</span
                             >
                         </div>
                         {#each revenueChannels() as channel (channel.key)}
@@ -1070,55 +795,37 @@
                             <p
                                 class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400"
                             >
-                                Insight Cepat
+                                Prioritas Hari Ini
                             </p>
                             <p
                                 class="mt-1 text-xs text-slate-500 dark:text-slate-400"
                             >
-                                Snapshot penting tanpa membuka laporan.
+                                Hal yang perlu dipantau sebelum membuka menu detail.
                             </p>
                         </div>
-                        <a
-                            href="/reports"
-                            class="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 transition hover:border-primary/35 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
-                        >
-                            <div class="min-w-0">
-                                <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
-                                >
-                                    Pendapatan Bulan Ini
-                                </p>
-                                <p
-                                    class="mt-1 break-words text-base font-semibold text-slate-900 dark:text-slate-50"
-                                >
-                                    {toCurrency(stats.revenue_total_month)}
-                                </p>
-                                <p
-                                    class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
-                                >
-                                    Periode berjalan
-                                </p>
-                            </div>
-                            <ArrowRight
-                                class="mt-1 h-3.5 w-3.5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary"
-                            />
-                        </a>
                         <div class="grid grid-cols-2 gap-2">
-                            <div
+                            <a
+                                href="/bookings"
                                 class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
                             >
                                 <p
                                     class="text-[11px] text-slate-500 dark:text-slate-400"
                                 >
-                                    Hari Ini
+                                    Keberangkatan
                                 </p>
                                 <p
                                     class="mt-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-50"
                                 >
-                                    {toCurrency(stats.revenue_total_today)}
+                                    {departuresToday.length} jadwal
                                 </p>
-                            </div>
-                            <div
+                                <p
+                                    class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
+                                >
+                                    {departuresTodayTotalBookings} booking aktif
+                                </p>
+                            </a>
+                            <a
+                                href="/admin-ops/armadas"
                                 class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
                             >
                                 <p
@@ -1131,7 +838,7 @@
                                 >
                                     {stats.live_fleet} unit
                                 </p>
-                            </div>
+                            </a>
                         </div>
                         <div
                             class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
@@ -1160,36 +867,34 @@
                             class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
                         >
                             <div
-                                class="flex items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-400"
+                                class="flex items-start justify-between gap-3"
                             >
-                                <span>Pendapatan Tahun Ini</span>
-                                <span
-                                    class="font-semibold text-slate-900 dark:text-slate-50"
-                                >
-                                    {toCurrency(stats.revenue_total_year)}
-                                </span>
-                            </div>
-                            {#if stats.target_revenue_month > 0}
-                                <div
-                                    class="mt-3 flex items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-400"
-                                >
-                                    <span>Pencapaian Target</span>
-                                    <span
-                                        class="font-semibold text-slate-900 dark:text-slate-50"
+                                <div class="min-w-0">
+                                    <p
+                                        class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
                                     >
-                                        {activeSummaryStats.achievement_percent ||
-                                            stats.achievement_percent}%
+                                        Carter Terdekat
+                                    </p>
+                                    <p
+                                        class="mt-1 truncate text-sm font-semibold text-slate-900 dark:text-slate-50"
+                                    >
+                                        {nextCharter?.name ?? 'Belum ada carter'}
+                                    </p>
+                                    <p
+                                        class="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400"
+                                    >
+                                        {nextCharter?.date_label ??
+                                            '7 hari ke depan kosong'}
+                                    </p>
+                                </div>
+                                {#if upcomingCharterReminder.total > 0}
+                                    <span
+                                        class="shrink-0 rounded-full bg-cyan-100 px-2 py-1 text-[11px] font-semibold text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-200"
+                                    >
+                                        {upcomingCharterReminder.total} data
                                     </span>
-                                </div>
-                                <div
-                                    class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
-                                >
-                                    <div
-                                        class="h-full rounded-full bg-primary transition-all"
-                                        style={`width:${activeAchievementWidth}%`}
-                                    ></div>
-                                </div>
-                            {/if}
+                                {/if}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1200,8 +905,6 @@
     <Deferred
         data={[
             'dailyTrend',
-            'monthlyTrend',
-            'yearlyHeatmap',
             'recentActivity',
             'recentActivityTotal',
             'recentActivityVisibleCount',
@@ -1277,48 +980,28 @@
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400"
                                 >
-                                    {activeTrendEyebrow}
+                                    30 Hari Terakhir
                                 </p>
                                 <CardTitle
                                     class="mt-1 text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-[1.65rem]"
-                                    >{activeTrendTitle}</CardTitle
+                                    >Revenue 30 Hari Terakhir</CardTitle
                                 >
                                 <p
                                     class="mt-1 text-xs text-slate-500 dark:text-slate-400"
                                 >
-                                    {activeTrendRangeLabel}
+                                    Tren pendapatan harian tanpa rekap tahunan.
                                 </p>
                             </div>
                             <div
                                 class="flex w-full flex-wrap items-center gap-2 sm:items-center lg:w-auto lg:justify-end"
                             >
                                 <div
-                                    class="inline-flex w-full rounded-full border border-border/70 bg-background/80 p-1 shadow-sm sm:w-auto"
-                                >
-                                    <button
-                                        type="button"
-                                        class={`flex-1 rounded-full px-3 py-1 text-[11px] font-semibold transition sm:flex-none ${trendMode === 'monthly' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
-                                        onclick={() => setTrendMode('monthly')}
-                                    >
-                                        Bulanan
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class={`flex-1 rounded-full px-3 py-1 text-[11px] font-semibold transition sm:flex-none ${trendMode === 'daily' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
-                                        onclick={() => setTrendMode('daily')}
-                                    >
-                                        Harian
-                                    </button>
-                                </div>
-                                <div
                                     class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none"
                                 >
                                     <p
                                         class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                                     >
-                                        {trendMode === 'daily'
-                                            ? 'Total 30 Hari'
-                                            : 'Total Tahun Ini'}
+                                        Total 30 Hari
                                     </p>
                                     <p
                                         class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-slate-50"
@@ -1337,9 +1020,7 @@
                                 class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
                             >
                                 <span
-                                    >{trendMode === 'daily'
-                                        ? 'Revenue harian'
-                                        : 'Revenue bulanan'}</span
+                                    >Revenue harian</span
                                 >
                                 <span class="normal-case tracking-normal"
                                     >{lineChartPoints.length} titik</span
@@ -1564,7 +1245,7 @@
                 </Card>
 
                 <Card
-                    class="h-fit overflow-visible border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]"
+                    class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]"
                 >
                     <CardHeader class="space-y-1 pb-2 sm:pb-1">
                         <div
@@ -1574,326 +1255,96 @@
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400"
                                 >
-                                    Bulan Berjalan
+                                    Operasional Harian
                                 </p>
                                 <CardTitle
                                     class="mt-1 text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-[1.65rem]"
-                                    >Transaction Revenue</CardTitle
+                                    >Aktivitas Operasional</CardTitle
                                 >
                                 <p
                                     class="mt-1 text-xs text-slate-500 dark:text-slate-400"
                                 >
-                                    <span class="md:hidden"
-                                        >{heatmapMonthLabel}</span
-                                    >
-                                    <span class="hidden md:inline"
-                                        >Tahun {heatmapYearLabel}</span
-                                    >
+                                    Volume aktivitas 30 hari, dari transaksi atau
+                                    keberangkatan hari ini.
                                 </p>
                             </div>
                             <div
-                                class="flex w-full flex-wrap items-stretch gap-2 sm:items-center md:w-auto md:justify-end"
+                                class="min-w-0 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/60"
                             >
-                                <div
-                                    class="min-w-0 flex-1 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/60 sm:flex-none"
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                                 >
-                                    <p
-                                        class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
-                                    >
-                                        <span class="md:hidden"
-                                            >Total Bulan Ini</span
-                                        >
-                                        <span class="hidden md:inline"
-                                            >Total Tahun Ini</span
-                                        >
-                                    </p>
-                                    <p
-                                        class="mt-1 break-words text-sm font-semibold text-slate-950 dark:text-slate-50"
-                                    >
-                                        <span class="md:hidden">
-                                            {toCurrency(
-                                                currentMonthRevenueTotal,
-                                            )}
-                                        </span>
-                                        <span class="hidden md:inline">
-                                            {toCurrency(
-                                                stats.revenue_total_year,
-                                            )}
-                                        </span>
-                                    </p>
-                                </div>
+                                    Hari Ini
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50"
+                                >
+                                    {departuresToday.length} jadwal / {departuresTodayTotalBookings}
+                                    booking
+                                </p>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent class="overflow-visible pt-0 pb-3">
+                    <CardContent class="pt-0 pb-3">
                         <div
-                            class="overflow-visible rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-2.5 shadow-inner dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] sm:rounded-[24px] sm:p-3 md:p-4"
+                            class="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4"
                         >
                             <div
-                                class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
+                                class="mb-3 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
                             >
-                                <span class="md:hidden">Kalender bulan ini</span
+                                <span>Aktivitas harian</span>
+                                <span class="normal-case tracking-normal"
+                                    >{operationalTrendRows.length} titik</span
                                 >
-                                <span class="hidden md:inline"
-                                    >Kalender tahun berjalan</span
-                                >
-                                <div class="hidden items-center gap-1 md:flex">
-                                    <span>Low</span>
-                                    {#each ['bg-slate-100 dark:bg-slate-800/90', 'bg-cyan-100 dark:bg-cyan-500/20', 'bg-sky-200 dark:bg-sky-500/30', 'bg-sky-400 dark:bg-sky-500', 'bg-sky-600'] as tone (`heatmap-legend-compact-${tone}`)}
-                                        <span
-                                            class={`h-3 w-3 rounded-[4px] ${tone}`}
-                                        ></span>
-                                    {/each}
-                                    <span>High</span>
-                                </div>
                             </div>
 
                             <div
-                                class="w-full overflow-visible pb-2 md:overflow-x-auto md:overscroll-x-contain md:[scrollbar-width:thin]"
-                                role="region"
-                                aria-label="Grafik transaksi revenue"
+                                class="grid h-[190px] grid-flow-col auto-cols-fr items-end gap-1.5 md:h-[220px] md:gap-2"
+                                role="img"
+                                aria-label="Grafik aktivitas operasional harian"
                             >
-                                <div
-                                    class="relative pt-12 md:min-w-[760px] md:pt-14"
-                                    role="presentation"
-                                    onmouseleave={() => hoverHeatmapDay(null)}
-                                >
-                                    {#if activeHeatmapTooltip}
-                                        {#key activeHeatmapTooltipKey}
-                                            <div
-                                                class={`pointer-events-none absolute top-0 z-10 w-[240px] max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900/96 px-3 py-2 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass(activeHeatmapTooltip.align)}`}
-                                                style={`left:${activeHeatmapTooltip.left}%`}
-                                            >
-                                                <p
-                                                    class="text-sm font-semibold"
-                                                >
-                                                    {activeHeatmapTooltip.row
-                                                        .name ??
-                                                        activeHeatmapTooltip.row
-                                                            .date}
-                                                </p>
-                                                <div
-                                                    class="mt-2 space-y-1 text-[12px]"
-                                                >
-                                                    <div
-                                                        class="flex items-center justify-between gap-3"
-                                                    >
-                                                        <span
-                                                            class="text-white/68"
-                                                            >Keberangkatan</span
-                                                        >
-                                                        <span
-                                                            class="font-semibold"
-                                                            >{toCurrency(
-                                                                activeHeatmapTooltip
-                                                                    .row
-                                                                    .booking_revenue ||
-                                                                    0,
-                                                            )}</span
-                                                        >
-                                                    </div>
-                                                    <div
-                                                        class="flex items-center justify-between gap-3"
-                                                    >
-                                                        <span
-                                                            class="text-white/68"
-                                                            >Bagasi</span
-                                                        >
-                                                        <span
-                                                            class="font-semibold"
-                                                            >{toCurrency(
-                                                                activeHeatmapTooltip
-                                                                    .row
-                                                                    .luggage_revenue ||
-                                                                    0,
-                                                            )}</span
-                                                        >
-                                                    </div>
-                                                    <div
-                                                        class="flex items-center justify-between gap-3"
-                                                    >
-                                                        <span
-                                                            class="text-white/68"
-                                                            >Carter</span
-                                                        >
-                                                        <span
-                                                            class="font-semibold"
-                                                            >{toCurrency(
-                                                                activeHeatmapTooltip
-                                                                    .row
-                                                                    .charter_revenue ||
-                                                                    0,
-                                                            )}</span
-                                                        >
-                                                    </div>
-                                                    <div
-                                                        class="flex items-center justify-between gap-3 border-t border-white/12 pt-1"
-                                                    >
-                                                        <span
-                                                            class="text-white/68"
-                                                            >Total</span
-                                                        >
-                                                        <span
-                                                            class="font-semibold"
-                                                            >{toCurrency(
-                                                                activeHeatmapTooltip
-                                                                    .row
-                                                                    .revenue,
-                                                            )}</span
-                                                        >
-                                                    </div>
-                                                </div>
-                                                <span
-                                                    class={`absolute top-full h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass(activeHeatmapTooltip.align)}`}
-                                                ></span>
-                                            </div>
-                                        {/key}
-                                    {/if}
-
+                                {#each operationalTrendRows as row, index (row.key)}
+                                    {@const height = Math.max(
+                                        row.value > 0
+                                            ? Math.round(
+                                                  (row.value /
+                                                      maxOperationalActivity) *
+                                                      100,
+                                              )
+                                            : 4,
+                                        4,
+                                    )}
                                     <div
-                                        class="absolute inset-x-0 top-0 hidden h-5 md:block"
+                                        class="flex h-full min-w-0 flex-col justify-end gap-1"
                                     >
-                                        {#each heatmapMonthMarkers as marker (marker.key)}
-                                            <span
-                                                class={`absolute top-0 text-[11px] font-medium text-slate-500 dark:text-slate-400 ${tooltipTranslateClass(tooltipAlignFor(marker.left))}`}
-                                                style={`left:${marker.left}%`}
-                                            >
-                                                {marker.label}
-                                            </span>
-                                        {/each}
-                                    </div>
-
-                                    <div
-                                        class="grid grid-flow-col auto-cols-fr grid-rows-7 gap-[4px] pt-2 md:hidden"
-                                    >
-                                        {#each mobileHeatmapContributionCells as cell (cell.key)}
-                                            {#if cell.item}
-                                                {@const day = cell.item}
-                                                <button
-                                                    type="button"
-                                                    class={`aspect-square min-h-0 w-full touch-manipulation rounded-[4px] outline-hidden transition hover:scale-105 focus-visible:ring-2 focus-visible:ring-sky-500/45 ${heatmapToneClass(day, maxCurrentMonthHeatmapRevenue)} ${heatmapSelectedClass(day)}`}
-                                                    onclick={() =>
-                                                        togglePinnedHeatmapDay(
-                                                            day,
-                                                        )}
-                                                    onmouseenter={() =>
-                                                        hoverHeatmapDay(day)}
-                                                    onfocus={() =>
-                                                        hoverHeatmapDay(day)}
-                                                    onmouseleave={() =>
-                                                        hoverHeatmapDay(null)}
-                                                    onblur={() =>
-                                                        hoverHeatmapDay(null)}
-                                                    aria-label={`${day.name ?? day.date} ${toCurrency(day.revenue)}`}
-                                                    aria-pressed={activeHeatmapTooltipKey ===
-                                                        heatmapKey(day)}
-                                                    disabled={day.is_future}
-                                                ></button>
-                                            {:else}
-                                                <div
-                                                    class="aspect-square w-full rounded-[4px] bg-transparent"
-                                                ></div>
-                                            {/if}
-                                        {/each}
-                                    </div>
-
-                                    <div
-                                        class="hidden grid-flow-col auto-cols-[14px] grid-rows-7 gap-[4px] pt-2 md:grid"
-                                    >
-                                        {#each heatmapContributionCells as cell (cell.key)}
-                                            {#if cell.item}
-                                                {@const day = cell.item}
-                                                <button
-                                                    type="button"
-                                                    class={`h-3.5 w-3.5 touch-manipulation rounded-[4px] outline-hidden transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-sky-500/45 ${heatmapToneClass(day, maxYearlyHeatmapRevenue)} ${heatmapSelectedClass(day)}`}
-                                                    onclick={() =>
-                                                        togglePinnedHeatmapDay(
-                                                            day,
-                                                        )}
-                                                    onmouseenter={() =>
-                                                        hoverHeatmapDay(day)}
-                                                    onfocus={() =>
-                                                        hoverHeatmapDay(day)}
-                                                    onmouseleave={() =>
-                                                        hoverHeatmapDay(null)}
-                                                    onblur={() =>
-                                                        hoverHeatmapDay(null)}
-                                                    aria-label={`${day.name ?? day.date} ${toCurrency(day.revenue)}`}
-                                                    aria-pressed={activeHeatmapTooltipKey ===
-                                                        heatmapKey(day)}
-                                                    disabled={day.is_future}
-                                                ></button>
-                                            {:else}
-                                                <div
-                                                    class="h-3.5 w-3.5 rounded-[4px] bg-transparent"
-                                                ></div>
-                                            {/if}
-                                        {/each}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-3 grid gap-2 md:hidden">
-                                {#if visibleRevenueDays.length === 0}
-                                    <div
-                                        class="rounded-xl border border-dashed border-slate-300 p-3 text-xs text-muted-foreground dark:border-slate-700"
-                                    >
-                                        Belum ada transaksi bulan berjalan.
-                                    </div>
-                                {:else}
-                                    {#each visibleRevenueDays
-                                        .slice(-8)
-                                        .reverse() as day (`mobile-revenue-day-${day.date}`)}
-                                        <button
-                                            type="button"
-                                            class={`rounded-xl border p-3 text-left transition ${
-                                                activeHeatmapTooltipKey ===
-                                                heatmapKey(day)
-                                                    ? 'border-sky-400 bg-sky-50 dark:border-sky-500/50 dark:bg-sky-950/30'
-                                                    : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950'
-                                            }`}
-                                            onclick={() =>
-                                                togglePinnedHeatmapDay(day)}
+                                        <div
+                                            class="group relative flex flex-1 items-end"
+                                            title={`${row.name}: ${row.value} aktivitas`}
                                         >
                                             <div
-                                                class="flex items-start justify-between gap-3"
+                                                class={`w-full rounded-t-lg transition group-hover:bg-cyan-500 ${
+                                                    row.value > 0
+                                                        ? 'bg-cyan-400 dark:bg-cyan-500'
+                                                        : 'bg-slate-200 dark:bg-slate-800'
+                                                }`}
+                                                style={`height:${height}%`}
+                                            ></div>
+                                        </div>
+                                        {#if index === 0 ||
+                                            index ===
+                                                operationalTrendRows.length -
+                                                    1 ||
+                                            index % 7 === 0}
+                                            <span
+                                                class="truncate text-center text-[9px] font-medium text-slate-500 dark:text-slate-400"
                                             >
-                                                <span
-                                                    class="text-xs font-semibold text-slate-900 dark:text-slate-50"
-                                                    >{day.name ??
-                                                        day.date}</span
-                                                >
-                                                <span
-                                                    class="break-words text-right text-xs font-semibold text-slate-900 dark:text-slate-50"
-                                                    >{toCurrency(
-                                                        day.revenue,
-                                                    )}</span
-                                                >
-                                            </div>
-                                            <div
-                                                class="mt-2 grid grid-cols-1 gap-1 text-[10px] text-slate-500 dark:text-slate-400 sm:grid-cols-3"
-                                            >
-                                                <span
-                                                    >Booking {toCurrency(
-                                                        day.booking_revenue ||
-                                                            0,
-                                                    )}</span
-                                                >
-                                                <span
-                                                    >Bagasi {toCurrency(
-                                                        day.luggage_revenue ||
-                                                            0,
-                                                    )}</span
-                                                >
-                                                <span
-                                                    >Carter {toCurrency(
-                                                        day.charter_revenue ||
-                                                            0,
-                                                    )}</span
-                                                >
-                                            </div>
-                                        </button>
-                                    {/each}
-                                {/if}
+                                                {row.label}
+                                            </span>
+                                        {:else}
+                                            <span class="h-[13px]"></span>
+                                        {/if}
+                                    </div>
+                                {/each}
                             </div>
                         </div>
                     </CardContent>
@@ -1967,11 +1418,11 @@
                                             {item.date_label}
                                         </p>
                                         <p>
-                                            {item.departure_time || '--:--'} â€¢ {item.layanan ||
+                                            {item.departure_time || '--:--'} • {item.layanan ||
                                                 '-'}
                                         </p>
                                         <p class="truncate">
-                                            Rute: {item.pickup_point || '-'} â†’ {item.drop_point ||
+                                            Rute: {item.pickup_point || '-'} → {item.drop_point ||
                                                 '-'}
                                         </p>
                                         <p class="truncate">
