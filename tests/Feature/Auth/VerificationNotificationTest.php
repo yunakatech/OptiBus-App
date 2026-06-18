@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -44,5 +45,16 @@ class VerificationNotificationTest extends TestCase
             ->assertRedirect(route('dashboard', absolute: false));
 
         Notification::assertNothingSent();
+    }
+
+    public function test_registration_event_sends_verification_notification(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->unverified()->create();
+
+        event(new Registered($user));
+
+        Notification::assertSentTo($user, VerifyEmail::class);
     }
 }
