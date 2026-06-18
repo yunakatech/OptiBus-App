@@ -3,11 +3,11 @@
 namespace App\Providers;
 
 use App\Listeners\CreateTenantOnRegistration;
+use App\Listeners\SendSafeEmailVerificationNotification;
 use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,7 +25,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            EmailVerificationNotificationController::class,
+            \App\Http\Controllers\Auth\SafeEmailVerificationNotificationController::class,
+        );
     }
 
     /**
@@ -45,7 +49,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Auto-provision tenant + subscription on user registration
         Event::listen(Registered::class, CreateTenantOnRegistration::class);
-        Event::listen(Registered::class, SendEmailVerificationNotification::class);
+        Event::listen(Registered::class, SendSafeEmailVerificationNotification::class);
     }
 
     /**

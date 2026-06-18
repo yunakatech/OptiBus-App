@@ -95,6 +95,11 @@
                             A new verification link has been sent to your email
                             address.
                         </div>
+                    {:else if status === 'verification-link-failed'}
+                        <div class="mt-2 text-sm font-medium text-destructive">
+                            We could not send the verification email right now.
+                            Please try again in a moment.
+                        </div>
                     {/if}
                 </div>
             {/if}
