@@ -164,6 +164,7 @@
         unit_id: number | null;
         armada_id: number | null;
         nopol: string | null;
+        departure_count?: number;
         target_revenue_bulanan: number;
         charter_revenue: number;
         departure_revenue: number;
@@ -207,6 +208,8 @@
         per_page?: number;
         route_id?: number;
         rute?: string;
+        pool_id?: number;
+        period?: string;
     };
     type SettingsDataPayload = {
         tab?: string;
@@ -603,6 +606,12 @@
         total: 0,
         last_page: 1,
     });
+    let driverMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
     let settingsMeta = $state<Pagination>({
         page: 1,
         per_page: 20,
@@ -743,6 +752,10 @@
     let customerFiltersExpanded = $state(false);
     let driverSearch = $state('');
     let driverUnitSearch = $state('');
+    let driverPoolId = $state(0);
+    let driverPeriod = $state(
+        `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+    );
     let armadaSearch = $state('');
     let armadaPoolId = $state(0);
     let armadaPeriod = $state(
@@ -788,6 +801,7 @@
     let ReportsPanelComponent = $state<any>(null);
     let UnitsLayoutPanelComponent = $state<any>(null);
     let ArmadasPanelComponent = $state<any>(null);
+    let DriversPanelComponent = $state<any>(null);
 
     const ensureReportsPanelLoaded = async () => {
         if (!ReportsPanelComponent) {
@@ -813,6 +827,14 @@
         }
     };
 
+    const ensureDriversPanelLoaded = async () => {
+        if (!DriversPanelComponent) {
+            DriversPanelComponent = (
+                await import('@/components/admin-ops/AdminOpsDriversPanel.svelte')
+            ).default;
+        }
+    };
+
     $effect(() => {
         if (activeTab === 'reports') {
             void ensureReportsPanelLoaded();
@@ -824,6 +846,10 @@
 
         if (activeTab === 'armadas' && activeMode !== 'form') {
             void ensureArmadasPanelLoaded();
+        }
+
+        if (activeTab === 'drivers' && activeMode !== 'form') {
+            void ensureDriversPanelLoaded();
         }
     });
 
@@ -2762,6 +2788,14 @@
             query.q = driverSearch.trim();
         }
 
+        if (activeTab === 'drivers' && Number(driverPoolId || 0) >= 0) {
+            query.pool_id = Number(driverPoolId || 0);
+        }
+
+        if (activeTab === 'drivers' && driverPeriod.trim() !== '') {
+            query.period = driverPeriod.trim();
+        }
+
         if (activeTab === 'armadas' && armadaSearch.trim() !== '') {
             query.q = armadaSearch.trim();
         }
@@ -2819,6 +2853,8 @@
 
         if (initialTab === 'drivers') {
             driverSearch = settingsQuery.q ?? '';
+            driverPoolId = Number(settingsQuery.pool_id ?? 0);
+            driverPeriod = String(settingsQuery.period ?? driverPeriod);
         }
 
         if (initialTab === 'armadas') {
@@ -2879,18 +2915,35 @@
         syncScheduleSelection();
     };
 
-    const loadDrivers = async () => {
+    const loadDrivers = async (page = driverMeta.page) => {
         if (usesHybridSettings('drivers')) {
-            reloadSettingsWithInertia();
+            reloadSettingsWithInertia(page);
 
             return;
         }
 
+        const params = new URLSearchParams();
+        params.set('paginate', 'true');
+        params.set('page', String(page));
+        params.set('per_page', String(driverMeta.per_page || 20));
+
+        const query = driverSearch.trim();
+        if (query !== '') {
+            params.set('q', query);
+        }
+
+        params.set('pool_id', String(Number(driverPoolId || 0)));
+
+        if (driverPeriod.trim() !== '') {
+            params.set('period', driverPeriod.trim());
+        }
+
         const [d, armadaResponse] = await Promise.all([
-            api('GET', '/api/admin/drivers'),
+            api('GET', `/api/admin/drivers?${params.toString()}`),
             api('GET', '/api/admin/armadas'),
         ]);
         drivers = d.drivers ?? [];
+        driverMeta = d.pagination ?? driverMeta;
         armadas = armadaResponse.armadas ?? [];
     };
 
@@ -3139,7 +3192,7 @@
             }
 
             if (activeTab === 'drivers') {
-                await loadDrivers();
+                await loadDrivers(1);
             }
 
             if (activeTab === 'services') {
@@ -5667,8 +5720,38 @@
                         </AdminOpsSection>
                     </form>
                 {:else}
+                    {#if DriversPanelComponent}
+                        <DriversPanelComponent
+                            {drivers}
+                            {driverMeta}
+                            bind:driverSearch
+                            bind:driverPoolId
+                            bind:driverPeriod
+                            {poolOptions}
+                            {formatCurrency}
+                            {driverGrossMargin}
+                            {driverNetMargin}
+                            {driverAchievement}
+                            {driverStatus}
+                            {loadDrivers}
+                            canManage={canWriteTab('drivers')}
+                            canExport={canExportArmadas}
+                            {editDriver}
+                            removeDriver={(id: number) =>
+                                removeItem(
+                                    `/api/admin/drivers/${id}`,
+                                    'Driver deleted.',
+                                )}
+                        />
+                    {:else}
+                        <div class="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4">
+                            <p class="text-sm text-muted-foreground">
+                                Memuat ringkasan driver...
+                            </p>
+                        </div>
+                    {/if}
                     <div
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="hidden overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
                             class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.035),rgba(16,185,129,0.05))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
