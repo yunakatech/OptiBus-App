@@ -47,22 +47,22 @@
     const bodyClass = $derived(tone === 'default' ? 'divide-y divide-border/70 text-xs' : 'divide-y divide-slate-800 text-xs');
     const rowClass = $derived(
         tone === 'default'
-            ? 'group transition-colors hover:bg-muted/15'
-            : 'hover:bg-[#222d4f] transition-colors group',
+            ? 'group text-foreground transition-colors hover:bg-muted/10 hover:text-foreground'
+            : 'group text-foreground transition-colors hover:bg-[#1b2440]',
     );
     const stickyCellClass = $derived(tone === 'default' ? 'sticky z-20 bg-background' : 'sticky z-20 bg-card');
     const actionSeparatorClass = $derived(tone === 'default' ? 'text-border' : 'text-slate-700');
 </script>
 
 <div class={cn('w-full overflow-x-auto rounded-lg border border-border/70 bg-card shadow-sm', className)}>
-    <table class="min-w-full border-collapse text-left text-xs">
+    <table class="min-w-full border-collapse text-left text-xs text-foreground">
         <thead>
             <tr class={headerRowClass}>
                 {#each columns as col}
                     {#if col}
                         <th
                             class={cn(
-                                'whitespace-nowrap px-4 py-2.5',
+                            'whitespace-nowrap px-3 py-2',
                                 col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
                                 col.numeric ? 'tabular-nums font-mono' : '',
                                 col.width ? col.width : '',
@@ -74,7 +74,7 @@
                         </th>
                     {/if}
                 {/each}
-                <th class={cn('sticky right-0 px-4 py-2.5 text-right', stickyHeaderClass)}>Aksi</th>
+                <th class={cn('sticky right-0 px-3 py-2 text-right', stickyHeaderClass)}>Aksi</th>
             </tr>
         </thead>
 
@@ -88,7 +88,7 @@
                         {#each computedColumns as col}
                             <td
                                 class={cn(
-                                    'whitespace-nowrap px-4 py-2.5 align-middle',
+                                    'whitespace-nowrap px-3 py-2 align-middle',
                                     col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : '',
                                     col.numeric ? 'tabular-nums font-mono' : '',
                                     col.sticky ? stickyCellClass : '',
@@ -100,14 +100,14 @@
                         {/each}
                     {/if}
 
-                    <td class="whitespace-nowrap px-4 py-2.5 text-right">
+                    <td class="whitespace-nowrap px-3 py-2 text-right">
                         {#if actions}
                             {@render actions(snippetProps)}
                         {:else}
                             <div class="flex justify-end gap-2 opacity-80 transition-opacity group-hover:opacity-100">
-                                <button class="text-[11px] font-medium text-accent hover:underline focus:outline-none">Ubah</button>
+                                <button class="text-[10px] font-medium text-accent hover:underline focus:outline-none">Ubah</button>
                                 <span class={actionSeparatorClass}>|</span>
-                                <button class="text-[11px] font-medium text-red-400 hover:underline focus:outline-none">Hapus</button>
+                                <button class="text-[10px] font-medium text-red-400 hover:underline focus:outline-none">Hapus</button>
                             </div>
                         {/if}
                     </td>

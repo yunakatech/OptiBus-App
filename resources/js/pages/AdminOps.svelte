@@ -1328,10 +1328,10 @@
         return categories;
     });
     const driversColumns = [
-        { key: 'nama', label: 'Nama Driver', width: 'w-[220px]', sticky: 'left' },
-        { key: 'phone', label: 'Kontak', width: 'w-[160px]', sticky: 'left' },
-        { key: 'nopol', label: 'Nopol Unit', width: 'w-[170px]', sticky: 'left' },
-        { key: 'pool', label: 'Pool', width: 'w-[180px]' },
+        { key: 'nama', label: 'Nama Driver', width: 'w-[150px]', sticky: 'left' },
+        { key: 'phone', label: 'Kontak', width: 'w-[120px]', sticky: 'left' },
+        { key: 'nopol', label: 'Nopol Unit', width: 'w-[130px]', sticky: 'left' },
+        { key: 'pool', label: 'Pool', width: 'w-[130px]' },
         { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
         { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
         { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
@@ -1348,8 +1348,8 @@
     ];
 
     const poolsColumns = [
-        { key: 'name', label: 'Pool', width: 'w-[240px]', sticky: 'left' },
-        { key: 'routes', label: 'Rute', width: 'w-[320px]', sticky: 'left' },
+        { key: 'name', label: 'Pool', width: 'w-[150px]', sticky: 'left' },
+        { key: 'routes', label: 'Rute', width: 'w-[200px]', sticky: 'left' },
         { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
         { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
         { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
@@ -5755,47 +5755,47 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[2040px]">
+                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[1820px]">
                                 {#snippet row({ row })}
                                     {@const gross = driverGrossMargin(row as DriverRow)}
                                     {@const net = driverNetMargin(row as DriverRow)}
                                     {@const achievement = driverAchievement(row as DriverRow)}
                                     {@const status = driverStatus(row as DriverRow)}
 
-                                    <td class="py-3 px-4 align-top">
-                                        <div class="font-semibold text-foreground">{row.nama}</div>
-                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontributor driver bulan ini</div>
+                                    <td class="px-3 py-2 align-top">
+                                        <div class="truncate text-[11px] font-semibold text-foreground">{row.nama}</div>
+                                        <div class="mt-0.5 text-[10px] text-muted-foreground">Kontributor driver bulan ini</div>
                                     </td>
 
-                                    <td class="py-3 px-4 align-top">
-                                        <div class="font-medium text-foreground">{row.phone ?? '-'}</div>
-                                        <div class="mt-1 text-[11px] text-muted-foreground">Kontak operasional</div>
+                                    <td class="px-3 py-2 align-top">
+                                        <div class="truncate text-[11px] font-medium text-foreground">{row.phone ?? '-'}</div>
+                                        <div class="mt-0.5 text-[10px] text-muted-foreground">Kontak operasional</div>
                                     </td>
 
-                                    <td class="py-3 px-4 align-top">
+                                    <td class="px-3 py-2 align-top">
                                         <EntityBadge code={row.nopol ?? '-'} />
                                     </td>
 
-                                    <td class="py-3 px-4 align-top">
-                                        <Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[11px]">
+                                    <td class="px-3 py-2 align-top">
+                                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px]">
                                             {rowPoolName(row as DriverRow)}
                                         </Badge>
                                     </td>
 
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(gross)}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(net)}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_revenue_bulanan || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
-                                    <td class="py-3 px-4 text-center">
-                                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(gross)}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(net)}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.target_revenue_bulanan || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{achievement.toFixed(1)}%</td>
+                                    <td class="px-3 py-2 text-center">
+                                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
                                     </td>
                                 {/snippet}
 
@@ -8213,34 +8213,34 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto lg:block">
-                            <DataTable columns={poolsColumns} rows={pools} class="min-w-[2060px]">
+                            <DataTable columns={poolsColumns} rows={pools} class="min-w-[1780px]">
                                 {#snippet row({ row })}
                                     {@const gross = financialGrossMargin(row as PoolRow)}
                                     {@const net = financialNetMargin(row as PoolRow)}
                                     {@const achievement = financialAchievement(row as PoolRow)}
                                     {@const healthStatus = financialStatus(row as PoolRow)}
 
-                                    <td class="py-3 px-4 align-top">
-                                        <div class="font-semibold text-foreground">{row.name}</div>
-                                        <div class="mt-1 text-[11px] text-muted-foreground">{row.code || 'Tanpa kode'}</div>
-                                        <span class={`mt-3 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
+                                    <td class="px-3 py-2 align-top">
+                                        <div class="truncate text-[11px] font-semibold text-foreground">{row.name}</div>
+                                        <div class="mt-0.5 text-[10px] text-muted-foreground">{row.code || 'Tanpa kode'}</div>
+                                        <span class={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
                                     </td>
 
-                                    <td class="py-3 px-4 align-top"><div class="line-clamp-2 text-sm text-foreground">{formatPoolRoutes(row as PoolRow)}</div></td>
+                                    <td class="px-3 py-2 align-top"><div class="line-clamp-2 text-[11px] leading-4 text-foreground">{formatPoolRoutes(row as PoolRow)}</div></td>
 
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(gross)}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-                                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(net)}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
-                                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
-                                    <td class="py-3 px-4 text-center"><span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(gross)}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(net)}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
+                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{achievement.toFixed(1)}%</td>
+                                    <td class="px-3 py-2 text-center"><span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
                                 {/snippet}
 
                                 {#snippet actions({ row })}
