@@ -79,6 +79,23 @@ class VerificationNotificationTest extends TestCase
         $this->assertSame('verification-link-failed', session('status'));
     }
 
+    public function test_resend_verification_notification_succeeds_when_send_method_does_not_throw(): void
+    {
+        $user = Mockery::mock(User::class)->makePartial();
+        $user->forceFill([
+            'id' => 1001,
+            'email' => 'resend-ok@example.com',
+        ]);
+        $user->shouldReceive('hasVerifiedEmail')->andReturn(false);
+        $user->shouldReceive('sendEmailVerificationNotification')
+            ->once()
+            ->andReturnNull();
+
+        $this->actingAs($user)
+            ->post(route('verification.send'))
+            ->assertRedirect(route('home'));
+    }
+
     public function test_user_verification_notification_records_mail_failures(): void
     {
         $user = Mockery::mock(User::class)->makePartial();

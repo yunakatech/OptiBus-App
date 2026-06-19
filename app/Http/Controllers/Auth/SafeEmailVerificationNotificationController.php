@@ -37,10 +37,6 @@ class SafeEmailVerificationNotificationController extends Controller
             return $this->failedResponse($request);
         }
 
-        if (method_exists($user, 'emailVerificationSendFailed') && $user->emailVerificationSendFailed()) {
-            return $this->failedResponse($request);
-        }
-
         return app(EmailVerificationNotificationSentResponse::class);
     }
 
