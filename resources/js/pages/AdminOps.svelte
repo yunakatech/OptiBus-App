@@ -265,6 +265,83 @@
         target_bulanan: number;
         pool_id?: number | null;
         pool_name?: string | null;
+        driver_name?: string | null;
+    };
+    type ArmadaMonthlyBookingRow = {
+        id: number;
+        tanggal: string;
+        jam: string;
+        rute: string;
+        unit: number;
+        seat: string;
+        name: string;
+        phone: string;
+        pickup_point: string;
+        pembayaran: string;
+        status: string;
+        total: number;
+    };
+    type ArmadaMonthlyCharterRow = {
+        id: number;
+        start_date: string;
+        end_date: string;
+        departure_time: string;
+        name: string;
+        phone: string;
+        pickup_point: string;
+        drop_point: string;
+        layanan: string;
+        payment_status: string;
+        bop_status: string;
+        status: string;
+        armada_nopol: string;
+        total: number;
+        bop: number;
+    };
+    type ArmadaMonthlyLuggageRow = {
+        id: number;
+        tanggal: string;
+        created_at: string;
+        kode_resi: string;
+        sender_name: string;
+        receiver_name: string;
+        quantity: number;
+        payment_status: string;
+        status: string;
+        service_name: string;
+        total: number;
+        departure_date: string;
+        departure_time: string;
+        departure_unit: number;
+    };
+    type ArmadaMonthlySummary = {
+        period: string;
+        period_label: string;
+        charter_count: number;
+        departure_count: number;
+        luggage_count: number;
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        total_revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        total_bop: number;
+        gross: number;
+        fixed_cost: number;
+        net_margin: number;
+        target_revenue: number;
+        achievement: number;
+        status: string;
+    };
+    type ArmadaMonthlyDetail = {
+        summary: ArmadaMonthlySummary;
+        bookings: ArmadaMonthlyBookingRow[];
+        charters: ArmadaMonthlyCharterRow[];
+        bagasi: ArmadaMonthlyLuggageRow[];
+    };
+    type ArmadaDetailRow = ArmadaRow & {
+        monthly?: ArmadaMonthlyDetail | null;
     };
     type UserRow = {
         id: number;
@@ -767,7 +844,8 @@
     let layoutUnitId = $state<number>(0);
     let layoutTemplateSearch = $state('');
     let layoutTemplateChoice = $state('');
-    let armadaDetail = $state<ArmadaRow | null>(null);
+    let armadaDetail = $state<ArmadaDetailRow | null>(null);
+    let armadaDetailLoading = $state(false);
     let poolSearch = $state('');
     let userSearch = $state('');
     let userFiltersExpanded = $state(false);
@@ -3142,8 +3220,11 @@
     };
 
     const loadArmadaDetail = async (id: number) => {
+        armadaDetailLoading = true;
+
         if (id <= 0) {
             armadaDetail = null;
+            armadaDetailLoading = false;
 
             return;
         }
@@ -3154,11 +3235,18 @@
             params.set('period', armadaPeriod.trim());
         }
 
-        const r = await api(
-            'GET',
-            `/api/admin/armadas/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`,
-        );
-        armadaDetail = r.armada ?? null;
+        try {
+            const r = await api(
+                'GET',
+                `/api/admin/armadas/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`,
+            );
+            armadaDetail = r.armada ?? null;
+        } catch (e) {
+            armadaDetail = null;
+            error = e instanceof Error ? e.message : 'Gagal memuat detail armada.';
+        } finally {
+            armadaDetailLoading = false;
+        }
     };
 
     const loadPools = async () => {
@@ -8486,6 +8574,7 @@
                         <ArmadasPanelComponent
                             activeMode="view"
                             {armadaDetail}
+                            {armadaDetailLoading}
                             {formatCurrency}
                             {armadaGrossMargin}
                             {armadaNetMargin}
@@ -8522,6 +8611,7 @@
                         activeMode="data"
                         {armadas}
                         bind:armadaSearch
+                        {armadaDetailLoading}
                         {formatCurrency}
                         {armadaGrossMargin}
                         {armadaNetMargin}

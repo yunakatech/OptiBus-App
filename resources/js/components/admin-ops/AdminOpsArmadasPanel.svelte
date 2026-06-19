@@ -35,10 +35,88 @@
         pool_name?: string | null;
         driver_name?: string | null;
     };
+    type ArmadaMonthlyBookingRow = {
+        id: number;
+        tanggal: string;
+        jam: string;
+        rute: string;
+        unit: number;
+        seat: string;
+        name: string;
+        phone: string;
+        pickup_point: string;
+        pembayaran: string;
+        status: string;
+        total: number;
+    };
+    type ArmadaMonthlyCharterRow = {
+        id: number;
+        start_date: string;
+        end_date: string;
+        departure_time: string;
+        name: string;
+        phone: string;
+        pickup_point: string;
+        drop_point: string;
+        layanan: string;
+        payment_status: string;
+        bop_status: string;
+        status: string;
+        armada_nopol: string;
+        driver_name: string;
+        total: number;
+        bop: number;
+    };
+    type ArmadaMonthlyLuggageRow = {
+        id: number;
+        tanggal: string;
+        created_at: string;
+        kode_resi: string;
+        sender_name: string;
+        receiver_name: string;
+        quantity: number;
+        payment_status: string;
+        status: string;
+        service_name: string;
+        total: number;
+        departure_date: string;
+        departure_time: string;
+        departure_unit: number;
+    };
+    type ArmadaMonthlySummary = {
+        period: string;
+        period_label: string;
+        charter_count: number;
+        departure_count: number;
+        luggage_count: number;
+        charter_revenue: number;
+        departure_revenue: number;
+        luggage_revenue: number;
+        total_revenue: number;
+        charter_bop: number;
+        departure_bop: number;
+        total_bop: number;
+        gross: number;
+        fixed_cost: number;
+        net_margin: number;
+        target_revenue: number;
+        achievement: number;
+        status: string;
+    };
+    type ArmadaMonthlyDetail = {
+        summary: ArmadaMonthlySummary;
+        bookings: ArmadaMonthlyBookingRow[];
+        charters: ArmadaMonthlyCharterRow[];
+        bagasi: ArmadaMonthlyLuggageRow[];
+    };
+    type ArmadaDetailRow = ArmadaRow & {
+        monthly?: ArmadaMonthlyDetail | null;
+    };
 
     let {
         activeMode = 'data',
         armadaDetail = null,
+        armadaDetailLoading = false,
         armadas = [],
         armadaSearch = $bindable(''),
         armadaPoolId = $bindable(0),
@@ -60,7 +138,8 @@
         canExport = false,
     }: {
         activeMode?: ViewMode;
-        armadaDetail?: ArmadaRow | null;
+        armadaDetail?: ArmadaDetailRow | null;
+        armadaDetailLoading?: boolean;
         armadas?: ArmadaRow[];
         armadaSearch?: string;
         armadaPoolId?: number;
@@ -210,6 +289,151 @@
         return 'text-foreground';
     };
 
+    const detailMetricCards = (row: ArmadaDetailRow) => {
+        const monthly = row.monthly?.summary;
+        const gross = monthly?.gross ?? armadaGrossMargin(row);
+        const net = monthly?.net_margin ?? armadaNetMargin(row);
+        const achievement = monthly?.achievement ?? armadaAchievement(row);
+        const target = monthly?.target_revenue ?? Number(row.target_bulanan || 0);
+        const status = monthly?.status ?? armadaStatus(row);
+
+        return [
+            {
+                key: 'charter',
+                label: 'Charter',
+                valueText: String(monthly?.charter_count ?? 0),
+                note: 'Jumlah transaksi charter',
+                tone: 'text-foreground',
+            },
+            {
+                key: 'departure',
+                label: 'Keberangkatan',
+                valueText: String(monthly?.departure_count ?? 0),
+                note: 'Jumlah data keberangkatan',
+                tone: 'text-foreground',
+            },
+            {
+                key: 'bagasi',
+                label: 'Bagasi',
+                valueText: String(monthly?.luggage_count ?? 0),
+                note: 'Jumlah data bagasi',
+                tone: 'text-foreground',
+            },
+            {
+                key: 'revenue',
+                label: 'Total Revenue',
+                valueText: formatCurrency(monthly?.total_revenue ?? Number(row.revenue || 0)),
+                note: 'Revenue bulanan armada',
+                tone: 'text-emerald-700 dark:text-emerald-300',
+            },
+            {
+                key: 'charter-bop',
+                label: 'Charter BOP',
+                valueText: formatCurrency(monthly?.charter_bop ?? Number(row.charter_bop || 0)),
+                note: 'BOP perjalanan charter',
+                tone: 'text-amber-700 dark:text-amber-300',
+            },
+            {
+                key: 'departure-bop',
+                label: 'Keberangkatan BOP',
+                valueText: formatCurrency(monthly?.departure_bop ?? Number(row.departure_bop || 0)),
+                note: 'BOP perjalanan reguler',
+                tone: 'text-amber-700 dark:text-amber-300',
+            },
+            {
+                key: 'bop',
+                label: 'Total BOP',
+                valueText: formatCurrency(monthly?.total_bop ?? Number(row.bop || 0)),
+                note: 'Akumulasi BOP bulanan',
+                tone: 'text-amber-700 dark:text-amber-300',
+            },
+            {
+                key: 'gross',
+                label: 'Gross',
+                valueText: formatCurrency(gross),
+                note: 'Revenue - BOP',
+                tone: summaryTone(gross),
+            },
+            {
+                key: 'fixed-cost',
+                label: 'Fixed Cost',
+                valueText: formatCurrency(monthly?.fixed_cost ?? Number(row.fixed_cost || 0)),
+                note: 'Biaya tetap bulanan',
+                tone: 'text-slate-700 dark:text-slate-300',
+            },
+            {
+                key: 'net',
+                label: 'Net Margin',
+                valueText: formatCurrency(net),
+                note: 'Gross - Fixed Cost',
+                tone: summaryTone(net),
+            },
+            {
+                key: 'target',
+                label: 'Target Revenue',
+                valueText: formatCurrency(target),
+                note: 'Target bulanan',
+                tone: 'text-slate-700 dark:text-slate-300',
+            },
+            {
+                key: 'achievement',
+                label: 'Achievement',
+                valueText: `${achievement.toFixed(1)}%`,
+                note: 'Pencapaian terhadap target',
+                tone: achievement >= 100
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : achievement >= 80
+                      ? 'text-amber-700 dark:text-amber-300'
+                      : 'text-rose-700 dark:text-rose-300',
+            },
+            {
+                key: 'status',
+                label: 'Status',
+                valueText: status,
+                note: monthly?.period_label ?? selectedPeriodLabel(),
+                tone: achievement >= 100
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : 'text-rose-700 dark:text-rose-300',
+            },
+        ];
+    };
+
+    const statusTone = (value: string) => {
+        const normalized = String(value ?? '').trim().toLowerCase();
+
+        if (
+            normalized === 'done' ||
+            normalized === 'selesai' ||
+            normalized === 'lunas' ||
+            normalized === 'paid' ||
+            normalized === 'active' ||
+            normalized === 'aktif' ||
+            normalized === 'tercapai'
+        ) {
+            return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300';
+        }
+
+        if (
+            normalized === 'pending' ||
+            normalized === 'dp' ||
+            normalized === 'proses' ||
+            normalized === 'partial'
+        ) {
+            return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300';
+        }
+
+        if (
+            normalized === 'canceled' ||
+            normalized === 'cancelled' ||
+            normalized === 'batal' ||
+            normalized === 'kurang'
+        ) {
+            return 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/35 dark:text-rose-300';
+        }
+
+        return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300';
+    };
+
     const summaryCards = $derived([
         {
             key: 'revenue',
@@ -273,64 +497,249 @@
 </script>
 
 {#if activeMode === 'view'}
-    {#if armadaDetail}
-        {@const gross = armadaGrossMargin(armadaDetail)}
-        {@const net = armadaNetMargin(armadaDetail)}
-        {@const achievement = armadaAchievement(armadaDetail)}
-        {@const status = armadaStatus(armadaDetail)}
+    {#if armadaDetailLoading}
+        <div class="rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
+            <div class="animate-pulse space-y-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="space-y-2">
+                        <div class="h-5 w-40 rounded bg-muted"></div>
+                        <div class="h-3 w-64 rounded bg-muted"></div>
+                    </div>
+                    <div class="h-9 w-24 rounded bg-muted"></div>
+                </div>
+                <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                    {#each Array(12) as _, index (index)}
+                        <div class="h-20 rounded-lg border border-border/60 bg-muted/30"></div>
+                    {/each}
+                </div>
+                <div class="grid gap-3 xl:grid-cols-3">
+                    <div class="h-72 rounded-lg border border-border/60 bg-muted/30"></div>
+                    <div class="h-72 rounded-lg border border-border/60 bg-muted/30"></div>
+                    <div class="h-72 rounded-lg border border-border/60 bg-muted/30"></div>
+                </div>
+            </div>
+        </div>
+    {:else if armadaDetail}
+        {@const monthly = armadaDetail.monthly?.summary ?? null}
+        {@const detailCards = detailMetricCards(armadaDetail)}
         <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
             <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                    <p class="text-lg font-bold tracking-tight">{armadaDetail.nopol}</p>
-                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                <div class="min-w-0 space-y-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p class="text-lg font-bold tracking-tight">{armadaDetail.nopol}</p>
                         <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
                             {rowPoolName(armadaDetail)}
                         </Badge>
-                        <span class="text-xs text-muted-foreground">
+                        <Badge variant="outline" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
                             {armadaDetail.kategori ?? '-'} / {armadaDetail.ac_type}
-                        </span>
+                        </Badge>
                     </div>
-                    <p class="mt-2 text-xs text-muted-foreground">
-                        No. rangka: {armadaDetail.nomor_rangka ?? '-'}
+                    <p class="text-xs text-muted-foreground">
+                        {armadaDetail.driver_name ?? 'Driver belum diatur'} · No. rangka {armadaDetail.nomor_rangka ?? '-'}
                     </p>
+                    <div class="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                        <span>Platform GPS: {armadaDetail.platform_gps ?? '-'}</span>
+                        <span>API GPS: {armadaDetail.api_gps ?? '-'}</span>
+                    </div>
                 </div>
-                <Button type="button" variant="outline" class="h-9" onclick={goBackToData}>Kembali</Button>
+                <Button type="button" variant="outline" class="h-9 shrink-0" onclick={goBackToData}>Kembali</Button>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Revenue</p>
-                    <p class="mt-2 text-sm font-semibold text-foreground">{formatCurrency(armadaDetail.revenue)}</p>
+            <div class="rounded-lg border border-border/70 bg-muted/20 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            Ringkasan Bulanan
+                        </p>
+                        <h4 class="mt-1 text-sm font-semibold tracking-tight">
+                            {monthly?.period_label ?? selectedPeriodLabel()}
+                        </h4>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                            {(monthly?.achievement ?? armadaAchievement(armadaDetail)).toFixed(1)}%
+                        </Badge>
+                        <Badge variant="outline" class={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${statusTone(monthly?.status ?? armadaStatus(armadaDetail))}`}>
+                            {monthly?.status ?? armadaStatus(armadaDetail)}
+                        </Badge>
+                    </div>
                 </div>
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Gross Margin</p>
-                    <p class="mt-2 text-sm font-semibold text-foreground">{formatCurrency(gross)}</p>
+                <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {#each detailCards as card (card.key)}
+                        <article class="rounded-md border border-border/70 bg-background px-3 py-2">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                {card.label}
+                            </p>
+                            <p class={`mt-1 text-sm font-bold tabular-nums ${card.tone}`}>
+                                {card.valueText}
+                            </p>
+                            <p class="mt-1 text-[11px] leading-4 text-muted-foreground">
+                                {card.note}
+                            </p>
+                        </article>
+                    {/each}
                 </div>
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Net Margin</p>
-                    <p class="mt-2 text-sm font-semibold text-foreground">{formatCurrency(net)}</p>
-                </div>
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Achievement</p>
-                    <p class="mt-2 text-sm font-semibold text-foreground">{achievement.toFixed(1)}%</p>
-                    <p class="mt-1 text-xs text-muted-foreground">{status}</p>
-                </div>
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">BOP</p>
-                    <p class="mt-2 text-sm font-semibold text-foreground">{formatCurrency(armadaDetail.bop)}</p>
-                </div>
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Fixed Cost</p>
-                    <p class="mt-2 text-sm font-semibold text-foreground">{formatCurrency(armadaDetail.fixed_cost)}</p>
-                </div>
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Platform GPS</p>
-                    <p class="mt-2 text-sm font-semibold text-foreground">{armadaDetail.platform_gps ?? '-'}</p>
-                </div>
-                <div class="rounded-lg border border-border/70 bg-muted/30 p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">API GPS</p>
-                    <p class="mt-2 break-all text-sm font-semibold text-foreground">{armadaDetail.api_gps ?? '-'}</p>
-                </div>
+            </div>
+
+            <div class="grid gap-3 xl:grid-cols-3">
+                <section class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                Keberangkatan
+                            </p>
+                            <h4 class="mt-1 text-sm font-semibold tracking-tight">
+                                {monthly?.departure_count ?? 0} data
+                            </h4>
+                        </div>
+                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                            {formatCurrency(monthly?.departure_revenue ?? 0)}
+                        </Badge>
+                    </div>
+                    <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                        <table class="min-w-full text-left text-[11px]">
+                            <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                                <tr>
+                                    <th class="py-2 pr-2 font-semibold">Tanggal</th>
+                                    <th class="py-2 pr-2 font-semibold">Rute</th>
+                                    <th class="py-2 pr-2 font-semibold">Unit</th>
+                                    <th class="py-2 pr-2 font-semibold">Nama</th>
+                                    <th class="py-2 pr-2 text-right font-semibold">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border/60">
+                                {#if (monthly?.bookings ?? []).length === 0}
+                                    <tr>
+                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data keberangkatan pada periode ini.</td>
+                                    </tr>
+                                {:else}
+                                    {#each monthly?.bookings ?? [] as row (row.id)}
+                                        <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
+                                            <td class="py-2 pr-2 text-muted-foreground">{row.tanggal} {row.jam}</td>
+                                            <td class="py-2 pr-2 font-medium">{row.rute}</td>
+                                            <td class="py-2 pr-2 tabular-nums">{row.unit}</td>
+                                            <td class="py-2 pr-2">
+                                                <div class="font-medium text-foreground">{row.name}</div>
+                                                <div class="text-[10px] text-muted-foreground">{row.seat} · {row.pickup_point}</div>
+                                            </td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.total)}</td>
+                                        </tr>
+                                    {/each}
+                                {/if}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                Carter
+                            </p>
+                            <h4 class="mt-1 text-sm font-semibold tracking-tight">
+                                {monthly?.charter_count ?? 0} data
+                            </h4>
+                        </div>
+                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                            {formatCurrency(monthly?.charter_revenue ?? 0)}
+                        </Badge>
+                    </div>
+                    <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                        <table class="min-w-full text-left text-[11px]">
+                            <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                                <tr>
+                                    <th class="py-2 pr-2 font-semibold">Tanggal</th>
+                                    <th class="py-2 pr-2 font-semibold">Rute</th>
+                                    <th class="py-2 pr-2 font-semibold">Penyewa</th>
+                                    <th class="py-2 pr-2 font-semibold">Armada</th>
+                                    <th class="py-2 pr-2 text-right font-semibold">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border/60">
+                                {#if (monthly?.charters ?? []).length === 0}
+                                    <tr>
+                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data charter pada periode ini.</td>
+                                    </tr>
+                                {:else}
+                                    {#each monthly?.charters ?? [] as row (row.id)}
+                                        <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
+                                            <td class="py-2 pr-2 text-muted-foreground">{row.start_date}</td>
+                                            <td class="py-2 pr-2">
+                                                <div class="font-medium text-foreground">{row.pickup_point}</div>
+                                                <div class="text-[10px] text-muted-foreground">{row.drop_point}</div>
+                                            </td>
+                                            <td class="py-2 pr-2">
+                                                <div class="font-medium text-foreground">{row.name}</div>
+                                                <div class="text-[10px] text-muted-foreground">{row.phone}</div>
+                                            </td>
+                                            <td class="py-2 pr-2">
+                                                <div class="font-medium text-foreground">{row.armada_nopol || armadaDetail.nopol}</div>
+                                                <div class="text-[10px] text-muted-foreground">{row.layanan}</div>
+                                            </td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.total)}</td>
+                                        </tr>
+                                    {/each}
+                                {/if}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                Bagasi
+                            </p>
+                            <h4 class="mt-1 text-sm font-semibold tracking-tight">
+                                {monthly?.luggage_count ?? 0} data
+                            </h4>
+                        </div>
+                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                            {formatCurrency(monthly?.luggage_revenue ?? 0)}
+                        </Badge>
+                    </div>
+                    <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                        <table class="min-w-full text-left text-[11px]">
+                            <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                                <tr>
+                                    <th class="py-2 pr-2 font-semibold">Tanggal</th>
+                                    <th class="py-2 pr-2 font-semibold">Resi</th>
+                                    <th class="py-2 pr-2 font-semibold">Pengirim</th>
+                                    <th class="py-2 pr-2 font-semibold">Penerima</th>
+                                    <th class="py-2 pr-2 text-right font-semibold">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border/60">
+                                {#if (monthly?.bagasi ?? []).length === 0}
+                                    <tr>
+                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data bagasi pada periode ini.</td>
+                                    </tr>
+                                {:else}
+                                    {#each monthly?.bagasi ?? [] as row (row.id)}
+                                        <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
+                                            <td class="py-2 pr-2 text-muted-foreground">{row.tanggal}</td>
+                                            <td class="py-2 pr-2">
+                                                <div class="font-medium text-foreground">{row.kode_resi}</div>
+                                                <div class="text-[10px] text-muted-foreground">{row.service_name}</div>
+                                            </td>
+                                            <td class="py-2 pr-2">
+                                                <div class="font-medium text-foreground">{row.sender_name}</div>
+                                                <div class="text-[10px] text-muted-foreground">Qty {row.quantity}</div>
+                                            </td>
+                                            <td class="py-2 pr-2">
+                                                <div class="font-medium text-foreground">{row.receiver_name}</div>
+                                                <div class="text-[10px] text-muted-foreground">Unit {row.departure_unit}</div>
+                                            </td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.total)}</td>
+                                        </tr>
+                                    {/each}
+                                {/if}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
         </div>
     {:else}
