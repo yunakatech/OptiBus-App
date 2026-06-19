@@ -62,6 +62,7 @@
         {
             label: 'Pengaturan',
             items: [
+                { title: 'Platform Dashboard', href: '/platform/dashboard', icon: Building2, permission: 'platform.manage', superAdminOnly: true },
                 { title: 'Laporan', href: '/report', icon: ChartColumn, permission: 'report.view' },
                 { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
                 { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },
@@ -73,6 +74,7 @@
                 { title: 'Armada', href: '/admin-ops/armadas', icon: CarFront, permission: 'armada.view' },
                 { title: 'Driver', href: '/admin-ops/drivers', icon: IdCard, permission: 'driver.view' },
                 { title: 'Users', href: '/admin-ops/users', icon: UserCog, permission: 'user.manage' },
+                { title: 'SaaS', href: '/admin-ops/saas', icon: Building2, permission: 'platform.manage', superAdminOnly: true },
                 { title: 'Role & Hak Akses', href: '/admin-ops/roles', icon: ShieldCheck, permission: 'role.manage', superAdminOnly: true },
             ],
         },

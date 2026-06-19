@@ -176,6 +176,7 @@
             href: '/platform/dashboard',
             icon: BarChart3,
             permission: 'platform.manage',
+            superAdminOnly: true,
         },
         {
             title: 'Langganan',
@@ -187,6 +188,7 @@
             href: '/admin-ops/saas',
             icon: Building2,
             permission: 'platform.manage',
+            superAdminOnly: true,
         },
         {
             title: 'Users',

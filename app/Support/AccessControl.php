@@ -68,7 +68,7 @@ class AccessControl
             'admin-pusat' => [
                 'name' => 'Admin Pusat',
                 'description' => 'Akses operasional pusat tanpa mengubah role inti.',
-                'permissions' => array_values(array_diff($all, ['role.manage'])),
+                'permissions' => array_values(array_diff($all, ['role.manage', 'platform.manage'])),
             ],
             'admin-pool' => [
                 'name' => 'Admin Pool',
@@ -307,7 +307,7 @@ class AccessControl
             return array_keys(self::defaultPermissions());
         }
 
-        return DB::table('user_role')
+        $permissions = DB::table('user_role')
             ->join('role_permission', 'user_role.role_id', '=', 'role_permission.role_id')
             ->join('permissions', 'role_permission.permission_id', '=', 'permissions.id')
             ->where('user_role.user_id', $userId)
@@ -316,6 +316,8 @@ class AccessControl
             ->unique()
             ->values()
             ->all();
+
+        return array_values(array_diff($permissions, ['platform.manage']));
     }
 
     public static function can(int $userId, string $permission): bool
@@ -326,6 +328,10 @@ class AccessControl
 
         if (self::userIsSuperAdmin($userId)) {
             return true;
+        }
+
+        if ($permission === 'platform.manage') {
+            return false;
         }
 
         return in_array($permission, self::userPermissions($userId), true);
