@@ -4911,12 +4911,17 @@ class AdminOpsApiController extends Controller
         }
 
         $newId = DB::table('users')->insertGetId(array_merge($payload, $this->tenantPayload('users'), [
-            'email_verified_at' => now(),
+            'email_verified_at' => null,
             'created_at' => now(),
             'updated_at' => now(),
         ]));
         $this->syncUserPools((int) $newId, $poolIds);
         $this->syncUserRoles((int) $newId, $roleIds);
+
+        $createdUser = User::query()->whereKey($newId)->first();
+        if ($createdUser && ! $createdUser->hasVerifiedEmail()) {
+            $createdUser->sendEmailVerificationNotification();
+        }
 
         ActivityLog::write('user.created', 'User dibuat', (string) $payload['email'], null, [
             'user_id' => (int) $newId,

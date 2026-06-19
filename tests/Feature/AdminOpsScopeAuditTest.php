@@ -6,7 +6,9 @@ use App\Models\User;
 use App\Support\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Tests\TestCase;
 
 class AdminOpsScopeAuditTest extends TestCase
@@ -557,6 +559,34 @@ class AdminOpsScopeAuditTest extends TestCase
         $newUserId = (int) ($created['id'] ?? 0);
         $this->assertTrue($newUserId > 0);
         $this->assertSame($tenantA, (int) (DB::table('users')->where('id', $newUserId)->value('tenant_id') ?? 0));
+    }
+
+    public function test_new_user_creation_sends_email_verification_notification(): void
+    {
+        AccessControl::syncDefaults();
+        Notification::fake();
+
+        $tenantId = $this->tenantIdBySlug('audit-user-mail-tenant');
+        $this->activateTenantBilling($tenantId);
+
+        $admin = User::factory()->create([
+            'is_super_admin' => true,
+        ]);
+
+        $this->actingAs($admin)->withSession(['active_tenant_id' => $tenantId]);
+
+        $created = $this->postJson(route('api.admin.users.save'), [
+            'name' => 'Mail Verification User',
+            'email' => 'mail-verification-user@example.com',
+            'password' => 'password123',
+        ])->assertCreated()->json();
+
+        $newUserId = (int) ($created['id'] ?? 0);
+        $createdUser = User::query()->find($newUserId);
+
+        $this->assertNotNull($createdUser);
+        $this->assertNull($createdUser?->email_verified_at);
+        Notification::assertSentTo($createdUser, VerifyEmail::class);
     }
 
     /**
