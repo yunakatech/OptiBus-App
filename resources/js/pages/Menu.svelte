@@ -26,7 +26,6 @@
     import Package from 'lucide-svelte/icons/package';
     import Route from 'lucide-svelte/icons/route';
     import ShieldCheck from 'lucide-svelte/icons/shield-check';
-    import Shuffle from 'lucide-svelte/icons/shuffle';
     import Truck from 'lucide-svelte/icons/truck';
     import UserCog from 'lucide-svelte/icons/user-cog';
     import Users from 'lucide-svelte/icons/users';
@@ -65,7 +64,6 @@
                 { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },
                 { title: 'Pool', href: '/admin-ops/pools', icon: Building2, permission: 'pool.manage' },
                 { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned, permission: 'master.view' },
-                { title: 'Segment', href: '/admin-ops/segments', icon: Shuffle, permission: 'master.view' },
                 { title: 'Tarif Bagasi', href: '/admin-ops/services', icon: Package, permission: 'master.view' },
                 { title: 'Kategori Armada', href: '/admin-ops/units', icon: Truck, permission: 'master.view' },
                 { title: 'Armada', href: '/admin-ops/armadas', icon: CarFront, permission: 'armada.view' },

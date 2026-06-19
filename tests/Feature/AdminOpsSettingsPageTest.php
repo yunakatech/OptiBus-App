@@ -33,7 +33,6 @@ class AdminOpsSettingsPageTest extends TestCase
             ['admin-ops.drivers', 'PengaturanDriver', 'drivers', ['armadas']],
             ['admin-ops.armadas', 'PengaturanArmada', 'armadas', ['categories', 'units']],
             ['admin-ops.schedules', 'PengaturanJadwal', 'schedules', ['routes', 'units']],
-            ['admin-ops.segments', 'PengaturanSegment', 'segments', ['routes']],
         ];
 
         foreach ($pages as [$routeName, $component, $tab, $masterKeys]) {

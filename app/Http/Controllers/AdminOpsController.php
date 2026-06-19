@@ -35,7 +35,7 @@ class AdminOpsController extends Controller
                 'schedules' => 'admin-ops.schedules',
                 'drivers' => 'admin-ops.drivers',
                 'services' => 'admin-ops.services',
-                'segments' => 'admin-ops.segments',
+                'segments' => 'admin-ops.routes',
                 'customers' => 'admin-ops.customers',
                 'units' => 'admin-ops.units',
                 'armadas' => 'admin-ops.armadas',

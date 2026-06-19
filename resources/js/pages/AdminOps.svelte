@@ -513,7 +513,6 @@
             tabs: [
                 { tab: 'routes', label: 'Rute Induk', permission: 'master.view' },
                 { tab: 'schedules', label: 'Jadwal', permission: 'master.view' },
-                { tab: 'segments', label: 'Segment', permission: 'master.view' },
                 { tab: 'services', label: 'Tarif Bagasi', permission: 'master.view' },
                 { tab: 'customers', label: 'Reguler', permission: 'customer.view' },
             ],
@@ -1252,6 +1251,31 @@
         routes.find((route) => route.id === Number(selectedSegmentRouteId)) ??
             null,
     );
+    const routeSegmentsById = $derived.by<Record<number, SegmentRow[]>>(() => {
+        const grouped: Record<number, SegmentRow[]> = {};
+
+        for (const segment of segments) {
+            const routeId = Number(segment.route_id || 0);
+
+            if (routeId <= 0) {
+                continue;
+            }
+
+            if (!grouped[routeId]) {
+                grouped[routeId] = [];
+            }
+
+            grouped[routeId].push(segment);
+        }
+
+        for (const key of Object.keys(grouped)) {
+            grouped[Number(key)] = grouped[Number(key)].slice().sort((a, b) =>
+                String(a.rute ?? '').localeCompare(String(b.rute ?? ''), 'id'),
+            );
+        }
+
+        return grouped;
+    });
     const poolOptions = $derived(
         pools.filter((pool) => String(pool.status ?? 'active') === 'active'),
     );
@@ -1298,6 +1322,12 @@
 
         return names.length > 0 ? names.join(', ') : 'Belum ada rute';
     };
+    const routeNameById = (routeId: number) =>
+        routes.find((route) => route.id === Number(routeId || 0))?.name ?? '';
+    const segmentsForRoute = (routeId: number) =>
+        routeSegmentsById[Number(routeId || 0)] ?? [];
+    const routeSegmentCount = (routeId: number) =>
+        segmentsForRoute(routeId).length;
 
     const togglePoolRoute = (routeId: number, checked: boolean) => {
         const id = Number(routeId || 0);
@@ -2873,8 +2903,27 @@
     });
 
     const loadRoutes = async () => {
-        const r = await api('GET', '/api/admin/routes');
+        const [r, s] = await Promise.all([
+            api('GET', '/api/admin/routes'),
+            api('GET', '/api/admin/segments'),
+        ]);
         routes = r.routes ?? [];
+        segments = s.segments ?? [];
+
+        const routeExists = routes.some(
+            (row) => row.id === Number(selectedSegmentRouteId),
+        );
+
+        if (!routeExists) {
+            selectedSegmentRouteId = 0;
+        }
+
+        if (Number(segmentForm.route_id || 0) > 0) {
+            const routeId = Number(segmentForm.route_id || 0);
+            if (!routes.some((row) => row.id === routeId)) {
+                resetSegmentForm(0);
+            }
+        }
     };
 
     const loadSchedules = async () => {
@@ -2932,34 +2981,7 @@
     };
 
     const loadSegments = async () => {
-        if (usesHybridSettings('segments')) {
-            reloadSettingsWithInertia(1);
-
-            return;
-        }
-
-        const r = await api('GET', '/api/admin/routes');
-        routes = r.routes ?? [];
-
-        const routeExists = routes.some(
-            (row) => row.id === Number(selectedSegmentRouteId),
-        );
-
-        if (!routeExists) {
-            selectedSegmentRouteId = Number(routes[0]?.id ?? 0);
-        }
-
-        const activeRouteId = Number(selectedSegmentRouteId || 0);
-        const segmentsUrl =
-            activeRouteId > 0
-                ? `/api/admin/segments?route_id=${activeRouteId}`
-                : '/api/admin/segments';
-        const s = await api('GET', segmentsUrl);
-        segments = s.segments ?? [];
-
-        if (Number(segmentForm.route_id || 0) <= 0) {
-            segmentForm.route_id = activeRouteId;
-        }
+        await loadRoutes();
     };
 
     const loadCustomers = async (page = customerMeta.page) => {
@@ -3398,26 +3420,30 @@
         setFormMode('form');
     };
     const resetServiceForm = () => (serviceForm = { id: 0, name: '' });
-    const resetSegmentForm = () =>
+    const resetSegmentForm = (routeId = Number(selectedSegmentRouteId || 0)) =>
         (segmentForm = {
             id: 0,
-            route_id: Number(selectedSegmentRouteId || 0),
-            rute: '',
+            route_id: Number(routeId || 0),
+            rute: routeNameById(routeId),
             origin: '',
             destination: '',
             harga: 0,
         });
     const editSegment = (row: SegmentRow) => {
-        selectedSegmentRouteId = row.route_id;
+        selectedSegmentRouteId = Number(row.route_id || 0);
         segmentForm = {
             id: row.id,
-            route_id: row.route_id,
-            rute: row.rute,
+            route_id: Number(row.route_id || 0),
+            rute:
+                row.route_name?.trim() !== ''
+                    ? String(row.route_name)
+                    : routeNameById(row.route_id) || row.rute,
             origin: row.origin ?? '',
             destination: row.destination ?? '',
             harga: Number(row.harga),
         };
-        setFormMode('form');
+        activeTab = 'routes';
+        activeMode = 'data';
     };
     const resetCustomerForm = () =>
         (customerForm = {
@@ -3729,13 +3755,34 @@
         activeMode = 'form';
     };
 
-    const changeSegmentRoute = async (routeId: number) => {
-        selectedSegmentRouteId = Number(routeId || 0);
-        resetSegmentForm();
+    const toggleRouteSegments = (routeId: number) => {
+        const normalizedRouteId = Number(routeId || 0);
 
-        if (activeTab === 'segments') {
-            await loadSegments();
+        if (normalizedRouteId <= 0) {
+            return;
         }
+
+        if (selectedSegmentRouteId === normalizedRouteId) {
+            selectedSegmentRouteId = 0;
+            resetSegmentForm(0);
+
+            return;
+        }
+
+        selectedSegmentRouteId = normalizedRouteId;
+        resetSegmentForm(normalizedRouteId);
+    };
+
+    const openRouteSegmentComposer = (routeId: number) => {
+        const normalizedRouteId = Number(routeId || 0);
+
+        if (normalizedRouteId <= 0) {
+            return;
+        }
+
+        selectedSegmentRouteId = normalizedRouteId;
+        resetSegmentForm(normalizedRouteId);
+        activeMode = 'data';
     };
 
     const saveDriver = async (event: SubmitEvent) => {
@@ -3853,8 +3900,12 @@
                 },
             );
             message = segmentForm.id ? 'Segment updated.' : 'Segment created.';
-            resetSegmentForm();
-            await loadSegments();
+            const routeId = Number(
+                selectedSegmentRouteId || segmentForm.route_id || 0,
+            );
+            selectedSegmentRouteId = routeId;
+            resetSegmentForm(routeId);
+            await loadRoutes();
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan segment.';
@@ -4501,9 +4552,10 @@
                                 <p
                                     class="mt-1 max-w-3xl text-sm text-muted-foreground"
                                 >
-                                    Nama rute dipertahankan dominan, sedangkan
-                                    origin dan destination digabung agar tabel
-                                    tetap ringkas saat dibuka di laptop.
+                                    Segment kini ditambahkan langsung di bawah
+                                    rute induk, sehingga parent route, arah
+                                    perjalanan, dan harga turunannya bisa
+                                    dilihat di satu tempat.
                                 </p>
                             </div>
                             <Badge
@@ -4520,6 +4572,9 @@
                                 </div>
                             {/if}
                             {#each routes as row (row.id)}
+                                {@const rowSegments = segmentsForRoute(
+                                    Number(row.id),
+                                )}
                                 <article
                                     class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-sm"
                                 >
@@ -4534,6 +4589,42 @@
                                                 </p>
                                             </div>
                                             <div class="flex shrink-0 items-center gap-1.5">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    class="h-8 rounded-full px-3 text-[11px] font-semibold"
+                                                    onclick={() =>
+                                                        openRouteSegmentComposer(
+                                                            Number(row.id),
+                                                        )}
+                                                >
+                                                    <Plus class="mr-1 h-3.5 w-3.5" />
+                                                    Segment
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    class="h-8 w-8 rounded-full border border-border/70 bg-background/80"
+                                                    onclick={() =>
+                                                        toggleRouteSegments(
+                                                            Number(row.id),
+                                                        )}
+                                                >
+                                                    {#if selectedSegmentRouteId ===
+                                                    row.id}
+                                                        <ChevronUp class="h-4 w-4" />
+                                                    {:else}
+                                                        <ChevronDown class="h-4 w-4" />
+                                                    {/if}
+                                                    <span class="sr-only">
+                                                        {selectedSegmentRouteId ===
+                                                        row.id
+                                                            ? 'Tutup detail segment'
+                                                            : 'Buka detail segment'}
+                                                    </span>
+                                                </Button>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button
@@ -4581,13 +4672,233 @@
                                         </div>
                                     </div>
                                 </article>
+                                {#if selectedSegmentRouteId === row.id}
+                                    <div class="overflow-hidden rounded-2xl border border-border/80 bg-background/95 shadow-sm">
+                                        <div class="space-y-4 p-3">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                                        Segment di bawah rute
+                                                    </p>
+                                                    <h4 class="mt-1 text-sm font-semibold text-foreground">
+                                                        {row.name}
+                                                    </h4>
+                                                </div>
+                                                <Badge
+                                                    variant="secondary"
+                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                >
+                                                    {rowSegments.length} segment
+                                                </Badge>
+                                            </div>
+
+                                            {#if rowSegments.length === 0}
+                                                <div class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
+                                                    Belum ada segment pada rute ini.
+                                                </div>
+                                            {:else}
+                                                <div class="space-y-2">
+                                                    {#each rowSegments as segment (segment.id)}
+                                                        <article class="rounded-2xl border border-border/70 bg-card/95 p-3 shadow-sm">
+                                                            <div class="flex items-start justify-between gap-3">
+                                                                <div class="min-w-0">
+                                                                    <p class="truncate text-sm font-semibold text-foreground">
+                                                                        {segment.rute}
+                                                                    </p>
+                                                                    <p class="mt-0.5 text-xs text-muted-foreground">
+                                                                        {segment.origin ?? 'Origin belum diatur'}
+                                                                        ?
+                                                                        {segment.destination ?? 'Destination belum diatur'}
+                                                                    </p>
+                                                                </div>
+                                                                {#if canWriteTab('segments')}
+                                                                    <DropdownMenu>
+                                                                        <DropdownMenuTrigger asChild>
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                                            >
+                                                                                <MoreHorizontal class="h-4 w-4" />
+                                                                                <span class="sr-only">Aksi segment</span>
+                                                                            </Button>
+                                                                        </DropdownMenuTrigger>
+                                                                        <DropdownMenuContent
+                                                                            align="end"
+                                                                            sideOffset={8}
+                                                                            class="z-[120] w-44"
+                                                                        >
+                                                                            <DropdownMenuItem onclick={() => editSegment(segment)}>
+                                                                                <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                                                Edit
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuItem
+                                                                                onclick={() =>
+                                                                                    void removeItem(
+                                                                                        `/api/admin/segments/${segment.id}`,
+                                                                                        'Segment deleted.',
+                                                                                    )}
+                                                                            >
+                                                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                                                Hapus
+                                                                            </DropdownMenuItem>
+                                                                        </DropdownMenuContent>
+                                                                    </DropdownMenu>
+                                                                {/if}
+                                                            </div>
+                                                            <div class="mt-2 text-sm font-semibold text-amber-800 tabular-nums">
+                                                                {formatCurrency(Number(segment.harga || 0))}
+                                                            </div>
+                                                        </article>
+                                                    {/each}
+                                                </div>
+                                            {/if}
+
+                                            {#if canWriteTab('segments')}
+                                                <form
+                                                    class="space-y-3 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-sm"
+                                                    onsubmit={saveSegment}
+                                                >
+                                                    <div class="flex items-center justify-between gap-3">
+                                                        <div>
+                                                            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                                                Form segment inline
+                                                            </p>
+                                                            <h4 class="mt-1 text-sm font-semibold text-foreground">
+                                                                {segmentForm.id
+                                                                    ? 'Perbarui segment'
+                                                                    : `Tambah segment di ${row.name}`}
+                                                            </h4>
+                                                        </div>
+                                                        <Badge
+                                                            variant="secondary"
+                                                            class="rounded-full px-2.5 py-1 text-[11px]"
+                                                        >
+                                                            {rowSegments.length} segment
+                                                        </Badge>
+                                                    </div>
+                                                    <input
+                                                        type="hidden"
+                                                        bind:value={segmentForm.route_id}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        bind:value={segmentForm.rute}
+                                                    />
+                                                    <div class="grid gap-3 md:grid-cols-3">
+                                                        <label class="space-y-1.5">
+                                                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                                Origin
+                                                            </span>
+                                                            <Input
+                                                                placeholder="Origin"
+                                                                bind:value={segmentForm.origin}
+                                                            />
+                                                        </label>
+                                                        <label class="space-y-1.5">
+                                                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                                Destination
+                                                            </span>
+                                                            <Input
+                                                                placeholder="Destination"
+                                                                bind:value={segmentForm.destination}
+                                                            />
+                                                        </label>
+                                                        <label class="space-y-1.5">
+                                                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                                Harga Segment
+                                                            </span>
+                                                            <Input
+                                                                type="text"
+                                                                inputmode="numeric"
+                                                                placeholder="Harga segment"
+                                                                value={formatRupiahInput(
+                                                                    segmentForm.harga,
+                                                                )}
+                                                                oninput={(event) => {
+                                                                    segmentForm.harga =
+                                                                        parseRupiahInput(
+                                                                            (
+                                                                                event.currentTarget as HTMLInputElement
+                                                                            ).value,
+                                                                        );
+                                                                }}
+                                                                required
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                    <div class="flex flex-wrap gap-2 border-t border-border/70 pt-3">
+                                                        <LoadingButton
+                                                            type="submit"
+                                                            loading={isSubmitActive('segment')}
+                                                            loadingText={segmentForm.id
+                                                                ? 'Menyimpan segment...'
+                                                                : 'Menambah segment...'}
+                                                        >
+                                                            {segmentForm.id
+                                                                ? 'Update Segment'
+                                                                : 'Tambah Segment'}
+                                                        </LoadingButton>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            onclick={() =>
+                                                                resetSegmentForm(
+                                                                    Number(row.id),
+                                                                )}
+                                                        >
+                                                            Reset
+                                                        </Button>
+                                                    </div>
+                                                </form>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/if}
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={routesColumns} rows={routes} class="min-w-[900px] w-full border-separate border-spacing-0 text-sm" tone="default">
+                            <DataTable
+                                columns={routesColumns}
+                                rows={routes}
+                                class="min-w-[820px] w-full border-separate border-spacing-0 text-sm"
+                                tone="default"
+                                expandedRows={selectedSegmentRouteId > 0
+                                    ? [selectedSegmentRouteId]
+                                    : []}
+                            >
                                 {#snippet row({ row, columns })}
                                     <td class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[0]?.leftOffset ?? '0px'}`}>
-                                        <div class="font-semibold text-foreground">{row.name}</div>
+                                        <div class="flex items-start gap-2">
+                                            <button
+                                                type="button"
+                                                class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background transition hover:bg-muted/40"
+                                                onclick={() =>
+                                                    toggleRouteSegments(
+                                                        Number(row.id),
+                                                    )}
+                                            >
+                                                {#if selectedSegmentRouteId ===
+                                                row.id}
+                                                    <ChevronUp class="h-4 w-4" />
+                                                {:else}
+                                                    <ChevronDown class="h-4 w-4" />
+                                                {/if}
+                                                <span class="sr-only">
+                                                    {selectedSegmentRouteId ===
+                                                    row.id
+                                                        ? 'Tutup detail segment'
+                                                        : 'Buka detail segment'}
+                                                </span>
+                                            </button>
+                                            <div class="flex items-center gap-2">
+                                            <div class="font-semibold text-foreground">{row.name}</div>
+                                            <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px]">
+                                                {routeSegmentCount(Number(row.id))} segment
+                                            </Badge>
+                                            </div>
+                                        </div>
                                         <div class="mt-1 text-[11px] text-muted-foreground">Rute master untuk jadwal dan segment</div>
                                     </td>
 
@@ -4597,29 +4908,239 @@
                                             <span class="text-muted-foreground">→</span>
                                             <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.destination ?? 'Destination belum diatur'}</span>
                                         </div>
-                                        <div class="mt-2 text-[11px] text-muted-foreground">Jalur ini dipakai sebagai acuan relasi jadwal keberangkatan dan segment harga.</div>
+                                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                                            <Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[11px]">
+                                                {routeSegmentCount(Number(row.id))} segment
+                                            </Badge>
+                                        </div>
                                     </td>
                                 {/snippet}
 
                                 {#snippet actions({ row })}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                                <MoreHorizontal class="h-4 w-4" />
-                                                <span class="sr-only">Aksi rute induk</span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                            <DropdownMenuItem onclick={() => editRoute(row as RouteRow)}>
-                                                <Pencil class="mr-2 h-3.5 w-3.5" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onclick={() => void removeItem(`/api/admin/routes/${row.id}`, 'Route deleted.') }>
-                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                                Hapus
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-8 rounded-full px-3 text-[11px] font-semibold"
+                                            onclick={() =>
+                                                openRouteSegmentComposer(
+                                                    Number(row.id),
+                                                )}
+                                        >
+                                            <Plus class="mr-1 h-3.5 w-3.5" />
+                                            Segment
+                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi rute induk</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                <DropdownMenuItem onclick={() => editRoute(row as RouteRow)}>
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/routes/${row.id}`, 'Route deleted.') }>
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                {/snippet}
+
+                                {#snippet detail({ row })}
+                                    {@const rowSegments = segmentsForRoute(
+                                        Number(row.id),
+                                    )}
+                                    <div class="space-y-4 px-2 py-3">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                                    Segment di bawah rute induk
+                                                </p>
+                                                <h4 class="mt-1 text-base font-semibold text-foreground">
+                                                    {row.name}
+                                                </h4>
+                                            </div>
+                                            <Badge
+                                                variant="secondary"
+                                                class="rounded-full px-3 py-1 text-[11px]"
+                                            >
+                                                {rowSegments.length} segment
+                                            </Badge>
+                                        </div>
+
+                                        {#if rowSegments.length === 0}
+                                            <div class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
+                                                Belum ada segment untuk rute ini.
+                                            </div>
+                                        {:else}
+                                            <div class="grid gap-2 xl:grid-cols-2">
+                                                {#each rowSegments as segment (segment.id)}
+                                                    <article class="rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm">
+                                                        <div class="flex items-start justify-between gap-3">
+                                                            <div class="min-w-0">
+                                                                <p class="truncate text-sm font-semibold text-foreground">
+                                                                    {segment.rute}
+                                                                </p>
+                                                                <p class="mt-0.5 text-xs text-muted-foreground">
+                                                                    {segment.origin ?? 'Origin belum diatur'}
+                                                                    ?
+                                                                    {segment.destination ?? 'Destination belum diatur'}
+                                                                </p>
+                                                            </div>
+                                                            {#if canWriteTab('segments')}
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            class="h-8 w-8 rounded-full border border-border/70"
+                                                                        >
+                                                                            <MoreHorizontal class="h-4 w-4" />
+                                                                            <span class="sr-only">Aksi segment</span>
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent
+                                                                        align="end"
+                                                                        sideOffset={8}
+                                                                        class="z-[120] w-44"
+                                                                    >
+                                                                        <DropdownMenuItem onclick={() => editSegment(segment)}>
+                                                                            <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                                            Edit
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            onclick={() =>
+                                                                                void removeItem(
+                                                                                    `/api/admin/segments/${segment.id}`,
+                                                                                    'Segment deleted.',
+                                                                                )}
+                                                                        >
+                                                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                                            Hapus
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            {/if}
+                                                        </div>
+                                                        <div class="mt-3 flex items-center justify-between gap-3">
+                                                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                                                                Harga segment
+                                                            </p>
+                                                            <p class="text-sm font-semibold text-amber-800 tabular-nums">
+                                                                {formatCurrency(Number(segment.harga || 0))}
+                                                            </p>
+                                                        </div>
+                                                    </article>
+                                                {/each}
+                                            </div>
+                                        {/if}
+
+                                        {#if canWriteTab('segments')}
+                                            <form
+                                                class="space-y-3 rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                                onsubmit={saveSegment}
+                                            >
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                                            Form segment inline
+                                                        </p>
+                                                        <h4 class="mt-1 text-sm font-semibold text-foreground">
+                                                            {segmentForm.id
+                                                                ? 'Perbarui segment'
+                                                                : `Tambah segment di ${row.name}`}
+                                                        </h4>
+                                                    </div>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        class="rounded-full px-2.5 py-1 text-[11px]"
+                                                    >
+                                                        {rowSegments.length} segment
+                                                    </Badge>
+                                                </div>
+                                                <input
+                                                    type="hidden"
+                                                    bind:value={segmentForm.route_id}
+                                                />
+                                                <input
+                                                    type="hidden"
+                                                    bind:value={segmentForm.rute}
+                                                />
+                                                <div class="grid gap-3 md:grid-cols-3">
+                                                    <label class="space-y-1.5">
+                                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Origin
+                                                        </span>
+                                                        <Input
+                                                            placeholder="Origin"
+                                                            bind:value={segmentForm.origin}
+                                                        />
+                                                    </label>
+                                                    <label class="space-y-1.5">
+                                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Destination
+                                                        </span>
+                                                        <Input
+                                                            placeholder="Destination"
+                                                            bind:value={segmentForm.destination}
+                                                        />
+                                                    </label>
+                                                    <label class="space-y-1.5">
+                                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Harga Segment
+                                                        </span>
+                                                        <Input
+                                                            type="text"
+                                                            inputmode="numeric"
+                                                            placeholder="Harga segment"
+                                                            value={formatRupiahInput(
+                                                                segmentForm.harga,
+                                                            )}
+                                                            oninput={(event) => {
+                                                                segmentForm.harga =
+                                                                    parseRupiahInput(
+                                                                        (
+                                                                            event.currentTarget as HTMLInputElement
+                                                                        ).value,
+                                                                    );
+                                                            }}
+                                                            required
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div class="flex flex-wrap gap-2 border-t border-border/70 pt-3">
+                                                    <LoadingButton
+                                                        type="submit"
+                                                        loading={isSubmitActive('segment')}
+                                                        loadingText={segmentForm.id
+                                                            ? 'Menyimpan segment...'
+                                                            : 'Menambah segment...'}
+                                                    >
+                                                        {segmentForm.id
+                                                            ? 'Update Segment'
+                                                            : 'Tambah Segment'}
+                                                    </LoadingButton>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onclick={() =>
+                                                            resetSegmentForm(
+                                                                Number(row.id),
+                                                            )}
+                                                    >
+                                                        Reset
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        {/if}
+                                    </div>
                                 {/snippet}
                             </DataTable>
                         </div>
@@ -6587,7 +7108,7 @@
                                                             >
                                                             <span
                                                                 class="text-muted-foreground"
-                                                                >→</span
+                                                                >?</span
                                                             >
                                                             <span
                                                                 class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
