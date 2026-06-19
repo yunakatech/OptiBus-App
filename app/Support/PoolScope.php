@@ -730,6 +730,60 @@ class PoolScope
         return self::customerPoolId(0, $userId);
     }
 
+    /**
+     * @return array<int, int>
+     */
+    public static function accessiblePoolIds(?int $userId = null, bool $useSessionPool = true): array
+    {
+        if (! Schema::hasTable('pools')) {
+            return [];
+        }
+
+        $scope = self::forCurrentUser(0, $userId, $useSessionPool);
+        if (! ($scope['all'] ?? true)) {
+            return array_values(array_map('intval', $scope['pool_ids'] ?? []));
+        }
+
+        $tenantId = self::tenantId($userId);
+        $query = DB::table('pools')->where('status', 'active')->orderBy('id');
+        if ($tenantId > 0 && Schema::hasColumn('pools', 'tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        return $query
+            ->pluck('id')
+            ->map(static fn ($value): int => (int) $value)
+            ->values()
+            ->all();
+    }
+
+    public static function canAccessPool(int $poolId, ?int $userId = null): bool
+    {
+        if ($poolId <= 0 || ! Schema::hasTable('pools')) {
+            return false;
+        }
+
+        $query = DB::table('pools')
+            ->where('id', $poolId)
+            ->where('status', 'active');
+
+        $tenantId = self::tenantId($userId);
+        if ($tenantId > 0 && Schema::hasColumn('pools', 'tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        if (! $query->exists()) {
+            return false;
+        }
+
+        $scope = self::forCurrentUser(0, $userId, false);
+        if ($scope['all'] ?? true) {
+            return true;
+        }
+
+        return in_array($poolId, array_map('intval', $scope['pool_ids'] ?? []), true);
+    }
+
     public static function defaultWritablePoolId(?int $userId = null): int
     {
         $poolId = self::currentPoolId($userId);

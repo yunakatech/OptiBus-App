@@ -95,6 +95,8 @@
         kapasitas: number | null;
         status: string | null;
         layout: string | null;
+        pool_id?: number | null;
+        pool_name?: string | null;
     };
     type ScheduleRow = {
         id: number;
@@ -165,6 +167,8 @@
         departure_bop: number;
         bop: number;
         fixed_cost: number;
+        pool_id?: number | null;
+        pool_name?: string | null;
     };
     type ServiceRow = { id: number; name: string };
     type SegmentRow = {
@@ -182,6 +186,8 @@
         phone: string;
         pickup_point: string | null;
         gmaps: string | null;
+        pool_id?: number | null;
+        pool_name?: string | null;
     };
     type Pagination = {
         page: number;
@@ -202,6 +208,7 @@
         drivers?: DriverRow[];
         segments?: SegmentRow[];
         armadas?: ArmadaRow[];
+        units?: UnitRow[];
         pools?: PoolRow[];
         users?: UserRow[];
         roles?: RoleOption[];
@@ -247,6 +254,8 @@
         bop: number;
         fixed_cost: number;
         target_bulanan: number;
+        pool_id?: number | null;
+        pool_name?: string | null;
     };
     type UserRow = {
         id: number;
@@ -423,6 +432,7 @@
         'schedules',
         'drivers',
         'segments',
+        'units',
         'armadas',
         'pools',
         'users',
@@ -621,6 +631,7 @@
         id: 0,
         nama: '',
         phone: '',
+        pool_id: 0,
         armada_id: 0,
         target_revenue_bulanan: '',
         fixed_cost: '',
@@ -640,12 +651,14 @@
         phone: '',
         pickup_point: '',
         gmaps: '',
+        pool_id: 0,
     });
     const unitCategoryOptions = ['Minibus', 'Mediumbus', 'Bigbus'] as const;
     type UnitCategory = (typeof unitCategoryOptions)[number];
     type UnitForm = {
         id: number;
         nama_model: string;
+        pool_id: number;
         category: UnitCategory;
         kapasitas: number;
         status: string;
@@ -677,6 +690,7 @@
     let unitForm = $state<UnitForm>({
         id: 0,
         nama_model: '',
+        pool_id: 0,
         category: defaultUnitCategory,
         kapasitas: 0,
         status: 'Aktif',
@@ -684,6 +698,7 @@
     });
     let armadaForm = $state({
         id: 0,
+        pool_id: 0,
         merk: '',
         tahun: '',
         warna: '',
@@ -1205,7 +1220,36 @@
     const poolOptions = $derived(
         pools.filter((pool) => String(pool.status ?? 'active') === 'active'),
     );
+    const activePoolId = $derived(
+        Number((page.props.auth as any)?.active_pool?.id ?? 0),
+    );
+    const activePoolName = $derived(
+        String((page.props.auth as any)?.active_pool?.name ?? 'Semua Pool'),
+    );
+    const isAllPoolMode = $derived(activePoolId <= 0);
     const roleOptions = $derived(roles);
+
+    const defaultPoolId = () => (activePoolId > 0 ? activePoolId : 0);
+
+    const poolNameById = (poolId: number | null | undefined) => {
+        const id = Number(poolId || 0);
+
+        if (id <= 0) {
+            return activePoolName;
+        }
+
+        return (
+            poolOptions.find((pool) => Number(pool.id) === id)?.name ??
+            'Pool'
+        );
+    };
+
+    const rowPoolName = (row: { pool_id?: number | null; pool_name?: string | null }) =>
+        String(row.pool_name ?? poolNameById(row.pool_id)).trim() ||
+        'Semua Pool';
+
+    const poolPayloadValue = (poolId: number) =>
+        Number(poolId || 0) > 0 ? Number(poolId) : undefined;
 
     const formatPoolRoutes = (pool: PoolRow) => {
         const names = Array.isArray(pool.route_names) ? pool.route_names : [];
@@ -1287,6 +1331,7 @@
         { key: 'nama', label: 'Nama Driver', width: 'w-[220px]', sticky: 'left' },
         { key: 'phone', label: 'Kontak', width: 'w-[160px]', sticky: 'left' },
         { key: 'nopol', label: 'Nopol Unit', width: 'w-[170px]', sticky: 'left' },
+        { key: 'pool', label: 'Pool', width: 'w-[180px]' },
         { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
         { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
         { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
@@ -1338,8 +1383,14 @@
     ];
     const filteredArmadaTemplateOptions = $derived.by<UnitRow[]>(() => {
         const keyword = armadaTemplateSearch.trim().toLowerCase();
+        const selectedPoolId = Number(armadaForm.pool_id || 0);
 
         return units
+            .filter((unit) =>
+                selectedPoolId > 0
+                    ? Number(unit.pool_id ?? 0) === selectedPoolId
+                    : true,
+            )
             .filter((unit) => {
                 const nopol = String(unit.nopol ?? '').toLowerCase();
                 const category = String(unit.category ?? '').toLowerCase();
@@ -1357,8 +1408,13 @@
     });
     const driverUnitOptions = $derived.by<ArmadaRow[]>(() => {
         const keyword = driverUnitSearch.trim().toLowerCase();
+        const selectedPoolId = Number(driverForm.pool_id || 0);
         const rows = armadas.filter(
             (armada) => String(armada.nopol ?? '').trim() !== '',
+        ).filter((armada) =>
+            selectedPoolId > 0
+                ? Number(armada.pool_id ?? 0) === selectedPoolId
+                : true,
         );
 
         if (keyword === '') {
@@ -1383,7 +1439,11 @@
     });
     const selectedDriverUnit = $derived(
         armadas.find(
-            (armada) => armada.id === Number(driverForm.armada_id || 0),
+            (armada) =>
+                armada.id === Number(driverForm.armada_id || 0) &&
+                (Number(driverForm.pool_id || 0) <= 0 ||
+                    Number(armada.pool_id ?? 0) ===
+                        Number(driverForm.pool_id || 0)),
         ) ?? null,
     );
     const layoutTemplateOptions = $derived.by<UnitRow[]>(() => {
@@ -2187,6 +2247,7 @@
         unitForm = {
             id: row.id,
             nama_model: row.nopol,
+            pool_id: Number(row.pool_id ?? defaultPoolId()),
             category: normalizeUnitCategory(row.category),
             kapasitas: Number(row.kapasitas ?? 0),
             status: row.status ?? 'Aktif',
@@ -2539,6 +2600,10 @@
             segments = payload.segments ?? [];
         }
 
+        if (payload.tab === 'units') {
+            units = payload.units ?? [];
+        }
+
         if (payload.tab === 'armadas') {
             armadas = payload.armadas ?? [];
         }
@@ -2573,6 +2638,7 @@
 
         if (payload.tab === 'drivers') {
             armadas = payload.armadas ?? [];
+            pools = payload.pools ?? pools;
         }
 
         if (payload.tab === 'segments') {
@@ -2582,6 +2648,11 @@
         if (payload.tab === 'armadas') {
             armadaCategories = payload.categories ?? [];
             units = payload.units ?? [];
+            pools = payload.pools ?? pools;
+        }
+
+        if (payload.tab === 'units') {
+            pools = payload.pools ?? pools;
         }
 
         if (payload.tab === 'pools') {
@@ -2891,6 +2962,12 @@
     };
 
     const loadUnits = async () => {
+        if (usesHybridSettings('units')) {
+            reloadSettingsWithInertia();
+
+            return;
+        }
+
         const r = await api('GET', '/api/admin/units');
         units = r.units ?? [];
 
@@ -3176,6 +3253,7 @@
             id: 0,
             nama: '',
             phone: '',
+            pool_id: defaultPoolId(),
             armada_id: 0,
             target_revenue_bulanan: '',
             fixed_cost: '',
@@ -3186,6 +3264,7 @@
             id: row.id,
             nama: row.nama,
             phone: row.phone ?? '',
+            pool_id: Number(row.pool_id ?? defaultPoolId()),
             armada_id: row.armada_id ?? 0,
             fixed_cost: formatRupiahInput(row.fixed_cost),
             target_revenue_bulanan: formatRupiahInput(
@@ -3224,11 +3303,13 @@
             phone: '',
             pickup_point: '',
             gmaps: '',
+            pool_id: defaultPoolId(),
         });
     const resetUnitForm = () =>
         (unitForm = {
             id: 0,
             nama_model: '',
+            pool_id: defaultPoolId(),
             category: defaultUnitCategory,
             kapasitas: 0,
             status: 'Aktif',
@@ -3237,6 +3318,7 @@
     const resetArmadaForm = () => {
         armadaForm = {
             id: 0,
+            pool_id: defaultPoolId(),
             merk: '',
             tahun: '',
             warna: '',
@@ -3263,6 +3345,7 @@
     const openArmadaEditor = (row: ArmadaRow) => {
         armadaForm = {
             id: row.id,
+            pool_id: Number(row.pool_id ?? defaultPoolId()),
             merk: row.merk ?? '',
             tahun: Number(row.tahun ?? 0) > 0 ? String(row.tahun) : '',
             warna: row.warna ?? '',
@@ -3539,6 +3622,7 @@
                         id: driverForm.id || undefined,
                         nama: driverForm.nama,
                         phone: driverForm.phone,
+                        pool_id: poolPayloadValue(driverForm.pool_id),
                         armada_id: Number(driverForm.armada_id) || undefined,
                         armada_nopol: driverUnitSearch.trim() || undefined,
                         target_revenue_bulanan: parseRupiahInput(
@@ -3665,6 +3749,7 @@
                         phone: customerForm.phone,
                         pickup_point: customerForm.pickup_point,
                         gmaps: customerForm.gmaps,
+                        pool_id: poolPayloadValue(customerForm.pool_id),
                     });
                 },
                 {
@@ -3702,6 +3787,7 @@
                     await api('POST', '/api/admin/units', {
                         id: unitForm.id || undefined,
                         nopol: unitForm.nama_model,
+                        pool_id: poolPayloadValue(unitForm.pool_id),
                         category: normalizeUnitCategory(unitForm.category),
                         kapasitas: Number(unitForm.kapasitas || 0),
                         status: unitForm.status,
@@ -3740,6 +3826,7 @@
                 async () => {
                     await api('POST', '/api/admin/armadas', {
                         id: armadaForm.id || undefined,
+                        pool_id: poolPayloadValue(armadaForm.pool_id),
                         merk: armadaForm.merk,
                         tahun: Number(armadaForm.tahun || 0),
                         warna: armadaForm.warna,
@@ -5272,6 +5359,32 @@
                             toneClass="bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(15,23,42,0.03))]"
                             bodyClass="space-y-4"
                         >
+                            <div class="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                                {#if isAllPoolMode}
+                                    <label class="space-y-1.5">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pool Target</span>
+                                        <select
+                                            class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm md:max-w-sm"
+                                            bind:value={driverForm.pool_id}
+                                            onchange={() => {
+                                                driverForm.armada_id = 0;
+                                                driverUnitSearch = '';
+                                            }}
+                                            required
+                                        >
+                                            <option value={0}>Pilih pool</option>
+                                            {#each poolOptions as pool (pool.id)}
+                                                <option value={pool.id}>{pool.name}</option>
+                                            {/each}
+                                        </select>
+                                    </label>
+                                {:else}
+                                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                                        <span class="text-muted-foreground">Pool aktif</span>
+                                        <Badge variant="secondary" class="rounded-full px-3 py-1">{activePoolName}</Badge>
+                                    </div>
+                                {/if}
+                            </div>
                             <div
                                 class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
                             >
@@ -5509,6 +5622,9 @@
                                             <p class="mt-0.5 truncate text-xs text-muted-foreground">
                                                 {row.phone ?? 'Kontak belum diatur'}
                                             </p>
+                                            <Badge variant="secondary" class="mt-2 w-fit rounded-full px-2.5 py-0.5 text-[10px]">
+                                                {rowPoolName(row)}
+                                            </Badge>
                                         </div>
                                         <div class="flex shrink-0 items-center gap-1.5">
                                             <span
@@ -5639,7 +5755,7 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[1900px]">
+                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[2040px]">
                                 {#snippet row({ row })}
                                     {@const gross = driverGrossMargin(row as DriverRow)}
                                     {@const net = driverNetMargin(row as DriverRow)}
@@ -5658,6 +5774,12 @@
 
                                     <td class="py-3 px-4 align-top">
                                         <EntityBadge code={row.nopol ?? '-'} />
+                                    </td>
+
+                                    <td class="py-3 px-4 align-top">
+                                        <Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[11px]">
+                                            {rowPoolName(row as DriverRow)}
+                                        </Badge>
                                     </td>
 
                                     <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
@@ -6429,6 +6551,36 @@
                         <div
                             class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4"
                         >
+                            {#if isAllPoolMode}
+                                <label class="space-y-1.5">
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                        >Pool Target</span
+                                    >
+                                    <select
+                                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                        bind:value={customerForm.pool_id}
+                                        required
+                                    >
+                                        <option value={0}>Pilih pool</option>
+                                        {#each poolOptions as pool (pool.id)}
+                                            <option value={pool.id}
+                                                >{pool.name}</option
+                                            >
+                                        {/each}
+                                    </select>
+                                </label>
+                            {:else}
+                                <div class="space-y-1.5">
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                        >Pool Aktif</span
+                                    >
+                                    <div class="flex h-9 items-center rounded-md border border-input bg-muted/30 px-3 text-sm font-medium">
+                                        {activePoolName}
+                                    </div>
+                                </div>
+                            {/if}
                             <label class="space-y-1.5">
                                 <span
                                     class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -6615,6 +6767,12 @@
                                             <p class="mt-0.5 truncate text-xs text-muted-foreground">
                                                 {row.phone}
                                             </p>
+                                            <Badge
+                                                variant="secondary"
+                                                class="mt-2 w-fit rounded-full px-2.5 py-0.5 text-[10px]"
+                                            >
+                                                {rowPoolName(row)}
+                                            </Badge>
                                         </div>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -6642,6 +6800,10 @@
                                                             pickup_point:
                                                                 row.pickup_point ?? '',
                                                             gmaps: row.gmaps ?? '',
+                                                            pool_id: Number(
+                                                                row.pool_id ??
+                                                                    defaultPoolId(),
+                                                            ),
                                                         };
                                                         setFormMode('form');
                                                     }}
@@ -6713,6 +6875,10 @@
                                             >Phone</th
                                         >
                                         <th
+                                            class="w-[180px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                            >Pool</th
+                                        >
+                                        <th
                                             class="w-[310px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
                                             >Pickup Point</th
                                         >
@@ -6758,6 +6924,16 @@
                                                 >
                                                     Kontak utama
                                                 </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-4 py-4"
+                                            >
+                                                <Badge
+                                                    variant="secondary"
+                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                >
+                                                    {rowPoolName(row)}
+                                                </Badge>
                                             </td>
                                             <td
                                                 class="border-b border-r border-border/60 px-4 py-4"
@@ -6821,17 +6997,21 @@
                                                     >
                                                         <DropdownMenuItem
                                                             onclick={() => {
-                                                                customerForm = {
-                                                                    id: row.id,
-                                                                    name: row.name,
-                                                                    phone: row.phone,
-                                                                    pickup_point:
-                                                                        row.pickup_point ??
-                                                                        '',
-                                                                    gmaps:
-                                                                        row.gmaps ??
-                                                                        '',
-                                                                };
+                                                        customerForm = {
+                                                            id: row.id,
+                                                            name: row.name,
+                                                            phone: row.phone,
+                                                            pickup_point:
+                                                                row.pickup_point ??
+                                                                '',
+                                                            gmaps:
+                                                                row.gmaps ??
+                                                                '',
+                                                            pool_id: Number(
+                                                                row.pool_id ??
+                                                                    defaultPoolId(),
+                                                            ),
+                                                        };
                                                                 setFormMode(
                                                                     'form',
                                                                 );
@@ -7113,6 +7293,12 @@
                                                 >
                                                     {row.status ?? '-'}
                                                 </Badge>
+                                                <Badge
+                                                    variant="secondary"
+                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                >
+                                                    {rowPoolName(row)}
+                                                </Badge>
                                             </div>
                                         </div>
                                         <DropdownMenu>
@@ -7209,19 +7395,22 @@
                                     class="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground"
                                 >
                                     <tr>
-                                        <th class="w-[32%] px-4 py-3 text-left"
+                                        <th class="w-[28%] px-4 py-3 text-left"
                                             >Nama Kategori Armada</th
                                         >
-                                        <th class="w-[18%] px-4 py-3 text-left"
+                                        <th class="w-[16%] px-4 py-3 text-left"
                                             >Kategori</th
                                         >
-                                        <th class="w-[22%] px-4 py-3 text-left"
+                                        <th class="w-[14%] px-4 py-3 text-left"
+                                            >Pool</th
+                                        >
+                                        <th class="w-[18%] px-4 py-3 text-left"
                                             >Kapasitas/Layout</th
                                         >
-                                        <th class="w-[14%] px-4 py-3 text-left"
+                                        <th class="w-[12%] px-4 py-3 text-left"
                                             >Status</th
                                         >
-                                        <th class="w-[14%] px-4 py-3 text-left"
+                                        <th class="w-[12%] px-4 py-3 text-left"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -7248,6 +7437,14 @@
                                                         row.category,
                                                     )}</span
                                                 >
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <Badge
+                                                    variant="secondary"
+                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                >
+                                                    {rowPoolName(row)}
+                                                </Badge>
                                             </td>
                                             <td class="px-4 py-3">
                                                 <div class="font-medium">
@@ -7372,6 +7569,33 @@
                                 >
                                     Info Armada
                                 </p>
+                                <div class="mt-4 rounded-xl border border-border/70 bg-muted/20 p-3">
+                                    {#if isAllPoolMode}
+                                        <label class="space-y-1.5">
+                                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pool Target</span>
+                                            <select
+                                                class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm md:max-w-sm"
+                                                bind:value={armadaForm.pool_id}
+                                                onchange={() => {
+                                                    armadaForm.kategori = '';
+                                                    armadaTemplateSearch = '';
+                                                    armadaTemplateLookupOpen = false;
+                                                }}
+                                                required
+                                            >
+                                                <option value={0}>Pilih pool</option>
+                                                {#each poolOptions as pool (pool.id)}
+                                                    <option value={pool.id}>{pool.name}</option>
+                                                {/each}
+                                            </select>
+                                        </label>
+                                    {:else}
+                                        <div class="flex flex-wrap items-center gap-2 text-sm">
+                                            <span class="text-muted-foreground">Pool aktif</span>
+                                            <Badge variant="secondary" class="rounded-full px-3 py-1">{activePoolName}</Badge>
+                                        </div>
+                                    {/if}
+                                </div>
                                 <div
                                     class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
                                 >

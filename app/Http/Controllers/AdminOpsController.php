@@ -58,7 +58,7 @@ class AdminOpsController extends Controller
         $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users', 'roles', 'cancellations', 'reports'];
         $requestedTab = (string) ($request->route('tab') ?? '');
         $initialTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : null;
-        $hybridTabs = ['schedules', 'drivers', 'segments', 'armadas', 'pools', 'users'];
+        $hybridTabs = ['schedules', 'drivers', 'segments', 'units', 'armadas', 'pools', 'users'];
         $usesHybridInertia = $lockedMenuView && in_array($initialTab, $hybridTabs, true);
 
         if ($initialTab === 'roles' && ! AccessControl::userIsSuperAdmin((int) ($request->user()?->id ?? 0))) {
@@ -185,6 +185,7 @@ class AdminOpsController extends Controller
             'schedules' => $this->payload($this->adminOpsApi->schedulesIndex($listRequest)),
             'drivers' => $this->payload($this->adminOpsApi->driversIndex($listRequest)),
             'segments' => $this->payload($this->adminOpsApi->segmentsIndex($listRequest)),
+            'units' => $this->payload($this->adminOpsApi->unitsIndex()),
             'armadas' => $this->payload($this->adminOpsApi->armadasIndex($listRequest)),
             'pools' => $this->payload($this->adminOpsApi->poolsIndex($listRequest)),
             'users' => $this->payload($this->adminOpsApi->usersIndex($listRequest)),
@@ -195,6 +196,7 @@ class AdminOpsController extends Controller
             'schedules' => 'schedules',
             'drivers' => 'drivers',
             'segments' => 'segments',
+            'units' => 'units',
             'armadas' => 'armadas',
             'pools' => 'pools',
             'users' => 'users',
@@ -234,15 +236,18 @@ class AdminOpsController extends Controller
         $routes = fn (): array => $this->routeOptions();
         $units = fn (): array => $this->payload($this->adminOpsApi->unitsIndex())['units'] ?? [];
         $armadas = fn (): array => $this->payload($this->operationsApi->armadas($masterRequest))['armadas'] ?? [];
+        $pools = fn (): array => $this->payload($this->adminOpsApi->poolsIndex($masterRequest))['pools'] ?? [];
 
         return match ($tab) {
             'schedules' => ['tab' => $tab, 'routes' => $routes(), 'units' => $units()],
-            'drivers' => ['tab' => $tab, 'armadas' => $armadas()],
+            'drivers' => ['tab' => $tab, 'armadas' => $armadas(), 'pools' => $pools()],
             'segments' => ['tab' => $tab, 'routes' => $routes()],
+            'units' => ['tab' => $tab, 'pools' => $pools()],
             'armadas' => [
                 'tab' => $tab,
                 'categories' => $this->payload($this->adminOpsApi->armadaCategoriesIndex())['categories'] ?? [],
                 'units' => $units(),
+                'pools' => $pools(),
             ],
             'pools' => $this->poolMasters($masterRequest, $tab, false),
             'users' => $this->poolMasters($masterRequest, $tab, true),
@@ -314,15 +319,11 @@ class AdminOpsController extends Controller
             }),
             'drivers' => $this->countScoped('drivers', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'drivers');
+                $this->applyPoolScopeIfExists($query, 'drivers');
             }),
             'luggage_services' => $this->countScoped('luggage_services', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'luggage_services');
-                if (Schema::hasColumn('luggage_services', 'pool_id')) {
-                    $poolId = PoolScope::currentPoolId(auth()->id());
-                    if ($poolId > 0) {
-                        $query->where('luggage_services.pool_id', $poolId);
-                    }
-                }
+                $this->applyPoolScopeIfExists($query, 'luggage_services');
             }),
             'segments' => $this->countScoped('segments', function (Builder $query): void {
                 PoolScope::applyRouteScope($query, 'segments.route_id', 'segments.rute');
@@ -334,6 +335,7 @@ class AdminOpsController extends Controller
             }),
             'armadas' => $this->countScoped('armadas', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'armadas');
+                $this->applyPoolScopeIfExists($query, 'armadas');
             }),
             'pools' => $this->countScoped('pools', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'pools');
@@ -367,6 +369,34 @@ class AdminOpsController extends Controller
         }
 
         PoolScope::applyTenantScope($query, $table.'.tenant_id');
+    }
+
+    private function applyPoolScopeIfExists(Builder $query, string $table): void
+    {
+        if (! Schema::hasColumn($table, 'pool_id')) {
+            return;
+        }
+
+        $poolId = PoolScope::currentPoolId(auth()->id());
+        if ($poolId > 0) {
+            $query->where($table.'.pool_id', $poolId);
+
+            return;
+        }
+
+        $scope = PoolScope::forCurrentUser(0, auth()->id());
+        if ($scope['all'] ?? true) {
+            return;
+        }
+
+        $poolIds = array_values(array_map('intval', $scope['pool_ids'] ?? []));
+        if ($poolIds === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereIn($table.'.pool_id', $poolIds);
     }
 
     /**

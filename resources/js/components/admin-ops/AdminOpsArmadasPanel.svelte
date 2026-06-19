@@ -29,6 +29,8 @@
         bop: number;
         fixed_cost: number;
         target_bulanan: number;
+        pool_id?: number | null;
+        pool_name?: string | null;
     };
 
     let {
@@ -71,10 +73,14 @@
 
     let armadaFiltersExpanded = $state(false);
 
+    const rowPoolName = (row: ArmadaRow) =>
+        String(row.pool_name ?? '').trim() || 'Semua Pool';
+
     const columns = [
         { key: 'nopol', label: 'Nopol', width: 'w-[180px]', sticky: 'left', leftOffset: '0px' },
         { key: 'profil', label: 'Profil Armada', width: 'w-[260px]', sticky: 'left', leftOffset: '180px' },
         { key: 'gps', label: 'GPS & Tracking', width: 'w-[220px]', sticky: 'left', leftOffset: '440px' },
+        { key: 'pool', label: 'Pool', width: 'w-[180px]' },
         { key: 'revenue', label: 'Revenue', align: 'right', numeric: true },
         { key: 'bop', label: 'BOP', align: 'right', numeric: true },
         { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
@@ -100,6 +106,7 @@
             </div>
             <div class="grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
                 <div><p class="text-xs text-muted-foreground">Merk</p><p>{armadaDetail.merk ?? '-'}</p></div>
+                <div><p class="text-xs text-muted-foreground">Pool</p><p>{rowPoolName(armadaDetail)}</p></div>
                 <div><p class="text-xs text-muted-foreground">Kategori / AC</p><p>{armadaDetail.kategori ?? '-'} / {armadaDetail.ac_type}</p></div>
                 <div><p class="text-xs text-muted-foreground">Revenue Charter</p><p>{formatCurrency(armadaDetail.charter_revenue)}</p></div>
                 <div><p class="text-xs text-muted-foreground">Revenue Keberangkatan</p><p>{formatCurrency(armadaDetail.departure_revenue)}</p></div>
@@ -216,6 +223,9 @@
                         <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                             {row.warna ?? '-'} / {row.tahun ?? '-'}
                         </span>
+                        <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                            {rowPoolName(row)}
+                        </span>
                     </div>
 
                     <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
@@ -300,6 +310,12 @@
                     <td class="py-3 px-4 align-top">
                         <div class="font-medium text-foreground">{row.platform_gps ?? '-'}</div>
                         <div class="mt-1 break-all text-[11px] text-muted-foreground">{row.api_gps ?? 'API GPS belum diatur'}</div>
+                    </td>
+
+                    <td class="py-3 px-4 align-top">
+                        <Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[11px]">
+                            {rowPoolName(row as ArmadaRow)}
+                        </Badge>
                     </td>
 
                     <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>

@@ -27,7 +27,7 @@
         label?: string;
     } = $props();
 
-    const { state: sidebarState, isMobile } = useSidebar();
+    const { state: sidebarState, isMobile, setOpenMobile } = useSidebar();
 
     let openSections = $state<Record<string, boolean>>({});
 
@@ -36,10 +36,12 @@
         const next: Record<string, boolean> = {};
 
         for (const section of sections) {
-            if (openSections[section.id] !== undefined) {
+            if (isSectionActive(section)) {
+                next[section.id] = true;
+            } else if (openSections[section.id] !== undefined) {
                 next[section.id] = Boolean(openSections[section.id]);
             } else {
-                next[section.id] = isSectionActive(section);
+                next[section.id] = false;
             }
         }
 
@@ -47,7 +49,11 @@
         const hasRemovedId = existingIds.some((id) => !validIds.has(id));
         const hasMissingId = sections.some((section) => openSections[section.id] === undefined);
 
-        if (hasRemovedId || hasMissingId) {
+        const activeChanged = sections.some(
+            (section) => isSectionActive(section) && !openSections[section.id],
+        );
+
+        if (hasRemovedId || hasMissingId || activeChanged) {
             openSections = next;
         }
     });
@@ -108,6 +114,12 @@
             [id]: !(openSections[id] ?? false),
         };
     };
+
+    const handleNavigate = () => {
+        if ($isMobile) {
+            setOpenMobile(false);
+        }
+    };
 </script>
 
 <SidebarGroup class="px-2 py-0">
@@ -141,8 +153,7 @@
                                             {...props}
                                             href={toUrl(item.href)}
                                             class={props.class}
-                                            prefetch={['hover', 'click']}
-                                            cacheFor={30000}
+                                            onclick={handleNavigate}
                                         >
                                             {#if item.icon}
                                                 <item.icon class="size-3.5 shrink-0" />
@@ -164,8 +175,7 @@
                             {#each section.items as item (toUrl(item.href))}
                                 <Link
                                     href={toUrl(item.href)}
-                                    prefetch={['hover', 'click']}
-                                    cacheFor={30000}
+                                    onclick={handleNavigate}
                                     class={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isItemActive(item.href) ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : ''}`}
                                 >
                                     {#if item.icon}
