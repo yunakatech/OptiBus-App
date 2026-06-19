@@ -3,6 +3,7 @@
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+    import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
     import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
 
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
@@ -412,7 +413,7 @@
             {/if}
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {#if armadas.length === 0}
                 <div class="col-span-full rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
                     Belum ada armada untuk filter yang dipilih.
@@ -423,127 +424,90 @@
                 {@const gross = armadaGrossMargin(row)}
                 {@const net = armadaNetMargin(row)}
                 {@const achievement = armadaAchievement(row)}
-                {@const status = armadaStatus(row)}
                 {@const activeGps = gpsActive(row)}
                 {@const achievementStyle = achievementTone(achievement)}
                 {@const revenue = Number(row.revenue || 0)}
                 {@const bop = Number(row.bop || 0)}
                 {@const fixedCost = Number(row.fixed_cost || 0)}
                 {@const target = Number(row.target_bulanan || 0)}
-                <article class="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-md">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="truncate text-lg font-bold tracking-tight text-foreground">{row.nopol}</p>
-                            <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <span class={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${gpsTone(activeGps)}`}>
-                                    <span class={`size-2 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                                    {activeGps ? 'GPS Aktif' : 'GPS Offline'}
-                                </span>
-                            </div>
-                            <div class="mt-2 flex flex-wrap gap-1.5">
-                                <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.kategori)}`}>
-                                    {normalizeUnitCategory(row.kategori)}
-                                </span>
-                                <span class="rounded-full border border-border/70 bg-muted/25 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                                    {row.ac_type}
-                                </span>
-                            </div>
-                        </div>
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                    <MoreHorizontal class="h-4 w-4" />
-                                    <span class="sr-only">Aksi armada</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
-                                    <Eye class="mr-2 h-3.5 w-3.5" />
-                                    Lihat Detail
-                                </DropdownMenuItem>
-                                {#if canManage}
-                                    <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
-                                        <Pencil class="mr-2 h-3.5 w-3.5" />
-                                        Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
-                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                        Hapus
-                                    </DropdownMenuItem>
-                                {/if}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                <article class="group relative flex min-h-[96px] flex-col justify-between overflow-hidden rounded-lg border border-border/70 bg-card px-3 py-2 shadow-sm transition duration-200 hover:border-blue-400/70 hover:shadow-[0_10px_20px_-14px_rgba(59,130,246,0.45)]">
+                    <div class="absolute top-2 right-2 z-10 rounded-md bg-muted/80 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground shadow-sm">
+                        {achievement.toFixed(0)}%
                     </div>
 
-                    <div class="mt-4 grid gap-2 sm:grid-cols-2">
-                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Revenue</p>
-                            <p class="mt-1 text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
-                                {formatCurrency(revenue)}
-                            </p>
-                            <p class="mt-1 text-[10px] text-muted-foreground">Total pemasukan armada</p>
-                        </div>
-                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">BOP</p>
-                            <p class="mt-1 text-sm font-bold tabular-nums text-amber-700 dark:text-amber-300">
-                                {formatCurrency(bop)}
-                            </p>
-                            <p class="mt-1 text-[10px] text-muted-foreground">Biaya operasional perjalanan</p>
-                        </div>
-                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Gross Margin</p>
-                            <p class={`mt-1 text-sm font-bold tabular-nums ${gross >= 0 ? 'text-sky-700 dark:text-sky-300' : 'text-rose-700 dark:text-rose-300'}`}>
-                                {formatCurrency(gross)}
-                            </p>
-                            <p class="mt-1 text-[10px] text-muted-foreground">Revenue - BOP</p>
-                        </div>
-                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Fixed Cost</p>
-                            <p class="mt-1 text-sm font-bold tabular-nums text-slate-700 dark:text-slate-300">
-                                {formatCurrency(fixedCost)}
-                            </p>
-                            <p class="mt-1 text-[10px] text-muted-foreground">Biaya tetap bulanan</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 rounded-lg border border-border/70 bg-muted/30 p-3">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Net Margin</p>
-                                <p class={`mt-1 text-2xl font-bold tabular-nums ${net >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>
-                                    {formatCurrency(net)}
+                    <div class="flex min-w-0 items-start justify-between gap-3 pr-14">
+                        <div class="min-w-0 space-y-1">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <p class="truncate text-sm font-bold tracking-tight text-foreground">
+                                    {row.nopol}
                                 </p>
+                                <span class={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${gpsTone(activeGps)}`}>
+                                    <span class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                                    GPS
+                                </span>
                             </div>
-                            <div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                Gross - Fixed Cost
-                            </div>
+                            <p class="truncate text-[11px] text-muted-foreground">
+                                {row.driver_name ?? 'Driver belum diatur'}
+                            </p>
                         </div>
-                        <p class="mt-2 text-xs text-muted-foreground">
-                            Gross: {formatCurrency(gross)} | Target: {formatCurrency(target)}
-                        </p>
+
+                        <div class="flex shrink-0 items-start gap-2">
+                            <div class="text-right">
+                                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                    Net Margin
+                                </p>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        {#snippet child({ props: triggerProps })}
+                                            <button
+                                                type="button"
+                                                class="cursor-help text-sm font-bold tabular-nums text-emerald-600 outline-none transition hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-ring"
+                                                aria-label={`Net Margin ${formatCurrency(net)}. Gross ${formatCurrency(gross)}. BOP ${formatCurrency(bop)}. Fixed Cost ${formatCurrency(fixedCost)}. Target ${formatCurrency(target)}.`}
+                                                title={`Gross: ${formatCurrency(gross)} | BOP: ${formatCurrency(bop)} | Fixed Cost: ${formatCurrency(fixedCost)} | Target: ${formatCurrency(target)}`}
+                                                {...triggerProps}
+                                            >
+                                                {formatCurrency(net)}
+                                            </button>
+                                        {/snippet}
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" align="end" class="max-w-[16rem] text-[11px]">
+                                        Gross: {formatCurrency(gross)} | BOP: {formatCurrency(bop)} | Fixed Cost: {formatCurrency(fixedCost)} | Target: {formatCurrency(target)}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                        <MoreHorizontal class="h-4 w-4" />
+                                        <span class="sr-only">Aksi armada</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                    <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
+                                        <Eye class="mr-2 h-3.5 w-3.5" />
+                                        Lihat Detail
+                                    </DropdownMenuItem>
+                                    {#if canManage}
+                                        <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
+                                            <Pencil class="mr-2 h-3.5 w-3.5" />
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                            Hapus
+                                        </DropdownMenuItem>
+                                    {/if}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
 
-                    <div class="mt-4 space-y-2">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-semibold text-foreground">Achievement</span>
-                            <span class={`font-semibold tabular-nums ${achievementStyle.text}`}>
-                                {achievement.toFixed(1)}%
-                            </span>
-                        </div>
-                        <div class="h-2 w-full rounded-full bg-muted/70">
-                            <div
-                                class={`h-2 rounded-full ${achievementStyle.bar}`}
-                                style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
-                            ></div>
-                        </div>
-                        <div class="flex items-center justify-between gap-2">
-                            <p class="text-[11px] text-muted-foreground">{achievementStyle.label}</p>
-                            <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'}`}>
-                                {status}
-                            </span>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground">Achievement = Revenue / Target x 100%</p>
+                    <div class="relative mt-2 h-1 w-full rounded-full bg-muted/70">
+                        <div
+                            class={`absolute inset-y-0 left-0 rounded-full ${achievementStyle.bar}`}
+                            style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
+                        ></div>
                     </div>
                 </article>
             {/each}
