@@ -494,13 +494,10 @@
                 <div class="space-y-2">
                     <div class="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800 dark:border-cyan-400/20 dark:bg-cyan-950/30 dark:text-cyan-100">
                         <WalletCards class="h-3.5 w-3.5" />
-                        Payment Desk
+                        Pembayaran
                     </div>
                     <div>
-                        <CardTitle class="text-xl md:text-2xl">Pembayaran Operasional</CardTitle>
-                        <p class="mt-1 max-w-2xl text-sm text-muted-foreground">
-                            Kelola pembayaran Data Keberangkatan, Carter, dan Bagasi dalam satu halaman sesuai pool user.
-                        </p>
+                        <CardTitle class="text-xl md:text-2xl">Pembayaran</CardTitle>
                     </div>
                 </div>
                 <div class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100">

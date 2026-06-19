@@ -8372,17 +8372,17 @@
 
     {#if !consoleOnly && !groupDetailPage}
         <Card class="border-sidebar-border/70 dark:border-sidebar-border">
-            <CardHeader>
-                <CardTitle
-                    >{listOnly
-                        ? 'Data Keberangkatan'
+                <CardHeader>
+                    <CardTitle
+                        >{listOnly
+                        ? 'Keberangkatan'
                         : 'Keberangkatan Terbaru'}</CardTitle
-                >
-                <CardDescription>
-                    {listOnly
-                        ? 'Daftar data keberangkatan yang sudah masuk dari Live Booking Console.'
-                        : 'Preview data keberangkatan terbaru dari tabel `bookings`.'}
-                </CardDescription>
+                    >
+                {#if !listOnly}
+                    <CardDescription>
+                        Preview data keberangkatan terbaru dari tabel `bookings`.
+                    </CardDescription>
+                {/if}
                 {#if listOnly}
                     <div
                         class="mt-3 flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
