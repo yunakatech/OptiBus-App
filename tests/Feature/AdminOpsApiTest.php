@@ -848,6 +848,144 @@ class AdminOpsApiTest extends TestCase
         $this->assertEquals(475000.0, $armada['revenue'] ?? 0);
     }
 
+    public function test_armada_detail_includes_manifest_charter_and_luggage_dates_and_financials(): void
+    {
+        $this->actingAsSuperAdmin();
+        Cache::flush();
+
+        $tenantId = $this->defaultTenantId();
+        $today = now()->toDateString();
+        $period = now()->format('Y-m');
+        $armadaNopol = 'DD 7788 ZZ';
+
+        $armadaPayload = [
+            'merk' => 'ISUZU',
+            'tahun' => 2024,
+            'warna' => 'PUTIH',
+            'nopol' => $armadaNopol,
+            'kategori' => 'MICRO BUS',
+            'ac_type' => 'AC',
+            'target_bulanan' => 1000000,
+            'created_at' => now(),
+        ];
+
+        if (Schema::hasColumn('armadas', 'nama_kendaraan')) {
+            $armadaPayload['nama_kendaraan'] = 'ARMADA DETAIL';
+        }
+
+        $armadaId = DB::table('armadas')->insertGetId($armadaPayload);
+
+        $driverPayload = [
+            'nama' => 'DRIVER DETAIL ARMADA',
+            'phone' => '08129990001',
+            'created_at' => now(),
+        ];
+
+        if (Schema::hasColumn('drivers', 'armada_id')) {
+            $driverPayload['armada_id'] = $armadaId;
+        }
+
+        if (Schema::hasColumn('drivers', 'armada_nopol')) {
+            $driverPayload['armada_nopol'] = $armadaNopol;
+        }
+
+        $driverId = DB::table('drivers')->insertGetId($driverPayload);
+
+        $assignmentPayload = [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => $today,
+            'jam' => '08:00:00',
+            'unit' => 1,
+            'driver_id' => $driverId,
+            'created_at' => now(),
+        ];
+
+        if (Schema::hasColumn('trip_assignments', 'armada_id')) {
+            $assignmentPayload['armada_id'] = $armadaId;
+        }
+
+        if (Schema::hasColumn('trip_assignments', 'armada_nopol')) {
+            $assignmentPayload['armada_nopol'] = $armadaNopol;
+        }
+
+        if (Schema::hasColumn('trip_assignments', 'status')) {
+            $assignmentPayload['status'] = 'active';
+        }
+
+        $assignmentId = DB::table('trip_assignments')->insertGetId($assignmentPayload);
+
+        DB::table('bookings')->insert([
+            'tenant_id' => $tenantId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => $today,
+            'jam' => '08:00:00',
+            'unit' => 1,
+            'seat' => 'A1',
+            'name' => 'PENUMPANG DETAIL',
+            'phone' => '08129990002',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Lunas',
+            'status' => 'active',
+            'price' => 100000,
+            'discount' => 5000,
+            'created_at' => now(),
+        ]);
+
+        DB::table('charters')->insert([
+            'tenant_id' => $tenantId,
+            'name' => 'CHARTER DETAIL',
+            'phone' => '08129990003',
+            'start_date' => $today,
+            'end_date' => $today,
+            'departure_time' => '09:00:00',
+            'pickup_point' => 'Pinrang',
+            'drop_point' => 'Makassar',
+            'price' => 300000,
+            'bop_price' => 40000,
+            'payment_status' => 'Lunas',
+            'bop_status' => 'done',
+            'created_at' => now(),
+            ...(Schema::hasColumn('charters', 'armada_id') ? ['armada_id' => $armadaId] : []),
+            ...(Schema::hasColumn('charters', 'armada_nopol') ? ['armada_nopol' => $armadaNopol] : []),
+            ...(Schema::hasColumn('charters', 'status') ? ['status' => 'done'] : []),
+        ]);
+
+        DB::table('luggages')->insert([
+            'sender_name' => 'PENGIRIM DETAIL',
+            'sender_phone' => '08129990004',
+            'receiver_name' => 'PENERIMA DETAIL',
+            'receiver_phone' => '08129990005',
+            'quantity' => 1,
+            'price' => 50000,
+            'status' => 'active',
+            'payment_status' => 'Lunas',
+            'tanggal' => $today,
+            'trip_assignment_id' => $assignmentId,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->getJson(route('api.admin.armadas.show', [
+            'id' => $armadaId,
+            'period' => $period,
+        ]))->assertOk();
+
+        $armada = $response->json('armada');
+        $this->assertNotNull($armada);
+        $monthly = $armada['monthly']['summary'] ?? [];
+        $this->assertSame($today, $armada['monthly']['bookings'][0]['departure_date'] ?? null);
+        $this->assertSame(95000.0, (float) ($armada['monthly']['bookings'][0]['revenue'] ?? -1));
+        $this->assertSame(0.0, (float) ($armada['monthly']['bookings'][0]['bop'] ?? -1));
+        $this->assertSame($today, $armada['monthly']['charters'][0]['departure_date'] ?? null);
+        $this->assertSame(300000.0, (float) ($armada['monthly']['charters'][0]['revenue'] ?? -1));
+        $this->assertSame(40000.0, (float) ($armada['monthly']['charters'][0]['bop'] ?? -1));
+        $this->assertSame($today, $armada['monthly']['bagasi'][0]['departure_date'] ?? null);
+        $this->assertSame(50000.0, (float) ($armada['monthly']['bagasi'][0]['revenue'] ?? -1));
+        $this->assertSame(0.0, (float) ($armada['monthly']['bagasi'][0]['bop'] ?? -1));
+        $this->assertSame(1, (int) ($monthly['departure_count'] ?? 0));
+        $this->assertSame(1, (int) ($monthly['charter_count'] ?? 0));
+        $this->assertSame(1, (int) ($monthly['luggage_count'] ?? 0));
+    }
+
     public function test_driver_and_armada_luggage_revenue_refresh_immediately_after_mapping_existing_luggage(): void
     {
         $this->actingAsSuperAdmin();

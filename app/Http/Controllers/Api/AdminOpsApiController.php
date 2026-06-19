@@ -7843,6 +7843,7 @@ XML;
                     'id' => (int) $row->id,
                     'tanggal' => (string) ($row->tanggal ?? ''),
                     'jam' => substr((string) ($row->jam ?? ''), 0, 5),
+                    'departure_date' => (string) ($row->tanggal ?? ''),
                     'rute' => (string) ($row->rute ?? ''),
                     'unit' => (int) ($row->unit ?? 0),
                     'seat' => (string) ($row->seat ?? ''),
@@ -7852,6 +7853,8 @@ XML;
                     'pembayaran' => (string) ($row->pembayaran ?? ''),
                     'status' => (string) ($row->status ?? ''),
                     'total' => max(0.0, (float) ($row->price ?? 0) - (float) ($row->discount ?? 0)),
+                    'revenue' => max(0.0, (float) ($row->price ?? 0) - (float) ($row->discount ?? 0)),
+                    'bop' => 0.0,
                 ])
                 ->values()
                 ->all();
@@ -7905,24 +7908,28 @@ XML;
                 ->orderByDesc('c.start_date')
                 ->orderByDesc('c.id')
                 ->get($charterSelect)
-                ->map(static fn (object $row): array => [
-                    'id' => (int) $row->id,
-                    'start_date' => (string) ($row->start_date ?? ''),
-                    'end_date' => (string) ($row->end_date ?? ''),
-                    'departure_time' => (string) ($row->departure_time ?? ''),
-                    'name' => (string) ($row->name ?? ''),
-                    'phone' => (string) ($row->phone ?? ''),
-                    'pickup_point' => (string) ($row->pickup_point ?? ''),
-                    'drop_point' => (string) ($row->drop_point ?? ''),
-                    'layanan' => (string) ($row->layanan ?? ''),
-                    'payment_status' => (string) ($row->payment_status ?? ''),
-                    'bop_status' => (string) ($row->bop_status ?? ''),
-                    'status' => $this->chartersHasStatusColumn() ? (string) ($row->status ?? '') : ((string) ($row->payment_status ?? '') === 'Canceled' ? 'canceled' : 'active'),
-                    'armada_nopol' => (string) ($row->armada_nopol ?? ''),
-                    'driver_name' => (string) ($row->driver_name ?? ''),
-                    'total' => (float) ($row->price ?? 0),
-                    'bop' => (float) ($row->bop_price ?? 0),
-                ])
+                ->map(function (object $row): array {
+                    return [
+                        'id' => (int) $row->id,
+                        'start_date' => (string) ($row->start_date ?? ''),
+                        'end_date' => (string) ($row->end_date ?? ''),
+                        'departure_date' => (string) ($row->start_date ?? ''),
+                        'departure_time' => (string) ($row->departure_time ?? ''),
+                        'name' => (string) ($row->name ?? ''),
+                        'phone' => (string) ($row->phone ?? ''),
+                        'pickup_point' => (string) ($row->pickup_point ?? ''),
+                        'drop_point' => (string) ($row->drop_point ?? ''),
+                        'layanan' => (string) ($row->layanan ?? ''),
+                        'payment_status' => (string) ($row->payment_status ?? ''),
+                        'bop_status' => (string) ($row->bop_status ?? ''),
+                        'status' => $this->chartersHasStatusColumn() ? (string) ($row->status ?? '') : ((string) ($row->payment_status ?? '') === 'Canceled' ? 'canceled' : 'active'),
+                        'armada_nopol' => (string) ($row->armada_nopol ?? ''),
+                        'driver_name' => (string) ($row->driver_name ?? ''),
+                        'total' => (float) ($row->price ?? 0),
+                        'revenue' => (float) ($row->price ?? 0),
+                        'bop' => (float) ($row->bop_price ?? 0),
+                    ];
+                })
                 ->values()
                 ->all();
         }
@@ -7972,6 +7979,7 @@ XML;
                     'id' => (int) $row->id,
                     'tanggal' => (string) ($row->tanggal ?? ''),
                     'created_at' => (string) ($row->created_at ?? ''),
+                    'departure_date' => (string) ($row->departure_date ?? ($row->tanggal ?? '')),
                     'kode_resi' => (string) ($row->kode_resi ?? ''),
                     'sender_name' => (string) ($row->sender_name ?? ''),
                     'receiver_name' => (string) ($row->receiver_name ?? ''),
@@ -7980,7 +7988,8 @@ XML;
                     'status' => (string) ($row->status ?? ''),
                     'service_name' => (string) ($row->service_name ?? ''),
                     'total' => (float) ($row->price ?? 0),
-                    'departure_date' => (string) ($row->departure_date ?? ''),
+                    'revenue' => (float) ($row->price ?? 0),
+                    'bop' => 0.0,
                     'departure_time' => substr((string) ($row->departure_time ?? ''), 0, 5),
                     'departure_unit' => (int) ($row->departure_unit ?? 0),
                 ])

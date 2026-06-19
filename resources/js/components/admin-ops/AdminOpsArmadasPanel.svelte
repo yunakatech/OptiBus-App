@@ -39,6 +39,7 @@
         id: number;
         tanggal: string;
         jam: string;
+        departure_date: string;
         rute: string;
         unit: number;
         seat: string;
@@ -48,11 +49,14 @@
         pembayaran: string;
         status: string;
         total: number;
+        revenue: number;
+        bop: number;
     };
     type ArmadaMonthlyCharterRow = {
         id: number;
         start_date: string;
         end_date: string;
+        departure_date: string;
         departure_time: string;
         name: string;
         phone: string;
@@ -65,12 +69,14 @@
         armada_nopol: string;
         driver_name: string;
         total: number;
+        revenue: number;
         bop: number;
     };
     type ArmadaMonthlyLuggageRow = {
         id: number;
         tanggal: string;
         created_at: string;
+        departure_date: string;
         kode_resi: string;
         sender_name: string;
         receiver_name: string;
@@ -79,7 +85,8 @@
         status: string;
         service_name: string;
         total: number;
-        departure_date: string;
+        revenue: number;
+        bop: number;
         departure_time: string;
         departure_unit: number;
     };
@@ -163,6 +170,25 @@
 
     const rowPoolName = (row: ArmadaRow) =>
         String(row.pool_name ?? '').trim() || 'Semua Pool';
+
+    const formatDateLabel = (value: string) => {
+        const raw = String(value ?? '').trim();
+
+        if (raw === '') {
+            return '-';
+        }
+
+        const date = new Date(`${raw}T00:00:00`);
+        if (Number.isNaN(date.getTime())) {
+            return raw;
+        }
+
+        return new Intl.DateTimeFormat('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        }).format(date);
+    };
 
     const periodOptions = (() => {
         const formatter = new Intl.DateTimeFormat('id-ID', {
@@ -586,7 +612,7 @@
                     <div class="flex items-center justify-between gap-2">
                         <div>
                             <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                Keberangkatan
+                                Manifest Keberangkatan
                             </p>
                             <h4 class="mt-1 text-sm font-semibold tracking-tight">
                                 {monthly?.departure_count ?? 0} data
@@ -600,29 +626,32 @@
                         <table class="min-w-full text-left text-[11px]">
                             <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                                 <tr>
-                                    <th class="py-2 pr-2 font-semibold">Tanggal</th>
+                                    <th class="py-2 pr-2 font-semibold">Manifest</th>
                                     <th class="py-2 pr-2 font-semibold">Rute</th>
                                     <th class="py-2 pr-2 font-semibold">Unit</th>
                                     <th class="py-2 pr-2 font-semibold">Nama</th>
-                                    <th class="py-2 pr-2 text-right font-semibold">Total</th>
+                                    <th class="py-2 pr-2 text-right font-semibold">Revenue</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
                                 {#if (monthly?.bookings ?? []).length === 0}
                                     <tr>
-                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data keberangkatan pada periode ini.</td>
+                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data manifest keberangkatan pada periode ini.</td>
                                     </tr>
                                 {:else}
                                     {#each monthly?.bookings ?? [] as row (row.id)}
                                         <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
-                                            <td class="py-2 pr-2 text-muted-foreground">{row.tanggal} {row.jam}</td>
+                                            <td class="py-2 pr-2 text-muted-foreground">
+                                                <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.tanggal)}</div>
+                                                <div class="text-[10px]">{row.jam}</div>
+                                            </td>
                                             <td class="py-2 pr-2 font-medium">{row.rute}</td>
                                             <td class="py-2 pr-2 tabular-nums">{row.unit}</td>
                                             <td class="py-2 pr-2">
                                                 <div class="font-medium text-foreground">{row.name}</div>
                                                 <div class="text-[10px] text-muted-foreground">{row.seat} · {row.pickup_point}</div>
                                             </td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.total)}</td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td>
                                         </tr>
                                     {/each}
                                 {/if}
@@ -649,22 +678,26 @@
                         <table class="min-w-full text-left text-[11px]">
                             <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                                 <tr>
-                                    <th class="py-2 pr-2 font-semibold">Tanggal</th>
+                                    <th class="py-2 pr-2 font-semibold">Berangkat</th>
                                     <th class="py-2 pr-2 font-semibold">Rute</th>
                                     <th class="py-2 pr-2 font-semibold">Penyewa</th>
                                     <th class="py-2 pr-2 font-semibold">Armada</th>
                                     <th class="py-2 pr-2 text-right font-semibold">Revenue</th>
+                                    <th class="py-2 pr-2 text-right font-semibold">BOP</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
                                 {#if (monthly?.charters ?? []).length === 0}
                                     <tr>
-                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data charter pada periode ini.</td>
+                                        <td class="py-3 text-muted-foreground" colspan="6">Tidak ada data charter pada periode ini.</td>
                                     </tr>
                                 {:else}
                                     {#each monthly?.charters ?? [] as row (row.id)}
                                         <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
-                                            <td class="py-2 pr-2 text-muted-foreground">{row.start_date}</td>
+                                            <td class="py-2 pr-2 text-muted-foreground">
+                                                <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.start_date)}</div>
+                                                <div class="text-[10px]">{row.departure_time || '-'}</div>
+                                            </td>
                                             <td class="py-2 pr-2">
                                                 <div class="font-medium text-foreground">{row.pickup_point}</div>
                                                 <div class="text-[10px] text-muted-foreground">{row.drop_point}</div>
@@ -677,7 +710,8 @@
                                                 <div class="font-medium text-foreground">{row.armada_nopol || armadaDetail.nopol}</div>
                                                 <div class="text-[10px] text-muted-foreground">{row.layanan}</div>
                                             </td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.total)}</td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.bop ?? 0)}</td>
                                         </tr>
                                     {/each}
                                 {/if}
@@ -704,22 +738,26 @@
                         <table class="min-w-full text-left text-[11px]">
                             <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                                 <tr>
-                                    <th class="py-2 pr-2 font-semibold">Tanggal</th>
+                                    <th class="py-2 pr-2 font-semibold">Berangkat</th>
                                     <th class="py-2 pr-2 font-semibold">Resi</th>
                                     <th class="py-2 pr-2 font-semibold">Pengirim</th>
                                     <th class="py-2 pr-2 font-semibold">Penerima</th>
-                                    <th class="py-2 pr-2 text-right font-semibold">Total</th>
+                                    <th class="py-2 pr-2 text-right font-semibold">Revenue</th>
+                                    <th class="py-2 pr-2 text-right font-semibold">BOP</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
                                 {#if (monthly?.bagasi ?? []).length === 0}
                                     <tr>
-                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data bagasi pada periode ini.</td>
+                                        <td class="py-3 text-muted-foreground" colspan="6">Tidak ada data bagasi pada periode ini.</td>
                                     </tr>
                                 {:else}
                                     {#each monthly?.bagasi ?? [] as row (row.id)}
                                         <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
-                                            <td class="py-2 pr-2 text-muted-foreground">{row.tanggal}</td>
+                                            <td class="py-2 pr-2 text-muted-foreground">
+                                                <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.tanggal)}</div>
+                                                <div class="text-[10px]">Unit {row.departure_unit || '-'}</div>
+                                            </td>
                                             <td class="py-2 pr-2">
                                                 <div class="font-medium text-foreground">{row.kode_resi}</div>
                                                 <div class="text-[10px] text-muted-foreground">{row.service_name}</div>
@@ -732,7 +770,8 @@
                                                 <div class="font-medium text-foreground">{row.receiver_name}</div>
                                                 <div class="text-[10px] text-muted-foreground">Unit {row.departure_unit}</div>
                                             </td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.total)}</td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td>
+                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.bop ?? 0)}</td>
                                         </tr>
                                     {/each}
                                 {/if}
