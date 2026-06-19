@@ -125,6 +125,8 @@ class AdminOpsController extends Controller
                     'per_page' => max(10, min(100, (int) $request->query('per_page', 20))),
                     'route_id' => max(0, (int) $request->query('route_id', 0)),
                     'rute' => trim((string) $request->query('rute', '')),
+                    'pool_id' => max(0, (int) $request->query('pool_id', 0)),
+                    'period' => trim((string) $request->query('period', '')),
                 ]
                 : null,
             'settingsData' => $usesHybridInertia

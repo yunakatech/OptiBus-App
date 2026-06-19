@@ -2948,6 +2948,8 @@
 
         if (initialTab === 'armadas') {
             armadaSearch = settingsQuery.q ?? '';
+            armadaPoolId = Number(settingsQuery.pool_id ?? 0);
+            armadaPeriod = String(settingsQuery.period ?? armadaPeriod);
         }
 
         if (initialTab === 'pools') {
@@ -4383,6 +4385,20 @@
 
         if (usesHybridSettings()) {
             busy = settingsData === null;
+
+            if (
+                activeTab === 'armadas' &&
+                activeMode === 'view' &&
+                armadaViewId > 0
+            ) {
+                armadaPoolId = Number(
+                    settingsQuery?.pool_id ?? armadaPoolId,
+                );
+                armadaPeriod = String(
+                    settingsQuery?.period || armadaPeriod,
+                );
+                void loadArmadaDetail(armadaViewId);
+            }
 
             return;
         }
