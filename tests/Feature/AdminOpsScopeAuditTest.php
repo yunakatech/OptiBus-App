@@ -498,6 +498,10 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->getJson(route('api.admin.routes.index'))
             ->assertStatus(409)
             ->assertJsonPath('error', 'Pilih tenant dulu.');
+
+        $this->getJson(route('api.admin.users.index'))
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'Pilih tenant dulu.');
     }
 
     public function test_users_are_scoped_to_the_active_tenant_for_super_admins(): void
@@ -525,6 +529,15 @@ class AdminOpsScopeAuditTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        $superAdminId = (int) DB::table('users')->insertGetId([
+            'tenant_id' => $tenantA,
+            'name' => 'Tenant A Super Admin',
+            'email' => 'tenant-a-superadmin@example.com',
+            'password' => bcrypt('password123'),
+            'is_super_admin' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $admin = User::factory()->create([
             'is_super_admin' => true,
@@ -540,6 +553,11 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonCount(1, 'users')
             ->assertJsonPath('users.0.id', $userAId)
             ->assertJsonPath('users.0.name', 'Tenant A User');
+        $this->assertDatabaseHas('users', [
+            'id' => $superAdminId,
+            'tenant_id' => $tenantA,
+            'is_super_admin' => true,
+        ]);
 
         $this->postJson(route('api.admin.users.save'), [
             'id' => $userBId,
@@ -548,6 +566,9 @@ class AdminOpsScopeAuditTest extends TestCase
         ])->assertStatus(404);
 
         $this->deleteJson(route('api.admin.users.delete', ['id' => $userBId]))
+            ->assertStatus(404);
+
+        $this->deleteJson(route('api.admin.users.delete', ['id' => $superAdminId]))
             ->assertStatus(404);
 
         $created = $this->postJson(route('api.admin.users.save'), [
@@ -559,6 +580,67 @@ class AdminOpsScopeAuditTest extends TestCase
         $newUserId = (int) ($created['id'] ?? 0);
         $this->assertTrue($newUserId > 0);
         $this->assertSame($tenantA, (int) (DB::table('users')->where('id', $newUserId)->value('tenant_id') ?? 0));
+
+        $this->postJson(route('api.admin.tenant.switch'), [
+            'tenant_id' => 0,
+        ])->assertOk();
+
+        $this->postJson(route('api.admin.users.save'), [
+            'name' => 'Tenant A New User Late',
+            'email' => 'tenant-a-new-late@example.com',
+            'password' => 'password123',
+        ])
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'Pilih tenant dulu.');
+
+        $this->postJson(route('api.admin.users.save'), [
+            'id' => $newUserId,
+            'name' => 'Tenant A New User Updated',
+            'email' => 'tenant-a-new@example.com',
+        ])
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'Pilih tenant dulu.');
+
+        $this->deleteJson(route('api.admin.users.delete', ['id' => $newUserId]))
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'Pilih tenant dulu.');
+    }
+
+    public function test_non_super_admin_users_cannot_see_or_assign_super_admin_role(): void
+    {
+        AccessControl::syncDefaults();
+
+        [$tenantId, $poolId] = $this->tenantWithSinglePool('audit-user-role-tenant', 150000);
+
+        $operator = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => false,
+        ]);
+        $this->assignRole($operator, 'tenant-owner');
+        DB::table('pool_user')->insert([
+            'pool_id' => $poolId,
+            'user_id' => $operator->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $superAdminRoleId = (int) (DB::table('roles')->where('slug', 'super-admin')->value('id') ?? 0);
+
+        $this->actingAs($operator);
+
+        $response = $this->getJson(route('api.admin.users.index'))
+            ->assertOk();
+        $this->assertFalse(
+            collect($response->json('roles', []))
+                ->contains(fn (array $role): bool => (string) ($role['slug'] ?? '') === 'super-admin'),
+        );
+
+        $this->postJson(route('api.admin.users.save'), [
+            'name' => 'Escalated User',
+            'email' => 'escalated-user@example.com',
+            'password' => 'password123',
+            'role_ids' => [$superAdminRoleId],
+        ])->assertStatus(403);
     }
 
     public function test_new_user_creation_sends_email_verification_notification(): void

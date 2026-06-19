@@ -4710,6 +4710,10 @@ class AdminOpsApiController extends Controller
 
     public function usersIndex(Request $request): JsonResponse
     {
+        if ($this->currentUserIsSuperAdmin() && PoolScope::tenantId(auth()->id()) <= 0) {
+            return $this->error('Pilih tenant dulu.', 409);
+        }
+
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
         $select = ['id', 'name', 'email', 'email_verified_at', 'created_at'];
@@ -4722,6 +4726,13 @@ class AdminOpsApiController extends Controller
         $query = DB::table('users')
             ->when(Schema::hasColumn('users', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'users.tenant_id');
+            })
+            ->when(Schema::hasColumn('users', 'is_super_admin'), function (Builder $q): void {
+                $q->where(function (Builder $superAdminFilter): void {
+                    $superAdminFilter
+                        ->whereNull('is_super_admin')
+                        ->orWhere('is_super_admin', false);
+                });
             })
             ->select($select)
             ->orderBy('name');
@@ -4796,9 +4807,14 @@ class AdminOpsApiController extends Controller
             })->values();
         }
 
+        $roles = AccessControl::rolesForSelect();
+        if (! $this->currentUserIsSuperAdmin()) {
+            $roles = array_values(array_filter($roles, static fn (array $role): bool => (string) ($role['slug'] ?? '') !== 'super-admin'));
+        }
+
         return $this->ok([
             'users' => $users,
-            'roles' => AccessControl::rolesForSelect(),
+            'roles' => $roles,
             'pagination' => $result['meta'],
         ]);
     }
@@ -4807,6 +4823,10 @@ class AdminOpsApiController extends Controller
     {
         if ($response = $this->requirePermission('user.manage')) {
             return $response;
+        }
+
+        if ($this->currentUserIsSuperAdmin() && PoolScope::tenantId(auth()->id()) <= 0) {
+            return $this->error('Pilih tenant dulu.', 409);
         }
 
         $data = $request->validate([
@@ -4855,8 +4875,15 @@ class AdminOpsApiController extends Controller
             : 0;
         $keepsSuperAdminRole = $superAdminRoleId > 0 && in_array($superAdminRoleId, $roleIds, true);
 
+        if ($superAdminRoleId > 0 && $keepsSuperAdminRole && ! $this->currentUserIsSuperAdmin()) {
+            return $this->error('Hanya Super Admin yang bisa menetapkan role Super Admin.', 403);
+        }
+
         if (Schema::hasColumn('users', 'is_super_admin')) {
             $wantsSuperAdmin = (bool) ($data['is_super_admin'] ?? false);
+            if ($wantsSuperAdmin && ! $this->currentUserIsSuperAdmin()) {
+                return $this->error('Hanya Super Admin yang bisa menjadikan user sebagai Super Admin.', 403);
+            }
             if ($id > 0 && ! $wantsSuperAdmin && ! $keepsSuperAdminRole && $this->isUserSuperAdmin($id) && $this->superAdminCount() <= 1) {
                 return $this->error('Minimal harus ada satu Super Admin.', 409);
             }
@@ -4889,8 +4916,18 @@ class AdminOpsApiController extends Controller
             if (Schema::hasColumn('users', 'tenant_id')) {
                 PoolScope::applyTenantScope($query, 'tenant_id');
             }
+            if (Schema::hasColumn('users', 'is_super_admin')) {
+                $query->where(function (Builder $superAdminFilter): void {
+                    $superAdminFilter
+                        ->whereNull('is_super_admin')
+                        ->orWhere('is_super_admin', false);
+                });
+            }
             if (! $query->exists()) {
                 return $this->error('User tidak ditemukan.', 404);
+            }
+            if (! $this->currentUserIsSuperAdmin() && (bool) ($data['is_super_admin'] ?? false)) {
+                return $this->error('Hanya Super Admin yang bisa menjadikan user sebagai Super Admin.', 403);
             }
             $query->update(array_merge($payload, ['updated_at' => now()]));
             $this->syncUserPools($id, $poolIds);
@@ -4937,6 +4974,10 @@ class AdminOpsApiController extends Controller
     {
         $authUserId = (int) (auth()->id() ?? 0);
 
+        if ($this->currentUserIsSuperAdmin() && PoolScope::tenantId(auth()->id()) <= 0) {
+            return $this->error('Pilih tenant dulu.', 409);
+        }
+
         if ($id === $authUserId) {
             return $this->error('Tidak bisa menghapus akun yang sedang login.', 409);
         }
@@ -4945,6 +4986,13 @@ class AdminOpsApiController extends Controller
         if (Schema::hasColumn('users', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
+        if (Schema::hasColumn('users', 'is_super_admin')) {
+            $query->where(function (Builder $superAdminFilter): void {
+                $superAdminFilter
+                    ->whereNull('is_super_admin')
+                    ->orWhere('is_super_admin', false);
+            });
+        }
         if (! $query->exists()) {
             return $this->error('User tidak ditemukan.', 404);
         }
@@ -4952,6 +5000,13 @@ class AdminOpsApiController extends Controller
         $tenantUserQuery = DB::table('users');
         if (Schema::hasColumn('users', 'tenant_id')) {
             PoolScope::applyTenantScope($tenantUserQuery, 'tenant_id');
+        }
+        if (Schema::hasColumn('users', 'is_super_admin')) {
+            $tenantUserQuery->where(function (Builder $superAdminFilter): void {
+                $superAdminFilter
+                    ->whereNull('is_super_admin')
+                    ->orWhere('is_super_admin', false);
+            });
         }
         if ((int) $tenantUserQuery->count() <= 1) {
             return $this->error('Minimal harus ada satu user admin di tenant ini.', 409);
@@ -5057,9 +5112,20 @@ class AdminOpsApiController extends Controller
             return null;
         }
 
+        if ($this->currentUserIsSuperAdmin() && PoolScope::tenantId(auth()->id()) <= 0) {
+            return null;
+        }
+
         $query = DB::table('users')->where('id', $id);
         if (Schema::hasColumn('users', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'users.tenant_id');
+        }
+        if (Schema::hasColumn('users', 'is_super_admin')) {
+            $query->where(function (Builder $superAdminFilter): void {
+                $superAdminFilter
+                    ->whereNull('is_super_admin')
+                    ->orWhere('is_super_admin', false);
+            });
         }
 
         if (! $query->exists()) {
