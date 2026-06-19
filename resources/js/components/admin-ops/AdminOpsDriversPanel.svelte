@@ -164,6 +164,111 @@
 
         return `${from}-${to} dari ${total}`;
     };
+
+    const driverSummary = $derived.by(() => {
+        const totals = drivers.reduce(
+            (acc, row) => {
+                const revenue = Number(row.revenue || 0);
+                const bop = Number(row.bop || 0);
+                const fixedCost = Number(row.fixed_cost || 0);
+                const target = Number(row.target_revenue_bulanan || 0);
+
+                acc.revenue += revenue;
+                acc.bop += bop;
+                acc.fixedCost += fixedCost;
+                acc.target += target;
+                acc.departureCount += Number(row.departure_count || 0);
+
+                return acc;
+            },
+            {
+                revenue: 0,
+                bop: 0,
+                fixedCost: 0,
+                target: 0,
+                departureCount: 0,
+            },
+        );
+
+        const gross = totals.revenue - totals.bop;
+        const net = gross - totals.fixedCost;
+        const achievement = totals.target > 0 ? (totals.revenue / totals.target) * 100 : 0;
+
+        return {
+            count: drivers.length,
+            revenue: totals.revenue,
+            bop: totals.bop,
+            gross,
+            fixedCost: totals.fixedCost,
+            net,
+            target: totals.target,
+            achievement,
+            departureCount: totals.departureCount,
+        };
+    });
+
+    const summaryTone = (value: number) => {
+        if (value < 0) {
+            return 'text-rose-700 dark:text-rose-300';
+        }
+
+        return 'text-foreground';
+    };
+
+    const summaryCards = $derived([
+        {
+            key: 'revenue',
+            label: 'Total Revenue',
+            valueText: formatCurrency(driverSummary.revenue),
+            note: 'Σ Revenue driver tampil',
+            formula: 'Total Revenue = Σ Revenue',
+            tone: 'text-emerald-700 dark:text-emerald-300',
+        },
+        {
+            key: 'bop',
+            label: 'Total BOP',
+            valueText: formatCurrency(driverSummary.bop),
+            note: 'Biaya perjalanan agregat',
+            formula: 'Total BOP = Σ BOP',
+            tone: 'text-amber-700 dark:text-amber-300',
+        },
+        {
+            key: 'gross',
+            label: 'Gross Margin',
+            valueText: formatCurrency(driverSummary.gross),
+            note: 'Revenue - BOP',
+            formula: 'Gross = Revenue - BOP',
+            tone: summaryTone(driverSummary.gross),
+        },
+        {
+            key: 'fixedCost',
+            label: 'Total Fixed Cost',
+            valueText: formatCurrency(driverSummary.fixedCost),
+            note: 'Beban tetap bulanan',
+            formula: 'Fixed Cost = Σ Fixed Cost',
+            tone: 'text-slate-700 dark:text-slate-300',
+        },
+        {
+            key: 'net',
+            label: 'Net Margin',
+            valueText: formatCurrency(driverSummary.net),
+            note: 'Gross - Fixed Cost',
+            formula: 'Net = Gross - Fixed Cost',
+            tone: summaryTone(driverSummary.net),
+        },
+        {
+            key: 'achievement',
+            label: 'Achievement Gabungan',
+            valueText: `${driverSummary.achievement.toFixed(1)}%`,
+            note: `${driverSummary.departureCount} rit terhitung`,
+            formula: 'Achievement = Revenue / Target × 100%',
+            tone: driverSummary.achievement >= 100
+                ? 'text-emerald-700 dark:text-emerald-300'
+                : driverSummary.achievement >= 80
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-rose-700 dark:text-rose-300',
+        },
+    ]);
 </script>
 
 <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
@@ -186,6 +291,25 @@
                 {pageSummary()}
             </Badge>
         </div>
+    </div>
+
+    <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        {#each summaryCards as card (card.key)}
+            <article class="rounded-lg border border-border/70 bg-muted/20 p-3 shadow-sm">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {card.label}
+                </p>
+                <p class={`mt-2 text-lg font-bold tabular-nums ${card.tone}`}>
+                    {card.valueText}
+                </p>
+                <p class="mt-1 text-[11px] leading-4 text-muted-foreground">
+                    {card.note}
+                </p>
+                <p class="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
+                    {card.formula}
+                </p>
+            </article>
+        {/each}
     </div>
 
     <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_auto]">
