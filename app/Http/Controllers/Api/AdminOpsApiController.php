@@ -3845,9 +3845,19 @@ class AdminOpsApiController extends Controller
             return $this->ok(['armadas' => []]);
         }
 
-        $q = trim((string) $request->query('q', ''));
-        $kategori = trim((string) $request->query('kategori', ''));
-        $acType = trim((string) $request->query('ac_type', ''));
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'kategori' => ['nullable', 'string', 'max:120'],
+            'ac_type' => ['nullable', 'string', 'max:20'],
+            'pool_id' => ['nullable', 'integer', 'min:0'],
+            'period' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $q = trim((string) ($validated['q'] ?? ''));
+        $kategori = trim((string) ($validated['kategori'] ?? ''));
+        $acType = trim((string) ($validated['ac_type'] ?? ''));
+        $poolId = (int) ($validated['pool_id'] ?? 0);
+        [$monthStart, $monthEnd] = $this->armadaPeriodBounds($validated['period'] ?? null);
 
         $query = DB::table('armadas')
             ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
@@ -3855,7 +3865,7 @@ class AdminOpsApiController extends Controller
             })
             ->select($this->armadaSelectColumns())
             ->orderBy('nopol');
-        $this->applyPoolScopeIfExists($query, 'armadas');
+        $this->applyPoolScopeIfExists($query, 'armadas', '', $poolId > 0 ? $poolId : 0);
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -3878,9 +3888,8 @@ class AdminOpsApiController extends Controller
             $query->where('ac_type', $acType);
         }
 
-        $monthStart = now()->startOfMonth()->toDateString();
-        $monthEnd = now()->endOfMonth()->toDateString();
         $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
+        $driverNames = $this->armadaDriverNameMap($poolId > 0 ? $poolId : 0);
 
         $pagination = null;
         if ($request->boolean('paginate')) {
@@ -3894,10 +3903,11 @@ class AdminOpsApiController extends Controller
 
         $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $rows = $rows
-            ->map(function ($row) use ($financials, $poolNames) {
+            ->map(function ($row) use ($financials, $poolNames, $driverNames) {
                 $row = $this->withArmadaFinancials($row, $financials);
                 $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
                 $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
+                $row->driver_name = $driverNames['by_id'][(int) ($row->id ?? 0)] ?? $driverNames['by_nopol'][$this->normalizeNopol((string) ($row->nopol ?? ''))] ?? null;
 
                 return $row;
             })
@@ -3907,6 +3917,125 @@ class AdminOpsApiController extends Controller
             'armadas' => $rows,
             ...($pagination !== null ? ['pagination' => $pagination] : []),
         ]);
+    }
+
+    public function armadasExport(Request $request): StreamedResponse
+    {
+        if (! Schema::hasTable('armadas')) {
+            return response()->streamDownload(static function (): void {
+            }, 'armadas.csv', ['Content-Type' => 'text/csv']);
+        }
+
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'kategori' => ['nullable', 'string', 'max:120'],
+            'ac_type' => ['nullable', 'string', 'max:20'],
+            'pool_id' => ['nullable', 'integer', 'min:0'],
+            'period' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $q = trim((string) ($validated['q'] ?? ''));
+        $kategori = trim((string) ($validated['kategori'] ?? ''));
+        $acType = trim((string) ($validated['ac_type'] ?? ''));
+        $poolId = (int) ($validated['pool_id'] ?? 0);
+        [$monthStart, $monthEnd, $period] = $this->armadaPeriodBounds($validated['period'] ?? null);
+        $filename = 'armadas-'.str_replace('-', '', $period).'.csv';
+
+        $query = DB::table('armadas')
+            ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'armadas.tenant_id');
+            })
+            ->select($this->armadaSelectColumns())
+            ->orderBy('nopol');
+        $this->applyPoolScopeIfExists($query, 'armadas', '', $poolId > 0 ? $poolId : 0);
+
+        if ($q !== '') {
+            $qLike = '%'.$q.'%';
+            $query->where(function (Builder $builder) use ($qLike) {
+                $builder->where('nopol', 'like', $qLike);
+
+                foreach (['nomor_rangka', 'merk', 'kategori', 'platform_gps'] as $column) {
+                    if (Schema::hasColumn('armadas', $column)) {
+                        $builder->orWhere($column, 'like', $qLike);
+                    }
+                }
+            });
+        }
+
+        if ($kategori !== '' && Schema::hasColumn('armadas', 'kategori')) {
+            $query->where('kategori', $kategori);
+        }
+
+        if (in_array($acType, ['AC', 'Non-AC'], true) && Schema::hasColumn('armadas', 'ac_type')) {
+            $query->where('ac_type', $acType);
+        }
+
+        $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
+        $driverNames = $this->armadaDriverNameMap($poolId > 0 ? $poolId : 0);
+
+        $rows = $query->get();
+        $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
+        $rows = $rows->map(function ($row) use ($financials, $poolNames, $driverNames) {
+            $row = $this->withArmadaFinancials($row, $financials);
+            $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
+            $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
+            $row->driver_name = $driverNames['by_id'][(int) ($row->id ?? 0)] ?? $driverNames['by_nopol'][$this->normalizeNopol((string) ($row->nopol ?? ''))] ?? null;
+
+            return $row;
+        });
+
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [
+                'nopol',
+                'driver_name',
+                'pool_name',
+                'kategori',
+                'ac_type',
+                'gps_status',
+                'revenue',
+                'bop',
+                'gross_margin',
+                'net_margin',
+                'target_bulanan',
+                'achievement_pct',
+                'platform_gps',
+                'api_gps',
+                'warna',
+                'tahun',
+            ]);
+            foreach ($rows as $row) {
+                $revenue = (float) ($row->revenue ?? 0);
+                $bop = (float) ($row->bop ?? 0);
+                $fixedCost = (float) ($row->fixed_cost ?? 0);
+                $gross = $revenue - $bop;
+                $net = $gross - $fixedCost;
+                $target = (float) ($row->target_bulanan ?? 0);
+                $achievement = $target > 0 ? ($revenue / $target) * 100 : 0;
+                $gpsStatus = trim((string) ($row->platform_gps ?? '')) !== '' || trim((string) ($row->api_gps ?? '')) !== '' ? 'Aktif' : 'Offline';
+
+                fputcsv($out, [
+                    $row->nopol ?? '',
+                    $row->driver_name ?? '',
+                    $row->pool_name ?? '',
+                    $row->kategori ?? '',
+                    $row->ac_type ?? '',
+                    $gpsStatus,
+                    $revenue,
+                    $bop,
+                    $gross,
+                    $net,
+                    $target,
+                    round($achievement, 1),
+                    $row->platform_gps ?? '',
+                    $row->api_gps ?? '',
+                    $row->warna ?? '',
+                    $row->tahun ?? '',
+                ]);
+            }
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     private function armadaSelectColumns(): array
@@ -3936,6 +4065,83 @@ class AdminOpsApiController extends Controller
                 : DB::raw($default.' as '.$column))
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{0: string, 1: string, 2: string}
+     */
+    private function armadaPeriodBounds(?string $period): array
+    {
+        $normalizedPeriod = trim((string) $period);
+        if ($normalizedPeriod === '') {
+            $normalizedPeriod = now()->format('Y-m');
+        }
+
+        try {
+            $month = Carbon::createFromFormat('Y-m', $normalizedPeriod)->startOfMonth();
+        } catch (\Throwable) {
+            $month = now()->startOfMonth();
+            $normalizedPeriod = $month->format('Y-m');
+        }
+
+        return [
+            $month->toDateString(),
+            $month->copy()->endOfMonth()->toDateString(),
+            $normalizedPeriod,
+        ];
+    }
+
+    /**
+     * @return array{by_id: array<int, string>, by_nopol: array<string, string>}
+     */
+    private function armadaDriverNameMap(int $poolId = 0): array
+    {
+        $result = [
+            'by_id' => [],
+            'by_nopol' => [],
+        ];
+
+        if (! Schema::hasTable('drivers')) {
+            return $result;
+        }
+
+        $select = ['id', 'nama'];
+        if (Schema::hasColumn('drivers', 'armada_id')) {
+            $select[] = 'armada_id';
+        } else {
+            $select[] = DB::raw('NULL as armada_id');
+        }
+        if (Schema::hasColumn('drivers', 'armada_nopol')) {
+            $select[] = 'armada_nopol';
+        } else {
+            $select[] = DB::raw('NULL as armada_nopol');
+        }
+
+        $query = DB::table('drivers')
+            ->select($select)
+            ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'drivers.tenant_id');
+            });
+        $this->applyPoolScopeIfExists($query, 'drivers', '', $poolId > 0 ? $poolId : 0);
+
+        foreach ($query->orderBy('nama')->get() as $row) {
+            $name = trim((string) ($row->nama ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $driverId = (int) ($row->id ?? 0);
+            if ($driverId > 0 && ! isset($result['by_id'][$driverId])) {
+                $result['by_id'][$driverId] = $name;
+            }
+
+            $nopolKey = $this->normalizeNopol((string) ($row->armada_nopol ?? ''));
+            if ($nopolKey !== '' && ! isset($result['by_nopol'][$nopolKey])) {
+                $result['by_nopol'][$nopolKey] = $name;
+            }
+        }
+
+        return $result;
     }
 
     public function armadasSave(Request $request): JsonResponse
@@ -4111,17 +4317,25 @@ class AdminOpsApiController extends Controller
         return $this->ok(['message' => 'Armada deleted.']);
     }
 
-    public function armadasShow(int $id): JsonResponse
+    public function armadasShow(Request $request, int $id): JsonResponse
     {
         if (! Schema::hasTable('armadas')) {
             return $this->error('Data armada tidak tersedia.', 404);
         }
 
+        $validated = $request->validate([
+            'pool_id' => ['nullable', 'integer', 'min:0'],
+            'period' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $poolId = (int) ($validated['pool_id'] ?? 0);
+        [$monthStart, $monthEnd] = $this->armadaPeriodBounds($validated['period'] ?? null);
+
         $query = DB::table('armadas')->where('id', $id);
         if (Schema::hasColumn('armadas', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
-        $this->applyPoolScopeIfExists($query, 'armadas');
+        $this->applyPoolScopeIfExists($query, 'armadas', '', $poolId > 0 ? $poolId : 0);
 
         $row = $query->first($this->armadaSelectColumns());
 
@@ -4129,14 +4343,14 @@ class AdminOpsApiController extends Controller
             return $this->error('Armada tidak ditemukan.', 404);
         }
 
-        $monthStart = now()->startOfMonth()->toDateString();
-        $monthEnd = now()->endOfMonth()->toDateString();
         $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
+        $driverNames = $this->armadaDriverNameMap($poolId > 0 ? $poolId : 0);
 
         $row = $this->withArmadaFinancials($row, $financials);
         $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
         $poolNames = $this->poolNameMap([$row->pool_id ?? 0]);
         $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
+        $row->driver_name = $driverNames['by_id'][(int) ($row->id ?? 0)] ?? $driverNames['by_nopol'][$this->normalizeNopol((string) ($row->nopol ?? ''))] ?? null;
 
         return $this->ok(['armada' => $row]);
     }

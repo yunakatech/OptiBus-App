@@ -175,6 +175,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::delete('customers/{id}', [AdminOpsApiController::class, 'customersDelete'])->middleware('permission:customer.delete')->name('customers.delete');
 
         Route::get('cancellations', [AdminOpsApiController::class, 'cancellationsIndex'])->middleware('permission:logs.view')->name('cancellations.index');
+        Route::get('armadas/export', [AdminOpsApiController::class, 'armadasExport'])->middleware('permission:report.export')->name('armadas.export');
         Route::get('reports/summary', [AdminOpsApiController::class, 'reportsSummary'])->middleware('permission:report.view')->name('reports.summary');
         Route::get('reports/bookings-csv', [AdminOpsApiController::class, 'reportsBookingsCsv'])->middleware('permission:report.export')->name('reports.bookings-csv');
         Route::get('reports/revenue-csv', [AdminOpsApiController::class, 'reportsRevenueCsv'])->middleware('permission:report.export')->name('reports.revenue-csv');

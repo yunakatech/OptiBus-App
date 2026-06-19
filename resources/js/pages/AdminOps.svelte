@@ -744,6 +744,10 @@
     let driverSearch = $state('');
     let driverUnitSearch = $state('');
     let armadaSearch = $state('');
+    let armadaPoolId = $state(0);
+    let armadaPeriod = $state(
+        `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+    );
     let armadaCategories = $state<string[]>([]);
     let armadaTemplateSearch = $state('');
     let armadaTemplateLookupOpen = $state(false);
@@ -1226,6 +1230,10 @@
     const poolOptions = $derived(
         pools.filter((pool) => String(pool.status ?? 'active') === 'active'),
     );
+    const armadaPoolOptions = $derived([
+        { id: 0, name: 'Semua Pool' },
+        ...poolOptions,
+    ]);
     const activePoolId = $derived(
         Number((page.props.auth as any)?.active_pool?.id ?? 0),
     );
@@ -1234,6 +1242,9 @@
     );
     const isAllPoolMode = $derived(activePoolId <= 0);
     const roleOptions = $derived(roles);
+    const canExportArmadas = $derived.by(() =>
+        hasPermission(permissions, 'report.export'),
+    );
 
     const defaultPoolId = () => (activePoolId > 0 ? activePoolId : 0);
 
@@ -3047,9 +3058,16 @@
             return;
         }
 
+        const params = new URLSearchParams();
         const query = armadaSearch.trim();
-        const searchSuffix =
-            query === '' ? '' : `?q=${encodeURIComponent(query)}`;
+        if (query !== '') {
+            params.set('q', query);
+        }
+        params.set('pool_id', String(Number(armadaPoolId || 0)));
+        if (armadaPeriod.trim() !== '') {
+            params.set('period', armadaPeriod.trim());
+        }
+        const searchSuffix = params.toString() === '' ? '' : `?${params.toString()}`;
         const [armadasResponse, categoriesResponse, unitsResponse] =
             await Promise.all([
                 api('GET', `/api/admin/armadas${searchSuffix}`),
@@ -3076,7 +3094,16 @@
             return;
         }
 
-        const r = await api('GET', `/api/admin/armadas/${id}`);
+        const params = new URLSearchParams();
+        params.set('pool_id', String(Number(armadaPoolId || 0)));
+        if (armadaPeriod.trim() !== '') {
+            params.set('period', armadaPeriod.trim());
+        }
+
+        const r = await api(
+            'GET',
+            `/api/admin/armadas/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`,
+        );
         armadaDetail = r.armada ?? null;
     };
 
@@ -3401,7 +3428,13 @@
         armadaTemplateLookupOpen = false;
     };
     const openArmadaView = (id: number) => {
-        router.visit(`/admin-ops/armadas/view/${id}`, {
+        const params = new URLSearchParams();
+        params.set('pool_id', String(Number(armadaPoolId || 0)));
+        if (armadaPeriod.trim() !== '') {
+            params.set('period', armadaPeriod.trim());
+        }
+
+        router.visit(`/admin-ops/armadas/view/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`, {
             preserveScroll: true,
             preserveState: false,
         });
@@ -8094,6 +8127,10 @@
                             {loadArmadas}
                             {openArmadaView}
                             {openArmadaEditor}
+                            {armadaPoolOptions}
+                            bind:armadaPoolId
+                            bind:armadaPeriod
+                            canExport={canExportArmadas}
                             canManage={canWriteTab('armadas')}
                             removeArmada={(id: number) =>
                                 removeItem(
@@ -8126,6 +8163,10 @@
                         {loadArmadas}
                         {openArmadaView}
                         {openArmadaEditor}
+                        {armadaPoolOptions}
+                        bind:armadaPoolId
+                        bind:armadaPeriod
+                        canExport={canExportArmadas}
                         canManage={canWriteTab('armadas')}
                         removeArmada={(id: number) =>
                             removeItem(
