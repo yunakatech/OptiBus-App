@@ -173,9 +173,6 @@
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                     <p class="text-lg font-bold tracking-tight">{armadaDetail.nopol}</p>
-                    <p class="mt-1 text-xs text-muted-foreground">
-                        Driver: {armadaDetail.driver_name ?? 'Belum ditetapkan'}
-                    </p>
                     <div class="mt-2 flex flex-wrap items-center gap-2">
                         <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
                             {rowPoolName(armadaDetail)}
@@ -316,9 +313,6 @@
                             {activeGps ? 'GPS Aktif' : 'GPS Offline'}
                         </span>
                     </div>
-                    <p class="mt-2 truncate text-sm text-muted-foreground">
-                        Driver: {row.driver_name ?? 'Belum ditetapkan'}
-                    </p>
                     <div class="mt-2 flex flex-wrap gap-1.5">
                         <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.kategori)}`}>
                             {normalizeUnitCategory(row.kategori)}
