@@ -37,7 +37,7 @@
     const url = currentUrlState();
     const menuSections = [
         {
-            label: 'Customer',
+            label: 'Pelanggan',
             items: [
                 { title: 'Reguler', href: '/admin-ops/customers', icon: Users, permission: 'customer.view' },
                 { title: 'Bagasi', href: '/admin-ops/master/customer-bagasi', icon: Briefcase, permission: 'customer.view' },

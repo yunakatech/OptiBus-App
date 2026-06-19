@@ -92,7 +92,7 @@
         },
     ];
 
-    const dataMasterNavItems: NavItem[] = [
+    const pelangganNavItems: NavItem[] = [
         {
             title: 'Pelanggan Reguler',
             href: '/admin-ops/customers',
@@ -111,6 +111,9 @@
             icon: BusFront,
             permission: 'customer.view',
         },
+    ];
+
+    const dataMasterNavItems: NavItem[] = [
         {
             title: 'Jadwal',
             href: '/admin-ops/schedules',
@@ -212,6 +215,12 @@
             title: 'Operasional',
             icon: LayoutGrid,
             items: operasionalNavItems,
+        },
+        {
+            id: 'pelanggan',
+            title: 'Pelanggan',
+            icon: Users,
+            items: pelangganNavItems,
         },
         {
             id: 'data-master',
