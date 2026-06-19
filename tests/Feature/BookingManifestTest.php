@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -13,8 +12,8 @@ class BookingManifestTest extends TestCase
 
     public function test_manifest_print_includes_mapped_luggage_and_cancel_history(): void
     {
-        $user = User::factory()->create(['is_super_admin' => true]);
-        $this->actingAs($user);
+        $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+        $tenantId = $this->defaultTenantId();
 
         $route = 'PINRANG - MAKASSAR';
         $date = '2026-05-15';
@@ -22,6 +21,7 @@ class BookingManifestTest extends TestCase
         $unit = 1;
 
         $activeBookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
             'rute' => $route,
             'tanggal' => $date,
             'jam' => $jam,
@@ -40,6 +40,7 @@ class BookingManifestTest extends TestCase
         ]);
 
         $canceledBookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
             'rute' => $route,
             'tanggal' => $date,
             'jam' => $jam,
@@ -65,6 +66,7 @@ class BookingManifestTest extends TestCase
         ]);
 
         $assignmentId = DB::table('trip_assignments')->insertGetId([
+            'tenant_id' => $tenantId,
             'rute' => $route,
             'tanggal' => $date,
             'jam' => $jam,
@@ -74,6 +76,7 @@ class BookingManifestTest extends TestCase
         ]);
 
         DB::table('luggages')->insert([
+            'tenant_id' => $tenantId,
             'sender_name' => 'Pengirim A',
             'sender_phone' => '0811111111',
             'receiver_name' => 'Penerima B',
@@ -109,6 +112,11 @@ class BookingManifestTest extends TestCase
             'id' => $activeBookingId,
             'status' => 'active',
         ]);
+    }
+
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
     private function manifestGroupKey(string $route, string $date, string $jam, int $unit): string

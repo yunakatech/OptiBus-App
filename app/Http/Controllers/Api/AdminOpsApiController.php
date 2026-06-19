@@ -4144,14 +4144,20 @@ class AdminOpsApiController extends Controller
         ]);
 
         $poolId = (int) ($data['pool_id'] ?? 0);
+        $userId = (int) ($request->user()?->id ?? 0);
 
         if ($poolId > 0 && $this->poolTablesReady()) {
+            $tenantId = PoolScope::tenantId($userId);
+            if ($tenantId <= 0) {
+                return $this->error('Pilih tenant dulu.', 422);
+            }
+
             $poolQuery = DB::table('pools')
                 ->where('id', $poolId)
                 ->where('status', 'active');
 
             if (Schema::hasColumn('pools', 'tenant_id')) {
-                PoolScope::applyTenantScope($poolQuery, 'tenant_id');
+                $poolQuery->where('tenant_id', $tenantId);
             }
 
             $pool = $poolQuery->first(['id', 'name']);
@@ -4160,13 +4166,14 @@ class AdminOpsApiController extends Controller
                 return $this->error('Pool tidak ditemukan atau tidak aktif.', 422);
             }
 
-            $scope = PoolScope::forCurrentUser(0, (int) ($request->user()?->id ?? 0), false);
+            $scope = PoolScope::forCurrentUser(0, $userId, false);
             if (! ($scope['all'] ?? true) && ! in_array($poolId, $scope['pool_ids'] ?? [], true)) {
                 return $this->error('Anda tidak memiliki akses ke pool ini.', 403);
             }
         }
 
         session(['active_pool_id' => $poolId]);
+        PoolScope::flushRequestCache();
         $poolName = $poolId > 0
             ? (string) (DB::table('pools')->where('id', $poolId)->value('name') ?? 'Pool')
             : 'Semua Pool';
@@ -4175,6 +4182,70 @@ class AdminOpsApiController extends Controller
             'message' => $poolId > 0 ? "Pool aktif: {$poolName}" : 'Menampilkan semua pool.',
             'pool_id' => $poolId,
             'pool_name' => $poolName,
+        ]);
+    }
+
+    public function tenantSwitch(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'tenant_id' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $tenantId = (int) ($data['tenant_id'] ?? 0);
+        $userId = (int) ($request->user()?->id ?? 0);
+        $previousTenantId = (int) session('active_tenant_id', 0);
+        $previousPoolId = (int) session('active_pool_id', 0);
+
+        if ($tenantId > 0) {
+            if (! Schema::hasTable('tenants')) {
+                return $this->error('Tabel tenants belum tersedia.', 409);
+            }
+
+            $tenant = DB::table('tenants')
+                ->where('id', $tenantId)
+                ->where('status', '!=', 'canceled')
+                ->first(['id', 'name', 'slug', 'status']);
+
+            if (! $tenant) {
+                return $this->error('Tenant tidak ditemukan atau sudah tidak aktif.', 422);
+            }
+        }
+
+        if ($tenantId > 0) {
+            session(['active_tenant_id' => $tenantId]);
+        } else {
+            session()->forget('active_tenant_id');
+        }
+
+        session()->forget('active_pool_id');
+        PoolScope::flushRequestCache();
+
+        $tenantName = $tenantId > 0
+            ? (string) (DB::table('tenants')->where('id', $tenantId)->value('name') ?? 'Tenant')
+            : 'Semua Tenant';
+
+        ActivityLog::write(
+            'SWITCH',
+            'Tenant switched',
+            $previousTenantId > 0 || $tenantId > 0
+                ? "Tenant context changed to {$tenantName}"
+                : 'Tenant context cleared',
+            (string) ($request->user()?->email ?? ''),
+            [
+                'user_id' => $userId,
+                'previous_tenant_id' => $previousTenantId,
+                'new_tenant_id' => $tenantId,
+                'previous_pool_id' => $previousPoolId,
+                'new_pool_id' => 0,
+                'tenant_id' => $tenantId > 0 ? $tenantId : $previousTenantId,
+                'action' => 'tenant_switch',
+            ],
+        );
+
+        return $this->ok([
+            'message' => $tenantId > 0 ? "Tenant aktif: {$tenantName}" : 'Menampilkan semua tenant.',
+            'tenant_id' => $tenantId,
+            'tenant_name' => $tenantName,
         ]);
     }
 
@@ -7346,7 +7417,11 @@ class AdminOpsApiController extends Controller
 
         $tenantId = PoolScope::tenantId();
         if ($tenantId <= 0) {
-            $tenantId = $this->defaultTenantId();
+            abort(response()->json([
+                'success' => false,
+                'error' => 'Pilih tenant dulu.',
+                'redirect_url' => route('platform.dashboard', absolute: false),
+            ], 409));
         }
 
         return $tenantId;

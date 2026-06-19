@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureFeature;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\EnsureTenantSubscriptionActive;
+use App\Http\Middleware\EnsureSuperAdminTenantContext;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectSuperAdmin;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleAppearance::class,
+            EnsureSuperAdminTenantContext::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
@@ -61,6 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsurePermission::class,
             'feature' => EnsureFeature::class,
             'subscription.active' => EnsureTenantSubscriptionActive::class,
+            'superadmin.tenant-context' => EnsureSuperAdminTenantContext::class,
             'superadmin.redirect' => RedirectSuperAdmin::class,
         ]);
     })

@@ -25,9 +25,25 @@ export type PoolOption = {
     code?: string | null;
 };
 
+export type TenantOption = {
+    id: number;
+    name: string;
+    slug: string;
+    status: string;
+    user_count?: number;
+    pool_count?: number;
+};
+
 export type ActivePool = {
     id: number;
     name: string;
+};
+
+export type ActiveTenant = {
+    id: number;
+    name: string;
+    slug: string;
+    status: string;
 };
 
 export type TenantSubscription = {
@@ -63,9 +79,12 @@ export type BillingAccess = {
 export type Auth = {
     user: User;
     permissions: string[];
+    tenants?: TenantOption[];
     pools?: PoolOption[];
     pool_scope?: PoolScope | null;
     active_pool?: ActivePool | null;
+    active_tenant?: ActiveTenant | null;
+    tenant_context_required?: boolean;
     tenant_subscription?: TenantSubscription | null;
     billing_access?: BillingAccess | null;
 };

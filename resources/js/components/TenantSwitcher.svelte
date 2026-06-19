@@ -11,7 +11,7 @@
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
     import { cn } from '@/lib/utils';
-    import type { PoolOption } from '@/types/auth';
+    import type { TenantOption, ActiveTenant } from '@/types/auth';
 
     let {
         compact = false,
@@ -21,11 +21,12 @@
         class?: string;
     } = $props();
 
-    const pools = $derived((page.props.auth?.pools ?? []) as PoolOption[]);
-    const activePool = $derived(page.props.auth?.active_pool ?? null);
-    const activePoolLabel = $derived(activePool?.name ?? 'Semua Pool');
-    const hasPools = $derived(pools.length > 0);
-    let pendingPoolId = $state<number | null>(null);
+    const tenants = $derived((page.props.auth?.tenants ?? []) as TenantOption[]);
+    const activeTenant = $derived((page.props.auth?.active_tenant ?? null) as ActiveTenant | null);
+    const activeTenantLabel = $derived(activeTenant?.name ?? 'Pilih Tenant');
+    const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
+    const hasTenants = $derived(tenants.length > 0);
+    let pendingTenantId = $state<number | null>(null);
     let errorMessage = $state('');
 
     function csrfToken(): string {
@@ -36,42 +37,42 @@
         return (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement | null)?.content ?? '';
     }
 
-    async function switchPool(poolId: number): Promise<void> {
-        if (pendingPoolId !== null || (activePool?.id ?? 0) === poolId) {
+    async function switchTenant(tenantId: number): Promise<void> {
+        if (pendingTenantId !== null || (activeTenant?.id ?? 0) === tenantId) {
             return;
         }
 
-        pendingPoolId = poolId;
+        pendingTenantId = tenantId;
         errorMessage = '';
 
         try {
-            const response = await fetch('/api/admin/pool/switch', {
+            const response = await fetch('/api/admin/tenant/switch', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken(),
                 },
-                body: JSON.stringify({ pool_id: poolId }),
+                body: JSON.stringify({ tenant_id: tenantId }),
             });
 
             if (!response.ok) {
                 const payload = await response.json().catch(() => ({}));
 
-                throw new Error((payload?.message as string | undefined) ?? 'Gagal mengganti pool.');
+                throw new Error((payload?.error as string | undefined) ?? 'Gagal mengganti tenant.');
             }
 
             const currentPath = `${window.location.pathname}${window.location.search}`;
             router.visit(currentPath, { preserveScroll: false, preserveState: false });
         } catch (error) {
-            errorMessage = error instanceof Error ? error.message : 'Gagal mengganti pool.';
+            errorMessage = error instanceof Error ? error.message : 'Gagal mengganti tenant.';
         } finally {
-            pendingPoolId = null;
+            pendingTenantId = null;
         }
     }
 </script>
 
-{#if hasPools}
+{#if isSuperAdmin && hasTenants}
     <DropdownMenu class={cn('relative', className)}>
         <DropdownMenuTrigger asChild>
             {#snippet children(props)}
@@ -79,17 +80,17 @@
                     type="button"
                     class={cn(
                         'inline-flex h-9 max-w-full items-center gap-1.5 rounded-md border text-xs font-medium transition hover:border-primary/35 hover:bg-primary/5 data-[state=open]:border-primary/40 data-[state=open]:bg-primary/8',
-                        activePool ? 'border-primary/30 bg-primary/8 text-primary' : 'border-border/80 bg-background text-muted-foreground',
+                        activeTenant ? 'border-primary/30 bg-primary/8 text-primary' : 'border-border/80 bg-background text-muted-foreground',
                         compact ? 'w-full min-w-0 px-2.5' : 'w-full px-2.5',
                     )}
-                    aria-label={`Pool aktif: ${activePoolLabel}`}
+                    aria-label={`Tenant aktif: ${activeTenantLabel}`}
                     {...props}
                 >
                     <Building2 class="size-3.5 shrink-0" />
                     <span class="min-w-0 flex-1 truncate text-left">
-                        {compact ? activePoolLabel : activePoolLabel}
+                        {activeTenantLabel}
                     </span>
-                    {#if pendingPoolId !== null}
+                    {#if pendingTenantId !== null}
                         <LoaderCircle class="size-3.5 shrink-0 animate-spin opacity-70" />
                     {:else}
                         <ChevronDown class="size-3.5 shrink-0 opacity-60" />
@@ -97,33 +98,32 @@
                 </button>
             {/snippet}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align={compact ? 'end' : 'start'} sideOffset={8} class="w-64 p-1.5">
+        <DropdownMenuContent align={compact ? 'end' : 'start'} sideOffset={8} class="w-72 p-1.5">
             <div class="px-2 py-1.5">
-                <p class="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">Pool aktif</p>
-                <p class="mt-0.5 truncate text-sm font-semibold text-foreground">{activePoolLabel}</p>
+                <p class="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">Tenant aktif</p>
+                <p class="mt-0.5 truncate text-sm font-semibold text-foreground">{activeTenantLabel}</p>
                 {#if errorMessage}
                     <p class="mt-1 text-[11px] text-destructive">{errorMessage}</p>
                 {/if}
             </div>
             <DropdownMenuItem
                 class="gap-2 rounded-md text-sm"
-                disabled={pendingPoolId !== null}
-                onclick={() => switchPool(0)}
+                disabled={pendingTenantId !== null}
+                onclick={() => switchTenant(0)}
             >
-                <Check class={cn('size-4', !activePool ? 'opacity-100' : 'opacity-0')} />
-                <span class="min-w-0 flex-1 truncate">Semua Pool</span>
+                <Check class={cn('size-4', !activeTenant ? 'opacity-100' : 'opacity-0')} />
+                <span class="min-w-0 flex-1 truncate">Semua Tenant</span>
+                <span class="shrink-0 text-[11px] text-muted-foreground">Platform</span>
             </DropdownMenuItem>
-            {#each pools as pool (pool.id)}
+            {#each tenants as tenant (tenant.id)}
                 <DropdownMenuItem
                     class="gap-2 rounded-md text-sm"
-                    disabled={pendingPoolId !== null}
-                    onclick={() => switchPool(pool.id)}
+                    disabled={pendingTenantId !== null}
+                    onclick={() => switchTenant(tenant.id)}
                 >
-                    <Check class={cn('size-4', activePool?.id === pool.id ? 'opacity-100 text-primary' : 'opacity-0')} />
-                    <span class="min-w-0 flex-1 truncate">{pool.name}</span>
-                    {#if pool.code}
-                        <span class="shrink-0 text-[11px] text-muted-foreground">{pool.code}</span>
-                    {/if}
+                    <Check class={cn('size-4', activeTenant?.id === tenant.id ? 'opacity-100 text-primary' : 'opacity-0')} />
+                    <span class="min-w-0 flex-1 truncate">{tenant.name}</span>
+                    <span class="shrink-0 text-[11px] text-muted-foreground">{tenant.slug}</span>
                 </DropdownMenuItem>
             {/each}
         </DropdownMenuContent>

@@ -15,7 +15,12 @@ class AdminOpsSettingsPageTest extends TestCase
 
     private function actingAsSuperAdmin(): void
     {
-        $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+        $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+    }
+
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
     public function test_settings_pages_expose_separate_deferred_list_and_master_payloads(): void

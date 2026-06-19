@@ -15,7 +15,12 @@ class AdminOpsRolesPageTest extends TestCase
 
     private function actingAsSuperAdmin(): void
     {
-        $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+        $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+    }
+
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
     private function userWithRole(string $roleSlug): User

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -13,7 +12,12 @@ class AdminOpsMasterPageTest extends TestCase
 
     private function actingAsSuperAdmin(): void
     {
-        $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+        $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+    }
+
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
     public function test_customer_bagasi_page_exposes_deferred_master_data(): void

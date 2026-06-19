@@ -14,23 +14,28 @@ class BookingPageTest extends TestCase
 
     private function actingAsSuperAdmin(): User
     {
-        $user = User::factory()->create(['is_super_admin' => true]);
-        $this->actingAs($user);
+        return $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+    }
 
-        return $user;
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
     public function test_canceled_departure_is_rendered_with_empty_assignment_meta(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $driverId = DB::table('drivers')->insertGetId([
+            'tenant_id' => $tenantId,
             'nama' => 'DRIVER HISTORY',
             'phone' => '081200000003',
             'created_at' => now(),
         ]);
 
         DB::table('trip_assignments')->insert([
+            'tenant_id' => $tenantId,
             'rute' => 'PINRANG - MAKASSAR',
             'tanggal' => '2026-05-15',
             'jam' => '09:00:00',
@@ -57,8 +62,10 @@ class BookingPageTest extends TestCase
     public function test_booking_route_filter_follows_master_routes_and_refund_is_counted_separately(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
             'name' => 'PINRANG - MAKASSAR',
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
@@ -67,6 +74,7 @@ class BookingPageTest extends TestCase
 
         DB::table('bookings')->insert([
             [
+                'tenant_id' => $tenantId,
                 'rute' => 'PINRANG - MAKASSAR',
                 'tanggal' => '2026-05-16',
                 'jam' => '09:00:00',
@@ -82,6 +90,7 @@ class BookingPageTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'rute' => 'PINRANG - MAKASSAR',
                 'tanggal' => '2026-05-16',
                 'jam' => '09:00:00',
@@ -97,6 +106,7 @@ class BookingPageTest extends TestCase
                 'created_at' => now(),
             ],
             [
+                'tenant_id' => $tenantId,
                 'rute' => 'RUTE LIAR',
                 'tanggal' => '2026-05-15',
                 'jam' => '09:00:00',

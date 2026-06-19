@@ -17,10 +17,7 @@ class AdminOpsApiTest extends TestCase
 
     private function actingAsSuperAdmin(): User
     {
-        $user = User::factory()->create(['is_super_admin' => true]);
-        $this->actingAs($user);
-
-        return $user;
+        return $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
     }
 
     private function defaultTenantId(): int
@@ -159,7 +156,7 @@ class AdminOpsApiTest extends TestCase
             'email' => 'root.admin@example.com',
             'is_super_admin' => true,
         ]);
-        $this->actingAs($authUser);
+        $this->actingAs($authUser)->withSession(['active_tenant_id' => $this->defaultTenantId()]);
 
         $unitCreate = $this->postJson(route('api.admin.units.save'), [
             'nopol' => 'DD 9900 AA',
