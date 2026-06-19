@@ -215,8 +215,8 @@
             label: 'Total Revenue',
             value: armadaSummary.revenue,
             valueText: formatCurrency(armadaSummary.revenue),
-            note: 'Σ Revenue unit aktif',
-            formula: 'Total Revenue = Σ Revenue',
+            note: 'Sum Revenue unit aktif',
+            formula: 'Total Revenue = Sum Revenue',
             tone: 'text-emerald-700 dark:text-emerald-300',
         },
         {
@@ -225,7 +225,7 @@
             value: armadaSummary.bop,
             valueText: formatCurrency(armadaSummary.bop),
             note: 'Biaya operasional perjalanan',
-            formula: 'Total BOP = Σ BOP unit',
+            formula: 'Total BOP = Sum BOP unit',
             tone: 'text-amber-700 dark:text-amber-300',
         },
         {
@@ -243,7 +243,7 @@
             value: armadaSummary.fixedCost,
             valueText: formatCurrency(armadaSummary.fixedCost),
             note: 'Biaya tetap bulanan',
-            formula: 'Fixed Cost = Σ Fixed Cost',
+            formula: 'Fixed Cost = Sum Fixed Cost',
             tone: 'text-slate-700 dark:text-slate-300',
         },
         {
@@ -261,7 +261,7 @@
             value: armadaSummary.achievement,
             valueText: `${armadaSummary.achievement.toFixed(1)}%`,
             note: `${armadaSummary.count} armada aktif`,
-            formula: 'Achievement = Revenue / Target × 100%',
+            formula: 'Achievement = Revenue / Target x 100%',
             tone: armadaSummary.achievement >= 100
                 ? 'text-emerald-700 dark:text-emerald-300'
                 : armadaSummary.achievement >= 80
@@ -430,25 +430,29 @@
                 {@const status = armadaStatus(row)}
                 {@const activeGps = gpsActive(row)}
                 {@const achievementStyle = achievementTone(achievement)}
+                {@const revenue = Number(row.revenue || 0)}
+                {@const bop = Number(row.bop || 0)}
+                {@const fixedCost = Number(row.fixed_cost || 0)}
+                {@const target = Number(row.target_bulanan || 0)}
                 <article class="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-md">
                     <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                    <p class="truncate text-lg font-bold tracking-tight text-foreground">{row.nopol}</p>
-                    <div class="mt-2 flex flex-wrap items-center gap-2">
-                        <span class={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${gpsTone(activeGps)}`}>
-                            <span class={`size-2 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                            {activeGps ? 'GPS Aktif' : 'GPS Offline'}
-                        </span>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-1.5">
-                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.kategori)}`}>
-                            {normalizeUnitCategory(row.kategori)}
-                        </span>
-                        <span class="rounded-full border border-border/70 bg-muted/25 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                            {row.ac_type}
-                        </span>
-                    </div>
-                </div>
+                        <div class="min-w-0">
+                            <p class="truncate text-lg font-bold tracking-tight text-foreground">{row.nopol}</p>
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <span class={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${gpsTone(activeGps)}`}>
+                                    <span class={`size-2 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                                    {activeGps ? 'GPS Aktif' : 'GPS Offline'}
+                                </span>
+                            </div>
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.kategori)}`}>
+                                    {normalizeUnitCategory(row.kategori)}
+                                </span>
+                                <span class="rounded-full border border-border/70 bg-muted/25 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                    {row.ac_type}
+                                </span>
+                            </div>
+                        </div>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -476,13 +480,51 @@
                         </DropdownMenu>
                     </div>
 
-                    <div class="mt-4 rounded-lg border border-border/70 bg-muted/30 p-4">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Net Margin</p>
-                        <p class={`mt-2 text-2xl font-bold tabular-nums ${net >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>
-                            {formatCurrency(net)}
-                        </p>
+                    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Revenue</p>
+                            <p class="mt-1 text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+                                {formatCurrency(revenue)}
+                            </p>
+                            <p class="mt-1 text-[10px] text-muted-foreground">Total pemasukan armada</p>
+                        </div>
+                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">BOP</p>
+                            <p class="mt-1 text-sm font-bold tabular-nums text-amber-700 dark:text-amber-300">
+                                {formatCurrency(bop)}
+                            </p>
+                            <p class="mt-1 text-[10px] text-muted-foreground">Biaya operasional perjalanan</p>
+                        </div>
+                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Gross Margin</p>
+                            <p class={`mt-1 text-sm font-bold tabular-nums ${gross >= 0 ? 'text-sky-700 dark:text-sky-300' : 'text-rose-700 dark:text-rose-300'}`}>
+                                {formatCurrency(gross)}
+                            </p>
+                            <p class="mt-1 text-[10px] text-muted-foreground">Revenue - BOP</p>
+                        </div>
+                        <div class="rounded-lg border border-border/70 bg-muted/30 p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Fixed Cost</p>
+                            <p class="mt-1 text-sm font-bold tabular-nums text-slate-700 dark:text-slate-300">
+                                {formatCurrency(fixedCost)}
+                            </p>
+                            <p class="mt-1 text-[10px] text-muted-foreground">Biaya tetap bulanan</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 rounded-lg border border-border/70 bg-muted/30 p-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Net Margin</p>
+                                <p class={`mt-1 text-2xl font-bold tabular-nums ${net >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>
+                                    {formatCurrency(net)}
+                                </p>
+                            </div>
+                            <div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Gross - Fixed Cost
+                            </div>
+                        </div>
                         <p class="mt-2 text-xs text-muted-foreground">
-                            Gross: {formatCurrency(gross)} | BOP: {formatCurrency(Number(row.bop || 0))}
+                            Gross: {formatCurrency(gross)} | Target: {formatCurrency(target)}
                         </p>
                     </div>
 
@@ -499,14 +541,13 @@
                                 style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
                             ></div>
                         </div>
-                        <p class="text-[11px] text-muted-foreground">{achievementStyle.label}</p>
-                        <p class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            status === 'Tercapai'
-                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
-                                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
-                        }`}>
-                            {status}
-                        </p>
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-[11px] text-muted-foreground">{achievementStyle.label}</p>
+                            <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'}`}>
+                                {status}
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground">Achievement = Revenue / Target x 100%</p>
                     </div>
                 </article>
             {/each}
