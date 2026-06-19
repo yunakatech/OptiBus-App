@@ -40,11 +40,11 @@
     let computedColumns = $derived(columns);
     const headerRowClass = $derived(
         tone === 'default'
-            ? 'border-b border-border/70 bg-muted/20 text-xs font-semibold tracking-wider text-muted-foreground uppercase'
-            : 'border-b border-slate-800 bg-[#151d33] text-xs font-semibold tracking-wider text-[#8D99AE] uppercase',
+            ? 'border-b border-border/70 bg-muted/20 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'
+            : 'border-b border-slate-800 bg-[#151d33] text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8D99AE]',
     );
     const stickyHeaderClass = $derived(tone === 'default' ? 'sticky z-30 bg-muted/20' : 'sticky z-30 bg-card');
-    const bodyClass = $derived(tone === 'default' ? 'divide-y divide-border/70 text-sm' : 'divide-y divide-slate-800 text-sm');
+    const bodyClass = $derived(tone === 'default' ? 'divide-y divide-border/70 text-xs' : 'divide-y divide-slate-800 text-xs');
     const rowClass = $derived(
         tone === 'default'
             ? 'group transition-colors hover:bg-muted/15'
@@ -54,15 +54,15 @@
     const actionSeparatorClass = $derived(tone === 'default' ? 'text-border' : 'text-slate-700');
 </script>
 
-<div class={cn('w-full overflow-x-auto', className)}>
-    <table class="w-full text-left border-collapse">
+<div class={cn('w-full overflow-x-auto rounded-lg border border-border/70 bg-card shadow-sm', className)}>
+    <table class="min-w-full border-collapse text-left text-xs">
         <thead>
             <tr class={headerRowClass}>
                 {#each columns as col}
                     {#if col}
                         <th
                             class={cn(
-                                'py-3 px-4',
+                                'whitespace-nowrap px-4 py-2.5',
                                 col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
                                 col.numeric ? 'tabular-nums font-mono' : '',
                                 col.width ? col.width : '',
@@ -74,7 +74,7 @@
                         </th>
                     {/if}
                 {/each}
-                <th class={cn('py-3 px-4 text-right sticky right-0', stickyHeaderClass)}>Aksi</th>
+                <th class={cn('sticky right-0 px-4 py-2.5 text-right', stickyHeaderClass)}>Aksi</th>
             </tr>
         </thead>
 
@@ -88,7 +88,7 @@
                         {#each computedColumns as col}
                             <td
                                 class={cn(
-                                    'py-3 px-4 align-middle',
+                                    'whitespace-nowrap px-4 py-2.5 align-middle',
                                     col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : '',
                                     col.numeric ? 'tabular-nums font-mono' : '',
                                     col.sticky ? stickyCellClass : '',
@@ -100,14 +100,14 @@
                         {/each}
                     {/if}
 
-                    <td class="py-3 px-4 text-right">
+                    <td class="whitespace-nowrap px-4 py-2.5 text-right">
                         {#if actions}
                             {@render actions(snippetProps)}
                         {:else}
-                            <div class="opacity-80 group-hover:opacity-100 transition-opacity flex justify-end gap-3">
-                                <button class="text-xs font-medium text-accent hover:underline focus:outline-none">Ubah</button>
+                            <div class="flex justify-end gap-2 opacity-80 transition-opacity group-hover:opacity-100">
+                                <button class="text-[11px] font-medium text-accent hover:underline focus:outline-none">Ubah</button>
                                 <span class={actionSeparatorClass}>|</span>
-                                <button class="text-xs font-medium text-red-400 hover:underline focus:outline-none">Hapus</button>
+                                <button class="text-[11px] font-medium text-red-400 hover:underline focus:outline-none">Hapus</button>
                             </div>
                         {/if}
                     </td>
