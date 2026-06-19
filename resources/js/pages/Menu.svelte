@@ -20,7 +20,9 @@
     import CreditCard from 'lucide-svelte/icons/credit-card';
     import History from 'lucide-svelte/icons/history';
     import IdCard from 'lucide-svelte/icons/id-card';
+    import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import MapPinned from 'lucide-svelte/icons/map-pinned';
+    import Monitor from 'lucide-svelte/icons/monitor';
     import Package from 'lucide-svelte/icons/package';
     import Route from 'lucide-svelte/icons/route';
     import ShieldCheck from 'lucide-svelte/icons/shield-check';
@@ -33,9 +35,22 @@
     import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
+    import { dashboard } from '@/routes';
 
     const url = currentUrlState();
     const menuSections = [
+        {
+            label: 'Operasional',
+            items: [
+                { title: 'Dashboard', href: dashboard(), icon: LayoutGrid, permission: 'dashboard.view' },
+                { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
+                { title: 'Keberangkatan', href: '/bookings', icon: CalendarDays, permission: 'booking.view' },
+                { title: 'Console', href: '/booking-console', icon: Monitor, permission: 'booking.view' },
+                { title: 'Carter', href: '/charters', icon: BusFront, permission: 'charter.view' },
+                { title: 'Bagasi', href: '/luggages', icon: Briefcase, permission: 'luggage.view' },
+                { title: 'Pembayaran', href: '/payments', icon: CreditCard, permission: ['payment.update', 'booking.update', 'charter.update', 'luggage.update'] },
+            ],
+        },
         {
             label: 'Pelanggan',
             items: [
@@ -48,8 +63,6 @@
             label: 'Pengaturan',
             items: [
                 { title: 'Laporan', href: '/report', icon: ChartColumn, permission: 'report.view' },
-                { title: 'Pembayaran', href: '/payments', icon: CreditCard, permission: ['payment.update', 'booking.update', 'charter.update', 'luggage.update'] },
-                { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
                 { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
                 { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },
                 { title: 'Pool', href: '/admin-ops/pools', icon: Building2, permission: 'pool.manage' },
