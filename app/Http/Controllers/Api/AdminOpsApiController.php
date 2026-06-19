@@ -414,6 +414,7 @@ class AdminOpsApiController extends Controller
             $unitsQuery = DB::table('units')
                 ->whereIn('id', $lookupUnitIds);
             $this->applyWriteTenantScopeIfExists($unitsQuery, 'units');
+            $this->applyPoolScopeIfExists($unitsQuery, 'units');
             $unitsById = $unitsQuery->get(['id', 'kapasitas', 'layout'])
                 ->keyBy(static fn ($row) => (int) ($row->id ?? 0))
                 ->all();
@@ -542,6 +543,7 @@ class AdminOpsApiController extends Controller
                     (string) ($row['nama'] ?? ''),
                     (string) ($row['phone'] ?? ''),
                     (string) ($row['nopol'] ?? ''),
+                    (string) ($row['pool_name'] ?? ''),
                 ])), $needle))
                 ->values();
         }
@@ -567,6 +569,7 @@ class AdminOpsApiController extends Controller
             'id' => ['nullable', 'integer', 'min:1'],
             'nama' => ['required', 'string', 'max:120'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
             'unit_id' => ['nullable', 'integer', 'min:1'],
             'armada_id' => ['nullable', 'integer', 'min:1'],
             'armada_nopol' => ['nullable', 'string', 'max:50'],
@@ -578,6 +581,27 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+        $existing = null;
+        if ($id > 0) {
+            $existingQuery = DB::table('drivers')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($existingQuery, 'drivers');
+            $this->applyPoolScopeIfExists($existingQuery, 'drivers');
+            $existing = $existingQuery->first(['id', Schema::hasColumn('drivers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id')]);
+
+            if (! $existing) {
+                return $this->error('Driver tidak ditemukan untuk pool aktif.', 404);
+            }
+        }
+
+        $targetPoolId = $this->resolveWritablePoolIdFromRequest(
+            $request,
+            'drivers',
+            (int) ($existing->pool_id ?? 0),
+            $id <= 0,
+        );
+        if ($targetPoolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
+        }
 
         if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('drivers', 'tenant_id')) {
             if (! FeatureGate::canCreate('master.drivers', 'drivers', 'tenant_id')) {
@@ -594,7 +618,8 @@ class AdminOpsApiController extends Controller
                 if (Schema::hasColumn('armadas', 'tenant_id')) {
                     PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
                 }
-                $armada = $armadaQuery->first(['id', 'nopol']);
+                $this->applyPoolScopeIfExists($armadaQuery, 'armadas', '', $targetPoolId > 0 ? $targetPoolId : null);
+                $armada = $armadaQuery->first(['id', 'nopol', Schema::hasColumn('armadas', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id')]);
                 if (! $armada) {
                     return $this->error('Nopol armada tidak ditemukan.', 422);
                 }
@@ -605,7 +630,8 @@ class AdminOpsApiController extends Controller
                 if (Schema::hasColumn('armadas', 'tenant_id')) {
                     PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
                 }
-                $armada = $armadaQuery->first(['id', 'nopol']);
+                $this->applyPoolScopeIfExists($armadaQuery, 'armadas', '', $targetPoolId > 0 ? $targetPoolId : null);
+                $armada = $armadaQuery->first(['id', 'nopol', Schema::hasColumn('armadas', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id')]);
 
                 if (! $armada) {
                     return $this->error('Nopol armada tidak ditemukan.', 422);
@@ -652,12 +678,17 @@ class AdminOpsApiController extends Controller
             $payload['fixed_cost'] = (float) ($data['fixed_cost'] ?? 0);
         }
 
+        $payload = array_merge($payload, $this->poolPayload('drivers', $targetPoolId > 0 ? $targetPoolId : null));
+
         if ($id > 0) {
             $query = DB::table('drivers')->where('id', $id);
-            if (Schema::hasColumn('drivers', 'tenant_id')) {
-                PoolScope::applyTenantScope($query, 'tenant_id');
+            $this->applyWriteTenantScopeIfExists($query, 'drivers');
+            $this->applyPoolScopeIfExists($query, 'drivers');
+            $updated = $query->update($payload);
+
+            if ($updated === 0) {
+                return $this->error('Driver tidak ditemukan untuk pool aktif.', 404);
             }
-            $query->update($payload);
 
             return $this->ok(['message' => 'Driver updated.', 'id' => $id]);
         }
@@ -671,7 +702,17 @@ class AdminOpsApiController extends Controller
 
     public function driversDelete(int $id): JsonResponse
     {
-        DB::table('drivers')->where('id', $id)->delete();
+        $query = DB::table('drivers')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($query, 'drivers');
+        $this->applyPoolScopeIfExists($query, 'drivers');
+        if (! $query->exists()) {
+            return $this->error('Driver tidak ditemukan untuk pool aktif.', 404);
+        }
+
+        $delete = DB::table('drivers')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($delete, 'drivers');
+        $this->applyPoolScopeIfExists($delete, 'drivers');
+        $delete->delete();
 
         return $this->ok(['message' => 'Driver deleted.']);
     }
@@ -847,7 +888,14 @@ class AdminOpsApiController extends Controller
         [$page, $perPage] = $this->paginationParams($request);
 
         $query = DB::table('customers')
-            ->select(['id', 'name', 'phone', 'pickup_point', 'gmaps'])
+            ->select([
+                'id',
+                'name',
+                'phone',
+                'pickup_point',
+                'gmaps',
+                Schema::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+            ])
             ->orderBy('name');
         PoolScope::applyCustomerScope($query, 'customers');
         $this->applyTenantScopeIfExists($query, 'customers');
@@ -864,9 +912,31 @@ class AdminOpsApiController extends Controller
         }
 
         $result = $this->paginateQuery($query, $page, $perPage);
+        $rows = collect($result['data'] ?? []);
+        $poolNames = $this->poolNameMap(
+            $rows->pluck('pool_id')
+                ->map(static fn ($value): int => (int) $value)
+                ->all(),
+        );
+
+        $customers = $rows->map(function ($row) use ($poolNames) {
+            $poolId = (int) data_get($row, 'pool_id', 0);
+
+            if (is_array($row)) {
+                $row['pool_id'] = $poolId > 0 ? $poolId : null;
+                $row['pool_name'] = $poolId > 0 ? ($poolNames[$poolId] ?? null) : null;
+
+                return $row;
+            }
+
+            $row->pool_id = $poolId > 0 ? $poolId : null;
+            $row->pool_name = $poolId > 0 ? ($poolNames[$poolId] ?? null) : null;
+
+            return $row;
+        })->values()->all();
 
         return $this->ok([
-            'customers' => $result['data'],
+            'customers' => $customers,
             'pagination' => $result['meta'],
         ]);
     }
@@ -880,6 +950,7 @@ class AdminOpsApiController extends Controller
             'pickup_point' => ['nullable', 'string', 'max:180'],
             'gmaps' => ['nullable', 'string'],
             'address' => ['nullable', 'string'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -889,18 +960,26 @@ class AdminOpsApiController extends Controller
             'pickup_point' => $this->nullable($data['pickup_point'] ?? null),
             'gmaps' => $this->nullable($data['gmaps'] ?? $data['address'] ?? null),
         ];
-        $poolId = $this->defaultCustomerPoolId();
+        $poolId = 0;
 
         if ($id > 0) {
             $customerUpdate = DB::table('customers')->where('id', $id);
             PoolScope::applyCustomerScope($customerUpdate, 'customers');
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
-            if (! $customerUpdate->exists()) {
+            $existing = $customerUpdate->first([
+                'id',
+                Schema::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+            ]);
+            if (! $existing) {
                 return $this->error('Customer not found.', 404);
             }
 
-            $customerUpdate->update($payload);
-            $this->assignCustomerPoolIfMissing($id, $poolId);
+            $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', (int) ($existing->pool_id ?? 0), false);
+            if ($poolId < 0) {
+                return $this->error($this->poolResolveErrorMessage($poolId), 422);
+            }
+
+            $customerUpdate->update(array_merge($payload, $this->poolPayload('customers', $poolId > 0 ? $poolId : null)));
 
             return $this->ok(['message' => 'Customer updated.', 'id' => $id]);
         }
@@ -908,18 +987,30 @@ class AdminOpsApiController extends Controller
         $existingQuery = DB::table('customers')->where('phone', $payload['phone']);
         PoolScope::applyCustomerScope($existingQuery, 'customers');
         $this->applyWriteTenantScopeIfExists($existingQuery, 'customers');
-        $existing = $existingQuery->value('id');
+        $existing = $existingQuery->first([
+            'id',
+            Schema::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+        ]);
         if ($existing) {
-            $customerUpdate = DB::table('customers')->where('id', (int) $existing);
+            $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', (int) ($existing->pool_id ?? 0), false);
+            if ($poolId < 0) {
+                return $this->error($this->poolResolveErrorMessage($poolId), 422);
+            }
+
+            $customerUpdate = DB::table('customers')->where('id', (int) $existing->id);
             PoolScope::applyCustomerScope($customerUpdate, 'customers');
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
-            $customerUpdate->update($payload);
-            $this->assignCustomerPoolIfMissing((int) $existing, $poolId);
+            $customerUpdate->update(array_merge($payload, $this->poolPayload('customers', $poolId > 0 ? $poolId : null)));
 
-            return $this->ok(['message' => 'Customer updated by phone.', 'id' => (int) $existing]);
+            return $this->ok(['message' => 'Customer updated by phone.', 'id' => (int) $existing->id]);
         }
 
-        $newId = DB::table('customers')->insertGetId(array_merge($payload, $poolId > 0 ? ['pool_id' => $poolId] : [], [
+        $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', 0, true);
+        if ($poolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($poolId), 422);
+        }
+
+        $newId = DB::table('customers')->insertGetId(array_merge($payload, $this->poolPayload('customers', $poolId > 0 ? $poolId : null), [
             ...$this->tenantPayload('customers'),
             'created_at' => now(),
         ]));
@@ -2015,6 +2106,7 @@ class AdminOpsApiController extends Controller
                 ->select(['id', 'nopol', 'category'])
                 ->where('id', $unitId);
             $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
+            $this->applyPoolScopeIfExists($unitQuery, 'units');
             $selectedUnit = $unitQuery->first();
 
             if (! $selectedUnit) {
@@ -2036,6 +2128,7 @@ class AdminOpsApiController extends Controller
                     ->select(['id', 'nopol', 'kategori'])
                     ->where('id', $armadaId);
                 $this->applyWriteTenantScopeIfExists($armadaQuery, 'armadas');
+                $this->applyPoolScopeIfExists($armadaQuery, 'armadas');
                 $matchedArmada = $armadaQuery->first();
 
                 if (! $matchedArmada) {
@@ -2046,6 +2139,7 @@ class AdminOpsApiController extends Controller
                     ->select(['id', 'nopol', 'kategori'])
                     ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol]);
                 $this->applyWriteTenantScopeIfExists($armadaQuery, 'armadas');
+                $this->applyPoolScopeIfExists($armadaQuery, 'armadas');
                 $matchedArmada = $armadaQuery->first();
             }
 
@@ -2577,6 +2671,16 @@ class AdminOpsApiController extends Controller
             $customerPoolId = $this->defaultCustomerPoolId('customer_bagasi');
         }
 
+        $unitId = (int) ($data['unit_id'] ?? 0);
+        if ($unitId > 0 && Schema::hasTable('units')) {
+            $unitQuery = DB::table('units')->where('id', $unitId);
+            $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
+            $this->applyPoolScopeIfExists($unitQuery, 'units', '', $poolId > 0 ? $poolId : null);
+            if (! $unitQuery->exists()) {
+                return $this->error('Kategori armada tidak ditemukan untuk pool aktif.', 422);
+            }
+        }
+
         $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim', $customerPoolId);
         $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima', $customerPoolId);
 
@@ -2601,7 +2705,7 @@ class AdminOpsApiController extends Controller
             'rute_id' => $routeId > 0 ? $routeId : null,
             'rute' => $routeName !== '' ? $routeName : null,
             'tanggal' => $data['tanggal'] ?? now()->toDateString(),
-            'unit_id' => isset($data['unit_id']) ? (int) $data['unit_id'] : null,
+            'unit_id' => $unitId > 0 ? $unitId : null,
             'pengirim_id' => $pengirimId > 0 ? $pengirimId : null,
             'penerima_id' => $penerimaId > 0 ? $penerimaId : null,
         ];
@@ -3026,24 +3130,57 @@ class AdminOpsApiController extends Controller
         $armadaId = (int) ($data['armada_id'] ?? 0);
         $requestedArmadaNopol = strtoupper(trim((string) ($data['armada_nopol'] ?? '')));
         $armadaNopol = $requestedArmadaNopol !== '' ? $requestedArmadaNopol : null;
+        $driverQuery = DB::table('drivers')->where('id', (int) $data['driver_id']);
+        $this->applyWriteTenantScopeIfExists($driverQuery, 'drivers');
+        $this->applyPoolScopeIfExists($driverQuery, 'drivers');
+        if (! $driverQuery->exists()) {
+            if ($this->currentUserIsSuperAdmin()) {
+                $legacyDriverQuery = DB::table('drivers')->where('id', (int) $data['driver_id']);
+                if ($legacyDriverQuery->exists()) {
+                    $driverQuery = $legacyDriverQuery;
+                }
+            }
+
+            if (! $driverQuery->exists()) {
+                return $this->error('Driver tidak ditemukan untuk pool aktif.', 422);
+            }
+        }
 
         if (Schema::hasTable('armadas')) {
             if ($armadaId <= 0 && $requestedArmadaNopol !== '') {
                 $matchedArmada = DB::table('armadas')
                     ->select('id', 'nopol')
-                    ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol])
-                    ->first();
+                    ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol]);
+                $this->applyWriteTenantScopeIfExists($matchedArmada, 'armadas');
+                $this->applyPoolScopeIfExists($matchedArmada, 'armadas');
+                $matchedArmada = $matchedArmada->first();
+
+                if (! $matchedArmada && $this->currentUserIsSuperAdmin()) {
+                    $matchedArmada = DB::table('armadas')
+                        ->select('id', 'nopol')
+                        ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol])
+                        ->first();
+                }
 
                 if ($matchedArmada) {
                     $armadaId = (int) $matchedArmada->id;
                     $armadaNopol = strtoupper(trim((string) $matchedArmada->nopol));
                 }
             } elseif ($armadaId > 0) {
-                $storedNopol = DB::table('armadas')->where('id', $armadaId)->value('nopol');
+                $storedArmada = DB::table('armadas')->where('id', $armadaId);
+                $this->applyWriteTenantScopeIfExists($storedArmada, 'armadas');
+                $this->applyPoolScopeIfExists($storedArmada, 'armadas');
+                $storedNopol = $storedArmada->value('nopol');
 
-                if ($storedNopol) {
-                    $armadaNopol = strtoupper(trim((string) $storedNopol));
+                if (! $storedNopol && $this->currentUserIsSuperAdmin()) {
+                    $storedNopol = DB::table('armadas')->where('id', $armadaId)->value('nopol');
                 }
+
+                if (! $storedNopol) {
+                    return $this->error('Armada tidak ditemukan untuk pool aktif.', 422);
+                }
+
+                $armadaNopol = strtoupper(trim((string) $storedNopol));
             }
         }
 
@@ -3468,22 +3605,38 @@ class AdminOpsApiController extends Controller
 
         $query = DB::table('units')
             ->orderBy('nopol')
-            ->select(['id', 'nopol', 'merek', 'type', 'category', 'tahun', 'warna', 'kapasitas', 'status', 'layout'])
+            ->select([
+                'id',
+                'nopol',
+                'merek',
+                'type',
+                'category',
+                'tahun',
+                'warna',
+                'kapasitas',
+                'status',
+                'layout',
+                Schema::hasColumn('units', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+            ])
             ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q) {
                 $tenantId = PoolScope::tenantId();
                 if ($tenantId > 0) {
                     $q->where('units.tenant_id', $tenantId);
                 }
             });
+        $this->applyPoolScopeIfExists($query, 'units');
 
         if ($status !== '') {
             $query->where('status', $status);
         }
 
-        $rows = $query
-            ->get()
-            ->map(function ($row) {
+        $rawRows = $query->get();
+        $poolNames = $this->poolNameMap($rawRows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
+        $rows = $rawRows
+            ->map(function ($row) use ($poolNames) {
                 $row->category = $this->normalizeUnitCategory($row->category ?? null);
+                $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
+                $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
 
                 return $row;
             })
@@ -3497,6 +3650,7 @@ class AdminOpsApiController extends Controller
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
             'nopol' => ['required', 'string', 'max:50'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
             'merek' => ['nullable', 'string', 'max:120'],
             'type' => ['nullable', 'string', 'max:120'],
             'category' => ['required', 'string', Rule::in(['Minibus', 'Mediumbus', 'Bigbus', 'Bigbun', 'Micro Bus', 'Microbus'])],
@@ -3509,15 +3663,34 @@ class AdminOpsApiController extends Controller
 
         $id = (int) ($data['id'] ?? 0);
         $nopol = strtoupper(trim((string) $data['nopol']));
-        $existing = $id > 0
-            ? DB::table('units')->where('id', $id)->first()
-            : null;
+        $existing = null;
+        if ($id > 0) {
+            $existingQuery = DB::table('units')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($existingQuery, 'units');
+            $this->applyPoolScopeIfExists($existingQuery, 'units');
+            $existing = $existingQuery->first();
+
+            if (! $existing) {
+                return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
+            }
+        }
+
+        $targetPoolId = $this->resolveWritablePoolIdFromRequest(
+            $request,
+            'units',
+            (int) ($existing->pool_id ?? 0),
+            $id <= 0,
+        );
+        if ($targetPoolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
+        }
 
         $duplicate = DB::table('units')
             ->whereRaw('UPPER(nopol) = ?', [$nopol])
             ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'tenant_id');
             })
+            ->when(Schema::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
             ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
             ->exists();
 
@@ -3540,15 +3713,18 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             $query = DB::table('units')->where('id', $id);
-            if (Schema::hasColumn('units', 'tenant_id')) {
-                PoolScope::applyTenantScope($query, 'tenant_id');
+            $this->applyWriteTenantScopeIfExists($query, 'units');
+            $this->applyPoolScopeIfExists($query, 'units');
+            $updated = $query->update(array_merge($payload, $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null)));
+
+            if ($updated === 0) {
+                return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
             }
-            $query->update($payload);
 
             return $this->ok(['message' => 'Unit updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), [
+        $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null), [
             'created_at' => now(),
         ]));
 
@@ -3614,11 +3790,21 @@ class AdminOpsApiController extends Controller
 
     public function unitsDelete(int $id): JsonResponse
     {
+        $unitQuery = DB::table('units')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
+        $this->applyPoolScopeIfExists($unitQuery, 'units');
+        if (! $unitQuery->exists()) {
+            return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
+        }
+
         DB::table('schedules')->where('unit_id', $id)->update(['unit_id' => null]);
         DB::table('drivers')->where('unit_id', $id)->update(['unit_id' => null]);
         DB::table('charters')->where('unit_id', $id)->update(['unit_id' => null]);
         DB::table('luggages')->where('unit_id', $id)->update(['unit_id' => null]);
-        DB::table('units')->where('id', $id)->delete();
+        $delete = DB::table('units')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($delete, 'units');
+        $this->applyPoolScopeIfExists($delete, 'units');
+        $delete->delete();
 
         return $this->ok(['message' => 'Unit deleted.']);
     }
@@ -3633,6 +3819,9 @@ class AdminOpsApiController extends Controller
             ->select('category')
             ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'units.tenant_id');
+            })
+            ->when(Schema::hasColumn('units', 'pool_id'), function (Builder $q): void {
+                $this->applyPoolScopeIfExists($q, 'units');
             })
             ->whereNotNull('category')
             ->whereRaw('TRIM(category) <> ?', [''])
@@ -3662,6 +3851,7 @@ class AdminOpsApiController extends Controller
             })
             ->select($this->armadaSelectColumns())
             ->orderBy('nopol');
+        $this->applyPoolScopeIfExists($query, 'armadas');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -3698,8 +3888,15 @@ class AdminOpsApiController extends Controller
             $rows = $query->get();
         }
 
+        $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $rows = $rows
-            ->map(fn ($row) => $this->withArmadaFinancials($row, $financials))
+            ->map(function ($row) use ($financials, $poolNames) {
+                $row = $this->withArmadaFinancials($row, $financials);
+                $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
+                $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
+
+                return $row;
+            })
             ->values();
 
         return $this->ok([
@@ -3726,6 +3923,7 @@ class AdminOpsApiController extends Controller
             'fixed_cost' => '0',
             'target_bulanan' => '0',
             'target_tahunan' => '0',
+            'pool_id' => 'NULL',
         ];
 
         return collect($columnDefaults)
@@ -3744,6 +3942,7 @@ class AdminOpsApiController extends Controller
 
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
             'merk' => ['nullable', 'string', 'max:120'],
             'tahun' => ['nullable', 'integer', 'min:0', 'max:2100'],
             'warna' => ['nullable', 'string', 'max:80'],
@@ -3762,6 +3961,27 @@ class AdminOpsApiController extends Controller
         ]);
 
         $id = (int) ($data['id'] ?? 0);
+        $existing = null;
+        if ($id > 0) {
+            $existingQuery = DB::table('armadas')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($existingQuery, 'armadas');
+            $this->applyPoolScopeIfExists($existingQuery, 'armadas');
+            $existing = $existingQuery->first(['id', 'pool_id']);
+
+            if (! $existing) {
+                return $this->error('Armada tidak ditemukan untuk pool aktif.', 404);
+            }
+        }
+
+        $targetPoolId = $this->resolveWritablePoolIdFromRequest(
+            $request,
+            'armadas',
+            (int) ($existing->pool_id ?? 0),
+            $id <= 0,
+        );
+        if ($targetPoolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
+        }
 
         if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('armadas', 'tenant_id')) {
             if (! FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id')) {
@@ -3806,12 +4026,12 @@ class AdminOpsApiController extends Controller
         }
 
         $payload = $this->filterPayloadColumns('armadas', $payload);
+        $payload = array_merge($payload, $this->poolPayload('armadas', $targetPoolId > 0 ? $targetPoolId : null));
 
         if ($id > 0) {
             $query = DB::table('armadas')->where('id', $id);
-            if (Schema::hasColumn('armadas', 'tenant_id')) {
-                PoolScope::applyTenantScope($query, 'tenant_id');
-            }
+            $this->applyWriteTenantScopeIfExists($query, 'armadas');
+            $this->applyPoolScopeIfExists($query, 'armadas');
             $updated = $query->update($payload);
 
             if ($updated === 0) {
@@ -3846,9 +4066,8 @@ class AdminOpsApiController extends Controller
         }
 
         $armadaQuery = DB::table('armadas')->where('id', $id);
-        if (Schema::hasColumn('armadas', 'tenant_id')) {
-            PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
-        }
+        $this->applyWriteTenantScopeIfExists($armadaQuery, 'armadas');
+        $this->applyPoolScopeIfExists($armadaQuery, 'armadas');
 
         $nopol = (string) ($armadaQuery->value('nopol') ?? '');
         if ($nopol === '') {
@@ -3881,9 +4100,8 @@ class AdminOpsApiController extends Controller
         }
 
         $deleteQuery = DB::table('armadas')->where('id', $id);
-        if (Schema::hasColumn('armadas', 'tenant_id')) {
-            PoolScope::applyTenantScope($deleteQuery, 'tenant_id');
-        }
+        $this->applyWriteTenantScopeIfExists($deleteQuery, 'armadas');
+        $this->applyPoolScopeIfExists($deleteQuery, 'armadas');
         $deleteQuery->delete();
 
         return $this->ok(['message' => 'Armada deleted.']);
@@ -3899,6 +4117,7 @@ class AdminOpsApiController extends Controller
         if (Schema::hasColumn('armadas', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
+        $this->applyPoolScopeIfExists($query, 'armadas');
 
         $row = $query->first($this->armadaSelectColumns());
 
@@ -3910,7 +4129,12 @@ class AdminOpsApiController extends Controller
         $monthEnd = now()->endOfMonth()->toDateString();
         $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
 
-        return $this->ok(['armada' => $this->withArmadaFinancials($row, $financials)]);
+        $row = $this->withArmadaFinancials($row, $financials);
+        $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
+        $poolNames = $this->poolNameMap([$row->pool_id ?? 0]);
+        $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
+
+        return $this->ok(['armada' => $row]);
     }
 
     public function poolSwitch(Request $request): JsonResponse
@@ -5920,6 +6144,7 @@ class AdminOpsApiController extends Controller
             'd.nama',
             'd.phone',
             'd.unit_id',
+            Schema::hasColumn('drivers', 'pool_id') ? 'd.pool_id' : DB::raw('NULL as pool_id'),
             $this->hasDriversTargetRevenueBulananColumn() ? 'd.target_revenue_bulanan' : DB::raw('0 as target_revenue_bulanan'),
             $this->hasDriversTargetRevenueTahunanColumn() ? 'd.target_revenue_tahunan' : DB::raw('0 as target_revenue_tahunan'),
             $this->hasDriversRevenueColumn() ? 'd.revenue' : DB::raw('0 as revenue'),
@@ -5951,8 +6176,12 @@ class AdminOpsApiController extends Controller
             ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'd.tenant_id');
             })
+            ->when(Schema::hasColumn('drivers', 'pool_id'), function (Builder $q): void {
+                $this->applyPoolScopeIfExists($q, 'drivers', 'd');
+            })
             ->orderBy('d.nama')
             ->get($select);
+        $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
 
         $scheduleBopMap = $this->scheduleBopMap();
         $bookingRevenueMap = $this->bookingRevenueByTripForDateRange($monthStart, $monthEnd);
@@ -5962,14 +6191,23 @@ class AdminOpsApiController extends Controller
         $assignmentRows = DB::table('trip_assignments')
             ->whereNotNull('driver_id')
             ->whereBetween('tanggal', [$monthStart, $monthEnd])
+            ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                PoolScope::applyTenantScope($query, 'trip_assignments.tenant_id');
+            })
             ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
                 $query->where(function (Builder $statusQuery) {
                     $statusQuery
                         ->whereNull('status')
                         ->orWhere('status', '!=', 'canceled');
                 });
-            })
-            ->get(['driver_id', 'rute', 'tanggal', 'jam', 'unit']);
+            });
+        $this->applyPoolOrRouteScopeToQuery(
+            $assignmentRows,
+            Schema::hasColumn('trip_assignments', 'pool_id') ? 'trip_assignments.pool_id' : '',
+            Schema::hasColumn('trip_assignments', 'route_id') ? 'trip_assignments.route_id' : '',
+            'trip_assignments.rute',
+        );
+        $assignmentRows = $assignmentRows->get(['driver_id', 'rute', 'tanggal', 'jam', 'unit']);
 
         foreach ($assignmentRows as $assignment) {
             $driverId = (int) ($assignment->driver_id ?? 0);
@@ -6008,6 +6246,12 @@ class AdminOpsApiController extends Controller
             $luggageRows = DB::table('luggages as l')
                 ->join('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id')
                 ->whereBetween(DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal)'), [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'l.tenant_id');
+                })
+                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 't.tenant_id');
+                })
                 ->where(function (Builder $query) {
                     $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageRevenueStatuses());
                 })
@@ -6021,7 +6265,14 @@ class AdminOpsApiController extends Controller
                 ->select([
                     't.driver_id',
                     DB::raw('SUM(COALESCE(l.price, 0)) as total_price'),
-                ])
+                ]);
+            $this->applyPoolOrRouteScopeToQuery(
+                $luggageRows,
+                $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                'l.rute',
+            );
+            $luggageRows = $luggageRows
                 ->groupBy('t.driver_id')
                 ->get();
 
@@ -6038,16 +6289,20 @@ class AdminOpsApiController extends Controller
         $charterRevenueByDriverName = [];
         $charterBopByDriverName = [];
         $hasCharterStatus = $this->chartersHasStatusColumn();
-        $charterRows = DB::table('charters')
-            ->whereBetween('start_date', [$monthStart, $monthEnd])
-            ->get([
-                'driver_name',
-                'price',
-                'bop_price',
-                'payment_status',
-                'bop_status',
-                $hasCharterStatus ? 'status' : DB::raw('NULL as status'),
-            ]);
+        $charterQuery = DB::table('charters as c')
+            ->whereBetween('c.start_date', [$monthStart, $monthEnd])
+            ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'c.tenant_id');
+            });
+        $this->applyCharterPoolScope($charterQuery);
+        $charterRows = $charterQuery->get([
+            'c.driver_name',
+            'c.price',
+            'c.bop_price',
+            'c.payment_status',
+            'c.bop_status',
+            $hasCharterStatus ? DB::raw('c.status as status') : DB::raw('NULL as status'),
+        ]);
 
         foreach ($charterRows as $charter) {
             $driverKey = $this->normalizeDriverName((string) ($charter->driver_name ?? ''));
@@ -6083,6 +6338,8 @@ class AdminOpsApiController extends Controller
             $payload['id'] = $driverId;
             $payload['unit_id'] = $payload['unit_id'] !== null ? (int) $payload['unit_id'] : null;
             $payload['armada_id'] = $payload['armada_id'] !== null ? (int) $payload['armada_id'] : null;
+            $payload['pool_id'] = (int) ($payload['pool_id'] ?? 0) ?: null;
+            $payload['pool_name'] = $payload['pool_id'] ? ($poolNames[$payload['pool_id']] ?? null) : null;
             $payload['target_revenue_bulanan'] = (float) ($payload['target_revenue_bulanan'] ?? 0);
             $payload['fixed_cost'] = (float) ($payload['fixed_cost'] ?? 0);
             $payload['nopol'] = (string) ($payload['nopol'] ?? '');
@@ -6111,6 +6368,7 @@ class AdminOpsApiController extends Controller
         $cacheKey = implode(':', [
             'adminops',
             'schedule-bop-map',
+            PoolScope::cacheKey(),
             $this->buildTableMutationSignature('schedules'),
         ]);
 
@@ -6119,8 +6377,9 @@ class AdminOpsApiController extends Controller
             $rows = DB::table('schedules')
                 ->when(Schema::hasColumn('schedules', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'schedules.tenant_id');
-                })
-                ->get(['rute', 'dow', 'jam', 'bop']);
+                });
+            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '', 'schedules.rute');
+            $rows = $rows->get(['rute', 'dow', 'jam', 'bop']);
 
             foreach ($rows as $row) {
                 $key = $this->driverScheduleBopKey(
@@ -6152,6 +6411,7 @@ class AdminOpsApiController extends Controller
         $cacheKey = implode(':', [
             'adminops',
             'booking-trip-revenue',
+            PoolScope::cacheKey(),
             $monthStart,
             $monthEnd,
             $this->buildTableMutationSignature('bookings'),
@@ -6166,7 +6426,9 @@ class AdminOpsApiController extends Controller
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
                 ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'bookings.tenant_id');
-                })
+                });
+            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('bookings', 'route_id') ? 'bookings.route_id' : '', 'bookings.rute');
+            $rows = $rows
                 ->groupBy('rute', 'tanggal', 'jam', 'unit')
                 ->get();
 
@@ -6540,8 +6802,14 @@ class AdminOpsApiController extends Controller
                             ->whereNull('t.status')
                             ->orWhere('t.status', '!=', 'canceled');
                     });
-                })
-                ->get($assignmentSelect);
+                });
+            $this->applyPoolOrRouteScopeToQuery(
+                $assignmentRows,
+                Schema::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
+                Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+                't.rute',
+            );
+            $assignmentRows = $assignmentRows->get($assignmentSelect);
 
             foreach ($assignmentRows as $assignment) {
                 $nopolKey = $this->normalizeNopol((string) ($assignment->armada_nopol ?? ''));
@@ -6606,6 +6874,9 @@ class AdminOpsApiController extends Controller
                 ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'l.tenant_id');
                 })
+                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 't.tenant_id');
+                })
                 ->where(function (Builder $query) {
                     $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageRevenueStatuses());
                 })
@@ -6615,8 +6886,14 @@ class AdminOpsApiController extends Controller
                             ->whereNull('t.status')
                             ->orWhere('t.status', '!=', 'canceled');
                     });
-                })
-                ->get($luggageSelect);
+                });
+            $this->applyPoolOrRouteScopeToQuery(
+                $luggageRows,
+                $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                'l.rute',
+            );
+            $luggageRows = $luggageRows->get($luggageSelect);
 
             foreach ($luggageRows as $luggage) {
                 $nopolKey = $this->normalizeNopol((string) ($luggage->armada_nopol ?? ''));
@@ -6663,8 +6940,9 @@ class AdminOpsApiController extends Controller
                 ->whereBetween('c.start_date', [$monthStart, $monthEnd])
                 ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'c.tenant_id');
-                })
-                ->get($charterSelect);
+                });
+            $this->applyCharterPoolScope($charterRows);
+            $charterRows = $charterRows->get($charterSelect);
 
             foreach ($charterRows as $charter) {
                 $nopolKey = $this->normalizeNopol((string) ($charter->armada_nopol ?? ''));
@@ -7018,7 +7296,23 @@ class AdminOpsApiController extends Controller
         $resolvedPoolId = $poolId ?? $this->currentPoolContextId();
         if ($resolvedPoolId > 0) {
             $query->where($prefix.'pool_id', $resolvedPoolId);
+
+            return;
         }
+
+        $scope = PoolScope::forCurrentUser(0, auth()->id());
+        if ($scope['all'] ?? true) {
+            return;
+        }
+
+        $poolIds = array_values(array_map('intval', $scope['pool_ids'] ?? []));
+        if ($poolIds === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereIn($prefix.'pool_id', $poolIds);
     }
 
     private function applyWriteTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
@@ -7067,6 +7361,56 @@ class AdminOpsApiController extends Controller
         $resolvedPoolId = $poolId ?? $this->writablePoolContextId();
 
         return ['pool_id' => $resolvedPoolId > 0 ? $resolvedPoolId : null];
+    }
+
+    private function resolveWritablePoolIdFromRequest(Request $request, string $table, int $existingPoolId = 0, bool $isCreate = false): int
+    {
+        if (! Schema::hasColumn($table, 'pool_id')) {
+            return 0;
+        }
+
+        $activePoolId = (int) session('active_pool_id', 0);
+        $requestedPoolId = (int) $request->input('pool_id', 0);
+
+        if ($activePoolId > 0) {
+            return PoolScope::canAccessPool($activePoolId, auth()->id()) ? $activePoolId : -1;
+        }
+
+        if ($requestedPoolId > 0) {
+            return PoolScope::canAccessPool($requestedPoolId, auth()->id()) ? $requestedPoolId : -1;
+        }
+
+        if (! $isCreate && $existingPoolId > 0) {
+            return PoolScope::canAccessPool($existingPoolId, auth()->id()) ? $existingPoolId : -1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param  array<int, int>  $poolIds
+     * @return array<int, string>
+     */
+    private function poolNameMap(array $poolIds): array
+    {
+        $poolIds = array_values(array_unique(array_filter(array_map('intval', $poolIds), static fn (int $id): bool => $id > 0)));
+        if ($poolIds === [] || ! Schema::hasTable('pools')) {
+            return [];
+        }
+
+        return DB::table('pools')
+            ->whereIn('id', $poolIds)
+            ->pluck('name', 'id')
+            ->mapWithKeys(static fn ($name, $id): array => [(int) $id => (string) $name])
+            ->all();
+    }
+
+    private function poolResolveErrorMessage(int $code): string
+    {
+        return match ($code) {
+            -1 => 'Pool tidak ditemukan atau Anda tidak memiliki akses.',
+            default => 'Pilih pool terlebih dahulu saat mode Semua Pool.',
+        };
     }
 
     private function defaultTenantId(): int
