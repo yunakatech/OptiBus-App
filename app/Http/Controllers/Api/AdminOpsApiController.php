@@ -4404,7 +4404,9 @@ class AdminOpsApiController extends Controller
         if (Schema::hasColumn('armadas', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
-        $this->applyPoolScopeIfExists($query, 'armadas', '', $poolId > 0 ? $poolId : 0);
+        if ($poolId > 0) {
+            $this->applyPoolScopeIfExists($query, 'armadas', '', $poolId);
+        }
 
         $row = $query->first($this->armadaSelectColumns());
 
