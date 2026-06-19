@@ -4420,6 +4420,7 @@ class AdminOpsApiController extends Controller
         $poolNames = $this->poolNameMap([$row->pool_id ?? 0]);
         $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
         $row->driver_name = $driverNames['by_id'][(int) ($row->id ?? 0)] ?? $driverNames['by_nopol'][$this->normalizeNopol((string) ($row->nopol ?? ''))] ?? null;
+        $row->monthly = $this->armadaMonthlyDetailForPeriod($row, $monthStart, $monthEnd, $poolId);
 
         return $this->ok(['armada' => $row]);
     }
@@ -7742,6 +7743,313 @@ XML;
         $row->bop = (float) ($bucket['bop'] ?? 0);
 
         return $row;
+    }
+
+    /**
+     * @return array{
+     *     summary: array{
+     *         period: string,
+     *         period_label: string,
+     *         charter_count: int,
+     *         departure_count: int,
+     *         luggage_count: int,
+     *         charter_revenue: float,
+     *         departure_revenue: float,
+     *         luggage_revenue: float,
+     *         total_revenue: float,
+     *         charter_bop: float,
+     *         departure_bop: float,
+     *         total_bop: float,
+     *         gross: float,
+     *         fixed_cost: float,
+     *         net_margin: float,
+     *         target_revenue: float,
+     *         achievement: float,
+     *         status: string
+     *     },
+     *     bookings: array<int, array<string, mixed>>,
+     *     charters: array<int, array<string, mixed>>,
+     *     bagasi: array<int, array<string, mixed>>
+     * }
+     */
+    private function armadaMonthlyDetailForPeriod(object $armada, string $monthStart, string $monthEnd, int $poolId = 0): array
+    {
+        $armadaId = (int) ($armada->id ?? 0);
+        $armadaNopol = strtoupper(trim((string) ($armada->nopol ?? '')));
+        $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
+        $bucket = $financials[$this->normalizeNopol($armadaNopol)] ?? $this->emptyFinancialBucket();
+
+        $charterRevenue = (float) ($bucket['charter_revenue'] ?? 0);
+        $departureRevenue = (float) ($bucket['departure_revenue'] ?? 0);
+        $luggageRevenue = (float) ($bucket['luggage_revenue'] ?? 0);
+        $totalRevenue = (float) ($bucket['revenue'] ?? 0);
+        $charterBop = (float) ($bucket['charter_bop'] ?? 0);
+        $departureBop = (float) ($bucket['departure_bop'] ?? 0);
+        $totalBop = (float) ($bucket['bop'] ?? 0);
+        $gross = $totalRevenue - $totalBop;
+        $fixedCost = (float) ($armada->fixed_cost ?? 0);
+        $netMargin = $gross - $fixedCost;
+        $targetRevenue = (float) ($armada->target_bulanan ?? 0);
+        $achievement = $targetRevenue > 0 ? ($totalRevenue / $targetRevenue) * 100 : 0.0;
+
+        $bookings = [];
+        if (Schema::hasTable('bookings') && Schema::hasTable('trip_assignments')) {
+            $bookingQuery = DB::table('bookings as b')
+                ->join('trip_assignments as t', function ($join): void {
+                    $join->on('b.rute', '=', 't.rute')
+                        ->on('b.tanggal', '=', 't.tanggal')
+                        ->on('b.jam', '=', 't.jam')
+                        ->on('b.unit', '=', 't.unit');
+                })
+                ->whereBetween('b.tanggal', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 'b.tenant_id');
+                })
+                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 't.tenant_id');
+                });
+            $this->applyPoolOrRouteScopeToQuery(
+                $bookingQuery,
+                Schema::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
+                Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+                't.rute',
+                $poolId,
+            );
+            $this->applyArmadaMatchFilter($bookingQuery, 'trip_assignments', 't', $armadaId, $armadaNopol);
+            $this->applyNotCanceledFilter($bookingQuery, 'b.status');
+
+            $bookings = $bookingQuery
+                ->orderByDesc('b.tanggal')
+                ->orderByDesc('b.jam')
+                ->orderByDesc('b.id')
+                ->get([
+                    'b.id',
+                    'b.tanggal',
+                    'b.jam',
+                    'b.rute',
+                    'b.unit',
+                    'b.seat',
+                    'b.name',
+                    'b.phone',
+                    'b.pickup_point',
+                    'b.pembayaran',
+                    'b.status',
+                    'b.price',
+                    'b.discount',
+                ])
+                ->map(static fn (object $row): array => [
+                    'id' => (int) $row->id,
+                    'tanggal' => (string) ($row->tanggal ?? ''),
+                    'jam' => substr((string) ($row->jam ?? ''), 0, 5),
+                    'rute' => (string) ($row->rute ?? ''),
+                    'unit' => (int) ($row->unit ?? 0),
+                    'seat' => (string) ($row->seat ?? ''),
+                    'name' => (string) ($row->name ?? ''),
+                    'phone' => (string) ($row->phone ?? ''),
+                    'pickup_point' => (string) ($row->pickup_point ?? ''),
+                    'pembayaran' => (string) ($row->pembayaran ?? ''),
+                    'status' => (string) ($row->status ?? ''),
+                    'total' => max(0.0, (float) ($row->price ?? 0) - (float) ($row->discount ?? 0)),
+                ])
+                ->values()
+                ->all();
+        }
+
+        $charters = [];
+        if (Schema::hasTable('charters')) {
+            $charterQuery = DB::table('charters as c')
+                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 'c.tenant_id');
+                })
+                ->whereBetween('c.start_date', [$monthStart, $monthEnd]);
+            $this->applyCharterPoolScope($charterQuery, $poolId);
+            $this->applyArmadaMatchFilter($charterQuery, 'charters', 'c', $armadaId, $armadaNopol);
+            $this->applyActiveCharterReportFilter($charterQuery, 'c');
+
+            $hasArmadaNopol = $this->chartersHasArmadaNopolColumn();
+            $canJoinArmadas = $this->chartersHasArmadaIdColumn() && Schema::hasTable('armadas');
+
+            $charterSelect = [
+                'c.id',
+                'c.start_date',
+                'c.end_date',
+                'c.departure_time',
+                'c.name',
+                'c.phone',
+                'c.pickup_point',
+                'c.drop_point',
+                'c.layanan',
+                'c.payment_status',
+                'c.bop_status',
+                DB::raw($this->chartersHasStatusColumn() ? 'c.status as status' : 'NULL as status'),
+                'c.price',
+                'c.bop_price',
+                'c.driver_name',
+            ];
+
+            if ($hasArmadaNopol && $canJoinArmadas) {
+                $charterSelect[] = DB::raw('COALESCE(c.armada_nopol, a.nopol) as armada_nopol');
+                $charterQuery->leftJoin('armadas as a', 'c.armada_id', '=', 'a.id');
+            } elseif ($hasArmadaNopol) {
+                $charterSelect[] = 'c.armada_nopol';
+            } elseif ($canJoinArmadas) {
+                $charterSelect[] = DB::raw('a.nopol as armada_nopol');
+                $charterQuery->leftJoin('armadas as a', 'c.armada_id', '=', 'a.id');
+            } else {
+                $charterSelect[] = DB::raw('NULL as armada_nopol');
+            }
+
+            $charters = $charterQuery
+                ->orderByDesc('c.start_date')
+                ->orderByDesc('c.id')
+                ->get($charterSelect)
+                ->map(static fn (object $row): array => [
+                    'id' => (int) $row->id,
+                    'start_date' => (string) ($row->start_date ?? ''),
+                    'end_date' => (string) ($row->end_date ?? ''),
+                    'departure_time' => (string) ($row->departure_time ?? ''),
+                    'name' => (string) ($row->name ?? ''),
+                    'phone' => (string) ($row->phone ?? ''),
+                    'pickup_point' => (string) ($row->pickup_point ?? ''),
+                    'drop_point' => (string) ($row->drop_point ?? ''),
+                    'layanan' => (string) ($row->layanan ?? ''),
+                    'payment_status' => (string) ($row->payment_status ?? ''),
+                    'bop_status' => (string) ($row->bop_status ?? ''),
+                    'status' => $this->chartersHasStatusColumn() ? (string) ($row->status ?? '') : ((string) ($row->payment_status ?? '') === 'Canceled' ? 'canceled' : 'active'),
+                    'armada_nopol' => (string) ($row->armada_nopol ?? ''),
+                    'driver_name' => (string) ($row->driver_name ?? ''),
+                    'total' => (float) ($row->price ?? 0),
+                    'bop' => (float) ($row->bop_price ?? 0),
+                ])
+                ->values()
+                ->all();
+        }
+
+        $bagasi = [];
+        if (Schema::hasTable('luggages') && Schema::hasTable('trip_assignments')) {
+            $luggageQuery = DB::table('luggages as l')
+                ->join('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id')
+                ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id')
+                ->whereBetween(DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal)'), [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 'l.tenant_id');
+                })
+                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 't.tenant_id');
+                });
+            $this->applyPoolOrRouteScopeToQuery(
+                $luggageQuery,
+                $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                'l.rute',
+                $poolId,
+            );
+            $this->applyArmadaMatchFilter($luggageQuery, 'trip_assignments', 't', $armadaId, $armadaNopol);
+            $this->applyLuggageStatusFilter($luggageQuery, 'l.status', $this->luggageRevenueStatuses());
+
+            $bagasi = $luggageQuery
+                ->orderByDesc('l.created_at')
+                ->orderByDesc('l.id')
+                ->get([
+                    'l.id',
+                    DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal) as tanggal'),
+                    'l.created_at',
+                    'l.kode_resi',
+                    'l.sender_name',
+                    'l.receiver_name',
+                    'l.quantity',
+                    'l.payment_status',
+                    'l.status',
+                    'l.price',
+                    DB::raw('s.name as service_name'),
+                    DB::raw('t.tanggal as departure_date'),
+                    DB::raw('t.jam as departure_time'),
+                    DB::raw('t.unit as departure_unit'),
+                ])
+                ->map(static fn (object $row): array => [
+                    'id' => (int) $row->id,
+                    'tanggal' => (string) ($row->tanggal ?? ''),
+                    'created_at' => (string) ($row->created_at ?? ''),
+                    'kode_resi' => (string) ($row->kode_resi ?? ''),
+                    'sender_name' => (string) ($row->sender_name ?? ''),
+                    'receiver_name' => (string) ($row->receiver_name ?? ''),
+                    'quantity' => (int) ($row->quantity ?? 0),
+                    'payment_status' => (string) ($row->payment_status ?? ''),
+                    'status' => (string) ($row->status ?? ''),
+                    'service_name' => (string) ($row->service_name ?? ''),
+                    'total' => (float) ($row->price ?? 0),
+                    'departure_date' => (string) ($row->departure_date ?? ''),
+                    'departure_time' => substr((string) ($row->departure_time ?? ''), 0, 5),
+                    'departure_unit' => (int) ($row->departure_unit ?? 0),
+                ])
+                ->values()
+                ->all();
+        }
+
+        $period = Carbon::createFromFormat('Y-m-d', $monthStart)->format('Y-m');
+        $periodLabel = Carbon::createFromFormat('Y-m-d', $monthStart)
+            ->locale('id')
+            ->translatedFormat('F Y');
+
+        return [
+            'summary' => [
+                'period' => $period,
+                'period_label' => $periodLabel,
+                'charter_count' => count($charters),
+                'departure_count' => count($bookings),
+                'luggage_count' => count($bagasi),
+                'charter_revenue' => $charterRevenue,
+                'departure_revenue' => $departureRevenue,
+                'luggage_revenue' => $luggageRevenue,
+                'total_revenue' => $totalRevenue,
+                'charter_bop' => $charterBop,
+                'departure_bop' => $departureBop,
+                'total_bop' => $totalBop,
+                'gross' => $gross,
+                'fixed_cost' => $fixedCost,
+                'net_margin' => $netMargin,
+                'target_revenue' => $targetRevenue,
+                'achievement' => $achievement,
+                'status' => $achievement >= 100 ? 'Tercapai' : 'Kurang',
+            ],
+            'bookings' => $bookings,
+            'charters' => $charters,
+            'bagasi' => $bagasi,
+        ];
+    }
+
+    private function applyArmadaMatchFilter(Builder $query, string $table, string $alias, int $armadaId, string $armadaNopol): void
+    {
+        $hasArmadaId = Schema::hasColumn($table, 'armada_id');
+        $hasArmadaNopol = Schema::hasColumn($table, 'armada_nopol');
+
+        if (! $hasArmadaId && ! $hasArmadaNopol) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $matchQuery) use ($alias, $armadaId, $armadaNopol, $hasArmadaId, $hasArmadaNopol): void {
+            $applied = false;
+
+            if ($armadaId > 0 && $hasArmadaId) {
+                $matchQuery->where($alias.'.armada_id', $armadaId);
+                $applied = true;
+            }
+
+            if ($armadaNopol !== '' && $hasArmadaNopol) {
+                if ($applied) {
+                    $matchQuery->orWhereRaw('UPPER(COALESCE('.$alias.'.armada_nopol, \'\')) = ?', [$armadaNopol]);
+                } else {
+                    $matchQuery->whereRaw('UPPER(COALESCE('.$alias.'.armada_nopol, \'\')) = ?', [$armadaNopol]);
+                }
+                $applied = true;
+            }
+
+            if (! $applied) {
+                $matchQuery->whereRaw('1 = 0');
+            }
+        });
     }
 
     /**
