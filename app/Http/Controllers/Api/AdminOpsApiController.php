@@ -531,10 +531,16 @@ class AdminOpsApiController extends Controller
 
     public function driversIndex(Request $request): JsonResponse
     {
-        $monthStart = now()->startOfMonth()->toDateString();
-        $monthEnd = now()->endOfMonth()->toDateString();
-        $rows = collect($this->driverRowsForMonth($monthStart, $monthEnd));
-        $q = trim((string) $request->query('q', ''));
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'pool_id' => ['nullable', 'integer', 'min:0'],
+            'period' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $q = trim((string) ($validated['q'] ?? ''));
+        $poolId = (int) ($validated['pool_id'] ?? 0);
+        [$monthStart, $monthEnd] = $this->driverPeriodBounds($validated['period'] ?? null);
+        $rows = collect($this->driverRowsForMonth($monthStart, $monthEnd, $poolId));
 
         if ($q !== '') {
             $needle = mb_strtolower($q);
@@ -549,7 +555,7 @@ class AdminOpsApiController extends Controller
         }
 
         if (! $request->boolean('paginate')) {
-            return $this->ok(['drivers' => $rows]);
+            return $this->ok(['drivers' => $rows, 'pagination' => null]);
         }
 
         [$page, $perPage] = $this->paginationParams($request);
@@ -561,6 +567,69 @@ class AdminOpsApiController extends Controller
                 ->values(),
             'pagination' => $pagination,
         ]);
+    }
+
+    public function driversExport(Request $request): StreamedResponse
+    {
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'pool_id' => ['nullable', 'integer', 'min:0'],
+            'period' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $q = trim((string) ($validated['q'] ?? ''));
+        $poolId = (int) ($validated['pool_id'] ?? 0);
+        [$monthStart, $monthEnd, $period] = $this->driverPeriodBounds($validated['period'] ?? null, true);
+
+        $rows = collect($this->driverRowsForMonth($monthStart, $monthEnd, $poolId));
+        if ($q !== '') {
+            $needle = mb_strtolower($q);
+            $rows = $rows
+                ->filter(static fn (array $row): bool => str_contains(mb_strtolower(implode(' ', [
+                    (string) ($row['nama'] ?? ''),
+                    (string) ($row['phone'] ?? ''),
+                    (string) ($row['nopol'] ?? ''),
+                    (string) ($row['pool_name'] ?? ''),
+                ])), $needle))
+                ->values();
+        }
+
+        $exportRows = $rows->map(function (array $row): array {
+            $revenue = (float) ($row['revenue'] ?? 0);
+            $bop = (float) ($row['bop'] ?? 0);
+            $fixedCost = (float) ($row['fixed_cost'] ?? 0);
+            $gross = $revenue - $bop;
+            $net = $gross - $fixedCost;
+            $target = (float) ($row['target_revenue_bulanan'] ?? 0);
+            $achievement = $target > 0 ? ($revenue / $target) * 100 : 0;
+
+            return [
+                'Nama Driver' => (string) ($row['nama'] ?? ''),
+                'Kontak' => (string) ($row['phone'] ?? ''),
+                'Nopol Armada' => (string) ($row['nopol'] ?? ''),
+                'Pool/Wilayah' => (string) ($row['pool_name'] ?? ''),
+                'Keberangkatan Rit' => (int) ($row['departure_count'] ?? 0),
+                'Charter Revenue' => (float) ($row['charter_revenue'] ?? 0),
+                'Keberangkatan Revenue' => (float) ($row['departure_revenue'] ?? 0),
+                'Bagasi Revenue' => (float) ($row['luggage_revenue'] ?? 0),
+                'Total Revenue' => $revenue,
+                'Charter BOP' => (float) ($row['charter_bop'] ?? 0),
+                'Keberangkatan BOP' => (float) ($row['departure_bop'] ?? 0),
+                'Total BOP' => $bop,
+                'Gross' => $gross,
+                'Fixed Cost' => $fixedCost,
+                'Net Margin' => $net,
+                'Target Revenue' => $target,
+                'Achievement' => $achievement,
+            ];
+        })->all();
+
+        $filename = 'driver-report-'.$period.'.xlsx';
+        $xlsx = $this->buildDriversXlsx($exportRows, $period);
+
+        return response()->streamDownload(function () use ($xlsx): void {
+            echo $xlsx;
+        }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
 
     public function driversSave(Request $request): JsonResponse
@@ -6496,7 +6565,7 @@ class AdminOpsApiController extends Controller
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function driverRowsForMonth(string $monthStart, string $monthEnd): array
+    private function driverRowsForMonth(string $monthStart, string $monthEnd, int $poolId = 0): array
     {
         $hasDriverArmadaId = $this->driversHasArmadaId();
         $hasDriverArmadaNopol = $this->driversHasArmadaNopol();
@@ -6539,18 +6608,19 @@ class AdminOpsApiController extends Controller
             ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'd.tenant_id');
             })
-            ->when(Schema::hasColumn('drivers', 'pool_id'), function (Builder $q): void {
-                $this->applyPoolScopeIfExists($q, 'drivers', 'd');
+            ->when(Schema::hasColumn('drivers', 'pool_id'), function (Builder $q) use ($poolId): void {
+                $this->applyPoolScopeIfExists($q, 'drivers', 'd', $poolId > 0 ? $poolId : null);
             })
             ->orderBy('d.nama')
             ->get($select);
         $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
 
-        $scheduleBopMap = $this->scheduleBopMap();
-        $bookingRevenueMap = $this->bookingRevenueByTripForDateRange($monthStart, $monthEnd);
+        $scheduleBopMap = $this->scheduleBopMap($poolId);
+        $bookingRevenueMap = $this->bookingRevenueByTripForDateRange($monthStart, $monthEnd, $poolId);
 
         $departureRevenueByDriver = [];
         $departureBopByDriver = [];
+        $departureCountByDriver = [];
         $assignmentRows = DB::table('trip_assignments')
             ->whereNotNull('driver_id')
             ->whereBetween('tanggal', [$monthStart, $monthEnd])
@@ -6569,6 +6639,7 @@ class AdminOpsApiController extends Controller
             Schema::hasColumn('trip_assignments', 'pool_id') ? 'trip_assignments.pool_id' : '',
             Schema::hasColumn('trip_assignments', 'route_id') ? 'trip_assignments.route_id' : '',
             'trip_assignments.rute',
+            $poolId,
         );
         $assignmentRows = $assignmentRows->get(['driver_id', 'rute', 'tanggal', 'jam', 'unit']);
 
@@ -6602,6 +6673,7 @@ class AdminOpsApiController extends Controller
                 + (float) ($bookingRevenueMap[$revenueKey] ?? 0);
             $departureBopByDriver[$driverId] = (float) ($departureBopByDriver[$driverId] ?? 0)
                 + (float) ($scheduleBopMap[$scheduleKey] ?? 0);
+            $departureCountByDriver[$driverId] = (int) ($departureCountByDriver[$driverId] ?? 0) + 1;
         }
 
         $luggageRevenueByDriver = [];
@@ -6634,6 +6706,7 @@ class AdminOpsApiController extends Controller
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
                 Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
                 'l.rute',
+                $poolId,
             );
             $luggageRows = $luggageRows
                 ->groupBy('t.driver_id')
@@ -6657,7 +6730,7 @@ class AdminOpsApiController extends Controller
             ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'c.tenant_id');
             });
-        $this->applyCharterPoolScope($charterQuery);
+        $this->applyCharterPoolScope($charterQuery, $poolId);
         $charterRows = $charterQuery->get([
             'c.driver_name',
             'c.price',
@@ -6706,6 +6779,7 @@ class AdminOpsApiController extends Controller
             $payload['target_revenue_bulanan'] = (float) ($payload['target_revenue_bulanan'] ?? 0);
             $payload['fixed_cost'] = (float) ($payload['fixed_cost'] ?? 0);
             $payload['nopol'] = (string) ($payload['nopol'] ?? '');
+            $payload['departure_count'] = (int) ($departureCountByDriver[$driverId] ?? 0);
             $payload['luggage_revenue'] = $luggageRevenue;
             $payload['departure_revenue'] = $departureRevenue;
             $payload['charter_revenue'] = $charterRevenue;
@@ -6720,9 +6794,325 @@ class AdminOpsApiController extends Controller
     }
 
     /**
+     * @return array{0: string, 1: string}|array{0: string, 1: string, 2: string}
+     */
+    private function driverPeriodBounds(?string $period, bool $includeLabel = false): array
+    {
+        $normalizedPeriod = trim((string) $period);
+        if ($normalizedPeriod === '') {
+            $normalizedPeriod = now()->format('Y-m');
+        }
+
+        try {
+            $month = Carbon::createFromFormat('Y-m', $normalizedPeriod)->startOfMonth();
+        } catch (\Throwable) {
+            $month = now()->startOfMonth();
+            $normalizedPeriod = $month->format('Y-m');
+        }
+
+        $start = $month->toDateString();
+        $end = $month->copy()->endOfMonth()->toDateString();
+
+        return $includeLabel
+            ? [$start, $end, $normalizedPeriod]
+            : [$start, $end];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function buildDriversXlsx(array $rows, string $period): string
+    {
+        if (! class_exists(ZipArchive::class)) {
+            abort(response()->json([
+                'success' => false,
+                'error' => 'Ekspor Excel tidak tersedia di server ini.',
+            ], 500));
+        }
+
+        $headers = [
+            'Nama Driver',
+            'Kontak',
+            'Nopol Armada',
+            'Pool/Wilayah',
+            'Keberangkatan Rit',
+            'Charter Revenue',
+            'Keberangkatan Revenue',
+            'Bagasi Revenue',
+            'Total Revenue',
+            'Charter BOP',
+            'Keberangkatan BOP',
+            'Total BOP',
+            'Gross',
+            'Fixed Cost',
+            'Net Margin',
+            'Target Revenue',
+            'Achievement',
+        ];
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'driver-xlsx-');
+        if ($tmpPath === false) {
+            abort(response()->json([
+                'success' => false,
+                'error' => 'Gagal menyiapkan file Excel.',
+            ], 500));
+        }
+
+        $zip = new ZipArchive();
+        $opened = $zip->open($tmpPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        if ($opened !== true) {
+            @unlink($tmpPath);
+            abort(response()->json([
+                'success' => false,
+                'error' => 'Gagal membuat arsip Excel.',
+            ], 500));
+        }
+
+        try {
+            $zip->addFromString('[Content_Types].xml', $this->driverXlsxContentTypesXml());
+            $zip->addFromString('_rels/.rels', $this->driverXlsxRootRelsXml());
+            $zip->addFromString('xl/workbook.xml', $this->driverXlsxWorkbookXml('Driver '.$period));
+            $zip->addFromString('xl/_rels/workbook.xml.rels', $this->driverXlsxWorkbookRelsXml());
+            $zip->addFromString('xl/styles.xml', $this->driverXlsxStylesXml());
+            $zip->addFromString('xl/worksheets/sheet1.xml', $this->driverXlsxSheetXml($headers, $rows, 'Driver '.$period));
+            $zip->close();
+
+            $binary = file_get_contents($tmpPath);
+            if ($binary === false) {
+                abort(response()->json([
+                    'success' => false,
+                    'error' => 'Gagal membaca file Excel.',
+                ], 500));
+            }
+
+            return $binary;
+        } finally {
+            if ($zip->status === ZipArchive::ER_OK) {
+                // no-op
+            }
+            @unlink($tmpPath);
+        }
+    }
+
+    private function driverXlsxContentTypesXml(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+    <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+    <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>
+XML;
+    }
+
+    private function driverXlsxRootRelsXml(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>
+XML;
+    }
+
+    private function driverXlsxWorkbookXml(string $sheetName): string
+    {
+        $sheetName = $this->xmlAttribute($this->truncateSheetName($sheetName));
+
+        return <<<XML
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+    <sheets>
+        <sheet name="{$sheetName}" sheetId="1" r:id="rId1"/>
+    </sheets>
+</workbook>
+XML;
+    }
+
+    private function driverXlsxWorkbookRelsXml(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>
+XML;
+    }
+
+    private function driverXlsxStylesXml(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <numFmts count="2">
+        <numFmt numFmtId="164" formatCode="&quot;Rp&quot; #,##0"/>
+        <numFmt numFmtId="165" formatCode="0.0"/>
+    </numFmts>
+    <fonts count="2">
+        <font>
+            <sz val="11"/>
+            <color theme="1"/>
+            <name val="Calibri"/>
+            <family val="2"/>
+        </font>
+        <font>
+            <sz val="11"/>
+            <b/>
+            <color theme="1"/>
+            <name val="Calibri"/>
+            <family val="2"/>
+        </font>
+    </fonts>
+    <fills count="2">
+        <fill><patternFill patternType="none"/></fill>
+        <fill><patternFill patternType="solid"><fgColor rgb="FFDCFCE7"/><bgColor indexed="64"/></patternFill></fill>
+    </fills>
+    <borders count="1">
+        <border>
+            <left/><right/><top/><bottom/><diagonal/>
+        </border>
+    </borders>
+    <cellStyleXfs count="1">
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+    </cellStyleXfs>
+    <cellXfs count="5">
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+        <xf numFmtId="0" fontId="1" fillId="1" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
+        <xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+        <xf numFmtId="3" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+        <xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+    </cellXfs>
+    <cellStyles count="1">
+        <cellStyle name="Normal" xfId="0" builtinId="0"/>
+    </cellStyles>
+</styleSheet>
+XML;
+    }
+
+    /**
+     * @param  array<int, string>  $headers
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function driverXlsxSheetXml(array $headers, array $rows, string $sheetName): string
+    {
+        $sheetName = $this->truncateSheetName($sheetName);
+        $rowIndex = 1;
+        $xml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+    <sheetViews>
+        <sheetView workbookViewId="0"/>
+    </sheetViews>
+    <sheetFormatPr defaultRowHeight="18"/>
+    <sheetData>
+XML;
+
+        $xml .= $this->driverXlsxRowXml($rowIndex++, $headers, [], true);
+        foreach ($rows as $row) {
+            $xml .= $this->driverXlsxRowXml($rowIndex++, $headers, $row, false);
+        }
+
+        $xml .= <<<'XML'
+    </sheetData>
+</worksheet>
+XML;
+
+        return $xml;
+    }
+
+    /**
+     * @param  array<int, mixed>  $values
+     */
+    private function driverXlsxRowXml(int $rowNumber, array $headers, array $rowValues, bool $isHeader = false): string
+    {
+        $xml = '        <row r="'.$rowNumber.'">';
+        $textHeaders = [
+            'Nama Driver',
+            'Kontak',
+            'Nopol Armada',
+            'Pool/Wilayah',
+        ];
+        foreach (array_values($headers) as $index => $header) {
+            $cellRef = $this->xlsxColumnName($index).$rowNumber;
+            if ($isHeader) {
+                $xml .= '<c r="'.$cellRef.'" t="inlineStr" s="1"><is><t>'.$this->xmlText((string) $header).'</t></is></c>';
+
+                continue;
+            }
+
+            $value = $rowValues[$header] ?? '';
+            if (! in_array((string) $header, $textHeaders, true) && is_numeric($value)) {
+                $style = $this->xlsxNumericStyleForHeader((string) $header, $value);
+                $xml .= '<c r="'.$cellRef.'" s="'.$style.'"><v>'.$this->xmlNumber($value).'</v></c>';
+
+                continue;
+            }
+
+            $xml .= '<c r="'.$cellRef.'" t="inlineStr"><is><t>'.$this->xmlText((string) $value).'</t></is></c>';
+        }
+        $xml .= '</row>'."\n";
+
+        return $xml;
+    }
+
+    private function xlsxNumericStyleForHeader(string $header, mixed $value): int
+    {
+        $normalized = strtolower($header);
+        if (str_contains($normalized, 'ratus') || str_contains($normalized, 'revenue') || str_contains($normalized, 'bop') || str_contains($normalized, 'gross') || str_contains($normalized, 'margin') || str_contains($normalized, 'target')) {
+            return 2;
+        }
+
+        if (str_contains($normalized, 'achievement')) {
+            return 4;
+        }
+
+        return is_float($value) || is_double($value) ? 4 : 3;
+    }
+
+    private function xmlText(string $value): string
+    {
+        return htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+    }
+
+    private function xmlAttribute(string $value): string
+    {
+        return htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+    }
+
+    private function xmlNumber(mixed $value): string
+    {
+        if (is_int($value)) {
+            return (string) $value;
+        }
+
+        return rtrim(rtrim(number_format((float) $value, 6, '.', ''), '0'), '.');
+    }
+
+    private function xlsxColumnName(int $index): string
+    {
+        $index++;
+        $name = '';
+        while ($index > 0) {
+            $mod = ($index - 1) % 26;
+            $name = chr(65 + $mod).$name;
+            $index = intdiv($index - 1, 26);
+        }
+
+        return $name;
+    }
+
+    private function truncateSheetName(string $name): string
+    {
+        return mb_substr(trim($name), 0, 31);
+    }
+
+    /**
      * @return array<string, float>
      */
-    private function scheduleBopMap(): array
+    private function scheduleBopMap(int $poolId = 0): array
     {
         if (! Schema::hasTable('schedules') || ! $this->hasSchedulesBopColumn()) {
             return [];
@@ -6731,17 +7121,17 @@ class AdminOpsApiController extends Controller
         $cacheKey = implode(':', [
             'adminops',
             'schedule-bop-map',
-            PoolScope::cacheKey(),
+            PoolScope::cacheKey($poolId),
             $this->buildTableMutationSignature('schedules'),
         ]);
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), function (): array {
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($poolId): array {
             $map = [];
             $rows = DB::table('schedules')
                 ->when(Schema::hasColumn('schedules', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'schedules.tenant_id');
                 });
-            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '', 'schedules.rute');
+            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '', 'schedules.rute', $poolId);
             $rows = $rows->get(['rute', 'dow', 'jam', 'bop']);
 
             foreach ($rows as $row) {
@@ -6765,7 +7155,7 @@ class AdminOpsApiController extends Controller
     /**
      * @return array<string, float>
      */
-    private function bookingRevenueByTripForDateRange(string $monthStart, string $monthEnd): array
+    private function bookingRevenueByTripForDateRange(string $monthStart, string $monthEnd, int $poolId = 0): array
     {
         if (! Schema::hasTable('bookings')) {
             return [];
@@ -6774,13 +7164,13 @@ class AdminOpsApiController extends Controller
         $cacheKey = implode(':', [
             'adminops',
             'booking-trip-revenue',
-            PoolScope::cacheKey(),
+            PoolScope::cacheKey($poolId),
             $monthStart,
             $monthEnd,
             $this->buildTableMutationSignature('bookings'),
         ]);
 
-        return Cache::remember($cacheKey, now()->addMinutes(2), function () use ($monthStart, $monthEnd): array {
+        return Cache::remember($cacheKey, now()->addMinutes(2), function () use ($monthStart, $monthEnd, $poolId): array {
             $map = [];
             $rows = DB::table('bookings')
                 ->select(['rute', 'tanggal', 'jam', 'unit'])
@@ -6790,7 +7180,7 @@ class AdminOpsApiController extends Controller
                 ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'bookings.tenant_id');
                 });
-            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('bookings', 'route_id') ? 'bookings.route_id' : '', 'bookings.rute');
+            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('bookings', 'route_id') ? 'bookings.route_id' : '', 'bookings.rute', $poolId);
             $rows = $rows
                 ->groupBy('rute', 'tanggal', 'jam', 'unit')
                 ->get();
