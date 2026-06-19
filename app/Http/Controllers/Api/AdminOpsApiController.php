@@ -267,12 +267,12 @@ class AdminOpsApiController extends Controller
                     ->orderBy('su.unit_no');
                 $this->applyTenantScopeIfExists($optionRows, 'schedule_units', 'su');
                 $optionRows = $optionRows->get([
-                        'su.schedule_id',
-                        'su.unit_no',
-                        'su.label',
-                        'su.unit_id',
-                        DB::raw('u.nopol as unit_nopol'),
-                    ]);
+                    'su.schedule_id',
+                    'su.unit_no',
+                    'su.label',
+                    'su.unit_id',
+                    DB::raw('u.nopol as unit_nopol'),
+                ]);
 
                 foreach ($optionRows as $item) {
                     $scheduleId = (int) ($item->schedule_id ?? 0);
@@ -683,6 +683,9 @@ class AdminOpsApiController extends Controller
             ->when(Schema::hasColumn('luggage_services', 'tenant_id'), function (Builder $q) {
                 PoolScope::applyTenantScope($q, 'luggage_services.tenant_id');
             })
+            ->when(Schema::hasColumn('luggage_services', 'pool_id'), function (Builder $q): void {
+                $this->applyPoolScopeIfExists($q, 'luggage_services');
+            })
             ->get(['id', 'name']);
 
         return $this->ok(['services' => $rows]);
@@ -702,15 +705,14 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             $query = DB::table('luggage_services')->where('id', $id);
-            if (Schema::hasColumn('luggage_services', 'tenant_id')) {
-                PoolScope::applyTenantScope($query, 'tenant_id');
-            }
+            $this->applyWriteTenantScopeIfExists($query, 'luggage_services');
+            $this->applyPoolScopeIfExists($query, 'luggage_services');
             $query->update($payload);
 
             return $this->ok(['message' => 'Luggage service updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, $this->tenantPayload('luggage_services'), [
+        $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, $this->tenantPayload('luggage_services'), $this->poolPayload('luggage_services'), [
             'created_at' => now(),
         ]));
 
@@ -719,7 +721,10 @@ class AdminOpsApiController extends Controller
 
     public function luggageServicesDelete(int $id): JsonResponse
     {
-        DB::table('luggage_services')->where('id', $id)->delete();
+        $query = DB::table('luggage_services')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($query, 'luggage_services');
+        $this->applyPoolScopeIfExists($query, 'luggage_services');
+        $query->delete();
 
         return $this->ok(['message' => 'Luggage service deleted.']);
     }
@@ -1294,7 +1299,7 @@ class AdminOpsApiController extends Controller
         } elseif ($routeName !== '') {
             $baseQuery->where(function (Builder $q) use ($routeName): void {
                 $q->where('c.pickup_point', 'like', "%{$routeName}%")
-                  ->orWhere('c.drop_point', 'like', "%{$routeName}%");
+                    ->orWhere('c.drop_point', 'like', "%{$routeName}%");
             });
         }
 
@@ -2078,19 +2083,6 @@ class AdminOpsApiController extends Controller
             'payment_status' => $this->nullable($data['payment_status'] ?? null) ?? 'Belum Bayar',
         ];
 
-        $masterCarterId = (int) ($data['master_carter_id'] ?? 0);
-        if ($masterCarterId > 0) {
-            if (! Schema::hasTable('master_carter')) {
-                return $this->error('Master Carter tidak ditemukan.', 422);
-            }
-
-            $masterCarterQuery = DB::table('master_carter')->where('id', $masterCarterId);
-            $this->applyWriteTenantScopeIfExists($masterCarterQuery, 'master_carter');
-            if (! $masterCarterQuery->exists()) {
-                return $this->error('Master Carter tidak ditemukan.', 422);
-            }
-        }
-
         if ($hasPoolIdColumn) {
             $poolId = $this->resolveTransactionPoolId(
                 (int) ($data['pool_id'] ?? 0),
@@ -2104,6 +2096,20 @@ class AdminOpsApiController extends Controller
             }
 
             $payload['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
+        $masterCarterId = (int) ($data['master_carter_id'] ?? 0);
+        if ($masterCarterId > 0) {
+            if (! Schema::hasTable('master_carter')) {
+                return $this->error('Master Carter tidak ditemukan.', 422);
+            }
+
+            $masterCarterQuery = DB::table('master_carter')->where('id', $masterCarterId);
+            $this->applyWriteTenantScopeIfExists($masterCarterQuery, 'master_carter');
+            $this->applyPoolScopeIfExists($masterCarterQuery, 'master_carter', '', $poolId ?? 0);
+            if (! $masterCarterQuery->exists()) {
+                return $this->error('Master Carter tidak ditemukan.', 422);
+            }
         }
 
         if ($hasMasterCarterIdColumn) {
@@ -3372,6 +3378,7 @@ class AdminOpsApiController extends Controller
             ->when(Schema::hasColumn('master_carter', 'tenant_id'), function (Builder $q) {
                 PoolScope::applyTenantScope($q, 'master_carter.tenant_id');
             });
+        $this->applyPoolScopeIfExists($query, 'master_carter');
 
         if ($q !== '') {
             $qLike = '%'.$q.'%';
@@ -3420,7 +3427,8 @@ class AdminOpsApiController extends Controller
         try {
             if ($id > 0) {
                 $routeUpdate = DB::table('master_carter')->where('id', $id);
-                $this->applyTenantScopeIfExists($routeUpdate, 'master_carter');
+                $this->applyWriteTenantScopeIfExists($routeUpdate, 'master_carter');
+                $this->applyPoolScopeIfExists($routeUpdate, 'master_carter');
                 if (! $routeUpdate->exists()) {
                     return $this->error('Rute carter not found.', 404);
                 }
@@ -3430,7 +3438,7 @@ class AdminOpsApiController extends Controller
                 return $this->ok(['message' => 'Rute carter updated.', 'id' => $id]);
             }
 
-            $newId = DB::table('master_carter')->insertGetId(array_merge($payload, $this->tenantPayload('master_carter'), ['created_at' => now()]));
+            $newId = DB::table('master_carter')->insertGetId(array_merge($payload, $this->tenantPayload('master_carter'), $this->poolPayload('master_carter'), ['created_at' => now()]));
 
             return $this->ok(['message' => 'Rute carter created.', 'id' => $newId], 201);
         } catch (QueryException $e) {
@@ -3443,7 +3451,8 @@ class AdminOpsApiController extends Controller
     public function charterRoutesMasterDelete(int $id): JsonResponse
     {
         $routeDelete = DB::table('master_carter')->where('id', $id);
-        $this->applyTenantScopeIfExists($routeDelete, 'master_carter');
+        $this->applyWriteTenantScopeIfExists($routeDelete, 'master_carter');
+        $this->applyPoolScopeIfExists($routeDelete, 'master_carter');
         if (! $routeDelete->exists()) {
             return $this->error('Rute carter not found.', 404);
         }
@@ -3462,7 +3471,9 @@ class AdminOpsApiController extends Controller
             ->select(['id', 'nopol', 'merek', 'type', 'category', 'tahun', 'warna', 'kapasitas', 'status', 'layout'])
             ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q) {
                 $tenantId = PoolScope::tenantId();
-                if ($tenantId > 0) { $q->where('units.tenant_id', $tenantId); }
+                if ($tenantId > 0) {
+                    $q->where('units.tenant_id', $tenantId);
+                }
             });
 
         if ($status !== '') {
@@ -3818,7 +3829,7 @@ class AdminOpsApiController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function filterPayloadColumns(string $table, array $payload): array
@@ -6975,13 +6986,38 @@ class AdminOpsApiController extends Controller
         return $this->luggagesHasPoolIdColumn;
     }
 
+    private function currentPoolContextId(): int
+    {
+        return PoolScope::currentPoolId(auth()->id());
+    }
+
+    private function writablePoolContextId(): int
+    {
+        return PoolScope::defaultWritablePoolId(auth()->id());
+    }
+
     private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
     {
         [$baseTable, $tableAlias] = $this->parseTableAlias($table);
         $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
         $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
         if (Schema::hasColumn($baseTable, 'tenant_id')) {
-            \App\Support\PoolScope::applyTenantScope($query, $prefix.'tenant_id');
+            PoolScope::applyTenantScope($query, $prefix.'tenant_id');
+        }
+    }
+
+    private function applyPoolScopeIfExists(Builder $query, string $table, string $alias = '', ?int $poolId = null): void
+    {
+        [$baseTable, $tableAlias] = $this->parseTableAlias($table);
+        $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
+        $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
+        if (! Schema::hasColumn($baseTable, 'pool_id')) {
+            return;
+        }
+
+        $resolvedPoolId = $poolId ?? $this->currentPoolContextId();
+        if ($resolvedPoolId > 0) {
+            $query->where($prefix.'pool_id', $resolvedPoolId);
         }
     }
 
@@ -7020,6 +7056,17 @@ class AdminOpsApiController extends Controller
         }
 
         return $tenantId;
+    }
+
+    private function poolPayload(string $table, ?int $poolId = null): array
+    {
+        if (! Schema::hasColumn($table, 'pool_id')) {
+            return [];
+        }
+
+        $resolvedPoolId = $poolId ?? $this->writablePoolContextId();
+
+        return ['pool_id' => $resolvedPoolId > 0 ? $resolvedPoolId : null];
     }
 
     private function defaultTenantId(): int
@@ -7199,14 +7246,16 @@ class AdminOpsApiController extends Controller
             'rental_price' => (float) ($payload['price'] ?? 0),
             'bop_price' => (float) ($payload['bop_price'] ?? 0),
         ];
-        $routePayload = array_merge($routePayload, $this->tenantPayload('master_carter'));
+        $poolId = (int) ($payload['pool_id'] ?? 0);
+        $routePayload = array_merge($routePayload, $this->tenantPayload('master_carter'), $this->poolPayload('master_carter', $poolId > 0 ? $poolId : null));
 
         try {
             $existingQuery = DB::table('master_carter')
                 ->whereRaw("UPPER(COALESCE(origin, '')) = ?", [strtoupper($origin)])
                 ->whereRaw("UPPER(COALESCE(destination, '')) = ?", [strtoupper($destination)])
                 ->whereRaw("UPPER(COALESCE(duration, '')) = ?", [strtoupper($duration)]);
-            $this->applyTenantScopeIfExists($existingQuery, 'master_carter');
+            $this->applyWriteTenantScopeIfExists($existingQuery, 'master_carter');
+            $this->applyPoolScopeIfExists($existingQuery, 'master_carter', '', $poolId > 0 ? $poolId : null);
             $existingId = (int) ($existingQuery->value('id') ?? 0);
 
             if ($existingId > 0) {
@@ -7546,18 +7595,30 @@ class AdminOpsApiController extends Controller
         return DB::transaction(function () use ($id, $data): JsonResponse {
             if ($id > 0) {
                 $payload = [];
-                if (isset($data['plan_id'])) { $payload['plan_id'] = (int) $data['plan_id']; }
+                if (isset($data['plan_id'])) {
+                    $payload['plan_id'] = (int) $data['plan_id'];
+                }
                 if (isset($data['status'])) {
                     $payload['status'] = (string) $data['status'];
                     if ($data['status'] === 'canceled') {
                         $payload['canceled_at'] = now();
                     }
                 }
-                if (isset($data['starts_at'])) { $payload['starts_at'] = $data['starts_at']; }
-                if (isset($data['ends_at'])) { $payload['ends_at'] = $data['ends_at']; }
-                if (isset($data['billing_interval'])) { $payload['billing_interval'] = $data['billing_interval']; }
-                if (isset($data['grace_period_days'])) { $payload['grace_period_days'] = (int) $data['grace_period_days']; }
-                if (isset($data['notes'])) { $payload['notes'] = $this->nullable($data['notes']); }
+                if (isset($data['starts_at'])) {
+                    $payload['starts_at'] = $data['starts_at'];
+                }
+                if (isset($data['ends_at'])) {
+                    $payload['ends_at'] = $data['ends_at'];
+                }
+                if (isset($data['billing_interval'])) {
+                    $payload['billing_interval'] = $data['billing_interval'];
+                }
+                if (isset($data['grace_period_days'])) {
+                    $payload['grace_period_days'] = (int) $data['grace_period_days'];
+                }
+                if (isset($data['notes'])) {
+                    $payload['notes'] = $this->nullable($data['notes']);
+                }
 
                 if ($payload !== []) {
                     $payload['updated_at'] = now();

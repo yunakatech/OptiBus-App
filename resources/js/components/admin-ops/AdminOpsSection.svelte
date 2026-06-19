@@ -27,7 +27,7 @@
     } = $props();
 </script>
 
-<section class={cn('overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm', className)}>
+<section class={cn('overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-sm', className)}>
     <div class={cn('border-b border-border/70 px-5 py-4', toneClass)}>
         <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -35,7 +35,7 @@
                     <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">{eyebrow}</p>
                 {/if}
                 {#if title !== ''}
-                    <h3 class="mt-1 text-lg font-semibold">{title}</h3>
+                    <h3 class="mt-1 text-xl font-semibold tracking-tight">{title}</h3>
                 {/if}
                 {#if description !== ''}
                     <p class="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>

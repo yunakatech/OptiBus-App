@@ -10,12 +10,12 @@
 </script>
 
 <script lang="ts">
-    import { router } from '@inertiajs/svelte';
+    import { page, router } from '@inertiajs/svelte';
     import { MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
-    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+    import { CardContent } from '@/components/ui/card';
     import {
         DropdownMenu,
         DropdownMenuContent,
@@ -97,6 +97,9 @@
     let charterQ = $state('');
     let carterRouteQ = $state('');
     let masterFiltersExpanded = $state(false);
+    const activePoolLabel = $derived(
+        String(page.props.auth?.active_pool?.name ?? 'Semua Pool'),
+    );
 
     let bagasiForm = $state({ id: 0, nama: '', no_hp: '', alamat: '', tipe: 'pengirim' });
     let charterForm = $state({ id: 0, nama: '', no_hp: '', alamat: '', company: '' });
@@ -543,17 +546,33 @@ return;
 <AppHead title={masterTabTitle(activeTab)} />
 
 <div class="space-y-4 p-4">
-    <Card>
-        <CardHeader><CardTitle>{masterTabTitle(activeTab)}</CardTitle></CardHeader>
-        <CardContent class="space-y-4">
+    <section class="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] shadow-sm">
+        <div class="grid gap-4 border-b border-border/70 px-5 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <div class="space-y-2">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Master Data</p>
+                <h1 class="text-2xl font-semibold tracking-tight text-foreground">{masterTabTitle(activeTab)}</h1>
+                <p class="max-w-3xl text-sm text-muted-foreground">Kelola data Bagasi, Carter, dan preset rute dengan tampilan yang ringkas, mudah discan, dan tetap mengikuti konteks pool aktif.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 md:justify-end">
+                <span class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-cyan-800 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">
+                    Pool aktif: {activePoolLabel}
+                </span>
+                <span class="inline-flex items-center rounded-full border border-border/70 bg-background/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Tab: {masterTabTitle(activeTab)}
+                </span>
+            </div>
+        </div>
+        <div class="border-b border-border/70 px-5 py-4">
             {#if !lockedMenuView}
                 <div class="flex flex-wrap gap-2">
-                    <Button type="button" variant={activeTab === 'customer-bagasi' ? 'default' : 'outline'} onclick={() => void setTab('customer-bagasi')}>Bagasi</Button>
-                    <Button type="button" variant={activeTab === 'customer-charter' ? 'default' : 'outline'} onclick={() => void setTab('customer-charter')}>Carter</Button>
-                    <Button type="button" variant={activeTab === 'rute-carter' ? 'default' : 'outline'} onclick={() => void setTab('rute-carter')}>Master Carter</Button>
+                    <Button type="button" size="sm" variant={activeTab === 'customer-bagasi' ? 'default' : 'outline'} class="rounded-full px-4" onclick={() => void setTab('customer-bagasi')}>Bagasi</Button>
+                    <Button type="button" size="sm" variant={activeTab === 'customer-charter' ? 'default' : 'outline'} class="rounded-full px-4" onclick={() => void setTab('customer-charter')}>Carter</Button>
+                    <Button type="button" size="sm" variant={activeTab === 'rute-carter' ? 'default' : 'outline'} class="rounded-full px-4" onclick={() => void setTab('rute-carter')}>Master Carter</Button>
                 </div>
             {/if}
+        </div>
 
+        <CardContent class="space-y-4 p-5">
             {#if busy}<p class="text-sm text-muted-foreground">Memuat data...</p>{/if}
             {#if error}<p class="text-sm text-red-600">{error}</p>{/if}
             {#if message}<p class="text-sm text-emerald-600">{message}</p>{/if}
@@ -600,7 +619,7 @@ return;
                     </div>
                     <div class="grid gap-3 md:hidden">
                         {#each bagasiCustomers as row (row.id)}
-                            <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                            <article class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-semibold text-foreground">{row.nama}</p>
@@ -712,7 +731,7 @@ return;
                     </div>
                     <div class="grid gap-3 md:hidden">
                         {#each charterCustomers as row (row.id)}
-                            <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                            <article class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-semibold text-foreground">{row.nama}</p>
@@ -1066,5 +1085,5 @@ return;
             {/if}
 
         </CardContent>
-    </Card>
+    </section>
 </div>

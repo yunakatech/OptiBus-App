@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
 use App\Support\PoolScope;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,9 @@ class OperationsApiController extends Controller
         $routes = DB::table('master_carter')
             ->when(Schema::hasColumn('master_carter', 'tenant_id'), function ($query): void {
                 PoolScope::applyTenantScope($query, 'tenant_id');
+            })
+            ->when(Schema::hasColumn('master_carter', 'pool_id'), function (Builder $query): void {
+                $this->applyPoolScopeIfExists($query, 'master_carter');
             })
             ->orderBy('name')
             ->get(['id', 'name', 'origin', 'destination', 'duration', 'rental_price', 'bop_price']);
@@ -43,6 +47,7 @@ class OperationsApiController extends Controller
         PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
 
         $segments = $query->orderBy('s.rute')->get();
+
         return $this->ok(['segments' => $segments]);
     }
 
@@ -60,6 +65,7 @@ class OperationsApiController extends Controller
         PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
 
         $price = $query->value('s.harga');
+
         return $this->ok(['price' => (float) ($price ?? 0)]);
     }
 
@@ -153,6 +159,7 @@ class OperationsApiController extends Controller
         if (Schema::hasColumn('luggage_services', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
+        $this->applyPoolScopeIfExists($query, 'luggage_services');
 
         $services = $query->get(['id', 'name']);
 
@@ -390,13 +397,13 @@ class OperationsApiController extends Controller
 
         $resi = (string) (DB::table('luggages')->where('id', $id)->value('kode_resi') ?? '');
         if ($resi !== '' && DB::getSchemaBuilder()->hasTable('bagasi_logs')) {
-                DB::table('bagasi_logs')->insert(array_merge([
-                    'kode_resi' => $resi,
-                    'status' => $this->luggageReceivedStatus(),
-                    'notes' => $this->luggageReceivedStatus(),
-                    'created_by_username' => auth()->user()?->email ?? auth()->user()?->name ?? 'system',
-                    'created_at' => now(),
-                ], $this->tenantPayload('bagasi_logs')));
+            DB::table('bagasi_logs')->insert(array_merge([
+                'kode_resi' => $resi,
+                'status' => $this->luggageReceivedStatus(),
+                'notes' => $this->luggageReceivedStatus(),
+                'created_by_username' => auth()->user()?->email ?? auth()->user()?->name ?? 'system',
+                'created_at' => now(),
+            ], $this->tenantPayload('bagasi_logs')));
         }
 
         ActivityLog::write(
@@ -417,6 +424,7 @@ class OperationsApiController extends Controller
     private function nullableString(?string $value): ?string
     {
         $v = trim((string) ($value ?? ''));
+
         return $v === '' ? null : $v;
     }
 
@@ -435,6 +443,58 @@ class OperationsApiController extends Controller
         }
 
         return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    }
+
+    private function currentPoolContextId(): int
+    {
+        return PoolScope::currentPoolId(auth()->id());
+    }
+
+    private function writablePoolContextId(): int
+    {
+        return PoolScope::defaultWritablePoolId(auth()->id());
+    }
+
+    private function applyPoolScopeIfExists(Builder $query, string $table, string $alias = '', ?int $poolId = null): void
+    {
+        [$baseTable, $tableAlias] = $this->parseTableAlias($table);
+        $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
+        $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
+        if (! Schema::hasColumn($baseTable, 'pool_id')) {
+            return;
+        }
+
+        $resolvedPoolId = $poolId ?? $this->currentPoolContextId();
+        if ($resolvedPoolId > 0) {
+            $query->where($prefix.'pool_id', $resolvedPoolId);
+        }
+    }
+
+    private function poolPayload(string $table, ?int $poolId = null): array
+    {
+        if (! Schema::hasColumn($table, 'pool_id')) {
+            return [];
+        }
+
+        $resolvedPoolId = $poolId ?? $this->writablePoolContextId();
+
+        return ['pool_id' => $resolvedPoolId > 0 ? $resolvedPoolId : null];
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function parseTableAlias(string $table): array
+    {
+        $table = trim($table);
+        if (preg_match('/^([a-z0-9_]+)(?:\s+as\s+([a-z0-9_]+))?$/i', $table, $matches) === 1) {
+            return [
+                $matches[1],
+                isset($matches[2]) ? $matches[2] : '',
+            ];
+        }
+
+        return [$table, ''];
     }
 
     private function defaultTenantId(): int
@@ -544,7 +604,7 @@ class OperationsApiController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function syncMasterCarterFromCharterPayload(array $payload): void
     {
@@ -568,7 +628,8 @@ class OperationsApiController extends Controller
             'rental_price' => (float) ($payload['price'] ?? 0),
             'bop_price' => (float) ($payload['bop_price'] ?? 0),
         ];
-        $routePayload = array_merge($routePayload, $this->tenantPayload('master_carter'));
+        $poolId = (int) ($payload['pool_id'] ?? 0);
+        $routePayload = array_merge($routePayload, $this->tenantPayload('master_carter'), $this->poolPayload('master_carter', $poolId > 0 ? $poolId : null));
 
         try {
             $existingQuery = DB::table('master_carter')
@@ -578,6 +639,7 @@ class OperationsApiController extends Controller
             if (Schema::hasColumn('master_carter', 'tenant_id')) {
                 PoolScope::applyTenantScope($existingQuery, 'tenant_id');
             }
+            $this->applyPoolScopeIfExists($existingQuery, 'master_carter', '', $poolId > 0 ? $poolId : null);
             $existingId = (int) ($existingQuery->value('id') ?? 0);
 
             if ($existingId > 0) {
@@ -600,6 +662,7 @@ class OperationsApiController extends Controller
     {
         $trimmed = trim($value);
         $digits = preg_replace('/\D+/', '', $trimmed) ?? '';
+
         return $digits !== '' ? $digits : $trimmed;
     }
 

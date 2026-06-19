@@ -112,6 +112,83 @@ class OperationsApiTest extends TestCase
             ->assertJsonPath('scope_limited', false);
     }
 
+    public function test_master_data_endpoints_follow_the_active_pool_context(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $poolA = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL A',
+            'code' => 'PA',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $poolB = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL B',
+            'code' => 'PB',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('luggage_services')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolA,
+                'name' => 'Dokumen A',
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolB,
+                'name' => 'Dokumen B',
+                'created_at' => now(),
+            ],
+        ]);
+
+        DB::table('master_carter')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolA,
+                'name' => 'PINRANG - MAKASSAR A',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'duration' => 'Regular',
+                'rental_price' => 2500000,
+                'bop_price' => 200000,
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolB,
+                'name' => 'PAREPARE - MAKASSAR B',
+                'origin' => 'PAREPARE',
+                'destination' => 'MAKASSAR',
+                'duration' => 'Regular',
+                'rental_price' => 2750000,
+                'bop_price' => 250000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $this->withSession(['active_pool_id' => $poolA])
+            ->getJson(route('api.master.luggage-services'))
+            ->assertOk()
+            ->assertJsonCount(1, 'services')
+            ->assertJsonPath('services.0.name', 'Dokumen A')
+            ->assertJsonMissing(['name' => 'Dokumen B']);
+
+        $this->withSession(['active_pool_id' => $poolA])
+            ->getJson(route('api.master.charter-routes'))
+            ->assertOk()
+            ->assertJsonCount(1, 'routes')
+            ->assertJsonPath('routes.0.name', 'PINRANG - MAKASSAR A')
+            ->assertJsonMissing(['name' => 'PAREPARE - MAKASSAR B']);
+    }
+
     public function test_customer_search_matches_split_terms_address_and_phone_variants(): void
     {
         $this->actingAsSuperAdmin();
