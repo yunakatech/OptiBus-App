@@ -24,11 +24,6 @@
         last_page: number;
     };
 
-    type PoolOption = {
-        id: number;
-        name: string;
-    };
-
     type DriverRow = {
         id: number;
         nama: string;
@@ -56,11 +51,9 @@
             last_page: 1,
         },
         driverSearch = $bindable(''),
-        driverPoolId = $bindable(0),
         driverPeriod = $bindable(
             `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
         ),
-        poolOptions = [],
         formatCurrency,
         driverGrossMargin,
         driverNetMargin,
@@ -75,9 +68,7 @@
         drivers?: DriverRow[];
         driverMeta?: Pagination;
         driverSearch?: string;
-        driverPoolId?: number;
         driverPeriod?: string;
-        poolOptions?: PoolOption[];
         formatCurrency: (value: number) => string;
         driverGrossMargin: (row: DriverRow) => number;
         driverNetMargin: (row: DriverRow) => number;
@@ -123,8 +114,6 @@
             params.set('q', query);
         }
 
-        params.set('pool_id', String(Number(driverPoolId || 0)));
-
         if (driverPeriod.trim() !== '') {
             params.set('period', driverPeriod.trim());
         }
@@ -133,11 +122,6 @@
 
         return `/api/admin/drivers/export${suffix !== '' ? `?${suffix}` : ''}`;
     });
-
-    const filterPoolOptions = $derived([
-        { id: 0, name: 'Semua Pool/Wilayah' },
-        ...poolOptions,
-    ]);
 
     const achievementTone = (achievement: number) => {
         if (achievement < 60) {
@@ -204,7 +188,7 @@
         </div>
     </div>
 
-    <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_minmax(180px,220px)_auto]">
+    <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_auto]">
         <div class="min-w-0">
             <TerminalFilter
                 bind:query={driverSearch}
@@ -213,16 +197,6 @@
                 on:search={() => void loadDrivers(1)}
             />
         </div>
-
-        <select
-            class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            bind:value={driverPoolId}
-            onchange={() => void loadDrivers(1)}
-        >
-            {#each filterPoolOptions as pool (pool.id)}
-                <option value={pool.id}>{pool.name}</option>
-            {/each}
-        </select>
 
         <select
             class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -265,9 +239,6 @@
                         <p class="mt-1 truncate text-xs text-muted-foreground">
                             {row.phone ?? '-'} | {row.nopol ?? '-'}
                         </p>
-                        <Badge variant="secondary" class="mt-2 w-fit rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wide">
-                            {row.pool_name ?? 'Tanpa Pool'}
-                        </Badge>
                     </div>
 
                     {#if canManage}

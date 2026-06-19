@@ -752,7 +752,6 @@
     let customerFiltersExpanded = $state(false);
     let driverSearch = $state('');
     let driverUnitSearch = $state('');
-    let driverPoolId = $state(0);
     let driverPeriod = $state(
         `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
     );
@@ -2788,10 +2787,6 @@
             query.q = driverSearch.trim();
         }
 
-        if (activeTab === 'drivers' && Number(driverPoolId || 0) >= 0) {
-            query.pool_id = Number(driverPoolId || 0);
-        }
-
         if (activeTab === 'drivers' && driverPeriod.trim() !== '') {
             query.period = driverPeriod.trim();
         }
@@ -2853,7 +2848,6 @@
 
         if (initialTab === 'drivers') {
             driverSearch = settingsQuery.q ?? '';
-            driverPoolId = Number(settingsQuery.pool_id ?? 0);
             driverPeriod = String(settingsQuery.period ?? driverPeriod);
         }
 
@@ -2931,8 +2925,6 @@
         if (query !== '') {
             params.set('q', query);
         }
-
-        params.set('pool_id', String(Number(driverPoolId || 0)));
 
         if (driverPeriod.trim() !== '') {
             params.set('period', driverPeriod.trim());
@@ -5725,9 +5717,7 @@
                             {drivers}
                             {driverMeta}
                             bind:driverSearch
-                            bind:driverPoolId
                             bind:driverPeriod
-                            {poolOptions}
                             {formatCurrency}
                             {driverGrossMargin}
                             {driverNetMargin}
