@@ -58,12 +58,6 @@
             permission: 'dashboard.view',
         },
         {
-            title: 'Jadwal',
-            href: '/admin-ops/schedules',
-            icon: CalendarDays,
-            permission: 'master.view',
-        },
-        {
             title: 'Data Keberangkatan',
             href: '/bookings',
             icon: Tickets,
@@ -89,15 +83,6 @@
         },
     ];
 
-    const laporanNavItems: NavItem[] = [
-        {
-            title: 'Laporan',
-            href: '/report',
-            icon: ChartColumn,
-            permission: 'report.view',
-        },
-    ];
-
     const pelangganNavItems: NavItem[] = [
         {
             title: 'Pelanggan Reguler',
@@ -120,6 +105,12 @@
     ];
 
     const dataMasterNavItems: NavItem[] = [
+        {
+            title: 'Jadwal',
+            href: '/admin-ops/schedules',
+            icon: CalendarDays,
+            permission: 'master.view',
+        },
         {
             title: 'Rute Induk',
             href: '/admin-ops/routes',
@@ -170,6 +161,32 @@
         },
     ];
 
+    const tenantNavItems: NavItem[] = [
+        {
+            title: 'Laporan',
+            href: '/report',
+            icon: ChartColumn,
+            permission: 'report.view',
+        },
+        {
+            title: 'Langganan',
+            href: '/subscription',
+            icon: CreditCard,
+        },
+        {
+            title: 'Users',
+            href: '/admin-ops/users',
+            icon: UserCog,
+            permission: 'user.manage',
+        },
+        {
+            title: 'Logs',
+            href: '/admin-ops/cancellations',
+            icon: History,
+            permission: 'logs.view',
+        },
+    ];
+
     const sistemNavItems: NavItem[] = [
         {
             title: 'Platform Dashboard',
@@ -191,23 +208,11 @@
             superAdminOnly: true,
         },
         {
-            title: 'Users',
-            href: '/admin-ops/users',
-            icon: UserCog,
-            permission: 'user.manage',
-        },
-        {
             title: 'Role & Hak Akses',
             href: '/admin-ops/roles',
             icon: ShieldCheck,
             permission: 'role.manage',
             superAdminOnly: true,
-        },
-        {
-            title: 'Logs',
-            href: '/admin-ops/cancellations',
-            icon: History,
-            permission: 'logs.view',
         },
     ];
 
@@ -231,10 +236,10 @@
             items: dataMasterNavItems,
         },
         {
-            id: 'laporan',
-            title: 'Laporan',
-            icon: ChartColumn,
-            items: laporanNavItems,
+            id: 'tenant',
+            title: 'Tenant',
+            icon: UserCog,
+            items: tenantNavItems,
         },
         {
             id: 'sistem',
@@ -246,6 +251,8 @@
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
     const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
+    const activeTenant = $derived(page.props.auth?.active_tenant ?? null);
+    const showTenantScopedSections = $derived(!isSuperAdmin || Boolean(activeTenant));
     const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
     const homeHref = $derived(billingLocked ? '/subscription' : toUrl(dashboard()));
     const visibleSections = $derived(
@@ -258,6 +265,18 @@
                     (!item.superAdminOnly || isSuperAdmin),
                 ),
             }))
+            .map((section) =>
+                showTenantScopedSections || section.id !== 'sistem'
+                    ? section
+                    : {
+                          ...section,
+                          items: section.items.filter((item) => {
+                              const href = toUrl(item.href);
+                              return href === '/platform/dashboard' || href === '/admin-ops/saas';
+                          }),
+                      },
+            )
+            .filter((section) => showTenantScopedSections || section.id === 'sistem')
             .filter((section) => section.items.length > 0),
     );
 </script>

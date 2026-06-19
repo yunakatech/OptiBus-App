@@ -54,7 +54,6 @@ class EnsureSuperAdminTenantContext
             'api.admin.invoices.*',
             'api.admin.payment-settings.*',
             'api.admin.tenant.switch',
-            'subscription.*',
             'logout',
             'verification.*',
             'profile.*',

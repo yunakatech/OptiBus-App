@@ -90,9 +90,98 @@ class ActivityLog
         );
     }
 
+    /**
+     * Read activity logs across the active tenant context.
+     *
+     * @return array<int, array<string, string>>
+     */
+    public static function recentForTenant(int $limit = 50, int $offset = 0): array
+    {
+        $scope = self::tenantScope();
+
+        if (self::usesDatabase()) {
+            return self::recentFromDatabase(max(1, $limit), max(0, $offset), $scope);
+        }
+
+        $path = storage_path('logs/activity.log');
+        if (! is_file($path)) {
+            return [];
+        }
+
+        $lines = @file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (! is_array($lines) || $lines === []) {
+            return [];
+        }
+
+        $items = [];
+        for ($i = count($lines) - 1; $i >= 0; $i -= 1) {
+            $row = self::parseJsonLine($lines[$i]);
+            if ($row === null) {
+                continue;
+            }
+            if (! self::isVisibleForScope($row, $scope)) {
+                continue;
+            }
+            $items[] = $row;
+            if (count($items) >= ($offset + $limit)) {
+                break;
+            }
+        }
+
+        return array_map(
+            static fn (array $row): array => self::publicRow($row),
+            array_slice($items, $offset, $limit),
+        );
+    }
+
     public static function count(int $poolId = 0, ?int $max = null): int
     {
         $scope = PoolScope::forCurrentUser($poolId);
+        $max = $max !== null ? max(1, $max) : null;
+
+        if (self::usesDatabase()) {
+            if ($scope['all']) {
+                $query = DB::table('activity_logs')->where('title', '!=', '');
+
+                if ($max !== null) {
+                    return (int) DB::query()
+                        ->fromSub($query->limit($max), 'capped_activity_logs')
+                        ->count();
+                }
+
+                return (int) $query->count();
+            }
+
+            return self::countFromDatabase($scope, $max);
+        }
+
+        $path = storage_path('logs/activity.log');
+        if (! is_file($path)) {
+            return 0;
+        }
+
+        $lines = @file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (! is_array($lines) || $lines === []) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($lines as $line) {
+            $row = self::parseJsonLine($line);
+            if ($row !== null && self::isVisibleForScope($row, $scope)) {
+                $count += 1;
+                if ($max !== null && $count >= $max) {
+                    break;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    public static function countForTenant(?int $max = null): int
+    {
+        $scope = self::tenantScope();
         $max = $max !== null ? max(1, $max) : null;
 
         if (self::usesDatabase()) {
@@ -278,6 +367,16 @@ class ActivityLog
         }
 
         return $count;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function tenantScope(): array
+    {
+        $userId = (int) (auth()->id() ?? 0);
+
+        return PoolScope::forCurrentUser(0, $userId, false);
     }
 
     /**

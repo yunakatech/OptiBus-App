@@ -242,7 +242,6 @@ class HandleInertiaRequests extends Middleware
             'platform.dashboard',
             'admin-ops.saas',
             'admin-ops.saas.*',
-            'subscription.*',
             'logout',
             'verification.*',
             'profile.*',
