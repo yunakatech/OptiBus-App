@@ -21,6 +21,8 @@
         columns: TableColumn[];
     };
 
+    type RowKey = string | number;
+
     let {
         columns = [],
         rows = [],
@@ -28,6 +30,8 @@
         tone = 'terminal',
         row,
         actions,
+        detail,
+        expandedRows = [],
     }: {
         columns?: TableColumn[];
         rows?: TableRow[];
@@ -35,6 +39,8 @@
         tone?: 'terminal' | 'default';
         row?: Snippet<[TableSnippetProps]>;
         actions?: Snippet<[TableSnippetProps]>;
+        detail?: Snippet<[TableSnippetProps]>;
+        expandedRows?: RowKey[];
     } = $props();
 
     let computedColumns = $derived(columns);
@@ -80,7 +86,9 @@
 
         <tbody class={bodyClass}>
             {#each rows as entry, idx (entry.id ?? idx)}
+                {@const rowId = (entry.id ?? idx) as RowKey}
                 {@const snippetProps = { row: entry, index: idx, columns: computedColumns }}
+                {@const isExpanded = detail && expandedRows.includes(rowId)}
                 <tr class={rowClass}>
                     {#if row}
                         {@render row(snippetProps)}
@@ -112,6 +120,14 @@
                         {/if}
                     </td>
                 </tr>
+
+                {#if detail && isExpanded}
+                    <tr class={tone === 'default' ? 'bg-muted/10' : 'bg-[#11182a]'}>
+                        <td colspan={computedColumns.length + 1} class={tone === 'default' ? 'border-b border-border/70 px-3 py-3' : 'border-b border-slate-800 px-3 py-3'}>
+                            {@render detail(snippetProps)}
+                        </td>
+                    </tr>
+                {/if}
             {/each}
         </tbody>
     </table>

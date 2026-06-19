@@ -16,12 +16,16 @@
         ArrowUpRight,
         CalendarDays,
         CheckCircle2,
+        Check,
         Clock3,
+        ChevronDown,
+        ChevronUp,
         MailX,
         MoreHorizontal,
         Pencil,
         Plus,
         Route,
+        SlidersHorizontal,
         Send,
         Trash2,
         Wallet,
@@ -41,6 +45,8 @@
         DropdownMenu,
         DropdownMenuContent,
         DropdownMenuItem,
+        DropdownMenuLabel,
+        DropdownMenuSeparator,
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
@@ -1329,8 +1335,8 @@
     });
     const driversColumns = [
         { key: 'nama', label: 'Nama Driver', width: 'w-[150px]', sticky: 'left' },
-        { key: 'phone', label: 'Kontak', width: 'w-[120px]', sticky: 'left' },
-        { key: 'nopol', label: 'Nopol Unit', width: 'w-[130px]', sticky: 'left' },
+        { key: 'phone', label: 'Kontak', width: 'w-[120px]' },
+        { key: 'nopol', label: 'Nopol Unit', width: 'w-[130px]' },
         { key: 'pool', label: 'Pool', width: 'w-[130px]' },
         { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
         { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
@@ -1346,6 +1352,64 @@
         { key: 'achievement', label: 'Achievement', align: 'right', numeric: true },
         { key: 'status', label: 'Status', align: 'center' },
     ];
+
+    const driverColumnOptions = [
+        { key: 'phone', label: 'Kontak' },
+        { key: 'nopol', label: 'Nopol Unit' },
+        { key: 'pool', label: 'Pool' },
+        { key: 'charter_revenue', label: 'Charter' },
+        { key: 'departure_revenue', label: 'Keberangkatan' },
+        { key: 'luggage_revenue', label: 'Bagasi' },
+        { key: 'revenue', label: 'Total Revenue' },
+        { key: 'charter_bop', label: 'Charter BOP' },
+        { key: 'departure_bop', label: 'Keberangkatan BOP' },
+        { key: 'bop', label: 'Total BOP' },
+        { key: 'gross', label: 'Gross' },
+        { key: 'fixed_cost', label: 'Fixed Cost' },
+        { key: 'net', label: 'Net Margin' },
+        { key: 'target_revenue_bulanan', label: 'Target Revenue' },
+        { key: 'achievement', label: 'Achievement' },
+        { key: 'status', label: 'Status' },
+    ] as const;
+
+    type DriverColumnKey = (typeof driverColumnOptions)[number]['key'];
+
+    let driverVisibleColumnKeys = $state<DriverColumnKey[]>(
+        driverColumnOptions.map((column) => column.key),
+    );
+    let expandedDriverRowIds = $state<number[]>([]);
+
+    const visibleDriverColumns = $derived(
+        driversColumns.filter(
+            (column) =>
+                column.key === 'nama' ||
+                driverVisibleColumnKeys.includes(column.key as DriverColumnKey),
+        ),
+    );
+    const hiddenDriverColumnCount = $derived(
+        driverColumnOptions.length - driverVisibleColumnKeys.length,
+    );
+    const toggleDriverColumn = (key: DriverColumnKey) => {
+        driverVisibleColumnKeys = driverVisibleColumnKeys.includes(key)
+            ? driverVisibleColumnKeys.filter((item) => item !== key)
+            : [...driverVisibleColumnKeys, key];
+    };
+    const resetDriverColumns = () => {
+        driverVisibleColumnKeys = driverColumnOptions.map((column) => column.key);
+    };
+    const isDriverExpanded = (rowId: number) =>
+        expandedDriverRowIds.includes(Number(rowId || 0));
+    const toggleDriverDetail = (rowId: number) => {
+        const id = Number(rowId || 0);
+
+        if (id <= 0) {
+            return;
+        }
+
+        expandedDriverRowIds = expandedDriverRowIds.includes(id)
+            ? expandedDriverRowIds.filter((item) => item !== id)
+            : [...expandedDriverRowIds, id];
+    };
 
     const poolsColumns = [
         { key: 'name', label: 'Pool', width: 'w-[150px]', sticky: 'left' },
@@ -5588,18 +5652,59 @@
                                 <p
                                     class="mt-1 max-w-3xl text-sm text-muted-foreground"
                                 >
-                                    Identitas driver dibuat tetap terlihat saat
-                                    scroll, sementara grup revenue, BOP, dan
-                                    margin dipisah agar angka penting lebih
-                                    cepat terbaca.
+                                    Nama driver tetap terkunci di kiri, kolom
+                                    bisa disembunyikan lewat tombol Kolom, dan
+                                    detail finansial lengkap muncul di baris
+                                    expand agar tabel tetap enak dipindai.
                                 </p>
                             </div>
-                            <Badge
-                                variant="secondary"
-                                class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
-                            >
-                                {drivers.length} driver aktif
-                            </Badge>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <Badge
+                                    variant="secondary"
+                                    class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
+                                >
+                                    {drivers.length} driver aktif
+                                </Badge>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        {#snippet children(props)}
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                class="h-9 rounded-full border-border/70 px-3 text-xs"
+                                                {...props}
+                                            >
+                                                <SlidersHorizontal class="mr-2 h-3.5 w-3.5" />
+                                                Kolom
+                                                {#if hiddenDriverColumnCount > 0}
+                                                    <span class="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                                        {hiddenDriverColumnCount}
+                                                    </span>
+                                                {/if}
+                                            </Button>
+                                        {/snippet}
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" sideOffset={8} class="w-64 p-1.5">
+                                        <DropdownMenuLabel class="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                            Tampilkan kolom
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {#each driverColumnOptions as option (option.key)}
+                                            <DropdownMenuItem
+                                                class="gap-2 rounded-md text-sm"
+                                                onclick={() => toggleDriverColumn(option.key)}
+                                            >
+                                                <Check class={driverVisibleColumnKeys.includes(option.key) ? 'size-4 text-primary opacity-100' : 'size-4 opacity-0'} />
+                                                <span class="min-w-0 flex-1 truncate">{option.label}</span>
+                                            </DropdownMenuItem>
+                                        {/each}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem class="rounded-md text-sm" onclick={resetDriverColumns}>
+                                            Tampilkan semua
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
 
                         <div class="grid gap-3 p-3 md:hidden">
@@ -5755,48 +5860,168 @@
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={driversColumns} rows={drivers} class="min-w-[1820px]">
+                            <DataTable columns={visibleDriverColumns} rows={drivers} class="min-w-[1640px]" expandedRows={expandedDriverRowIds}>
                                 {#snippet row({ row })}
-                                    {@const gross = driverGrossMargin(row as DriverRow)}
-                                    {@const net = driverNetMargin(row as DriverRow)}
-                                    {@const achievement = driverAchievement(row as DriverRow)}
-                                    {@const status = driverStatus(row as DriverRow)}
+                                    {@const driver = row as DriverRow}
+                                    {@const gross = driverGrossMargin(driver)}
+                                    {@const net = driverNetMargin(driver)}
+                                    {@const achievement = driverAchievement(driver)}
+                                    {@const status = driverStatus(driver)}
 
-                                    <td class="px-3 py-2 align-top">
-                                        <div class="truncate text-[11px] font-semibold text-foreground">{row.nama}</div>
-                                        <div class="mt-0.5 text-[10px] text-muted-foreground">Kontributor driver bulan ini</div>
+                                    <td class="sticky left-0 z-20 w-[150px] border-b border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/15" style="left: 0px">
+                                        <div class="flex items-start gap-2">
+                                            <button
+                                                type="button"
+                                                class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground transition hover:border-primary/35 hover:text-primary"
+                                                onclick={() => toggleDriverDetail(Number(driver.id))}
+                                                aria-expanded={isDriverExpanded(Number(driver.id))}
+                                                aria-label={isDriverExpanded(Number(driver.id)) ? 'Tutup detail driver' : 'Buka detail driver'}
+                                            >
+                                                {#if isDriverExpanded(Number(driver.id))}
+                                                    <ChevronUp class="h-3.5 w-3.5" />
+                                                {:else}
+                                                    <ChevronDown class="h-3.5 w-3.5" />
+                                                {/if}
+                                            </button>
+                                            <div class="min-w-0">
+                                                <div class="truncate text-[11px] font-semibold text-foreground">{driver.nama}</div>
+                                                <p class="mt-0.5 text-[10px] text-muted-foreground">Klik untuk detail finansial</p>
+                                            </div>
+                                        </div>
                                     </td>
 
-                                    <td class="px-3 py-2 align-top">
-                                        <div class="truncate text-[11px] font-medium text-foreground">{row.phone ?? '-'}</div>
-                                        <div class="mt-0.5 text-[10px] text-muted-foreground">Kontak operasional</div>
-                                    </td>
+                                    {#each visibleDriverColumns as column}
+                                        {#if column.key !== 'nama'}
+                                            {#if column.key === 'phone'}
+                                                <td class="px-3 py-2 align-top">
+                                                    <div class="truncate text-[11px] font-medium text-foreground">{driver.phone ?? '-'}</div>
+                                                    <div class="mt-0.5 text-[10px] text-muted-foreground">Kontak operasional</div>
+                                                </td>
+                                            {:else if column.key === 'nopol'}
+                                                <td class="px-3 py-2 align-top">
+                                                    <EntityBadge code={driver.nopol ?? '-'} />
+                                                </td>
+                                            {:else if column.key === 'pool'}
+                                                <td class="px-3 py-2 align-top">
+                                                    <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px]">
+                                                        {rowPoolName(driver)}
+                                                    </Badge>
+                                                </td>
+                                            {:else if column.key === 'charter_revenue'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(driver.charter_revenue || 0))}</td>
+                                            {:else if column.key === 'departure_revenue'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(driver.departure_revenue || 0))}</td>
+                                            {:else if column.key === 'luggage_revenue'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(driver.luggage_revenue || 0))}</td>
+                                            {:else if column.key === 'revenue'}
+                                                <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(driver.revenue || 0))}</td>
+                                            {:else if column.key === 'charter_bop'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(driver.charter_bop || 0))}</td>
+                                            {:else if column.key === 'departure_bop'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(driver.departure_bop || 0))}</td>
+                                            {:else if column.key === 'bop'}
+                                                <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(driver.bop || 0))}</td>
+                                            {:else if column.key === 'gross'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(gross)}</td>
+                                            {:else if column.key === 'fixed_cost'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(driver.fixed_cost || 0))}</td>
+                                            {:else if column.key === 'net'}
+                                                <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(net)}</td>
+                                            {:else if column.key === 'target_revenue_bulanan'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(driver.target_revenue_bulanan || 0))}</td>
+                                            {:else if column.key === 'achievement'}
+                                                <td class="px-3 py-2 text-right text-[11px] tabular-nums">{achievement.toFixed(1)}%</td>
+                                            {:else if column.key === 'status'}
+                                                <td class="px-3 py-2 text-center">
+                                                    <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
+                                                </td>
+                                            {/if}
+                                        {/if}
+                                    {/each}
+                                {/snippet}
 
-                                    <td class="px-3 py-2 align-top">
-                                        <EntityBadge code={row.nopol ?? '-'} />
-                                    </td>
+                                {#snippet detail({ row })}
+                                    {@const driver = row as DriverRow}
+                                    {@const gross = driverGrossMargin(driver)}
+                                    {@const net = driverNetMargin(driver)}
+                                    {@const achievement = driverAchievement(driver)}
+                                    <div class="grid gap-3 xl:grid-cols-4">
+                                        <div class="rounded-2xl border border-border/70 bg-background/80 p-3">
+                                            <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Pendapatan</p>
+                                            <div class="mt-3 grid gap-2 sm:grid-cols-3">
+                                                <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
+                                                    <p class="text-[10px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Charter</p>
+                                                    <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">{formatCurrency(Number(driver.charter_revenue || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-sky-50/70 px-3 py-2 dark:bg-sky-950/25">
+                                                    <p class="text-[10px] uppercase tracking-wide text-sky-700 dark:text-sky-300">Keberangkatan</p>
+                                                    <p class="mt-1 font-semibold text-sky-800 dark:text-sky-200">{formatCurrency(Number(driver.departure_revenue || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-violet-50/70 px-3 py-2 dark:bg-violet-950/25">
+                                                    <p class="text-[10px] uppercase tracking-wide text-violet-700 dark:text-violet-300">Bagasi</p>
+                                                    <p class="mt-1 font-semibold text-violet-800 dark:text-violet-200">{formatCurrency(Number(driver.luggage_revenue || 0))}</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <td class="px-3 py-2 align-top">
-                                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px]">
-                                            {rowPoolName(row as DriverRow)}
-                                        </Badge>
-                                    </td>
+                                        <div class="rounded-2xl border border-border/70 bg-background/80 p-3">
+                                            <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">BOP & Biaya</p>
+                                            <div class="mt-3 grid gap-2 sm:grid-cols-3">
+                                                <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
+                                                    <p class="text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300">Charter BOP</p>
+                                                    <p class="mt-1 font-semibold text-amber-800 dark:text-amber-200">{formatCurrency(Number(driver.charter_bop || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-orange-50/80 px-3 py-2 dark:bg-orange-950/25">
+                                                    <p class="text-[10px] uppercase tracking-wide text-orange-700 dark:text-orange-300">Keberangkatan BOP</p>
+                                                    <p class="mt-1 font-semibold text-orange-800 dark:text-orange-200">{formatCurrency(Number(driver.departure_bop || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-rose-50/80 px-3 py-2 dark:bg-rose-950/25">
+                                                    <p class="text-[10px] uppercase tracking-wide text-rose-700 dark:text-rose-300">Total BOP</p>
+                                                    <p class="mt-1 font-semibold text-rose-800 dark:text-rose-200">{formatCurrency(Number(driver.bop || 0))}</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(gross)}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(net)}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.target_revenue_bulanan || 0))}</td>
-                                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{achievement.toFixed(1)}%</td>
-                                    <td class="px-3 py-2 text-center">
-                                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
-                                    </td>
+                                        <div class="rounded-2xl border border-border/70 bg-background/80 p-3">
+                                            <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Margin</p>
+                                            <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Gross</p>
+                                                    <p class="mt-1 font-semibold text-foreground">{formatCurrency(gross)}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Fixed Cost</p>
+                                                    <p class="mt-1 font-semibold text-foreground">{formatCurrency(Number(driver.fixed_cost || 0))}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Net Margin</p>
+                                                    <p class={`mt-1 font-semibold ${net >= 0 ? 'text-sky-800 dark:text-sky-200' : 'text-rose-700 dark:text-rose-300'}`}>{formatCurrency(net)}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Achievement</p>
+                                                    <p class="mt-1 font-semibold text-foreground">{achievement.toFixed(1)}%</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="rounded-2xl border border-border/70 bg-background/80 p-3">
+                                            <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Identitas</p>
+                                            <div class="mt-3 space-y-2">
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Kontak</p>
+                                                    <p class="mt-1 font-semibold text-foreground">{driver.phone ?? '-'}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Nopol</p>
+                                                    <p class="mt-1 font-semibold text-foreground">{driver.nopol ?? '-'}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Pool</p>
+                                                    <p class="mt-1 font-semibold text-foreground">{rowPoolName(driver)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 {/snippet}
 
                                 {#snippet actions({ row })}
