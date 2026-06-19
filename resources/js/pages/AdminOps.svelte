@@ -509,7 +509,7 @@
     const tabGroups: TabGroup[] = [
         {
             title: 'Master Data',
-            description: 'Referensi tenant yang dipakai oleh jadwal dan operasional harian.',
+            description: '',
             tabs: [
                 { tab: 'routes', label: 'Rute Induk', permission: 'master.view' },
                 { tab: 'schedules', label: 'Jadwal', permission: 'master.view' },
@@ -519,7 +519,7 @@
         },
         {
             title: 'Armada & Akses',
-            description: 'Kelola driver, kategori armada, unit, armada, dan pool.',
+            description: '',
             tabs: [
                 { tab: 'drivers', label: 'Driver', permission: 'driver.view' },
                 { tab: 'units', label: 'Kategori Armada', permission: 'master.view' },
@@ -529,7 +529,7 @@
         },
         {
             title: 'Tenant',
-            description: 'Kelola user tenant, laporan, dan log aktivitas tenant aktif.',
+            description: '',
             tabs: [
                 { tab: 'users', label: 'Users', permission: 'user.manage' },
                 { tab: 'cancellations', label: 'Logs', permission: 'logs.view' },
@@ -4325,9 +4325,6 @@
                         <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">
                             {tabTitle(activeTab)}
                         </h2>
-                        <p class="max-w-2xl text-sm leading-relaxed text-slate-200/80">
-                            {tabGroupFor(activeTab).description}
-                        </p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <span class="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-slate-100">
@@ -4384,7 +4381,6 @@
                 <Card class={group.tabs.some((item) => item.tab === activeTab) ? 'border-cyan-300/60 shadow-md shadow-cyan-950/5' : 'border-border/70 shadow-sm'}>
                     <CardHeader class="space-y-1 pb-3">
                         <CardTitle class="text-sm font-semibold">{group.title}</CardTitle>
-                        <p class="text-xs text-muted-foreground">{group.description}</p>
                     </CardHeader>
                     <CardContent class="flex flex-wrap gap-2 pt-0">
                         {#each group.tabs as item (item.tab)}
@@ -4406,21 +4402,19 @@
     {/if}
 
     <Card class="overflow-hidden border-border/70 shadow-sm">
-        <CardHeader class="space-y-2 border-b border-border/70 bg-muted/20">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="space-y-1">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        {tabGroupFor(activeTab).title}
-                    </p>
-                    <CardTitle>{tabTitle(activeTab)}</CardTitle>
-                    <p class="max-w-3xl text-sm text-muted-foreground">
-                        {tabGroupFor(activeTab).description}
-                    </p>
+        <CardHeader class="border-b border-border/70 bg-muted/20">
+            {#if lockedMenuView}
+                <div class="flex items-center justify-between gap-3">
+                    <CardTitle class="text-lg md:text-xl">{tabTitle(activeTab)}</CardTitle>
                 </div>
-                <Badge variant="secondary" class="rounded-full px-3 py-1">
-                    {lockedMenuView ? 'Locked View' : 'Active'}
-                </Badge>
-            </div>
+            {:else}
+                <div class="flex items-center justify-between gap-3">
+                    <CardTitle class="text-lg md:text-xl">{tabTitle(activeTab)}</CardTitle>
+                    <Badge variant="secondary" class="rounded-full px-3 py-1">
+                        Active
+                    </Badge>
+                </div>
+            {/if}
         </CardHeader>
         <CardContent class="space-y-4 pt-6">
             {#if busy}<p class="text-sm text-muted-foreground">
@@ -4539,31 +4533,22 @@
                     <div
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
-                            <div>
-                                <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
-                                >
-                                    Rute Induk
-                                </p>
-                                <h3 class="mt-1 text-lg font-semibold">
-                                    Peta perjalanan utama
-                                </h3>
-                                <p
-                                    class="mt-1 max-w-3xl text-sm text-muted-foreground"
-                                >
-                                    Segment kini ditambahkan langsung di bawah
-                                    rute induk, sehingga parent route, arah
-                                    perjalanan, dan harga turunannya bisa
-                                    dilihat di satu tempat.
-                                </p>
-                            </div>
+                        <div class="flex items-center justify-between gap-3 border-b border-border/70 bg-muted/20 px-5 py-4">
                             <Badge
                                 variant="secondary"
                                 class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
                             >
                                 {routes.length} rute aktif
                             </Badge>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="h-9 rounded-full px-3 text-xs font-semibold"
+                                onclick={resetRouteForm}
+                            >
+                                Tambah Rute
+                            </Button>
                         </div>
                         <div class="grid gap-3 p-3 md:hidden">
                             {#if routes.length === 0}
@@ -5152,32 +5137,8 @@
                 <div class="space-y-4">
                     <section class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm">
                         <div class="space-y-5 px-5 py-5">
-                            <div
-                                class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
-                            >
-                                <div class="space-y-2">
-                                    <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                                        Workspace Keberangkatan
-                                    </p>
-                                    <div class="space-y-2">
-                                        <h3
-                                            class="text-xl font-semibold tracking-tight text-foreground"
-                                        >
-                                            Jadwal mingguan lebih mudah dipindai
-                                        </h3>
-                                        <p
-                                            class="max-w-3xl text-sm text-muted-foreground"
-                                        >
-                                            Pilih rute untuk mengatur jam
-                                            berangkat, jumlah unit, layout kursi,
-                                            dan BOP tanpa harus membaca tabel
-                                            panjang.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div
-                                    class="grid gap-3 md:min-w-[420px] md:grid-cols-[minmax(0,1fr)_auto]"
-                                >
+                            <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                                <div class="grid gap-3 md:min-w-[420px] md:grid-cols-[minmax(0,1fr)_auto]">
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
@@ -6091,26 +6052,13 @@
                     <div
                         class="hidden overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div
-                            class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.035),rgba(16,185,129,0.05))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
-                        >
-                            <div>
-                                <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
-                                >
-                                    Ringkasan Driver
-                                </p>
-                                <h3 class="mt-1 text-lg font-semibold">
-                                    Kinerja pendapatan bulan berjalan
+                    <div
+                        class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.035),rgba(16,185,129,0.05))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
+                    >
+                        <div>
+                                <h3 class="text-lg font-semibold">
+                                    Driver
                                 </h3>
-                                <p
-                                    class="mt-1 max-w-3xl text-sm text-muted-foreground"
-                                >
-                                    Nama driver tetap terkunci di kiri, kolom
-                                    bisa disembunyikan lewat tombol Kolom, dan
-                                    detail finansial lengkap muncul di baris
-                                    expand agar tabel tetap enak dipindai.
-                                </p>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <Badge

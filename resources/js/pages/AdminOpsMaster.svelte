@@ -549,9 +549,7 @@ return;
     <section class="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] shadow-sm">
         <div class="grid gap-4 border-b border-border/70 px-5 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <div class="space-y-2">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Master Data</p>
                 <h1 class="text-2xl font-semibold tracking-tight text-foreground">{masterTabTitle(activeTab)}</h1>
-                <p class="max-w-3xl text-sm text-muted-foreground">Kelola data Bagasi, Carter, dan preset rute dengan tampilan yang ringkas, mudah discan, dan tetap mengikuti konteks pool aktif.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 md:justify-end">
                 <span class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-cyan-800 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">

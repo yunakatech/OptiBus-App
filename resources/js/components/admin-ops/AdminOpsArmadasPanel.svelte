@@ -340,11 +340,7 @@
         <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div class="space-y-1">
-                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Ringkasan Armada</p>
                     <h3 class="text-lg font-bold tracking-tight md:text-xl">Performa Armada</h3>
-                    <p class="max-w-3xl text-sm text-muted-foreground">
-                    Kartu ini dibuat untuk dibaca cepat oleh manajemen dan direksi, tanpa scroll horizontal, dengan fokus ke performa finansial, GPS, dan achievement per armada.
-                    </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] uppercase tracking-wide">
