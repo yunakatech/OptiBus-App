@@ -137,4 +137,55 @@ class BookingPageTest extends TestCase
                     ->where('bookingGroups.0.belum_lunas', 0)),
             );
     }
+
+    public function test_booking_detail_page_ignores_invalid_booking_dates_without_failing(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        DB::table('bookings')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-05-17',
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => '1',
+                'name' => 'PENUMPANG VALID',
+                'phone' => '081200000020',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Lunas',
+                'status' => 'active',
+                'price' => 150000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => 'invalid-date',
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => '2',
+                'name' => 'PENUMPANG RUSAK',
+                'phone' => '081200000021',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Belum Lunas',
+                'status' => 'active',
+                'price' => 150000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $groupKey = md5('PINRANG TO MAKASSAR|2026-05-17|09:00|1');
+
+        $this->get(route('bookings.detail', ['groupKey' => $groupKey]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Bookings')
+                ->where('groupDetailPage', true)
+                ->where('groupDetailKey', $groupKey)
+                ->has('bookingGroups', 2));
+    }
 }
