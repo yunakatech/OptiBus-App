@@ -804,12 +804,13 @@ class BookingController extends Controller
                     $route = trim((string) ($item['rute'] ?? ''));
                     $date = trim((string) ($item['tanggal'] ?? ''));
                     $jam = substr((string) ($item['jam'] ?? ''), 0, 5);
+                    $dayOfWeek = $this->safeDayOfWeek($date);
 
                     if ($route !== '') {
                         $routeKeys[$this->normalizeTripRoute($route)] = true;
                     }
-                    if ($date !== '') {
-                        $dows[Carbon::parse($date)->dayOfWeek] = true;
+                    if ($dayOfWeek !== null) {
+                        $dows[$dayOfWeek] = true;
                     }
                     if ($jam !== '') {
                         $jams[$jam.':00'] = true;
@@ -843,9 +844,16 @@ class BookingController extends Controller
                             continue;
                         }
 
+                        $dayOfWeek = $this->safeDayOfWeek((string) ($item['tanggal'] ?? ''));
+                        if ($dayOfWeek === null) {
+                            $grouped[$key]['bop'] = 0;
+
+                            continue;
+                        }
+
                         $grouped[$key]['bop'] = $bopBySchedule[$this->tripScheduleKey(
                             (string) ($item['rute'] ?? ''),
-                            Carbon::parse((string) ($item['tanggal'] ?? ''))->dayOfWeek,
+                            $dayOfWeek,
                             (string) ($item['jam'] ?? ''),
                         )] ?? 0;
                     }
@@ -946,6 +954,24 @@ class BookingController extends Controller
         }
 
         return null;
+    }
+
+    private function safeDayOfWeek(string $date): ?int
+    {
+        $date = trim($date);
+        if ($date === '') {
+            return null;
+        }
+
+        try {
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1) {
+                return Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
+            }
+
+            return Carbon::parse($date)->dayOfWeek;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function departureCanArrive(
