@@ -4726,21 +4726,6 @@ class AdminOpsApiController extends Controller
             ->select($select)
             ->orderBy('name');
 
-        if (! $this->currentUserIsSuperAdmin() && $this->poolTablesReady()) {
-            $poolIds = $this->currentUserPoolIds();
-            if ($poolIds === []) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->whereExists(function (Builder $exists) use ($poolIds): void {
-                    $exists
-                        ->selectRaw('1')
-                        ->from('pool_user as scoped_pool_user')
-                        ->whereColumn('scoped_pool_user.user_id', 'users.id')
-                        ->whereIn('scoped_pool_user.pool_id', $poolIds);
-                });
-            }
-        }
-
         if ($q !== '') {
             $qLike = '%'.$q.'%';
             $query->where(function ($builder) use ($qLike) {
@@ -4904,9 +4889,19 @@ class AdminOpsApiController extends Controller
             if (Schema::hasColumn('users', 'tenant_id')) {
                 PoolScope::applyTenantScope($query, 'tenant_id');
             }
+            if (! $query->exists()) {
+                return $this->error('User tidak ditemukan.', 404);
+            }
             $query->update(array_merge($payload, ['updated_at' => now()]));
             $this->syncUserPools($id, $poolIds);
             $this->syncUserRoles($id, $roleIds);
+
+            ActivityLog::write('user.updated', 'User diperbarui', (string) $payload['email'], null, [
+                'user_id' => $id,
+                'tenant_id' => (int) PoolScope::tenantId(),
+                'pool_id' => (int) PoolScope::currentPoolId(auth()->id()),
+                'actor_user_id' => (int) (auth()->id() ?? 0),
+            ]);
 
             return $this->ok(['message' => 'User updated.', 'id' => $id]);
         }
@@ -4923,6 +4918,13 @@ class AdminOpsApiController extends Controller
         $this->syncUserPools((int) $newId, $poolIds);
         $this->syncUserRoles((int) $newId, $roleIds);
 
+        ActivityLog::write('user.created', 'User dibuat', (string) $payload['email'], null, [
+            'user_id' => (int) $newId,
+            'tenant_id' => (int) PoolScope::tenantId(),
+            'pool_id' => (int) PoolScope::currentPoolId(auth()->id()),
+            'actor_user_id' => (int) (auth()->id() ?? 0),
+        ]);
+
         return $this->ok(['message' => 'User created.', 'id' => $newId], 201);
     }
 
@@ -4934,9 +4936,20 @@ class AdminOpsApiController extends Controller
             return $this->error('Tidak bisa menghapus akun yang sedang login.', 409);
         }
 
-        $totalUsers = (int) DB::table('users')->count();
-        if ($totalUsers <= 1) {
-            return $this->error('Minimal harus ada satu user admin.', 409);
+        $query = DB::table('users')->where('id', $id);
+        if (Schema::hasColumn('users', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'tenant_id');
+        }
+        if (! $query->exists()) {
+            return $this->error('User tidak ditemukan.', 404);
+        }
+
+        $tenantUserQuery = DB::table('users');
+        if (Schema::hasColumn('users', 'tenant_id')) {
+            PoolScope::applyTenantScope($tenantUserQuery, 'tenant_id');
+        }
+        if ((int) $tenantUserQuery->count() <= 1) {
+            return $this->error('Minimal harus ada satu user admin di tenant ini.', 409);
         }
 
         if ($this->isUserSuperAdmin($id) && $this->superAdminCount() <= 1) {
@@ -4949,7 +4962,14 @@ class AdminOpsApiController extends Controller
         if (AccessControl::tablesReady()) {
             DB::table('user_role')->where('user_id', $id)->delete();
         }
-        DB::table('users')->where('id', $id)->delete();
+        $query->delete();
+
+        ActivityLog::write('user.deleted', 'User dihapus', '', null, [
+            'user_id' => $id,
+            'tenant_id' => (int) PoolScope::tenantId(),
+            'pool_id' => (int) PoolScope::currentPoolId(auth()->id()),
+            'actor_user_id' => (int) (auth()->id() ?? 0),
+        ]);
 
         return $this->ok(['message' => 'User deleted.']);
     }
@@ -5035,21 +5055,6 @@ class AdminOpsApiController extends Controller
         $query = DB::table('users')->where('id', $id);
         if (Schema::hasColumn('users', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'users.tenant_id');
-        }
-
-        if (! $this->currentUserIsSuperAdmin() && $this->poolTablesReady()) {
-            $poolIds = $this->currentUserPoolIds();
-            if ($poolIds === []) {
-                return null;
-            }
-
-            $query->whereExists(function (Builder $exists) use ($poolIds): void {
-                $exists
-                    ->selectRaw('1')
-                    ->from('pool_user as scoped_pool_user')
-                    ->whereColumn('scoped_pool_user.user_id', 'users.id')
-                    ->whereIn('scoped_pool_user.pool_id', $poolIds);
-            });
         }
 
         if (! $query->exists()) {

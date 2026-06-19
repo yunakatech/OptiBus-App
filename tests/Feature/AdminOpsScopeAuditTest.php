@@ -498,6 +498,67 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('error', 'Pilih tenant dulu.');
     }
 
+    public function test_users_are_scoped_to_the_active_tenant_for_super_admins(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantA = $this->tenantIdBySlug('audit-user-tenant-a');
+        $tenantB = $this->tenantIdBySlug('audit-user-tenant-b');
+        $this->activateTenantBilling($tenantA);
+        $this->activateTenantBilling($tenantB);
+
+        $userAId = (int) DB::table('users')->insertGetId([
+            'tenant_id' => $tenantA,
+            'name' => 'Tenant A User',
+            'email' => 'tenant-a-user@example.com',
+            'password' => bcrypt('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $userBId = (int) DB::table('users')->insertGetId([
+            'tenant_id' => $tenantB,
+            'name' => 'Tenant B User',
+            'email' => 'tenant-b-user@example.com',
+            'password' => bcrypt('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $admin = User::factory()->create([
+            'is_super_admin' => true,
+        ]);
+
+        $this->actingAs($admin);
+        $this->postJson(route('api.admin.tenant.switch'), [
+            'tenant_id' => $tenantA,
+        ])->assertOk();
+
+        $this->getJson(route('api.admin.users.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'users')
+            ->assertJsonPath('users.0.id', $userAId)
+            ->assertJsonPath('users.0.name', 'Tenant A User');
+
+        $this->postJson(route('api.admin.users.save'), [
+            'id' => $userBId,
+            'name' => 'Tenant B User Update',
+            'email' => 'tenant-b-user@example.com',
+        ])->assertStatus(404);
+
+        $this->deleteJson(route('api.admin.users.delete', ['id' => $userBId]))
+            ->assertStatus(404);
+
+        $created = $this->postJson(route('api.admin.users.save'), [
+            'name' => 'Tenant A New User',
+            'email' => 'tenant-a-new@example.com',
+            'password' => 'password123',
+        ])->assertCreated()->json();
+
+        $newUserId = (int) ($created['id'] ?? 0);
+        $this->assertTrue($newUserId > 0);
+        $this->assertSame($tenantA, (int) (DB::table('users')->where('id', $newUserId)->value('tenant_id') ?? 0));
+    }
+
     /**
      * @return array{0: int, 1: int}
      */
