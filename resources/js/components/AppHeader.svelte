@@ -42,7 +42,7 @@
 
 <div>
     <div class="mobile-safe-header-shell border-b border-sidebar-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-        <div class="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
+        <div class="mx-auto flex h-14 max-w-6xl items-center px-4 md:px-6">
             <MobileSettingsMenuButton class="mr-2" />
 
             {#if isBookingConsolePage}
@@ -67,10 +67,8 @@
 
             <!-- Desktop Menu -->
             <div class="hidden h-full lg:flex lg:flex-1">
-                <NavigationMenu class="ml-10 flex h-full items-stretch">
-                    <NavigationMenuList
-                        class="flex h-full items-stretch space-x-2"
-                    >
+                <NavigationMenu class="ml-8 flex h-full items-stretch">
+                    <NavigationMenuList class="flex h-full items-stretch gap-1.5">
                         {#each mainNavItems as item (toUrl(item.href))}
                             <NavigationMenuItem
                                 class="relative flex h-full items-center"
@@ -81,7 +79,7 @@
                                         url.currentUrl,
                                         activeItemStyles,
                                         '',
-                                    ) ?? ''} h-9 cursor-pointer px-4"
+                                    ) ?? ''} h-8 cursor-pointer rounded-md px-3.5 text-sm"
                                     href={toUrl(item.href)}
                                     prefetch={['hover', 'click']}
                                     cacheFor={30000}
@@ -102,7 +100,7 @@
                 </NavigationMenu>
             </div>
 
-            <div class="ml-auto flex items-center space-x-2">
+            <div class="ml-auto flex items-center gap-2">
                 <ProfileMenu user={auth.user} />
             </div>
         </div>
@@ -111,7 +109,7 @@
     {#if breadcrumbs.length > 1}
         <div class="flex w-full border-b border-sidebar-border/70">
             <div
-                class="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl"
+                class="mx-auto flex h-11 w-full max-w-6xl items-center justify-start px-4 text-neutral-500 md:px-6"
             >
                 <Breadcrumbs {breadcrumbs} />
             </div>

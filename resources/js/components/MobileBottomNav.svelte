@@ -244,14 +244,14 @@ return;
     aria-label="Mobile bottom navigation"
 >
     <div
-        class={`mx-auto w-full border border-sidebar-border/70 bg-background/85 ring-1 ring-white/10 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[17rem] rounded-[1.35rem] p-1 shadow-[0_14px_32px_-24px_hsl(201_96%_30%_/_0.8)]' : 'max-w-xl rounded-[1.75rem] p-1.5 shadow-[0_18px_40px_-24px_hsl(201_96%_30%_/_0.75)]'}`}
+        class={`mx-auto w-full border border-sidebar-border/70 bg-background/88 ring-1 ring-black/5 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[16rem] rounded-2xl p-1 shadow-[0_12px_24px_-22px_hsl(201_96%_30%_/_0.75)]' : 'max-w-md rounded-2xl p-1.5 shadow-[0_14px_30px_-24px_hsl(201_96%_30%_/_0.7)]'}`}
     >
-        <div class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1.15rem]' : 'rounded-3xl'}`}>
+        <div class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1rem]' : 'rounded-[1.15rem]'}`}>
             <div
-                class={`pointer-events-none absolute left-0 z-0 transition-[transform,padding,inset] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'inset-y-0.5 px-1' : 'inset-y-1 px-1.5'}`}
+                class={`pointer-events-none absolute left-0 z-0 transition-[transform,padding,inset] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'inset-y-0.5 px-1' : 'inset-y-[3px] px-[5px]'}`}
                 style={`width: ${100 / navCount}%; transform: translateX(${activeIndex * 100}%);`}
             >
-                <div class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/30 to-sky-500/20 shadow-[0_10px_25px_-12px_hsl(200_95%_45%_/_0.85)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-xl' : 'rounded-2xl'}`}></div>
+                <div class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/25 to-sky-500/15 shadow-[0_8px_20px_-12px_hsl(200_95%_45%_/_0.7)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-lg' : 'rounded-xl'}`}></div>
             </div>
 
             <ul class="relative z-10 grid" style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}>
@@ -267,7 +267,7 @@ return;
                             onpointerdown={() => prepareNavPress(itemHref)}
                             onfocus={() => prefetchNavItem(itemHref)}
                             onclick={(event) => visitNavItem(event, itemHref)}
-                            class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref === itemHref ? 'opacity-70' : ''} {isCompact ? 'h-10 rounded-xl' : 'h-14 rounded-2xl'} {isNavItemActive(
+                            class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref === itemHref ? 'opacity-70' : ''} {isCompact ? 'h-10 rounded-lg' : 'h-12 rounded-xl'} {isNavItemActive(
                                 item.href,
                             )
                                 ? 'text-primary'

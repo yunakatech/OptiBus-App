@@ -11,6 +11,6 @@
     } = $props();
 </script>
 
-<div data-slot="card" class={cn('bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm md:[html[data-density=compact]_&]:gap-4 md:[html[data-density=compact]_&]:py-4', className)}>
+<div data-slot="card" class={cn('bg-card text-card-foreground flex flex-col gap-4 rounded-lg border py-4 shadow-sm md:[html[data-density=compact]_&]:gap-3 md:[html[data-density=compact]_&]:py-3.5', className)}>
     {@render children?.()}
 </div>

@@ -42,7 +42,7 @@
 </script>
 
 <header
-    class="mobile-safe-header grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-sidebar-border/70 bg-background/95 px-4 backdrop-blur transition-[width,height] ease-linear supports-[backdrop-filter]:bg-background/85 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-6 md:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:[html[data-density=compact]_&]:h-14 md:[html[data-density=compact]_&]:px-4"
+    class="mobile-safe-header grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-sidebar-border/70 bg-background/95 px-4 backdrop-blur transition-[width,height] ease-linear supports-[backdrop-filter]:bg-background/85 md:h-14 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5 md:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:[html[data-density=compact]_&]:h-12 md:[html[data-density=compact]_&]:px-4"
 >
     <div class="flex min-w-0 items-center gap-2">
         <SidebarTrigger class="-ml-1 hidden md:inline-flex" />
@@ -74,7 +74,7 @@
             variant={url.isCurrentUrl('/booking-console', url.currentUrl)
                 ? 'default'
                 : 'outline'}
-            class="h-9 gap-2 rounded-full px-4"
+            class="h-8 gap-2 rounded-md px-3.5"
         >
             {#snippet children(props)}
                 <Link
