@@ -5868,7 +5868,7 @@
                                     {@const achievement = driverAchievement(driver)}
                                     {@const status = driverStatus(driver)}
 
-                                    <td class="sticky left-0 z-20 w-[150px] border-b border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/15" style="left: 0px">
+                                    <td class="sticky left-0 z-20 w-[150px] border-b border-r border-border/60 bg-background px-3 py-2 align-top transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60" style="left: 0px">
                                         <div class="flex items-start gap-2">
                                             <button
                                                 type="button"

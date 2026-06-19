@@ -53,10 +53,14 @@
     const bodyClass = $derived(tone === 'default' ? 'divide-y divide-border/70 text-xs' : 'divide-y divide-slate-800 text-xs');
     const rowClass = $derived(
         tone === 'default'
-            ? 'group text-foreground transition-colors hover:bg-muted/10 hover:text-foreground'
-            : 'group text-foreground transition-colors hover:bg-[#1b2440]',
+            ? 'group text-foreground transition-colors hover:bg-[#ebf3fc] hover:text-foreground dark:hover:bg-slate-800/60'
+            : 'group text-foreground transition-colors hover:bg-[#ebf3fc] hover:text-foreground dark:hover:bg-slate-800/60',
     );
-    const stickyCellClass = $derived(tone === 'default' ? 'sticky z-20 bg-background' : 'sticky z-20 bg-card');
+    const stickyCellClass = $derived(
+        tone === 'default'
+            ? 'sticky z-20 bg-background transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60'
+            : 'sticky z-20 bg-card transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60',
+    );
     const actionSeparatorClass = $derived(tone === 'default' ? 'text-border' : 'text-slate-700');
 </script>
 
