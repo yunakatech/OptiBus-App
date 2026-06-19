@@ -500,7 +500,7 @@
     const tabGroups: TabGroup[] = [
         {
             title: 'Master Data',
-            description: 'Referensi utama yang dipakai oleh jadwal dan operasional harian.',
+            description: 'Referensi tenant yang dipakai oleh jadwal dan operasional harian.',
             tabs: [
                 { tab: 'routes', label: 'Rute Induk', permission: 'master.view' },
                 { tab: 'schedules', label: 'Jadwal', permission: 'master.view' },
@@ -511,19 +511,19 @@
         },
         {
             title: 'Armada & Akses',
-            description: 'Kelola driver, kategori armada, unit, armada, dan akun pengguna.',
+            description: 'Kelola driver, kategori armada, unit, armada, dan pool.',
             tabs: [
                 { tab: 'drivers', label: 'Driver', permission: 'driver.view' },
                 { tab: 'units', label: 'Kategori Armada', permission: 'master.view' },
                 { tab: 'armadas', label: 'Armada', permission: 'armada.view' },
                 { tab: 'pools', label: 'Pool', permission: 'pool.manage' },
-                { tab: 'users', label: 'Users', permission: 'user.manage' },
             ],
         },
         {
-            title: 'Audit & Rekap',
-            description: 'Pantau log aktivitas, pembatalan, dan ringkasan laporan.',
+            title: 'Tenant',
+            description: 'Kelola user tenant, laporan, dan log aktivitas tenant aktif.',
             tabs: [
+                { tab: 'users', label: 'Users', permission: 'user.manage' },
                 { tab: 'cancellations', label: 'Logs', permission: 'logs.view' },
                 { tab: 'reports', label: 'Laporan', permission: 'report.view' },
             ],

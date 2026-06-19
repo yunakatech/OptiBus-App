@@ -43,7 +43,6 @@
             label: 'Operasional',
             items: [
                 { title: 'Dashboard', href: dashboard(), icon: LayoutGrid, permission: 'dashboard.view' },
-                { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
                 { title: 'Keberangkatan', href: '/bookings', icon: CalendarDays, permission: 'booking.view' },
                 { title: 'Console', href: '/booking-console', icon: Monitor, permission: 'booking.view' },
                 { title: 'Carter', href: '/charters', icon: BusFront, permission: 'charter.view' },
@@ -60,11 +59,9 @@
             ],
         },
         {
-            label: 'Pengaturan',
+            label: 'Data Master',
             items: [
-                { title: 'Platform Dashboard', href: '/platform/dashboard', icon: Building2, permission: 'platform.manage', superAdminOnly: true },
-                { title: 'Laporan', href: '/report', icon: ChartColumn, permission: 'report.view' },
-                { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
+                { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
                 { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },
                 { title: 'Pool', href: '/admin-ops/pools', icon: Building2, permission: 'pool.manage' },
                 { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned, permission: 'master.view' },
@@ -73,7 +70,21 @@
                 { title: 'Kategori Armada', href: '/admin-ops/units', icon: Truck, permission: 'master.view' },
                 { title: 'Armada', href: '/admin-ops/armadas', icon: CarFront, permission: 'armada.view' },
                 { title: 'Driver', href: '/admin-ops/drivers', icon: IdCard, permission: 'driver.view' },
+            ],
+        },
+        {
+            label: 'Tenant',
+            items: [
+                { title: 'Laporan', href: '/report', icon: ChartColumn, permission: 'report.view' },
+                { title: 'Langganan', href: '/subscription', icon: CreditCard },
                 { title: 'Users', href: '/admin-ops/users', icon: UserCog, permission: 'user.manage' },
+                { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
+            ],
+        },
+        {
+            label: 'Sistem',
+            items: [
+                { title: 'Platform Dashboard', href: '/platform/dashboard', icon: Building2, permission: 'platform.manage', superAdminOnly: true },
                 { title: 'SaaS', href: '/admin-ops/saas', icon: Building2, permission: 'platform.manage', superAdminOnly: true },
                 { title: 'Role & Hak Akses', href: '/admin-ops/roles', icon: ShieldCheck, permission: 'role.manage', superAdminOnly: true },
             ],
@@ -94,6 +105,8 @@
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
     const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
+    const activeTenant = $derived(page.props.auth?.active_tenant ?? null);
+    const showTenantScopedSections = $derived(!isSuperAdmin || Boolean(activeTenant));
     const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
     const visibleMenuSections = $derived(
         (billingLocked ? billingMenuSections : menuSections)
@@ -109,6 +122,18 @@
                         isSuperAdmin),
                 ),
             }))
+            .map((section) =>
+                showTenantScopedSections || section.label !== 'Sistem'
+                    ? section
+                    : {
+                          ...section,
+                          items: section.items.filter((item) => {
+                              const href = toUrl(item.href);
+                              return href === '/platform/dashboard' || href === '/admin-ops/saas';
+                          }),
+                      },
+            )
+            .filter((section) => showTenantScopedSections || section.label === 'Sistem')
             .filter((section) => section.items.length > 0),
     );
 </script>

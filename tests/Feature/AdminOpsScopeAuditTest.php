@@ -445,11 +445,47 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->assertSame($tenantA, (int) session('active_tenant_id', 0));
         $this->assertFalse(session()->has('active_pool_id'));
 
+        DB::table('activity_logs')->insert([
+            [
+                'tenant_id' => $tenantB,
+                'tag' => 'BOOKING',
+                'title' => 'Tenant B Log',
+                'meta' => 'POOL B',
+                'actor' => 'tenant-b@example.test',
+                'extra' => json_encode([
+                    'tenant_id' => $tenantB,
+                    'pool_id' => $poolB,
+                ]),
+                'created_at' => now()->subMinute(),
+            ],
+            [
+                'tenant_id' => $tenantA,
+                'tag' => 'BOOKING',
+                'title' => 'Tenant A Log',
+                'meta' => 'POOL A',
+                'actor' => 'tenant-a@example.test',
+                'extra' => json_encode([
+                    'tenant_id' => $tenantA,
+                    'pool_id' => $poolA,
+                ]),
+                'created_at' => now(),
+            ],
+        ]);
+
         $this->getJson(route('api.admin.routes.index'))
             ->assertOk()
             ->assertJsonCount(1, 'routes')
             ->assertJsonPath('routes.0.id', $routeA)
             ->assertJsonPath('routes.0.name', 'PINRANG - MAKASSAR A');
+
+        $cancellationsA = $this->getJson(route('api.admin.cancellations.index'))
+            ->assertOk()
+            ->json('cancellations', []);
+        $cancellationTitlesA = collect($cancellationsA)
+            ->pluck('title')
+            ->all();
+        $this->assertContains('Tenant A Log', $cancellationTitlesA);
+        $this->assertNotContains('Tenant B Log', $cancellationTitlesA);
 
         $this->postJson(route('api.admin.routes.save'), [
             'name' => 'PINRANG - MAKASSAR A BARU',
@@ -476,6 +512,15 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('routes.0.id', $routeB)
             ->assertJsonPath('routes.0.name', 'PAREPARE - MAKASSAR B');
 
+        $cancellationsB = $this->getJson(route('api.admin.cancellations.index'))
+            ->assertOk()
+            ->json('cancellations', []);
+        $cancellationTitlesB = collect($cancellationsB)
+            ->pluck('title')
+            ->all();
+        $this->assertContains('Tenant B Log', $cancellationTitlesB);
+        $this->assertNotContains('Tenant A Log', $cancellationTitlesB);
+
         $this->postJson(route('api.admin.routes.save'), [
             'name' => 'PAREPARE - MAKASSAR B BARU',
             'origin' => 'PAREPARE',
@@ -493,6 +538,21 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('tenant_id', 0);
 
         $this->get(route('dashboard'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->get(route('admin-ops.schedules'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->get(route('report.index'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->get(route('subscription.index'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->get(route('admin-ops.users'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->get(route('admin-ops.cancellations'))
             ->assertRedirect(route('platform.dashboard'));
 
         $this->getJson(route('api.admin.routes.index'))
@@ -548,11 +608,15 @@ class AdminOpsScopeAuditTest extends TestCase
             'tenant_id' => $tenantA,
         ])->assertOk();
 
-        $this->getJson(route('api.admin.users.index'))
+        $userResponse = $this->getJson(route('api.admin.users.index'))
             ->assertOk()
             ->assertJsonCount(1, 'users')
             ->assertJsonPath('users.0.id', $userAId)
             ->assertJsonPath('users.0.name', 'Tenant A User');
+        $this->assertFalse(
+            collect($userResponse->json('roles', []))
+                ->contains(fn (array $role): bool => (string) ($role['slug'] ?? '') === 'super-admin'),
+        );
         $this->assertDatabaseHas('users', [
             'id' => $superAdminId,
             'tenant_id' => $tenantA,

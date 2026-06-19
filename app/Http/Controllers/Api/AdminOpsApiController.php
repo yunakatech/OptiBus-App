@@ -1166,8 +1166,8 @@ class AdminOpsApiController extends Controller
             [, $perPage] = $this->paginationParams($request);
         }
         $offset = max(0, ($page - 1) * $perPage);
-        $items = ActivityLog::recent($perPage, $offset);
-        $total = ActivityLog::count();
+        $items = ActivityLog::recentForTenant($perPage, $offset);
+        $total = ActivityLog::countForTenant();
         $lastPage = max(1, (int) ceil($total / $perPage));
 
         return $this->ok([
@@ -1199,12 +1199,16 @@ class AdminOpsApiController extends Controller
         $routeFilter = $this->resolveAccessibleRouteFilter($routeId, $poolId);
         [$from, $to] = $this->normalizeDateRange($from, $to);
         [$page, $perPage] = $this->paginationParams($request);
+        $tenantId = (int) PoolScope::tenantId(auth()->id());
+        $activePoolId = (int) PoolScope::currentPoolId(auth()->id());
         $rangeKey = implode(':', [
             $type,
             $from,
             $to,
             $poolId,
             $routeId,
+            $tenantId,
+            $activePoolId,
             (int) (auth()->id() ?? 0),
             $page,
             $perPage,
@@ -4808,9 +4812,7 @@ class AdminOpsApiController extends Controller
         }
 
         $roles = AccessControl::rolesForSelect();
-        if (! $this->currentUserIsSuperAdmin()) {
-            $roles = array_values(array_filter($roles, static fn (array $role): bool => (string) ($role['slug'] ?? '') !== 'super-admin'));
-        }
+        $roles = array_values(array_filter($roles, static fn (array $role): bool => (string) ($role['slug'] ?? '') !== 'super-admin'));
 
         return $this->ok([
             'users' => $users,
@@ -4875,14 +4877,14 @@ class AdminOpsApiController extends Controller
             : 0;
         $keepsSuperAdminRole = $superAdminRoleId > 0 && in_array($superAdminRoleId, $roleIds, true);
 
-        if ($superAdminRoleId > 0 && $keepsSuperAdminRole && ! $this->currentUserIsSuperAdmin()) {
-            return $this->error('Hanya Super Admin yang bisa menetapkan role Super Admin.', 403);
+        if ($superAdminRoleId > 0 && $keepsSuperAdminRole) {
+            return $this->error('Role Super Admin hanya dikelola dari menu role.', 403);
         }
 
         if (Schema::hasColumn('users', 'is_super_admin')) {
             $wantsSuperAdmin = (bool) ($data['is_super_admin'] ?? false);
-            if ($wantsSuperAdmin && ! $this->currentUserIsSuperAdmin()) {
-                return $this->error('Hanya Super Admin yang bisa menjadikan user sebagai Super Admin.', 403);
+            if ($wantsSuperAdmin) {
+                return $this->error('Role Super Admin hanya dikelola dari menu role.', 403);
             }
             if ($id > 0 && ! $wantsSuperAdmin && ! $keepsSuperAdminRole && $this->isUserSuperAdmin($id) && $this->superAdminCount() <= 1) {
                 return $this->error('Minimal harus ada satu Super Admin.', 409);

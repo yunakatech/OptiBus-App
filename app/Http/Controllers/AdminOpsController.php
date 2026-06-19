@@ -346,7 +346,7 @@ class AdminOpsController extends Controller
                         : $query->whereIn('pools.id', $poolIds);
                 }
             }),
-            'cancellations' => ActivityLog::count(),
+            'cancellations' => ActivityLog::countForTenant(),
         ];
     }
 
