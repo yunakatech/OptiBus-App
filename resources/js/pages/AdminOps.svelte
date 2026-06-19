@@ -1467,19 +1467,6 @@
     const routesColumns = [
         { key: 'name', label: 'Rute Induk', width: 'w-[220px]', sticky: 'left' },
         { key: 'direction', label: 'Arah Perjalanan', width: 'w-[300px]', sticky: 'left' },
-        { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
-        { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
-        { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
-        { key: 'revenue', label: 'Total Revenue', align: 'right', numeric: true },
-        { key: 'charter_bop', label: 'Charter BOP', align: 'right', numeric: true },
-        { key: 'departure_bop', label: 'Keberangkatan BOP', align: 'right', numeric: true },
-        { key: 'bop', label: 'Total BOP', align: 'right', numeric: true },
-        { key: 'gross', label: 'Gross', align: 'right', numeric: true },
-        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true },
-        { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
-        { key: 'target_revenue', label: 'Target Revenue', align: 'right', numeric: true },
-        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true },
-        { key: 'status', label: 'Status', align: 'center' },
     ];
     const filteredArmadaTemplateOptions = $derived.by<UnitRow[]>(() => {
         const keyword = armadaTemplateSearch.trim().toLowerCase();
@@ -4443,7 +4430,7 @@
                             </p>
                         </div>
                         <div
-                            class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3"
+                            class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-2"
                         >
                             <label class="space-y-1.5">
                                 <span
@@ -4474,42 +4461,6 @@
                                 <Input
                                     placeholder="Titik tujuan"
                                     bind:value={routeForm.destination}
-                                />
-                            </label>
-                            <label class="space-y-1.5">
-                                <span
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >Target Revenue</span
-                                >
-                                <Input
-                                    placeholder="Rp 0"
-                                    bind:value={routeForm.target_revenue}
-                                    oninput={(event) => {
-                                        routeForm.target_revenue =
-                                            formatRupiahInput(
-                                                (
-                                                    event.currentTarget as HTMLInputElement
-                                                ).value,
-                                            );
-                                    }}
-                                />
-                            </label>
-                            <label class="space-y-1.5">
-                                <span
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >Fixed Cost</span
-                                >
-                                <Input
-                                    placeholder="Rp 0"
-                                    bind:value={routeForm.fixed_cost}
-                                    oninput={(event) => {
-                                        routeForm.fixed_cost =
-                                            formatRupiahInput(
-                                                (
-                                                    event.currentTarget as HTMLInputElement
-                                                ).value,
-                                            );
-                                    }}
                                 />
                             </label>
                         </div>
@@ -4569,10 +4520,6 @@
                                 </div>
                             {/if}
                             {#each routes as row (row.id)}
-                                {@const gross = financialGrossMargin(row)}
-                                {@const net = financialNetMargin(row)}
-                                {@const achievement = financialAchievement(row)}
-                                {@const status = financialStatus(row)}
                                 <article
                                     class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-sm"
                                 >
@@ -4587,15 +4534,6 @@
                                                 </p>
                                             </div>
                                             <div class="flex shrink-0 items-center gap-1.5">
-                                                <span
-                                                    class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                                                        status === 'Tercapai'
-                                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
-                                                            : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
-                                                    }`}
-                                                >
-                                                    {status}
-                                                </span>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button
@@ -4642,88 +4580,12 @@
                                             </span>
                                         </div>
                                     </div>
-
-                                    <div class="grid grid-cols-2 gap-2 p-3 text-xs">
-                                        <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                                                Revenue
-                                            </p>
-                                            <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">
-                                                {formatCurrency(Number(row.revenue || 0))}
-                                            </p>
-                                        </div>
-                                        <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                                                BOP
-                                            </p>
-                                            <p class="mt-1 font-semibold text-amber-800 dark:text-amber-200">
-                                                {formatCurrency(Number(row.bop || 0))}
-                                            </p>
-                                        </div>
-                                        <div class="rounded-xl bg-sky-50/80 px-3 py-2 dark:bg-sky-950/25">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
-                                                Net Margin
-                                            </p>
-                                            <p
-                                                class={`mt-1 font-semibold ${net >= 0 ? 'text-sky-800 dark:text-sky-200' : 'text-rose-700 dark:text-rose-300'}`}
-                                            >
-                                                {formatCurrency(net)}
-                                            </p>
-                                        </div>
-                                        <div class="rounded-xl bg-muted/40 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                                Achievement
-                                            </p>
-                                            <p class="mt-1 font-semibold text-foreground">
-                                                {achievement.toFixed(1)}%
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <details class="border-t border-border/70 px-3 py-2 text-xs">
-                                        <summary class="cursor-pointer select-none py-1 font-semibold text-muted-foreground">
-                                            Detail breakdown
-                                        </summary>
-                                        <div class="mt-2 grid gap-2">
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Charter</p>
-                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.charter_revenue || 0))}</p>
-                                                </div>
-                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Keberangkatan</p>
-                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.departure_revenue || 0))}</p>
-                                                </div>
-                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Bagasi</p>
-                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.luggage_revenue || 0))}</p>
-                                                </div>
-                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Gross</p>
-                                                    <p class="mt-1 font-semibold">{formatCurrency(gross)}</p>
-                                                </div>
-                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Fixed Cost</p>
-                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.fixed_cost || 0))}</p>
-                                                </div>
-                                                <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Target</p>
-                                                    <p class="mt-1 font-semibold">{formatCurrency(Number(row.target_revenue || 0))}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </details>
                                 </article>
                             {/each}
                         </div>
                         <div class="hidden overflow-x-auto md:block">
-                            <DataTable columns={routesColumns} rows={routes} class="min-w-[1980px] w-full border-separate border-spacing-0 text-sm" tone="default">
+                            <DataTable columns={routesColumns} rows={routes} class="min-w-[900px] w-full border-separate border-spacing-0 text-sm" tone="default">
                                 {#snippet row({ row, columns })}
-                                    {@const gross = financialGrossMargin(row as RouteRow)}
-                                    {@const net = financialNetMargin(row as RouteRow)}
-                                    {@const achievement = financialAchievement(row as RouteRow)}
-                                    {@const status = financialStatus(row as RouteRow)}
-
                                     <td class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15" style={`left: ${columns[0]?.leftOffset ?? '0px'}`}>
                                         <div class="font-semibold text-foreground">{row.name}</div>
                                         <div class="mt-1 text-[11px] text-muted-foreground">Rute master untuk jadwal dan segment</div>
@@ -4736,41 +4598,6 @@
                                             <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium">{row.destination ?? 'Destination belum diatur'}</span>
                                         </div>
                                         <div class="mt-2 text-[11px] text-muted-foreground">Jalur ini dipakai sebagai acuan relasi jadwal keberangkatan dan segment harga.</div>
-                                    </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-
-                                    <td class="border-b border-r border-border/60 bg-emerald-50/45 px-3 py-4 text-right">
-                                        <div class="text-sm font-semibold text-emerald-800 tabular-nums">{formatCurrency(Number(row.revenue || 0))}</div>
-                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-emerald-700/80">Total</div>
-                                    </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-
-                                    <td class="border-b border-r border-border/60 bg-amber-50/50 px-3 py-4 text-right">
-                                        <div class="text-sm font-semibold text-amber-800 tabular-nums">{formatCurrency(Number(row.bop || 0))}</div>
-                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80">Total</div>
-                                    </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(gross)}</td>
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-
-                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
-                                        <div class={`text-sm font-semibold tabular-nums ${net >= 0 ? 'text-sky-800' : 'text-rose-700'}`}>{formatCurrency(net)}</div>
-                                        <div class={`mt-1 text-[10px] uppercase tracking-wide ${net >= 0 ? 'text-sky-700/80' : 'text-rose-600/80'}`}>{net >= 0 ? 'Positif' : 'Minus'}</div>
-                                    </td>
-
-                                    <td class="border-b border-border/60 px-3 py-4 text-right text-xs tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
-                                    <td class="border-b border-r border-border/60 px-3 py-4 text-right">
-                                        <div class="text-sm font-semibold tabular-nums">{achievement.toFixed(1)}%</div>
-                                        <div class="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Pencapaian</div>
-                                    </td>
-
-                                    <td class="border-b border-r border-border/60 px-3 py-4 text-center">
-                                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{status}</span>
                                     </td>
                                 {/snippet}
 
