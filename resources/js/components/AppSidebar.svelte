@@ -15,7 +15,6 @@
     import Route from 'lucide-svelte/icons/route';
     import Settings2 from 'lucide-svelte/icons/settings-2';
     import ShieldCheck from 'lucide-svelte/icons/shield-check';
-    import Shuffle from 'lucide-svelte/icons/shuffle';
     import Tickets from 'lucide-svelte/icons/tickets';
     import Truck from 'lucide-svelte/icons/truck';
     import UserCog from 'lucide-svelte/icons/user-cog';
@@ -121,12 +120,6 @@
             title: 'Master Carter',
             href: '/admin-ops/master/rute-carter',
             icon: BusFront,
-            permission: 'master.view',
-        },
-        {
-            title: 'Segment',
-            href: '/admin-ops/segments',
-            icon: Shuffle,
             permission: 'master.view',
         },
         {
