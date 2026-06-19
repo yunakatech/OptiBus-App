@@ -3,7 +3,6 @@
     import Monitor from 'lucide-svelte/icons/monitor';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
-    import PoolSwitcher from '@/components/PoolSwitcher.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
     import { Button } from '@/components/ui/button';
     import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -93,10 +92,6 @@
     <div
         class="flex min-w-0 items-center gap-2 justify-self-end md:col-start-3"
     >
-        <PoolSwitcher
-            compact
-            class="hidden min-[380px]:block w-[8.5rem] min-[420px]:w-[10rem] md:hidden"
-        />
         <ProfileMenu user={auth.user} />
     </div>
 </header>
