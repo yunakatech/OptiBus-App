@@ -161,6 +161,114 @@
         active
             ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
             : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/35 dark:text-rose-300';
+
+    const armadaSummary = $derived.by(() => {
+        const totals = armadas.reduce(
+            (acc, row) => {
+                const revenue = Number(row.revenue || 0);
+                const bop = Number(row.bop || 0);
+                const fixedCost = Number(row.fixed_cost || 0);
+                const target = Number(row.target_bulanan || 0);
+
+                acc.revenue += revenue;
+                acc.bop += bop;
+                acc.fixedCost += fixedCost;
+                acc.target += target;
+
+                return acc;
+            },
+            {
+                revenue: 0,
+                bop: 0,
+                fixedCost: 0,
+                target: 0,
+            },
+        );
+
+        const gross = totals.revenue - totals.bop;
+        const net = gross - totals.fixedCost;
+        const achievement = totals.target > 0 ? (totals.revenue / totals.target) * 100 : 0;
+
+        return {
+            count: armadas.length,
+            revenue: totals.revenue,
+            bop: totals.bop,
+            gross,
+            fixedCost: totals.fixedCost,
+            net,
+            target: totals.target,
+            achievement,
+        };
+    });
+
+    const summaryTone = (value: number) => {
+        if (value < 0) {
+            return 'text-rose-700 dark:text-rose-300';
+        }
+
+        return 'text-foreground';
+    };
+
+    const summaryCards = $derived([
+        {
+            key: 'revenue',
+            label: 'Total Revenue',
+            value: armadaSummary.revenue,
+            valueText: formatCurrency(armadaSummary.revenue),
+            note: 'Σ Revenue unit aktif',
+            formula: 'Total Revenue = Σ Revenue',
+            tone: 'text-emerald-700 dark:text-emerald-300',
+        },
+        {
+            key: 'bop',
+            label: 'Total BOP',
+            value: armadaSummary.bop,
+            valueText: formatCurrency(armadaSummary.bop),
+            note: 'Biaya operasional perjalanan',
+            formula: 'Total BOP = Σ BOP unit',
+            tone: 'text-amber-700 dark:text-amber-300',
+        },
+        {
+            key: 'gross',
+            label: 'Gross Margin',
+            value: armadaSummary.gross,
+            valueText: formatCurrency(armadaSummary.gross),
+            note: 'Revenue - BOP',
+            formula: 'Gross = Revenue - BOP',
+            tone: summaryTone(armadaSummary.gross),
+        },
+        {
+            key: 'fixedCost',
+            label: 'Total Fixed Cost',
+            value: armadaSummary.fixedCost,
+            valueText: formatCurrency(armadaSummary.fixedCost),
+            note: 'Biaya tetap bulanan',
+            formula: 'Fixed Cost = Σ Fixed Cost',
+            tone: 'text-slate-700 dark:text-slate-300',
+        },
+        {
+            key: 'net',
+            label: 'Net Margin',
+            value: armadaSummary.net,
+            valueText: formatCurrency(armadaSummary.net),
+            note: 'Gross - Fixed Cost',
+            formula: 'Net = Gross - Fixed Cost',
+            tone: summaryTone(armadaSummary.net),
+        },
+        {
+            key: 'achievement',
+            label: 'Achievement Gabungan',
+            value: armadaSummary.achievement,
+            valueText: `${armadaSummary.achievement.toFixed(1)}%`,
+            note: `${armadaSummary.count} armada aktif`,
+            formula: 'Achievement = Revenue / Target × 100%',
+            tone: armadaSummary.achievement >= 100
+                ? 'text-emerald-700 dark:text-emerald-300'
+                : armadaSummary.achievement >= 80
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-rose-700 dark:text-rose-300',
+        },
+    ]);
 </script>
 
 {#if activeMode === 'view'}
@@ -228,28 +336,47 @@
         <p class="text-sm text-muted-foreground">Data armada tidak ditemukan.</p>
         <Button type="button" variant="outline" class="h-9" onclick={goBackToData}>Kembali</Button>
     {/if}
-{:else}
-    <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div class="space-y-1">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Ringkasan Armada</p>
-                <h3 class="text-lg font-bold tracking-tight md:text-xl">Performa Armada</h3>
-                <p class="max-w-3xl text-sm text-muted-foreground">
+    {:else}
+        <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div class="space-y-1">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Ringkasan Armada</p>
+                    <h3 class="text-lg font-bold tracking-tight md:text-xl">Performa Armada</h3>
+                    <p class="max-w-3xl text-sm text-muted-foreground">
                     Kartu ini dibuat untuk dibaca cepat oleh manajemen dan direksi, tanpa scroll horizontal, dengan fokus ke performa finansial, GPS, dan achievement per armada.
-                </p>
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] uppercase tracking-wide">
+                        {armadas.length} unit
+                    </Badge>
+                    <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] uppercase tracking-wide">
+                        {selectedPeriodLabel()}
+                    </Badge>
+                </div>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" class="rounded-full px-3 py-1 text-[11px] uppercase tracking-wide">
-                    {armadas.length} unit
-                </Badge>
-                <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] uppercase tracking-wide">
-                    {selectedPeriodLabel()}
-                </Badge>
-            </div>
-        </div>
 
-        <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_minmax(180px,220px)_auto]">
-            <div class="min-w-0">
+            <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+                {#each summaryCards as card (card.key)}
+                    <article class="rounded-lg border border-border/70 bg-muted/20 p-3 shadow-sm">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            {card.label}
+                        </p>
+                        <p class={`mt-2 text-lg font-bold tabular-nums ${card.tone}`}>
+                            {card.valueText}
+                        </p>
+                        <p class="mt-1 text-[11px] leading-4 text-muted-foreground">
+                            {card.note}
+                        </p>
+                        <p class="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
+                            {card.formula}
+                        </p>
+                    </article>
+                {/each}
+            </div>
+
+            <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_minmax(180px,220px)_auto]">
+                <div class="min-w-0">
                 <TerminalFilter
                     bind:query={armadaSearch}
                     placeholder="Cari nopol, driver, pool, atau GPS"
