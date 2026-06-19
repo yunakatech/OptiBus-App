@@ -58,6 +58,12 @@
             permission: 'dashboard.view',
         },
         {
+            title: 'Jadwal',
+            href: '/admin-ops/schedules',
+            icon: CalendarDays,
+            permission: 'master.view',
+        },
+        {
             title: 'Data Keberangkatan',
             href: '/bookings',
             icon: Tickets,
@@ -114,12 +120,6 @@
     ];
 
     const dataMasterNavItems: NavItem[] = [
-        {
-            title: 'Jadwal',
-            href: '/admin-ops/schedules',
-            icon: CalendarDays,
-            permission: 'master.view',
-        },
         {
             title: 'Rute Induk',
             href: '/admin-ops/routes',
