@@ -23,10 +23,12 @@ class DashboardTest extends TestCase
 
     private function actingAsSuperAdmin(): User
     {
-        $user = User::factory()->create(['is_super_admin' => true]);
-        $this->actingAs($user);
+        return $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+    }
 
-        return $user;
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
     public function test_guests_are_redirected_to_the_login_page()
@@ -74,6 +76,7 @@ class DashboardTest extends TestCase
 
         try {
             DB::table('bookings')->insert([
+                'tenant_id' => $this->defaultTenantId(),
                 'rute' => 'PINRANG - MAKASSAR',
                 'tanggal' => '2026-06-05',
                 'jam' => '09:00:00',
@@ -89,6 +92,7 @@ class DashboardTest extends TestCase
                 'created_at' => now(),
             ]);
             DB::table('charters')->insert([
+                'tenant_id' => $this->defaultTenantId(),
                 'name' => 'CARTER DASHBOARD',
                 'start_date' => '2026-06-05',
                 'end_date' => '2026-06-05',
@@ -97,6 +101,7 @@ class DashboardTest extends TestCase
                 'created_at' => now(),
             ]);
             DB::table('luggages')->insert([
+                'tenant_id' => $this->defaultTenantId(),
                 'sender_name' => 'PENGIRIM DASHBOARD',
                 'sender_phone' => '081300000099',
                 'receiver_name' => 'PENERIMA DASHBOARD',
@@ -107,6 +112,7 @@ class DashboardTest extends TestCase
                 'created_at' => now(),
             ]);
             DB::table('luggages')->insert([
+                'tenant_id' => $this->defaultTenantId(),
                 'sender_name' => 'PENGIRIM BELUM BAYAR DASHBOARD',
                 'sender_phone' => '081300000100',
                 'receiver_name' => 'PENERIMA BELUM BAYAR DASHBOARD',
@@ -117,6 +123,7 @@ class DashboardTest extends TestCase
                 'created_at' => now(),
             ]);
             DB::table('luggages')->insert([
+                'tenant_id' => $this->defaultTenantId(),
                 'sender_name' => 'PENGIRIM CANCELED DASHBOARD',
                 'sender_phone' => '081300000101',
                 'receiver_name' => 'PENERIMA CANCELED DASHBOARD',

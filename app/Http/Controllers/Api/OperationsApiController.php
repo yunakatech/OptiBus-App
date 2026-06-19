@@ -494,12 +494,21 @@ class OperationsApiController extends Controller
             return [];
         }
 
+        return ['tenant_id' => $this->requireTenantContext()];
+    }
+
+    private function requireTenantContext(): int
+    {
         $tenantId = PoolScope::tenantId();
-        if ($tenantId <= 0) {
-            $tenantId = $this->defaultTenantId();
+        if ($tenantId > 0) {
+            return $tenantId;
         }
 
-        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+        abort(response()->json([
+            'success' => false,
+            'error' => 'Pilih tenant dulu.',
+            'redirect_url' => route('platform.dashboard', absolute: false),
+        ], 409));
     }
 
     private function currentPoolContextId(): int
@@ -800,12 +809,9 @@ class OperationsApiController extends Controller
             return 0;
         }
 
+        $tenantId = $this->requireTenantContext();
         $existingQuery = DB::table('customer_bagasi')->where('no_hp', $noHp);
         if (Schema::hasColumn('customer_bagasi', 'tenant_id')) {
-            $tenantId = PoolScope::tenantId();
-            if ($tenantId <= 0) {
-                $tenantId = $this->defaultTenantId();
-            }
             if ($tenantId > 0) {
                 $existingQuery->where('tenant_id', $tenantId);
             }
@@ -819,10 +825,6 @@ class OperationsApiController extends Controller
             }
             $updateQuery = DB::table('customer_bagasi')->where('id', (int) $existing->id);
             if (Schema::hasColumn('customer_bagasi', 'tenant_id')) {
-                $tenantId = PoolScope::tenantId();
-                if ($tenantId <= 0) {
-                    $tenantId = $this->defaultTenantId();
-                }
                 if ($tenantId > 0) {
                     $updateQuery->where('tenant_id', $tenantId);
                 }
@@ -852,17 +854,16 @@ class OperationsApiController extends Controller
             return;
         }
 
+        $tenantId = PoolScope::tenantId();
+        if ($tenantId <= 0) {
+            return;
+        }
+
         $query = DB::table('customer_bagasi')
             ->where('id', $customerId)
             ->whereNull('pool_id');
         if (Schema::hasColumn('customer_bagasi', 'tenant_id')) {
-            $tenantId = PoolScope::tenantId();
-            if ($tenantId <= 0) {
-                $tenantId = $this->defaultTenantId();
-            }
-            if ($tenantId > 0) {
-                $query->where('tenant_id', $tenantId);
-            }
+            $query->where('tenant_id', $tenantId);
         }
         $query->update(['pool_id' => $poolId]);
     }
@@ -874,19 +875,14 @@ class OperationsApiController extends Controller
 
     private function nextLuggageResi(): string
     {
+        $tenantId = $this->requireTenantContext();
         $date = now()->format('Ymd');
         $prefix = "BGS-{$date}-";
         $query = DB::table('luggages')
             ->where('kode_resi', 'like', "{$prefix}%")
             ->orderByDesc('id');
         if (Schema::hasColumn('luggages', 'tenant_id')) {
-            $tenantId = PoolScope::tenantId();
-            if ($tenantId <= 0) {
-                $tenantId = $this->defaultTenantId();
-            }
-            if ($tenantId > 0) {
-                $query->where('tenant_id', $tenantId);
-            }
+            $query->where('tenant_id', $tenantId);
         }
         $last = (string) ($query->value('kode_resi') ?? '');
 

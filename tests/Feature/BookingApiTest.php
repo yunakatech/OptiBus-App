@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +13,7 @@ class BookingApiTest extends TestCase
 
     private function actingAsSuperAdmin(): void
     {
-        $this->actingAs(User::factory()->create(['is_super_admin' => true]));
+        $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
     }
 
     private function defaultTenantId(): int

@@ -24,6 +24,7 @@
     import AppLogo from '@/components/AppLogo.svelte';
     import NavMain from '@/components/NavMain.svelte';
     import PoolSwitcher from '@/components/PoolSwitcher.svelte';
+    import TenantSwitcher from '@/components/TenantSwitcher.svelte';
     import {
         Sidebar,
         SidebarContent,
@@ -271,6 +272,11 @@
                         </Link>
                     {/snippet}
                 </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem
+                class={`px-1 group-data-[collapsible=icon]:hidden ${billingLocked ? 'hidden' : ''}`}
+            >
+                <TenantSwitcher />
             </SidebarMenuItem>
             <SidebarMenuItem
                 class={`px-1 group-data-[collapsible=icon]:hidden ${billingLocked ? 'hidden' : ''}`}

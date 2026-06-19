@@ -14,10 +14,12 @@ class AdminOpsDriverTest extends TestCase
 
     private function actingAsSuperAdmin(): User
     {
-        $user = User::factory()->create(['is_super_admin' => true]);
-        $this->actingAs($user);
+        return $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+    }
 
-        return $user;
+    private function defaultTenantId(): int
+    {
+        return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
     public function test_driver_save_and_index_tolerate_legacy_schema_without_optional_columns(): void

@@ -314,6 +314,7 @@ class AdminOpsScopeAuditTest extends TestCase
         ]);
 
         $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId])
             ->withSession(['active_pool_id' => $poolA])
             ->postJson(route('api.admin.luggage-services.save'), [
                 'name' => 'Ekspres A',
@@ -407,6 +408,94 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'routes')
             ->assertJsonPath('routes.0.name', 'PAREPARE - MAKASSAR B');
+    }
+
+    public function test_super_admin_tenant_switch_resets_pool_and_scopes_reads_and_writes(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantA = $this->tenantIdBySlug('audit-switch-a');
+        $tenantB = $this->tenantIdBySlug('audit-switch-b');
+        $this->activateTenantBilling($tenantA);
+        $this->activateTenantBilling($tenantB);
+
+        $poolA = $this->createPool($tenantA, 'POOL A', 'SW-A', 100000);
+        $poolB = $this->createPool($tenantB, 'POOL B', 'SW-B', 100000);
+        $routeA = $this->createRouteForPool('audit-switch-a', $poolA, 'PINRANG - MAKASSAR A', 100000);
+        $routeB = $this->createRouteForPool('audit-switch-b', $poolB, 'PAREPARE - MAKASSAR B', 100000);
+
+        $admin = User::factory()->create([
+            'is_super_admin' => true,
+        ]);
+
+        $this->actingAs($admin);
+
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->postJson(route('api.admin.tenant.switch'), [
+            'tenant_id' => $tenantA,
+        ])
+            ->assertOk()
+            ->assertJsonPath('tenant_id', $tenantA)
+            ->assertJsonPath('tenant_name', DB::table('tenants')->where('id', $tenantA)->value('name'));
+
+        $this->assertSame($tenantA, (int) session('active_tenant_id', 0));
+        $this->assertFalse(session()->has('active_pool_id'));
+
+        $this->getJson(route('api.admin.routes.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'routes')
+            ->assertJsonPath('routes.0.id', $routeA)
+            ->assertJsonPath('routes.0.name', 'PINRANG - MAKASSAR A');
+
+        $this->postJson(route('api.admin.routes.save'), [
+            'name' => 'PINRANG - MAKASSAR A BARU',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+        ])
+            ->assertCreated();
+
+        $tenantARouteId = (int) (DB::table('routes')->where('name', 'PINRANG - MAKASSAR A BARU')->value('id') ?? 0);
+        $this->assertSame($tenantA, (int) (DB::table('routes')->where('id', $tenantARouteId)->value('tenant_id') ?? 0));
+
+        $this->postJson(route('api.admin.tenant.switch'), [
+            'tenant_id' => $tenantB,
+        ])
+            ->assertOk()
+            ->assertJsonPath('tenant_id', $tenantB);
+
+        $this->assertSame($tenantB, (int) session('active_tenant_id', 0));
+        $this->assertFalse(session()->has('active_pool_id'));
+
+        $this->getJson(route('api.admin.routes.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'routes')
+            ->assertJsonPath('routes.0.id', $routeB)
+            ->assertJsonPath('routes.0.name', 'PAREPARE - MAKASSAR B');
+
+        $this->postJson(route('api.admin.routes.save'), [
+            'name' => 'PAREPARE - MAKASSAR B BARU',
+            'origin' => 'PAREPARE',
+            'destination' => 'MAKASSAR',
+        ])
+            ->assertCreated();
+
+        $tenantBRouteId = (int) (DB::table('routes')->where('name', 'PAREPARE - MAKASSAR B BARU')->value('id') ?? 0);
+        $this->assertSame($tenantB, (int) (DB::table('routes')->where('id', $tenantBRouteId)->value('tenant_id') ?? 0));
+
+        $this->postJson(route('api.admin.tenant.switch'), [
+            'tenant_id' => 0,
+        ])
+            ->assertOk()
+            ->assertJsonPath('tenant_id', 0);
+
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->getJson(route('api.admin.routes.index'))
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'Pilih tenant dulu.');
     }
 
     /**
