@@ -6,11 +6,15 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class CabooqDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        $tenantId = $this->defaultTenantId();
+        $poolId = $this->seedPoolId($tenantId);
+
         User::query()->updateOrCreate(
             ['email' => 'admin@cabooq.local'],
             [
@@ -108,16 +112,18 @@ class CabooqDemoSeeder extends Seeder
 
         DB::table('luggage_services')->updateOrInsert(
             ['name' => 'Dokumen'],
-            ['created_at' => now()]
+            ['tenant_id' => $tenantId, 'pool_id' => $poolId > 0 ? $poolId : null, 'created_at' => now()]
         );
         DB::table('luggage_services')->updateOrInsert(
             ['name' => 'Paket Sedang'],
-            ['created_at' => now()]
+            ['tenant_id' => $tenantId, 'pool_id' => $poolId > 0 ? $poolId : null, 'created_at' => now()]
         );
 
         DB::table('master_carter')->updateOrInsert(
             ['name' => 'PINRANG - MAKASSAR'],
             [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolId > 0 ? $poolId : null,
                 'origin' => 'PINRANG',
                 'destination' => 'MAKASSAR',
                 'duration' => 'Regular',
@@ -128,5 +134,35 @@ class CabooqDemoSeeder extends Seeder
             ]
         );
 
+    }
+
+    private function defaultTenantId(): int
+    {
+        if (! Schema::hasTable('tenants')) {
+            return 0;
+        }
+
+        return (int) (DB::table('tenants')->where('slug', 'qbus-default')->value('id') ?? 0);
+    }
+
+    private function seedPoolId(int $tenantId): int
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable('pools')) {
+            return 0;
+        }
+
+        $poolId = (int) (DB::table('pools')
+            ->where('tenant_id', $tenantId)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->value('id') ?? 0);
+        if ($poolId > 0) {
+            return $poolId;
+        }
+
+        return (int) (DB::table('pools')
+            ->where('tenant_id', $tenantId)
+            ->orderBy('id')
+            ->value('id') ?? 0);
     }
 }

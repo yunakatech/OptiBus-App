@@ -5500,7 +5500,7 @@
                                 {@const net = driverNetMargin(row)}
                                 {@const achievement = driverAchievement(row)}
                                 {@const status = driverStatus(row)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                <article class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="truncate text-sm font-semibold text-foreground">
@@ -5799,7 +5799,7 @@
                                 </div>
                             {/if}
                             {#each services as row (row.id)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                <article class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="truncate text-sm font-semibold text-foreground">
@@ -7699,7 +7699,7 @@
             {#if activeTab === 'pools'}
                 {#if activeMode === 'form'}
                     <form
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={savePool}
                     >
                         <div
@@ -7710,7 +7710,7 @@
                             >
                                 Form Pool
                             </p>
-                            <h3 class="mt-1 text-lg font-semibold">
+                            <h3 class="mt-1 text-xl font-semibold tracking-tight">
                                 {poolForm.id
                                     ? 'Perbarui pool operasional'
                                     : 'Tambah pool operasional'}
@@ -7886,7 +7886,7 @@
                     </form>
                 {:else}
                     <div
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
                             class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
@@ -7897,7 +7897,7 @@
                                 >
                                     Pool
                                 </p>
-                                <h3 class="mt-1 text-lg font-semibold">
+                                <h3 class="mt-1 text-xl font-semibold tracking-tight">
                                     Area operasional dan rute terkelola
                                 </h3>
                                 <p
@@ -7919,7 +7919,7 @@
                                 {@const net = financialNetMargin(row)}
                                 {@const achievement = financialAchievement(row)}
                                 {@const healthStatus = financialStatus(row)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                                <article class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="truncate text-sm font-semibold text-foreground">{row.name}</p>

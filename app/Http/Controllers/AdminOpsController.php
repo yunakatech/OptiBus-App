@@ -317,6 +317,12 @@ class AdminOpsController extends Controller
             }),
             'luggage_services' => $this->countScoped('luggage_services', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'luggage_services');
+                if (Schema::hasColumn('luggage_services', 'pool_id')) {
+                    $poolId = PoolScope::currentPoolId(auth()->id());
+                    if ($poolId > 0) {
+                        $query->where('luggage_services.pool_id', $poolId);
+                    }
+                }
             }),
             'segments' => $this->countScoped('segments', function (Builder $query): void {
                 PoolScope::applyRouteScope($query, 'segments.route_id', 'segments.rute');

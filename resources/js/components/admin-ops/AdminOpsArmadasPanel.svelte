@@ -90,7 +90,7 @@
         {@const net = armadaNetMargin(armadaDetail)}
         {@const achievement = armadaAchievement(armadaDetail)}
         {@const status = armadaStatus(armadaDetail)}
-        <div class="space-y-4 rounded-md border p-4">
+        <div class="space-y-4 rounded-[28px] border border-border/70 bg-background/95 p-4 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-base font-semibold">{armadaDetail.nopol}</p>
@@ -138,11 +138,11 @@
     <div class={armadaFiltersExpanded ? 'flex flex-col gap-2 md:flex-row' : 'hidden md:flex md:gap-2'}>
         <TerminalFilter bind:query={armadaSearch} placeholder="Cari merk / nopol / kategori / platform GPS" on:search={() => void loadArmadas()} />
     </div>
-    <div class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm">
+    <div class="overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-sm">
         <div class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(14,165,233,0.05),rgba(15,23,42,0.035))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Ringkasan Armada</p>
-                <h3 class="mt-1 text-lg font-semibold">Performa unit berdasarkan nopol</h3>
+                <h3 class="mt-1 text-xl font-semibold tracking-tight">Performa unit berdasarkan nopol</h3>
                 <p class="mt-1 max-w-3xl text-sm text-muted-foreground">
                     Tabel ini menekankan nopol, profil armada, dan hasil finansial bulanan agar unit mana yang sehat dan mana yang perlu perhatian bisa langsung terlihat.
                 </p>
@@ -163,7 +163,7 @@
                 {@const net = armadaNetMargin(row)}
                 {@const achievement = armadaAchievement(row)}
                 {@const status = armadaStatus(row)}
-                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
+                <article class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <EntityBadge code={row.nopol} class="text-sm" />

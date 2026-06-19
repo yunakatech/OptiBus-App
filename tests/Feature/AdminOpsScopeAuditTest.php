@@ -170,6 +170,7 @@ class AdminOpsScopeAuditTest extends TestCase
         }
 
         $tenantId = $this->tenantIdBySlug('audit-customer-tenant');
+        $this->activateTenantBilling($tenantId);
         $poolA = $this->createPool($tenantId, 'POOL A', 'AUD-A', 100000);
         $poolB = $this->createPool($tenantId, 'POOL B', 'AUD-B', 100000);
         $this->createRouteForPool('audit-customer-tenant', $poolA, 'A - MAKASSAR', 100000);
@@ -259,12 +260,162 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->deleteJson(route('api.admin.customer-charter.delete', ['id' => $charterOtherId]))->assertStatus(404);
     }
 
+    public function test_admin_master_lookup_and_write_paths_stay_in_the_active_pool(): void
+    {
+        AccessControl::syncDefaults();
+
+        if (! Schema::hasTable('luggage_services') || ! Schema::hasTable('master_carter')) {
+            $this->markTestSkipped('Master lookup tables are not available.');
+        }
+
+        $tenantId = $this->tenantIdBySlug('qbus-default');
+        $poolA = $this->createPool($tenantId, 'POOL A', 'AUD-A', 100000);
+        $poolB = $this->createPool($tenantId, 'POOL B', 'AUD-B', 100000);
+
+        $serviceAId = (int) DB::table('luggage_services')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolA,
+            'name' => 'Dokumen A',
+            'created_at' => now(),
+        ]);
+        $serviceBId = (int) DB::table('luggage_services')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolB,
+            'name' => 'Dokumen B',
+            'created_at' => now(),
+        ]);
+
+        $routeAId = (int) DB::table('master_carter')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolA,
+            'name' => 'PINRANG - MAKASSAR A',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'duration' => 'Regular',
+            'rental_price' => 2500000,
+            'bop_price' => 200000,
+            'created_at' => now(),
+        ]);
+        $routeBId = (int) DB::table('master_carter')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolB,
+            'name' => 'PAREPARE - MAKASSAR B',
+            'origin' => 'PAREPARE',
+            'destination' => 'MAKASSAR',
+            'duration' => 'Regular',
+            'rental_price' => 2750000,
+            'bop_price' => 250000,
+            'created_at' => now(),
+        ]);
+
+        $admin = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->withSession(['active_pool_id' => $poolA])
+            ->postJson(route('api.admin.luggage-services.save'), [
+                'name' => 'Ekspres A',
+            ])
+            ->assertCreated();
+
+        $newServiceId = (int) (DB::table('luggage_services')->where('name', 'Ekspres A')->value('id') ?? 0);
+        $this->assertTrue($newServiceId > 0);
+        $this->assertSame($poolA, (int) (DB::table('luggage_services')->where('id', $newServiceId)->value('pool_id') ?? 0));
+
+        $this->actingAs($admin)
+            ->withSession(['active_pool_id' => $poolA])
+            ->postJson(route('api.admin.charter-routes.save'), [
+                'name' => 'PINRANG - MAKASSAR BARU',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'duration' => 'VIP',
+                'rental_price' => 3000000,
+                'bop_price' => 300000,
+                'notes' => 'Pool A preset',
+            ])
+            ->assertCreated();
+
+        $newRouteId = (int) (DB::table('master_carter')->where('name', 'PINRANG - MAKASSAR BARU')->value('id') ?? 0);
+        $this->assertTrue($newRouteId > 0);
+        $this->assertSame($poolA, (int) (DB::table('master_carter')->where('id', $newRouteId)->value('pool_id') ?? 0));
+
+        $this->actingAs($admin)
+            ->withSession(['active_pool_id' => $poolA])
+            ->postJson(route('api.admin.luggage-services.save'), [
+                'id' => $serviceAId,
+                'name' => 'Dokumen A Updated',
+            ])
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->withSession(['active_pool_id' => $poolA])
+            ->postJson(route('api.admin.charter-routes.save'), [
+                'id' => $routeAId,
+                'name' => 'PINRANG - MAKASSAR A UPDATED',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'duration' => 'Regular',
+                'rental_price' => 2600000,
+                'bop_price' => 210000,
+                'notes' => 'Pool A preset updated',
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('luggage_services', [
+            'id' => $serviceAId,
+            'name' => 'Dokumen A Updated',
+            'pool_id' => $poolA,
+        ]);
+        $this->assertDatabaseHas('luggage_services', [
+            'id' => $serviceBId,
+            'name' => 'Dokumen B',
+            'pool_id' => $poolB,
+        ]);
+        $this->assertDatabaseHas('master_carter', [
+            'id' => $routeAId,
+            'name' => 'PINRANG - MAKASSAR A UPDATED',
+            'pool_id' => $poolA,
+        ]);
+        $this->assertDatabaseHas('master_carter', [
+            'id' => $routeBId,
+            'name' => 'PAREPARE - MAKASSAR B',
+            'pool_id' => $poolB,
+        ]);
+
+        $this->actingAs($admin)
+            ->withSession(['active_pool_id' => $poolA])
+            ->deleteJson(route('api.admin.luggage-services.delete', ['id' => $newServiceId]))
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->withSession(['active_pool_id' => $poolA])
+            ->deleteJson(route('api.admin.charter-routes.delete', ['id' => $newRouteId]))
+            ->assertOk();
+
+        $this->withSession(['active_pool_id' => $poolB])
+            ->actingAs($admin)
+            ->getJson(route('api.admin.luggage-services.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'services')
+            ->assertJsonPath('services.0.name', 'Dokumen B');
+
+        $this->withSession(['active_pool_id' => $poolB])
+            ->actingAs($admin)
+            ->getJson(route('api.admin.charter-routes.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'routes')
+            ->assertJsonPath('routes.0.name', 'PAREPARE - MAKASSAR B');
+    }
+
     /**
      * @return array{0: int, 1: int}
      */
     private function tenantWithSinglePool(string $slug, int $targetRevenue): array
     {
         $tenantId = $this->tenantIdBySlug($slug);
+        $this->activateTenantBilling($tenantId);
         $poolId = $this->createPool($tenantId, strtoupper($slug).' POOL', $slug.'-pool', $targetRevenue);
 
         return [$tenantId, $poolId];
@@ -318,6 +469,52 @@ class AdminOpsScopeAuditTest extends TestCase
         ]);
 
         return $routeId;
+    }
+
+    private function activateTenantBilling(int $tenantId): void
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable('plans') || ! Schema::hasTable('subscriptions')) {
+            return;
+        }
+
+        $planId = (int) (DB::table('plans')->where('slug', 'starter')->value('id') ?? 0);
+        if ($planId <= 0) {
+            return;
+        }
+
+        DB::table('tenants')
+            ->where('id', $tenantId)
+            ->update([
+                'status' => 'active',
+                'updated_at' => now(),
+            ]);
+
+        $subscription = DB::table('subscriptions')
+            ->where('tenant_id', $tenantId)
+            ->orderByDesc('id')
+            ->first();
+        $payload = [
+            'tenant_id' => $tenantId,
+            'plan_id' => $planId,
+            'status' => 'active',
+            'starts_at' => now()->subDay()->toDateString(),
+            'ends_at' => now()->addMonth()->toDateString(),
+            'billing_interval' => 'monthly',
+            'grace_period_days' => 7,
+            'updated_at' => now(),
+        ];
+
+        if ($subscription) {
+            DB::table('subscriptions')
+                ->where('id', $subscription->id)
+                ->update($payload);
+
+            return;
+        }
+
+        $payload['created_at'] = now();
+
+        DB::table('subscriptions')->insert($payload);
     }
 
     private function assignRole(User $user, string $slug): void

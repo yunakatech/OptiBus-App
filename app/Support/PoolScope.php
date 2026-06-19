@@ -725,6 +725,48 @@ class PoolScope
         return count($activePoolIds) === 1 ? $activePoolIds[0] : 0;
     }
 
+    public static function currentPoolId(?int $userId = null): int
+    {
+        return self::customerPoolId(0, $userId);
+    }
+
+    public static function defaultWritablePoolId(?int $userId = null): int
+    {
+        $poolId = self::currentPoolId($userId);
+        if ($poolId > 0) {
+            return $poolId;
+        }
+
+        if (! Schema::hasTable('pools')) {
+            return 0;
+        }
+
+        $tenantId = self::tenantId($userId);
+        if ($tenantId > 0 && Schema::hasColumn('pools', 'tenant_id')) {
+            $poolId = (int) (DB::table('pools')
+                ->where('tenant_id', $tenantId)
+                ->where('status', 'active')
+                ->orderBy('id')
+                ->value('id') ?? 0);
+            if ($poolId > 0) {
+                return $poolId;
+            }
+
+            $poolId = (int) (DB::table('pools')
+                ->where('tenant_id', $tenantId)
+                ->orderBy('id')
+                ->value('id') ?? 0);
+            if ($poolId > 0) {
+                return $poolId;
+            }
+        }
+
+        return (int) (DB::table('pools')
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->value('id') ?? 0);
+    }
+
     public static function routeIdForName(string $routeName): int
     {
         $target = self::normalizeRouteName($routeName);
@@ -821,8 +863,8 @@ class PoolScope
     }
 
     /**
-     * @param array<int, int> $routeIds
-     * @param array<int, string> $routeNames
+     * @param  array<int, int>  $routeIds
+     * @param  array<int, string>  $routeNames
      */
     private static function appendRouteClauses(Builder $builder, string $routeIdColumn, array $routeIds, string $routeNameColumn, array $routeNames): void
     {
