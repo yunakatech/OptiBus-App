@@ -77,10 +77,10 @@
         String(row.pool_name ?? '').trim() || 'Semua Pool';
 
     const columns = [
-        { key: 'nopol', label: 'Nopol', width: 'w-[180px]', sticky: 'left', leftOffset: '0px' },
-        { key: 'profil', label: 'Profil Armada', width: 'w-[260px]', sticky: 'left', leftOffset: '180px' },
-        { key: 'gps', label: 'GPS & Tracking', width: 'w-[220px]', sticky: 'left', leftOffset: '440px' },
-        { key: 'pool', label: 'Pool', width: 'w-[180px]' },
+        { key: 'nopol', label: 'Nopol', width: 'w-[150px]', sticky: 'left', leftOffset: '0px' },
+        { key: 'profil', label: 'Profil Armada', width: 'w-[220px]', sticky: 'left', leftOffset: '150px' },
+        { key: 'gps', label: 'GPS & Tracking', width: 'w-[180px]', sticky: 'left', leftOffset: '370px' },
+        { key: 'pool', label: 'Pool', width: 'w-[140px]' },
         { key: 'revenue', label: 'Revenue', align: 'right', numeric: true },
         { key: 'bop', label: 'BOP', align: 'right', numeric: true },
         { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
@@ -214,14 +214,14 @@
                     </div>
 
                     <div class="mt-3 flex flex-wrap gap-1.5">
-                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${categoryTone(row.kategori)}`}>
+                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.kategori)}`}>
                             {normalizeUnitCategory(row.kategori)}
                         </span>
                         <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                             {row.ac_type}
                         </span>
                         <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-                            {row.warna ?? '-'} / {row.tahun ?? '-'}
+                        <div class="mt-0.5 text-[10px] text-muted-foreground">{row.warna ?? '-'} / {row.tahun ?? 0}</div>
                         </span>
                         <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                             {rowPoolName(row)}
@@ -282,50 +282,50 @@
         </div>
 
         <div class="hidden overflow-x-auto md:block">
-            <DataTable {columns} rows={armadas} class="min-w-full">
+            <DataTable {columns} rows={armadas} class="min-w-[1520px]">
                 {#snippet row({ row })}
                     {@const gross = armadaGrossMargin(row as ArmadaRow)}
                     {@const net = armadaNetMargin(row as ArmadaRow)}
                     {@const achievement = armadaAchievement(row as ArmadaRow)}
                     {@const status = armadaStatus(row as ArmadaRow)}
 
-                    <td class="py-3 px-4 align-top">
+                    <td class="px-3 py-2 align-top">
                         <EntityBadge code={row.nopol} class="text-sm" />
-                        <div class="mt-1 text-[11px] text-muted-foreground">{row.nomor_rangka ?? 'Nomor rangka belum tersedia'}</div>
+                        <div class="mt-0.5 text-[10px] text-muted-foreground">{row.nomor_rangka ?? 'Nomor rangka belum tersedia'}</div>
                     </td>
 
-                    <td class="py-3 px-4 align-top">
-                        <div class="font-medium text-foreground">{row.merk ?? 'Armada tanpa merek'}</div>
-                        <div class="mt-1 text-xs text-muted-foreground">{row.warna ?? '-'} · {row.tahun ?? 0}</div>
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${categoryTone(row.kategori)}`}>
+                    <td class="px-3 py-2 align-top">
+                        <div class="truncate text-[11px] font-medium text-foreground">{row.merk ?? 'Armada tanpa merek'}</div>
+                        <div class="mt-0.5 text-[10px] text-muted-foreground">{row.warna ?? '-'} / {row.tahun ?? 0}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.kategori)}`}>
                                 {normalizeUnitCategory(row.kategori)}
                             </span>
-                            <span class="rounded-full border border-border/70 bg-muted/25 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                            <span class="rounded-full border border-border/70 bg-muted/25 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                                 {row.ac_type}
                             </span>
                         </div>
                     </td>
 
-                    <td class="py-3 px-4 align-top">
-                        <div class="font-medium text-foreground">{row.platform_gps ?? '-'}</div>
-                        <div class="mt-1 break-all text-[11px] text-muted-foreground">{row.api_gps ?? 'API GPS belum diatur'}</div>
+                    <td class="px-3 py-2 align-top">
+                        <div class="truncate text-[11px] font-medium text-foreground">{row.platform_gps ?? '-'}</div>
+                        <div class="mt-0.5 break-all text-[10px] text-muted-foreground">{row.api_gps ?? 'API GPS belum diatur'}</div>
                     </td>
 
-                    <td class="py-3 px-4 align-top">
-                        <Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[11px]">
+                    <td class="px-3 py-2 align-top">
+                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px]">
                             {rowPoolName(row as ArmadaRow)}
                         </Badge>
                     </td>
 
-                    <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
-                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
-                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(net)}</td>
-                    <td class="py-3 px-4 text-right tabular-nums">{formatCurrency(Number(row.target_bulanan || 0))}</td>
-                    <td class="py-3 px-4 text-right tabular-nums">{achievement.toFixed(1)}%</td>
+                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(net)}</td>
+                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.target_bulanan || 0))}</td>
+                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{achievement.toFixed(1)}%</td>
 
-                    <td class="py-3 px-4 text-center">
-                        <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                    <td class="px-3 py-2 text-center">
+                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
                             {status}
                         </span>
                     </td>
