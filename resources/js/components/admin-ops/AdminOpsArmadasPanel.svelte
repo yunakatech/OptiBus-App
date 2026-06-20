@@ -244,6 +244,7 @@
             return {
                 bar: 'bg-rose-500',
                 text: 'text-rose-700 dark:text-rose-300',
+                badge: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/35 dark:text-rose-300',
                 label: 'Kurang',
             };
         }
@@ -252,6 +253,7 @@
             return {
                 bar: 'bg-amber-400',
                 text: 'text-amber-700 dark:text-amber-300',
+                badge: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300',
                 label: 'Mendekati',
             };
         }
@@ -259,6 +261,7 @@
         return {
             bar: 'bg-emerald-500',
             text: 'text-emerald-700 dark:text-emerald-300',
+            badge: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300',
             label: 'Tercapai',
         };
     };
@@ -878,38 +881,64 @@
                 {@const bop = Number(row.bop || 0)}
                 {@const fixedCost = Number(row.fixed_cost || 0)}
                 {@const target = Number(row.target_bulanan || 0)}
-                <article class="group relative flex min-h-[96px] flex-col justify-between overflow-hidden rounded-lg border border-border/70 bg-card px-3 py-2 shadow-sm transition duration-200 hover:border-blue-400/70 hover:shadow-[0_10px_20px_-14px_rgba(59,130,246,0.45)]">
-                    <div class="absolute top-2 right-2 z-10 rounded-md bg-muted/80 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground shadow-sm">
-                        {achievement.toFixed(0)}%
+                <article
+                    class="group flex min-w-0 flex-col space-y-2 overflow-hidden rounded-xl border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:border-blue-400/70 hover:shadow-[0_12px_24px_-16px_rgba(59,130,246,0.5)]"
+                >
+                    <header
+                        class="flex min-w-0 items-start justify-between gap-3"
+                    >
+                        <p
+                            class="min-w-0 break-words text-base leading-6 font-bold tracking-tight text-foreground"
+                        >
+                            {row.nopol}
+                        </p>
+                        <span
+                            class={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums ${achievementStyle.badge}`}
+                        >
+                            {achievement.toFixed(0)}%
+                            <span class="sr-only">
+                                achievement, {achievementStyle.label}</span
+                            >
+                        </span>
+                    </header>
+
+                    <div
+                        class="flex min-w-0 flex-wrap items-center gap-2"
+                        aria-label="Informasi driver dan GPS"
+                    >
+                        <p
+                            class="min-w-0 break-words text-sm leading-5 font-medium text-foreground"
+                        >
+                            {row.driver_name ?? 'Driver belum diatur'}
+                        </p>
+                        <span
+                            class={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold ${gpsTone(activeGps)}`}
+                        >
+                            <span
+                                class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                            ></span>
+                            GPS {activeGps ? 'Aktif' : 'Mati'}
+                        </span>
                     </div>
 
-                    <div class="flex min-w-0 items-start justify-between gap-3 pr-14">
-                        <div class="min-w-0 space-y-1">
-                            <div class="flex min-w-0 items-center gap-2">
-                                <p class="truncate text-sm font-bold tracking-tight text-foreground">
-                                    {row.nopol}
-                                </p>
-                                <span class={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${gpsTone(activeGps)}`}>
-                                    <span class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                                    GPS
-                                </span>
-                            </div>
-                            <p class="truncate text-[11px] text-muted-foreground">
-                                {row.driver_name ?? 'Driver belum diatur'}
-                            </p>
-                        </div>
-
-                        <div class="flex shrink-0 items-start gap-2">
-                            <div class="text-right">
-                                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                                    Net Margin
-                                </p>
+                    <div
+                        class="flex min-w-0 items-end justify-between gap-3 pt-1"
+                    >
+                        <dl class="min-w-0">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Net Margin
+                            </dt>
+                            <dd class="mt-0.5 min-w-0">
                                 <Tooltip>
                                     <TooltipTrigger>
-                                        {#snippet child({ props: triggerProps })}
+                                        {#snippet child({
+                                            props: triggerProps,
+                                        })}
                                             <button
                                                 type="button"
-                                                class="cursor-help text-sm font-bold tabular-nums text-emerald-600 outline-none transition hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-ring"
+                                                class="max-w-full cursor-help break-words text-left text-base leading-6 font-bold tabular-nums text-emerald-600 outline-none transition hover:text-emerald-700 focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring dark:text-emerald-400 dark:hover:text-emerald-300"
                                                 aria-label={`Net Margin ${formatCurrency(net)}. Gross ${formatCurrency(gross)}. BOP ${formatCurrency(bop)}. Fixed Cost ${formatCurrency(fixedCost)}. Target ${formatCurrency(target)}.`}
                                                 title={`Gross: ${formatCurrency(gross)} | BOP: ${formatCurrency(bop)} | Fixed Cost: ${formatCurrency(fixedCost)} | Target: ${formatCurrency(target)}`}
                                                 {...triggerProps}
@@ -918,40 +947,68 @@
                                             </button>
                                         {/snippet}
                                     </TooltipTrigger>
-                                    <TooltipContent side="top" align="end" class="max-w-[16rem] text-[11px]">
-                                        Gross: {formatCurrency(gross)} | BOP: {formatCurrency(bop)} | Fixed Cost: {formatCurrency(fixedCost)} | Target: {formatCurrency(target)}
+                                    <TooltipContent
+                                        side="top"
+                                        align="start"
+                                        class="max-w-[16rem] text-[11px]"
+                                    >
+                                        Gross: {formatCurrency(gross)} | BOP: {formatCurrency(
+                                            bop,
+                                        )} | Fixed Cost: {formatCurrency(
+                                            fixedCost,
+                                        )} | Target: {formatCurrency(target)}
                                     </TooltipContent>
                                 </Tooltip>
-                            </div>
+                            </dd>
+                        </dl>
 
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                        <MoreHorizontal class="h-4 w-4" />
-                                        <span class="sr-only">Aksi armada</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                    <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
-                                        <Eye class="mr-2 h-3.5 w-3.5" />
-                                        Lihat Detail
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-11 w-11 shrink-0 rounded-full border border-border/70 bg-muted/30"
+                                    aria-label="Aksi armada"
+                                >
+                                    <MoreHorizontal class="h-5 w-5" />
+                                    <span class="sr-only">Aksi armada</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                sideOffset={8}
+                                class="z-[120] w-44"
+                            >
+                                <DropdownMenuItem
+                                    onclick={() => openArmadaView(row.id)}
+                                >
+                                    <Eye class="mr-2 h-3.5 w-3.5" />
+                                    Lihat Detail
+                                </DropdownMenuItem>
+                                {#if canManage}
+                                    <DropdownMenuItem
+                                        onclick={() => openArmadaEditor(row)}
+                                    >
+                                        <Pencil class="mr-2 h-3.5 w-3.5" />
+                                        Edit
                                     </DropdownMenuItem>
-                                    {#if canManage}
-                                        <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
-                                            <Pencil class="mr-2 h-3.5 w-3.5" />
-                                            Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
-                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                            Hapus
-                                        </DropdownMenuItem>
-                                    {/if}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
+                                    <DropdownMenuItem
+                                        onclick={() =>
+                                            void removeArmada(row.id)}
+                                    >
+                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                        Hapus
+                                    </DropdownMenuItem>
+                                {/if}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
-                    <div class="relative mt-2 h-1 w-full rounded-full bg-muted/70">
+                    <div
+                        class="relative h-1.5 w-full rounded-full bg-muted/70"
+                        aria-hidden="true"
+                    >
                         <div
                             class={`absolute inset-y-0 left-0 rounded-full ${achievementStyle.bar}`}
                             style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
