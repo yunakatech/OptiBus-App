@@ -12,6 +12,7 @@
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
     import {
+        Building2,
         Armchair,
         ArrowUpRight,
         CalendarDays,
@@ -24,7 +25,10 @@
         MoreHorizontal,
         Pencil,
         Plus,
+        Download,
+        MapPin,
         Route,
+        Search,
         SlidersHorizontal,
         Send,
         Trash2,
@@ -365,6 +369,9 @@
         id: number;
         name: string;
         code: string;
+        region: string;
+        phone: string;
+        address: string;
         target_revenue: number;
         status: string;
         notes: string;
@@ -379,6 +386,12 @@
         departure_bop: number;
         bop: number;
         fixed_cost: number;
+        gross_margin: number;
+        net_margin: number;
+        achievement: number;
+        armada_ready_count: number;
+        armada_count: number;
+        driver_count: number;
     };
     type CancellationRow = {
         tag: string;
@@ -559,7 +572,7 @@
         }
 
         if (tab === 'pools') {
-            return 'Pool';
+            return 'Performa Cabang';
         }
 
         if (tab === 'users') {
@@ -601,7 +614,7 @@
                 { tab: 'drivers', label: 'Driver', permission: 'driver.view' },
                 { tab: 'units', label: 'Kategori Armada', permission: 'master.view' },
                 { tab: 'armadas', label: 'Armada', permission: 'armada.view' },
-                { tab: 'pools', label: 'Pool', permission: 'pool.manage' },
+                { tab: 'pools', label: 'Performa Cabang', permission: 'pool.manage' },
             ],
         },
         {
@@ -808,6 +821,8 @@
         id: 0,
         name: '',
         code: '',
+        phone: '',
+        address: '',
         target_revenue: '',
         fixed_cost: '',
         status: 'active',
@@ -847,6 +862,9 @@
     let armadaDetail = $state<ArmadaDetailRow | null>(null);
     let armadaDetailLoading = $state(false);
     let poolSearch = $state('');
+    let poolRegions = $state<string[]>([]);
+    let poolRegionFilter = $state('all');
+    let poolSortOrder = $state<'desc' | 'asc'>('desc');
     let userSearch = $state('');
     let userFiltersExpanded = $state(false);
     const today = new Date().toISOString().slice(0, 10);
@@ -1357,6 +1375,17 @@
     const poolOptions = $derived(
         pools.filter((pool) => String(pool.status ?? 'active') === 'active'),
     );
+    const poolRegionOptions = $derived(
+        poolRegions.length > 0
+            ? poolRegions
+            : Array.from(
+                  new Set(
+                      pools
+                          .map((pool) => String(pool.region ?? '').trim())
+                          .filter((region) => region !== ''),
+                  ),
+              ).sort((a, b) => a.localeCompare(b, 'id')),
+    );
     const armadaPoolOptions = $derived([
         { id: 0, name: 'Semua Pool' },
         ...poolOptions,
@@ -1372,8 +1401,29 @@
     const canExportArmadas = $derived.by(() =>
         hasPermission(permissions, 'report.export'),
     );
+    const canExportPools = $derived.by(() =>
+        hasPermission(permissions, 'report.export'),
+    );
 
     const defaultPoolId = () => (activePoolId > 0 ? activePoolId : 0);
+
+    const poolQueryParams = () => {
+        const params = new URLSearchParams();
+
+        if (poolSearch.trim() !== '') {
+            params.set('q', poolSearch.trim());
+        }
+
+        if (poolRegionFilter !== 'all') {
+            params.set('region', poolRegionFilter);
+        }
+
+        if (poolSortOrder === 'asc') {
+            params.set('sort', 'asc');
+        }
+
+        return params;
+    };
 
     const poolNameById = (poolId: number | null | undefined) => {
         const id = Number(poolId || 0);
@@ -1399,6 +1449,62 @@
         const names = Array.isArray(pool.route_names) ? pool.route_names : [];
 
         return names.length > 0 ? names.join(', ') : 'Belum ada rute';
+    };
+    const poolGrossMargin = (pool: PoolRow) =>
+        Number(pool.gross_margin ?? financialGrossMargin(pool));
+    const poolNetMargin = (pool: PoolRow) =>
+        Number(pool.net_margin ?? financialNetMargin(pool));
+    const poolAchievement = (pool: PoolRow) =>
+        Number(pool.achievement ?? financialAchievement(pool));
+    const poolReadyLabel = (pool: PoolRow) => {
+        const ready = Number(pool.armada_ready_count ?? 0);
+        const total = Number(pool.armada_count ?? 0);
+
+        return `${ready}/${total} Ready`;
+    };
+    const poolProgressTone = (achievement: number) => {
+        if (achievement < 60) {
+            return 'rose';
+        }
+
+        if (achievement <= 85) {
+            return 'amber';
+        }
+
+        return 'emerald';
+    };
+    const poolProgressClass = (achievement: number) => {
+        const tone = poolProgressTone(achievement);
+
+        if (tone === 'rose') {
+            return 'bg-rose-500';
+        }
+
+        if (tone === 'amber') {
+            return 'bg-amber-500';
+        }
+
+        return 'bg-emerald-500';
+    };
+    const poolProgressBadgeClass = (achievement: number) => {
+        const tone = poolProgressTone(achievement);
+
+        if (tone === 'rose') {
+            return 'border-rose-200 bg-rose-50 text-rose-700';
+        }
+
+        if (tone === 'amber') {
+            return 'border-amber-200 bg-amber-50 text-amber-700';
+        }
+
+        return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    };
+    const exportPools = () => {
+        const params = poolQueryParams();
+        const search = params.toString();
+        const url = `/api/admin/pools/export${search === '' ? '' : `?${search}`}`;
+
+        window.location.assign(url);
     };
     const routeNameById = (routeId: number) =>
         routes.find((route) => route.id === Number(routeId || 0))?.name ?? '';
@@ -2805,6 +2911,9 @@
 
         if (payload.tab === 'pools') {
             pools = payload.pools ?? [];
+            poolRegions = Array.isArray(payload.regions)
+                ? payload.regions
+                : poolRegions;
             canManagePools = Boolean(payload.can_manage ?? true);
         }
 
@@ -2894,6 +3003,14 @@
             query.q = poolSearch.trim();
         }
 
+        if (activeTab === 'pools' && poolRegionFilter !== 'all') {
+            query.region = poolRegionFilter;
+        }
+
+        if (activeTab === 'pools' && poolSortOrder === 'asc') {
+            query.sort = 'asc';
+        }
+
         if (
             activeTab === 'schedules' &&
             (selectedScheduleRouteId > 0 || selectedScheduleRoute !== '')
@@ -2954,6 +3071,8 @@
 
         if (initialTab === 'pools') {
             poolSearch = settingsQuery.q ?? '';
+            poolRegionFilter = String(settingsQuery.region ?? 'all') || 'all';
+            poolSortOrder = String(settingsQuery.sort ?? 'desc') === 'asc' ? 'asc' : 'desc';
         }
 
         selectedScheduleRouteId = Number(settingsQuery.route_id ?? 0);
@@ -3164,6 +3283,9 @@
             users = userResponse.users ?? [];
             roles = userResponse.roles ?? [];
             pools = poolResponse.pools ?? [];
+            poolRegions = Array.isArray(poolResponse.regions)
+                ? poolResponse.regions
+                : poolRegions;
             canManagePools = Boolean(poolResponse.can_manage ?? true);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat users.';
@@ -3258,8 +3380,14 @@
             return;
         }
 
-        const r = await api('GET', '/api/admin/pools');
+        const params = poolQueryParams();
+        const search = params.toString();
+        const r = await api(
+            'GET',
+            `/api/admin/pools${search === '' ? '' : `?${search}`}`,
+        );
         pools = r.pools ?? [];
+        poolRegions = Array.isArray(r.regions) ? r.regions : poolRegions;
         routes = r.routes ?? routes;
         canManagePools = Boolean(r.can_manage ?? true);
     };
@@ -3636,6 +3764,8 @@
             id: 0,
             name: '',
             code: '',
+            phone: '',
+            address: '',
             target_revenue: '',
             fixed_cost: '',
             status: 'active',
@@ -4146,6 +4276,8 @@
                         id: poolForm.id || undefined,
                         name: poolForm.name,
                         code: poolForm.code,
+                        phone: poolForm.phone,
+                        address: poolForm.address,
                         target_revenue: parseRupiahInput(
                             poolForm.target_revenue,
                         ),
@@ -8717,6 +8849,28 @@
                             <label class="space-y-1.5">
                                 <span
                                     class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Kontak</span
+                                >
+                                <Input
+                                    placeholder="No. operasional"
+                                    bind:value={poolForm.phone}
+                                    disabled={!canManagePools}
+                                />
+                            </label>
+                            <label class="space-y-1.5 xl:col-span-2">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Alamat Lengkap</span
+                                >
+                                <Input
+                                    placeholder="Alamat cabang / kantor pool"
+                                    bind:value={poolForm.address}
+                                    disabled={!canManagePools}
+                                />
+                            </label>
+                            <label class="space-y-1.5">
+                                <span
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Target Revenue</span
                                 >
                                 <Input
@@ -8860,26 +9014,182 @@
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                                 >
-                                    Pool
+                                    Performa Cabang
                                 </p>
                                 <h3 class="mt-1 text-xl font-semibold tracking-tight">
-                                    Area operasional dan rute terkelola
+                                    Ringkasan efisiensi dan pendapatan cabang
                                 </h3>
                                 <p
                                     class="mt-1 max-w-3xl text-sm text-muted-foreground"
                                 >
-                                    Pool menjadi pagar akses data untuk user dan
-                                    filter laporan per area.
+                                    Mini-card padat untuk memantau revenue, BOP,
+                                    gross, net margin, dan target tanpa scroll
+                                    horizontal.
                                 </p>
                             </div>
                             <Badge
                                 variant="secondary"
                                 class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
                             >
-                                {pools.length} pool
+                                {pools.length} cabang
                             </Badge>
                         </div>
-                        <div class="grid gap-3 p-3 lg:hidden">
+                        <div class="grid gap-3 border-b border-border/70 p-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.55fr)_minmax(220px,0.55fr)]">
+                            <div class="min-w-0 lg:col-span-1">
+                                <TerminalFilter
+                                    bind:query={poolSearch}
+                                    placeholder="Cari cabang, kode, alamat, atau catatan"
+                                    on:search={() => void loadPools()}
+                                />
+                            </div>
+                            <label class="space-y-1.5">
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Wilayah/Region
+                                </span>
+                                <select
+                                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring/20"
+                                    bind:value={poolRegionFilter}
+                                    onchange={() => void loadPools()}
+                                >
+                                    <option value="all">Semua Wilayah</option>
+                                    {#each poolRegionOptions as region (region)}
+                                        <option value={region}>{region}</option>
+                                    {/each}
+                                </select>
+                            </label>
+                            <label class="space-y-1.5">
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Urutan Kinerja
+                                </span>
+                                <select
+                                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring/20"
+                                    bind:value={poolSortOrder}
+                                    onchange={() => void loadPools()}
+                                >
+                                    <option value="desc">Kinerja Tertinggi</option>
+                                    <option value="asc">Kinerja Terendah</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            {#each pools as row (row.id)}
+                                {@const achievement = poolAchievement(row as PoolRow)}
+                                {@const gross = poolGrossMargin(row as PoolRow)}
+                                {@const net = poolNetMargin(row as PoolRow)}
+                                {@const barClass = poolProgressClass(achievement)}
+                                {@const badgeClass = poolProgressBadgeClass(achievement)}
+                                <article
+                                    class="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-md"
+                                    title={`Alamat: ${row.address || 'Belum diisi'} | Kontak: ${row.phone || 'Belum diisi'}`}
+                                >
+                                    <div class="flex items-start gap-3">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="min-w-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <Building2 class="h-3.5 w-3.5 shrink-0 text-cyan-600" />
+                                                        <p class="truncate text-sm font-semibold text-foreground">
+                                                            {row.name}
+                                                        </p>
+                                                    </div>
+                                                    <p class="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                                        {row.region || 'Lainnya'} · {row.code || 'Tanpa kode'}
+                                                    </p>
+                                                </div>
+                                                <div class="flex shrink-0 flex-col items-end gap-1">
+                                                    <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                                                        {row.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                                                    </span>
+                                                    <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
+                                                        {achievement.toFixed(0)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                                                <span class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5">
+                                                    <MapPin class="h-3 w-3" />
+                                                    {poolReadyLabel(row as PoolRow)}
+                                                </span>
+                                                <span class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5">
+                                                    👤 {row.driver_count || 0} Driver
+                                                </span>
+                                                <span class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5">
+                                                    🛣️ {row.route_ids?.length || 0} Rute
+                                                </span>
+                                            </div>
+
+                                            <div class="mt-3 flex items-end justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                        Revenue Cabang
+                                                    </p>
+                                                    <p class="truncate text-sm font-bold text-emerald-600">
+                                                        {formatCurrency(Number(row.revenue || 0))}
+                                                    </p>
+                                                    <p class="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                                        Gross {formatCurrency(gross)} · BOP {formatCurrency(Number(row.bop || 0))} · Net {formatCurrency(net)}
+                                                    </p>
+                                                </div>
+                                                <div class="shrink-0 text-right">
+                                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                                        Achievement
+                                                    </p>
+                                                    <p class="text-sm font-semibold text-foreground">
+                                                        {achievement.toFixed(1)}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 shrink-0 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                    <span class="sr-only">Aksi cabang</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                                <DropdownMenuItem
+                                                    onclick={() => {
+                                                        poolForm = {
+                                                            id: row.id,
+                                                            name: row.name,
+                                                            code: row.code,
+                                                            phone: row.phone ?? '',
+                                                            address: row.address ?? '',
+                                                            target_revenue: formatRupiahInput(row.target_revenue),
+                                                            fixed_cost: formatRupiahInput(row.fixed_cost),
+                                                            status: row.status || 'active',
+                                                            notes: row.notes || '',
+                                                            route_ids: [...(row.route_ids ?? [])],
+                                                        };
+                                                        setFormMode('form');
+                                                    }}
+                                                >
+                                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onclick={() => void removeItem(`/api/admin/pools/${row.id}`, 'Pool deleted.')}>
+                                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                    Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+
+                                    <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                                        <div
+                                            class={`h-full rounded-full transition-[width] duration-300 ${barClass}`}
+                                            style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
+                                        ></div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+
+                        <div class="hidden">
                             {#each pools as row (row.id)}
                                 {@const net = financialNetMargin(row)}
                                 {@const achievement = financialAchievement(row)}
@@ -8907,6 +9217,8 @@
                                                             id: row.id,
                                                             name: row.name,
                                                             code: row.code,
+                                                            phone: row.phone ?? '',
+                                                            address: row.address ?? '',
                                                             target_revenue: formatRupiahInput(row.target_revenue),
                                                             fixed_cost: formatRupiahInput(row.fixed_cost),
                                                             status: row.status || 'active',
@@ -8953,7 +9265,7 @@
                                 </article>
                             {/each}
                         </div>
-                        <div class="hidden overflow-x-auto lg:block">
+                        <div class="hidden">
                             <DataTable columns={poolsColumns} rows={pools} class="min-w-[1780px]">
                                 {#snippet row({ row })}
                                     {@const gross = financialGrossMargin(row as PoolRow)}
@@ -8998,6 +9310,8 @@
                                                     id: row.id,
                                                     name: row.name,
                                                     code: row.code,
+                                                    phone: row.phone ?? '',
+                                                    address: row.address ?? '',
                                                     target_revenue: formatRupiahInput(row.target_revenue),
                                                     fixed_cost: formatRupiahInput(row.fixed_cost),
                                                     status: row.status || 'active',

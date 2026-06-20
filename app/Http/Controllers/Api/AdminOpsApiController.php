@@ -4541,29 +4541,69 @@ class AdminOpsApiController extends Controller
 
     public function poolsIndex(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'region' => ['nullable', 'string', 'max:120'],
+            'sort' => ['nullable', Rule::in(['desc', 'asc'])],
+        ]);
+
+        return $this->ok($this->poolListingPayload(
+            trim((string) ($validated['q'] ?? '')),
+            trim((string) ($validated['region'] ?? '')),
+            (string) ($validated['sort'] ?? 'desc'),
+        ));
+    }
+
+    public function poolsExport(Request $request): StreamedResponse
+    {
+        if ($response = $this->requirePermission('report.export')) {
+            abort($response);
+        }
+
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'region' => ['nullable', 'string', 'max:120'],
+            'sort' => ['nullable', Rule::in(['desc', 'asc'])],
+        ]);
+
+        $payload = $this->poolListingPayload(
+            trim((string) ($validated['q'] ?? '')),
+            trim((string) ($validated['region'] ?? '')),
+            (string) ($validated['sort'] ?? 'desc'),
+        );
+
+        $period = now()->format('Y-m');
+        $xlsx = $this->buildPoolsXlsx(array_values($payload['pools'] ?? []), $period);
+
+        return response()->streamDownload(function () use ($xlsx): void {
+            echo $xlsx;
+        }, 'performa-cabang-'.$period.'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * @return array{pools: array<int, array<string, mixed>>, routes: array<int, mixed>, can_manage: bool}
+     */
+    private function poolListingPayload(string $q = '', string $region = '', string $sort = 'desc'): array
+    {
         if (! $this->poolTablesReady()) {
-            return $this->ok([
+            return [
                 'pools' => [],
                 'routes' => Schema::hasTable('routes')
-                    ? DB::table('routes')->orderBy('name')->get(['id', 'name', 'origin', 'destination'])
+                    ? DB::table('routes')->orderBy('name')->get(['id', 'name', 'origin', 'destination'])->all()
                     : [],
+                'regions' => [],
                 'can_manage' => true,
-                ...($request->boolean('paginate')
-                    ? ['pagination' => $this->paginationMeta(0, 1, max(10, min(100, (int) $request->query('per_page', 20))))]
-                    : []),
-            ]);
+            ];
         }
 
         $canManage = $this->currentUserIsSuperAdmin();
         $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
-        $q = trim((string) $request->query('q', ''));
-        $monthStart = now()->startOfMonth()->toDateString();
-        $monthEnd = now()->endOfMonth()->toDateString();
-        $routeFinancials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
 
         $poolQuery = DB::table('pools')
-            ->when(Schema::hasColumn('pools', 'tenant_id'), function (Builder $q): void {
-                PoolScope::applyTenantScope($q, 'pools.tenant_id');
+            ->when(Schema::hasColumn('pools', 'tenant_id'), function (Builder $query): void {
+                PoolScope::applyTenantScope($query, 'pools.tenant_id');
             })
             ->select([
                 'id',
@@ -4573,48 +4613,30 @@ class AdminOpsApiController extends Controller
                 $this->hasPoolsFixedCostColumn() ? 'fixed_cost' : DB::raw('0 as fixed_cost'),
                 'status',
                 'notes',
+                Schema::hasColumn('pools', 'phone') ? 'phone' : DB::raw('NULL as phone'),
+                Schema::hasColumn('pools', 'address') ? 'address' : DB::raw('NULL as address'),
                 'created_at',
             ])
             ->orderBy('name');
 
         if (! $canManage) {
             if ($allowedPoolIds === []) {
-                return $this->ok([
+                return [
                     'pools' => [],
                     'routes' => [],
+                    'regions' => [],
                     'can_manage' => false,
-                    ...($request->boolean('paginate')
-                        ? ['pagination' => $this->paginationMeta(0, 1, max(10, min(100, (int) $request->query('per_page', 20))))]
-                        : []),
-                ]);
+                ];
             }
 
             $poolQuery->whereIn('id', $allowedPoolIds)->where('status', 'active');
         }
 
-        if ($q !== '') {
-            $qLike = '%'.$q.'%';
-            $poolQuery->where(function (Builder $builder) use ($qLike): void {
-                $builder
-                    ->where('name', 'like', $qLike)
-                    ->orWhere('code', 'like', $qLike)
-                    ->orWhere('notes', 'like', $qLike);
-            });
-        }
-
-        $pagination = null;
-        if ($request->boolean('paginate')) {
-            [$page, $perPage] = $this->paginationParams($request);
-            $result = $this->paginateQuery($poolQuery, $page, $perPage);
-            $pools = collect($result['data']);
-            $pagination = $result['meta'];
-        } else {
-            $pools = $poolQuery->get();
-        }
-        $poolIds = $pools->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        $pools = $poolQuery->get();
+        $poolIds = $pools->pluck('id')->map(static fn ($id): int => (int) $id)->values()->all();
         $routesByPool = [];
 
-        if ($poolIds !== []) {
+        if ($poolIds !== [] && Schema::hasTable('pool_route') && Schema::hasTable('routes')) {
             $routeRows = DB::table('pool_route as pr')
                 ->join('routes as r', 'pr.route_id', '=', 'r.id')
                 ->whereIn('pr.pool_id', $poolIds)
@@ -4642,44 +4664,124 @@ class AdminOpsApiController extends Controller
             }
         }
 
-        $rows = $pools->map(function ($pool) use ($routesByPool, $routeFinancials): array {
-            $poolId = (int) ($pool->id ?? 0);
-            $routes = $routesByPool[$poolId] ?? ['ids' => [], 'names' => []];
-            $financials = $this->sumRouteFinancials($routes['ids'], $routeFinancials);
+        $armadaCounts = $this->poolArmadaCounts();
+        $driverCounts = $this->poolDriverCounts();
+        $monthStart = now()->startOfMonth()->toDateString();
+        $monthEnd = now()->endOfMonth()->toDateString();
+        $routeFinancials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
 
-            return [
-                'id' => $poolId,
-                'name' => (string) ($pool->name ?? ''),
-                'code' => (string) ($pool->code ?? ''),
-                'target_revenue' => (float) ($pool->target_revenue ?? 0),
-                'fixed_cost' => (float) ($pool->fixed_cost ?? 0),
-                'charter_revenue' => (float) ($financials['charter_revenue'] ?? 0),
-                'departure_revenue' => (float) ($financials['departure_revenue'] ?? 0),
-                'luggage_revenue' => (float) ($financials['luggage_revenue'] ?? 0),
-                'revenue' => (float) ($financials['revenue'] ?? 0),
-                'charter_bop' => (float) ($financials['charter_bop'] ?? 0),
-                'departure_bop' => (float) ($financials['departure_bop'] ?? 0),
-                'bop' => (float) ($financials['bop'] ?? 0),
-                'status' => (string) ($pool->status ?? 'active'),
-                'notes' => (string) ($pool->notes ?? ''),
-                'created_at' => (string) ($pool->created_at ?? ''),
-                'route_ids' => array_values(array_filter($routes['ids'], static fn ($id) => (int) $id > 0)),
-                'route_names' => collect($routes['names'])
-                    ->map(static fn ($name) => trim((string) $name))
-                    ->filter(static fn ($name) => $name !== '')
-                    ->unique()
-                    ->values()
-                    ->all(),
-            ];
-        })->values();
+        $mappedRows = $pools
+            ->map(function ($pool) use ($routesByPool, $routeFinancials, $armadaCounts, $driverCounts): array {
+                $poolId = (int) ($pool->id ?? 0);
+                $routes = $routesByPool[$poolId] ?? ['ids' => [], 'names' => []];
+                $financials = $this->sumRouteFinancials($routes['ids'], $routeFinancials);
+                $revenue = (float) ($financials['revenue'] ?? 0);
+                $bop = (float) ($financials['bop'] ?? 0);
+                $fixedCost = (float) ($pool->fixed_cost ?? 0);
+                $gross = $revenue - $bop;
+                $net = $gross - $fixedCost;
+                $target = (float) ($pool->target_revenue ?? 0);
+                $achievement = $target > 0 ? ($revenue / $target) * 100 : 0;
+
+                return [
+                    'id' => $poolId,
+                    'name' => (string) ($pool->name ?? ''),
+                    'code' => (string) ($pool->code ?? ''),
+                    'region' => $this->poolRegionLabel(
+                        (string) ($pool->name ?? ''),
+                        (string) ($pool->code ?? ''),
+                        (string) ($pool->notes ?? ''),
+                        collect($routes['names'])->map(static fn ($name): string => trim((string) $name))->all(),
+                    ),
+                    'phone' => trim((string) ($pool->phone ?? '')),
+                    'address' => trim((string) ($pool->address ?? '')),
+                    'target_revenue' => $target,
+                    'fixed_cost' => $fixedCost,
+                    'charter_revenue' => (float) ($financials['charter_revenue'] ?? 0),
+                    'departure_revenue' => (float) ($financials['departure_revenue'] ?? 0),
+                    'luggage_revenue' => (float) ($financials['luggage_revenue'] ?? 0),
+                    'revenue' => $revenue,
+                    'charter_bop' => (float) ($financials['charter_bop'] ?? 0),
+                    'departure_bop' => (float) ($financials['departure_bop'] ?? 0),
+                    'bop' => $bop,
+                    'gross_margin' => $gross,
+                    'net_margin' => $net,
+                    'achievement' => $achievement,
+                    'armada_ready_count' => (int) ($armadaCounts[$poolId]['ready'] ?? 0),
+                    'armada_count' => (int) ($armadaCounts[$poolId]['total'] ?? 0),
+                    'driver_count' => (int) ($driverCounts[$poolId] ?? 0),
+                    'status' => (string) ($pool->status ?? 'active'),
+                    'notes' => (string) ($pool->notes ?? ''),
+                    'created_at' => (string) ($pool->created_at ?? ''),
+                    'route_ids' => array_values(array_filter($routes['ids'], static fn ($id): bool => (int) $id > 0)),
+                    'route_names' => collect($routes['names'])
+                        ->map(static fn ($name): string => trim((string) $name))
+                        ->filter(static fn ($name): bool => $name !== '')
+                        ->unique()
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $regionOptions = collect($mappedRows)
+            ->pluck('region')
+            ->map(static fn ($value): string => trim((string) $value))
+            ->filter(static fn ($value): bool => $value !== '')
+            ->unique()
+            ->sortBy(static fn (string $value): string => mb_strtolower($value))
+            ->values()
+            ->all();
+
+        $rows = collect($mappedRows)
+            ->filter(function (array $row) use ($q, $region): bool {
+                $haystack = mb_strtolower(implode(' ', [
+                    (string) ($row['name'] ?? ''),
+                    (string) ($row['code'] ?? ''),
+                    (string) ($row['region'] ?? ''),
+                    (string) ($row['notes'] ?? ''),
+                    (string) ($row['phone'] ?? ''),
+                    (string) ($row['address'] ?? ''),
+                    implode(' ', array_map(static fn ($item): string => (string) $item, $row['route_names'] ?? [])),
+                ]));
+
+                if ($q !== '' && ! str_contains($haystack, mb_strtolower($q))) {
+                    return false;
+                }
+
+                if ($region !== '' && mb_strtolower((string) ($row['region'] ?? '')) !== mb_strtolower($region)) {
+                    return false;
+                }
+
+                return true;
+            })
+            ->values()
+            ->all();
+
+        usort($rows, function (array $left, array $right) use ($sort): int {
+            $leftScore = (float) ($left['achievement'] ?? 0);
+            $rightScore = (float) ($right['achievement'] ?? 0);
+            $comparison = $leftScore <=> $rightScore;
+
+            if ($sort === 'desc') {
+                $comparison *= -1;
+            }
+
+            if ($comparison !== 0) {
+                return $comparison;
+            }
+
+            return mb_strtolower((string) ($left['name'] ?? '')) <=> mb_strtolower((string) ($right['name'] ?? ''));
+        });
 
         $routeQuery = DB::table('routes')->orderBy('name');
         if (! $canManage) {
             $routeIds = [];
             foreach ($rows as $pool) {
-                $routeIds = array_merge($routeIds, $pool['route_ids']);
+                $routeIds = array_merge($routeIds, $pool['route_ids'] ?? []);
             }
-            $routeIds = array_values(array_unique(array_map(static fn ($id) => (int) $id, $routeIds)));
+            $routeIds = array_values(array_unique(array_map(static fn ($id): int => (int) $id, $routeIds)));
 
             if ($routeIds === []) {
                 $routeQuery->whereRaw('1 = 0');
@@ -4688,12 +4790,123 @@ class AdminOpsApiController extends Controller
             }
         }
 
-        return $this->ok([
+        return [
             'pools' => $rows,
-            'routes' => $routeQuery->get(['id', 'name', 'origin', 'destination']),
+            'routes' => $routeQuery->get(['id', 'name', 'origin', 'destination'])->all(),
+            'regions' => $regionOptions,
             'can_manage' => $canManage,
-            ...($pagination !== null ? ['pagination' => $pagination] : []),
-        ]);
+        ];
+    }
+
+    /**
+     * @return array<int, array{total: int, ready: int}>
+     */
+    private function poolArmadaCounts(): array
+    {
+        if (! Schema::hasTable('armadas') || ! Schema::hasColumn('armadas', 'pool_id')) {
+            return [];
+        }
+
+        $query = DB::table('armadas')
+            ->select('pool_id')
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN COALESCE(revenue, 0) > 0 OR COALESCE(bop, 0) > 0 OR COALESCE(fixed_cost, 0) > 0 THEN 1 ELSE 0 END) as ready')
+            ->groupBy('pool_id');
+
+        if (Schema::hasColumn('armadas', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'armadas.tenant_id');
+        }
+
+        $counts = [];
+        foreach ($query->get() as $row) {
+            $poolId = (int) ($row->pool_id ?? 0);
+            if ($poolId <= 0) {
+                continue;
+            }
+
+            $counts[$poolId] = [
+                'total' => (int) ($row->total ?? 0),
+                'ready' => (int) ($row->ready ?? 0),
+            ];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function poolDriverCounts(): array
+    {
+        if (! Schema::hasTable('drivers') || ! Schema::hasColumn('drivers', 'pool_id')) {
+            return [];
+        }
+
+        $query = DB::table('drivers')
+            ->select('pool_id')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('pool_id');
+
+        if (Schema::hasColumn('drivers', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, 'drivers.tenant_id');
+        }
+
+        $counts = [];
+        foreach ($query->get() as $row) {
+            $poolId = (int) ($row->pool_id ?? 0);
+            if ($poolId <= 0) {
+                continue;
+            }
+
+            $counts[$poolId] = (int) ($row->total ?? 0);
+        }
+
+        return $counts;
+    }
+
+    private function poolRegionLabel(string $name, string $code, string $notes, array $routeNames = []): string
+    {
+        $sources = array_filter([
+            $name,
+            $code,
+            implode(' ', $routeNames),
+            $notes,
+        ], static fn (string $value): bool => trim($value) !== '');
+
+        foreach ($sources as $source) {
+            $label = $this->deriveRegionLabel($source);
+
+            if ($label !== '') {
+                return $label;
+            }
+        }
+
+        return 'Lainnya';
+    }
+
+    private function deriveRegionLabel(string $value): string
+    {
+        $normalized = trim(preg_replace('/\s+/', ' ', strtoupper($value)) ?? '');
+        if ($normalized === '') {
+            return '';
+        }
+
+        $normalized = preg_replace('/^(POOL|CABANG|AREA|WILAYAH)\s+/u', '', $normalized) ?? $normalized;
+        $normalized = preg_replace('/[^A-Z0-9\s\-\/]+/u', ' ', $normalized) ?? $normalized;
+        $normalized = trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
+        if ($normalized === '') {
+            return '';
+        }
+
+        $segments = preg_split('/[\s\-\/]+/', $normalized) ?: [];
+        $segments = array_values(array_filter($segments, static fn (string $segment): bool => trim($segment) !== ''));
+        if ($segments === []) {
+            return '';
+        }
+
+        $region = implode(' ', array_slice($segments, 0, min(2, count($segments))));
+
+        return mb_convert_case($region, MB_CASE_TITLE, 'UTF-8');
     }
 
     public function poolsSave(Request $request): JsonResponse
@@ -4718,6 +4931,8 @@ class AdminOpsApiController extends Controller
             'id' => ['nullable', 'integer', 'min:1'],
             'name' => ['required', 'string', 'max:120'],
             'code' => ['nullable', 'string', 'max:40', Rule::unique('pools', 'code')->ignore($id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'address' => ['nullable', 'string'],
             'target_revenue' => ['nullable', 'numeric', 'min:0'],
             'fixed_cost' => ['nullable', 'numeric', 'min:0'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
@@ -4748,6 +4963,8 @@ class AdminOpsApiController extends Controller
         $payload = [
             'name' => strtoupper(trim((string) $data['name'])),
             'code' => $this->nullable($data['code'] ?? null),
+            'phone' => $this->nullable($data['phone'] ?? null),
+            'address' => $this->nullable($data['address'] ?? null),
             'target_revenue' => (float) ($data['target_revenue'] ?? 0),
             'status' => (string) ($data['status'] ?? 'active'),
             'notes' => $this->nullable($data['notes'] ?? null),
@@ -6826,7 +7043,7 @@ class AdminOpsApiController extends Controller
      */
     private function buildDriversXlsx(array $rows, string $period): string
     {
-        if (! class_exists(ZipArchive::class)) {
+        if (! class_exists(\ZipArchive::class)) {
             abort(response()->json([
                 'success' => false,
                 'error' => 'Ekspor Excel tidak tersedia di server ini.',
@@ -6861,8 +7078,8 @@ class AdminOpsApiController extends Controller
             ], 500));
         }
 
-        $zip = new ZipArchive();
-        $opened = $zip->open($tmpPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $zip = new \ZipArchive();
+        $opened = $zip->open($tmpPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
         if ($opened !== true) {
             @unlink($tmpPath);
             abort(response()->json([
@@ -6890,9 +7107,97 @@ class AdminOpsApiController extends Controller
 
             return $binary;
         } finally {
-            if ($zip->status === ZipArchive::ER_OK) {
+            if ($zip->status === \ZipArchive::ER_OK) {
                 // no-op
             }
+            @unlink($tmpPath);
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function buildPoolsXlsx(array $rows, string $period): string
+    {
+        if (! class_exists(\ZipArchive::class)) {
+            abort(response()->json([
+                'success' => false,
+                'error' => 'Ekspor Excel tidak tersedia di server ini.',
+            ], 500));
+        }
+
+        $headers = [
+            'Nama Cabang',
+            'Kode',
+            'Wilayah/Region',
+            'Alamat Lengkap',
+            'Kontak Operasional',
+            'Armada Ready',
+            'Armada Total',
+            'Driver',
+            'Rute',
+            'Charter Revenue',
+            'Keberangkatan Revenue',
+            'Bagasi Revenue',
+            'Total Revenue',
+            'Charter BOP',
+            'Keberangkatan BOP',
+            'Total BOP',
+            'Gross',
+            'Fixed Cost',
+            'Net Margin',
+            'Target Revenue',
+            'Achievement',
+            'Status',
+        ];
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'pool-xlsx-');
+        if ($tmpPath === false) {
+            abort(response()->json([
+                'success' => false,
+                'error' => 'Gagal menyiapkan file Excel.',
+            ], 500));
+        }
+
+        $zip = new \ZipArchive();
+        $opened = $zip->open($tmpPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        if ($opened !== true) {
+            @unlink($tmpPath);
+            abort(response()->json([
+                'success' => false,
+                'error' => 'Gagal membuat arsip Excel.',
+            ], 500));
+        }
+
+        try {
+            $zip->addFromString('[Content_Types].xml', $this->driverXlsxContentTypesXml());
+            $zip->addFromString('_rels/.rels', $this->driverXlsxRootRelsXml());
+            $zip->addFromString('xl/workbook.xml', $this->driverXlsxWorkbookXml('Performa Cabang '.$period));
+            $zip->addFromString('xl/_rels/workbook.xml.rels', $this->driverXlsxWorkbookRelsXml());
+            $zip->addFromString('xl/styles.xml', $this->driverXlsxStylesXml());
+            $zip->addFromString(
+                'xl/worksheets/sheet1.xml',
+                $this->driverXlsxSheetXml($headers, $rows, 'Performa Cabang '.$period, [
+                    'Nama Cabang',
+                    'Kode',
+                    'Wilayah/Region',
+                    'Alamat Lengkap',
+                    'Kontak Operasional',
+                    'Status',
+                ]),
+            );
+            $zip->close();
+
+            $binary = file_get_contents($tmpPath);
+            if ($binary === false) {
+                abort(response()->json([
+                    'success' => false,
+                    'error' => 'Gagal membaca file Excel.',
+                ], 500));
+            }
+
+            return $binary;
+        } finally {
             @unlink($tmpPath);
         }
     }
@@ -6999,7 +7304,7 @@ XML;
      * @param  array<int, string>  $headers
      * @param  array<int, array<string, mixed>>  $rows
      */
-    private function driverXlsxSheetXml(array $headers, array $rows, string $sheetName): string
+    private function driverXlsxSheetXml(array $headers, array $rows, string $sheetName, array $textHeaders = []): string
     {
         $sheetName = $this->truncateSheetName($sheetName);
         $rowIndex = 1;
@@ -7015,7 +7320,7 @@ XML;
 
         $xml .= $this->driverXlsxRowXml($rowIndex++, $headers, [], true);
         foreach ($rows as $row) {
-            $xml .= $this->driverXlsxRowXml($rowIndex++, $headers, $row, false);
+            $xml .= $this->driverXlsxRowXml($rowIndex++, $headers, $row, false, $textHeaders);
         }
 
         $xml .= <<<'XML'
@@ -7029,15 +7334,17 @@ XML;
     /**
      * @param  array<int, mixed>  $values
      */
-    private function driverXlsxRowXml(int $rowNumber, array $headers, array $rowValues, bool $isHeader = false): string
+    private function driverXlsxRowXml(int $rowNumber, array $headers, array $rowValues, bool $isHeader = false, array $textHeaders = []): string
     {
         $xml = '        <row r="'.$rowNumber.'">';
-        $textHeaders = [
-            'Nama Driver',
-            'Kontak',
-            'Nopol Armada',
-            'Pool/Wilayah',
-        ];
+        $textHeaders = $textHeaders !== []
+            ? $textHeaders
+            : [
+                'Nama Driver',
+                'Kontak',
+                'Nopol Armada',
+                'Pool/Wilayah',
+            ];
         foreach (array_values($headers) as $index => $header) {
             $cellRef = $this->xlsxColumnName($index).$rowNumber;
             if ($isHeader) {

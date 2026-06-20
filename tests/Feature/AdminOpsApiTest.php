@@ -151,12 +151,20 @@ class AdminOpsApiTest extends TestCase
 
     public function test_units_and_users_crud_works(): void
     {
+        $tenantId = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Test CRUD',
+            'slug' => 'tenant-test-crud',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $authUser = User::factory()->create([
             'name' => 'Root Admin',
             'email' => 'root.admin@example.com',
             'is_super_admin' => true,
         ]);
-        $this->actingAs($authUser)->withSession(['active_tenant_id' => $this->defaultTenantId()]);
+        $this->actingAs($authUser)->withSession(['active_tenant_id' => $tenantId]);
 
         $unitCreate = $this->postJson(route('api.admin.units.save'), [
             'nopol' => 'DD 9900 AA',
@@ -207,10 +215,17 @@ class AdminOpsApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'users');
 
+        $this->postJson(route('api.admin.users.save'), [
+            'name' => 'Ops Cadangan',
+            'email' => 'ops.cadangan@example.com',
+            'password' => 'password123',
+        ])->assertCreated();
+
         $this->deleteJson(route('api.admin.users.delete', ['id' => $authUser->id]))
             ->assertStatus(409);
 
         $this->deleteJson(route('api.admin.users.delete', ['id' => $userId]))->assertOk();
+
         $this->deleteJson(route('api.admin.units.delete', ['id' => $unitId]))->assertOk();
     }
 
@@ -673,10 +688,38 @@ class AdminOpsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
+        $tenantId = $this->defaultTenantId();
         $today = now()->toDateString();
         $armadaNopol = 'DD 1234 UX';
 
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL PINRANG',
+            'code' => 'PIN',
+            'status' => 'active',
+            'target_revenue' => 1000000,
+            'fixed_cost' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $armadaPayload = [
+            'tenant_id' => $tenantId,
             'merk' => 'ISUZU',
             'tahun' => 2024,
             'warna' => 'PUTIH',
@@ -687,6 +730,10 @@ class AdminOpsApiTest extends TestCase
             'created_at' => now(),
         ];
 
+        if (Schema::hasColumn('armadas', 'pool_id')) {
+            $armadaPayload['pool_id'] = $poolId;
+        }
+
         if (Schema::hasColumn('armadas', 'nama_kendaraan')) {
             $armadaPayload['nama_kendaraan'] = 'ARMADA BAGASI';
         }
@@ -694,11 +741,16 @@ class AdminOpsApiTest extends TestCase
         $armadaId = DB::table('armadas')->insertGetId($armadaPayload);
 
         $driverPayload = [
+            'tenant_id' => $tenantId,
             'nama' => 'DRIVER BAGASI',
             'phone' => '08123456789',
             'target_revenue_bulanan' => 800000,
             'created_at' => now(),
         ];
+
+        if (Schema::hasColumn('drivers', 'pool_id')) {
+            $driverPayload['pool_id'] = $poolId;
+        }
 
         if (Schema::hasColumn('drivers', 'armada_id')) {
             $driverPayload['armada_id'] = $armadaId;
@@ -713,6 +765,7 @@ class AdminOpsApiTest extends TestCase
         $driverId = DB::table('drivers')->insertGetId($driverPayload);
 
         $assignmentPayload = [
+            'tenant_id' => $tenantId,
             'rute' => 'PINRANG - MAKASSAR',
             'tanggal' => $today,
             'jam' => '08:00:00',
@@ -720,6 +773,14 @@ class AdminOpsApiTest extends TestCase
             'driver_id' => $driverId,
             'created_at' => now(),
         ];
+
+        if (Schema::hasColumn('trip_assignments', 'pool_id')) {
+            $assignmentPayload['pool_id'] = $poolId;
+        }
+
+        if (Schema::hasColumn('trip_assignments', 'route_id')) {
+            $assignmentPayload['route_id'] = $routeId;
+        }
 
         if (Schema::hasColumn('trip_assignments', 'armada_id')) {
             $assignmentPayload['armada_id'] = $armadaId;
@@ -736,6 +797,7 @@ class AdminOpsApiTest extends TestCase
         $assignmentId = DB::table('trip_assignments')->insertGetId($assignmentPayload);
 
         DB::table('bookings')->insert([
+            'tenant_id' => $tenantId,
             'rute' => 'PINRANG - MAKASSAR',
             'tanggal' => $today,
             'jam' => '08:00:00',
@@ -752,6 +814,7 @@ class AdminOpsApiTest extends TestCase
         ]);
 
         DB::table('luggages')->insert([
+            'tenant_id' => $tenantId,
             'sender_name' => 'PENGIRIM BAGASI',
             'sender_phone' => '0812000002',
             'receiver_name' => 'PENERIMA BAGASI',
@@ -761,6 +824,8 @@ class AdminOpsApiTest extends TestCase
             'status' => 'active',
             'payment_status' => 'Lunas',
             'trip_assignment_id' => $assignmentId,
+            ...(Schema::hasColumn('luggages', 'pool_id') ? ['pool_id' => $poolId] : []),
+            ...(Schema::hasColumn('luggages', 'rute_id') ? ['rute_id' => $routeId] : []),
             'created_at' => now(),
         ]);
 
@@ -782,6 +847,7 @@ class AdminOpsApiTest extends TestCase
         $historicalAssignmentId = DB::table('trip_assignments')->insertGetId($historicalAssignmentPayload);
 
         DB::table('luggages')->insert([
+            'tenant_id' => $tenantId,
             'sender_name' => 'PENGIRIM BAGASI LAMA',
             'sender_phone' => '0812000012',
             'receiver_name' => 'PENERIMA BAGASI LAMA',
@@ -792,17 +858,20 @@ class AdminOpsApiTest extends TestCase
             'payment_status' => 'Lunas',
             'tanggal' => $today,
             'trip_assignment_id' => $historicalAssignmentId,
+            ...(Schema::hasColumn('luggages', 'pool_id') ? ['pool_id' => $poolId] : []),
+            ...(Schema::hasColumn('luggages', 'rute_id') ? ['rute_id' => $routeId] : []),
             'created_at' => now(),
         ]);
 
         $charterPayload = [
+            'tenant_id' => $tenantId,
             'name' => 'CHARTER BAGASI',
             'phone' => '0812000004',
             'start_date' => $today,
             'end_date' => $today,
             'departure_time' => '09:00:00',
-            'pickup_point' => 'Pinrang',
-            'drop_point' => 'Makassar',
+            'pickup_point' => 'PINRANG',
+            'drop_point' => 'MAKASSAR',
             'driver_name' => 'DRIVER BAGASI',
             'price' => 300000,
             'bop_price' => 40000,
@@ -810,6 +879,18 @@ class AdminOpsApiTest extends TestCase
             'bop_status' => 'done',
             'created_at' => now(),
         ];
+
+        if (Schema::hasColumn('charters', 'pool_id')) {
+            $charterPayload['pool_id'] = $poolId;
+        }
+
+        if (Schema::hasColumn('charters', 'armada_id')) {
+            $charterPayload['armada_id'] = $armadaId;
+        }
+
+        if (Schema::hasColumn('charters', 'armada_nopol')) {
+            $charterPayload['armada_nopol'] = $armadaNopol;
+        }
 
         if (Schema::hasColumn('charters', 'armada_id')) {
             $charterPayload['armada_id'] = $armadaId;
@@ -991,10 +1072,38 @@ class AdminOpsApiTest extends TestCase
         $this->actingAsSuperAdmin();
         Cache::flush();
 
+        $tenantId = $this->defaultTenantId();
         $today = now()->toDateString();
         $armadaNopol = 'DD 4321 UX';
 
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL PINRANG CACHE',
+            'code' => 'PIN-CACHE',
+            'status' => 'active',
+            'target_revenue' => 1000000,
+            'fixed_cost' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $armadaPayload = [
+            'tenant_id' => $tenantId,
             'merk' => 'ISUZU',
             'tahun' => 2024,
             'warna' => 'PUTIH',
@@ -1005,6 +1114,10 @@ class AdminOpsApiTest extends TestCase
             'created_at' => now(),
         ];
 
+        if (Schema::hasColumn('armadas', 'pool_id')) {
+            $armadaPayload['pool_id'] = $poolId;
+        }
+
         if (Schema::hasColumn('armadas', 'nama_kendaraan')) {
             $armadaPayload['nama_kendaraan'] = 'ARMADA CACHE BAGASI';
         }
@@ -1012,11 +1125,16 @@ class AdminOpsApiTest extends TestCase
         $armadaId = DB::table('armadas')->insertGetId($armadaPayload);
 
         $driverPayload = [
+            'tenant_id' => $tenantId,
             'nama' => 'DRIVER CACHE BAGASI',
             'phone' => '08123456780',
             'target_revenue_bulanan' => 800000,
             'created_at' => now(),
         ];
+
+        if (Schema::hasColumn('drivers', 'pool_id')) {
+            $driverPayload['pool_id'] = $poolId;
+        }
 
         if (Schema::hasColumn('drivers', 'armada_id')) {
             $driverPayload['armada_id'] = $armadaId;
@@ -1031,6 +1149,7 @@ class AdminOpsApiTest extends TestCase
         $driverId = DB::table('drivers')->insertGetId($driverPayload);
 
         $assignmentPayload = [
+            'tenant_id' => $tenantId,
             'rute' => 'PINRANG - MAKASSAR',
             'tanggal' => $today,
             'jam' => '08:00:00',
@@ -1038,6 +1157,14 @@ class AdminOpsApiTest extends TestCase
             'driver_id' => $driverId,
             'created_at' => now(),
         ];
+
+        if (Schema::hasColumn('trip_assignments', 'pool_id')) {
+            $assignmentPayload['pool_id'] = $poolId;
+        }
+
+        if (Schema::hasColumn('trip_assignments', 'route_id')) {
+            $assignmentPayload['route_id'] = $routeId;
+        }
 
         if (Schema::hasColumn('trip_assignments', 'armada_id')) {
             $assignmentPayload['armada_id'] = $armadaId;
@@ -1054,6 +1181,7 @@ class AdminOpsApiTest extends TestCase
         $assignmentId = DB::table('trip_assignments')->insertGetId($assignmentPayload);
 
         $luggageId = DB::table('luggages')->insertGetId([
+            'tenant_id' => $tenantId,
             'sender_name' => 'PENGIRIM CACHE',
             'sender_phone' => '0812000100',
             'receiver_name' => 'PENERIMA CACHE',
@@ -1064,6 +1192,8 @@ class AdminOpsApiTest extends TestCase
             'payment_status' => 'Lunas',
             'tanggal' => $today,
             'trip_assignment_id' => null,
+            ...(Schema::hasColumn('luggages', 'pool_id') ? ['pool_id' => $poolId] : []),
+            ...(Schema::hasColumn('luggages', 'rute_id') ? ['rute_id' => $routeId] : []),
             'created_at' => now(),
         ]);
 
@@ -1752,5 +1882,54 @@ class AdminOpsApiTest extends TestCase
         ]));
         $csvCharter->assertOk();
         $this->assertStringContainsString('text/csv', (string) $csvCharter->headers->get('content-type'));
+    }
+
+    public function test_pools_index_exposes_regions_and_export_downloads_xlsx(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $tenantId = $this->defaultTenantId();
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'MAKASSAR TIMUR - MAKASSAR',
+            'origin' => 'MAKASSAR TIMUR',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL MAKASSAR TIMUR',
+            'code' => 'MKS-TMR',
+            'phone' => '0411000001',
+            'address' => 'Jl. Cabang No. 1',
+            'target_revenue' => 150000000,
+            'fixed_cost' => 25000000,
+            'status' => 'active',
+            'notes' => 'Cabang timur',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->getJson(route('api.admin.pools.index'));
+        $response->assertOk();
+        $response = $response->json();
+
+        $this->assertSame('Makassar Timur', $response['pools'][0]['region'] ?? null);
+        $this->assertContains('Makassar Timur', $response['regions'] ?? []);
+
+        $export = $this->get(route('api.admin.pools.export'));
+        $export->assertOk();
+        $this->assertStringContainsString(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            (string) $export->headers->get('content-type'),
+        );
     }
 }

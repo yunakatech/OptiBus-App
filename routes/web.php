@@ -232,6 +232,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::delete('armadas/{id}', [AdminOpsApiController::class, 'armadasDelete'])->middleware('permission:armada.manage')->name('armadas.delete');
 
         Route::get('pools', [AdminOpsApiController::class, 'poolsIndex'])->middleware('permission:pool.manage,user.manage,report.view,charter.view,luggage.view')->name('pools.index');
+        Route::get('pools/export', [AdminOpsApiController::class, 'poolsExport'])->middleware('permission:report.export')->name('pools.export');
         Route::post('pools', [AdminOpsApiController::class, 'poolsSave'])->middleware('permission:pool.manage')->name('pools.save');
         Route::delete('pools/{id}', [AdminOpsApiController::class, 'poolsDelete'])->middleware('permission:pool.manage')->name('pools.delete');
         Route::post('tenant/switch', [AdminOpsApiController::class, 'tenantSwitch'])->middleware('permission:platform.manage')->name('tenant.switch');
