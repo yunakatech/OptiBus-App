@@ -650,6 +650,9 @@
     ];
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
+    const poolManagementOverride = $derived(
+        hasPermission(permissions, 'pool.manage'),
+    );
     const visibleTabGroups = $derived(
         tabGroups
             .map((group) => ({
@@ -693,6 +696,9 @@
     };
 
     const isSubmitActive = (key: string) => activeSubmitKey === key;
+    const setPoolManageAccess = (value: boolean) => {
+        canManagePools = value || poolManagementOverride;
+    };
 
     let routes = $state<RouteRow[]>([]);
     let schedules = $state<ScheduleRow[]>([]);
@@ -3194,7 +3200,7 @@
             poolRegions = Array.isArray(payload.regions)
                 ? payload.regions
                 : poolRegions;
-            canManagePools = Boolean(payload.can_manage ?? true);
+            setPoolManageAccess(Boolean(payload.can_manage ?? true));
         }
 
         if (payload.tab === 'users') {
@@ -3246,7 +3252,7 @@
         if (payload.tab === 'users') {
             pools = payload.pools ?? [];
             roles = payload.roles ?? [];
-            canManagePools = Boolean(payload.can_manage_pools ?? true);
+            setPoolManageAccess(Boolean(payload.can_manage_pools ?? true));
         }
     };
 
@@ -3566,7 +3572,7 @@
             poolRegions = Array.isArray(poolResponse.regions)
                 ? poolResponse.regions
                 : poolRegions;
-            canManagePools = Boolean(poolResponse.can_manage ?? true);
+            setPoolManageAccess(Boolean(poolResponse.can_manage ?? true));
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat users.';
         }
@@ -3669,7 +3675,7 @@
         pools = r.pools ?? [];
         poolRegions = Array.isArray(r.regions) ? r.regions : poolRegions;
         routes = r.routes ?? routes;
-        canManagePools = Boolean(r.can_manage ?? true);
+        setPoolManageAccess(Boolean(r.can_manage ?? true));
     };
 
     const loadCancellations = async () => {
