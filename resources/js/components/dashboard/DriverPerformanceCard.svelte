@@ -26,10 +26,10 @@
 </script>
 
 <div
-    class="rounded-3xl border border-gray-200 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-5"
+    class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow"
 >
     <!-- Header -->
-    <div class="mb-4 flex items-start justify-between gap-3">
+    <div class="mb-3 flex items-start justify-between gap-3">
         <div>
             <p class="text-[13px] font-semibold text-slate-700">
                 Peringkat <span class="font-bold text-slate-900"
@@ -50,12 +50,12 @@
 
     {#if drivers.length === 0}
         <div
-            class="flex h-24 items-center justify-center rounded-2xl border border-dashed border-gray-200 text-[12px] text-slate-400"
+            class="flex h-20 items-center justify-center rounded-xl border border-dashed border-gray-200 text-[11px] text-slate-400"
         >
             Belum ada data performa driver
         </div>
     {:else}
-        <div class="space-y-3">
+        <div class="space-y-2">
             {#each drivers as driver, i (driver.rank)}
                 {@const barWidth =
                     maxRevenue > 0
@@ -63,32 +63,32 @@
                         : 6}
                 {@const isMedal = i < 3}
                 <div
-                    class={`group relative rounded-2xl border p-3 transition ${i === 0 ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-50' : 'border-gray-100 bg-gray-50/50 hover:border-gray-200 hover:bg-white hover:shadow-sm'}`}
+                    class={`group relative rounded-xl border p-2 transition ${i === 0 ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-50' : 'border-gray-100 bg-gray-50/50 hover:border-gray-200 hover:bg-white hover:shadow-sm'}`}
                 >
                     <!-- Top row: rank + name + trips -->
-                    <div class="mb-2 flex items-center justify-between gap-2">
-                        <div class="flex min-w-0 items-center gap-2">
+                    <div class="mb-1.5 flex items-center justify-between gap-2">
+                        <div class="flex min-w-0 items-center gap-1.5">
                             <span
-                                class="shrink-0 text-[16px] leading-none"
+                                class="shrink-0 text-[13px] leading-none"
                                 aria-hidden="true"
                             >
                                 {#if isMedal}
                                     {medalLabel[i]}
                                 {:else}
-                                    <span
-                                        class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500"
+                            <span
+                                        class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-[9px] font-bold text-slate-500"
                                         >{driver.rank}</span
                                     >
                                 {/if}
                             </span>
                             <p
-                                class="truncate text-[13px] font-semibold text-slate-800"
+                                class="truncate text-[12px] font-semibold text-slate-800"
                             >
                                 {driver.name}
                             </p>
                         </div>
                         <span
-                            class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600"
+                            class="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-600"
                         >
                             {driver.trip_count} trip
                         </span>
@@ -96,7 +96,7 @@
 
                     <!-- Revenue bar -->
                     <div
-                        class="h-1.5 overflow-hidden rounded-full bg-gray-200/70"
+                        class="h-1 overflow-hidden rounded-full bg-gray-200/70"
                     >
                         <div
                             class={`h-full rounded-full transition-all duration-700 ease-out ${i === 0 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-amber-700/70' : 'bg-blue-400'}`}
@@ -105,13 +105,13 @@
                     </div>
 
                     <!-- Revenue amount -->
-                    <p class="mt-1.5 text-[11px] font-bold text-slate-700">
+                    <p class="mt-1 text-[10px] font-bold text-slate-700">
                         {toCurrency(driver.revenue)}
                     </p>
 
                     {#if driver.route}
-                        <p class="mt-0.5 truncate text-[10px] text-slate-400">
-                            Rute dominan: {driver.route}
+                        <p class="mt-0.5 truncate text-[9px] text-slate-400">
+                            Rute: {driver.route}
                         </p>
                     {/if}
                 </div>

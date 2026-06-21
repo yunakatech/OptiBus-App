@@ -234,61 +234,7 @@
 <div
     class="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
 >
-    <div class="border-b border-slate-100/80 px-4 py-4 sm:px-5">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div class="min-w-0">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-600">
-                    {subtitle}
-                </p>
-                <h3 class="mt-1 text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-                    {title}
-                </h3>
-                <p class="mt-1 text-xs leading-relaxed text-slate-500 max-w-xl">
-                    {description}
-                </p>
-            </div>
 
-            <div class="flex flex-wrap gap-2">
-                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-700">
-                    <span class="h-2 w-2 rounded-full bg-sky-500"></span>
-                    {currentMonthLabel}: {toCurrency(currentMonthRevenue)}
-                </div>
-                <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700">
-                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    {monthlyTrend.length} bulan
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-3 grid gap-2 sm:grid-cols-3">
-            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    {currentMonthLabel}
-                </p>
-                <p class="mt-1 text-sm font-bold text-slate-900">
-                    {toCurrency(currentMonthRevenue)}
-                </p>
-            </div>
-            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Rata-rata data
-                </p>
-                <p class="mt-1 text-sm font-bold text-slate-900">
-                    {toCurrency(trendRevenueAverage)}
-                </p>
-            </div>
-            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Puncak data
-                </p>
-                <p class="mt-1 text-sm font-bold text-slate-900">
-                    {trendRevenuePeak
-                        ? `${trendRevenuePeak.label || trendRevenuePeak.name || '-'} • ${toCurrency(trendRevenuePeak.revenue)}`
-                        : '-'}
-                </p>
-            </div>
-        </div>
-    </div>
 
     <div class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4">
         <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
