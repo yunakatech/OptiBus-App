@@ -13,11 +13,12 @@
 
 <script lang="ts">
     import { Deferred, router } from '@inertiajs/svelte';
-    import { ArrowRight, Building2, Copy } from 'lucide-svelte';
+    import { Copy } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import CommandCenter from '@/components/dashboard/CommandCenter.svelte';
     import RevenueActivityChart from '@/components/dashboard/RevenueActivityChart.svelte';
     import RevenueChannelPieChart from '@/components/dashboard/RevenueChannelPieChart.svelte';
+    import DriverPerformanceCard from '@/components/dashboard/DriverPerformanceCard.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -155,6 +156,7 @@
         upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
         recentActivityTotal = 0,
         recentActivityVisibleCount = 0,
+        topDrivers = [] as any[],
         summaryStatsByScope = {
             day: {
                 total_bookings: 0,
@@ -260,6 +262,7 @@
         upcomingCharterReminder?: UpcomingCharterReminder;
         recentActivityTotal?: number;
         recentActivityVisibleCount?: number;
+        topDrivers?: any[];
         summaryStatsByScope?: Record<
             'day' | 'month' | 'year',
             SummaryScopeStats
@@ -647,39 +650,7 @@
     class="flex h-full flex-1 flex-col gap-2 overflow-x-clip rounded-xl px-2 py-2 md:gap-3 md:p-4"
 >
     <div class="space-y-2">
-        <div
-            class="flex flex-col gap-2 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] px-3 py-2.5 shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.9))] md:flex-row md:items-end md:justify-between md:rounded-3xl md:px-4 md:py-3"
-        >
-            <div class="space-y-0.5 md:space-y-1">
-                <p
-                    class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:text-[11px]"
-                >
-                    Ringkasan Dashboard
-                </p>
-                <h2
-                    class="text-base font-semibold tracking-tight text-foreground md:text-lg"
-                >
-                    Operasional Hari Ini
-                </h2>
-                {#if selectedPoolId > 0}
-                    <p class="text-[11px] text-muted-foreground">
-                        <Building2 class="inline size-3 -mt-0.5 mr-1" />
-                        Pool aktif:
-                        <span class="font-medium text-primary"
-                            >{selectedPoolName}</span
-                        >
-                    </p>
-                {/if}
-            </div>
-            <div class="flex flex-col gap-2 md:items-end">
-                <div
-                    class="hidden items-center gap-2 self-start rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground dark:border-slate-700/70 dark:bg-slate-900/70 sm:flex md:self-auto"
-                >
-                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    Fokus: jadwal, armada, carter, dan revenue harian
-                </div>
-            </div>
-        </div>
+
         <!-- Command Center & Prioritas Grid -->
         <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <!-- Command Center -->
@@ -687,6 +658,7 @@
                 {stats}
                 {summaryStatsByScope}
                 {summaryPeriodByScope}
+                {monthlyTrend}
                 {toCurrency}
             />
 
@@ -704,6 +676,7 @@
             'recentActivityVisibleCount',
             'departuresToday',
             'upcomingCharterReminder',
+            'topDrivers',
         ]}
     >
         {#snippet fallback()}
@@ -771,6 +744,13 @@
                     description="Grafik spline ini menampilkan pergerakan revenue operasional sistem Anda dalam 30 hari ke belakang secara presisi."
                     currentMonthLabel="Total 30 Hari"
                     currentMonthRevenue={activeTrendRevenueTotal}
+                />
+
+                <!-- Driver Performance Card -->
+                <DriverPerformanceCard
+                    drivers={topDrivers}
+                    {toCurrency}
+                    period="Bulan Ini"
                 />
             </div>
 
