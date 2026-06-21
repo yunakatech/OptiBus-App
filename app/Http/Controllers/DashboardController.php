@@ -754,7 +754,7 @@ class DashboardController extends Controller
             function () use ($yearAnchor): array {
                 $year = (int) $yearAnchor->format('Y');
                 $yearStart = Carbon::create($year, 1, 1)->startOfDay();
-                $queryEnd = $yearAnchor->copy()->endOfDay();
+                $queryEnd = Carbon::create($year, 12, 31)->endOfDay();
 
                 $bookingRevenueByDate = $this->bookingRevenueByDateRange($yearStart, $queryEnd);
                 $charterRevenueByDate = $this->charterRevenueByDateRange($yearStart, $queryEnd);
