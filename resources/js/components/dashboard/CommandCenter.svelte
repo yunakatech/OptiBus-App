@@ -51,39 +51,12 @@
         `${activeSummaryPeriod.current_label} • total channel`,
     );
 
-    const activeTotalRevenue = $derived(
-        Number(activeSummaryStats.revenue_booking || 0) +
-        Number(activeSummaryStats.revenue_charter || 0) +
-        Number(activeSummaryStats.revenue_luggage || 0)
-    );
-
     const activeAchievementWidth = $derived(
         Math.min(
             Math.max(Number(activeSummaryStats.achievement_percent || 0), 0),
             100
         )
     );
-
-    const revenueChannels = $derived([
-        {
-            key: 'booking',
-            label: 'Booking',
-            value: activeSummaryStats.revenue_booking,
-            href: '/bookings',
-        },
-        {
-            key: 'carter',
-            label: 'Carter',
-            value: activeSummaryStats.revenue_charter,
-            href: '/charters',
-        },
-        {
-            key: 'bagasi',
-            label: 'Bagasi',
-            value: activeSummaryStats.revenue_luggage,
-            href: '/luggages',
-        },
-    ]);
 </script>
 
 <div
@@ -168,40 +141,5 @@
         </div>
     </div>
 
-    <!-- Channel Breakdown -->
-    <div class="mt-auto pt-5">
-        <p class="mb-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-            Detail Channel
-        </p>
-        <div class="space-y-2">
-            {#each revenueChannels as channel (channel.key)}
-                {@const width =
-                    activeTotalRevenue > 0
-                        ? Math.max(
-                              4,
-                              Math.round(
-                                  (Number(channel.value || 0) /
-                                      activeTotalRevenue) *
-                                      100,
-                              ),
-                          )
-                        : 4}
-                <a
-                    href={channel.href}
-                    class="group block rounded-2xl border border-gray-100 bg-gray-50/50 p-3 transition hover:border-gray-200 hover:bg-white hover:shadow-sm"
-                >
-                    <div class="flex items-center justify-between gap-3 text-sm">
-                        <span class="font-medium text-slate-600 group-hover:text-slate-800">{channel.label}</span>
-                        <span class="font-bold text-slate-900">{toCurrency(channel.value)}</span>
-                    </div>
-                    <div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-gray-200/60">
-                        <div
-                            class="h-full rounded-full bg-blue-500 transition-all duration-500 ease-out group-hover:bg-blue-600"
-                            style={`width:${width}%`}
-                        ></div>
-                    </div>
-                </a>
-            {/each}
-        </div>
-    </div>
+
 </div>

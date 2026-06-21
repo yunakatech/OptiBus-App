@@ -17,6 +17,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import CommandCenter from '@/components/dashboard/CommandCenter.svelte';
     import RevenueActivityChart from '@/components/dashboard/RevenueActivityChart.svelte';
+    import RevenueChannelPieChart from '@/components/dashboard/RevenueChannelPieChart.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -689,77 +690,8 @@
                 {toCurrency}
             />
 
-            <!-- Prioritas Hari Ini -->
-            <div class="flex flex-col rounded-3xl border border-gray-200 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] md:p-5">
-                <div class="space-y-4">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                            Prioritas Hari Ini
-                        </p>
-                        <p class="mt-1 text-sm text-slate-500">
-                            Hal yang perlu dipantau sebelum membuka menu detail.
-                        </p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <a
-                            href="/bookings"
-                            class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3 transition hover:border-gray-200 hover:bg-white hover:shadow-sm"
-                        >
-                            <p class="text-[11px] text-slate-500 font-medium">Keberangkatan</p>
-                            <p class="mt-1 break-words text-lg font-bold text-slate-900">
-                                {departuresToday.length} <span class="text-xs font-semibold text-slate-500">jadwal</span>
-                            </p>
-                            <p class="mt-1.5 text-[11px] font-medium text-slate-500">
-                                {departuresTodayTotalBookings} booking aktif
-                            </p>
-                        </a>
-                        <a
-                            href="/admin-ops/armada"
-                            class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3 transition hover:border-gray-200 hover:bg-white hover:shadow-sm"
-                        >
-                            <p class="text-[11px] text-slate-500 font-medium">Armada Aktif</p>
-                            <p class="mt-1 text-lg font-bold text-slate-900">
-                                {stats.live_fleet} <span class="text-xs font-semibold text-slate-500">unit</span>
-                            </p>
-                        </a>
-                    </div>
-                    <div class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3.5 transition hover:border-gray-200 hover:bg-white">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                                    Rute Teratas
-                                </p>
-                                <p class="mt-1 truncate text-sm font-bold text-slate-900">
-                                    {stats.top_route}
-                                </p>
-                            </div>
-                            <span class="shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-700">
-                                {stats.top_route_count}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3.5 transition hover:border-gray-200 hover:bg-white">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                                    Carter Terdekat
-                                </p>
-                                <p class="mt-1 truncate text-sm font-bold text-slate-900">
-                                    {nextCharter?.name ?? 'Belum ada carter'}
-                                </p>
-                                <p class="mt-1 truncate text-[11px] text-slate-500 font-medium">
-                                    {nextCharter?.date_label ?? '7 hari ke depan kosong'}
-                                </p>
-                            </div>
-                            {#if upcomingCharterReminder.total > 0}
-                                <span class="shrink-0 rounded-full bg-cyan-100 px-2.5 py-1 text-[11px] font-bold text-cyan-700">
-                                    {upcomingCharterReminder.total} data
-                                </span>
-                            {/if}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Prioritas Hari Ini replaced with RevenueChannelPieChart -->
+            <RevenueChannelPieChart summaryStats={summaryStatsByScope.year} {toCurrency} />
         </div>
     </div>
 
