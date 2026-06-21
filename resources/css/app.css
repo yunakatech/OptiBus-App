@@ -293,6 +293,12 @@
             font-size: 16px !important;
         }
     }
+
+    @media (min-width: 1024px) {
+        html {
+            font-size: 80%;
+        }
+    }
 }
 
 @layer components {
