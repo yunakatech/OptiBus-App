@@ -7344,7 +7344,7 @@ XML;
     }
 
     /**
-     * @param  array<int, mixed>  $values
+     * @param  array<int, mixed>  $rowValues
      */
     private function driverXlsxRowXml(int $rowNumber, array $headers, array $rowValues, bool $isHeader = false, array $textHeaders = []): string
     {

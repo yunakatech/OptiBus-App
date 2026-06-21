@@ -1,4 +1,4 @@
-<script module lang="ts">
+﻿<script module lang="ts">
     export const layout = {
         breadcrumbs: [
             {
@@ -25,7 +25,6 @@
     import Monitor from 'lucide-svelte/icons/monitor';
     import Package from 'lucide-svelte/icons/package';
     import Route from 'lucide-svelte/icons/route';
-    import Settings2 from 'lucide-svelte/icons/settings-2';
     import ShieldCheck from 'lucide-svelte/icons/shield-check';
     import Truck from 'lucide-svelte/icons/truck';
     import UserCog from 'lucide-svelte/icons/user-cog';
@@ -61,8 +60,14 @@
         {
             label: 'Data Master',
             items: [
-                { title: 'Pengaturan', href: '/admin-ops', icon: Settings2, permission: ['master.view', 'driver.view', 'armada.view', 'pool.manage'] },
+                { title: 'Jadwal', href: '/admin-ops/jadwal', icon: CalendarDays, permission: 'master.view' },
+                { title: 'Rute Induk', href: '/admin-ops/rute-induk', icon: Route, permission: 'master.view' },
+                { title: 'Pool', href: '/admin-ops/pool', icon: Building2, permission: 'pool.manage' },
                 { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned, permission: 'master.view' },
+                { title: 'Tarif Bagasi', href: '/admin-ops/tarif-bagasi', icon: Package, permission: 'master.view' },
+                { title: 'Kategori Armada', href: '/admin-ops/kategori-armada', icon: Truck, permission: 'master.view' },
+                { title: 'Armada', href: '/admin-ops/armada', icon: CarFront, permission: 'armada.view' },
+                { title: 'Driver', href: '/admin-ops/driver', icon: IdCard, permission: 'driver.view' },
             ],
         },
         {
