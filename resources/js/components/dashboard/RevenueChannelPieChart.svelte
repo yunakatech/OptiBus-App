@@ -6,7 +6,6 @@
 
     type SummaryScopeStats = {
         total_bookings: number;
-        total_passengers: number;
         revenue_booking: number;
         revenue_charter: number;
         revenue_luggage: number;
