@@ -34,7 +34,7 @@
         Trash2,
         Wallet,
     } from 'lucide-svelte';
-    import { onDestroy, onMount, tick } from 'svelte';
+    import { onDestroy, onMount, tick, untrack } from 'svelte';
     import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
