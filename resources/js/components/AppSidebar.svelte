@@ -188,11 +188,6 @@
             superAdminOnly: true,
         },
         {
-            title: 'Langganan',
-            href: '/subscription',
-            icon: CreditCard,
-        },
-        {
             title: 'SaaS',
             href: '/admin-ops/saas',
             icon: Building2,
