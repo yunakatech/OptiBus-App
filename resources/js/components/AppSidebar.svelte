@@ -105,13 +105,13 @@
     const dataMasterNavItems: NavItem[] = [
         {
             title: 'Jadwal',
-            href: '/admin-ops/schedules',
+            href: '/admin-ops/jadwal',
             icon: CalendarDays,
             permission: 'master.view',
         },
         {
             title: 'Rute Induk',
-            href: '/admin-ops/routes',
+            href: '/admin-ops/rute-induk',
             icon: Route,
             permission: 'master.view',
         },
@@ -123,31 +123,31 @@
         },
         {
             title: 'Tarif Bagasi',
-            href: '/admin-ops/services',
+            href: '/admin-ops/tarif-bagasi',
             icon: Package,
             permission: 'master.view',
         },
         {
             title: 'Pool',
-            href: '/admin-ops/pools',
+            href: '/admin-ops/pool',
             icon: Building2,
             permission: 'pool.manage',
         },
         {
             title: 'Driver',
-            href: '/admin-ops/drivers',
+            href: '/admin-ops/driver',
             icon: IdCard,
             permission: 'driver.view',
         },
         {
             title: 'Kategori Armada',
-            href: '/admin-ops/units',
+            href: '/admin-ops/kategori-armada',
             icon: Truck,
             permission: 'master.view',
         },
         {
             title: 'Armada',
-            href: '/admin-ops/armadas',
+            href: '/admin-ops/armada',
             icon: CarFront,
             permission: 'armada.view',
         },

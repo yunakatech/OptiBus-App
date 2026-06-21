@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Rute Induk',
-                href: '/admin-ops/routes',
+                href: '/admin-ops/rute-induk',
             },
         ],
     };

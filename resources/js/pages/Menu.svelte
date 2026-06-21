@@ -60,14 +60,14 @@
         {
             label: 'Data Master',
             items: [
-                { title: 'Jadwal', href: '/admin-ops/schedules', icon: CalendarDays, permission: 'master.view' },
-                { title: 'Rute Induk', href: '/admin-ops/routes', icon: Route, permission: 'master.view' },
-                { title: 'Pool', href: '/admin-ops/pools', icon: Building2, permission: 'pool.manage' },
+                { title: 'Jadwal', href: '/admin-ops/jadwal', icon: CalendarDays, permission: 'master.view' },
+                { title: 'Rute Induk', href: '/admin-ops/rute-induk', icon: Route, permission: 'master.view' },
+                { title: 'Pool', href: '/admin-ops/pool', icon: Building2, permission: 'pool.manage' },
                 { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned, permission: 'master.view' },
-                { title: 'Tarif Bagasi', href: '/admin-ops/services', icon: Package, permission: 'master.view' },
-                { title: 'Kategori Armada', href: '/admin-ops/units', icon: Truck, permission: 'master.view' },
-                { title: 'Armada', href: '/admin-ops/armadas', icon: CarFront, permission: 'armada.view' },
-                { title: 'Driver', href: '/admin-ops/drivers', icon: IdCard, permission: 'driver.view' },
+                { title: 'Tarif Bagasi', href: '/admin-ops/tarif-bagasi', icon: Package, permission: 'master.view' },
+                { title: 'Kategori Armada', href: '/admin-ops/kategori-armada', icon: Truck, permission: 'master.view' },
+                { title: 'Armada', href: '/admin-ops/armada', icon: CarFront, permission: 'armada.view' },
+                { title: 'Driver', href: '/admin-ops/driver', icon: IdCard, permission: 'driver.view' },
             ],
         },
         {

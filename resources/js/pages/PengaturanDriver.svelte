@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Driver',
-                href: '/admin-ops/drivers',
+                href: '/admin-ops/driver',
             },
         ],
     };
