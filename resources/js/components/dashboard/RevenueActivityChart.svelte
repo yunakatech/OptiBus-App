@@ -125,14 +125,6 @@
                         mode: 'index',
                         intersect: false,
                     },
-                    layout: {
-                        padding: {
-                            top: 20,
-                            bottom: 10,
-                            left: -5,
-                            right: 15, // extra padding for rightmost tooltip to fit inside container
-                        },
-                    },
                     scales: {
                         x: {
                             grid: {
@@ -144,65 +136,66 @@
                                     family: 'ui-sans-serif, system-ui, sans-serif',
                                     weight: 500,
                                 },
-                            color: '#64748b', // slate-500
-                            maxRotation: 0,
-                            autoSkip: true,
-                            maxTicksLimit: 6,
+                                color: '#64748b',
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 6,
+                            },
+                            border: {
+                                display: false,
+                            },
                         },
-                        border: {
-                            display: false,
+                        y: {
+                            grid: {
+                                color: '#f1f5f9',
+                                tickBorderDash: [4, 4],
+                            },
+                            ticks: {
+                                display: false,
+                            },
+                            border: {
+                                display: false,
+                            },
+                            beginAtZero: true,
                         },
                     },
-                    y: {
-                        grid: {
-                            color: '#f1f5f9', // slate-100
-                            tickBorderDash: [4, 4],
-                        },
-                        ticks: {
+                    plugins: {
+                        legend: {
                             display: false,
                         },
-                        border: {
-                            display: false,
-                        },
-                        beginAtZero: true,
-                    },
-                },
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    tooltip: {
-                        enabled: false, // disable native tooltip, use custom HTML tooltip
-                        external: (context) => {
-                            const { chart, tooltip } = context;
-                            if (tooltip.opacity === 0) {
-                                tooltipData.visible = false;
-                                return;
-                            }
+                        tooltip: {
+                            enabled: false,
+                            external: (context) => {
+                                const { chart, tooltip } = context;
+                                if (tooltip.opacity === 0) {
+                                    tooltipData.visible = false;
+                                    return;
+                                }
 
-                            if (tooltip.body) {
-                                const dataIndex = tooltip.dataPoints[0].dataIndex;
-                                const item = monthlyTrend[dataIndex];
+                                if (tooltip.body) {
+                                    const dataIndex = tooltip.dataPoints[0].dataIndex;
+                                    const item = monthlyTrend[dataIndex];
 
-                                const left = tooltip.caretX;
-                                const width = chart.width;
-                                let align: 'left' | 'right' | 'center' = 'center';
+                                    const left = tooltip.caretX;
+                                    const width = chart.width;
+                                    let align: 'left' | 'right' | 'center' = 'center';
 
-                                if (left < width * 0.2) align = 'left';
-                                else if (left > width * 0.8) align = 'right';
+                                    if (left < width * 0.2) align = 'left';
+                                    else if (left > width * 0.8) align = 'right';
 
-                                tooltipData = {
-                                    visible: true,
-                                    x: tooltip.caretX,
-                                    y: tooltip.caretY,
-                                    title: item.name || item.date || item.label || '',
-                                    revenue: Number(item.revenue || 0),
-                                    booking_revenue: Number(item.booking_revenue || 0),
-                                    charter_revenue: Number(item.charter_revenue || 0),
-                                    luggage_revenue: Number(item.luggage_revenue || 0),
-                                    align,
-                                };
-                            }
+                                    tooltipData = {
+                                        visible: true,
+                                        x: tooltip.caretX,
+                                        y: tooltip.caretY,
+                                        title: item.name || item.date || item.label || '',
+                                        revenue: Number(item.revenue || 0),
+                                        booking_revenue: Number(item.booking_revenue || 0),
+                                        charter_revenue: Number(item.charter_revenue || 0),
+                                        luggage_revenue: Number(item.luggage_revenue || 0),
+                                        align,
+                                    };
+                                }
+                            },
                         },
                     },
                 },
