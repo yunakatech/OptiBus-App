@@ -4446,8 +4446,9 @@
         }
 
         void initScheduleTimePicker().then(() => {
+            const jam = untrack(() => scheduleForm.jam);
             scheduleTimePicker?.setDate(
-                scheduleForm.jam || '08:00',
+                jam || '08:00',
                 false,
                 'H:i',
             );
@@ -4471,8 +4472,10 @@
         }
 
         void initReportPickers().then(() => {
-            reportFromPicker?.setDate(reportFrom || today, false, 'Y-m-d');
-            reportToPicker?.setDate(reportTo || today, false, 'Y-m-d');
+            const currentFrom = untrack(() => reportFrom);
+            const currentTo = untrack(() => reportTo);
+            reportFromPicker?.setDate(currentFrom || today, false, 'Y-m-d');
+            reportToPicker?.setDate(currentTo || today, false, 'Y-m-d');
         });
     });
 
