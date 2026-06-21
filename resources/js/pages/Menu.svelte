@@ -1,4 +1,4 @@
-﻿<script module lang="ts">
+<script module lang="ts">
     export const layout = {
         breadcrumbs: [
             {
@@ -53,8 +53,8 @@
             label: 'Pelanggan',
             items: [
                 { title: 'Reguler', href: '/admin-ops/customers', icon: Users, permission: 'customer.view' },
-                { title: 'Bagasi', href: '/admin-ops/master/customer-bagasi', icon: Briefcase, permission: 'customer.view' },
-                { title: 'Carter', href: '/admin-ops/master/customer-charter', icon: BusFront, permission: 'customer.view' },
+                { title: 'Bagasi', href: '/admin-ops/customer-bagasi', icon: Briefcase, permission: 'customer.view' },
+                { title: 'Carter', href: '/admin-ops/customer-charter', icon: BusFront, permission: 'customer.view' },
             ],
         },
         {
@@ -63,7 +63,7 @@
                 { title: 'Jadwal', href: '/admin-ops/jadwal', icon: CalendarDays, permission: 'master.view' },
                 { title: 'Rute Induk', href: '/admin-ops/rute-induk', icon: Route, permission: 'master.view' },
                 { title: 'Pool', href: '/admin-ops/pool', icon: Building2, permission: 'pool.manage' },
-                { title: 'Master Carter', href: '/admin-ops/master/rute-carter', icon: MapPinned, permission: 'master.view' },
+                { title: 'Master Carter', href: '/admin-ops/rute-carter', icon: MapPinned, permission: 'master.view' },
                 { title: 'Tarif Bagasi', href: '/admin-ops/tarif-bagasi', icon: Package, permission: 'master.view' },
                 { title: 'Kategori Armada', href: '/admin-ops/kategori-armada', icon: Truck, permission: 'master.view' },
                 { title: 'Armada', href: '/admin-ops/armada', icon: CarFront, permission: 'armada.view' },

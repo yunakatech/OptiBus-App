@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Carter',
-                href: '/admin-ops/master/customer-charter',
+                href: '/admin-ops/customer-charter',
             },
         ],
     };

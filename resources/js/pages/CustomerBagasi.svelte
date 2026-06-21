@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Bagasi',
-                href: '/admin-ops/master/customer-bagasi',
+                href: '/admin-ops/customer-bagasi',
             },
         ],
     };
