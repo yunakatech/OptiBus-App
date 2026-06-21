@@ -549,7 +549,8 @@
             </div>
         </div>
     {:else if armadaDetail}
-        {@const monthly = armadaDetail.monthly?.summary ?? null}
+        {@const monthly = armadaDetail.monthly ?? null}
+        {@const summary = monthly?.summary ?? null}
         {@const detailCards = detailMetricCards(armadaDetail)}
         <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
             <div class="flex items-start justify-between gap-3">
@@ -581,15 +582,15 @@
                             Ringkasan Bulanan
                         </p>
                         <h4 class="mt-1 text-sm font-semibold tracking-tight">
-                            {monthly?.period_label ?? selectedPeriodLabel()}
+                            {summary?.period_label ?? selectedPeriodLabel()}
                         </h4>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                            {(monthly?.achievement ?? armadaAchievement(armadaDetail)).toFixed(1)}%
+                            {(summary?.achievement ?? armadaAchievement(armadaDetail)).toFixed(1)}%
                         </Badge>
-                        <Badge variant="outline" class={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${statusTone(monthly?.status ?? armadaStatus(armadaDetail))}`}>
-                            {monthly?.status ?? armadaStatus(armadaDetail)}
+                        <Badge variant="outline" class={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${statusTone(summary?.status ?? armadaStatus(armadaDetail))}`}>
+                            {summary?.status ?? armadaStatus(armadaDetail)}
                         </Badge>
                     </div>
                 </div>
@@ -618,11 +619,11 @@
                                 Manifest Keberangkatan
                             </p>
                             <h4 class="mt-1 text-sm font-semibold tracking-tight">
-                                {monthly?.departure_count ?? 0} data
+                                {summary?.departure_count ?? 0} data
                             </h4>
                         </div>
                         <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                            {formatCurrency(monthly?.departure_revenue ?? 0)}
+                            {formatCurrency(summary?.departure_revenue ?? 0)}
                         </Badge>
                     </div>
                     <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
@@ -670,11 +671,11 @@
                                 Carter
                             </p>
                             <h4 class="mt-1 text-sm font-semibold tracking-tight">
-                                {monthly?.charter_count ?? 0} data
+                                {summary?.charter_count ?? 0} data
                             </h4>
                         </div>
                         <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                            {formatCurrency(monthly?.charter_revenue ?? 0)}
+                            {formatCurrency(summary?.charter_revenue ?? 0)}
                         </Badge>
                     </div>
                     <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
@@ -730,11 +731,11 @@
                                 Bagasi
                             </p>
                             <h4 class="mt-1 text-sm font-semibold tracking-tight">
-                                {monthly?.luggage_count ?? 0} data
+                                {summary?.luggage_count ?? 0} data
                             </h4>
                         </div>
                         <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                            {formatCurrency(monthly?.luggage_revenue ?? 0)}
+                            {formatCurrency(summary?.luggage_revenue ?? 0)}
                         </Badge>
                     </div>
                     <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">

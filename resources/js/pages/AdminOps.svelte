@@ -214,6 +214,8 @@
         rute?: string;
         pool_id?: number;
         period?: string;
+        region?: string;
+        sort?: string;
     };
     type SettingsDataPayload = {
         tab?: string;
@@ -226,6 +228,7 @@
         users?: UserRow[];
         roles?: RoleOption[];
         routes?: RouteRow[];
+        regions?: string[];
         can_manage?: boolean;
         pagination?: Pagination;
         route_id?: number;
@@ -4280,6 +4283,11 @@
 
         selectedSegmentRouteId = normalizedRouteId;
         resetSegmentForm(normalizedRouteId);
+    };
+
+    const changeSegmentRoute = async (routeId: number) => {
+        toggleRouteSegments(routeId);
+        activeMode = 'data';
     };
 
     const openRouteSegmentComposer = (routeId: number) => {
