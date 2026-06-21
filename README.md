@@ -12,6 +12,11 @@ This Svelte starter kit utilizes Svelte 5, TypeScript, Tailwind, and the [shadcn
 
 Documentation for all Laravel starter kits can be found on the [Laravel website](https://laravel.com/docs/starter-kits).
 
+## Deployment Guides
+
+- Coolify: [docs/coolify-deploy.md](docs/coolify-deploy.md)
+- Render + Neon: [docs/render-neon-deploy.md](docs/render-neon-deploy.md)
+
 ## Legacy Data Import (Booking Core)
 
 Project ini punya command import untuk menarik data inti booking dari aplikasi legacy (`routes`, `units`, `schedules`, `customers`, `segments`, `bookings`).

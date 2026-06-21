@@ -15,6 +15,8 @@
     import { Deferred, router } from '@inertiajs/svelte';
     import { ArrowRight, Building2, Copy } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import CommandCenter from '@/components/dashboard/CommandCenter.svelte';
+    import RevenueActivityChart from '@/components/dashboard/RevenueActivityChart.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -677,237 +679,88 @@
                 </div>
             </div>
         </div>
-        <section
-            class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/70 dark:bg-slate-950 md:rounded-3xl"
-        >
-            <div class="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-                <div
-                    class="border-b border-slate-200/80 bg-slate-900 p-3 text-slate-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] dark:border-slate-800 md:p-4 lg:border-b-0 lg:border-r"
-                >
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200/80"
-                            >
-                                Command Center
-                            </p>
-                            <h3
-                                class="mt-1 break-words text-xl font-semibold leading-tight text-white md:text-3xl"
-                            >
-                                {toCurrency(stats.revenue_total_today)}
-                            </h3>
-                            <p class="mt-1 text-xs text-slate-200/80">
-                                Revenue hari ini
-                            </p>
-                        </div>
+        <!-- Command Center & Prioritas Grid -->
+        <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+            <!-- Command Center -->
+            <CommandCenter
+                {stats}
+                {summaryStatsByScope}
+                {summaryPeriodByScope}
+                {toCurrency}
+            />
+
+            <!-- Prioritas Hari Ini -->
+            <div class="flex flex-col rounded-3xl border border-gray-200 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] md:p-5">
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            Prioritas Hari Ini
+                        </p>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Hal yang perlu dipantau sebelum membuka menu detail.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
                         <a
-                            href="/reports"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20"
-                            aria-label="Buka laporan revenue"
+                            href="/bookings"
+                            class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3 transition hover:border-gray-200 hover:bg-white hover:shadow-sm"
                         >
-                            <ArrowRight class="h-4 w-4" />
+                            <p class="text-[11px] text-slate-500 font-medium">Keberangkatan</p>
+                            <p class="mt-1 break-words text-lg font-bold text-slate-900">
+                                {departuresToday.length} <span class="text-xs font-semibold text-slate-500">jadwal</span>
+                            </p>
+                            <p class="mt-1.5 text-[11px] font-medium text-slate-500">
+                                {departuresTodayTotalBookings} booking aktif
+                            </p>
+                        </a>
+                        <a
+                            href="/admin-ops/armada"
+                            class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3 transition hover:border-gray-200 hover:bg-white hover:shadow-sm"
+                        >
+                            <p class="text-[11px] text-slate-500 font-medium">Armada Aktif</p>
+                            <p class="mt-1 text-lg font-bold text-slate-900">
+                                {stats.live_fleet} <span class="text-xs font-semibold text-slate-500">unit</span>
+                            </p>
                         </a>
                     </div>
-
-                    <div class="mt-4 grid grid-cols-2 gap-2 md:mt-5">
-                        <div
-                            class="min-w-0 rounded-2xl border border-white/10 bg-white/10 p-2.5 backdrop-blur-[2px] md:p-3"
-                        >
-                            <p class="text-[11px] text-slate-200/80">Target</p>
-                            <p
-                                class="mt-1 break-words text-sm font-semibold text-white"
-                            >
-                                {toCurrency(
-                                    activeSummaryStats.target_revenue ||
-                                        stats.target_revenue_month,
-                                )}
-                            </p>
-                        </div>
-                        <div
-                            class="min-w-0 rounded-2xl border border-white/10 bg-white/10 p-2.5 backdrop-blur-[2px] md:p-3"
-                        >
-                            <p class="text-[11px] text-slate-200/80">
-                                Achievement
-                            </p>
-                            <p class="mt-1 text-sm font-semibold text-white">
-                                {activeSummaryStats.achievement_percent ||
-                                    stats.achievement_percent}%
-                            </p>
+                    <div class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3.5 transition hover:border-gray-200 hover:bg-white">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                    Rute Teratas
+                                </p>
+                                <p class="mt-1 truncate text-sm font-bold text-slate-900">
+                                    {stats.top_route}
+                                </p>
+                            </div>
+                            <span class="shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                                {stats.top_route_count}
+                            </span>
                         </div>
                     </div>
-
-                    <div
-                        class="mt-3 h-2 overflow-hidden rounded-full bg-white/15"
-                    >
-                        <div
-                            class="h-full rounded-full bg-emerald-400 transition-all"
-                            style={`width:${activeAchievementWidth}%`}
-                        ></div>
-                    </div>
-
-                    <div class="mt-4 space-y-2">
-                        <div class="flex items-center justify-between gap-2">
-                            <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200/75"
-                            >
-                                Revenue Channel
-                            </p>
-                            <span class="text-[11px] text-slate-300/80"
-                                >{summaryPeriodByScope.month.current_label}</span
-                            >
-                        </div>
-                        {#each revenueChannels() as channel (channel.key)}
-                            {@const width =
-                                activeTotalRevenue > 0
-                                    ? Math.max(
-                                          8,
-                                          Math.round(
-                                              (Number(channel.value || 0) /
-                                                  activeTotalRevenue) *
-                                                  100,
-                                          ),
-                                      )
-                                    : 8}
-                            <a
-                                href={channel.href}
-                                class="block rounded-2xl border border-white/10 bg-white/8 px-3 py-2 transition hover:bg-white/14"
-                            >
-                                <div
-                                    class="flex items-start justify-between gap-3 text-xs"
-                                >
-                                    <span
-                                        class="min-w-0 font-medium text-slate-100"
-                                        >{channel.label}</span
-                                    >
-                                    <span
-                                        class="min-w-0 break-words text-right font-semibold text-white"
-                                        >{toCurrency(channel.value)}</span
-                                    >
-                                </div>
-                                <div
-                                    class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/12"
-                                >
-                                    <div
-                                        class="h-full rounded-full bg-emerald-400"
-                                        style={`width:${width}%`}
-                                    ></div>
-                                </div>
-                            </a>
-                        {/each}
-                    </div>
-                </div>
-
-                <div class="p-3 md:p-4">
-                    <div class="space-y-3">
-                        <div>
-                            <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400"
-                            >
-                                Prioritas Hari Ini
-                            </p>
-                            <p
-                                class="mt-1 text-xs text-slate-500 dark:text-slate-400"
-                            >
-                                Hal yang perlu dipantau sebelum membuka menu detail.
-                            </p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <a
-                                href="/bookings"
-                                class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
-                            >
-                                <p
-                                    class="text-[11px] text-slate-500 dark:text-slate-400"
-                                >
-                                    Keberangkatan
+                    <div class="rounded-2xl border border-gray-100 bg-gray-50/70 p-3.5 transition hover:border-gray-200 hover:bg-white">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                    Carter Terdekat
                                 </p>
-                                <p
-                                    class="mt-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-50"
-                                >
-                                    {departuresToday.length} jadwal
+                                <p class="mt-1 truncate text-sm font-bold text-slate-900">
+                                    {nextCharter?.name ?? 'Belum ada carter'}
                                 </p>
-                                <p
-                                    class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
-                                >
-                                    {departuresTodayTotalBookings} booking aktif
+                                <p class="mt-1 truncate text-[11px] text-slate-500 font-medium">
+                                    {nextCharter?.date_label ?? '7 hari ke depan kosong'}
                                 </p>
-                            </a>
-                            <a
-                                href="/admin-ops/armada"
-                                class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
-                            >
-                                <p
-                                    class="text-[11px] text-slate-500 dark:text-slate-400"
-                                >
-                                    Armada Aktif
-                                </p>
-                                <p
-                                    class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50"
-                                >
-                                    {stats.live_fleet} unit
-                                </p>
-                            </a>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
-                                    >
-                                        Rute Teratas
-                                    </p>
-                                    <p
-                                        class="mt-1 truncate text-sm font-semibold text-slate-900 dark:text-slate-50"
-                                    >
-                                        {stats.top_route}
-                                    </p>
-                                </div>
-                                <span
-                                    class="shrink-0 rounded-full bg-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                >
-                                    {stats.top_route_count}
+                            </div>
+                            {#if upcomingCharterReminder.total > 0}
+                                <span class="shrink-0 rounded-full bg-cyan-100 px-2.5 py-1 text-[11px] font-bold text-cyan-700">
+                                    {upcomingCharterReminder.total} data
                                 </span>
-                            </div>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
-                        >
-                            <div
-                                class="flex items-start justify-between gap-3"
-                            >
-                                <div class="min-w-0">
-                                    <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"
-                                    >
-                                        Carter Terdekat
-                                    </p>
-                                    <p
-                                        class="mt-1 truncate text-sm font-semibold text-slate-900 dark:text-slate-50"
-                                    >
-                                        {nextCharter?.name ?? 'Belum ada carter'}
-                                    </p>
-                                    <p
-                                        class="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400"
-                                    >
-                                        {nextCharter?.date_label ??
-                                            '7 hari ke depan kosong'}
-                                    </p>
-                                </div>
-                                {#if upcomingCharterReminder.total > 0}
-                                    <span
-                                        class="shrink-0 rounded-full bg-cyan-100 px-2 py-1 text-[11px] font-semibold text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-200"
-                                    >
-                                        {upcomingCharterReminder.total} data
-                                    </span>
-                                {/if}
-                            </div>
+                            {/if}
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
     </div>
 
     <Deferred
@@ -1253,110 +1106,7 @@
                     </CardContent>
                 </Card>
 
-                <Card
-                    class="h-fit overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] shadow-sm dark:border-slate-700/70 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))]"
-                >
-                    <CardHeader class="space-y-1 pb-2 sm:pb-1">
-                        <div
-                            class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
-                        >
-                            <div class="min-w-0">
-                                <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400"
-                                >
-                                    Tahun Berjalan
-                                </p>
-                                <CardTitle
-                                    class="mt-1 text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-[1.65rem]"
-                                    >Aktivitas Operasional</CardTitle
-                                >
-                                <p
-                                    class="mt-1 text-xs text-slate-500 dark:text-slate-400"
-                                >
-                                    Volume aktivitas bulanan selama tahun ini.
-                                </p>
-                            </div>
-                            <div
-                                class="min-w-0 rounded-2xl border border-slate-200/80 bg-background/82 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/60"
-                            >
-                                <p
-                                    class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
-                                >
-                                    Hari Ini
-                                </p>
-                                <p
-                                    class="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50"
-                                >
-                                    {departuresToday.length} jadwal / {departuresTodayTotalBookings}
-                                    booking
-                                </p>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent class="pt-0 pb-3">
-                        <div
-                            class="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-3 dark:border-slate-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.7))] md:p-4"
-                        >
-                            <div
-                                class="mb-3 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
-                            >
-                                <span>Aktivitas bulanan</span>
-                                <span class="normal-case tracking-normal"
-                                    >{operationalTrendRows.length} bulan</span
-                                >
-                            </div>
-
-                            <div
-                                class="grid h-[190px] grid-flow-col auto-cols-fr items-end gap-1.5 md:h-[220px] md:gap-2"
-                                role="img"
-                                aria-label="Grafik aktivitas operasional tahun berjalan"
-                            >
-                                {#each operationalTrendRows as row, index (row.key)}
-                                    {@const height = Math.max(
-                                        row.value > 0
-                                            ? Math.round(
-                                                  (row.value /
-                                                      maxOperationalActivity) *
-                                                      100,
-                                              )
-                                            : 4,
-                                        4,
-                                    )}
-                                    <div
-                                        class="flex h-full min-w-0 flex-col justify-end gap-1"
-                                    >
-                                        <div
-                                            class="group relative flex flex-1 items-end"
-                                            title={`${row.name}: ${row.value} aktivitas`}
-                                        >
-                                            <div
-                                                class={`w-full rounded-t-lg transition group-hover:bg-cyan-500 ${
-                                                    row.value > 0
-                                                        ? 'bg-cyan-400 dark:bg-cyan-500'
-                                                        : 'bg-slate-200 dark:bg-slate-800'
-                                                }`}
-                                                style={`height:${height}%`}
-                                            ></div>
-                                        </div>
-                                        {#if index === 0 ||
-                                            index ===
-                                                operationalTrendRows.length -
-                                                    1 ||
-                                            index % 2 === 0}
-                                            <span
-                                                class="truncate text-center text-[9px] font-medium text-slate-500 dark:text-slate-400"
-                                            >
-                                                {row.label}
-                                            </span>
-                                        {:else}
-                                            <span class="h-[13px]"></span>
-                                        {/if}
-                                    </div>
-                                {/each}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <RevenueActivityChart monthlyTrend={monthlyTrend} {toCurrency} />
             </div>
 
             <div class="space-y-2.5 xl:col-span-1">
