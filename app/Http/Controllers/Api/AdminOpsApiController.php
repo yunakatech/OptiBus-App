@@ -4588,11 +4588,18 @@ class AdminOpsApiController extends Controller
     private function poolListingPayload(string $q = '', string $region = '', string $sort = 'desc'): array
     {
         if (! $this->poolTablesReady()) {
+            $routes = [];
+            if (Schema::hasTable('routes')) {
+                $q = DB::table('routes')->orderBy('name');
+                if (Schema::hasColumn('routes', 'tenant_id')) {
+                    PoolScope::applyTenantScope($q, 'routes.tenant_id');
+                }
+                $routes = $q->get(['id', 'name', 'origin', 'destination'])->all();
+            }
+
             return [
                 'pools' => [],
-                'routes' => Schema::hasTable('routes')
-                    ? DB::table('routes')->orderBy('name')->get(['id', 'name', 'origin', 'destination'])->all()
-                    : [],
+                'routes' => $routes,
                 'regions' => [],
                 'can_manage' => true,
             ];
@@ -4776,6 +4783,11 @@ class AdminOpsApiController extends Controller
         });
 
         $routeQuery = DB::table('routes')->orderBy('name');
+        if (Schema::hasColumn('routes', 'tenant_id')) {
+            PoolScope::applyTenantScope($routeQuery, 'routes.tenant_id');
+        }
+
+
         if (! $canManage) {
             $routeIds = [];
             foreach ($rows as $pool) {
