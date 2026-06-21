@@ -3091,13 +3091,13 @@
 
     $effect(() => {
         if (settingsData) {
-            hydrateSettingsData(settingsData);
+            untrack(() => hydrateSettingsData(settingsData));
         }
     });
 
     $effect(() => {
         if (settingsMasters) {
-            hydrateSettingsMasters(settingsMasters);
+            untrack(() => hydrateSettingsMasters(settingsMasters));
         }
     });
 
