@@ -49,6 +49,7 @@ APP_URL=https://domain-anda.com
 APP_TIMEZONE=Asia/Makassar
 FORCE_HTTPS=true
 TRUSTED_PROXIES=*
+ASSET_URL=
 
 LOG_CHANNEL=stack
 LOG_STACK=stderr
@@ -77,6 +78,8 @@ VITE_APP_NAME=OptiBus
 Catatan:
 
 - Kalau pakai Neon, cukup isi `DB_URL` dari connection string Neon.
+- Jangan isi `APP_URL` dengan `http://localhost`, `http://0.0.0.0`, atau host internal container.
+- `ASSET_URL` biarkan kosong kecuali kamu memang memakai CDN atau domain asset terpisah.
 - `APP_KEY` wajib diisi sebelum container start, karena `docker/start.sh` akan berhenti kalau nilainya kosong.
 - Kalau kamu belum siap migrasi otomatis saat setiap deploy, ubah `RUN_MIGRATIONS=false` setelah deploy awal sukses.
 
@@ -170,6 +173,7 @@ Kalau deploy pertama berhasil, lanjut cek halaman:
 - Kalau muncul error `APP_KEY belum diisi`, isi `APP_KEY` dulu lalu redeploy.
 - Kalau health check gagal, pastikan port aplikasi benar-benar `10000`.
 - Kalau halaman loading tapi asset tidak muncul, cek ulang build log dan pastikan build pack yang dipakai adalah `Dockerfile`.
+- Kalau `woff2`, CSS, atau JS timeout di browser, buka `View Source` atau Network tab dan cek host asset-nya. Jika masih `localhost` atau host internal, perbaiki `APP_URL` dan kosongkan `ASSET_URL`, lalu redeploy.
 - Kalau job queue menumpuk, cek apakah worker terpisah benar-benar aktif.
 - Kalau task harian tidak jalan, cek scheduled command `schedule:run`.
 
