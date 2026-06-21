@@ -67,7 +67,28 @@
                 ) && !prev[section.id],
         );
 
+        let shouldUpdate = false;
         if (hasRemovedId || hasMissingId || activeChanged) {
+            shouldUpdate = true;
+        }
+
+        if (!shouldUpdate) {
+            const nextKeys = Object.keys(next);
+            const prevKeys = Object.keys(prev);
+            
+            if (nextKeys.length !== prevKeys.length) {
+                shouldUpdate = true;
+            } else {
+                for (const key of nextKeys) {
+                    if (next[key] !== prev[key]) {
+                        shouldUpdate = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (shouldUpdate) {
             openSections = next;
         }
     });
