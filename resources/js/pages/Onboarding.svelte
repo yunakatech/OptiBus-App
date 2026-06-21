@@ -1,9 +1,3 @@
-<script module lang="ts">
-    export const layout = {
-        title: 'Lengkapi Data Travel',
-        description: 'Isi data travel Anda untuk melanjutkan.',
-    };
-</script>
 
 <script lang="ts">
     import { Form, page } from '@inertiajs/svelte';
