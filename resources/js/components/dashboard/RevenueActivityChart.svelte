@@ -19,11 +19,17 @@
         toCurrency,
         currentMonthRevenue = 0,
         currentMonthLabel = 'Bulan ini',
+        title = 'Tren Revenue 12 Bulan Terakhir',
+        subtitle = 'Aktivitas Operasional',
+        description = 'Grafik ini menampilkan total revenue per bulan. Kartu Command Center di atas memakai periode aktif yang sama agar angka lebih mudah dibandingkan.',
     }: {
         monthlyTrend: TrendItem[];
         toCurrency: (value: number) => string;
         currentMonthRevenue?: number;
         currentMonthLabel?: string;
+        title?: string;
+        subtitle?: string;
+        description?: string;
     } = $props();
 
     let chartCanvas: HTMLCanvasElement;
@@ -232,15 +238,13 @@
         <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div class="min-w-0">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-600">
-                    Aktivitas Operasional
+                    {subtitle}
                 </p>
                 <h3 class="mt-1 text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-                    Tren Revenue 12 Bulan Terakhir
+                    {title}
                 </h3>
-                <p class="mt-1 text-xs leading-relaxed text-slate-500">
-                    Grafik ini menampilkan total revenue per bulan.
-                    Kartu Command Center di atas memakai periode aktif yang sama
-                    agar angka lebih mudah dibandingkan.
+                <p class="mt-1 text-xs leading-relaxed text-slate-500 max-w-xl">
+                    {description}
                 </p>
             </div>
 
@@ -259,7 +263,7 @@
         <div class="mt-3 grid gap-2 sm:grid-cols-3">
             <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Bulan ini
+                    {currentMonthLabel}
                 </p>
                 <p class="mt-1 text-sm font-bold text-slate-900">
                     {toCurrency(currentMonthRevenue)}
@@ -267,7 +271,7 @@
             </div>
             <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Rata-rata bulanan
+                    Rata-rata data
                 </p>
                 <p class="mt-1 text-sm font-bold text-slate-900">
                     {toCurrency(trendRevenueAverage)}
@@ -275,7 +279,7 @@
             </div>
             <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Puncak bulanan
+                    Puncak data
                 </p>
                 <p class="mt-1 text-sm font-bold text-slate-900">
                     {trendRevenuePeak
