@@ -324,7 +324,7 @@ class AccessControl
         return array_values(array_diff($permissions, ['platform.manage']));
     }
 
-    private static function userHasRoleSlug(int $userId, string $roleSlug): bool
+    public static function userHasRoleSlug(int $userId, string $roleSlug): bool
     {
         if ($userId <= 0 || $roleSlug === '' || ! self::tablesReady()) {
             return false;
