@@ -71,7 +71,7 @@
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 1)', // Solid slate-900
+                            backgroundColor: '#0f172a', // non-transparent
                             titleColor: '#ffffff',
                             bodyColor: '#ffffff',
                             borderColor: 'rgba(51, 65, 85, 1)', // border-slate-700

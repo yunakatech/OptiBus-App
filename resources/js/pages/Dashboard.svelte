@@ -156,7 +156,7 @@
         upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
         recentActivityTotal = 0,
         recentActivityVisibleCount = 0,
-        topDrivers = [] as any[],
+        topDrivers = { 'Minibus': [], 'Mediumbus': [], 'Bigbus': [] } as Record<string, any[]>,
         summaryStatsByScope = {
             day: {
                 total_bookings: 0,
@@ -262,7 +262,7 @@
         upcomingCharterReminder?: UpcomingCharterReminder;
         recentActivityTotal?: number;
         recentActivityVisibleCount?: number;
-        topDrivers?: any[];
+        topDrivers?: Record<string, any[]>;
         summaryStatsByScope?: Record<
             'day' | 'month' | 'year',
             SummaryScopeStats
@@ -653,13 +653,15 @@
 
         <!-- Command Center & Prioritas Grid -->
         <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-            <!-- Command Center -->
-            <CommandCenter
-                {stats}
-                {summaryStatsByScope}
-                {summaryPeriodByScope}
-                {monthlyTrend}
+            <!-- Revenue Activity Chart -->
+            <RevenueActivityChart
+                monthlyTrend={dailyTrend}
                 {toCurrency}
+                title="Revenue 30 Hari Terakhir"
+                subtitle="Aktivitas Harian"
+                description="Grafik spline ini menampilkan pergerakan revenue operasional sistem Anda dalam 30 hari ke belakang secara presisi."
+                currentMonthLabel="Total 30 Hari"
+                currentMonthRevenue={activeTrendRevenueTotal}
             />
 
             <!-- Prioritas Hari Ini replaced with RevenueChannelPieChart -->
@@ -736,19 +738,18 @@
 
         <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
             <div class="space-y-2.5 xl:col-span-2">
-                <RevenueActivityChart
-                    monthlyTrend={dailyTrend}
+                <!-- Command Center -->
+                <CommandCenter
+                    {stats}
+                    {summaryStatsByScope}
+                    {summaryPeriodByScope}
+                    {monthlyTrend}
                     {toCurrency}
-                    title="Revenue 30 Hari Terakhir"
-                    subtitle="Aktivitas Harian"
-                    description="Grafik spline ini menampilkan pergerakan revenue operasional sistem Anda dalam 30 hari ke belakang secara presisi."
-                    currentMonthLabel="Total 30 Hari"
-                    currentMonthRevenue={activeTrendRevenueTotal}
                 />
 
                 <!-- Driver Performance Card -->
                 <DriverPerformanceCard
-                    drivers={topDrivers}
+                    categories={topDrivers}
                     {toCurrency}
                     period="Bulan Ini"
                 />

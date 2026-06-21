@@ -1702,14 +1702,15 @@ class DashboardController extends Controller
     private function topDriversByRevenue(Carbon $today): array
     {
         if (! Schema::hasTable('trip_assignments') || ! Schema::hasTable('drivers')) {
-            return [];
+            return ['Minibus' => [], 'Mediumbus' => [], 'Bigbus' => []];
         }
 
         $monthStart = $today->copy()->startOfMonth()->toDateString();
         $monthEnd   = $today->copy()->endOfMonth()->toDateString();
+        $hasArmada = Schema::hasColumn('trip_assignments', 'armada_id') && Schema::hasTable('armadas');
 
         try {
-            $rows = DB::table('trip_assignments as t')
+            $query = DB::table('trip_assignments as t')
                 ->join('drivers as d', 't.driver_id', '=', 'd.id')
                 ->join('bookings as b', function ($join) {
                     $join->on('b.rute',  '=', 't.rute')
@@ -1717,30 +1718,75 @@ class DashboardController extends Controller
                          ->on('b.unit',  '=', 't.unit')
                          ->where('b.status', '!=', 'canceled');
                 })
-                ->whereBetween('t.tanggal', [$monthStart, $monthEnd])
-                ->selectRaw(
-                    'd.id as driver_id,
-                     d.nama as driver_name,
-                     COUNT(DISTINCT CONCAT(t.rute, \'|\', t.tanggal, \'|\', t.unit)) as trip_count,
-                     COALESCE(SUM(COALESCE(b.price,0) - COALESCE(b.discount,0)), 0) as revenue,
-                     MAX(t.rute) as top_route'
-                )
-                ->groupBy('d.id', 'd.nama')
-                ->orderByDesc('revenue')
-                ->limit(5)
-                ->get();
+                ->whereBetween('t.tanggal', [$monthStart, $monthEnd]);
+
+            if ($hasArmada) {
+                $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id')
+                    ->selectRaw(
+                        'd.id as driver_id,
+                         d.nama as driver_name,
+                         a.kategori as category,
+                         COUNT(DISTINCT CONCAT(t.rute, \'|\', t.tanggal, \'|\', t.unit)) as trip_count,
+                         COALESCE(SUM(COALESCE(b.price,0) - COALESCE(b.discount,0)), 0) as revenue,
+                         MAX(t.rute) as top_route'
+                    )
+                    ->groupBy('d.id', 'd.nama', 'a.kategori');
+            } else {
+                $query->selectRaw(
+                        'd.id as driver_id,
+                         d.nama as driver_name,
+                         \'Minibus\' as category,
+                         COUNT(DISTINCT CONCAT(t.rute, \'|\', t.tanggal, \'|\', t.unit)) as trip_count,
+                         COALESCE(SUM(COALESCE(b.price,0) - COALESCE(b.discount,0)), 0) as revenue,
+                         MAX(t.rute) as top_route'
+                    )
+                    ->groupBy('d.id', 'd.nama');
+            }
+
+            $rows = $query->orderByDesc('revenue')->get();
         } catch (\Throwable) {
-            return [];
+            return ['Minibus' => [], 'Mediumbus' => [], 'Bigbus' => []];
         }
 
-        return $rows->values()->map(static function ($row, int $index): array {
+        $drivers = $rows->values()->map(static function ($row): array {
+            $cat = strtolower(preg_replace('/\s+/', '', trim((string) ($row->category ?? ''))));
+            $normalizedCategory = match ($cat) {
+                'mediumbus', 'medium bus', 'medium' => 'Mediumbus',
+                'bigbus', 'bigbun', 'big bus', 'big' => 'Bigbus',
+                default => 'Minibus',
+            };
+
             return [
-                'rank'       => $index + 1,
                 'name'       => (string) ($row->driver_name ?? '-'),
                 'trip_count' => (int) ($row->trip_count ?? 0),
                 'revenue'    => (float) ($row->revenue ?? 0),
                 'route'      => $row->top_route ? (string) $row->top_route : null,
+                'category'   => $normalizedCategory,
             ];
-        })->all();
+        });
+
+        $categories = [
+            'Minibus' => [],
+            'Mediumbus' => [],
+            'Bigbus' => [],
+        ];
+
+        foreach ($drivers as $driver) {
+            $cat = $driver['category'];
+            if (!isset($categories[$cat])) {
+                $cat = 'Minibus';
+            }
+            $categories[$cat][] = $driver;
+        }
+
+        foreach ($categories as &$list) {
+            $list = array_slice($list, 0, 5);
+            foreach ($list as $index => &$d) {
+                $d['rank'] = $index + 1;
+            }
+        }
+        unset($list);
+
+        return $categories;
     }
 }
