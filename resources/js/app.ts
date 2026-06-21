@@ -8,8 +8,18 @@ import { initializeInertiaLoading } from '@/lib/inertia-loading';
 import { initializeTheme } from '@/lib/theme.svelte';
 
 const appName = import.meta.env.VITE_APP_NAME || 'OptiBus';
+const pages = import.meta.glob('./pages/**/*.svelte');
 
 createInertiaApp({
+    resolve: async (name) => {
+        const page = pages[`./pages/${name}.svelte`];
+
+        if (!page) {
+            throw new Error(`Inertia page not found: ${name}`);
+        }
+
+        return page();
+    },
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
