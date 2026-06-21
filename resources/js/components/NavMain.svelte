@@ -61,6 +61,9 @@
     const appOrigin = () =>
         typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
 
+    // Reactive ke page.url agar Svelte 5 melacak perubahan URL saat navigasi Inertia
+    const currentUrl = $derived(page.url);
+
     const isItemActive = (href: NavItem['href']): boolean => {
         const resolved = toUrl(href);
 
@@ -69,7 +72,7 @@
         }
 
         try {
-            const current = new URL(page.url, appOrigin());
+            const current = new URL(currentUrl, appOrigin());
             const target = new URL(resolved, appOrigin());
             const currentPath = current.pathname.replace(/\/+$/, '') || '/';
             const targetPath = target.pathname.replace(/\/+$/, '') || '/';
@@ -94,7 +97,7 @@
 
             return false;
         } catch {
-            return page.url === resolved;
+            return currentUrl === resolved;
         }
     };
 
