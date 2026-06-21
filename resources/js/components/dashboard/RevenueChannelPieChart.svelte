@@ -4,19 +4,24 @@
 
     Chart.register(PieController, ArcElement, Tooltip, Legend);
 
-    type SummaryStats = {
+    type SummaryScopeStats = {
+        total_bookings: number;
+        total_passengers: number;
         revenue_booking: number;
         revenue_charter: number;
         revenue_luggage: number;
     };
 
     let {
-        summaryStats,
+        summaryStatsByScope,
         toCurrency,
     }: {
-        summaryStats: SummaryStats;
+        summaryStatsByScope: Record<'day' | 'month' | 'year', SummaryScopeStats>;
         toCurrency: (val: number) => string;
     } = $props();
+
+    let selectedScope = $state<'month' | 'year'>('month');
+    let summaryStats = $derived(summaryStatsByScope[selectedScope]);
 
     let chartCanvas: HTMLCanvasElement;
     let chartInstance: Chart | null = null;
@@ -110,13 +115,19 @@
 </script>
 
 <div class="flex flex-col rounded-3xl border border-gray-200 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] md:p-5">
-    <div>
-        <p class="text-[13px] font-semibold text-slate-700">
-            Sebaran <span class="font-bold text-slate-900">Tahun Ini</span>
-        </p>
-        <p class="mt-0.5 text-[11px] text-slate-500">
-            Kontribusi perbandingan revenue tahun berjalan
-        </p>
+    <div class="flex items-start justify-between">
+        <div>
+            <p class="text-[13px] font-semibold text-slate-700">
+                Sebaran <span class="font-bold text-slate-900">Revenue</span>
+            </p>
+            <p class="mt-0.5 text-[11px] text-slate-500">
+                Layanan
+            </p>
+        </div>
+        <div class="flex rounded-lg bg-gray-100/80 p-0.5">
+            <button class={`px-2 py-1 text-[10px] font-semibold rounded-md ${selectedScope === 'month' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`} onclick={() => selectedScope = 'month'}>Bulan Ini</button>
+            <button class={`px-2 py-1 text-[10px] font-semibold rounded-md ${selectedScope === 'year' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`} onclick={() => selectedScope = 'year'}>Tahun Ini</button>
+        </div>
     </div>
 
     <div class="relative mt-5 h-[160px] w-full">

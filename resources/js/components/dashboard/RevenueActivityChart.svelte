@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+    import { onDestroy } from 'svelte';
     import { Chart, type ChartConfiguration } from 'chart.js/auto';
 
     type TrendItem = {
@@ -75,7 +75,7 @@
         ),
     );
 
-    onMount(() => {
+    $effect(() => {
         if (!chartCanvas) return;
 
         const labels = monthlyTrend.map(
@@ -83,62 +83,67 @@
         );
         const data = monthlyTrend.map((item) => Number(item.revenue || 0));
 
-        // Create Gradient
-        const ctx = chartCanvas.getContext('2d');
-        let gradientFill: CanvasGradient | string = 'rgba(14, 165, 233, 0.2)';
-        if (ctx) {
-            gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
-            gradientFill.addColorStop(0, 'rgba(14, 165, 233, 0.32)');
-            gradientFill.addColorStop(1, 'rgba(14, 165, 233, 0.02)');
-        }
+        if (chartInstance) {
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = data;
+            chartInstance.update();
+        } else {
+            // Create Gradient
+            const ctx = chartCanvas.getContext('2d');
+            let gradientFill: CanvasGradient | string = 'rgba(14, 165, 233, 0.2)';
+            if (ctx) {
+                gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
+                gradientFill.addColorStop(0, 'rgba(14, 165, 233, 0.32)');
+                gradientFill.addColorStop(1, 'rgba(14, 165, 233, 0.02)');
+            }
 
-        const config: ChartConfiguration = {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'Total Revenue',
-                        data,
-                        borderColor: '#2563eb', // blue-600
-                        backgroundColor: gradientFill,
-                        borderWidth: 2,
-                        pointBackgroundColor: '#2563eb',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 0,
-                        pointHoverRadius: 6,
-                        fill: true,
-                        tension: 0.4, // Smooth spline curves
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                layout: {
-                    padding: {
-                        top: 20,
-                        bottom: 10,
-                        left: -5,
-                        right: 15, // extra padding for rightmost tooltip to fit inside container
-                    },
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false,
+            const config: ChartConfiguration = {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Total Revenue',
+                            data,
+                            borderColor: '#2563eb', // blue-600
+                            backgroundColor: gradientFill,
+                            borderWidth: 2,
+                            pointBackgroundColor: '#2563eb',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            fill: true,
+                            tension: 0.4, // Smooth spline curves
                         },
-                        ticks: {
-                            font: {
-                                size: 10,
-                                family: 'ui-sans-serif, system-ui, sans-serif',
-                                weight: 500,
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    layout: {
+                        padding: {
+                            top: 20,
+                            bottom: 10,
+                            left: -5,
+                            right: 15, // extra padding for rightmost tooltip to fit inside container
+                        },
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
                             },
+                            ticks: {
+                                font: {
+                                    size: 10,
+                                    family: 'ui-sans-serif, system-ui, sans-serif',
+                                    weight: 500,
+                                },
                             color: '#64748b', // slate-500
                             maxRotation: 0,
                             autoSkip: true,
@@ -201,10 +206,10 @@
                         },
                     },
                 },
-            },
-        };
+            };
 
-        chartInstance = new Chart(chartCanvas, config);
+            chartInstance = new Chart(chartCanvas, config);
+        }
     });
 
     onDestroy(() => {
@@ -238,12 +243,11 @@
 
     <div class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4">
         <div class="mb-5 px-1 sm:px-2">
-            <h3 class="text-sm font-bold text-slate-800">Aktivitas Harian</h3>
-            <p class="mt-0.5 text-[11px] leading-relaxed text-slate-500">Melihat pergerakan revenue operasional sistem Anda dibandingkan dengan total 30 hari terakhir. Tooltip dapat di-hover untuk melihat rincian.</p>
+            <h3 class="text-sm font-bold text-slate-800">Revenue Harian</h3>
+            <p class="mt-0.5 text-[11px] leading-relaxed text-slate-500">Melihat pergerakan revenue operasional sistem Anda dalam 30 hari terakhir. Tooltip dapat di-hover untuk melihat rincian.</p>
         </div>
 
-        <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            <span>Revenue harian</span>
+        <div class="mb-2 flex items-center justify-end text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
             <span class="normal-case tracking-normal">
                 {monthlyTrend.length} titik
             </span>

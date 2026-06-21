@@ -740,10 +740,7 @@
             <div class="space-y-2.5 xl:col-span-2">
                 <!-- Command Center -->
                 <CommandCenter
-                    {stats}
-                    {summaryStatsByScope}
-                    {summaryPeriodByScope}
-                    {monthlyTrend}
+                    monthlyTrend={monthlyTrend}
                     {toCurrency}
                 />
 
