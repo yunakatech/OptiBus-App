@@ -90,13 +90,13 @@
         },
         {
             title: 'Pelanggan Bagasi',
-            href: '/admin-ops/master/customer-bagasi',
+            href: '/admin-ops/customer-bagasi',
             icon: Briefcase,
             permission: 'customer.view',
         },
         {
             title: 'Pelanggan Carter',
-            href: '/admin-ops/master/customer-charter',
+            href: '/admin-ops/customer-charter',
             icon: BusFront,
             permission: 'customer.view',
         },
@@ -117,7 +117,7 @@
         },
         {
             title: 'Master Carter',
-            href: '/admin-ops/master/rute-carter',
+            href: '/admin-ops/rute-carter',
             icon: BusFront,
             permission: 'master.view',
         },
