@@ -4971,6 +4971,11 @@ class AdminOpsApiController extends Controller
             'address' => ['nullable', 'string'],
             'target_revenue' => ['nullable', 'numeric', 'min:0'],
             'fixed_cost' => ['nullable', 'numeric', 'min:0'],
+            'monthly_targets' => ['nullable', 'array'],
+            'monthly_targets.*.target_month' => ['required_with:monthly_targets', 'date_format:Y-m-d'],
+            'monthly_targets.*.booking_target' => ['nullable', 'numeric', 'min:0'],
+            'monthly_targets.*.bagasi_target' => ['nullable', 'numeric', 'min:0'],
+            'monthly_targets.*.carter_target' => ['nullable', 'numeric', 'min:0'],
             'target_month' => ['nullable', 'date_format:Y-m'],
             'booking_target' => ['nullable', 'numeric', 'min:0'],
             'bagasi_target' => ['nullable', 'numeric', 'min:0'],
@@ -5015,9 +5020,13 @@ class AdminOpsApiController extends Controller
             $payload['fixed_cost'] = (float) ($data['fixed_cost'] ?? 0);
         }
 
-        $saveMonthlyTarget = $request->boolean('save_monthly_target');
+        $monthlyTargetsProvided = array_key_exists('monthly_targets', $data) && is_array($data['monthly_targets']);
+        $saveMonthlyTarget = $request->boolean('save_monthly_target') || $monthlyTargetsProvided;
+        $normalizedMonthlyTargets = $monthlyTargetsProvided
+            ? $this->normalizePoolMonthlyTargetRows($data['monthly_targets'])
+            : [];
         $normalizedTargetMonth = null;
-        if ($saveMonthlyTarget) {
+        if (! $monthlyTargetsProvided && $saveMonthlyTarget) {
             if (! Schema::hasTable('pool_monthly_targets')) {
                 return $this->error('Tabel target bulanan belum tersedia. Jalankan migration terlebih dahulu.', 409);
             }
@@ -5028,7 +5037,7 @@ class AdminOpsApiController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($id, $payload, $routeIds, $data, $saveMonthlyTarget, $normalizedTargetMonth): JsonResponse {
+        return DB::transaction(function () use ($id, $payload, $routeIds, $data, $saveMonthlyTarget, $normalizedTargetMonth, $normalizedMonthlyTargets, $monthlyTargetsProvided): JsonResponse {
             if ($id > 0) {
                 $query = DB::table('pools')->where('id', $id);
                 if (Schema::hasColumn('pools', 'tenant_id')) {
@@ -5071,18 +5080,15 @@ class AdminOpsApiController extends Controller
                 }
             }
 
-            if ($saveMonthlyTarget) {
-                DB::table('pool_monthly_targets')->upsert([
-                    [
-                        'pool_id' => $poolId,
-                        'target_month' => $normalizedTargetMonth,
-                        'booking_target' => (float) ($data['booking_target'] ?? 0),
-                        'bagasi_target' => (float) ($data['bagasi_target'] ?? 0),
-                        'carter_target' => (float) ($data['carter_target'] ?? 0),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ],
-                ], ['pool_id', 'target_month'], ['booking_target', 'bagasi_target', 'carter_target', 'updated_at']);
+            if ($monthlyTargetsProvided) {
+                $this->syncPoolMonthlyTargets($poolId, $normalizedMonthlyTargets);
+            } elseif ($saveMonthlyTarget) {
+                $this->syncPoolMonthlyTargets($poolId, [[
+                    'target_month' => $normalizedTargetMonth,
+                    'booking_target' => (float) ($data['booking_target'] ?? 0),
+                    'bagasi_target' => (float) ($data['bagasi_target'] ?? 0),
+                    'carter_target' => (float) ($data['carter_target'] ?? 0),
+                ]]);
             }
 
             return $this->ok([
@@ -5777,6 +5783,78 @@ class AdminOpsApiController extends Controller
         }
 
         return $grouped;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $monthlyTargets
+     * @return array<int, array{target_month: string, booking_target: float, bagasi_target: float, carter_target: float}>
+     */
+    private function normalizePoolMonthlyTargetRows(array $monthlyTargets): array
+    {
+        $normalized = [];
+
+        foreach ($monthlyTargets as $monthlyTarget) {
+            if (! is_array($monthlyTarget)) {
+                continue;
+            }
+
+            $targetMonth = $this->normalizeTargetMonth((string) ($monthlyTarget['target_month'] ?? ''));
+            if ($targetMonth === null) {
+                continue;
+            }
+
+            $normalized[] = [
+                'target_month' => $targetMonth,
+                'booking_target' => (float) ($monthlyTarget['booking_target'] ?? 0),
+                'bagasi_target' => (float) ($monthlyTarget['bagasi_target'] ?? 0),
+                'carter_target' => (float) ($monthlyTarget['carter_target'] ?? 0),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param  array<int, array{target_month: string, booking_target: float, bagasi_target: float, carter_target: float}>  $monthlyTargets
+     */
+    private function syncPoolMonthlyTargets(int $poolId, array $monthlyTargets): void
+    {
+        if ($poolId <= 0 || ! Schema::hasTable('pool_monthly_targets')) {
+            return;
+        }
+
+        $now = now();
+        foreach ($monthlyTargets as $monthlyTarget) {
+            $targetMonth = $this->normalizeTargetMonth((string) ($monthlyTarget['target_month'] ?? ''));
+            if ($targetMonth === null) {
+                continue;
+            }
+
+            $bookingTarget = (float) ($monthlyTarget['booking_target'] ?? 0);
+            $bagasiTarget = (float) ($monthlyTarget['bagasi_target'] ?? 0);
+            $carterTarget = (float) ($monthlyTarget['carter_target'] ?? 0);
+
+            $query = DB::table('pool_monthly_targets')
+                ->where('pool_id', $poolId)
+                ->where('target_month', $targetMonth);
+
+            if ($bookingTarget <= 0 && $bagasiTarget <= 0 && $carterTarget <= 0) {
+                $query->delete();
+                continue;
+            }
+
+            DB::table('pool_monthly_targets')->upsert([
+                [
+                    'pool_id' => $poolId,
+                    'target_month' => $targetMonth,
+                    'booking_target' => $bookingTarget,
+                    'bagasi_target' => $bagasiTarget,
+                    'carter_target' => $carterTarget,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            ], ['pool_id', 'target_month'], ['booking_target', 'bagasi_target', 'carter_target', 'updated_at']);
+        }
     }
 
     private function defaultCustomerPoolId(string $table = 'customers'): int
