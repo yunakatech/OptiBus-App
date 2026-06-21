@@ -12,6 +12,8 @@
     import { toUrl } from '@/lib/utils';
     import type { NavItem } from '@/types';
 
+    import { currentUrlState } from '@/lib/currentUrl.svelte';
+
     type NavSection = {
         id: string;
         title: string;
@@ -28,6 +30,7 @@
     } = $props();
 
     const { state: sidebarState, isMobile, setOpenMobile } = useSidebar();
+    const urlState = currentUrlState();
 
     let openSections = $state<Record<string, boolean>>({});
 
@@ -58,47 +61,8 @@
         }
     });
 
-    const appOrigin = () =>
-        typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
-
-    // Reactive ke page.url agar Svelte 5 melacak perubahan URL saat navigasi Inertia
-    const currentUrl = $derived(page.url);
-
     const isItemActive = (href: NavItem['href']): boolean => {
-        const resolved = toUrl(href);
-
-        if (typeof resolved !== 'string') {
-            return false;
-        }
-
-        try {
-            const current = new URL(currentUrl, appOrigin());
-            const target = new URL(resolved, appOrigin());
-            const currentPath = current.pathname.replace(/\/+$/, '') || '/';
-            const targetPath = target.pathname.replace(/\/+$/, '') || '/';
-
-            if (currentPath === targetPath) {
-                if (!target.search) {
-                    return true;
-                }
-
-                for (const [key, value] of target.searchParams.entries()) {
-                    if (current.searchParams.get(key) !== value) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            if (!target.search && targetPath !== '/' && currentPath.startsWith(`${targetPath}/`)) {
-                return true;
-            }
-
-            return false;
-        } catch {
-            return currentUrl === resolved;
-        }
+        return urlState.isCurrentOrParentUrl(href, urlState.currentUrl);
     };
 
     const isSectionActive = (section: NavSection): boolean =>

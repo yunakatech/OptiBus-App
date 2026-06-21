@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Armada',
-                href: '/admin-ops/armadas',
+                href: '/admin-ops/armada',
             },
         ],
     };

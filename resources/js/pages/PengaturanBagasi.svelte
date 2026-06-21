@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Tarif Bagasi',
-                href: '/admin-ops/services',
+                href: '/admin-ops/tarif-bagasi',
             },
         ],
     };

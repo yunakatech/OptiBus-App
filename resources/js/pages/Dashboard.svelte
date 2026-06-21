@@ -833,7 +833,7 @@
                                 </p>
                             </a>
                             <a
-                                href="/admin-ops/armadas"
+                                href="/admin-ops/armada"
                                 class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60"
                             >
                                 <p

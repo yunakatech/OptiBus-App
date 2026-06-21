@@ -1896,7 +1896,7 @@
             activeMode === 'view' &&
             mode === 'data'
         ) {
-            router.visit('/admin-ops/armadas', {
+            router.visit('/admin-ops/armada', {
                 preserveScroll: true,
                 preserveState: false,
             });
@@ -1909,7 +1909,7 @@
             activeMode === 'layout' &&
             mode === 'data'
         ) {
-            router.visit('/admin-ops/units', {
+            router.visit('/admin-ops/kategori-armada', {
                 preserveScroll: true,
                 preserveState: false,
             });
@@ -2558,7 +2558,7 @@
     };
 
     const openLayoutEditor = (row: UnitRow) => {
-        router.visit(`/admin-ops/units/layout/${row.id}`, {
+        router.visit(`/admin-ops/kategori-armada/layout/${row.id}`, {
             preserveScroll: true,
             preserveState: false,
         });
@@ -3710,7 +3710,7 @@
             params.set('period', armadaPeriod.trim());
         }
 
-        router.visit(`/admin-ops/armadas/view/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`, {
+        router.visit(`/admin-ops/armada/view/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`, {
             preserveScroll: true,
             preserveState: false,
         });
