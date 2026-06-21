@@ -320,7 +320,7 @@ class DashboardController extends Controller
         );
 
         // Target revenue from routes & pools
-        $stats['target_revenue_month'] = $this->targetRevenueForPeriod();
+        $stats['target_revenue_month'] = $this->targetRevenueForPeriod($datePeriods['month'][0]);
         foreach (['day', 'month', 'year'] as $scope) {
             $summaryStatsByScope[$scope]['target_revenue'] = $stats['target_revenue_month'];
         }
@@ -1605,15 +1605,17 @@ class DashboardController extends Controller
     /**
      * Sum target revenue from routes and pools.
      */
-    private function targetRevenueForPeriod(): float
+    private function targetRevenueForPeriod(string $monthStart): float
     {
         $target = 0.0;
         $scope = PoolScope::forCurrentUser($this->activePoolId);
         $isScoped = ! ($scope['all'] ?? true);
 
-        // Pool-level target takes priority when a specific pool is selected
+        // Pool-level target takes priority when a specific pool is selected.
         if (Schema::hasTable('pools') && Schema::hasColumn('pools', 'target_revenue')) {
-            $poolQuery = DB::table('pools')->where('status', 'active');
+            $poolQuery = DB::table('pools')
+                ->where('status', 'active');
+
             if ($isScoped) {
                 $poolIds = $scope['pool_ids'] ?? [];
                 if ($poolIds === []) {
@@ -1624,10 +1626,46 @@ class DashboardController extends Controller
             } elseif ($this->activePoolId > 0) {
                 $poolQuery->where('id', $this->activePoolId);
             }
+
             if (Schema::hasColumn('pools', 'tenant_id')) {
                 PoolScope::applyTenantScope($poolQuery, 'tenant_id');
             }
-            $target = (float) $poolQuery->sum('target_revenue');
+
+            $pools = $poolQuery->get(['id', 'target_revenue']);
+            $poolIds = $pools->pluck('id')->map(static fn ($value): int => (int) $value)->values()->all();
+            $monthlyTargetsByPool = [];
+
+            if ($poolIds !== [] && Schema::hasTable('pool_monthly_targets')) {
+                $monthlyRows = DB::table('pool_monthly_targets')
+                    ->whereIn('pool_id', $poolIds)
+                    ->where('target_month', $monthStart)
+                    ->get([
+                        'pool_id',
+                        'booking_target',
+                        'bagasi_target',
+                        'carter_target',
+                    ]);
+
+                foreach ($monthlyRows as $row) {
+                    $poolId = (int) ($row->pool_id ?? 0);
+                    if ($poolId <= 0) {
+                        continue;
+                    }
+
+                    $monthlyTargetsByPool[$poolId] = (float) ($row->booking_target ?? 0)
+                        + (float) ($row->bagasi_target ?? 0)
+                        + (float) ($row->carter_target ?? 0);
+                }
+            }
+
+            foreach ($pools as $pool) {
+                $poolId = (int) ($pool->id ?? 0);
+                if ($poolId <= 0) {
+                    continue;
+                }
+
+                $target += (float) ($monthlyTargetsByPool[$poolId] ?? $pool->target_revenue ?? 0);
+            }
         }
 
         // Fallback to route-level targets
