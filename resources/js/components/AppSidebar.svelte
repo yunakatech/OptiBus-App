@@ -104,16 +104,52 @@
 
     const dataMasterNavItems: NavItem[] = [
         {
-            title: 'Pengaturan',
-            href: '/admin-ops',
-            icon: Settings2,
-            permission: ['master.view', 'driver.view', 'armada.view', 'pool.manage'],
+            title: 'Jadwal',
+            href: '/admin-ops/jadwal',
+            icon: CalendarDays,
+            permission: 'master.view',
+        },
+        {
+            title: 'Rute Induk',
+            href: '/admin-ops/rute-induk',
+            icon: Route,
+            permission: 'master.view',
         },
         {
             title: 'Master Carter',
             href: '/admin-ops/master/rute-carter',
             icon: BusFront,
             permission: 'master.view',
+        },
+        {
+            title: 'Tarif Bagasi',
+            href: '/admin-ops/tarif-bagasi',
+            icon: Package,
+            permission: 'master.view',
+        },
+        {
+            title: 'Pool',
+            href: '/admin-ops/pool',
+            icon: Building2,
+            permission: 'pool.manage',
+        },
+        {
+            title: 'Driver',
+            href: '/admin-ops/driver',
+            icon: IdCard,
+            permission: 'driver.view',
+        },
+        {
+            title: 'Kategori Armada',
+            href: '/admin-ops/kategori-armada',
+            icon: Truck,
+            permission: 'master.view',
+        },
+        {
+            title: 'Armada',
+            href: '/admin-ops/armada',
+            icon: CarFront,
+            permission: 'armada.view',
         },
     ];
 
