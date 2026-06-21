@@ -372,6 +372,12 @@
         carter_target: number;
         target_revenue: number;
     };
+    type PoolMonthlyTargetFormRow = {
+        target_month: string;
+        booking_target: string;
+        bagasi_target: string;
+        carter_target: string;
+    };
     type PoolRow = {
         id: number;
         name: string;
@@ -840,11 +846,9 @@
         address: '',
         target_revenue: '',
         fixed_cost: '',
-        target_month: '',
-        booking_target: '',
-        bagasi_target: '',
-        carter_target: '',
-        monthly_targets: [] as PoolMonthlyTargetRow[],
+        target_year: String(new Date().getFullYear()),
+        monthly_targets: [] as PoolMonthlyTargetFormRow[],
+        monthly_targets_by_year: {} as Record<string, PoolMonthlyTargetFormRow[]>,
         status: 'active',
         notes: '',
         route_ids: [] as number[],
@@ -1835,31 +1839,25 @@
     };
     const financialStatus = (row: FinancialRow) =>
         financialAchievement(row) >= 100 ? 'Tercapai' : 'Kurang';
-    const currentMonthKey = () => {
-        const now = new Date();
-
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    };
-    const formatMonthLabel = (value: string) => {
+    const poolMonthlyTargetMonthOptions = [
+        { month: '01', label: 'Januari' },
+        { month: '02', label: 'Februari' },
+        { month: '03', label: 'Maret' },
+        { month: '04', label: 'April' },
+        { month: '05', label: 'Mei' },
+        { month: '06', label: 'Juni' },
+        { month: '07', label: 'Juli' },
+        { month: '08', label: 'Agustus' },
+        { month: '09', label: 'September' },
+        { month: '10', label: 'Oktober' },
+        { month: '11', label: 'November' },
+        { month: '12', label: 'Desember' },
+    ] as const;
+    const currentYearKey = () => String(new Date().getFullYear());
+    const normalizePoolTargetYear = (value: string | number) => {
         const normalized = String(value ?? '').trim();
-        if (normalized === '') {
-            return 'Bulan belum dipilih';
-        }
 
-        const match = normalized.match(/^(\d{4})-(\d{2})/);
-        if (!match) {
-            return normalized;
-        }
-
-        const date = new Date(`${match[1]}-${match[2]}-01T00:00:00`);
-        if (Number.isNaN(date.getTime())) {
-            return normalized;
-        }
-
-        return new Intl.DateTimeFormat('id-ID', {
-            month: 'long',
-            year: 'numeric',
-        }).format(date);
+        return /^\d{4}$/.test(normalized) ? normalized : currentYearKey();
     };
     const normalizePoolTargetMonth = (value: string) => {
         const normalized = String(value ?? '').trim();
@@ -1870,23 +1868,88 @@
         const match = normalized.match(/^(\d{4})-(\d{2})/);
         return match ? `${match[1]}-${match[2]}` : normalized;
     };
-    const poolMonthlyTargetForMonth = (
-        targets: PoolMonthlyTargetRow[] | undefined,
-        month: string,
+    const poolMonthlyTargetRowsForYear = (
+        year: string,
+        targets: PoolMonthlyTargetRow[] = [],
+    ): PoolMonthlyTargetFormRow[] => {
+        const normalizedYear = normalizePoolTargetYear(year);
+        const targetsByMonth = new Map<string, PoolMonthlyTargetRow>();
+
+        for (const target of targets) {
+            const normalizedMonth = normalizePoolTargetMonth(target.target_month);
+            if (normalizedMonth === '') {
+                continue;
+            }
+
+            const month = normalizedMonth.slice(5, 7);
+            targetsByMonth.set(month, target);
+        }
+
+        return poolMonthlyTargetMonthOptions.map((option) => {
+            const target = targetsByMonth.get(option.month);
+
+            return {
+                target_month: `${normalizedYear}-${option.month}-01`,
+                booking_target: target ? formatRupiahInput(target.booking_target) : '',
+                bagasi_target: target ? formatRupiahInput(target.bagasi_target) : '',
+                carter_target: target ? formatRupiahInput(target.carter_target) : '',
+            };
+        });
+    };
+    const poolMonthlyTargetRowsByYear = (
+        targets: PoolMonthlyTargetRow[] = [],
+    ): Record<string, PoolMonthlyTargetFormRow[]> => {
+        const grouped = new Map<string, PoolMonthlyTargetRow[]>();
+
+        for (const target of targets) {
+            const normalizedMonth = normalizePoolTargetMonth(target.target_month);
+            if (normalizedMonth === '') {
+                continue;
+            }
+
+            const year = normalizedMonth.slice(0, 4);
+            const yearTargets = grouped.get(year) ?? [];
+            yearTargets.push(target);
+            grouped.set(year, yearTargets);
+        }
+
+        const rowsByYear: Record<string, PoolMonthlyTargetFormRow[]> = {
+            [currentYearKey()]: poolMonthlyTargetRowsForYear(currentYearKey(), []),
+        };
+
+        for (const [year, yearTargets] of grouped.entries()) {
+            rowsByYear[year] = poolMonthlyTargetRowsForYear(year, yearTargets);
+        }
+
+        return rowsByYear;
+    };
+    const poolMonthlyTargetRowsToPayload = (
+        targetsByYear: Record<string, PoolMonthlyTargetFormRow[]>,
+    ) =>
+        Object.values(targetsByYear)
+            .flat()
+            .map((target) => ({
+                target_month: normalizePoolTargetMonth(target.target_month),
+                booking_target: parseRupiahInput(target.booking_target),
+                bagasi_target: parseRupiahInput(target.bagasi_target),
+                carter_target: parseRupiahInput(target.carter_target),
+            }))
+            .filter((target) => target.target_month !== '');
+    const poolMonthlyTargetRowHasValue = (
+        row: PoolMonthlyTargetFormRow | undefined,
     ) => {
-        const normalizedMonth = normalizePoolTargetMonth(month);
-        if (normalizedMonth === '' || !Array.isArray(targets)) {
-            return null;
+        if (!row) {
+            return false;
         }
 
         return (
-            targets.find(
-                (target) =>
-                    normalizePoolTargetMonth(target.target_month) ===
-                    normalizedMonth,
-            ) ?? null
+            parseRupiahInput(row.booking_target) > 0 ||
+            parseRupiahInput(row.bagasi_target) > 0 ||
+            parseRupiahInput(row.carter_target) > 0
         );
     };
+    const poolMonthlyTargetFilledCount = (rows: PoolMonthlyTargetFormRow[]) =>
+        rows.filter((row) => poolMonthlyTargetRowHasValue(row)).length;
     const poolTargetTotal = (pool: PoolRow) =>
         Number(
             pool.monthly_target_total ??
@@ -1894,27 +1957,78 @@
                 pool.target_revenue_legacy ??
                 0,
         );
-    const applyPoolMonthlyTargetMonth = (
+    const updatePoolMonthlyTargetYear = (year: string) => {
+        const normalizedYear = normalizePoolTargetYear(year);
+        const currentYear = normalizePoolTargetYear(poolForm.target_year);
+        const currentRows = Array.isArray(poolForm.monthly_targets)
+            ? poolForm.monthly_targets.map((row) => ({ ...row }))
+            : poolMonthlyTargetRowsForYear(currentYear, []);
+        const monthlyTargetsByYear = {
+            ...(poolForm.monthly_targets_by_year ?? {}),
+            [currentYear]: currentRows,
+        };
+        const selectedRows = Array.isArray(monthlyTargetsByYear[normalizedYear])
+            ? monthlyTargetsByYear[normalizedYear].map((row) => ({ ...row }))
+            : poolMonthlyTargetRowsForYear(normalizedYear, []);
+
+        monthlyTargetsByYear[normalizedYear] = selectedRows;
+        poolForm = {
+            ...poolForm,
+            target_year: normalizedYear,
+            monthly_targets: selectedRows,
+            monthly_targets_by_year: monthlyTargetsByYear,
+        };
+    };
+    const updatePoolMonthlyTargetField = (
         month: string,
-        targets: PoolMonthlyTargetRow[] = Array.isArray(
-            poolForm.monthly_targets,
-        )
-            ? poolForm.monthly_targets
-            : [],
+        field: keyof Pick<
+            PoolMonthlyTargetFormRow,
+            'booking_target' | 'bagasi_target' | 'carter_target'
+        >,
+        value: string,
     ) => {
-        const normalizedMonth = normalizePoolTargetMonth(month) || currentMonthKey();
-        const target = poolMonthlyTargetForMonth(targets, normalizedMonth);
+        const normalizedMonth = normalizePoolTargetMonth(month);
+        if (normalizedMonth === '') {
+            return;
+        }
+
+        const monthValue = normalizedMonth.slice(5, 7);
+        const currentYear = normalizePoolTargetYear(poolForm.target_year);
+        const currentRows = Array.isArray(poolForm.monthly_targets)
+            ? poolForm.monthly_targets.map((row) => ({ ...row }))
+            : poolMonthlyTargetRowsForYear(currentYear, []);
+        const rowIndex = currentRows.findIndex(
+            (row) => normalizePoolTargetMonth(row.target_month).slice(5, 7) === monthValue,
+        );
+
+        if (rowIndex < 0) {
+            return;
+        }
+
+        currentRows[rowIndex] = {
+            ...currentRows[rowIndex],
+            [field]: formatRupiahInput(value),
+        };
 
         poolForm = {
             ...poolForm,
-            target_month: normalizedMonth,
-            booking_target: target ? formatRupiahInput(target.booking_target) : '',
-            bagasi_target: target ? formatRupiahInput(target.bagasi_target) : '',
-            carter_target: target ? formatRupiahInput(target.carter_target) : '',
-            monthly_targets: targets,
+            monthly_targets: currentRows,
+            monthly_targets_by_year: {
+                ...(poolForm.monthly_targets_by_year ?? {}),
+                [currentYear]: currentRows,
+            },
         };
+        poolMonthlyTargetDirty = true;
     };
     const openPoolEditor = (row: PoolRow) => {
+        const monthlyTargetsByYear = poolMonthlyTargetRowsByYear(
+            Array.isArray(row.monthly_targets) ? row.monthly_targets : [],
+        );
+        const targetYear = currentYearKey();
+        const selectedRows = Array.isArray(monthlyTargetsByYear[targetYear])
+            ? monthlyTargetsByYear[targetYear].map((target) => ({ ...target }))
+            : poolMonthlyTargetRowsForYear(targetYear, []);
+
         poolForm = {
             id: row.id,
             name: row.name,
@@ -1925,22 +2039,17 @@
                 row.target_revenue_legacy ?? row.target_revenue,
             ),
             fixed_cost: formatRupiahInput(row.fixed_cost),
-            target_month: currentMonthKey(),
-            booking_target: '',
-            bagasi_target: '',
-            carter_target: '',
-            monthly_targets: Array.isArray(row.monthly_targets)
-                ? [...row.monthly_targets]
-                : [],
+            target_year: targetYear,
+            monthly_targets: selectedRows,
+            monthly_targets_by_year: {
+                ...monthlyTargetsByYear,
+                [targetYear]: selectedRows,
+            },
             status: row.status || 'active',
             notes: row.notes || '',
             route_ids: [...(row.route_ids ?? [])],
         };
         poolMonthlyTargetDirty = false;
-        applyPoolMonthlyTargetMonth(
-            poolForm.target_month,
-            poolForm.monthly_targets,
-        );
         setFormMode('form');
     };
     const armadaGrossMargin = (row: ArmadaRow) =>
@@ -3898,6 +4007,7 @@
     };
     const resetPoolForm = () => {
         poolMonthlyTargetDirty = false;
+        const targetYear = currentYearKey();
         poolForm = {
             id: 0,
             name: '',
@@ -3906,11 +4016,11 @@
             address: '',
             target_revenue: '',
             fixed_cost: '',
-            target_month: currentMonthKey(),
-            booking_target: '',
-            bagasi_target: '',
-            carter_target: '',
-            monthly_targets: [],
+            target_year: targetYear,
+            monthly_targets: poolMonthlyTargetRowsForYear(targetYear, []),
+            monthly_targets_by_year: {
+                [targetYear]: poolMonthlyTargetRowsForYear(targetYear, []),
+            },
             status: 'active',
             notes: '',
             route_ids: [],
@@ -4416,6 +4526,15 @@
         try {
             await runWithFeedback(
                 async () => {
+                    const currentYear = normalizePoolTargetYear(poolForm.target_year);
+                    const currentRows = Array.isArray(poolForm.monthly_targets)
+                        ? poolForm.monthly_targets.map((row) => ({ ...row }))
+                        : poolMonthlyTargetRowsForYear(currentYear, []);
+                    const monthlyTargetsByYear = {
+                        ...(poolForm.monthly_targets_by_year ?? {}),
+                        [currentYear]: currentRows,
+                    };
+
                     await api('POST', '/api/admin/pools', {
                         id: poolForm.id || undefined,
                         name: poolForm.name,
@@ -4426,11 +4545,9 @@
                             poolForm.target_revenue,
                         ),
                         fixed_cost: parseRupiahInput(poolForm.fixed_cost),
-                        target_month: poolForm.target_month || undefined,
-                        booking_target: parseRupiahInput(poolForm.booking_target),
-                        bagasi_target: parseRupiahInput(poolForm.bagasi_target),
-                        carter_target: parseRupiahInput(poolForm.carter_target),
-                        save_monthly_target: poolMonthlyTargetDirty,
+                        monthly_targets:
+                            poolMonthlyTargetRowsToPayload(monthlyTargetsByYear),
+                        save_monthly_target: true,
                         status: poolForm.status,
                         notes: poolForm.notes,
                         route_ids: poolForm.route_ids,
@@ -9023,97 +9140,125 @@
                             <div
                                 class="rounded-2xl border border-border/70 bg-muted/20 p-4 md:col-span-2 xl:col-span-4"
                             >
-                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
                                     <div>
                                         <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                            Target Bulanan
+                                            Target Bulanan Jan-Des
                                         </p>
                                         <p class="mt-1 text-sm text-muted-foreground">
-                                            Atur target booking, bagasi, dan carter per bulan. Jika bulan ini belum diisi, sistem tetap memakai target legacy di bawah.
+                                            Isi target booking, bagasi, dan carter untuk Januari sampai Desember pada tahun yang dipilih. Data lama tetap tersimpan per tahun.
                                         </p>
                                     </div>
-                                    <Badge variant="secondary" class="rounded-full">
-                                        {poolMonthlyTargetDirty ? 'Siap disimpan' : 'Belum diubah'}
-                                    </Badge>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <Badge variant={poolMonthlyTargetDirty ? 'default' : 'secondary'} class="rounded-full">
+                                            {poolMonthlyTargetDirty ? 'Ada perubahan' : 'Belum diubah'}
+                                        </Badge>
+                                        <Badge variant="outline" class="rounded-full">
+                                            {poolMonthlyTargetFilledCount(poolForm.monthly_targets)} / 12 terisi
+                                        </Badge>
+                                    </div>
                                 </div>
-                                <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                <div class="mt-4 grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)]">
                                     <label class="space-y-1.5">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                            Bulan Target
+                                            Tahun Target
                                         </span>
                                         <Input
-                                            type="month"
-                                            value={poolForm.target_month}
-                                            onchange={(event) => {
-                                                const value = (event.currentTarget as HTMLInputElement).value;
-                                                poolForm.target_month = normalizePoolTargetMonth(value) || currentMonthKey();
-                                                applyPoolMonthlyTargetMonth(
-                                                    poolForm.target_month,
-                                                    poolForm.monthly_targets,
+                                            type="number"
+                                            min="2000"
+                                            max="2100"
+                                            step="1"
+                                            value={poolForm.target_year}
+                                            oninput={(event) => {
+                                                updatePoolMonthlyTargetYear(
+                                                    (event.currentTarget as HTMLInputElement).value,
                                                 );
-                                                poolMonthlyTargetDirty = false;
                                             }}
                                             disabled={!canManagePools}
                                         />
                                     </label>
-                                    <label class="space-y-1.5">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                            Target Booking
-                                        </span>
-                                        <Input
-                                            placeholder="Rp 0"
-                                            value={poolForm.booking_target}
-                                            oninput={(event) => {
-                                                poolMonthlyTargetDirty = true;
-                                                poolForm.booking_target =
-                                                    formatRupiahInput(
-                                                        (event.currentTarget as HTMLInputElement).value,
-                                                    );
-                                            }}
-                                            disabled={!canManagePools}
-                                        />
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                            Target Bagasi
-                                        </span>
-                                        <Input
-                                            placeholder="Rp 0"
-                                            value={poolForm.bagasi_target}
-                                            oninput={(event) => {
-                                                poolMonthlyTargetDirty = true;
-                                                poolForm.bagasi_target =
-                                                    formatRupiahInput(
-                                                        (event.currentTarget as HTMLInputElement).value,
-                                                    );
-                                            }}
-                                            disabled={!canManagePools}
-                                        />
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                            Target Carter
-                                        </span>
-                                        <Input
-                                            placeholder="Rp 0"
-                                            value={poolForm.carter_target}
-                                            oninput={(event) => {
-                                                poolMonthlyTargetDirty = true;
-                                                poolForm.carter_target =
-                                                    formatRupiahInput(
-                                                        (event.currentTarget as HTMLInputElement).value,
-                                                    );
-                                            }}
-                                            disabled={!canManagePools}
-                                        />
-                                    </label>
+                                    <div class="rounded-2xl border border-border/70 bg-background/80 p-3">
+                                        <p class="text-xs text-muted-foreground">
+                                            Tahun aktif: {poolForm.target_year}. Target yang kamu isi akan tersimpan per tahun, jadi kamu bisa pindah ke tahun lain tanpa kehilangan data tahun ini.
+                                        </p>
+                                    </div>
                                 </div>
-                                <p class="mt-3 text-xs text-muted-foreground">
-                                    Bulan aktif: {formatMonthLabel(poolForm.target_month)}.
-                                    {poolMonthlyTargetForMonth(poolForm.monthly_targets, poolForm.target_month)
-                                        ? 'Target bulan ini sudah tersimpan.'
-                                        : 'Target bulan ini belum disimpan, jadi fallback ke target legacy masih dipakai.'}
-                                </p>
+                                <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                    {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                        {@const row = poolForm.monthly_targets?.[monthIndex]}
+                                        <div class="rounded-2xl border border-border/70 bg-background/90 p-3 shadow-sm">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <p class="text-sm font-semibold text-foreground">
+                                                        {monthOption.label}
+                                                    </p>
+                                                    <p class="text-xs text-muted-foreground">
+                                                        Target {poolForm.target_year}
+                                                    </p>
+                                                </div>
+                                                <Badge
+                                                    variant={poolMonthlyTargetRowHasValue(row) ? 'default' : 'secondary'}
+                                                    class="rounded-full"
+                                                >
+                                                    {poolMonthlyTargetRowHasValue(row) ? 'Terisi' : 'Kosong'}
+                                                </Badge>
+                                            </div>
+                                            <div class="mt-3 space-y-3">
+                                                <label class="space-y-1.5">
+                                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                        Booking
+                                                    </span>
+                                                    <Input
+                                                        placeholder="Rp 0"
+                                                        value={row?.booking_target ?? ''}
+                                                        oninput={(event) => {
+                                                            updatePoolMonthlyTargetField(
+                                                                row?.target_month ?? `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                'booking_target',
+                                                                (event.currentTarget as HTMLInputElement).value,
+                                                            );
+                                                        }}
+                                                        disabled={!canManagePools}
+                                                    />
+                                                </label>
+                                                <label class="space-y-1.5">
+                                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                        Bagasi
+                                                    </span>
+                                                    <Input
+                                                        placeholder="Rp 0"
+                                                        value={row?.bagasi_target ?? ''}
+                                                        oninput={(event) => {
+                                                            updatePoolMonthlyTargetField(
+                                                                row?.target_month ?? `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                'bagasi_target',
+                                                                (event.currentTarget as HTMLInputElement).value,
+                                                            );
+                                                        }}
+                                                        disabled={!canManagePools}
+                                                    />
+                                                </label>
+                                                <label class="space-y-1.5">
+                                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                        Carter
+                                                    </span>
+                                                    <Input
+                                                        placeholder="Rp 0"
+                                                        value={row?.carter_target ?? ''}
+                                                        oninput={(event) => {
+                                                            updatePoolMonthlyTargetField(
+                                                                row?.target_month ?? `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                'carter_target',
+                                                                (event.currentTarget as HTMLInputElement).value,
+                                                            );
+                                                        }}
+                                                        disabled={!canManagePools}
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {/each}
+                                </div>
                             </div>
                             <label class="space-y-1.5">
                                 <span
