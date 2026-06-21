@@ -70,6 +70,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
     *,
     ::after,
     ::before,
@@ -80,6 +81,7 @@
 }
 
 @layer utilities {
+
     body,
     html {
         --font-sans:
@@ -261,25 +263,31 @@
     * {
         @apply border-border outline-ring/50;
     }
+
     html {
         @apply antialiased;
     }
+
     body {
         @apply bg-background font-sans text-foreground leading-relaxed;
         touch-action: manipulation;
     }
+
     h1,
     h2,
     h3,
     h4 {
         @apply font-semibold tracking-tight text-foreground;
     }
+
     a {
         @apply text-primary underline-offset-4 transition-colors;
     }
+
     a:hover {
         @apply text-primary/80;
     }
+
     ::selection {
         @apply bg-primary/20 text-foreground;
     }
@@ -287,6 +295,7 @@
 
 @layer base {
     @media (max-width: 767px) {
+
         input:not([type='checkbox']):not([type='radio']),
         select,
         textarea {
@@ -296,7 +305,7 @@
 
     @media (min-width: 1024px) {
         html {
-            font-size: 80%;
+            font-size: 75%;
         }
     }
 }
@@ -323,14 +332,13 @@
     }
 
     @media (min-width: 768px) {
+
         html[data-density='compact'] [data-slot='sidebar-inset'] table th,
         html[data-density='compact'] [data-slot='sidebar-inset'] table td {
             @apply px-2.5 py-1.5 text-[13px] leading-tight;
         }
 
-        html[data-density='compact']
-            [data-slot='sidebar-inset']
-            input:not([type='checkbox']):not([type='radio']),
+        html[data-density='compact'] [data-slot='sidebar-inset'] input:not([type='checkbox']):not([type='radio']),
         html[data-density='compact'] [data-slot='sidebar-inset'] select,
         html[data-density='compact'] [data-slot='sidebar-inset'] textarea {
             @apply text-[13px];
