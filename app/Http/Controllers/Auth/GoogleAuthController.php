@@ -19,8 +19,12 @@ class GoogleAuthController extends Controller
      * Redirect to Google OAuth.
      * GET /auth/google/redirect
      */
-    public function redirect()
+    public function redirect(Request $request)
     {
+        if ($request->has('intent')) {
+            session(['registration_intent' => $request->intent]);
+            session(['registration_plan' => $request->plan]);
+        }
         return Socialite::driver('google')->redirect();
     }
 
