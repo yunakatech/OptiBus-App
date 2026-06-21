@@ -12,6 +12,7 @@
     import { toUrl } from '@/lib/utils';
     import type { NavItem } from '@/types';
 
+    import { untrack } from 'svelte';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
 
     type NavSection = {
@@ -35,31 +36,42 @@
     let openSections = $state<Record<string, boolean>>({});
 
     $effect(() => {
-        const validIds = new Set(sections.map((section) => section.id));
-        const next: Record<string, boolean> = {};
+        // Hanya `sections` dan `urlState.currentUrl` yang menjadi dependensi reaktif.
+        // `openSections` dibaca via untrack agar tidak memicu loop.
+        const _sections = sections;
+        const _url = urlState.currentUrl;
 
-        for (const section of sections) {
-            if (isSectionActive(section)) {
+        const validIds = new Set(_sections.map((section) => section.id));
+        const prev = untrack(() => openSections);
+
+        const next: Record<string, boolean> = {};
+        for (const section of _sections) {
+            const active = section.items.some((item) =>
+                urlState.isCurrentOrParentUrl(item.href, _url),
+            );
+            if (active) {
                 next[section.id] = true;
-            } else if (openSections[section.id] !== undefined) {
-                next[section.id] = Boolean(openSections[section.id]);
+            } else if (prev[section.id] !== undefined) {
+                next[section.id] = Boolean(prev[section.id]);
             } else {
                 next[section.id] = false;
             }
         }
 
-        const existingIds = Object.keys(openSections);
-        const hasRemovedId = existingIds.some((id) => !validIds.has(id));
-        const hasMissingId = sections.some((section) => openSections[section.id] === undefined);
-
-        const activeChanged = sections.some(
-            (section) => isSectionActive(section) && !openSections[section.id],
+        const hasRemovedId = Object.keys(prev).some((id) => !validIds.has(id));
+        const hasMissingId = _sections.some((section) => prev[section.id] === undefined);
+        const activeChanged = _sections.some(
+            (section) =>
+                section.items.some((item) =>
+                    urlState.isCurrentOrParentUrl(item.href, _url),
+                ) && !prev[section.id],
         );
 
         if (hasRemovedId || hasMissingId || activeChanged) {
             openSections = next;
         }
     });
+
 
     const isItemActive = (href: NavItem['href']): boolean => {
         return urlState.isCurrentOrParentUrl(href, urlState.currentUrl);
