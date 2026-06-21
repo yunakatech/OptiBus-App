@@ -237,6 +237,11 @@
 
 
     <div class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4">
+        <div class="mb-5 px-1 sm:px-2">
+            <h3 class="text-sm font-bold text-slate-800">Aktivitas Harian</h3>
+            <p class="mt-0.5 text-[11px] leading-relaxed text-slate-500">Melihat pergerakan revenue operasional sistem Anda dibandingkan dengan total 30 hari terakhir. Tooltip dapat di-hover untuk melihat rincian.</p>
+        </div>
+
         <div class="mb-2 flex items-center justify-between gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
             <span>Revenue harian</span>
             <span class="normal-case tracking-normal">

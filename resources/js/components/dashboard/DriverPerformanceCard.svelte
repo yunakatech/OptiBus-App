@@ -8,17 +8,24 @@
     };
 
     let {
-        drivers = [],
+        categories = {
+            'Minibus': [],
+            'Mediumbus': [],
+            'Bigbus': []
+        },
         toCurrency,
         period = 'Bulan Ini',
     }: {
-        drivers: DriverItem[];
+        categories: Record<string, DriverItem[]>;
         toCurrency: (val: number) => string;
         period?: string;
     } = $props();
 
+    let selectedCategory = $state('Minibus');
+    let currentDrivers = $derived(categories[selectedCategory] || []);
+
     const maxRevenue = $derived(
-        drivers.length > 0 ? Math.max(...drivers.map((d) => d.revenue)) : 1,
+        currentDrivers.length > 0 ? Math.max(...currentDrivers.map((d) => d.revenue)) : 1,
     );
 
     const medalColors = ['#f59e0b', '#94a3b8', '#b45309']; // gold, silver, bronze
@@ -48,7 +55,18 @@
         </a>
     </div>
 
-    {#if drivers.length === 0}
+    <div class="mb-3 flex rounded-lg bg-slate-50 p-1">
+        {#each Object.keys(categories) as cat}
+            <button
+                class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === cat ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                onclick={() => selectedCategory = cat}
+            >
+                {cat}
+            </button>
+        {/each}
+    </div>
+
+    {#if currentDrivers.length === 0}
         <div
             class="flex h-20 items-center justify-center rounded-xl border border-dashed border-gray-200 text-[11px] text-slate-400"
         >
@@ -56,7 +74,7 @@
         </div>
     {:else}
         <div class="space-y-2">
-            {#each drivers as driver, i (driver.rank)}
+            {#each currentDrivers as driver, i (driver.rank)}
                 {@const barWidth =
                     maxRevenue > 0
                         ? Math.max(6, Math.round((driver.revenue / maxRevenue) * 100))

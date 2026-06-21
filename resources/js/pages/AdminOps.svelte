@@ -9218,6 +9218,28 @@
                                         </p>
                                     </div>
                                 </div>
+                                <div class="mt-4 flex gap-2 overflow-x-auto pb-1">
+                                    {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                        {@const row = poolForm.monthly_targets?.[monthIndex]}
+                                        {@const rowHasValue = poolMonthlyTargetRowHasValue(row)}
+                                        <button
+                                            type="button"
+                                            class={`inline-flex min-w-[92px] shrink-0 items-center justify-between rounded-full border px-3 py-1.5 text-left text-[11px] font-semibold transition-all duration-200 ${
+                                                monthIndex === poolMonthlyTargetActiveMonthIndex
+                                                    ? 'border-cyan-300 bg-cyan-50 text-cyan-800 shadow-sm'
+                                                    : rowHasValue
+                                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100'
+                                                        : 'border-border/70 bg-background text-muted-foreground hover:border-border hover:bg-muted/60'
+                                            }`}
+                                            onclick={() => {
+                                                void focusPoolMonthlyTargetMonth(monthIndex);
+                                            }}
+                                        >
+                                            <span>{monthOption.label}</span>
+                                            <span class={`ml-2 inline-flex h-2 w-2 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                                        </button>
+                                    {/each}
+                                </div>
                                 <div class="mt-4 space-y-3 md:hidden">
                                     {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
                                         {@const row = poolForm.monthly_targets?.[monthIndex]}
@@ -9248,7 +9270,7 @@
                                                         {monthOption.label}
                                                     </p>
                                                     <p class="mt-0.5 text-[11px] text-muted-foreground">
-                                                        {poolForm.target_year} · {rowHasValue ? 'Sudah diisi' : 'Belum diisi'}
+                                                        {poolForm.target_year} - {rowHasValue ? 'Sudah diisi' : 'Belum diisi'}
                                                     </p>
                                                 </div>
                                                 <div class="flex items-center gap-2">
@@ -9320,13 +9342,13 @@
                                         </details>
                                     {/each}
                                 </div>
-                                <div class="mt-4 hidden gap-3 sm:grid-cols-2 xl:grid-cols-3 md:grid">
+                                <div class="mt-4 hidden gap-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
                                     {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
                                         {@const row = poolForm.monthly_targets?.[monthIndex]}
                                         {@const rowHasValue = poolMonthlyTargetRowHasValue(row)}
                                         <div
                                             id={`pool-month-target-desktop-${monthIndex}`}
-                                            class={`rounded-2xl border p-3 shadow-sm transition-all duration-200 ${
+                                            class={`rounded-2xl border p-2.5 shadow-sm transition-all duration-200 ${
                                                 rowHasValue
                                                     ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
                                                     : 'border-border/70 bg-background/90'
@@ -9338,23 +9360,23 @@
                                         >
                                             <div class="flex items-start justify-between gap-2">
                                                 <div>
-                                                    <p class="text-sm font-semibold text-foreground">
+                                                    <p class="text-[13px] font-semibold text-foreground">
                                                         {monthOption.label}
                                                     </p>
-                                                    <p class="text-xs text-muted-foreground">
+                                                    <p class="text-[11px] text-muted-foreground">
                                                         Target {poolForm.target_year}
                                                     </p>
                                                 </div>
                                                 <Badge
                                                     variant={rowHasValue ? 'default' : 'secondary'}
-                                                    class="rounded-full"
+                                                    class="rounded-full px-2 py-0.5 text-[10px]"
                                                 >
                                                     {rowHasValue ? 'Terisi' : 'Kosong'}
                                                 </Badge>
                                             </div>
-                                            <div class="mt-3 space-y-3">
+                                            <div class="mt-2.5 space-y-2.5">
                                                 <label class="space-y-1.5">
-                                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                                                         Booking
                                                     </span>
                                                     <Input
@@ -9371,7 +9393,7 @@
                                                     />
                                                 </label>
                                                 <label class="space-y-1.5">
-                                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                                                         Bagasi
                                                     </span>
                                                     <Input
@@ -9388,7 +9410,7 @@
                                                     />
                                                 </label>
                                                 <label class="space-y-1.5">
-                                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                                                         Carter
                                                     </span>
                                                     <Input
@@ -9405,7 +9427,7 @@
                                                     />
                                                 </label>
                                             </div>
-                                            <div class={`mt-3 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+                                            <div class={`mt-2.5 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
                                         </div>
                                     {/each}
                                 </div>
