@@ -307,6 +307,10 @@ class AccessControl
             return array_keys(self::defaultPermissions());
         }
 
+        if (self::userHasRoleSlug($userId, 'tenant-owner')) {
+            self::ensureDefaultRoleReady('tenant-owner');
+        }
+
         $permissions = DB::table('user_role')
             ->join('role_permission', 'user_role.role_id', '=', 'role_permission.role_id')
             ->join('permissions', 'role_permission.permission_id', '=', 'permissions.id')
@@ -318,6 +322,19 @@ class AccessControl
             ->all();
 
         return array_values(array_diff($permissions, ['platform.manage']));
+    }
+
+    private static function userHasRoleSlug(int $userId, string $roleSlug): bool
+    {
+        if ($userId <= 0 || $roleSlug === '' || ! self::tablesReady()) {
+            return false;
+        }
+
+        return DB::table('user_role')
+            ->join('roles', 'user_role.role_id', '=', 'roles.id')
+            ->where('user_role.user_id', $userId)
+            ->where('roles.slug', $roleSlug)
+            ->exists();
     }
 
     public static function can(int $userId, string $permission): bool
