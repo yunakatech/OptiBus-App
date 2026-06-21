@@ -889,7 +889,9 @@
     let poolRegions = $state<string[]>([]);
     let poolRegionFilter = $state('all');
     let poolSortOrder = $state<'desc' | 'asc'>('desc');
+    const currentMonthIndex = new Date().getMonth();
     let poolMonthlyTargetDirty = $state(false);
+    let poolMonthlyTargetActiveMonthIndex = $state(currentMonthIndex);
     let userSearch = $state('');
     let userFiltersExpanded = $state(false);
     const today = new Date().toISOString().slice(0, 10);
@@ -1933,8 +1935,7 @@
                 booking_target: parseRupiahInput(target.booking_target),
                 bagasi_target: parseRupiahInput(target.bagasi_target),
                 carter_target: parseRupiahInput(target.carter_target),
-            }))
-            .filter((target) => target.target_month !== '');
+            }));
     const poolMonthlyTargetRowHasValue = (
         row: PoolMonthlyTargetFormRow | undefined,
     ) => {
@@ -1950,6 +1951,37 @@
     };
     const poolMonthlyTargetFilledCount = (rows: PoolMonthlyTargetFormRow[]) =>
         rows.filter((row) => poolMonthlyTargetRowHasValue(row)).length;
+    const focusPoolMonthlyTargetMonth = async (monthIndex: number) => {
+        poolMonthlyTargetActiveMonthIndex = Math.max(
+            0,
+            Math.min(11, Number(monthIndex || 0)),
+        );
+
+        await tick();
+
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const normalizedIndex = Math.max(
+            0,
+            Math.min(11, Number(monthIndex || 0)),
+        );
+        const mobileTarget = document.getElementById(
+            `pool-month-target-mobile-${normalizedIndex}`,
+        );
+        const desktopTarget = document.getElementById(
+            `pool-month-target-desktop-${normalizedIndex}`,
+        );
+        const target = window.matchMedia('(max-width: 767px)').matches
+            ? mobileTarget ?? desktopTarget
+            : desktopTarget ?? mobileTarget;
+
+        target?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+        });
+    };
     const poolTargetTotal = (pool: PoolRow) =>
         Number(
             pool.monthly_target_total ??
@@ -2050,7 +2082,9 @@
             route_ids: [...(row.route_ids ?? [])],
         };
         poolMonthlyTargetDirty = false;
+        poolMonthlyTargetActiveMonthIndex = currentMonthIndex;
         setFormMode('form');
+        void focusPoolMonthlyTargetMonth(currentMonthIndex);
     };
     const armadaGrossMargin = (row: ArmadaRow) =>
         financialGrossMargin(row);
@@ -4007,6 +4041,7 @@
     };
     const resetPoolForm = () => {
         poolMonthlyTargetDirty = false;
+        poolMonthlyTargetActiveMonthIndex = currentMonthIndex;
         const targetYear = currentYearKey();
         poolForm = {
             id: 0,
@@ -9183,10 +9218,124 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                <div class="mt-4 space-y-3 md:hidden">
                                     {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
                                         {@const row = poolForm.monthly_targets?.[monthIndex]}
-                                        <div class="rounded-2xl border border-border/70 bg-background/90 p-3 shadow-sm">
+                                        {@const rowHasValue = poolMonthlyTargetRowHasValue(row)}
+                                        <details
+                                            id={`pool-month-target-mobile-${monthIndex}`}
+                                            class={`group overflow-hidden rounded-2xl border shadow-sm transition-all duration-200 ${
+                                                rowHasValue
+                                                    ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
+                                                    : 'border-border/70 bg-background/90'
+                                            } ${
+                                                monthIndex === poolMonthlyTargetActiveMonthIndex
+                                                    ? 'ring-2 ring-cyan-300/60'
+                                                    : ''
+                                            }`}
+                                            open={monthIndex === poolMonthlyTargetActiveMonthIndex}
+                                        >
+                                            <summary
+                                                class={`flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 transition-colors ${
+                                                    rowHasValue ? 'bg-emerald-50/30' : ''
+                                                }`}
+                                                onclick={() => {
+                                                    poolMonthlyTargetActiveMonthIndex = monthIndex;
+                                                }}
+                                            >
+                                                <div class="min-w-0">
+                                                    <p class="truncate text-sm font-semibold text-foreground">
+                                                        {monthOption.label}
+                                                    </p>
+                                                    <p class="mt-0.5 text-[11px] text-muted-foreground">
+                                                        {poolForm.target_year} · {rowHasValue ? 'Sudah diisi' : 'Belum diisi'}
+                                                    </p>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <Badge
+                                                        variant={rowHasValue ? 'default' : 'secondary'}
+                                                        class="rounded-full"
+                                                    >
+                                                        {rowHasValue ? 'Terisi' : 'Kosong'}
+                                                    </Badge>
+                                                    <ChevronDown class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${monthIndex === poolMonthlyTargetActiveMonthIndex ? 'rotate-180' : ''}`} />
+                                                </div>
+                                            </summary>
+                                            <div class="border-t border-border/70 px-4 pb-4 pt-3">
+                                                <div class="grid gap-3">
+                                                    <label class="space-y-1.5">
+                                                        <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Booking
+                                                        </span>
+                                                        <Input
+                                                            placeholder="Rp 0"
+                                                            value={row?.booking_target ?? ''}
+                                                            oninput={(event) => {
+                                                                updatePoolMonthlyTargetField(
+                                                                    row?.target_month ?? `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                    'booking_target',
+                                                                    (event.currentTarget as HTMLInputElement).value,
+                                                                );
+                                                            }}
+                                                            disabled={!canManagePools}
+                                                        />
+                                                    </label>
+                                                    <label class="space-y-1.5">
+                                                        <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Bagasi
+                                                        </span>
+                                                        <Input
+                                                            placeholder="Rp 0"
+                                                            value={row?.bagasi_target ?? ''}
+                                                            oninput={(event) => {
+                                                                updatePoolMonthlyTargetField(
+                                                                    row?.target_month ?? `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                    'bagasi_target',
+                                                                    (event.currentTarget as HTMLInputElement).value,
+                                                                );
+                                                            }}
+                                                            disabled={!canManagePools}
+                                                        />
+                                                    </label>
+                                                    <label class="space-y-1.5">
+                                                        <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Carter
+                                                        </span>
+                                                        <Input
+                                                            placeholder="Rp 0"
+                                                            value={row?.carter_target ?? ''}
+                                                            oninput={(event) => {
+                                                                updatePoolMonthlyTargetField(
+                                                                    row?.target_month ?? `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                    'carter_target',
+                                                                    (event.currentTarget as HTMLInputElement).value,
+                                                                );
+                                                            }}
+                                                            disabled={!canManagePools}
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div class={`mt-3 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+                                            </div>
+                                        </details>
+                                    {/each}
+                                </div>
+                                <div class="mt-4 hidden gap-3 sm:grid-cols-2 xl:grid-cols-3 md:grid">
+                                    {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                        {@const row = poolForm.monthly_targets?.[monthIndex]}
+                                        {@const rowHasValue = poolMonthlyTargetRowHasValue(row)}
+                                        <div
+                                            id={`pool-month-target-desktop-${monthIndex}`}
+                                            class={`rounded-2xl border p-3 shadow-sm transition-all duration-200 ${
+                                                rowHasValue
+                                                    ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
+                                                    : 'border-border/70 bg-background/90'
+                                            } ${
+                                                monthIndex === poolMonthlyTargetActiveMonthIndex
+                                                    ? 'ring-2 ring-cyan-300/60'
+                                                    : ''
+                                            }`}
+                                        >
                                             <div class="flex items-start justify-between gap-2">
                                                 <div>
                                                     <p class="text-sm font-semibold text-foreground">
@@ -9197,10 +9346,10 @@
                                                     </p>
                                                 </div>
                                                 <Badge
-                                                    variant={poolMonthlyTargetRowHasValue(row) ? 'default' : 'secondary'}
+                                                    variant={rowHasValue ? 'default' : 'secondary'}
                                                     class="rounded-full"
                                                 >
-                                                    {poolMonthlyTargetRowHasValue(row) ? 'Terisi' : 'Kosong'}
+                                                    {rowHasValue ? 'Terisi' : 'Kosong'}
                                                 </Badge>
                                             </div>
                                             <div class="mt-3 space-y-3">
@@ -9256,6 +9405,7 @@
                                                     />
                                                 </label>
                                             </div>
+                                            <div class={`mt-3 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
                                         </div>
                                     {/each}
                                 </div>

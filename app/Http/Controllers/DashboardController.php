@@ -103,6 +103,10 @@ class DashboardController extends Controller
                 $this->activePoolId = $deferredPoolId;
                 return $this->upcomingCharterReminder($today);
             }, 'dashboard-data'),
+            'topDrivers' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $this->topDriversByRevenue($today);
+            }, 'dashboard-data'),
         ]);
     }
 
@@ -779,6 +783,7 @@ class DashboardController extends Controller
                         'booking_bop' => 0.0,
                         'charter_bop' => 0.0,
                         'margin' => 0.0,
+                        'target_revenue' => $this->targetRevenueForPeriod($monthDate->toDateString()),
                     ];
                 }
 
@@ -1692,5 +1697,50 @@ class DashboardController extends Controller
         }
 
         return $target;
+    }
+
+    private function topDriversByRevenue(Carbon $today): array
+    {
+        if (! Schema::hasTable('trip_assignments') || ! Schema::hasTable('drivers')) {
+            return [];
+        }
+
+        $monthStart = $today->copy()->startOfMonth()->toDateString();
+        $monthEnd   = $today->copy()->endOfMonth()->toDateString();
+
+        try {
+            $rows = DB::table('trip_assignments as t')
+                ->join('drivers as d', 't.driver_id', '=', 'd.id')
+                ->join('bookings as b', function ($join) {
+                    $join->on('b.rute',  '=', 't.rute')
+                         ->on('b.tanggal', '=', 't.tanggal')
+                         ->on('b.unit',  '=', 't.unit')
+                         ->where('b.status', '!=', 'canceled');
+                })
+                ->whereBetween('t.tanggal', [$monthStart, $monthEnd])
+                ->selectRaw(
+                    'd.id as driver_id,
+                     d.nama as driver_name,
+                     COUNT(DISTINCT CONCAT(t.rute, \'|\', t.tanggal, \'|\', t.unit)) as trip_count,
+                     COALESCE(SUM(COALESCE(b.price,0) - COALESCE(b.discount,0)), 0) as revenue,
+                     MAX(t.rute) as top_route'
+                )
+                ->groupBy('d.id', 'd.nama')
+                ->orderByDesc('revenue')
+                ->limit(5)
+                ->get();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return $rows->values()->map(static function ($row, int $index): array {
+            return [
+                'rank'       => $index + 1,
+                'name'       => (string) ($row->driver_name ?? '-'),
+                'trip_count' => (int) ($row->trip_count ?? 0),
+                'revenue'    => (float) ($row->revenue ?? 0),
+                'route'      => $row->top_route ? (string) $row->top_route : null,
+            ];
+        })->all();
     }
 }
