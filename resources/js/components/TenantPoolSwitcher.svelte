@@ -37,7 +37,12 @@
     {/if}
 {:else}
     {#if showTenant || showPool}
-        <div class={cn(showTenant && showPool ? 'grid grid-cols-2 gap-2' : 'grid gap-2', className)}>
+        <div
+            class={cn(
+                showTenant && showPool ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2',
+                className,
+            )}
+        >
             {#if showTenant}
                 <ContextSwitcher kind="tenant" mode="mobile" />
             {/if}

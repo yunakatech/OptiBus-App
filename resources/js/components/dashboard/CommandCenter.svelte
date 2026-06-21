@@ -47,6 +47,9 @@
 
     const activeSummaryStats = $derived(summaryStatsByScope[activeScope]);
     const activeSummaryPeriod = $derived(summaryPeriodByScope[activeScope]);
+    const activeRevenueLabel = $derived(
+        `${activeSummaryPeriod.current_label} • total channel`,
+    );
 
     const activeTotalRevenue = $derived(
         Number(activeSummaryStats.revenue_booking || 0) +
@@ -87,10 +90,16 @@
     class="flex flex-col rounded-3xl border border-gray-200 bg-[#FFFFFF] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
 >
     <!-- Header & Toggle -->
-    <div class="flex items-center justify-between gap-3">
-        <p class="text-[13px] font-semibold text-slate-700">
-            Ringkasan Revenue <span class="font-bold text-slate-900">{activeSummaryPeriod.current_label}</span>
-        </p>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+            <p class="text-[13px] font-semibold text-slate-700">
+                Ringkasan Revenue
+                <span class="font-bold text-slate-900">{activeSummaryPeriod.current_label}</span>
+            </p>
+            <p class="mt-0.5 text-[11px] text-slate-500">
+                Booking + Carter + Bagasi untuk periode aktif
+            </p>
+        </div>
 
         <!-- Pill Toggle -->
         <div class="flex items-center rounded-full border border-gray-200 bg-gray-50/80 p-0.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
@@ -122,7 +131,7 @@
                 {toCurrency(activeScope === 'day' ? stats.revenue_total_today : activeScope === 'month' ? stats.revenue_total_month : stats.revenue_total_year)}
             </h3>
             <p class="mt-0.5 text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                Total Revenue
+                {activeRevenueLabel}
             </p>
         </div>
         <a

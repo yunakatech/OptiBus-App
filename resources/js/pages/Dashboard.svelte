@@ -1106,7 +1106,12 @@
                     </CardContent>
                 </Card>
 
-                <RevenueActivityChart monthlyTrend={monthlyTrend} {toCurrency} />
+                <RevenueActivityChart
+                    monthlyTrend={monthlyTrend}
+                    {toCurrency}
+                    currentMonthRevenue={activeTotalRevenue}
+                    currentMonthLabel={activeSummaryPeriod.current_label}
+                />
             </div>
 
             <div class="space-y-2.5 xl:col-span-1">
