@@ -42,7 +42,7 @@
         toCurrency: (value: number) => string;
     } = $props();
 
-    type Scope = 'day' | 'month';
+    type Scope = 'day' | 'month' | 'year';
     let activeScope = $state<Scope>('day');
 
     const activeSummaryStats = $derived(summaryStatsByScope[activeScope]);
@@ -84,45 +84,45 @@
 </script>
 
 <div
-    class="flex flex-col rounded-3xl border border-gray-200 bg-[#FFFFFF] p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:min-h-[380px]"
+    class="flex flex-col rounded-3xl border border-gray-200 bg-[#FFFFFF] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
 >
     <!-- Header & Toggle -->
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Command Center
-            </p>
-            <p class="mt-1 text-sm font-medium text-slate-600">
-                Ringkasan Revenue <span class="font-bold text-slate-800">{activeSummaryPeriod.current_label}</span>
-            </p>
-        </div>
+    <div class="flex items-center justify-between gap-3">
+        <p class="text-[13px] font-semibold text-slate-700">
+            Ringkasan Revenue <span class="font-bold text-slate-900">{activeSummaryPeriod.current_label}</span>
+        </p>
 
         <!-- Pill Toggle -->
-        <div class="flex items-center rounded-full border border-gray-200 bg-gray-50/80 p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+        <div class="flex items-center rounded-full border border-gray-200 bg-gray-50/80 p-0.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
             <button
-                class="relative rounded-full px-4 py-1.5 text-xs font-semibold transition-colors duration-200 {activeScope === 'day' ? 'text-slate-800 shadow-sm ring-1 ring-black/5 bg-white' : 'text-slate-500 hover:text-slate-700'}"
+                class="relative rounded-full px-3 py-1 text-[11px] font-semibold transition-colors duration-200 {activeScope === 'day' ? 'text-slate-800 shadow-sm ring-1 ring-black/5 bg-white' : 'text-slate-500 hover:text-slate-700'}"
                 onclick={() => (activeScope = 'day')}
             >
                 Hari Ini
             </button>
             <button
-                class="relative rounded-full px-4 py-1.5 text-xs font-semibold transition-colors duration-200 {activeScope === 'month' ? 'text-slate-800 shadow-sm ring-1 ring-black/5 bg-white' : 'text-slate-500 hover:text-slate-700'}"
+                class="relative rounded-full px-3 py-1 text-[11px] font-semibold transition-colors duration-200 {activeScope === 'month' ? 'text-slate-800 shadow-sm ring-1 ring-black/5 bg-white' : 'text-slate-500 hover:text-slate-700'}"
                 onclick={() => (activeScope = 'month')}
             >
                 Bulan Ini
+            </button>
+            <button
+                class="relative rounded-full px-3 py-1 text-[11px] font-semibold transition-colors duration-200 {activeScope === 'year' ? 'text-slate-800 shadow-sm ring-1 ring-black/5 bg-white' : 'text-slate-500 hover:text-slate-700'}"
+                onclick={() => (activeScope = 'year')}
+            >
+                Tahun Ini
             </button>
         </div>
     </div>
 
     <!-- Main Value -->
-    <div class="mt-6 flex items-start justify-between">
+    <div class="mt-4 flex items-start justify-between">
         <div>
-            <!-- Note: if ActiveScope is Day, revenue_total_today could be from 'stats', but summaryStatsByScope['day'].revenue_booking + charter + luggage should equal it -->
-            <h3 class="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
-                {toCurrency(activeScope === 'day' ? stats.revenue_total_today : stats.revenue_total_month)}
+            <h3 class="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+                {toCurrency(activeScope === 'day' ? stats.revenue_total_today : activeScope === 'month' ? stats.revenue_total_month : stats.revenue_total_year)}
             </h3>
-            <p class="mt-1 text-sm font-medium text-slate-500">
-                Total Omzet Operasional
+            <p class="mt-0.5 text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                Total Revenue
             </p>
         </div>
         <a
@@ -135,7 +135,7 @@
     </div>
 
     <!-- Achievement Progress -->
-    <div class="mt-8 space-y-3">
+    <div class="mt-5 space-y-2">
         <div class="flex items-end justify-between">
             <div>
                 <p class="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Target {activeSummaryPeriod.current_label}</p>
@@ -160,8 +160,8 @@
     </div>
 
     <!-- Channel Breakdown -->
-    <div class="mt-auto pt-8">
-        <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+    <div class="mt-auto pt-5">
+        <p class="mb-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
             Detail Channel
         </p>
         <div class="space-y-2">
