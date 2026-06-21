@@ -55,7 +55,6 @@
 
     type SummaryScopeStats = {
         total_bookings: number;
-        total_passengers: number;
         revenue_booking: number;
         revenue_charter: number;
         revenue_luggage: number;
@@ -161,7 +160,6 @@
         summaryStatsByScope = {
             day: {
                 total_bookings: 0,
-                total_passengers: 0,
                 revenue_booking: 0,
                 revenue_charter: 0,
                 revenue_luggage: 0,
@@ -174,7 +172,6 @@
             },
             month: {
                 total_bookings: 0,
-                total_passengers: 0,
                 revenue_booking: 0,
                 revenue_charter: 0,
                 revenue_luggage: 0,
@@ -187,7 +184,6 @@
             },
             year: {
                 total_bookings: 0,
-                total_passengers: 0,
                 revenue_booking: 0,
                 revenue_charter: 0,
                 revenue_luggage: 0,
@@ -202,7 +198,6 @@
         summaryComparisonByScope = {
             day: {
                 total_bookings: 0,
-                total_passengers: 0,
                 revenue_booking: 0,
                 revenue_charter: 0,
                 revenue_luggage: 0,
@@ -215,7 +210,6 @@
             },
             month: {
                 total_bookings: 0,
-                total_passengers: 0,
                 revenue_booking: 0,
                 revenue_charter: 0,
                 revenue_luggage: 0,
@@ -228,7 +222,6 @@
             },
             year: {
                 total_bookings: 0,
-                total_passengers: 0,
                 revenue_booking: 0,
                 revenue_charter: 0,
                 revenue_luggage: 0,
