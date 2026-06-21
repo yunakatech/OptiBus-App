@@ -18,9 +18,7 @@ createInertiaApp({
             throw new Error(`Inertia page not found: ${name}`);
         }
 
-        const module = (await page()) as { default: any };
-
-        return module.default;
+        return page();
     },
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {

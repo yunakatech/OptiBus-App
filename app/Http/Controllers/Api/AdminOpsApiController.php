@@ -4605,9 +4605,7 @@ class AdminOpsApiController extends Controller
             ];
         }
 
-        $currentUserId = (int) (auth()->id() ?? 0);
-        $canManage = $this->currentUserIsSuperAdmin()
-            || AccessControl::userHasRoleSlug($currentUserId, 'tenant-owner');
+        $canManage = $this->currentUserIsSuperAdmin();
         $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
 
         $poolQuery = DB::table('pools')
