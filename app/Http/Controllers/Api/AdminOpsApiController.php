@@ -4676,9 +4676,11 @@ class AdminOpsApiController extends Controller
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
         $routeFinancials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
+        $monthlyTargetsByPool = $this->poolMonthlyTargetsByPoolIds($poolIds);
+        $currentMonth = now()->startOfMonth()->toDateString();
 
         $mappedRows = $pools
-            ->map(function ($pool) use ($routesByPool, $routeFinancials, $armadaCounts, $driverCounts): array {
+            ->map(function ($pool) use ($routesByPool, $routeFinancials, $armadaCounts, $driverCounts, $monthlyTargetsByPool, $currentMonth): array {
                 $poolId = (int) ($pool->id ?? 0);
                 $routes = $routesByPool[$poolId] ?? ['ids' => [], 'names' => []];
                 $financials = $this->sumRouteFinancials($routes['ids'], $routeFinancials);
@@ -4687,7 +4689,22 @@ class AdminOpsApiController extends Controller
                 $fixedCost = (float) ($pool->fixed_cost ?? 0);
                 $gross = $revenue - $bop;
                 $net = $gross - $fixedCost;
-                $target = (float) ($pool->target_revenue ?? 0);
+                $legacyTarget = (float) ($pool->target_revenue ?? 0);
+                $monthlyTargets = $monthlyTargetsByPool[$poolId] ?? [];
+                $currentMonthlyTarget = null;
+                foreach ($monthlyTargets as $monthlyTarget) {
+                    if ((string) ($monthlyTarget['target_month'] ?? '') === $currentMonth) {
+                        $currentMonthlyTarget = $monthlyTarget;
+
+                        break;
+                    }
+                }
+                $monthlyTargetTotal = $currentMonthlyTarget ? (float) (
+                    ($currentMonthlyTarget['booking_target'] ?? 0)
+                    + ($currentMonthlyTarget['bagasi_target'] ?? 0)
+                    + ($currentMonthlyTarget['carter_target'] ?? 0)
+                ) : null;
+                $target = $monthlyTargetTotal ?? $legacyTarget;
                 $achievement = $target > 0 ? ($revenue / $target) * 100 : 0;
 
                 return [
@@ -4702,7 +4719,14 @@ class AdminOpsApiController extends Controller
                     ),
                     'phone' => trim((string) ($pool->phone ?? '')),
                     'address' => trim((string) ($pool->address ?? '')),
-                    'target_revenue' => $target,
+                    'target_revenue' => $legacyTarget,
+                    'monthly_target_month' => $currentMonth,
+                    'monthly_target_total' => $monthlyTargetTotal,
+                    'monthly_target_booking' => $currentMonthlyTarget ? (float) ($currentMonthlyTarget['booking_target'] ?? 0) : null,
+                    'monthly_target_bagasi' => $currentMonthlyTarget ? (float) ($currentMonthlyTarget['bagasi_target'] ?? 0) : null,
+                    'monthly_target_carter' => $currentMonthlyTarget ? (float) ($currentMonthlyTarget['carter_target'] ?? 0) : null,
+                    'monthly_target_source' => $currentMonthlyTarget ? 'monthly' : ($legacyTarget > 0 ? 'legacy' : 'none'),
+                    'monthly_targets' => $monthlyTargets,
                     'fixed_cost' => $fixedCost,
                     'charter_revenue' => (float) ($financials['charter_revenue'] ?? 0),
                     'departure_revenue' => (float) ($financials['departure_revenue'] ?? 0),
@@ -4947,6 +4971,11 @@ class AdminOpsApiController extends Controller
             'address' => ['nullable', 'string'],
             'target_revenue' => ['nullable', 'numeric', 'min:0'],
             'fixed_cost' => ['nullable', 'numeric', 'min:0'],
+            'target_month' => ['nullable', 'date_format:Y-m'],
+            'booking_target' => ['nullable', 'numeric', 'min:0'],
+            'bagasi_target' => ['nullable', 'numeric', 'min:0'],
+            'carter_target' => ['nullable', 'numeric', 'min:0'],
+            'save_monthly_target' => ['nullable', 'boolean'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
             'notes' => ['nullable', 'string'],
             'route_ids' => ['nullable', 'array'],
@@ -4986,7 +5015,20 @@ class AdminOpsApiController extends Controller
             $payload['fixed_cost'] = (float) ($data['fixed_cost'] ?? 0);
         }
 
-        return DB::transaction(function () use ($id, $payload, $routeIds): JsonResponse {
+        $saveMonthlyTarget = $request->boolean('save_monthly_target');
+        $normalizedTargetMonth = null;
+        if ($saveMonthlyTarget) {
+            if (! Schema::hasTable('pool_monthly_targets')) {
+                return $this->error('Tabel target bulanan belum tersedia. Jalankan migration terlebih dahulu.', 409);
+            }
+
+            $normalizedTargetMonth = $this->normalizeTargetMonth((string) ($data['target_month'] ?? ''));
+            if ($normalizedTargetMonth === null) {
+                return $this->error('Bulan target bulanan wajib diisi.', 422);
+            }
+        }
+
+        return DB::transaction(function () use ($id, $payload, $routeIds, $data, $saveMonthlyTarget, $normalizedTargetMonth): JsonResponse {
             if ($id > 0) {
                 $query = DB::table('pools')->where('id', $id);
                 if (Schema::hasColumn('pools', 'tenant_id')) {
@@ -5027,6 +5069,20 @@ class AdminOpsApiController extends Controller
                 if ($rows !== []) {
                     DB::table('pool_route')->insert($rows);
                 }
+            }
+
+            if ($saveMonthlyTarget) {
+                DB::table('pool_monthly_targets')->upsert([
+                    [
+                        'pool_id' => $poolId,
+                        'target_month' => $normalizedTargetMonth,
+                        'booking_target' => (float) ($data['booking_target'] ?? 0),
+                        'bagasi_target' => (float) ($data['bagasi_target'] ?? 0),
+                        'carter_target' => (float) ($data['carter_target'] ?? 0),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ],
+                ], ['pool_id', 'target_month'], ['booking_target', 'bagasi_target', 'carter_target', 'updated_at']);
             }
 
             return $this->ok([
@@ -5658,6 +5714,69 @@ class AdminOpsApiController extends Controller
             && Schema::hasTable('pool_route')
             && Schema::hasTable('pool_user')
             && Schema::hasTable('routes');
+    }
+
+    private function normalizeTargetMonth(?string $month): ?string
+    {
+        $month = trim((string) $month);
+        if ($month === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
+        } catch (\Throwable) {
+            try {
+                return Carbon::parse($month)->startOfMonth()->toDateString();
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * @param  array<int, int>  $poolIds
+     * @return array<int, array<int, array{target_month: string, booking_target: float, bagasi_target: float, carter_target: float, target_revenue: float}>>
+     */
+    private function poolMonthlyTargetsByPoolIds(array $poolIds): array
+    {
+        $poolIds = array_values(array_unique(array_filter(array_map('intval', $poolIds), static fn (int $id): bool => $id > 0)));
+        if ($poolIds === [] || ! Schema::hasTable('pool_monthly_targets')) {
+            return [];
+        }
+
+        $rows = DB::table('pool_monthly_targets')
+            ->whereIn('pool_id', $poolIds)
+            ->orderByDesc('target_month')
+            ->get([
+                'pool_id',
+                'target_month',
+                'booking_target',
+                'bagasi_target',
+                'carter_target',
+            ]);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $poolId = (int) ($row->pool_id ?? 0);
+            if ($poolId <= 0) {
+                continue;
+            }
+
+            $bookingTarget = (float) ($row->booking_target ?? 0);
+            $bagasiTarget = (float) ($row->bagasi_target ?? 0);
+            $carterTarget = (float) ($row->carter_target ?? 0);
+            $grouped[$poolId] ??= [];
+            $grouped[$poolId][] = [
+                'target_month' => (string) ($row->target_month ?? ''),
+                'booking_target' => $bookingTarget,
+                'bagasi_target' => $bagasiTarget,
+                'carter_target' => $carterTarget,
+                'target_revenue' => $bookingTarget + $bagasiTarget + $carterTarget,
+            ];
+        }
+
+        return $grouped;
     }
 
     private function defaultCustomerPoolId(string $table = 'customers'): int
