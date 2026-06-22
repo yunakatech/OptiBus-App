@@ -257,6 +257,23 @@ class AdminOpsApiController extends Controller
             return $row;
         })->values();
 
+        $scheduleSegmentsPivot = [];
+        if (Schema::hasTable('schedule_segment')) {
+            $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
+            if (!empty($scheduleIds)) {
+                $pivots = DB::table('schedule_segment')
+                    ->whereIn('schedule_id', $scheduleIds)
+                    ->get(['schedule_id', 'segment_id', 'jam_pickup']);
+                foreach ($pivots as $pivot) {
+                    $sId = (int) $pivot->schedule_id;
+                    if (!isset($scheduleSegmentsPivot[$sId])) {
+                        $scheduleSegmentsPivot[$sId] = [];
+                    }
+                    $scheduleSegmentsPivot[$sId][(int) $pivot->segment_id] = substr((string) $pivot->jam_pickup, 0, 5);
+                }
+            }
+        }
+
         $segmentCache = [];
         $rows = $rows->map(function ($row) use (&$segmentCache) {
             $routeId = (int) ($row->route_id ?? 0);
@@ -268,15 +285,30 @@ class AdminOpsApiController extends Controller
             }
 
             $scheduleJam = substr((string) ($row->jam ?? ''), 0, 5);
+            $scheduleId = (int) ($row->id ?? 0);
+            $explicitMappings = $scheduleSegmentsPivot[$scheduleId] ?? [];
+
             $segmentMatches = array_values(array_filter(
                 $segmentCache[$cacheKey],
-                static function (array $segment) use ($scheduleJam): bool {
+                static function (array $segment) use ($scheduleJam, $explicitMappings): bool {
+                    if (!empty($explicitMappings)) {
+                        return isset($explicitMappings[$segment['id']]);
+                    }
+
                     $jamPickups = $segment['jam_pickups'] ?? [];
 
                     return in_array($scheduleJam, $jamPickups, true)
                         || (string) ($segment['jam'] ?? '') === $scheduleJam;
                 },
             ));
+            
+            // Map explicitly selected pickup
+            $segmentMatches = array_map(function ($segment) use ($explicitMappings) {
+                if (!empty($explicitMappings) && isset($explicitMappings[$segment['id']])) {
+                    $segment['jam_pickups'] = [$explicitMappings[$segment['id']]];
+                }
+                return $segment;
+            }, $segmentMatches);
 
             $row->segment_matches = $segmentMatches;
             $segmentJamPickups = [];
@@ -359,6 +391,9 @@ class AdminOpsApiController extends Controller
             'unit_id' => ['nullable', 'integer', 'min:0'],
             'unit_ids' => ['nullable', 'array'],
             'unit_ids.*' => ['nullable', 'integer', 'min:0'],
+            'segment_configs' => ['nullable', 'array'],
+            'segment_configs.*.segment_id' => ['required_with:segment_configs', 'integer', 'min:1'],
+            'segment_configs.*.jam_pickup' => ['required_with:segment_configs', 'string', 'max:5'],
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -394,7 +429,8 @@ class AdminOpsApiController extends Controller
 
         $scheduleJam = substr($jam, 0, 5);
         $routeSegmentJamPickups = $this->scheduleSegmentJamOptions($routeId, $routeName);
-        if ($routeSegmentJamPickups !== [] && ! in_array($scheduleJam, $routeSegmentJamPickups, true)) {
+        $segmentConfigs = is_array($data['segment_configs'] ?? null) ? $data['segment_configs'] : [];
+        if (empty($segmentConfigs) && $routeSegmentJamPickups !== [] && ! in_array($scheduleJam, $routeSegmentJamPickups, true)) {
             return $this->error('Jam jadwal harus cocok dengan jam segment pada rute ini.', 422);
         }
 
@@ -509,7 +545,7 @@ class AdminOpsApiController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($id, $payload, $normalizedLabels, $normalizedUnitIds) {
+            return DB::transaction(function () use ($id, $payload, $normalizedLabels, $normalizedUnitIds, $segmentConfigs) {
                 $scheduleId = $id;
                 if ($scheduleId > 0) {
                     $scheduleUpdate = DB::table('schedules')->where('id', $scheduleId);
@@ -541,6 +577,27 @@ class AdminOpsApiController extends Controller
                     }
                 }
 
+                if (Schema::hasTable('schedule_segment')) {
+                    DB::table('schedule_segment')->where('schedule_id', $scheduleId)->delete();
+                    $pivotRows = [];
+                    $savedSegments = [];
+                    foreach ($segmentConfigs as $sc) {
+                        $sId = (int) $sc['segment_id'];
+                        if (isset($savedSegments[$sId])) continue;
+                        $savedSegments[$sId] = true;
+                        
+                        $pivotRows[] = [
+                            'schedule_id' => $scheduleId,
+                            'segment_id' => $sId,
+                            'jam_pickup' => substr(trim((string) $sc['jam_pickup']), 0, 5),
+                            'created_at' => now(),
+                        ];
+                    }
+                    if (! empty($pivotRows)) {
+                        DB::table('schedule_segment')->insert($pivotRows);
+                    }
+                }
+
                 if ($id > 0) {
                     return $this->ok(['message' => 'Schedule updated.', 'id' => $scheduleId]);
                 }
@@ -564,6 +621,10 @@ class AdminOpsApiController extends Controller
             $scheduleUnitsDelete = DB::table('schedule_units')->where('schedule_id', $id);
             $this->applyWriteTenantScopeIfExists($scheduleUnitsDelete, 'schedule_units');
             $scheduleUnitsDelete->delete();
+        }
+        
+        if (Schema::hasTable('schedule_segment')) {
+            DB::table('schedule_segment')->where('schedule_id', $id)->delete();
         }
         $scheduleDelete = DB::table('schedules')->where('id', $id);
         $this->applyWriteTenantScopeIfExists($scheduleDelete, 'schedules');

@@ -162,6 +162,23 @@ class BookingApiController extends Controller
         $segments = collect($data['segments'] ?? []);
         $rows = collect($data['schedules'] ?? []);
 
+        $scheduleSegmentsPivot = [];
+        if (Schema::hasTable('schedule_segment')) {
+            $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
+            if (!empty($scheduleIds)) {
+                $pivots = DB::table('schedule_segment')
+                    ->whereIn('schedule_id', $scheduleIds)
+                    ->get(['schedule_id', 'segment_id', 'jam_pickup']);
+                foreach ($pivots as $pivot) {
+                    $sId = (int) $pivot->schedule_id;
+                    if (!isset($scheduleSegmentsPivot[$sId])) {
+                        $scheduleSegmentsPivot[$sId] = [];
+                    }
+                    $scheduleSegmentsPivot[$sId][(int) $pivot->segment_id] = substr((string) $pivot->jam_pickup, 0, 5);
+                }
+            }
+        }
+
         $optionsBySchedule = [];
         $unitIds = $rows
             ->pluck('unit_id')
@@ -286,11 +303,23 @@ class BookingApiController extends Controller
             }
 
             $scheduleJam = substr((string) ($row->jam ?? ''), 0, 5);
-            $segmentMatches = $segments->filter(function (array $segment) use ($scheduleJam): bool {
+            $scheduleId = (int) ($row->id ?? 0);
+            $explicitMappings = $scheduleSegmentsPivot[$scheduleId] ?? [];
+
+            $segmentMatches = $segments->filter(function (array $segment) use ($scheduleJam, $explicitMappings): bool {
+                if (!empty($explicitMappings)) {
+                    return isset($explicitMappings[$segment['id']]);
+                }
+
                 $jamPickups = $segment['jam_pickups'] ?? [];
 
                 return in_array($scheduleJam, $jamPickups, true)
                     || (string) ($segment['jam'] ?? '') === $scheduleJam;
+            })->map(function (array $segment) use ($explicitMappings) {
+                if (!empty($explicitMappings) && isset($explicitMappings[$segment['id']])) {
+                    $segment['jam_pickups'] = [$explicitMappings[$segment['id']]];
+                }
+                return $segment;
             })->values()->all();
 
             return [
