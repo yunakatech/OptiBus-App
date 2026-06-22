@@ -434,28 +434,9 @@ class AdminOpsApiController extends Controller
             return $this->error('Jam jadwal harus cocok dengan jam segment pada rute ini.', 422);
         }
 
-        $duplicateQuery = DB::table('schedules')
-            ->where('dow', (int) $data['dow'])
-            ->where('jam', $jam)
-            ->where(function (Builder $query) use ($hasRouteId, $routeId, $routeName) {
-                if ($hasRouteId && $routeId > 0) {
-                    $query
-                        ->where('route_id', $routeId)
-                        ->orWhere(function (Builder $legacy) use ($routeName) {
-                            $legacy->whereNull('route_id')->where('rute', $routeName);
-                        });
-
-                    return;
-                }
-                $query->where('rute', $routeName);
-            })
-            ->when($id > 0, fn ($q) => $q->where('id', '!=', $id));
-        $this->applyWriteTenantScopeIfExists($duplicateQuery, 'schedules');
-        $duplicate = $duplicateQuery->exists();
-
-        if ($duplicate) {
-            return $this->error('Jadwal duplikat (rute + hari + jam).', 409);
-        }
+        // Validasi duplikat dihapus agar satu jam jadwal bisa dibuat berulang kali untuk segment berbeda
+        // $duplicateQuery = DB::table('schedules')->...
+        // if ($duplicate) { return this->error(...); }
 
         $unitsCount = max(1, (int) ($data['units'] ?? 1));
         $rawLabels = is_array($data['unit_labels'] ?? null) ? $data['unit_labels'] : [];
