@@ -282,6 +282,115 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('details.A1.segment_jam_pickups.1', '08:45');
     }
 
+    public function test_schedules_only_return_matched_segments_no_route_fallback(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $date = '2026-05-15';
+        $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $this->defaultTenantId(),
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        DB::table('schedules')->insert([
+            'rute' => 'PINRANG - MAKASSAR',
+            'dow' => $dow,
+            'jam' => '07:00:00',
+            'units' => 1,
+            'unit_label' => 'Reguler',
+            'created_at' => now(),
+        ]);
+
+        // Segment only has jam_pickups = ['10:00'] — does NOT match the schedule jam 07:00
+        DB::table('segments')->insertGetId([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '10:00:00',
+            'jam_pickups' => json_encode(['10:00']),
+            'harga' => 150000,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->getJson(route('api.bookings.schedules', [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => $date,
+        ]));
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'schedules')
+            ->assertJsonPath('schedules.0.jam', '07:00');
+
+        // segment_matches must be empty — no fallback to all route segments
+        $this->assertCount(0, $response->json('schedules.0.segment_matches'));
+    }
+
+    public function test_booked_seats_detail_segment_jam_pickups_come_from_segment_not_schedule(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $segmentId = DB::table('segments')->insertGetId([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - PAREPARE',
+            'origin' => 'PINRANG',
+            'destination' => 'PAREPARE',
+            'jam' => '07:30:00',
+            'jam_pickups' => json_encode(['07:30', '08:45']),
+            'harga' => 75000,
+            'created_at' => now(),
+        ]);
+
+        // Schedule jam = 09:00 is intentionally different from segment jams
+        DB::table('bookings')->insert([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00', // schedule jam – should NOT appear in output
+            'unit' => 1,
+            'seat' => 'B1',
+            'name' => 'TOTI',
+            'phone' => '081900000001',
+            'pickup_point' => 'Pinrang',
+            'pembayaran' => 'Lunas',
+            'status' => 'active',
+            'segment_id' => $segmentId,
+            'price' => 75000,
+            'discount' => 0,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->getJson(route('api.bookings.seats-detail', [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00',
+            'unit' => 1,
+        ]));
+
+        $response->assertOk()
+            ->assertJsonPath('details.B1.segment_jam', '07:30')
+            ->assertJsonPath('details.B1.segment_jam_pickups.0', '07:30')
+            ->assertJsonPath('details.B1.segment_jam_pickups.1', '08:45');
+
+        // The schedule jam (09:00) must NOT appear as segment_jam or in segment_jam_pickups
+        $this->assertNotSame('09:00', $response->json('details.B1.segment_jam'));
+        $this->assertNotContains('09:00', $response->json('details.B1.segment_jam_pickups'));
+    }
+
     public function test_payment_only_update_does_not_require_complete_booking_fields(): void
     {
         $this->actingAsSuperAdmin();

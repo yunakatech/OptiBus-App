@@ -1706,7 +1706,7 @@
         const jams = scheduleRouteJamOptions();
 
         if (jams.length > 0) {
-            return `Jam segment tersedia: ${jams.join(', ')}`;
+            return `Satu segment bisa punya beberapa jam pickup. Jadwal hanya mengikuti jam yang terdaftar pada segment (Tersedia: ${jams.join(', ')}).`;
         }
 
         if (scheduleSegmentsForRoute().length > 0) {

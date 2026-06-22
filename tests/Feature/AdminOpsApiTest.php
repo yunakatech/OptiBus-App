@@ -142,6 +142,74 @@ class AdminOpsApiTest extends TestCase
             ->assertJsonPath('schedules.0.segment_jam_pickups.1', '08:45');
     }
 
+    public function test_segment_multi_pickup_persists_and_schedule_mapping_is_strict(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        // Segment A: jam_pickups = ['07:30', '08:45']
+        $segmentAId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - PAREPARE',
+            'origin' => 'PINRANG',
+            'destination' => 'PAREPARE',
+            'jam' => '07:30:00',
+            'jam_pickups' => json_encode(['07:30', '08:45']),
+            'harga' => 75000,
+            'created_at' => now(),
+        ]);
+
+        // Segment B: jam_pickups = ['10:00'] — should NOT match schedule at 07:30
+        DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '10:00:00',
+            'jam_pickups' => json_encode(['10:00']),
+            'harga' => 120000,
+            'created_at' => now(),
+        ]);
+
+        // Schedule jam = 07:30 → should match segmentA only
+        $scheduleId = DB::table('schedules')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'dow' => 1,
+            'jam' => '07:30:00',
+            'units' => 1,
+            'unit_label' => 'Reguler',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->getJson(route('api.admin.schedules.index', [
+            'route_id' => $routeId,
+        ]))->assertOk();
+
+        $schedules = $response->json('schedules');
+        $schedule = collect($schedules)->firstWhere('id', $scheduleId);
+
+        $this->assertNotNull($schedule);
+        $this->assertCount(1, $schedule['segment_matches']);
+        $this->assertSame($segmentAId, (int) ($schedule['segment_matches'][0]['id'] ?? 0));
+        // segment_jam_pickups should include both pickup times from segmentA
+        $this->assertContains('07:30', $schedule['segment_jam_pickups']);
+        $this->assertContains('08:45', $schedule['segment_jam_pickups']);
+        // segmentB (10:00) must NOT bleed into this schedule's matches
+        $this->assertNotContains('10:00', $schedule['segment_jam_pickups']);
+    }
+
     public function test_schedules_index_prefers_route_id_over_stale_route_name(): void
     {
         $this->actingAsSuperAdmin();
