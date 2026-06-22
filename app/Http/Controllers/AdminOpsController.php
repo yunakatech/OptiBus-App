@@ -146,6 +146,7 @@ class AdminOpsController extends Controller
         $listRequest = clone $request;
         $listRequest->query->set('paginate', '1');
         $routeOptions = [];
+        $segmentRequest = null;
 
         if ($tab === 'schedules') {
             $routeOptions = $this->routeOptions();
@@ -176,6 +177,9 @@ class AdminOpsController extends Controller
             } elseif ($rute === '') {
                 $listRequest->query->set('rute', (string) ($routeOptions[0]['name'] ?? ''));
             }
+
+            $segmentRequest = clone $listRequest;
+            $segmentRequest->query->remove('paginate');
         }
 
         if ($tab === 'segments' && (int) $listRequest->query('route_id', 0) <= 0) {
@@ -222,6 +226,7 @@ class AdminOpsController extends Controller
             ...($tab === 'schedules' ? [
                 'route_id' => max(0, (int) $listRequest->query('route_id', 0)),
                 'rute' => trim((string) $listRequest->query('rute', '')),
+                'segments' => $this->payload($this->adminOpsApi->segmentsIndex($segmentRequest ?? $listRequest))['segments'] ?? [],
             ] : []),
             ...($tab === 'segments' ? ['route_id' => max(0, (int) $listRequest->query('route_id', 0))] : []),
         ];

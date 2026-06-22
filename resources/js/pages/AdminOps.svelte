@@ -120,6 +120,8 @@
         unit_label: string | null;
         unit_id: number | null;
         nopol: string | null;
+        segment_matches?: SegmentRow[];
+        segment_jam_pickups?: string[];
         unit_options?: Array<{
             unit_no: number;
             label: string;
@@ -214,8 +216,10 @@
         per_page?: number;
         route_id?: number;
         rute?: string;
+        region?: string;
         pool_id?: number;
         period?: string;
+        sort?: string;
     };
     type SettingsDataPayload = {
         tab?: string;
@@ -232,6 +236,7 @@
         pagination?: Pagination;
         route_id?: number;
         rute?: string;
+        regions?: string[];
     };
     type SettingsMastersPayload = {
         tab?: string;
@@ -1644,6 +1649,82 @@
         routeSegmentsById[Number(routeId || 0)] ?? [];
     const routeSegmentCount = (routeId: number) =>
         segmentsForRoute(routeId).length;
+    const scheduleRouteId = () =>
+        Number(
+            selectedScheduleRouteId ||
+                scheduleRouteIdByName(selectedScheduleRoute) ||
+                0,
+        );
+    const scheduleSegmentsForRoute = () =>
+        segmentsForRoute(scheduleRouteId());
+    const scheduleRouteJamOptions = () => {
+        const jams = new Set<string>();
+
+        for (const segment of scheduleSegmentsForRoute()) {
+            const pickupJams = segmentJamList(segment.jam_pickups);
+            const sourceJams =
+                pickupJams.length > 0
+                    ? pickupJams
+                    : segmentJamList(segment.jam);
+
+            for (const jam of sourceJams) {
+                if (jam !== '') {
+                    jams.add(jam);
+                }
+            }
+        }
+
+        return Array.from(jams).sort((a, b) => a.localeCompare(b, 'id'));
+    };
+    const scheduleJamOptionsForRoute = (
+        routeName: string,
+        routeId = 0,
+    ) => {
+        const effectiveRouteId = Number(
+            routeId || scheduleRouteIdByName(routeName) || 0,
+        );
+        const effectiveRouteSegments = segmentsForRoute(effectiveRouteId);
+        const jams = new Set<string>();
+
+        for (const segment of effectiveRouteSegments) {
+            const pickupJams = segmentJamList(segment.jam_pickups);
+            const sourceJams =
+                pickupJams.length > 0
+                    ? pickupJams
+                    : segmentJamList(segment.jam);
+
+            for (const jam of sourceJams) {
+                if (jam !== '') {
+                    jams.add(jam);
+                }
+            }
+        }
+
+        return Array.from(jams).sort((a, b) => a.localeCompare(b, 'id'));
+    };
+    const scheduleRouteJamHint = () => {
+        const jams = scheduleRouteJamOptions();
+
+        if (jams.length > 0) {
+            return `Jam segment tersedia: ${jams.join(', ')}`;
+        }
+
+        if (scheduleSegmentsForRoute().length > 0) {
+            return 'Segment ditemukan, tetapi belum ada jam pickup yang valid.';
+        }
+
+        return 'Belum ada segment pada rute ini.';
+    };
+    const scheduleJamIsMapped = (jam: string) =>
+        scheduleRouteJamOptions().includes(segmentJamLabel(jam));
+    const applyScheduleJam = (jam: string) => {
+        const nextJam = segmentJamLabel(jam) || '08:00';
+        scheduleForm = {
+            ...scheduleForm,
+            jam: nextJam,
+        };
+        scheduleTimePicker?.setDate(nextJam, false, 'H:i');
+    };
 
     const togglePoolRoute = (routeId: number, checked: boolean) => {
         const id = Number(routeId || 0);
@@ -3312,6 +3393,7 @@
                 selectedScheduleRouteId,
             );
             schedules = payload.schedules ?? [];
+            segments = payload.segments ?? segments;
             syncScheduleSelection();
         }
 
@@ -3557,14 +3639,16 @@
             return;
         }
 
-        const [s, u, r] = await Promise.all([
+        const [s, u, r, seg] = await Promise.all([
             api('GET', '/api/admin/schedules'),
             api('GET', '/api/admin/units'),
             api('GET', '/api/admin/routes'),
+            api('GET', '/api/admin/segments'),
         ]);
         schedules = s.schedules ?? [];
         units = u.units ?? [];
         routes = r.routes ?? [];
+        segments = seg.segments ?? segments;
 
         syncScheduleSelection();
     };
@@ -4009,7 +4093,7 @@
                 scheduleRouteOptions[0] ||
                 '',
             dow: 1,
-            jam: '08:00',
+            jam: scheduleRouteJamOptions()[0] || '08:00',
             units: 1,
             bop: '',
             unit_id: 0,
@@ -4032,8 +4116,8 @@
 
         selectedScheduleRoute = selected.name;
         selectedScheduleRouteId = selected.id;
-        resetScheduleForm();
         await loadSchedules();
+        resetScheduleForm();
     };
     const resetDriverForm = () => (
         (driverUnitSearch = ''),
@@ -4294,6 +4378,20 @@
             }
 
             const selectedRouteId = scheduleRouteIdByName(activeRoute);
+            const normalizedJam = segmentJamLabel(scheduleForm.jam);
+            const routeJamOptions = scheduleJamOptionsForRoute(
+                activeRoute,
+                selectedRouteId,
+            );
+
+            if (
+                routeJamOptions.length > 0 &&
+                !routeJamOptions.includes(normalizedJam)
+            ) {
+                throw new Error(
+                    `Jam jadwal harus mengikuti jam segment pada rute ini. Pilih salah satu: ${routeJamOptions.join(', ')}.`,
+                );
+            }
             await runWithFeedback(
                 async () => {
                     await api('POST', '/api/admin/schedules', {
@@ -4301,7 +4399,7 @@
                         route_id: selectedRouteId || undefined,
                         rute: activeRoute,
                         dow: Number(scheduleForm.dow),
-                        jam: scheduleForm.jam,
+                        jam: normalizedJam,
                         units: Number(scheduleForm.units),
                         bop: parseRupiahInput(scheduleForm.bop),
                         unit_label: scheduleForm.unit_labels[0] || undefined,
@@ -4361,11 +4459,12 @@
             ) ||
             scheduleRouteOptions[0] ||
             '';
+        const defaultJam = scheduleRouteJamOptions()[0] || '08:00';
         scheduleForm = {
             id: 0,
             rute: routeName,
             dow,
-            jam: '08:00',
+            jam: defaultJam,
             units: 1,
             bop: '',
             unit_id: 0,
@@ -4940,6 +5039,19 @@
                 'H:i',
             );
         });
+    });
+
+    $effect(() => {
+        if (activeTab !== 'schedules' || activeMode !== 'form' || scheduleForm.id > 0) {
+            return;
+        }
+
+        const mappedJam = scheduleRouteJamOptions()[0] || '';
+        const currentJam = segmentJamLabel(scheduleForm.jam);
+
+        if (mappedJam !== '' && currentJam !== mappedJam) {
+            applyScheduleJam(mappedJam);
+        }
     });
 
     $effect(() => {
@@ -6197,6 +6309,40 @@
                                             placeholder="Jam"
                                             class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                         />
+                                        <p
+                                            class="mt-1 text-[11px] text-muted-foreground"
+                                        >
+                                            {scheduleJamIsMapped(scheduleForm.jam)
+                                                ? 'Jam ini sudah cocok dengan mapping segment.'
+                                                : scheduleRouteJamHint()}
+                                        </p>
+                                        <div class="mt-2 flex flex-wrap gap-2">
+                                            {#if scheduleRouteJamOptions().length > 0}
+                                                {#each scheduleRouteJamOptions() as jamOption (jamOption)}
+                                                    <button
+                                                        type="button"
+                                                        class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                                                            scheduleForm.jam ===
+                                                            jamOption
+                                                                ? 'border-sky-500 bg-sky-50 text-sky-700'
+                                                                : 'border-border/70 bg-background text-muted-foreground hover:border-sky-300 hover:text-sky-700'
+                                                        }`}
+                                                        onclick={() =>
+                                                            applyScheduleJam(
+                                                                jamOption,
+                                                            )}
+                                                    >
+                                                        {jamOption}
+                                                    </button>
+                                                {/each}
+                                            {:else}
+                                                <span class="text-[11px] text-muted-foreground">
+                                                    Jam tetap bisa diisi manual
+                                                    bila route ini belum punya
+                                                    segment.
+                                                </span>
+                                            {/if}
+                                        </div>
                                     </label>
                                     <label class="space-y-1.5">
                                         <span
@@ -6515,6 +6661,15 @@
                                                                         {row.units}
                                                                         unit
                                                                     </span>
+                                                                    <span
+                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
+                                                                    >
+                                                                        {Array.isArray(
+                                                                            row.segment_matches,
+                                                                        )
+                                                                            ? `${row.segment_matches.length} segment`
+                                                                            : '0 segment'}
+                                                                    </span>
                                                                 </div>
                                                                 <div
                                                                     class="flex flex-wrap gap-2"
@@ -6538,6 +6693,15 @@
                                                                             : 'Layout dasar'}
                                                                     </span>
                                                                 </div>
+                                                                <p
+                                                                    class="text-[11px] text-muted-foreground"
+                                                                >
+                                                                    Jam segment:
+                                                                    {segmentJamSummary(
+                                                                        row.segment_jam_pickups,
+                                                                    ) ||
+                                                                        'Belum ada mapping'}
+                                                                </p>
                                                             </div>
                                                             {#if canWriteTab('schedules')}
                                                                 <DropdownMenu>

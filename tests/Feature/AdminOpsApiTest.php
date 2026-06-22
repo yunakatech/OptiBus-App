@@ -83,6 +83,65 @@ class AdminOpsApiTest extends TestCase
         ])->assertStatus(409);
     }
 
+    public function test_schedule_save_requires_matching_segment_jam_and_index_includes_matches(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $segmentId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - PAREPARE',
+            'origin' => 'PINRANG',
+            'destination' => 'PAREPARE',
+            'jam' => '07:30:00',
+            'jam_pickups' => json_encode(['07:30', '08:45']),
+            'harga' => 75000,
+            'created_at' => now(),
+        ]);
+
+        $this->postJson(route('api.admin.schedules.save'), [
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'dow' => 1,
+            'jam' => '08:00',
+            'units' => 1,
+            'unit_label' => 'Reguler',
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'Jam jadwal harus cocok dengan jam segment pada rute ini.');
+
+        $create = $this->postJson(route('api.admin.schedules.save'), [
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'dow' => 1,
+            'jam' => '07:30',
+            'units' => 1,
+            'unit_label' => 'Reguler',
+        ])->assertCreated()->json();
+
+        $scheduleId = (int) ($create['id'] ?? 0);
+        $this->assertTrue($scheduleId > 0);
+
+        $this->getJson(route('api.admin.schedules.index', [
+            'route_id' => $routeId,
+        ]))
+            ->assertOk()
+            ->assertJsonCount(1, 'schedules')
+            ->assertJsonPath('schedules.0.id', $scheduleId)
+            ->assertJsonPath('schedules.0.segment_matches.0.id', $segmentId)
+            ->assertJsonPath('schedules.0.segment_jam_pickups.0', '07:30')
+            ->assertJsonPath('schedules.0.segment_jam_pickups.1', '08:45');
+    }
+
     public function test_schedules_index_prefers_route_id_over_stale_route_name(): void
     {
         $this->actingAsSuperAdmin();
