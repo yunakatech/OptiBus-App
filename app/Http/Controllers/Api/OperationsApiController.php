@@ -35,9 +35,14 @@ class OperationsApiController extends Controller
     {
         $routeName = trim((string) $request->query('route_name', ''));
 
+        $select = ['s.id', 's.rute', 's.origin', 's.destination', 's.jam', 's.harga'];
+        $select[] = Schema::hasColumn('segments', 'jam_pickups')
+            ? 's.jam_pickups'
+            : DB::raw('NULL as jam_pickups');
+
         $query = DB::table('segments as s')
             ->leftJoin('routes as r', 's.route_id', '=', 'r.id')
-            ->select(['s.id', 's.rute', 's.origin', 's.destination', 's.jam', 's.harga']);
+            ->select($select);
         if (Schema::hasColumn('segments', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 's.tenant_id');
         }
@@ -54,6 +59,10 @@ class OperationsApiController extends Controller
                 $row->rute ?? '',
             );
             $row->jam = SegmentName::jam($row->jam ?? null);
+            $row->jam_pickups = SegmentName::jamList(
+                $row->jam_pickups ?? null,
+                $row->jam ?? null,
+            );
 
             return $row;
         })->values();

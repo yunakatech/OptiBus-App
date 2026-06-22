@@ -854,6 +854,9 @@ class AdminOpsApiController extends Controller
                 's.origin',
                 's.destination',
                 's.jam',
+                Schema::hasColumn('segments', 'jam_pickups')
+                    ? 's.jam_pickups'
+                    : DB::raw('NULL as jam_pickups'),
                 's.harga',
                 DB::raw('r.name as route_name'),
             ])
@@ -883,6 +886,10 @@ class AdminOpsApiController extends Controller
                     $row->rute ?? '',
                 );
                 $row->jam = SegmentName::jam($row->jam ?? null);
+                $row->jam_pickups = SegmentName::jamList(
+                    $row->jam_pickups ?? null,
+                    $row->jam ?? null,
+                );
 
                 return $row;
             })->values();
@@ -899,6 +906,10 @@ class AdminOpsApiController extends Controller
                 $row->rute ?? '',
             );
             $row->jam = SegmentName::jam($row->jam ?? null);
+            $row->jam_pickups = SegmentName::jamList(
+                $row->jam_pickups ?? null,
+                $row->jam ?? null,
+            );
 
             return $row;
         })->values();
@@ -917,7 +928,9 @@ class AdminOpsApiController extends Controller
             'rute' => ['nullable', 'string', 'max:120'],
             'origin' => ['nullable', 'string', 'max:120'],
             'destination' => ['nullable', 'string', 'max:120'],
-            'jam' => ['required', 'regex:/^\d{2}:\d{2}$/'],
+            'jam' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'jam_pickups' => ['nullable', 'array', 'min:1'],
+            'jam_pickups.*' => ['required', 'regex:/^\d{2}:\d{2}$/'],
             'harga' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -940,14 +953,27 @@ class AdminOpsApiController extends Controller
             $data['rute'] ?? '',
         );
 
+        $jamPickups = SegmentName::jamList(
+            $data['jam_pickups'] ?? null,
+            $data['jam'] ?? null,
+        );
+
+        if ($jamPickups === []) {
+            return $this->error('Minimal 1 jam pickup wajib diisi.', 422);
+        }
+
         $payload = [
             'route_id' => (int) $data['route_id'],
             'rute' => $segmentName !== '' ? $segmentName : trim((string) ($data['rute'] ?? '')),
             'origin' => $this->nullable($data['origin'] ?? null),
             'destination' => $this->nullable($data['destination'] ?? null),
-            'jam' => SegmentName::jam($data['jam']).':00',
+            'jam' => SegmentName::jam($jamPickups[0]).':00',
             'harga' => (float) $data['harga'],
         ];
+
+        if (Schema::hasColumn('segments', 'jam_pickups')) {
+            $payload['jam_pickups'] = json_encode($jamPickups);
+        }
 
         if ($id > 0) {
             $segmentUpdate = DB::table('segments')->where('id', $id);
