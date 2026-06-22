@@ -910,8 +910,7 @@
     let reportRouteId = $state(0);
     let scheduleTimeInput = $state<HTMLInputElement | null>(null);
     let scheduleTimePicker: FlatpickrInstance | null = null;
-    let segmentTimeInput = $state<HTMLInputElement | null>(null);
-    let segmentTimePicker: FlatpickrInstance | null = null;
+    let segmentTimePickers: FlatpickrInstance[] = [];
     let reportFromInput = $state<HTMLInputElement | null>(null);
     let reportToInput = $state<HTMLInputElement | null>(null);
     let reportFromPicker: FlatpickrInstance | null = null;
@@ -2294,8 +2293,10 @@
     };
 
     const destroySegmentTimePicker = () => {
-        segmentTimePicker?.destroy();
-        segmentTimePicker = null;
+        for (const picker of segmentTimePickers) {
+            picker.destroy();
+        }
+        segmentTimePickers = [];
     };
 
     const destroyReportPickers = () => {
@@ -2336,29 +2337,36 @@
     const initSegmentTimePicker = async () => {
         if (
             typeof window === 'undefined' ||
-            !segmentTimeInput ||
-            segmentTimePicker
+            segmentTimePickers.length > 0
         ) {
             return;
         }
 
         const flatpickr = await loadFlatpickr();
 
-        if (!segmentTimeInput || segmentTimePicker) {
+        const inputs = Array.from(
+            document.querySelectorAll<HTMLInputElement>(
+                'input[data-segment-time="true"]',
+            ),
+        );
+
+        if (inputs.length === 0 || segmentTimePickers.length > 0) {
             return;
         }
 
-        segmentTimePicker = flatpickr(segmentTimeInput, {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: 'H:i',
-            time_24hr: true,
-            disableMobile: true,
-            defaultDate: segmentForm.jam || '08:00',
-            onChange: (_selectedDates, dateStr) => {
-                segmentForm.jam = dateStr || '08:00';
-            },
-        });
+        segmentTimePickers = inputs.map((input) =>
+            flatpickr(input, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: 'H:i',
+                time_24hr: true,
+                disableMobile: true,
+                defaultDate: segmentForm.jam || '08:00',
+                onChange: (_selectedDates, dateStr) => {
+                    segmentForm.jam = dateStr || '08:00';
+                },
+            }),
+        );
     };
 
     const initReportPickers = async () => {
@@ -4848,6 +4856,24 @@
     });
 
     $effect(() => {
+        const isSegmentFormActive =
+            activeTab === 'segments' && activeMode === 'form';
+
+        if (!isSegmentFormActive) {
+            destroySegmentTimePicker();
+
+            return;
+        }
+
+        void initSegmentTimePicker().then(() => {
+            const jam = untrack(() => segmentForm.jam);
+            for (const picker of segmentTimePickers) {
+                picker.setDate(jam || '08:00', false, 'H:i');
+            }
+        });
+    });
+
+    $effect(() => {
         const isReportTabActive = activeTab === 'reports';
         const reportPanelLoaded = ReportsPanelComponent;
         const fromInput = reportFromInput;
@@ -4938,6 +4964,7 @@
             clearTimeout(armadaTemplateBlurTimer);
         }
         destroyScheduleTimePicker();
+        destroySegmentTimePicker();
         destroyReportPickers();
     });
 </script>
@@ -5317,16 +5344,20 @@
                                                     {#each rowSegments as segment (segment.id)}
                                                         <article class="rounded-2xl border border-border/70 bg-card/95 p-3 shadow-sm">
                                                             <div class="flex items-start justify-between gap-3">
-                                                                <div class="min-w-0">
-                                                                    <p class="truncate text-sm font-semibold text-foreground">
-                                                                        {segment.rute}
-                                                                    </p>
-                                                                    <p class="mt-0.5 text-xs text-muted-foreground">
-                                                                        {segment.origin ?? 'Origin belum diatur'}
-                                                                        ?
-                                                                        {segment.destination ?? 'Destination belum diatur'}
-                                                                    </p>
-                                                                </div>
+                                                            <div class="min-w-0">
+                                                                <p class="truncate text-sm font-semibold text-foreground">
+                                                                    {segment.rute}
+                                                                </p>
+                                                                <p class="mt-0.5 text-xs text-muted-foreground">
+                                                                    {segment.origin ?? 'Origin belum diatur'}
+                                                                    ?
+                                                                    {segment.destination ?? 'Destination belum diatur'}
+                                                                </p>
+                                                                <p class="mt-0.5 text-[11px] text-muted-foreground">
+                                                                    Jam:
+                                                                    {segmentJamLabel(segment.jam) || '-'}
+                                                                </p>
+                                                            </div>
                                                                 {#if canWriteTab('segments')}
                                                                     <DropdownMenu>
                                                                         <DropdownMenuTrigger asChild>
@@ -5398,10 +5429,6 @@
                                                         type="hidden"
                                                         bind:value={segmentForm.route_id}
                                                     />
-                                                    <input
-                                                        type="hidden"
-                                                        bind:value={segmentForm.rute}
-                                                    />
                                                     <div class="grid gap-3 md:grid-cols-3">
                                                         <label class="space-y-1.5">
                                                             <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -5410,6 +5437,13 @@
                                                             <Input
                                                                 placeholder="Origin"
                                                                 bind:value={segmentForm.origin}
+                                                                required
+                                                                oninput={(event) =>
+                                                                    updateSegmentOrigin(
+                                                                        (
+                                                                            event.currentTarget as HTMLInputElement
+                                                                        ).value,
+                                                                    )}
                                                             />
                                                         </label>
                                                         <label class="space-y-1.5">
@@ -5419,6 +5453,13 @@
                                                             <Input
                                                                 placeholder="Destination"
                                                                 bind:value={segmentForm.destination}
+                                                                required
+                                                                oninput={(event) =>
+                                                                    updateSegmentDestination(
+                                                                        (
+                                                                            event.currentTarget as HTMLInputElement
+                                                                        ).value,
+                                                                    )}
                                                             />
                                                         </label>
                                                         <label class="space-y-1.5">
@@ -5441,9 +5482,22 @@
                                                                         );
                                                                 }}
                                                                 required
-                                                            />
+                                                                />
                                                         </label>
                                                     </div>
+                                                    <label class="space-y-1.5">
+                                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Jam Segment
+                                                        </span>
+                                                        <input
+                                                            data-segment-time="true"
+                                                            type="text"
+                                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                            placeholder="Jam segment"
+                                                            bind:value={segmentForm.jam}
+                                                            required
+                                                        />
+                                                    </label>
                                                     <div class="flex flex-wrap gap-2 border-t border-border/70 pt-3">
                                                         <LoadingButton
                                                             type="submit"
@@ -5608,6 +5662,10 @@
                                                                     ?
                                                                     {segment.destination ?? 'Destination belum diatur'}
                                                                 </p>
+                                                                <p class="mt-0.5 text-[11px] text-muted-foreground">
+                                                                    Jam:
+                                                                    {segmentJamLabel(segment.jam) || '-'}
+                                                                </p>
                                                             </div>
                                                             {#if canWriteTab('segments')}
                                                                 <DropdownMenu>
@@ -5685,10 +5743,6 @@
                                                     type="hidden"
                                                     bind:value={segmentForm.route_id}
                                                 />
-                                                <input
-                                                    type="hidden"
-                                                    bind:value={segmentForm.rute}
-                                                />
                                                 <div class="grid gap-3 md:grid-cols-3">
                                                     <label class="space-y-1.5">
                                                         <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -5697,6 +5751,13 @@
                                                         <Input
                                                             placeholder="Origin"
                                                             bind:value={segmentForm.origin}
+                                                            required
+                                                            oninput={(event) =>
+                                                                updateSegmentOrigin(
+                                                                    (
+                                                                        event.currentTarget as HTMLInputElement
+                                                                    ).value,
+                                                                )}
                                                         />
                                                     </label>
                                                     <label class="space-y-1.5">
@@ -5706,6 +5767,13 @@
                                                         <Input
                                                             placeholder="Destination"
                                                             bind:value={segmentForm.destination}
+                                                            required
+                                                            oninput={(event) =>
+                                                                updateSegmentDestination(
+                                                                    (
+                                                                        event.currentTarget as HTMLInputElement
+                                                                    ).value,
+                                                                )}
                                                         />
                                                     </label>
                                                     <label class="space-y-1.5">
@@ -5728,9 +5796,22 @@
                                                                     );
                                                             }}
                                                             required
-                                                        />
+                                                            />
                                                     </label>
                                                 </div>
+                                                <label class="space-y-1.5">
+                                                    <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                        Jam Segment
+                                                    </span>
+                                                    <input
+                                                        data-segment-time="true"
+                                                        type="text"
+                                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                        placeholder="Jam segment"
+                                                        bind:value={segmentForm.jam}
+                                                        required
+                                                    />
+                                                </label>
                                                 <div class="flex flex-wrap gap-2 border-t border-border/70 pt-3">
                                                     <LoadingButton
                                                         type="submit"
@@ -7433,22 +7514,18 @@
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Nama Segment</span
-                                        >
-                                        <Input
-                                            placeholder="Nama segment"
-                                            bind:value={segmentForm.rute}
-                                            required
-                                        />
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                                             >Origin</span
                                         >
                                         <Input
                                             placeholder="Origin"
                                             bind:value={segmentForm.origin}
+                                            required
+                                            oninput={(event) =>
+                                                updateSegmentOrigin(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).value,
+                                                )}
                                         />
                                     </label>
                                     <label class="space-y-1.5">
@@ -7459,6 +7536,27 @@
                                         <Input
                                             placeholder="Destination"
                                             bind:value={segmentForm.destination}
+                                            required
+                                            oninput={(event) =>
+                                                updateSegmentDestination(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).value,
+                                                )}
+                                        />
+                                    </label>
+                                    <label class="space-y-1.5">
+                                        <span
+                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >Jam Segment</span
+                                        >
+                                        <input
+                                            data-segment-time="true"
+                                            type="text"
+                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                            placeholder="Jam segment"
+                                            bind:value={segmentForm.jam}
+                                            required
                                         />
                                     </label>
                                     <label class="space-y-1.5">
@@ -7488,9 +7586,8 @@
                                 <div
                                     class="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-xs text-muted-foreground"
                                 >
-                                    Segment ini akan muncul sebagai turunan dari
-                                    rute induk yang sedang dipilih dan dipakai
-                                    untuk referensi harga perjalanan parsial.
+                                    Nama segment akan otomatis terbentuk dari
+                                    origin dan destination.
                                 </div>
                                 <div
                                     class="flex flex-wrap gap-2 border-t border-border/70 pt-4"
@@ -10785,4 +10882,26 @@
                             Prev
                         </Button>
                         <span
-                            class="rounded-full border border-
+                            class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground"
+                        >
+                            {settingsMeta.page} / {settingsMeta.last_page}
+                        </span>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={settingsMeta.page >=
+                                settingsMeta.last_page || busy}
+                            onclick={() =>
+                                reloadSettingsWithInertia(
+                                    settingsMeta.page + 1,
+                                )}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            {/if}
+        </CardContent>
+    </Card>
+</div>

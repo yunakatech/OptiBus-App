@@ -91,6 +91,9 @@ class BookingApiTest extends TestCase
         $segmentId = DB::table('segments')->insertGetId([
             'route_id' => $routeId,
             'rute' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '09:30:00',
             'harga' => 150000,
             'created_at' => now(),
         ]);
@@ -199,6 +202,60 @@ class BookingApiTest extends TestCase
             'rute' => 'Pinrang => Makassar',
             'seat' => '3',
         ]);
+    }
+
+    public function test_booked_seats_detail_includes_segment_time_and_display_name(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $segmentId = DB::table('segments')->insertGetId([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - PAREPARE',
+            'origin' => 'PINRANG',
+            'destination' => 'PAREPARE',
+            'jam' => '07:30:00',
+            'harga' => 75000,
+            'created_at' => now(),
+        ]);
+
+        DB::table('bookings')->insert([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => 'A1',
+            'name' => 'RIDWAN',
+            'phone' => '081234567890',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'segment_id' => $segmentId,
+            'price' => 75000,
+            'discount' => 0,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->getJson(route('api.bookings.seats-detail', [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00',
+            'unit' => 1,
+        ]));
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('details.A1.segment_name', 'PINRANG - PAREPARE')
+            ->assertJsonPath('details.A1.segment_jam', '07:30');
     }
 
     public function test_payment_only_update_does_not_require_complete_booking_fields(): void

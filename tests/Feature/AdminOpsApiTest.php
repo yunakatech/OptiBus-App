@@ -444,10 +444,9 @@ class AdminOpsApiTest extends TestCase
 
         $segmentCreate = $this->postJson(route('api.admin.segments.save'), [
             'route_id' => $routeId,
-            'rute' => 'PINRANG - PAREPARE',
             'origin' => 'PINRANG',
             'destination' => 'PAREPARE',
-            'pickup_time' => '07:30',
+            'jam' => '07:30',
             'harga' => 75000,
         ])->assertCreated()->json();
 
@@ -456,6 +455,10 @@ class AdminOpsApiTest extends TestCase
         $segments = $this->getJson(route('api.admin.segments.index'))
             ->assertOk()
             ->json('segments');
+        $segmentRow = collect($segments)->firstWhere('id', $segmentId);
+        $this->assertTrue(is_array($segmentRow));
+        $this->assertSame('PINRANG - PAREPARE', (string) ($segmentRow['rute'] ?? ''));
+        $this->assertSame('07:30', (string) ($segmentRow['jam'] ?? ''));
         $this->assertTrue(
             collect($segments)->contains(
                 fn (array $row) => (int) ($row['id'] ?? 0) === $segmentId,

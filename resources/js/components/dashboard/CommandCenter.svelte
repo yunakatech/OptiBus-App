@@ -171,7 +171,7 @@
         </div>
     </div>
 
-    <div class="relative mt-3 min-h-0 w-full flex-1">
+    <div class="relative mt-3 min-h-[200px] w-full flex-1 sm:min-h-0">
         <canvas bind:this={chartCanvas}></canvas>
     </div>
 </div>
