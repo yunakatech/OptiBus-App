@@ -37,6 +37,14 @@ class BookingApiTest extends TestCase
             'created_at' => now(),
         ]);
 
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $this->defaultTenantId(),
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
         DB::table('schedules')->insert([
             'rute' => 'PINRANG - MAKASSAR',
             'dow' => $dow,
@@ -44,6 +52,17 @@ class BookingApiTest extends TestCase
             'units' => 1,
             'unit_label' => 'Reguler',
             'unit_id' => $unitId,
+            'created_at' => now(),
+        ]);
+
+        $segmentId = DB::table('segments')->insertGetId([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '09:00:00',
+            'jam_pickups' => json_encode(['09:00', '09:30']),
+            'harga' => 150000,
             'created_at' => now(),
         ]);
 
@@ -56,6 +75,8 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonCount(1, 'schedules')
             ->assertJsonPath('schedules.0.jam', '09:00')
+            ->assertJsonPath('schedules.0.segment_matches.0.id', $segmentId)
+            ->assertJsonPath('schedules.0.segment_matches.0.jam_pickups.0', '09:00')
             ->assertJsonPath('schedules.0.seats', 12)
             ->assertJsonPath('schedules.0.unit_options.0.unit_no', 1)
             ->assertJsonPath('schedules.0.unit_options.0.label', 'Reguler');

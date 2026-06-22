@@ -80,8 +80,8 @@ class BookingApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
-        $cacheKey = 'booking:schedules:v2:'.PoolScope::cacheKey().':'.md5($rute.'|'.$date);
-        $rows = Cache::remember($cacheKey, now()->addSeconds(30), function () use ($rute, $date) {
+        $cacheKey = 'booking:schedules:v3:'.PoolScope::cacheKey().':'.md5($rute.'|'.$date);
+        $data = Cache::remember($cacheKey, now()->addSeconds(30), function () use ($rute, $date) {
             $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
             $select = [
                 's.id',
@@ -113,8 +113,54 @@ class BookingApiController extends Controller
                 's.rute',
             );
 
-            return $query->get($select);
+            $rows = $query->get($select);
+
+            $segmentSelect = [
+                's.id',
+                's.rute',
+                's.origin',
+                's.destination',
+                's.jam',
+                's.harga',
+            ];
+            $segmentSelect[] = Schema::hasColumn('segments', 'jam_pickups')
+                ? 's.jam_pickups'
+                : DB::raw('NULL as jam_pickups');
+
+            $segmentQuery = DB::table('segments as s')
+                ->where('s.rute', $rute)
+                ->orderBy('s.rute')
+                ->orderBy('s.jam');
+            if (Schema::hasColumn('segments', 'tenant_id')) {
+                PoolScope::applyTenantScope($segmentQuery, 's.tenant_id');
+            }
+            PoolScope::applyRouteScope($segmentQuery, 's.route_id', 's.rute');
+
+            $segments = $segmentQuery->get($segmentSelect)->map(function ($row) {
+                return [
+                    'id' => (int) ($row->id ?? 0),
+                    'rute' => SegmentName::display(
+                        $row->origin ?? null,
+                        $row->destination ?? null,
+                        $row->rute ?? '',
+                    ),
+                    'jam' => SegmentName::jam($row->jam ?? null),
+                    'jam_pickups' => SegmentName::jamList(
+                        $row->jam_pickups ?? null,
+                        $row->jam ?? null,
+                    ),
+                    'harga' => (float) ($row->harga ?? 0),
+                ];
+            })->values();
+
+            return [
+                'schedules' => $rows,
+                'segments' => $segments,
+            ];
         });
+
+        $segments = collect($data['segments'] ?? []);
+        $rows = collect($data['schedules'] ?? []);
 
         $optionsBySchedule = [];
         $unitIds = $rows
@@ -168,7 +214,7 @@ class BookingApiController extends Controller
                 ->all();
         }
 
-        $schedules = $rows->map(function ($row) use ($optionsBySchedule, $unitMap) {
+        $schedules = $rows->map(function ($row) use ($optionsBySchedule, $unitMap, $segments, $rute) {
             $scheduleId = (int) ($row->id ?? 0);
             $baseUnitId = (int) ($row->unit_id ?? 0);
             $baseUnit = $baseUnitId > 0 ? ($unitMap[$baseUnitId] ?? null) : null;
@@ -239,8 +285,16 @@ class BookingApiController extends Controller
                 $defaultNopol = strtoupper(trim((string) ($baseUnit->nopol ?? '')));
             }
 
+            $scheduleJam = substr((string) ($row->jam ?? ''), 0, 5);
+            $segmentMatches = $segments->filter(function (array $segment) use ($scheduleJam): bool {
+                $jamPickups = $segment['jam_pickups'] ?? [];
+
+                return in_array($scheduleJam, $jamPickups, true)
+                    || (string) ($segment['jam'] ?? '') === $scheduleJam;
+            })->values()->all();
+
             return [
-                'jam' => substr((string) $row->jam, 0, 5),
+                'jam' => $scheduleJam,
                 'units' => (int) ($row->units ?? 1),
                 'seats' => $defaultSeats,
                 'layout' => $defaultLayout,
@@ -249,6 +303,7 @@ class BookingApiController extends Controller
                 'unit_label' => (string) ($row->unit_label ?? ''),
                 'bop' => (float) ($row->bop ?? 0),
                 'unit_options' => $unitOptions,
+                'segment_matches' => $segmentMatches,
             ];
         })->values()->all();
 

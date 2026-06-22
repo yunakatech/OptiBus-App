@@ -459,12 +459,12 @@
             {/if}
         </div>
     {:else}
-        <Sheet bind:open={open}>
+        <div class={cn('relative w-full', className)}>
             <button
                 type="button"
                 class={cn(
-                    'flex min-h-11 w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    className,
+                    'flex min-h-[44px] w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:outline-none',
+                    open ? 'border-primary/35 bg-slate-50' : '',
                 )}
                 aria-haspopup="dialog"
                 aria-expanded={open}
@@ -489,92 +489,74 @@
             </button>
 
             {#if open}
-                <SheetContent
-                    side="bottom"
-                    class="max-h-[85svh] rounded-t-2xl border-t border-sidebar-border/70 p-0"
+                <!-- Backdrop Modal -->
+                <div class="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm transition-all" onclick={close} aria-hidden="true"></div>
+                
+                <!-- Popup Card Center -->
+                <div 
+                    class="fixed left-1/2 top-1/2 z-[100] flex w-[calc(100vw-2.5rem)] max-w-[320px] -translate-x-1/2 -translate-y-1/2 flex-col rounded-3xl border border-border/50 bg-background p-2 shadow-2xl"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`${label} switcher`}
                 >
-                    <SheetHeader class="border-b border-sidebar-border/70 px-4 py-4 text-left">
-                        <SheetTitle class="text-base">{label}</SheetTitle>
-                        <p class="truncate text-sm text-muted-foreground">{activeLabel}</p>
-                    </SheetHeader>
+                    <div class="mb-1 flex items-center justify-between px-3 pt-3">
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pilih {label}</p>
+                            <p class="truncate text-sm font-bold text-foreground">{activeLabel}</p>
+                        </div>
+                        <button onclick={close} class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100/80 text-muted-foreground transition hover:bg-slate-200">
+                            <X class="size-4" />
+                        </button>
+                    </div>
 
-                    <div class="flex max-h-[calc(85svh-6.5rem)] flex-col gap-3 px-4 py-4">
+                    <div class="flex max-h-[65svh] flex-col px-1 pb-1 pt-2">
                         {#if showSearch}
-                            <div class="flex items-center gap-2 rounded-xl border border-input bg-background px-3">
+                            <div class="mb-3 flex items-center gap-2 rounded-xl border border-input bg-slate-50/50 px-3 mx-2">
                                 <Search class="size-4 shrink-0 text-muted-foreground" />
                                 <input
                                     bind:this={searchInput}
                                     bind:value={searchQuery}
                                     type="search"
-                                    class="h-10 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                                    class="h-[38px] w-full min-w-0 bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
                                     placeholder={`Cari ${kind === 'tenant' ? 'tenant' : 'pool'}...`}
-                                    aria-label={`Cari ${label.toLowerCase()}`}
                                     onkeydown={handleSearchKeydown}
                                 />
                             </div>
                         {/if}
 
                         <div
-                            class="max-h-60 overflow-y-auto pr-1 scrollbar-thin"
+                            class="flex-1 overflow-y-auto px-2 pb-2 scrollbar-thin"
                             role="listbox"
-                            tabindex="-1"
-                            aria-label={`${label} options`}
-                            onkeydown={(event) => {
-                                if (event.key === 'Escape') {
-                                    close();
-                                }
-                            }}
                         >
                             <button
                                 type="button"
                                 class={cn(
-                                    'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 active:bg-slate-100 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                                    activeId === 0 ? 'bg-slate-50 font-semibold text-foreground' : 'text-foreground',
+                                    'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50',
+                                    activeId === 0 ? 'bg-primary/5 font-bold text-primary' : 'text-foreground font-medium',
                                 )}
-                                role="option"
-                                aria-selected={activeId === 0}
-                                disabled={pendingId !== null}
-                                bind:this={optionButtons[0]}
                                 onclick={() => void switchContext(0)}
-                                onkeydown={(event) => handleOptionKeydown(event, 0, 0)}
                             >
-                                <Check
-                                    class={cn(
-                                        'size-4 shrink-0',
-                                        activeId === 0 ? 'opacity-100 text-primary' : 'opacity-0',
-                                    )}
-                                />
+                                <div class={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full", activeId === 0 ? "bg-primary text-white" : "bg-slate-100 text-slate-400")}>
+                                    <Check class="size-3.5" />
+                                </div>
                                 <span class="min-w-0 flex-1 truncate">{allLabel}</span>
-                                {#if allMeta}
-                                    <span class="shrink-0 text-[11px] text-muted-foreground">
-                                        {allMeta}
-                                    </span>
-                                {/if}
                             </button>
 
-                            {#each filteredOptions as item, index (item.id)}
+                            {#each filteredOptions as item (item.id)}
                                 <button
                                     type="button"
                                     class={cn(
-                                        'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 active:bg-slate-100 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                                        activeId === item.id ? 'bg-slate-50 font-semibold text-foreground' : 'text-foreground',
+                                        'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50',
+                                        activeId === item.id ? 'bg-primary/5 font-bold text-primary' : 'text-foreground font-medium',
                                     )}
-                                    role="option"
-                                    aria-selected={activeId === item.id}
-                                    disabled={pendingId !== null}
-                                    bind:this={optionButtons[index + 1]}
                                     onclick={() => void switchContext(item.id)}
-                                    onkeydown={(event) => handleOptionKeydown(event, index + 1, item.id)}
                                 >
-                                    <Check
-                                        class={cn(
-                                            'size-4 shrink-0',
-                                            activeId === item.id ? 'opacity-100 text-primary' : 'opacity-0',
-                                        )}
-                                    />
+                                    <div class={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full", activeId === item.id ? "bg-primary text-white" : "bg-slate-100 text-slate-400")}>
+                                        <Check class="size-3.5" />
+                                    </div>
                                     <span class="min-w-0 flex-1 truncate">{item.label}</span>
                                     {#if item.meta}
-                                        <span class="shrink-0 text-[11px] text-muted-foreground">
+                                        <span class="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
                                             {item.meta}
                                         </span>
                                     {/if}
@@ -582,18 +564,18 @@
                             {/each}
 
                             {#if filteredOptions.length === 0}
-                                <div class="rounded-xl border border-dashed border-border/70 px-3 py-3 text-sm text-muted-foreground">
-                                    Tidak ada pilihan yang cocok.
+                                <div class="rounded-xl border border-dashed border-border/70 px-3 py-4 text-center text-[12px] text-muted-foreground mt-2">
+                                    Tidak ada data {label.toLowerCase()} yang sesuai.
                                 </div>
                             {/if}
                         </div>
 
                         {#if errorMessage}
-                            <p class="text-xs text-destructive">{errorMessage}</p>
+                            <p class="mx-3 mt-1 text-[11px] font-medium text-destructive">{errorMessage}</p>
                         {/if}
                     </div>
-                </SheetContent>
+                </div>
             {/if}
-        </Sheet>
+        </div>
     {/if}
 {/if}
