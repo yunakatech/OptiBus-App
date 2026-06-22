@@ -5417,25 +5417,7 @@
                 </CardHeader>
             {/if}
             <CardContent class="space-y-5 p-4 md:p-5">
-                <div
-                    class="flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 shadow-sm dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
-                >
-                    <div>
-                        <p class="font-semibold">
-                            Pool aktif: {poolContextName}
-                        </p>
-                        <p
-                            class="mt-0.5 text-[11px] leading-snug text-cyan-800/80 dark:text-cyan-200/75"
-                        >
-                            {poolContextDescription}
-                        </p>
-                    </div>
-                    <span
-                        class="rounded-full border border-cyan-300/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-900/35 dark:text-cyan-100"
-                    >
-                        {poolContextBadge}
-                    </span>
-                </div>
+
                 <div class="space-y-3 md:hidden">
                     <div
                         class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
@@ -6001,151 +5983,172 @@
                                 Tambah Booking Cepat
                             </h3>
                             <div class="grid gap-3 md:grid-cols-2">
-                                <div class="relative md:col-span-2">
-                                    <Input
-                                        placeholder="Cari customer lama (nama / telepon)"
-                                        class="h-11 rounded-xl !pl-11 md:!pl-11"
-                                        bind:value={customerLookupQuery}
-                                        oninput={onCustomerLookupInput}
-                                        onfocus={() =>
-                                            (customerSuggestOpen =
-                                                customerSuggestions.length > 0)}
-                                        onblur={onCustomerLookupBlur}
-                                    />
-                                    <Search
-                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                    />
-                                    {#if loadingCustomerLookup}
-                                        <p
-                                            class="mt-1 text-xs text-muted-foreground"
-                                        >
-                                            Mencari customer...
-                                        </p>
-                                    {:else if customerLookupMessage}
-                                        <p
-                                            class="mt-1 text-xs text-muted-foreground"
-                                            role="status"
-                                        >
-                                            {customerLookupMessage}
-                                        </p>
-                                    {/if}
-                                    {#if customerSuggestOpen}
-                                        <div
-                                            class="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background p-1 shadow-lg"
-                                        >
-                                            {#each customerSuggestions as item, idx (`cust-suggest-${idx}-${item.phone}`)}
-                                                <button
-                                                    type="button"
-                                                    class="flex w-full flex-col items-start rounded px-2 py-2 text-left hover:bg-muted"
-                                                    onmousedown={() =>
-                                                        applyCustomerLookup(
-                                                            item,
-                                                        )}
-                                                >
-                                                    <span
-                                                        class="text-sm font-medium"
-                                                        >{item.name}</span
+                                <div class="md:col-span-2">
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Cari Database Customer</label>
+                                    <div class="relative">
+                                        <Input
+                                            placeholder="Cari customer lama (nama / telepon)"
+                                            class="h-11 rounded-xl !pl-10"
+                                            bind:value={customerLookupQuery}
+                                            oninput={onCustomerLookupInput}
+                                            onfocus={() =>
+                                                (customerSuggestOpen =
+                                                    customerSuggestions.length > 0)}
+                                            onblur={onCustomerLookupBlur}
+                                        />
+                                        <Search
+                                            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        />
+                                        {#if loadingCustomerLookup}
+                                            <p
+                                                class="mt-1 text-xs text-muted-foreground"
+                                            >
+                                                Mencari customer...
+                                            </p>
+                                        {:else if customerLookupMessage}
+                                            <p
+                                                class="mt-1 text-xs text-muted-foreground"
+                                                role="status"
+                                            >
+                                                {customerLookupMessage}
+                                            </p>
+                                        {/if}
+                                        {#if customerSuggestOpen}
+                                            <div
+                                                class="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background p-1 shadow-lg"
+                                            >
+                                                {#each customerSuggestions as item, idx (`cust-suggest-${idx}-${item.phone}`)}
+                                                    <button
+                                                        type="button"
+                                                        class="flex w-full flex-col items-start rounded px-2 py-2 text-left hover:bg-muted"
+                                                        onmousedown={() =>
+                                                            applyCustomerLookup(
+                                                                item,
+                                                            )}
                                                     >
-                                                    <span
-                                                        class="text-xs text-muted-foreground"
-                                                        >{item.phone}
-                                                        {item.pickup_point
-                                                            ? `- ${item.pickup_point}`
-                                                            : ''}</span
-                                                    >
-                                                </button>
-                                            {/each}
-                                        </div>
-                                    {/if}
+                                                        <span
+                                                            class="text-sm font-medium"
+                                                            >{item.name}</span
+                                                        >
+                                                        <span
+                                                            class="text-xs text-muted-foreground"
+                                                            >{item.phone}
+                                                            {item.pickup_point
+                                                                ? `- ${item.pickup_point}`
+                                                                : ''}</span
+                                                        >
+                                                    </button>
+                                                {/each}
+                                            </div>
+                                        {/if}
+                                    </div>
                                 </div>
-                                <div class="relative">
-                                    <Input
-                                        class="h-11 rounded-xl !pl-11 md:!pl-11"
-                                        placeholder="Nama"
-                                        bind:value={formName}
-                                        oninput={onFormNameInput}
-                                    />
-                                    <UserRound
-                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                    />
+                                <div>
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Nama Penumpang</label>
+                                    <div class="relative">
+                                        <Input
+                                            class="h-11 rounded-xl !pl-10"
+                                            placeholder="Cth: BUDI"
+                                            bind:value={formName}
+                                            oninput={onFormNameInput}
+                                        />
+                                        <UserRound
+                                            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        />
+                                    </div>
                                 </div>
-                                <div class="relative">
-                                    <Input
-                                        class="h-11 rounded-xl !pl-11 md:!pl-11"
-                                        placeholder="Telepon"
-                                        bind:value={formPhone}
-                                        oninput={onFormPhoneInput}
-                                        onblur={() => void autofillByPhone()}
-                                    />
-                                    <Phone
-                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                    />
+                                <div>
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Telepon</label>
+                                    <div class="relative">
+                                        <Input
+                                            class="h-11 rounded-xl !pl-10"
+                                            placeholder="Cth: 08123456789"
+                                            bind:value={formPhone}
+                                            oninput={onFormPhoneInput}
+                                            onblur={() => void autofillByPhone()}
+                                        />
+                                        <Phone
+                                            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        />
+                                    </div>
                                 </div>
-                                <div class="relative">
-                                    <Input
-                                        class="h-11 rounded-xl !pl-11 md:!pl-11"
-                                        placeholder="Seat (multi: 1,2,3)"
-                                        bind:value={formSeat}
-                                        oninput={syncSelectedSeatsFromInput}
-                                    />
-                                    <Armchair
-                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                    />
+                                <div>
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Pilih Kursi</label>
+                                    <div class="relative">
+                                        <Input
+                                            class="h-11 rounded-xl !pl-10"
+                                            placeholder="Cth: 1, 2, 3"
+                                            bind:value={formSeat}
+                                            oninput={syncSelectedSeatsFromInput}
+                                        />
+                                        <Armchair
+                                            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        />
+                                    </div>
                                 </div>
-                                <select
-                                    class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
-                                    bind:value={formSegmentId}
-                                    disabled={loadingSegments}
-                                >
-                                    <option value={0}
-                                        >{loadingSegments
-                                            ? 'Memuat segment...'
-                                            : 'Pilih segment rute'}</option
+                                <div>
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Segment & Harga</label>
+                                    <select
+                                        class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
+                                        bind:value={formSegmentId}
+                                        disabled={loadingSegments}
                                     >
-                                {#each scheduleSegmentOptions() as segment (`segment-opt-${segment.id}`)}
-                                    <option value={segment.id}>
-                                        {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
-                                            ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
-                                            : ''} (Rp {Number(
-                                            segment.harga,
-                                        ).toLocaleString('id-ID')})
-                                    </option>
-                                {/each}
-                                </select>
-                                <p class="mt-1 text-[11px] text-muted-foreground">
-                                    {scheduleSegmentOptions().length > 0
-                                        ? `Segment yang bisa dipilih untuk jam ini: ${scheduleSegmentOptions().length}`
-                                        : 'Belum ada segment yang cocok untuk jam ini.'}
-                                </p>
-                                <select
-                                    class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
-                                    bind:value={formPayment}
-                                >
-                                    {#each paymentOptions as option (option)}
-                                        <option value={option}>{option}</option>
-                                    {/each}
-                                </select>
-                                <Input
-                                    class="h-11 rounded-xl"
-                                    type="text"
-                                    inputmode="numeric"
-                                    placeholder="Potongan harga"
-                                    value={formatCurrencyInput(formDiscount)}
-                                    oninput={(event) => {
-                                        formDiscount = parseCurrencyInput(
-                                            (
-                                                event.currentTarget as HTMLInputElement
-                                            ).value,
-                                        );
-                                    }}
-                                />
-                                <Input
-                                    class="h-11 rounded-xl md:col-span-2"
-                                    placeholder="Pickup point"
-                                    bind:value={formPickupPoint}
-                                />
-                                <Input
-                                    class="h-11 rounded-xl md:col-span-2"
+                                        <option value={0}
+                                            >{loadingSegments
+                                                ? 'Memuat segment...'
+                                                : 'Pilih segment rute'}
+                                        </option>
+                                        {#each scheduleSegmentOptions() as segment (`segment-opt-${segment.id}`)}
+                                            <option value={segment.id}>
+                                                {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
+                                                    ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
+                                                    : ''} (Rp {Number(
+                                                    segment.harga,
+                                                ).toLocaleString('id-ID')})
+                                            </option>
+                                        {/each}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Status Pembayaran</label>
+                                    <select
+                                        class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
+                                        bind:value={formPayment}
+                                    >
+                                        {#each paymentOptions as option (option)}
+                                            <option value={option}>{option}</option>
+                                        {/each}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Diskon Spesial</label>
+                                    <Input
+                                        class="h-11 rounded-xl"
+                                        type="text"
+                                        inputmode="numeric"
+                                        placeholder="Cth: 10.000"
+                                        value={formatCurrencyInput(formDiscount)}
+                                        oninput={(event) => {
+                                            formDiscount = parseCurrencyInput(
+                                                (
+                                                    event.currentTarget as HTMLInputElement
+                                                ).value,
+                                            );
+                                        }}
+                                    />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Titik Jemput (Pickup Point)</label>
+                                    <Input
+                                        class="h-11 rounded-xl"
+                                        placeholder="Cth: Depan Indomaret"
+                                        bind:value={formPickupPoint}
+                                    />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Catatan Tambahan</label>
+                                    <Input
+                                        class="h-11 rounded-xl"
                                     placeholder="URL Google Map (opsional)"
                                     bind:value={formAddress}
                                 />
@@ -6415,55 +6418,61 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                    Nama
-                                </p>
-                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
-                                    {detailSeat.name || '-'}
-                                </p>
-                            </div>
-                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                    Telepon
-                                </p>
-                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
-                                    {detailSeat.phone || '-'}
-                                </p>
-                            </div>
-                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                    Segment
-                                </p>
-                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
-                                    {detailSeat.segment_name || '-'}
-                                </p>
-                            </div>
-                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                    Jam Segment
-                                </p>
-                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
-                                    {segmentJamLabel(detailSeat.segment_jam) || '-'}
-                                </p>
-                            </div>
-                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
-                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                    Pembayaran
-                                </p>
-                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
-                                    {detailSeat.pembayaran || '-'}
-                                </p>
-                            </div>
-                            <div
-                                class="rounded-xl border bg-muted/20 p-2.5 sm:col-span-2 sm:p-3"
-                            >
-                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
-                                    Pickup Point
-                                </p>
-                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
-                                    {detailSeat.pickup_point || '-'}
-                                </p>
+                            <div class="sm:col-span-2 grid gap-px bg-border/40 border rounded-xl overflow-hidden shadow-sm">
+                                <div class="grid grid-cols-2 gap-px">
+                                    <div class="bg-background p-3">
+                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                            Nama
+                                        </p>
+                                        <p class="break-words text-sm font-semibold">
+                                            {detailSeat.name || '-'}
+                                        </p>
+                                    </div>
+                                    <div class="bg-background p-3">
+                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                            Telepon
+                                        </p>
+                                        <p class="break-words text-sm font-semibold">
+                                            {detailSeat.phone || '-'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-px">
+                                    <div class="bg-background p-3">
+                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                            Segment
+                                        </p>
+                                        <p class="break-words text-sm font-semibold">
+                                            {detailSeat.segment_name || '-'}
+                                        </p>
+                                    </div>
+                                    <div class="bg-background p-3">
+                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                            Jam Segment
+                                        </p>
+                                        <p class="break-words text-sm font-semibold">
+                                            {segmentJamSummary(detailSeat.segment_jam_pickups) || segmentJamLabel(detailSeat.segment_jam) || '-'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-px">
+                                    <div class="bg-background p-3">
+                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                            Pembayaran
+                                        </p>
+                                        <p class="break-words text-sm font-semibold">
+                                            {detailSeat.pembayaran || '-'}
+                                        </p>
+                                    </div>
+                                    <div class="bg-background p-3">
+                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                            Pickup Point
+                                        </p>
+                                        <p class="break-words text-sm font-semibold">
+                                            {detailSeat.pickup_point || '-'}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     {:else}
@@ -6529,11 +6538,6 @@
                                     </option>
                                 {/each}
                             </select>
-                            <p class="mt-1 text-[11px] text-muted-foreground sm:col-span-2">
-                                {scheduleSegmentOptions().length > 0
-                                    ? `Segment yang bisa dipilih untuk jam ini: ${scheduleSegmentOptions().length}`
-                                    : 'Belum ada segment yang cocok untuk jam ini.'}
-                            </p>
                         </div>
                     {/if}
 
@@ -6568,63 +6572,67 @@
                             </Button>
                         </div>
                     {:else}
-                        <div class="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto_auto]">
-                            <Button
-                                type="button"
-                                class="h-10 sm:col-span-1"
-                                onclick={() => void copyCurrentDetail()}
-                            >
-                                <Copy class="mr-1.5 h-3.5 w-3.5" />
-                                Salin Detail
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="h-10 sm:col-span-1"
-                                onclick={addCurrentDetailToRekap}
-                            >
-                                <Plus class="mr-1.5 h-3.5 w-3.5" />
-                                Tambah Rekap
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="h-10"
-                                onclick={startDetailEdit}
-                            >
-                                <Pencil class="mr-1.5 h-3.5 w-3.5" />
-                                Edit
-                            </Button>
-
-                            {#if !isLunasPayment(detailSeat.pembayaran)}
+                        <div class="flex flex-wrap gap-2 justify-end sm:justify-start">
+                            <div class="flex flex-1 sm:flex-none gap-2">
+                                <Button
+                                    type="button"
+                                    class="h-10 flex-1 sm:flex-none whitespace-nowrap"
+                                    onclick={() => void copyCurrentDetail()}
+                                >
+                                    <Copy class="mr-1.5 h-3.5 w-3.5" />
+                                    Salin Detail
+                                </Button>
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    class="h-10 border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                                    onclick={() => void markDetailAsPaid()}
-                                    disabled={markingPaidSeatId === detailSeat.id ||
-                                        cancelingSeatId === detailSeat.id}
+                                    class="h-10 flex-1 sm:flex-none whitespace-nowrap"
+                                    onclick={addCurrentDetailToRekap}
                                 >
-                                    <WalletCards class="mr-1.5 h-3.5 w-3.5" />
-                                    {markingPaidSeatId === detailSeat.id
-                                        ? 'Proses'
-                                        : 'Lunas'}
+                                    <Plus class="mr-1.5 h-3.5 w-3.5" />
+                                    Msk Rekap
                                 </Button>
-                            {/if}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-10 sm:flex-none"
+                                    onclick={startDetailEdit}
+                                    aria-label="Edit detail"
+                                    size="icon"
+                                >
+                                    <Pencil class="h-3.5 w-3.5 text-muted-foreground" />
+                                </Button>
+                            </div>
 
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="h-10 border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30"
-                                onclick={() => void cancelSeat(detailSeat!.id)}
-                                disabled={cancelingSeatId === detailSeat!.id ||
-                                    markingPaidSeatId === detailSeat.id}
-                            >
-                                <X class="mr-1.5 h-3.5 w-3.5" />
-                                {cancelingSeatId === detailSeat.id
-                                    ? 'Proses'
-                                    : 'Cancel'}
-                            </Button>
+                            <div class="flex w-full sm:w-auto gap-2">
+                                {#if !isLunasPayment(detailSeat.pembayaran)}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-10 flex-1 sm:flex-none border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                                        onclick={() => void markDetailAsPaid()}
+                                        disabled={markingPaidSeatId === detailSeat.id ||
+                                            cancelingSeatId === detailSeat.id}
+                                    >
+                                        <WalletCards class="mr-1.5 h-3.5 w-3.5" />
+                                        {markingPaidSeatId === detailSeat.id
+                                            ? 'Loading'
+                                            : 'Tandai Lunas'}
+                                    </Button>
+                                {/if}
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-10 sm:flex-none border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 {isLunasPayment(detailSeat.pembayaran) ? 'flex-1 sm:flex-none' : 'px-3'}"
+                                    onclick={() => void cancelSeat(detailSeat!.id)}
+                                    disabled={cancelingSeatId === detailSeat!.id ||
+                                        markingPaidSeatId === detailSeat.id}
+                                    aria-label="Cancel seat"
+                                >
+                                    <X class="h-3.5 w-3.5 {isLunasPayment(detailSeat.pembayaran) ? 'mr-1.5' : ''}" />
+                                    {isLunasPayment(detailSeat.pembayaran) ? 'Cancel Kursi' : ''}
+                                </Button>
+                            </div>
                         </div>
                     {/if}
                 </div>
@@ -8488,27 +8496,7 @@
                         Preview data keberangkatan terbaru dari tabel `bookings`.
                     </CardDescription>
                 {/if}
-                {#if listOnly}
-                    <div
-                        class="mt-3 flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
-                    >
-                        <div>
-                            <p class="font-semibold">
-                                Pool aktif: {poolContextName}
-                            </p>
-                            <p
-                                class="mt-0.5 text-[11px] leading-snug text-cyan-800/80 dark:text-cyan-200/75"
-                            >
-                                {poolContextDescription}
-                            </p>
-                        </div>
-                        <span
-                            class="rounded-full border border-cyan-300/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-900/35 dark:text-cyan-100"
-                        >
-                            {poolContextBadge}
-                        </span>
-                    </div>
-                {/if}
+
             </CardHeader>
             <CardContent>
                 {#if listOnly}
