@@ -452,6 +452,30 @@ class BookingApiController extends Controller
             ];
         }
 
+        // Apply explicit schedule-segment override if available
+        if (Schema::hasTable('schedule_segment') && !empty($details)) {
+            $dow = Carbon::createFromFormat('Y-m-d', $validated['tanggal'])->dayOfWeek;
+            $scheduleQuery = DB::table('schedules')->where('rute', $validated['rute'])->where('dow', $dow)->where('jam', $jamSql);
+            if (Schema::hasColumn('schedules', 'tenant_id')) {
+                PoolScope::applyTenantScope($scheduleQuery, 'tenant_id');
+            }
+            // Cannot cleanly apply route_id scope to schedules without more context, but rute+dow+jam+tenant_id is usually unique enough
+            $schedule = $scheduleQuery->first(['id']);
+            if ($schedule) {
+                $pivots = DB::table('schedule_segment')->where('schedule_id', $schedule->id)->get(['segment_id', 'jam_pickup']);
+                $pivotMap = [];
+                foreach ($pivots as $p) {
+                    $pivotMap[(int)$p->segment_id] = substr((string)$p->jam_pickup, 0, 5);
+                }
+                foreach ($details as $seat => $detail) {
+                    $segId = (int) $detail['segment_id'];
+                    if (isset($pivotMap[$segId])) {
+                        $details[$seat]['segment_jam_pickups'] = [$pivotMap[$segId]];
+                    }
+                }
+            }
+        }
+
         return $this->ok(['details' => $details]);
     }
 

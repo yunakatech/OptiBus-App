@@ -1812,11 +1812,12 @@
             return;
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${bookingDate} | ${normalizeJamToken(selectedJam) || '-'}`;
+        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${bookingDate}`;
         const lines = rekapItems.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
                 `   Segment: ${item.segment_name}\n` +
+                `   Jam Segment: ${segmentJamSummary(item.segment_jam_pickups) || segmentJamLabel(item.segment_jam) || '-'}\n` +
                 `   Jemput: ${item.pickup_point || '-'}\n` +
                 `   Pembayaran: ${item.pembayaran}\n` +
                 `   Harga: Rp ${item.final_price.toLocaleString('id-ID')}`,
