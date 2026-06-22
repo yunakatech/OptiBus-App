@@ -731,6 +731,23 @@
 
     const activeSchedule = () =>
         schedules.find((item) => item.jam === selectedJam) ?? null;
+    const scheduleSegmentCount = (schedule: ScheduleItem | null | undefined) =>
+        Array.isArray(schedule?.segment_matches)
+            ? schedule.segment_matches.length
+            : 0;
+    const scheduleSegmentHint = (schedule: ScheduleItem | null | undefined) => {
+        const count = scheduleSegmentCount(schedule);
+
+        if (count > 0) {
+            return `${count} segment terhubung`;
+        }
+
+        if (segments.length > 0) {
+            return 'Belum ada mapping segment untuk jam ini, menampilkan segment rute';
+        }
+
+        return 'Belum ada segment terhubung';
+    };
     const scheduleSegmentOptions = () => {
         const matches = activeSchedule()?.segment_matches ?? [];
 
@@ -5564,6 +5581,8 @@
                                                     ? ` | ${schedule.unit_label}`
                                                     : ''}{schedule.nopol
                                                     ? ` | ${schedule.nopol}`
+                                                    : ''}{scheduleSegmentCount(schedule) > 0
+                                                    ? ` | ${scheduleSegmentCount(schedule)} segment`
                                                     : ''}{!consoleOnly
                                                     ? ` | BOP ${formatCurrency(Number(schedule.bop || 0))}`
                                                     : ''}
@@ -5571,6 +5590,9 @@
                                         {/each}
                                     </select>
                                 </div>
+                                <p class="mt-1 text-[11px] text-muted-foreground">
+                                    {scheduleSegmentHint(activeSchedule())}
+                                </p>
                             </div>
 
                             <div>
@@ -6094,6 +6116,11 @@
                                     </option>
                                 {/each}
                                 </select>
+                                <p class="mt-1 text-[11px] text-muted-foreground">
+                                    {scheduleSegmentOptions().length > 0
+                                        ? `Segment yang bisa dipilih untuk jam ini: ${scheduleSegmentOptions().length}`
+                                        : 'Belum ada segment yang cocok untuk jam ini.'}
+                                </p>
                                 <select
                                     class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
                                     bind:value={formPayment}
@@ -6506,6 +6533,11 @@
                                     </option>
                                 {/each}
                             </select>
+                            <p class="mt-1 text-[11px] text-muted-foreground sm:col-span-2">
+                                {scheduleSegmentOptions().length > 0
+                                    ? `Segment yang bisa dipilih untuk jam ini: ${scheduleSegmentOptions().length}`
+                                    : 'Belum ada segment yang cocok untuk jam ini.'}
+                            </p>
                         </div>
                     {/if}
 
