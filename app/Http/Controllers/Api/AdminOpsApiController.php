@@ -275,7 +275,7 @@ class AdminOpsApiController extends Controller
         }
 
         $segmentCache = [];
-        $rows = $rows->map(function ($row) use (&$segmentCache) {
+        $rows = $rows->map(function ($row) use (&$segmentCache, $scheduleSegmentsPivot) {
             $routeId = (int) ($row->route_id ?? 0);
             $routeName = trim((string) ($row->route_name ?? $row->rute ?? ''));
             $cacheKey = $routeId.'|'.$routeName;
