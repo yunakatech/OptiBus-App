@@ -269,7 +269,7 @@ class BookingApiController extends Controller
                 ->all();
         }
 
-        $schedules = $rows->map(function ($row) use ($optionsBySchedule, $unitMap, $segments, $rute, $scheduleSegmentsPivot) {
+        $schedules = $rows->map(function ($row) use ($optionsBySchedule, $unitMap, $segments, $rute, $scheduleSegmentsPivot, $pivotSegmentMap) {
             $scheduleId = (int) ($row->id ?? 0);
             $baseUnitId = (int) ($row->unit_id ?? 0);
             $baseUnit = $baseUnitId > 0 ? ($unitMap[$baseUnitId] ?? null) : null;
