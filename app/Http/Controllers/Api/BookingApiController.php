@@ -80,7 +80,7 @@ class BookingApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
-        $cacheKey = 'booking:schedules:v3:'.PoolScope::cacheKey().':'.md5($rute.'|'.$date);
+        $cacheKey = 'booking:schedules:v4:'.PoolScope::cacheKey().':'.md5($rute.'|'.$date);
         $data = Cache::remember($cacheKey, now()->addSeconds(30), function () use ($rute, $date) {
             $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
             $select = [

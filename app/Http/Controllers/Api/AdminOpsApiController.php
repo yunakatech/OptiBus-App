@@ -399,7 +399,9 @@ class AdminOpsApiController extends Controller
         $id = (int) ($data['id'] ?? 0);
         $routeId = (int) ($data['route_id'] ?? 0);
         $routeName = trim((string) ($data['rute'] ?? ''));
-        $jam = $data['jam'].':00';
+        // Normalize jam: ensure it's stored as HH:MM (strip seconds if already present)
+        $jamRaw = trim((string) ($data['jam'] ?? ''));
+        $jam = strlen($jamRaw) === 5 ? $jamRaw : substr($jamRaw, 0, 5);
 
         if ($hasRouteId && $routeId > 0) {
             $routeQuery = DB::table('routes')->where('id', $routeId);
@@ -586,7 +588,12 @@ class AdminOpsApiController extends Controller
                 return $this->ok(['message' => 'Schedule created.', 'id' => $scheduleId], 201);
             });
         } catch (QueryException $e) {
-            return $this->error('Failed saving schedule.', 500, ['detail' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            // Extract shorter postgres error message if possible
+            if (preg_match('/ERROR:\s*(.+?)(?:\s+DETAIL|\s+HINT|$)/s', $msg, $m)) {
+                $msg = trim($m[1]);
+            }
+            return $this->error('Failed saving schedule: '.$msg, 500);
         }
     }
 
