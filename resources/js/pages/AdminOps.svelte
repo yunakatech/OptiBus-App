@@ -1584,6 +1584,11 @@
     };
     const segmentJamLabel = (value: string | null | undefined) =>
         String(value ?? '').trim().slice(0, 5);
+    const syncSegmentTimePickers = (jam: string) => {
+        for (const picker of segmentTimePickers) {
+            picker.setDate(jam || '08:00', false, 'H:i');
+        }
+    };
     const segmentsForRoute = (routeId: number) =>
         routeSegmentsById[Number(routeId || 0)] ?? [];
     const routeSegmentCount = (routeId: number) =>
@@ -4001,8 +4006,8 @@
         setFormMode('form');
     };
     const resetServiceForm = () => (serviceForm = { id: 0, name: '' });
-    const resetSegmentForm = (routeId = Number(selectedSegmentRouteId || 0)) =>
-        (segmentForm = {
+    const resetSegmentForm = (routeId = Number(selectedSegmentRouteId || 0)) => {
+        segmentForm = {
             id: 0,
             route_id: Number(routeId || 0),
             rute: '',
@@ -4010,7 +4015,9 @@
             destination: '',
             jam: '08:00',
             harga: 0,
-        });
+        };
+        syncSegmentTimePickers('08:00');
+    };
     const editSegment = (row: SegmentRow) => {
         selectedSegmentRouteId = Number(row.route_id || 0);
         segmentForm = {
@@ -4026,6 +4033,7 @@
             jam: segmentJamLabel(row.jam) || '08:00',
             harga: Number(row.harga),
         };
+        syncSegmentTimePickers(segmentForm.jam);
         activeTab = 'routes';
         activeMode = 'data';
     };
@@ -4378,6 +4386,14 @@
         selectedSegmentRouteId = normalizedRouteId;
         resetSegmentForm(normalizedRouteId);
         activeMode = 'data';
+    };
+
+    const changeSegmentRoute = async (routeId: number) => {
+        const normalizedRouteId = Number(routeId || 0);
+
+        selectedSegmentRouteId = normalizedRouteId;
+        resetSegmentForm(normalizedRouteId);
+        activeMode = normalizedRouteId > 0 ? 'data' : 'data';
     };
 
     const saveDriver = async (event: SubmitEvent) => {
@@ -7712,6 +7728,9 @@
                                                 {row.destination ?? 'Destination belum diatur'}
                                             </span>
                                         </div>
+                                        <div class="mt-2 text-[11px] text-muted-foreground">
+                                            Jam segment: {segmentJamLabel(row.jam) || '-'}
+                                        </div>
                                     </article>
                                 {/each}
                             </div>
@@ -7769,6 +7788,9 @@
                                                         >
                                                             Turunan dari rute
                                                             induk {selectedSegmentRoute.name}
+                                                        </div>
+                                                        <div class="mt-1 text-[11px] text-muted-foreground">
+                                                            Jam segment: {segmentJamLabel(row.jam) || '-'}
                                                         </div>
                                                     </td>
                                                     <td
