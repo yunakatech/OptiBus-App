@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
 use App\Support\PoolScope;
+use App\Support\SegmentName;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +37,7 @@ class OperationsApiController extends Controller
 
         $query = DB::table('segments as s')
             ->leftJoin('routes as r', 's.route_id', '=', 'r.id')
-            ->select(['s.id', 's.rute', 's.harga']);
+            ->select(['s.id', 's.rute', 's.origin', 's.destination', 's.jam', 's.harga']);
         if (Schema::hasColumn('segments', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 's.tenant_id');
         }
@@ -46,7 +47,16 @@ class OperationsApiController extends Controller
         }
         PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
 
-        $segments = $query->orderBy('s.rute')->get();
+        $segments = $query->orderBy('s.rute')->get()->map(function ($row) {
+            $row->rute = SegmentName::display(
+                $row->origin ?? null,
+                $row->destination ?? null,
+                $row->rute ?? '',
+            );
+            $row->jam = SegmentName::jam($row->jam ?? null);
+
+            return $row;
+        })->values();
 
         return $this->ok(['segments' => $segments]);
     }

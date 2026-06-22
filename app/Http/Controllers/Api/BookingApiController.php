@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
 use App\Support\BookingCode;
 use App\Support\PoolScope;
+use App\Support\SegmentName;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -289,6 +290,9 @@ class BookingApiController extends Controller
                 'b.segment_id',
                 'b.price',
                 'b.discount',
+                's.origin',
+                's.destination',
+                's.jam as segment_jam',
                 DB::raw('s.rute as segment_name'),
             ]);
 
@@ -302,7 +306,12 @@ class BookingApiController extends Controller
                 'pembayaran' => (string) ($row->pembayaran ?? 'Belum Lunas'),
                 'pickup_point' => (string) ($row->pickup_point ?? ''),
                 'segment_id' => (int) ($row->segment_id ?? 0),
-                'segment_name' => (string) ($row->segment_name ?? ''),
+                'segment_name' => SegmentName::display(
+                    $row->origin ?? null,
+                    $row->destination ?? null,
+                    $row->segment_name ?? '',
+                ),
+                'segment_jam' => SegmentName::jam($row->segment_jam ?? null),
                 'price' => (float) ($row->price ?? 0),
                 'discount' => (float) ($row->discount ?? 0),
             ];

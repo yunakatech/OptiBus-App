@@ -10,6 +10,7 @@ use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\FeatureGate;
 use App\Support\PoolScope;
+use App\Support\SegmentName;
 use App\Support\RoleAccessData;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Verified;
@@ -852,6 +853,7 @@ class AdminOpsApiController extends Controller
                 's.rute',
                 's.origin',
                 's.destination',
+                's.jam',
                 's.harga',
                 DB::raw('r.name as route_name'),
             ])
@@ -874,11 +876,32 @@ class AdminOpsApiController extends Controller
         $this->applyRouteScopeToQuery($query, 's.route_id', 's.rute');
 
         if (! $request->boolean('paginate')) {
-            return $this->ok(['segments' => $query->get()]);
+            $segments = $query->get()->map(function ($row) {
+                $row->rute = SegmentName::display(
+                    $row->origin ?? null,
+                    $row->destination ?? null,
+                    $row->rute ?? '',
+                );
+                $row->jam = SegmentName::jam($row->jam ?? null);
+
+                return $row;
+            })->values();
+
+            return $this->ok(['segments' => $segments]);
         }
 
         [$page, $perPage] = $this->paginationParams($request);
         $result = $this->paginateQuery($query, $page, $perPage);
+        $result['data'] = collect($result['data'])->map(function ($row) {
+            $row->rute = SegmentName::display(
+                $row->origin ?? null,
+                $row->destination ?? null,
+                $row->rute ?? '',
+            );
+            $row->jam = SegmentName::jam($row->jam ?? null);
+
+            return $row;
+        })->values();
 
         return $this->ok([
             'segments' => $result['data'],
@@ -891,9 +914,10 @@ class AdminOpsApiController extends Controller
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
             'route_id' => ['required', 'integer', 'min:1'],
-            'rute' => ['required', 'string', 'max:120'],
+            'rute' => ['nullable', 'string', 'max:120'],
             'origin' => ['nullable', 'string', 'max:120'],
             'destination' => ['nullable', 'string', 'max:120'],
+            'jam' => ['required', 'regex:/^\d{2}:\d{2}$/'],
             'harga' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -910,11 +934,18 @@ class AdminOpsApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
+        $segmentName = SegmentName::display(
+            $data['origin'] ?? null,
+            $data['destination'] ?? null,
+            $data['rute'] ?? '',
+        );
+
         $payload = [
             'route_id' => (int) $data['route_id'],
-            'rute' => $routeName !== '' ? $routeName : trim((string) $data['rute']),
+            'rute' => $segmentName !== '' ? $segmentName : trim((string) ($data['rute'] ?? '')),
             'origin' => $this->nullable($data['origin'] ?? null),
             'destination' => $this->nullable($data['destination'] ?? null),
+            'jam' => SegmentName::jam($data['jam']).':00',
             'harga' => (float) $data['harga'],
         ];
 
