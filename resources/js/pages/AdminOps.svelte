@@ -188,6 +188,7 @@
         rute: string;
         origin: string | null;
         destination: string | null;
+        jam: string | null;
         harga: number;
         route_name: string | null;
     };
@@ -774,6 +775,7 @@
         rute: '',
         origin: '',
         destination: '',
+        jam: '08:00',
         harga: 0,
     });
     let customerForm = $state({
@@ -908,6 +910,8 @@
     let reportRouteId = $state(0);
     let scheduleTimeInput = $state<HTMLInputElement | null>(null);
     let scheduleTimePicker: FlatpickrInstance | null = null;
+    let segmentTimeInput = $state<HTMLInputElement | null>(null);
+    let segmentTimePicker: FlatpickrInstance | null = null;
     let reportFromInput = $state<HTMLInputElement | null>(null);
     let reportToInput = $state<HTMLInputElement | null>(null);
     let reportFromPicker: FlatpickrInstance | null = null;
@@ -1549,6 +1553,38 @@
     };
     const routeNameById = (routeId: number) =>
         routes.find((route) => route.id === Number(routeId || 0))?.name ?? '';
+    const segmentDisplayName = (
+        origin: string,
+        destination: string,
+        fallback = '',
+    ) => {
+        const originValue = String(origin ?? '').trim();
+        const destinationValue = String(destination ?? '').trim();
+
+        if (originValue !== '' && destinationValue !== '') {
+            return `${originValue} - ${destinationValue}`;
+        }
+
+        return String(fallback ?? '').trim();
+    };
+    const updateSegmentOrigin = (value: string) => {
+        const origin = String(value ?? '');
+        segmentForm = {
+            ...segmentForm,
+            origin,
+            rute: segmentDisplayName(origin, segmentForm.destination, segmentForm.rute),
+        };
+    };
+    const updateSegmentDestination = (value: string) => {
+        const destination = String(value ?? '');
+        segmentForm = {
+            ...segmentForm,
+            destination,
+            rute: segmentDisplayName(segmentForm.origin, destination, segmentForm.rute),
+        };
+    };
+    const segmentJamLabel = (value: string | null | undefined) =>
+        String(value ?? '').trim().slice(0, 5);
     const segmentsForRoute = (routeId: number) =>
         routeSegmentsById[Number(routeId || 0)] ?? [];
     const routeSegmentCount = (routeId: number) =>
@@ -2257,6 +2293,11 @@
         scheduleTimePicker = null;
     };
 
+    const destroySegmentTimePicker = () => {
+        segmentTimePicker?.destroy();
+        segmentTimePicker = null;
+    };
+
     const destroyReportPickers = () => {
         reportFromPicker?.destroy();
         reportFromPicker = null;
@@ -2288,6 +2329,34 @@
             defaultDate: scheduleForm.jam || '08:00',
             onChange: (_selectedDates, dateStr) => {
                 scheduleForm.jam = dateStr || '08:00';
+            },
+        });
+    };
+
+    const initSegmentTimePicker = async () => {
+        if (
+            typeof window === 'undefined' ||
+            !segmentTimeInput ||
+            segmentTimePicker
+        ) {
+            return;
+        }
+
+        const flatpickr = await loadFlatpickr();
+
+        if (!segmentTimeInput || segmentTimePicker) {
+            return;
+        }
+
+        segmentTimePicker = flatpickr(segmentTimeInput, {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: 'H:i',
+            time_24hr: true,
+            disableMobile: true,
+            defaultDate: segmentForm.jam || '08:00',
+            onChange: (_selectedDates, dateStr) => {
+                segmentForm.jam = dateStr || '08:00';
             },
         });
     };
@@ -3928,9 +3997,10 @@
         (segmentForm = {
             id: 0,
             route_id: Number(routeId || 0),
-            rute: routeNameById(routeId),
+            rute: '',
             origin: '',
             destination: '',
+            jam: '08:00',
             harga: 0,
         });
     const editSegment = (row: SegmentRow) => {
@@ -3938,12 +4008,14 @@
         segmentForm = {
             id: row.id,
             route_id: Number(row.route_id || 0),
-            rute:
-                row.route_name?.trim() !== ''
-                    ? String(row.route_name)
-                    : routeNameById(row.route_id) || row.rute,
+            rute: segmentDisplayName(
+                row.origin ?? '',
+                row.destination ?? '',
+                row.rute,
+            ),
             origin: row.origin ?? '',
             destination: row.destination ?? '',
+            jam: segmentJamLabel(row.jam) || '08:00',
             harga: Number(row.harga),
         };
         activeTab = 'routes';
@@ -4393,14 +4465,27 @@
                 throw new Error('Pilih rute induk terlebih dahulu.');
             }
 
+            const segmentName = segmentDisplayName(
+                segmentForm.origin,
+                segmentForm.destination,
+                segmentForm.rute,
+            );
+
+            if (segmentName === '') {
+                throw new Error('Origin dan destination segment wajib diisi.');
+            }
+
+            const segmentJam = segmentJamLabel(segmentForm.jam) || '08:00';
+
             await runWithFeedback(
                 async () => {
                     await api('POST', '/api/admin/segments', {
                         id: segmentForm.id || undefined,
                         route_id: activeRouteId,
-                        rute: segmentForm.rute,
+                        rute: segmentName,
                         origin: segmentForm.origin,
                         destination: segmentForm.destination,
+                        jam: segmentJam,
                         harga: parseRupiahInput(segmentForm.harga),
                     });
                 },
@@ -10700,26 +10785,4 @@
                             Prev
                         </Button>
                         <span
-                            class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground"
-                        >
-                            {settingsMeta.page} / {settingsMeta.last_page}
-                        </span>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={settingsMeta.page >=
-                                settingsMeta.last_page || busy}
-                            onclick={() =>
-                                reloadSettingsWithInertia(
-                                    settingsMeta.page + 1,
-                                )}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            {/if}
-        </CardContent>
-    </Card>
-</div>
+                            class="rounded-full border border-
