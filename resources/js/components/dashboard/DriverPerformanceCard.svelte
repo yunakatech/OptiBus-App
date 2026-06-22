@@ -33,17 +33,17 @@
 </script>
 
 <div
-    class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow"
+    class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow sm:rounded-3xl sm:p-5"
 >
     <!-- Header -->
-    <div class="mb-3 flex items-start justify-between gap-3">
+    <div class="mb-3 flex items-start justify-between gap-3 sm:mb-4">
         <div>
-            <p class="text-[13px] font-semibold text-slate-700">
+            <p class="text-[13px] font-semibold text-slate-700 sm:text-sm">
                 Peringkat <span class="font-bold text-slate-900"
                     >Performa Driver</span
                 >
             </p>
-            <p class="mt-0.5 text-[11px] text-slate-500">
+            <p class="mt-0.5 text-[10px] text-slate-500 sm:text-[11px]">
                 Berdasarkan jumlah trip & revenue — {period}
             </p>
         </div>

@@ -753,16 +753,16 @@
             </div>
 
             <div class="space-y-2.5 xl:col-span-1">
-                <Card class="overflow-hidden">
-                    <CardHeader class="space-y-1 pb-2">
+                <Card class="overflow-hidden rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border">
+                    <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <div
-                            class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
+                            class="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between"
                         >
                             <div class="min-w-0">
-                                <CardTitle class="text-sm md:text-base"
+                                <CardTitle class="text-[13px] sm:text-[14px]"
                                     >Info Carter 7 Hari Kedepan</CardTitle
                                 >
-                                <CardDescription class="text-xs"
+                                <CardDescription class="text-[10px] sm:text-xs"
                                     >Reminder charter terdekat, diurutkan dari
                                     tanggal paling dekat</CardDescription
                                 >
@@ -776,18 +776,18 @@
                             {/if}
                         </div>
                     </CardHeader>
-                    <CardContent class="space-y-2.5 pt-0">
+                    <CardContent class="space-y-2 px-3 pb-3 pt-0 sm:space-y-2.5 sm:px-5 sm:pb-4">
                         {#if upcomingCharterReminder.items.length === 0}
                             <div
-                                class="rounded-md border border-dashed p-3 text-xs text-muted-foreground"
+                                class="rounded-xl border border-dashed p-3 text-[11px] text-muted-foreground text-center"
                             >
-                                Belum ada data carter untuk 7 hari ke depan.
+                                Belum ada data carter.
                             </div>
                         {:else}
                             {#each upcomingCharterReminder.items as item (`upcoming-charter-${item.id}`)}
                                 <a
                                     href={`/charters/view/${item.id}`}
-                                    class="block rounded-xl border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-3 transition hover:border-cyan-300/70 hover:shadow-sm dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(8,47,73,0.65))]"
+                                    class="block rounded-[14px] border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-2.5 sm:p-3 transition hover:border-cyan-300/70 hover:shadow-sm"
                                 >
                                     <div
                                         class="mb-2 flex items-start justify-between gap-2"
@@ -848,16 +848,16 @@
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader class="space-y-1 pb-2">
-                        <CardTitle class="text-sm md:text-base"
+                <Card class="rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border">
+                    <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
+                        <CardTitle class="text-[13px] sm:text-[14px]"
                             >Keberangkatan Hari Ini</CardTitle
                         >
-                        <CardDescription class="text-xs"
+                        <CardDescription class="text-[10px] sm:text-xs"
                             >Data jadwal dari booking aktif hari ini</CardDescription
                         >
                     </CardHeader>
-                    <CardContent class="space-y-2.5 pt-0">
+                    <CardContent class="space-y-2 px-3 pb-3 pt-0 sm:space-y-2.5 sm:px-5 sm:pb-4">
                         {#if copyMessage}
                             <p class="text-xs text-emerald-600">
                                 {copyMessage}
@@ -926,11 +926,11 @@
                     </CardContent>
                 </Card>
 
-                <Card class="hidden h-fit xl:block">
-                    <CardHeader class="space-y-1 pb-2">
+                <Card class="hidden h-fit xl:block rounded-3xl border-gray-200 shadow-sm border">
+                    <CardHeader class="space-y-1 p-4 pb-2 sm:px-5 sm:pt-4">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
-                                <CardTitle class="text-sm md:text-base"
+                                <CardTitle class="text-[14px]"
                                     >Aktivitas Terbaru</CardTitle
                                 >
                                 <CardDescription class="text-xs"
@@ -944,7 +944,7 @@
                             {/if}
                         </div>
                     </CardHeader>
-                    <CardContent class="pt-0">
+                    <CardContent class="pb-4 pt-0 sm:px-5">
                         {#if recentActivity.length === 0}
                             <p class="text-xs text-muted-foreground">
                                 Belum ada aktivitas.

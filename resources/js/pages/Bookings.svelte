@@ -165,6 +165,7 @@
         nopol: string;
         unit_label: string;
         bop: number;
+        segment_matches?: SegmentItem[];
         unit_options?: Array<{
             unit_no: number;
             label: string;
@@ -730,6 +731,24 @@
 
     const activeSchedule = () =>
         schedules.find((item) => item.jam === selectedJam) ?? null;
+    const scheduleSegmentOptions = () => {
+        const matches = activeSchedule()?.segment_matches ?? [];
+
+        return matches.length > 0 ? matches : segments;
+    };
+    const syncSegmentSelectionToSchedule = () => {
+        const options = scheduleSegmentOptions();
+
+        if (options.length === 0) {
+            formSegmentId = 0;
+
+            return;
+        }
+
+        if (!options.some((item) => item.id === Number(formSegmentId))) {
+            formSegmentId = options[0].id;
+        }
+    };
     const emptyDepartureSchedule = () =>
         emptyDepartureSchedules.find(
             (item) => item.jam === emptyDepartureJam,
@@ -4911,6 +4930,7 @@
             if (schedules.length > 0) {
                 selectedJam = schedules[0].jam;
                 selectedUnit = 1;
+                syncSegmentSelectionToSchedule();
                 await loadSeatDetails();
             }
         } catch (error) {
@@ -4923,7 +4943,6 @@
 
     const loadSegments = async () => {
         segments = [];
-        formSegmentId = 0;
 
         if (!selectedRoute) {
             return;
@@ -5001,12 +5020,15 @@
     };
 
     const onRouteChange = async () => {
+        segments = [];
         await loadSchedules();
         await loadSegments();
+        syncSegmentSelectionToSchedule();
     };
 
     const onScheduleChange = async () => {
         selectedUnit = 1;
+        syncSegmentSelectionToSchedule();
         await loadSeatDetails();
     };
 
@@ -6062,7 +6084,7 @@
                                             ? 'Memuat segment...'
                                             : 'Pilih segment rute'}</option
                                     >
-                                {#each segments as segment (`segment-opt-${segment.id}`)}
+                                {#each scheduleSegmentOptions() as segment (`segment-opt-${segment.id}`)}
                                     <option value={segment.id}>
                                         {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
                                             ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
@@ -6474,7 +6496,7 @@
                                         ? detailSeat.segment_name || 'Tanpa Segment'
                                         : 'Pilih segment rute'}</option
                                 >
-                                {#each segments as segment (`detail-segment-${segment.id}`)}
+                                {#each scheduleSegmentOptions() as segment (`detail-segment-${segment.id}`)}
                                     <option value={segment.id}>
                                         {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
                                             ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
