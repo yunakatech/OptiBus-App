@@ -446,7 +446,7 @@ class AdminOpsApiTest extends TestCase
             'route_id' => $routeId,
             'origin' => 'PINRANG',
             'destination' => 'PAREPARE',
-            'jam' => '07:30',
+            'jam_pickups' => ['07:30', '09:15'],
             'harga' => 75000,
         ])->assertCreated()->json();
 
@@ -459,6 +459,7 @@ class AdminOpsApiTest extends TestCase
         $this->assertTrue(is_array($segmentRow));
         $this->assertSame('PINRANG - PAREPARE', (string) ($segmentRow['rute'] ?? ''));
         $this->assertSame('07:30', (string) ($segmentRow['jam'] ?? ''));
+        $this->assertSame(['07:30', '09:15'], $segmentRow['jam_pickups'] ?? []);
         $this->assertTrue(
             collect($segments)->contains(
                 fn (array $row) => (int) ($row['id'] ?? 0) === $segmentId,

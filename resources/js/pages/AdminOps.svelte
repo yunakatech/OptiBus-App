@@ -189,6 +189,7 @@
         origin: string | null;
         destination: string | null;
         jam: string | null;
+        jam_pickups: string[] | null;
         harga: number;
         route_name: string | null;
     };
@@ -776,6 +777,7 @@
         origin: '',
         destination: '',
         jam: '08:00',
+        jam_pickups: ['08:00'],
         harga: 0,
     });
     let customerForm = $state({
@@ -1584,10 +1586,59 @@
     };
     const segmentJamLabel = (value: string | null | undefined) =>
         String(value ?? '').trim().slice(0, 5);
-    const syncSegmentTimePickers = (jam: string) => {
-        for (const picker of segmentTimePickers) {
-            picker.setDate(jam || '08:00', false, 'H:i');
+    const segmentJamList = (value: string[] | string | null | undefined) =>
+        Array.isArray(value)
+            ? value
+                  .map((item) => segmentJamLabel(item))
+                  .filter((item) => item !== '')
+            : segmentJamLabel(value)
+              ? [segmentJamLabel(value)]
+              : [];
+    const segmentJamSummary = (
+        value: string[] | string | null | undefined,
+    ) => segmentJamList(value).join(', ');
+    const syncSegmentTimePickers = (jamPickups: string[]) => {
+        for (const [index, picker] of segmentTimePickers.entries()) {
+            picker.setDate(jamPickups[index] || '08:00', false, 'H:i');
         }
+    };
+    const updateSegmentJamPickup = (index: number, value: string) => {
+        const nextJam = segmentJamList(segmentForm.jam_pickups);
+        const normalized = segmentJamLabel(value) || '08:00';
+
+        while (nextJam.length <= index) {
+            nextJam.push('08:00');
+        }
+
+        nextJam[index] = normalized;
+        segmentForm = {
+            ...segmentForm,
+            jam: nextJam[0] || '08:00',
+            jam_pickups: nextJam.length > 0 ? nextJam : ['08:00'],
+        };
+    };
+    const addSegmentJamPickup = () => {
+        const nextJam = segmentJamList(segmentForm.jam_pickups);
+
+        segmentForm = {
+            ...segmentForm,
+            jam: nextJam[0] || '08:00',
+            jam_pickups: [...nextJam, '08:00'],
+        };
+    };
+    const removeSegmentJamPickup = (index: number) => {
+        const nextJam = segmentJamList(segmentForm.jam_pickups);
+
+        if (nextJam.length <= 1 || index < 0 || index >= nextJam.length) {
+            return;
+        }
+
+        nextJam.splice(index, 1);
+        segmentForm = {
+            ...segmentForm,
+            jam: nextJam[0] || '08:00',
+            jam_pickups: nextJam.length > 0 ? nextJam : ['08:00'],
+        };
     };
     const segmentsForRoute = (routeId: number) =>
         routeSegmentsById[Number(routeId || 0)] ?? [];
@@ -2353,25 +2404,31 @@
             document.querySelectorAll<HTMLInputElement>(
                 'input[data-segment-time="true"]',
             ),
-        );
+        ).filter((input) => input.getClientRects().length > 0);
 
         if (inputs.length === 0 || segmentTimePickers.length > 0) {
             return;
         }
 
-        segmentTimePickers = inputs.map((input) =>
+        segmentTimePickers = inputs.map((input, index) =>
             flatpickr(input, {
                 enableTime: true,
                 noCalendar: true,
                 dateFormat: 'H:i',
                 time_24hr: true,
                 disableMobile: true,
-                defaultDate: segmentForm.jam || '08:00',
+                defaultDate: input.value || '08:00',
                 onChange: (_selectedDates, dateStr) => {
-                    segmentForm.jam = dateStr || '08:00';
+                    updateSegmentJamPickup(index, dateStr || '08:00');
                 },
             }),
         );
+    };
+
+    const refreshSegmentTimePickers = async () => {
+        destroySegmentTimePicker();
+        await tick();
+        await initSegmentTimePicker();
     };
 
     const initReportPickers = async () => {
@@ -4014,12 +4071,20 @@
             origin: '',
             destination: '',
             jam: '08:00',
+            jam_pickups: ['08:00'],
             harga: 0,
         };
-        syncSegmentTimePickers('08:00');
+        syncSegmentTimePickers(segmentForm.jam_pickups);
     };
     const editSegment = (row: SegmentRow) => {
         selectedSegmentRouteId = Number(row.route_id || 0);
+        const jamPickupsFromRow = segmentJamList(row.jam_pickups);
+        const jamPickups =
+            jamPickupsFromRow.length > 0
+                ? jamPickupsFromRow
+                : segmentJamList(row.jam).length > 0
+                  ? segmentJamList(row.jam)
+                  : ['08:00'];
         segmentForm = {
             id: row.id,
             route_id: Number(row.route_id || 0),
@@ -4030,10 +4095,11 @@
             ),
             origin: row.origin ?? '',
             destination: row.destination ?? '',
-            jam: segmentJamLabel(row.jam) || '08:00',
+            jam: jamPickups[0] || segmentJamLabel(row.jam) || '08:00',
+            jam_pickups: jamPickups,
             harga: Number(row.harga),
         };
-        syncSegmentTimePickers(segmentForm.jam);
+        syncSegmentTimePickers(segmentForm.jam_pickups);
         activeTab = 'routes';
         activeMode = 'data';
     };
@@ -4499,7 +4565,11 @@
                 throw new Error('Origin dan destination segment wajib diisi.');
             }
 
-            const segmentJam = segmentJamLabel(segmentForm.jam) || '08:00';
+            const segmentJamPickups = segmentJamList(segmentForm.jam_pickups);
+
+            if (segmentJamPickups.length === 0) {
+                throw new Error('Minimal 1 jam pickup wajib diisi.');
+            }
 
             await runWithFeedback(
                 async () => {
@@ -4509,7 +4579,8 @@
                         rute: segmentName,
                         origin: segmentForm.origin,
                         destination: segmentForm.destination,
-                        jam: segmentJam,
+                        jam: segmentJamPickups[0] || segmentForm.jam || '08:00',
+                        jam_pickups: segmentJamPickups,
                         harga: parseRupiahInput(segmentForm.harga),
                     });
                 },
@@ -4874,6 +4945,7 @@
     $effect(() => {
         const isSegmentFormActive =
             activeTab === 'segments' && activeMode === 'form';
+        const jamPickupCount = segmentForm.jam_pickups.length;
 
         if (!isSegmentFormActive) {
             destroySegmentTimePicker();
@@ -4881,12 +4953,12 @@
             return;
         }
 
-        void initSegmentTimePicker().then(() => {
-            const jam = untrack(() => segmentForm.jam);
-            for (const picker of segmentTimePickers) {
-                picker.setDate(jam || '08:00', false, 'H:i');
-            }
-        });
+        if (
+            jamPickupCount > 0 &&
+            segmentTimePickers.length !== jamPickupCount
+        ) {
+            void refreshSegmentTimePickers();
+        }
     });
 
     $effect(() => {
@@ -5371,7 +5443,7 @@
                                                                 </p>
                                                                 <p class="mt-0.5 text-[11px] text-muted-foreground">
                                                                     Jam:
-                                                                    {segmentJamLabel(segment.jam) || '-'}
+                                                                    {segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam) || '-'}
                                                                 </p>
                                                             </div>
                                                                 {#if canWriteTab('segments')}
@@ -5501,19 +5573,55 @@
                                                                 />
                                                         </label>
                                                     </div>
-                                                    <label class="space-y-1.5">
-                                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                                            Jam Segment
-                                                        </span>
-                                                        <input
-                                                            data-segment-time="true"
-                                                            type="text"
-                                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                                            placeholder="Jam segment"
-                                                            bind:value={segmentForm.jam}
-                                                            required
-                                                        />
-                                                    </label>
+                                                    <div class="space-y-2 md:col-span-3">
+                                                        <div class="flex items-center justify-between gap-3">
+                                                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                                Jam Pickup
+                                                            </span>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                class="h-8 rounded-full px-3 text-[11px]"
+                                                                onclick={addSegmentJamPickup}
+                                                            >
+                                                                Tambah jam
+                                                            </Button>
+                                                        </div>
+                                                        <div class="space-y-2">
+                                                            {#each segmentForm.jam_pickups as jamValue, index (index)}
+                                                                <div class="flex items-center gap-2">
+                                                                    <input
+                                                                        data-segment-time="true"
+                                                                        data-segment-time-index={index}
+                                                                        type="text"
+                                                                        class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                                        placeholder={`Jam pickup ${index + 1}`}
+                                                                        value={jamValue}
+                                                                        oninput={(event) =>
+                                                                            updateSegmentJamPickup(
+                                                                                index,
+                                                                                (
+                                                                                    event.currentTarget as HTMLInputElement
+                                                                                ).value,
+                                                                            )}
+                                                                        required
+                                                                    />
+                                                                    {#if segmentForm.jam_pickups.length > 1}
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            class="h-9 rounded-full px-3 text-[11px]"
+                                                                            onclick={() =>
+                                                                                removeSegmentJamPickup(index)}
+                                                                        >
+                                                                            Hapus
+                                                                        </Button>
+                                                                    {/if}
+                                                                </div>
+                                                            {/each}
+                                                        </div>
+                                                    </div>
                                                     <div class="flex flex-wrap gap-2 border-t border-border/70 pt-3">
                                                         <LoadingButton
                                                             type="submit"
@@ -5680,7 +5788,7 @@
                                                                 </p>
                                                                 <p class="mt-0.5 text-[11px] text-muted-foreground">
                                                                     Jam:
-                                                                    {segmentJamLabel(segment.jam) || '-'}
+                                                                    {segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam) || '-'}
                                                                 </p>
                                                             </div>
                                                             {#if canWriteTab('segments')}
@@ -5815,19 +5923,55 @@
                                                             />
                                                     </label>
                                                 </div>
-                                                <label class="space-y-1.5">
-                                                    <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                                        Jam Segment
-                                                    </span>
-                                                    <input
-                                                        data-segment-time="true"
-                                                        type="text"
-                                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                                        placeholder="Jam segment"
-                                                        bind:value={segmentForm.jam}
-                                                        required
-                                                    />
-                                                </label>
+                                                <div class="space-y-2 md:col-span-3">
+                                                    <div class="flex items-center justify-between gap-3">
+                                                        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                            Jam Pickup
+                                                        </span>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            class="h-8 rounded-full px-3 text-[11px]"
+                                                            onclick={addSegmentJamPickup}
+                                                        >
+                                                            Tambah jam
+                                                        </Button>
+                                                    </div>
+                                                    <div class="space-y-2">
+                                                        {#each segmentForm.jam_pickups as jamValue, index (index)}
+                                                            <div class="flex items-center gap-2">
+                                                                <input
+                                                                    data-segment-time="true"
+                                                                    data-segment-time-index={index}
+                                                                    type="text"
+                                                                    class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                                    placeholder={`Jam pickup ${index + 1}`}
+                                                                    value={jamValue}
+                                                                    oninput={(event) =>
+                                                                        updateSegmentJamPickup(
+                                                                            index,
+                                                                            (
+                                                                                event.currentTarget as HTMLInputElement
+                                                                            ).value,
+                                                                        )}
+                                                                    required
+                                                                />
+                                                                {#if segmentForm.jam_pickups.length > 1}
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        class="h-9 rounded-full px-3 text-[11px]"
+                                                                        onclick={() =>
+                                                                            removeSegmentJamPickup(index)}
+                                                                    >
+                                                                        Hapus
+                                                                    </Button>
+                                                                {/if}
+                                                            </div>
+                                                        {/each}
+                                                    </div>
+                                                </div>
                                                 <div class="flex flex-wrap gap-2 border-t border-border/70 pt-3">
                                                     <LoadingButton
                                                         type="submit"
@@ -7561,20 +7705,55 @@
                                                 )}
                                         />
                                     </label>
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Jam Segment</span
-                                        >
-                                        <input
-                                            data-segment-time="true"
-                                            type="text"
-                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                            placeholder="Jam segment"
-                                            bind:value={segmentForm.jam}
-                                            required
-                                        />
-                                    </label>
+                                    <div class="space-y-2 md:col-span-2 xl:col-span-4">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                Jam Pickup
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                class="h-8 rounded-full px-3 text-[11px]"
+                                                onclick={addSegmentJamPickup}
+                                            >
+                                                Tambah jam
+                                            </Button>
+                                        </div>
+                                        <div class="space-y-2">
+                                            {#each segmentForm.jam_pickups as jamValue, index (index)}
+                                                <div class="flex items-center gap-2">
+                                                    <input
+                                                        data-segment-time="true"
+                                                        data-segment-time-index={index}
+                                                        type="text"
+                                                        class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                        placeholder={`Jam pickup ${index + 1}`}
+                                                        value={jamValue}
+                                                        oninput={(event) =>
+                                                            updateSegmentJamPickup(
+                                                                index,
+                                                                (
+                                                                    event.currentTarget as HTMLInputElement
+                                                                ).value,
+                                                            )}
+                                                        required
+                                                    />
+                                                    {#if segmentForm.jam_pickups.length > 1}
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            class="h-9 rounded-full px-3 text-[11px]"
+                                                            onclick={() =>
+                                                                removeSegmentJamPickup(index)}
+                                                        >
+                                                            Hapus
+                                                        </Button>
+                                                    {/if}
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    </div>
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -7729,7 +7908,7 @@
                                             </span>
                                         </div>
                                         <div class="mt-2 text-[11px] text-muted-foreground">
-                                            Jam segment: {segmentJamLabel(row.jam) || '-'}
+                                            Jam segment: {segmentJamSummary(row.jam_pickups) || segmentJamLabel(row.jam) || '-'}
                                         </div>
                                     </article>
                                 {/each}
@@ -7790,7 +7969,7 @@
                                                             induk {selectedSegmentRoute.name}
                                                         </div>
                                                         <div class="mt-1 text-[11px] text-muted-foreground">
-                                                            Jam segment: {segmentJamLabel(row.jam) || '-'}
+                                                            Jam segment: {segmentJamSummary(row.jam_pickups) || segmentJamLabel(row.jam) || '-'}
                                                         </div>
                                                     </td>
                                                     <td

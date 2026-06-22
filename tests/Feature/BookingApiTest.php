@@ -223,6 +223,7 @@ class BookingApiTest extends TestCase
             'origin' => 'PINRANG',
             'destination' => 'PAREPARE',
             'jam' => '07:30:00',
+            'jam_pickups' => json_encode(['07:30', '08:45']),
             'harga' => 75000,
             'created_at' => now(),
         ]);
@@ -255,7 +256,9 @@ class BookingApiTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('details.A1.segment_name', 'PINRANG - PAREPARE')
-            ->assertJsonPath('details.A1.segment_jam', '07:30');
+            ->assertJsonPath('details.A1.segment_jam', '07:30')
+            ->assertJsonPath('details.A1.segment_jam_pickups.0', '07:30')
+            ->assertJsonPath('details.A1.segment_jam_pickups.1', '08:45');
     }
 
     public function test_payment_only_update_does_not_require_complete_booking_fields(): void

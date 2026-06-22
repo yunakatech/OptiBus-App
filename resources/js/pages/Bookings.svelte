@@ -184,6 +184,7 @@
         segment_id: number;
         segment_name: string;
         segment_jam: string;
+        segment_jam_pickups: string[];
         price: number;
         discount: number;
     };
@@ -192,6 +193,7 @@
         id: number;
         rute: string;
         jam: string | null;
+        jam_pickups: string[] | null;
         harga: number;
     };
 
@@ -244,6 +246,7 @@
         pickup_point: string;
         segment_name: string;
         segment_jam: string;
+        segment_jam_pickups: string[];
         pembayaran: string;
         final_price: number;
     };
@@ -252,6 +255,7 @@
         tanggal: string;
         jam: string;
         segment_jam: string;
+        segment_jam_pickups: string[];
         rute: string;
         unit: number;
         total: number;
@@ -1579,7 +1583,7 @@
             'BOOKING BERHASIL ✅',
             '',
             `Tanggal: ${bookingDate || '-'}`,
-            `Jam Segment: ${segmentJamLabel(detailSeat.segment_jam) || normalizeJamToken(selectedJam) || '-'}`,
+            `Jam Segment: ${segmentJamSummary(detailSeat.segment_jam_pickups) || segmentJamLabel(detailSeat.segment_jam) || normalizeJamToken(selectedJam) || '-'}`,
             `Kursi: ${detailSeat.seat || '-'}`,
             `Nama: ${detailSeat.name || '-'}`,
             `Telepon: ${detailSeat.phone || '-'}`,
@@ -1822,7 +1826,7 @@
                 'BOOKING BERHASIL ✅',
                 '',
                 `Tanggal: ${snapshot.tanggal || '-'}`,
-                `Jam Segment: ${segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`,
+                `Jam Segment: ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`,
                 `Kursi: ${item.seat || '-'}`,
                 `Nama: ${item.name || '-'}`,
                 `Telepon: ${item.phone || '-'}`,
@@ -1843,12 +1847,12 @@
             return lines.join('\n');
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`;
+        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`;
         const lines = snapshot.items.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
                 `   Segment: ${item.segment_name || '-'}\n` +
-                `   Jam Segment: ${item.segment_jam || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}\n` +
+                `   Jam Segment: ${segmentJamSummary(item.segment_jam_pickups) || segmentJamLabel(item.segment_jam) || segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}\n` +
                 `   Jemput: ${item.pickup_point || '-'}\n` +
                 `   Pembayaran: ${item.pembayaran || '-'}\n` +
                 `   Harga: Rp ${item.final_price.toLocaleString('id-ID')}`,
@@ -2066,6 +2070,17 @@
         String(value || '').slice(0, 5);
     const segmentJamLabel = (value: string | null | undefined) =>
         normalizeJamToken(String(value ?? ''));
+    const segmentJamList = (value: string[] | string | null | undefined) =>
+        Array.isArray(value)
+            ? value
+                  .map((item) => segmentJamLabel(item))
+                  .filter((item) => item !== '')
+            : segmentJamLabel(value)
+              ? [segmentJamLabel(value)]
+              : [];
+    const segmentJamSummary = (
+        value: string[] | string | null | undefined,
+    ) => segmentJamList(value).join(', ');
     const formatCurrency = (value: number) => formatCurrencyDisplay(value);
     const parseGroupDateTime = (tanggal: string, jam: string) => {
         const datePart = String(tanggal || '').slice(0, 10);
@@ -5112,10 +5127,21 @@
             const seatDiscount = seatCandidates.length > 0
                 ? totalDiscount / seatCandidates.length
                 : 0;
+            const activeSegmentJamPickups = segmentJamList(
+                activeSegment()?.jam_pickups,
+            );
+            const segmentJamPickups =
+                activeSegmentJamPickups.length > 0
+                    ? activeSegmentJamPickups
+                    : segmentJamList(activeSegment()?.jam);
             const successSnapshot: BookingSuccessSnapshot = {
                 tanggal: bookingDate,
                 jam: selectedJam,
-                segment_jam: segmentJamLabel(activeSegment()?.jam) || normalizeJamToken(selectedJam),
+                segment_jam:
+                    segmentJamSummary(segmentJamPickups) ||
+                    segmentJamLabel(activeSegment()?.jam) ||
+                    normalizeJamToken(selectedJam),
+                segment_jam_pickups: segmentJamPickups,
                 rute: selectedRoute,
                 unit: Number(selectedUnit) || 1,
                 total: Math.max(
@@ -5128,7 +5154,11 @@
                     phone: formPhone,
                     pickup_point: formPickupPoint,
                     segment_name: activeSegment()?.rute || selectedRoute || '-',
-                    segment_jam: segmentJamLabel(activeSegment()?.jam) || normalizeJamToken(selectedJam),
+                    segment_jam:
+                        segmentJamSummary(segmentJamPickups) ||
+                        segmentJamLabel(activeSegment()?.jam) ||
+                        normalizeJamToken(selectedJam),
+                    segment_jam_pickups: segmentJamPickups,
                     pembayaran: formPayment,
                     final_price: Math.max(seatPrice - seatDiscount, 0),
                 })),
@@ -6034,8 +6064,8 @@
                                     >
                                 {#each segments as segment (`segment-opt-${segment.id}`)}
                                     <option value={segment.id}>
-                                        {segment.rute}{segment.jam
-                                            ? ` • ${segmentJamLabel(segment.jam)}`
+                                        {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
+                                            ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
                                             : ''} (Rp {Number(
                                             segment.harga,
                                         ).toLocaleString('id-ID')})
@@ -6446,8 +6476,8 @@
                                 >
                                 {#each segments as segment (`detail-segment-${segment.id}`)}
                                     <option value={segment.id}>
-                                        {segment.rute}{segment.jam
-                                            ? ` • ${segmentJamLabel(segment.jam)}`
+                                        {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
+                                            ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
                                             : ''} (Rp {Number(
                                             segment.harga,
                                         ).toLocaleString('id-ID')})
@@ -6577,7 +6607,9 @@
                                 {bookingSuccessSnapshot.items.length} kursi berhasil tersimpan
                             </h3>
                             <p class="mt-1 text-sm text-muted-foreground">
-                                {bookingSuccessSnapshot.tanggal} · {segmentJamLabel(
+                                {bookingSuccessSnapshot.tanggal} · {segmentJamSummary(
+                                    bookingSuccessSnapshot.segment_jam_pickups,
+                                ) || segmentJamLabel(
                                     bookingSuccessSnapshot.segment_jam,
                                 ) || normalizeJamToken(
                                     bookingSuccessSnapshot.jam,

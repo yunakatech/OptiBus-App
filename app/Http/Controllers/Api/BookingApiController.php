@@ -280,21 +280,26 @@ class BookingApiController extends Controller
         PoolScope::applyRouteIdentity($query, (string) $validated['rute'], $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
         PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
-        $rows = $query->get([
-                'b.id',
-                'b.seat',
-                'b.name',
-                'b.phone',
-                'b.pembayaran',
-                'b.pickup_point',
-                'b.segment_id',
-                'b.price',
-                'b.discount',
-                's.origin',
-                's.destination',
-                's.jam as segment_jam',
-                DB::raw('s.rute as segment_name'),
-            ]);
+        $select = [
+            'b.id',
+            'b.seat',
+            'b.name',
+            'b.phone',
+            'b.pembayaran',
+            'b.pickup_point',
+            'b.segment_id',
+            'b.price',
+            'b.discount',
+            's.origin',
+            's.destination',
+            's.jam as segment_jam',
+            DB::raw('s.rute as segment_name'),
+        ];
+        $select[] = Schema::hasColumn('segments', 'jam_pickups')
+            ? 's.jam_pickups'
+            : DB::raw('NULL as jam_pickups');
+
+        $rows = $query->get($select);
 
         $details = [];
         foreach ($rows as $row) {
@@ -312,6 +317,10 @@ class BookingApiController extends Controller
                     $row->segment_name ?? '',
                 ),
                 'segment_jam' => SegmentName::jam($row->segment_jam ?? null),
+                'segment_jam_pickups' => SegmentName::jamList(
+                    $row->jam_pickups ?? null,
+                    $row->segment_jam ?? null,
+                ),
                 'price' => (float) ($row->price ?? 0),
                 'discount' => (float) ($row->discount ?? 0),
             ];

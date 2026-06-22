@@ -37,6 +37,8 @@ class OperationsApiTest extends TestCase
         DB::table('segments')->insert([
             'route_id' => $routeId,
             'rute' => 'PINRANG - MAKASSAR',
+            'jam' => '09:30:00',
+            'jam_pickups' => json_encode(['09:30', '11:00']),
             'harga' => 150000,
             'created_at' => now(),
         ]);
@@ -82,7 +84,9 @@ class OperationsApiTest extends TestCase
         $this->getJson(route('api.master.segments', ['route_name' => 'PINRANG - MAKASSAR']))
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonCount(1, 'segments');
+            ->assertJsonCount(1, 'segments')
+            ->assertJsonPath('segments.0.jam_pickups.0', '09:30')
+            ->assertJsonPath('segments.0.jam_pickups.1', '11:00');
 
         $segmentId = (int) DB::table('segments')->value('id');
         $this->getJson(route('api.master.segment-price', ['id' => $segmentId]))
