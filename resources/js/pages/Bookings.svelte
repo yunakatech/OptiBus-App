@@ -183,6 +183,7 @@
         pickup_point: string;
         segment_id: number;
         segment_name: string;
+        segment_jam: string;
         price: number;
         discount: number;
     };
@@ -190,6 +191,7 @@
     type SegmentItem = {
         id: number;
         rute: string;
+        jam: string | null;
         harga: number;
     };
 
@@ -241,6 +243,7 @@
         phone: string;
         pickup_point: string;
         segment_name: string;
+        segment_jam: string;
         pembayaran: string;
         final_price: number;
     };
@@ -248,6 +251,7 @@
     type BookingSuccessSnapshot = {
         tanggal: string;
         jam: string;
+        segment_jam: string;
         rute: string;
         unit: number;
         total: number;
@@ -1575,7 +1579,7 @@
             'BOOKING BERHASIL ✅',
             '',
             `Tanggal: ${bookingDate || '-'}`,
-            `Jam: ${normalizeJamToken(selectedJam) || '-'}`,
+            `Jam Segment: ${segmentJamLabel(detailSeat.segment_jam) || normalizeJamToken(selectedJam) || '-'}`,
             `Kursi: ${detailSeat.seat || '-'}`,
             `Nama: ${detailSeat.name || '-'}`,
             `Telepon: ${detailSeat.phone || '-'}`,
@@ -1818,11 +1822,12 @@
                 'BOOKING BERHASIL ✅',
                 '',
                 `Tanggal: ${snapshot.tanggal || '-'}`,
-                `Jam: ${normalizeJamToken(snapshot.jam) || '-'}`,
+                `Jam: ${segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`,
                 `Kursi: ${item.seat || '-'}`,
                 `Nama: ${item.name || '-'}`,
                 `Telepon: ${item.phone || '-'}`,
                 `Segment: ${item.segment_name || '-'}`,
+                `Jam Segment: ${item.segment_jam || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`,
                 `Jemput: ${item.pickup_point || '-'}`,
                 '',
                 `Harga: Rp ${item.final_price.toLocaleString('id-ID')}`,
@@ -1839,11 +1844,12 @@
             return lines.join('\n');
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${normalizeJamToken(snapshot.jam) || '-'}`;
+        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`;
         const lines = snapshot.items.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
                 `   Segment: ${item.segment_name || '-'}\n` +
+                `   Jam Segment: ${item.segment_jam || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}\n` +
                 `   Jemput: ${item.pickup_point || '-'}\n` +
                 `   Pembayaran: ${item.pembayaran || '-'}\n` +
                 `   Harga: Rp ${item.final_price.toLocaleString('id-ID')}`,
@@ -2059,6 +2065,8 @@
 
     const normalizeJamToken = (value: string) =>
         String(value || '').slice(0, 5);
+    const segmentJamLabel = (value: string | null | undefined) =>
+        normalizeJamToken(String(value ?? ''));
     const formatCurrency = (value: number) => formatCurrencyDisplay(value);
     const parseGroupDateTime = (tanggal: string, jam: string) => {
         const datePart = String(tanggal || '').slice(0, 10);
@@ -5108,6 +5116,7 @@
             const successSnapshot: BookingSuccessSnapshot = {
                 tanggal: bookingDate,
                 jam: selectedJam,
+                segment_jam: segmentJamLabel(activeSegment()?.jam) || normalizeJamToken(selectedJam),
                 rute: selectedRoute,
                 unit: Number(selectedUnit) || 1,
                 total: Math.max(
@@ -5120,6 +5129,7 @@
                     phone: formPhone,
                     pickup_point: formPickupPoint,
                     segment_name: activeSegment()?.rute || selectedRoute || '-',
+                    segment_jam: segmentJamLabel(activeSegment()?.jam) || normalizeJamToken(selectedJam),
                     pembayaran: formPayment,
                     final_price: Math.max(seatPrice - seatDiscount, 0),
                 })),
@@ -6023,13 +6033,15 @@
                                             ? 'Memuat segment...'
                                             : 'Pilih segment rute'}</option
                                     >
-                                    {#each segments as segment (`segment-opt-${segment.id}`)}
-                                        <option value={segment.id}>
-                                            {segment.rute} (Rp {Number(
-                                                segment.harga,
-                                            ).toLocaleString('id-ID')})
-                                        </option>
-                                    {/each}
+                                {#each segments as segment (`segment-opt-${segment.id}`)}
+                                    <option value={segment.id}>
+                                        {segment.rute}{segment.jam
+                                            ? ` • ${segmentJamLabel(segment.jam)}`
+                                            : ''} (Rp {Number(
+                                            segment.harga,
+                                        ).toLocaleString('id-ID')})
+                                    </option>
+                                {/each}
                                 </select>
                                 <select
                                     class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
@@ -6355,6 +6367,14 @@
                             </div>
                             <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
                                 <p class="text-[10px] text-muted-foreground sm:text-[11px]">
+                                    Jam Segment
+                                </p>
+                                <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
+                                    {segmentJamLabel(detailSeat.segment_jam) || '-'}
+                                </p>
+                            </div>
+                            <div class="rounded-xl border bg-muted/20 p-2.5 sm:p-3">
+                                <p class="text-[10px] text-muted-foreground sm:text-[11px]">
                                     Pembayaran
                                 </p>
                                 <p class="mt-1 break-words text-sm font-semibold sm:text-[15px]">
@@ -6427,7 +6447,9 @@
                                 >
                                 {#each segments as segment (`detail-segment-${segment.id}`)}
                                     <option value={segment.id}>
-                                        {segment.rute} (Rp {Number(
+                                        {segment.rute}{segment.jam
+                                            ? ` • ${segmentJamLabel(segment.jam)}`
+                                            : ''} (Rp {Number(
                                             segment.harga,
                                         ).toLocaleString('id-ID')})
                                     </option>
@@ -6556,7 +6578,9 @@
                                 {bookingSuccessSnapshot.items.length} kursi berhasil tersimpan
                             </h3>
                             <p class="mt-1 text-sm text-muted-foreground">
-                                {bookingSuccessSnapshot.tanggal} · {normalizeJamToken(
+                                {bookingSuccessSnapshot.tanggal} · {segmentJamLabel(
+                                    bookingSuccessSnapshot.segment_jam,
+                                ) || normalizeJamToken(
                                     bookingSuccessSnapshot.jam,
                                 ) || '-'} · Unit {bookingSuccessSnapshot.unit}
                             </p>
