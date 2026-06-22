@@ -1,4 +1,4 @@
-﻿<script module lang="ts">
+<script module lang="ts">
     export const layout = {
         breadcrumbs: [
             {
@@ -742,16 +742,10 @@
             return `${count} segment terhubung`;
         }
 
-        if (segments.length > 0) {
-            return 'Belum ada mapping segment untuk jam ini, menampilkan segment rute';
-        }
-
-        return 'Belum ada segment terhubung';
+        return 'Belum ada segment terhubung untuk jam ini';
     };
     const scheduleSegmentOptions = () => {
-        const matches = activeSchedule()?.segment_matches ?? [];
-
-        return matches.length > 0 ? matches : segments;
+        return activeSchedule()?.segment_matches ?? [];
     };
     const syncSegmentSelectionToSchedule = () => {
         const options = scheduleSegmentOptions();
@@ -1619,7 +1613,7 @@
             'BOOKING BERHASIL ✅',
             '',
             `Tanggal: ${bookingDate || '-'}`,
-            `Jam Segment: ${segmentJamSummary(detailSeat.segment_jam_pickups) || segmentJamLabel(detailSeat.segment_jam) || normalizeJamToken(selectedJam) || '-'}`,
+            `Jam Segment: ${segmentJamSummary(detailSeat.segment_jam_pickups) || segmentJamLabel(detailSeat.segment_jam) || '-'}`,
             `Kursi: ${detailSeat.seat || '-'}`,
             `Nama: ${detailSeat.name || '-'}`,
             `Telepon: ${detailSeat.phone || '-'}`,
@@ -1862,7 +1856,7 @@
                 'BOOKING BERHASIL ✅',
                 '',
                 `Tanggal: ${snapshot.tanggal || '-'}`,
-                `Jam Segment: ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`,
+                `Jam Segment: ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || '-'}`,
                 `Kursi: ${item.seat || '-'}`,
                 `Nama: ${item.name || '-'}`,
                 `Telepon: ${item.phone || '-'}`,
@@ -1883,12 +1877,12 @@
             return lines.join('\n');
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}`;
+        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || '-'}`;
         const lines = snapshot.items.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
                 `   Segment: ${item.segment_name || '-'}\n` +
-                `   Jam Segment: ${segmentJamSummary(item.segment_jam_pickups) || segmentJamLabel(item.segment_jam) || segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || normalizeJamToken(snapshot.jam) || '-'}\n` +
+                `   Jam Segment: ${segmentJamSummary(item.segment_jam_pickups) || segmentJamLabel(item.segment_jam) || segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || '-'}\n` +
                 `   Jemput: ${item.pickup_point || '-'}\n` +
                 `   Pembayaran: ${item.pembayaran || '-'}\n` +
                 `   Harga: Rp ${item.final_price.toLocaleString('id-ID')}`,
@@ -5179,7 +5173,7 @@
                 segment_jam:
                     segmentJamSummary(segmentJamPickups) ||
                     segmentJamLabel(activeSegment()?.jam) ||
-                    normalizeJamToken(selectedJam),
+                    '',
                 segment_jam_pickups: segmentJamPickups,
                 rute: selectedRoute,
                 unit: Number(selectedUnit) || 1,
@@ -5196,7 +5190,7 @@
                     segment_jam:
                         segmentJamSummary(segmentJamPickups) ||
                         segmentJamLabel(activeSegment()?.jam) ||
-                        normalizeJamToken(selectedJam),
+                        '',
                     segment_jam_pickups: segmentJamPickups,
                     pembayaran: formPayment,
                     final_price: Math.max(seatPrice - seatDiscount, 0),
