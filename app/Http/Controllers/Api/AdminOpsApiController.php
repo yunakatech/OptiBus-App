@@ -257,6 +257,42 @@ class AdminOpsApiController extends Controller
             return $row;
         })->values();
 
+        $segmentCache = [];
+        $rows = $rows->map(function ($row) use (&$segmentCache) {
+            $routeId = (int) ($row->route_id ?? 0);
+            $routeName = trim((string) ($row->route_name ?? $row->rute ?? ''));
+            $cacheKey = $routeId.'|'.$routeName;
+
+            if (! array_key_exists($cacheKey, $segmentCache)) {
+                $segmentCache[$cacheKey] = $this->scheduleSegmentsForRoute($routeId, $routeName);
+            }
+
+            $scheduleJam = substr((string) ($row->jam ?? ''), 0, 5);
+            $segmentMatches = array_values(array_filter(
+                $segmentCache[$cacheKey],
+                static function (array $segment) use ($scheduleJam): bool {
+                    $jamPickups = $segment['jam_pickups'] ?? [];
+
+                    return in_array($scheduleJam, $jamPickups, true)
+                        || (string) ($segment['jam'] ?? '') === $scheduleJam;
+                },
+            ));
+
+            $row->segment_matches = $segmentMatches;
+            $segmentJamPickups = [];
+            foreach ($segmentMatches as $segment) {
+                foreach ($segment['jam_pickups'] ?? [] as $jam) {
+                    $normalizedJam = SegmentName::jam($jam);
+                    if ($normalizedJam !== '') {
+                        $segmentJamPickups[] = $normalizedJam;
+                    }
+                }
+            }
+            $row->segment_jam_pickups = array_values(array_unique($segmentJamPickups));
+
+            return $row;
+        });
+
         $optionsBySchedule = [];
         if ($hasScheduleUnits) {
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
@@ -354,6 +390,12 @@ class AdminOpsApiController extends Controller
 
         if (! PoolScope::canAccessRouteName($routeName)) {
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
+        $scheduleJam = substr($jam, 0, 5);
+        $routeSegmentJamPickups = $this->scheduleSegmentJamOptions($routeId, $routeName);
+        if ($routeSegmentJamPickups !== [] && ! in_array($scheduleJam, $routeSegmentJamPickups, true)) {
+            return $this->error('Jam jadwal harus cocok dengan jam segment pada rute ini.', 422);
         }
 
         $duplicateQuery = DB::table('schedules')
@@ -8817,6 +8859,98 @@ XML;
         $signature = (array) (DB::table($table)->selectRaw(implode(', ', $selects))->first() ?? []);
 
         return md5(json_encode($signature, JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @return array<int, array{
+     *     id: int,
+     *     rute: string,
+     *     origin: string,
+     *     destination: string,
+     *     jam: string,
+     *     jam_pickups: array<int, string>,
+     *     harga: float
+     * }>
+     */
+    private function scheduleSegmentsForRoute(int $routeId, string $routeName): array
+    {
+        if (! Schema::hasTable('segments')) {
+            return [];
+        }
+
+        $query = DB::table('segments as s')
+            ->select([
+                's.id',
+                's.rute',
+                's.origin',
+                's.destination',
+                's.jam',
+                's.harga',
+                Schema::hasColumn('segments', 'jam_pickups')
+                    ? 's.jam_pickups'
+                    : DB::raw('NULL as jam_pickups'),
+            ]);
+        $this->applyTenantScopeIfExists($query, 'segments', 's');
+
+        if ($routeId > 0) {
+            $query->where(function (Builder $builder) use ($routeId, $routeName): void {
+                $builder->where('s.route_id', $routeId);
+
+                if ($routeName !== '') {
+                    $builder->orWhere(function (Builder $legacy) use ($routeName): void {
+                        $legacy->whereNull('s.route_id')->where('s.rute', $routeName);
+                    });
+                }
+            });
+        } elseif ($routeName !== '') {
+            $query->where('s.rute', $routeName);
+        }
+
+        $this->applyRouteScopeToQuery($query, 's.route_id', 's.rute');
+
+        return $query
+            ->orderBy('s.rute')
+            ->orderBy('s.jam')
+            ->get()
+            ->map(static function ($row): array {
+                return [
+                    'id' => (int) ($row->id ?? 0),
+                    'rute' => SegmentName::display(
+                        $row->origin ?? null,
+                        $row->destination ?? null,
+                        $row->rute ?? '',
+                    ),
+                    'origin' => (string) ($row->origin ?? ''),
+                    'destination' => (string) ($row->destination ?? ''),
+                    'jam' => SegmentName::jam($row->jam ?? null),
+                    'jam_pickups' => SegmentName::jamList(
+                        $row->jam_pickups ?? null,
+                        $row->jam ?? null,
+                    ),
+                    'harga' => (float) ($row->harga ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function scheduleSegmentJamOptions(int $routeId, string $routeName): array
+    {
+        $jams = [];
+
+        foreach ($this->scheduleSegmentsForRoute($routeId, $routeName) as $segment) {
+            foreach ($segment['jam_pickups'] as $jam) {
+                $normalized = SegmentName::jam($jam);
+                if ($normalized !== '') {
+                    $jams[] = $normalized;
+                }
+            }
+        }
+
+        return array_values(array_unique($jams));
     }
 
     private function hasSchedulesRouteId(): bool
