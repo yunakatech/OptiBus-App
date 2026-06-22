@@ -92,6 +92,9 @@
                                     family: 'ui-sans-serif, system-ui',
                                 },
                                 color: '#64748b',
+                                maxRotation: 45,
+                                autoSkip: true,
+                                maxTicksLimit: 12,
                             },
                             border: { display: false },
                         },
@@ -135,11 +138,11 @@
 </script>
 
 <div
-    class="flex h-full flex-col rounded-3xl border border-gray-200 bg-[#FFFFFF] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-5"
-    style="min-height: 280px;"
+    class="flex w-full flex-col rounded-3xl border border-gray-200 bg-[#FFFFFF] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-5"
 >
+    <!-- Header dan Legend Horisontal -->
     <div
-        class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        class="mb-4 flex flex-wrap items-start justify-between gap-y-3 gap-x-4"
     >
         <div class="min-w-0">
             <p class="text-[13px] font-semibold text-slate-700">
@@ -151,27 +154,32 @@
                 Pemantauan target omset bulanan terhadap pencapaian aktual
             </p>
         </div>
-        <div class="flex items-center gap-3">
+        
+        <!-- Legend -->
+        <div class="flex shrink-0 items-center gap-3 pt-0.5">
             <div class="flex items-center gap-1.5">
                 <div
-                    class="h-2.5 w-2.5 rounded border border-slate-300 bg-slate-100"
+                    class="h-2 w-2 rounded-sm border border-slate-300 bg-slate-100"
                 ></div>
                 <span
-                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500"
+                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-[11px]"
                     >Target</span
                 >
             </div>
             <div class="flex items-center gap-1.5">
-                <div class="h-2.5 w-2.5 rounded bg-sky-500"></div>
+                <div class="h-2 w-2 rounded-sm bg-sky-500"></div>
                 <span
-                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500"
+                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-[11px]"
                     >Revenue</span
                 >
             </div>
         </div>
     </div>
 
-    <div class="relative mt-3 min-h-[200px] w-full flex-1 sm:min-h-0">
-        <canvas bind:this={chartCanvas}></canvas>
+    <!-- Chart Container yang memiliki scroll horizontal di mobile dan batasan tinggi aspect-->
+    <div class="w-full overflow-x-auto overflow-y-hidden pb-1">
+        <div class="relative min-w-[500px] w-full" style="height: 250px;">
+            <canvas bind:this={chartCanvas}></canvas>
+        </div>
     </div>
 </div>
