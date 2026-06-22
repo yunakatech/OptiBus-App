@@ -176,9 +176,9 @@
         </div>
     </div>
 
-    <!-- Chart Container yang memiliki scroll horizontal di mobile dan batasan tinggi aspect-->
-    <div class="w-full overflow-x-auto overflow-y-hidden pb-1">
-        <div class="relative min-w-[500px] w-full" style="height: 250px;">
+    <!-- Chart Container -->
+    <div class="w-full pb-1">
+        <div class="relative w-full" style="height: 250px;">
             <canvas bind:this={chartCanvas}></canvas>
         </div>
     </div>

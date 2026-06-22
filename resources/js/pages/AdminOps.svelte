@@ -6241,103 +6241,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                                <div
-                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-center gap-3 text-muted-foreground"
-                                    >
-                                        <Route class="h-4 w-4 text-sky-600" />
-                                        <span
-                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
-                                            >Rute tersedia</span
-                                        >
-                                    </div>
-                                    <p
-                                        class="mt-3 text-2xl font-semibold text-foreground"
-                                    >
-                                        {scheduleOverview.routes}
-                                    </p>
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        {selectedScheduleRoute
-                                            ? selectedScheduleRoute
-                                            : 'Belum ada rute yang dipilih'}
-                                    </p>
-                                </div>
-                                <div
-                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-center gap-3 text-muted-foreground"
-                                    >
-                                        <CalendarDays
-                                            class="h-4 w-4 text-emerald-600"
-                                        />
-                                        <span
-                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
-                                            >Jadwal aktif</span
-                                        >
-                                    </div>
-                                    <p
-                                        class="mt-3 text-2xl font-semibold text-foreground"
-                                    >
-                                        {scheduleSummary.total}
-                                    </p>
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        {activeScheduleGroup
-                                            ? `${activeScheduleGroup.activeDays} hari operasional`
-                                            : 'Semua jadwal dari seluruh rute'}
-                                    </p>
-                                </div>
-                                <div
-                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-center gap-3 text-muted-foreground"
-                                    >
-                                        <Armchair
-                                            class="h-4 w-4 text-violet-600"
-                                        />
-                                        <span
-                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
-                                            >Total unit</span
-                                        >
-                                    </div>
-                                    <p
-                                        class="mt-3 text-2xl font-semibold text-foreground"
-                                    >
-                                        {scheduleSummary.totalUnits}
-                                    </p>
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        Alokasi unit terjadwal minggu ini
-                                    </p>
-                                </div>
-                                <div
-                                    class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-center gap-3 text-muted-foreground"
-                                    >
-                                        <Wallet class="h-4 w-4 text-amber-600" />
-                                        <span
-                                            class="text-[11px] font-semibold uppercase tracking-[0.18em]"
-                                            >BOP terjadwal</span
-                                        >
-                                    </div>
-                                    <p
-                                        class="mt-3 text-xl font-semibold text-foreground"
-                                    >
-                                        {formatCurrency(scheduleSummary.bopTotal)}
-                                    </p>
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        Window jam {formatScheduleWindow(
-                                            scheduleSummary.firstDeparture,
-                                            scheduleSummary.lastDeparture,
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
+
                         </div>
                     </section>
 
@@ -7029,11 +6933,6 @@
                                             {/each}
                                         </select>
                                     </label>
-                                {:else}
-                                    <div class="flex flex-wrap items-center gap-2 text-sm">
-                                        <span class="text-muted-foreground">Pool aktif</span>
-                                        <Badge variant="secondary" class="rounded-full px-3 py-1">{activePoolName}</Badge>
-                                    </div>
                                 {/if}
                             </div>
                             <div

@@ -43,9 +43,7 @@
         </div>
         {@render children?.()}
     </AppContent>
-    {#if !isMenuPage}
-        <MobileBottomNav />
-    {/if}
+    <MobileBottomNav />
     <GlobalLoadingOverlay />
     <GlobalConfirmDialog />
     <ToastContainer />

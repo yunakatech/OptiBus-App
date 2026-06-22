@@ -4,9 +4,10 @@
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CreditCard from 'lucide-svelte/icons/credit-card';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
-    import Monitor from 'lucide-svelte/icons/monitor';
+    import Plus from 'lucide-svelte/icons/plus';
     import Tickets from 'lucide-svelte/icons/tickets';
     import { onMount } from 'svelte';
+    import MobileMenuSheet from '@/components/MobileMenuSheet.svelte';
     import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
@@ -33,7 +34,7 @@
         {
             title: 'Console',
             href: '/booking-console',
-            icon: Monitor,
+            icon: Plus,
             permission: 'booking.view',
         },
         {
@@ -43,10 +44,9 @@
             permission: 'charter.view',
         },
         {
-            title: 'Bagasi',
-            href: '/luggages',
-            icon: Briefcase,
-            permission: 'luggage.view',
+            title: 'Menu',
+            href: '#menu',
+            icon: LayoutGrid,
         },
     ];
     const billingItems: NavItem[] = [
@@ -123,8 +123,16 @@
         }
     }
 
+    let menuSheetOpen = $state(false);
+
     function visitNavItem(event: MouseEvent, href: string): void {
         event.preventDefault();
+        
+        if (href === '#menu') {
+            menuSheetOpen = true;
+            return;
+        }
+
         prepareNavPress(href);
 
         if (url.isCurrentUrl(href, url.currentUrl)) {
@@ -294,3 +302,5 @@ return;
         </div>
     </div>
 </nav>
+
+<MobileMenuSheet bind:open={menuSheetOpen} />
