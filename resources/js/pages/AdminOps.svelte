@@ -751,7 +751,18 @@
         target_revenue: '',
         fixed_cost: '',
     });
-    let scheduleForm = $state({
+    let scheduleForm = $state<{
+        id: number;
+        rute: string;
+        dow: number;
+        jam: string;
+        units: number;
+        bop: string;
+        unit_id: number;
+        unit_ids: number[];
+        unit_labels: string[];
+        segment_configs: Array<{ segment_id: number; jam_pickup: string }>;
+    }>({
         id: 0,
         rute: '',
         dow: 1,
@@ -761,6 +772,7 @@
         unit_id: 0,
         unit_ids: [0],
         unit_labels: ['Unit 1'],
+        segment_configs: [],
     });
     let selectedScheduleRoute = $state('');
     let selectedScheduleRouteId = $state(0);
@@ -4099,7 +4111,47 @@
             unit_id: 0,
             unit_ids: [0],
             unit_labels: ['Unit 1'],
+            segment_configs: [],
         });
+
+    // ── Segment config helpers ───────────────────────────────────────────────
+    const addScheduleSegmentConfig = (segmentId: number) => {
+        const seg = scheduleSegmentsForRoute().find(
+            (s) => Number(s.id) === segmentId,
+        );
+        if (!seg) return;
+        const existing = scheduleForm.segment_configs.find(
+            (c) => c.segment_id === segmentId,
+        );
+        if (existing) return;
+        const jamPickups = segmentJamList(seg.jam_pickups);
+        const defaultJam = jamPickups[0] || segmentJamLabel(seg.jam) || '08:00';
+        scheduleForm = {
+            ...scheduleForm,
+            segment_configs: [
+                ...scheduleForm.segment_configs,
+                { segment_id: segmentId, jam_pickup: defaultJam },
+            ],
+        };
+    };
+    const removeScheduleSegmentConfig = (segmentId: number) => {
+        scheduleForm = {
+            ...scheduleForm,
+            segment_configs: scheduleForm.segment_configs.filter(
+                (c) => c.segment_id !== segmentId,
+            ),
+        };
+    };
+    const updateScheduleSegmentJam = (segmentId: number, jam: string) => {
+        scheduleForm = {
+            ...scheduleForm,
+            segment_configs: scheduleForm.segment_configs.map((c) =>
+                c.segment_id === segmentId
+                    ? { ...c, jam_pickup: segmentJamLabel(jam) || c.jam_pickup }
+                    : c,
+            ),
+        };
+    };
     const selectScheduleRoute = async (value: string) => {
         const selected = scheduleRouteSelectOptions.find(
             (option) => option.value === value,
@@ -4384,7 +4436,13 @@
                 selectedRouteId,
             );
 
+            const hasSegmentConfigs =
+                Array.isArray(scheduleForm.segment_configs) &&
+                scheduleForm.segment_configs.length > 0;
+
+            // Only enforce jam-matching when no explicit segment configs are set
             if (
+                !hasSegmentConfigs &&
                 routeJamOptions.length > 0 &&
                 !routeJamOptions.includes(normalizedJam)
             ) {
@@ -4424,6 +4482,9 @@
 
                             return normalized > 0 ? normalized : null;
                         }),
+                        segment_configs: hasSegmentConfigs
+                            ? scheduleForm.segment_configs
+                            : undefined,
                     });
                 },
                 {
@@ -4470,6 +4531,7 @@
             unit_id: 0,
             unit_ids: [0],
             unit_labels: ['Unit 1'],
+            segment_configs: [],
         };
         activeMode = 'form';
     };
@@ -4504,6 +4566,23 @@
                 row.units || labels.length || unitIdsFromOptions.length || 1,
             ),
         );
+        // Rebuild segment_configs from segment_matches on the row
+        const segmentMatches = Array.isArray(
+            (row as Record<string, unknown>).segment_matches,
+        )
+            ? ((row as Record<string, unknown>).segment_matches as Array<{
+                  id: number;
+                  jam_pickups: string[];
+                  jam: string;
+              }>)
+            : [];
+        const loadedSegmentConfigs = segmentMatches.map((seg) => ({
+            segment_id: Number(seg.id),
+            jam_pickup:
+                (Array.isArray(seg.jam_pickups) && seg.jam_pickups[0]
+                    ? seg.jam_pickups[0]
+                    : segmentJamLabel(seg.jam)) || '08:00',
+        }));
         scheduleForm = {
             id: row.id,
             rute: selectedScheduleRoute,
@@ -4519,6 +4598,7 @@
                     : [row.unit_id ?? 0],
             ),
             unit_labels: buildDefaultUnitLabels(totalUnits, labels),
+            segment_configs: loadedSegmentConfigs,
         };
         activeMode = 'form';
     };
@@ -6387,6 +6467,90 @@
                                         />
                                     </label>
                                 </div>
+
+                                {#if scheduleSegmentsForRoute().length > 0}
+                                    <div class="rounded-2xl border border-sky-200/70 bg-sky-50/40 p-4">
+                                        <div class="mb-3 flex items-start justify-between gap-3">
+                                            <div>
+                                                <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700">
+                                                    Konfigurasi Segment
+                                                </p>
+                                                <p class="mt-1 text-xs text-muted-foreground">
+                                                    Pilih segment yang aktif untuk jadwal ini. Setiap segment harus memilih satu jam pickup.
+                                                </p>
+                                            </div>
+                                            {#if scheduleForm.segment_configs.length > 0}
+                                                <span class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-700">
+                                                    {scheduleForm.segment_configs.length} terpilih
+                                                </span>
+                                            {/if}
+                                        </div>
+                                        <div class="grid gap-2.5">
+                                            {#each scheduleSegmentsForRoute() as seg (seg.id)}
+                                                {@const isChecked = scheduleForm.segment_configs.some(
+                                                    (c) => c.segment_id === Number(seg.id),
+                                                )}
+                                                {@const configEntry = scheduleForm.segment_configs.find(
+                                                    (c) => c.segment_id === Number(seg.id),
+                                                )}
+                                                {@const pickupOptions = segmentJamList(seg.jam_pickups).length > 0
+                                                    ? segmentJamList(seg.jam_pickups)
+                                                    : segmentJamLabel(seg.jam)
+                                                      ? [segmentJamLabel(seg.jam)]
+                                                      : []}
+                                                <div
+                                                    class={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5 transition ${isChecked ? 'border-sky-400/60 bg-white shadow-sm' : 'border-border/50 bg-background/60'}`}
+                                                >
+                                                    <label class="flex flex-1 cursor-pointer items-center gap-2.5">
+                                                        <input
+                                                            type="checkbox"
+                                                            class="h-4 w-4 rounded border-border accent-sky-600"
+                                                            checked={isChecked}
+                                                            onchange={(e) => {
+                                                                if ((e.currentTarget as HTMLInputElement).checked) {
+                                                                    addScheduleSegmentConfig(Number(seg.id));
+                                                                } else {
+                                                                    removeScheduleSegmentConfig(Number(seg.id));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <div>
+                                                            <p class="text-xs font-medium text-foreground">
+                                                                {seg.rute || seg.origin + ' → ' + seg.destination}
+                                                            </p>
+                                                            <p class="text-[11px] text-muted-foreground">
+                                                                Pickup tersedia: {pickupOptions.join(', ') || '-'} · Rp {formatCurrency(Number(seg.harga || 0))}
+                                                            </p>
+                                                        </div>
+                                                    </label>
+                                                    {#if isChecked && pickupOptions.length > 0}
+                                                        <select
+                                                            class="h-8 rounded-md border border-sky-300/70 bg-white px-2 text-[12px] font-semibold text-sky-800 shadow-sm"
+                                                            value={configEntry?.jam_pickup ?? pickupOptions[0]}
+                                                            onchange={(e) => updateScheduleSegmentJam(
+                                                                Number(seg.id),
+                                                                (e.currentTarget as HTMLSelectElement).value,
+                                                            )}
+                                                        >
+                                                            {#each pickupOptions as pickupJam (pickupJam)}
+                                                                <option value={pickupJam}>{pickupJam}</option>
+                                                            {/each}
+                                                        </select>
+                                                    {:else if isChecked}
+                                                        <span class="rounded bg-sky-100 px-2 py-1 text-[11px] text-sky-600">
+                                                            {configEntry?.jam_pickup ?? '-'}
+                                                        </span>
+                                                    {/if}
+                                                </div>
+                                            {/each}
+                                        </div>
+                                        {#if scheduleForm.segment_configs.length === 0}
+                                            <p class="mt-2.5 text-[11px] text-amber-600">
+                                                ⚠ Belum ada segment dipilih. Matching akan menggunakan jam jadwal secara otomatis.
+                                            </p>
+                                        {/if}
+                                    </div>
+                                {/if}
 
                                 <div
                                     class="rounded-2xl border border-input/70 bg-muted/10 p-4"
