@@ -163,6 +163,7 @@ class BookingApiController extends Controller
         $rows = collect($data['schedules'] ?? []);
 
         $scheduleSegmentsPivot = [];
+        $pivotSegmentMap = [];   // id => segment array for segments linked via pivot
         if (Schema::hasTable('schedule_segment')) {
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
             if (!empty($scheduleIds)) {
@@ -176,8 +177,45 @@ class BookingApiController extends Controller
                     }
                     $scheduleSegmentsPivot[$sId][(int) $pivot->segment_id] = substr((string) $pivot->jam_pickup, 0, 5);
                 }
+
+                // Collect all unique segment IDs from pivot and fetch their details
+                // This bypasses the rute filter so sub-segments on different rutes are found
+                $allPivotSegmentIds = collect($scheduleSegmentsPivot)
+                    ->flatMap(fn ($mapping) => array_keys($mapping))
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                if (!empty($allPivotSegmentIds)) {
+                    $hasJamPickupsCol = Schema::hasColumn('segments', 'jam_pickups');
+                    $segSelect = ['id', 'rute', 'origin', 'destination', 'jam', 'harga'];
+                    if ($hasJamPickupsCol) {
+                        $segSelect[] = 'jam_pickups';
+                    }
+                    $pivotSegs = DB::table('segments')
+                        ->whereIn('id', $allPivotSegmentIds)
+                        ->get($segSelect);
+                    foreach ($pivotSegs as $seg) {
+                        $segId = (int) $seg->id;
+                        $pivotSegmentMap[$segId] = [
+                            'id'          => $segId,
+                            'rute'        => \App\Support\SegmentName::display(
+                                $seg->origin ?? null,
+                                $seg->destination ?? null,
+                                $seg->rute ?? '',
+                            ),
+                            'jam'         => \App\Support\SegmentName::jam($seg->jam ?? null),
+                            'jam_pickups' => \App\Support\SegmentName::jamList(
+                                $hasJamPickupsCol ? ($seg->jam_pickups ?? null) : null,
+                                $seg->jam ?? null,
+                            ),
+                            'harga'       => (float) ($seg->harga ?? 0),
+                        ];
+                    }
+                }
             }
         }
+
 
         $optionsBySchedule = [];
         $unitIds = $rows
@@ -306,21 +344,25 @@ class BookingApiController extends Controller
             $scheduleId = (int) ($row->id ?? 0);
             $explicitMappings = $scheduleSegmentsPivot[$scheduleId] ?? [];
 
-            $segmentMatches = $segments->filter(function (array $segment) use ($scheduleJam, $explicitMappings): bool {
-                if (!empty($explicitMappings)) {
-                    return isset($explicitMappings[$segment['id']]);
+            // When explicit mappings exist, build segment_matches from pivotSegmentMap
+            // (segments fetched by ID directly, so rute mismatch is no problem)
+            if (!empty($explicitMappings)) {
+                $segmentMatches = [];
+                foreach ($explicitMappings as $segId => $jam_pickup) {
+                    if (isset($pivotSegmentMap[$segId])) {
+                        $seg = $pivotSegmentMap[$segId];
+                        $seg['jam_pickups'] = [$jam_pickup];
+                        $segmentMatches[] = $seg;
+                    }
                 }
+            } else {
+                $segmentMatches = $segments->filter(function (array $segment) use ($scheduleJam): bool {
+                    $jamPickups = $segment['jam_pickups'] ?? [];
 
-                $jamPickups = $segment['jam_pickups'] ?? [];
-
-                return in_array($scheduleJam, $jamPickups, true)
-                    || (string) ($segment['jam'] ?? '') === $scheduleJam;
-            })->map(function (array $segment) use ($explicitMappings) {
-                if (!empty($explicitMappings) && isset($explicitMappings[$segment['id']])) {
-                    $segment['jam_pickups'] = [$explicitMappings[$segment['id']]];
-                }
-                return $segment;
-            })->values()->all();
+                    return in_array($scheduleJam, $jamPickups, true)
+                        || (string) ($segment['jam'] ?? '') === $scheduleJam;
+                })->values()->all();
+            }
 
             return [
                 'jam' => $scheduleJam,
