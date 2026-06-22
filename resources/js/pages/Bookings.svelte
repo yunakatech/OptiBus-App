@@ -230,6 +230,8 @@
         phone: string;
         pickup_point: string;
         segment_name: string;
+        segment_jam?: string;
+        segment_jam_pickups?: string[];
         pembayaran: string;
         final_price: number;
     };
@@ -373,10 +375,7 @@
     const today = toDateKey(new Date());
     const paymentOptions = [
         'Belum Lunas',
-        'DP',
         'Lunas',
-        'Redbus',
-        'Traveloka',
         'QRIS',
         'Transfer',
         'Transfer BJU',
@@ -1590,6 +1589,8 @@
                 phone: currentDetail.phone,
                 pickup_point: currentDetail.pickup_point,
                 segment_name: currentDetail.segment_name || '-',
+                segment_jam: currentDetail.segment_jam,
+                segment_jam_pickups: currentDetail.segment_jam_pickups,
                 pembayaran: currentDetail.pembayaran,
                 final_price: finalPrice,
             },
