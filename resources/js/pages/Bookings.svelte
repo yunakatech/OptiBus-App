@@ -8895,12 +8895,12 @@
                                                 </div>
                                             </div>
 
-                                            <div class="overflow-x-auto">
+                                            <div class="table-container">
                                                 <table
                                                     class="min-w-full table-fixed text-sm"
                                                 >
                                                     <thead
-                                                        class="bg-muted/25 text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+                                                        class="sticky top-0 z-10 bg-muted/25 text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
                                                     >
                                                         <tr>
                                                             <th class="w-[128px] px-4 py-3 font-medium">
@@ -8921,7 +8921,7 @@
                                                             </th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody>
+                                                    <tbody class="text-[13px]">
                                                         {#each section.groups as group (group.key)}
                                                             {@const unpaidAmount =
                                                                 bookingGroupUnpaidAmount(

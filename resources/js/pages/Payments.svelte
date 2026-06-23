@@ -611,7 +611,7 @@
                     <p class="mt-1 text-sm text-muted-foreground">Coba pindah tab status, ubah filter sumber data, atau kosongkan pencarian.</p>
                 </div>
             {:else}
-                <div class="hidden overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm md:block">
+                <div class="table-container hidden rounded-2xl border border-border/70 bg-card shadow-sm md:block">
                     <table class="w-full text-sm">
                         <thead class="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                             <tr>
