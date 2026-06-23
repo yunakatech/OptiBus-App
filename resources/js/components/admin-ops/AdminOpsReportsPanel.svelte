@@ -578,7 +578,7 @@
             </div>
 
             {#if reportRows.length > 0}
-                <div class="max-h-[70vh] overflow-auto">
+                <div class="table-container max-h-[70vh]">
                     {#if reportSummary.type === 'booking'}
                         <div class="grid gap-3 p-3 md:hidden">
                             {#each asBookingRows(reportRows) as row (row.id)}
@@ -624,7 +624,7 @@
                                 </article>
                             {/each}
                         </div>
-                        <table class="hidden min-w-full text-sm md:table">
+                        <table class="hidden w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
@@ -640,7 +640,7 @@
                                     <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="text-[13px]">
                                 {#each asBookingRows(reportRows) as row (row.id)}
                                     <tr
                                         class="border-b border-border/60 align-top transition hover:bg-muted/15"
@@ -774,7 +774,7 @@
                                 </article>
                             {/each}
                         </div>
-                        <table class="hidden min-w-full text-sm md:table">
+                        <table class="hidden w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
@@ -790,7 +790,7 @@
                                     <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="text-[13px]">
                                 {#each asCharterRows(reportRows) as row (row.id)}
                                     <tr
                                         class="border-b border-border/60 align-top transition hover:bg-muted/15"
@@ -922,7 +922,7 @@
                                 </article>
                             {/each}
                         </div>
-                        <table class="hidden min-w-full text-sm md:table">
+                        <table class="hidden w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
@@ -938,7 +938,7 @@
                                     <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="text-[13px]">
                                 {#each asLuggageRows(reportRows) as row (row.id)}
                                     <tr
                                         class="border-b border-border/60 align-top transition hover:bg-muted/15"

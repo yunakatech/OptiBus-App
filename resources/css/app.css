@@ -111,6 +111,14 @@
     .scrollbar-thin::-webkit-scrollbar-thumb:hover {
         background: rgba(100, 116, 139, 0.55);
     }
+
+    .table-container {
+        width: 100%;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+        overflow-x: auto;
+    }
 }
 
 :root {

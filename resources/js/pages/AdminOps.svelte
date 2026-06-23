@@ -7150,7 +7150,7 @@
                         </div>
                     {/if}
                     <div
-                        class="hidden overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="table-container hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
                     <div
                         class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.035),rgba(16,185,129,0.05))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
@@ -9172,7 +9172,7 @@
                         </div>
 
                         <div
-                            class="hidden overflow-hidden rounded-2xl border border-border/70 bg-background/90 lg:block"
+                            class="table-container hidden rounded-2xl border border-border/70 bg-background/90 lg:block"
                         >
                             <table class="w-full table-fixed text-sm">
                                 <thead

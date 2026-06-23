@@ -625,8 +625,8 @@
                             {formatCurrency(monthly?.departure_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
-                        <table class="min-w-full text-left text-[11px]">
+                    <div class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                        <table class="w-full text-left text-[11px]">
                             <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                                 <tr>
                                     <th class="py-2 pr-2 font-semibold">Manifest</th>
@@ -677,8 +677,8 @@
                             {formatCurrency(monthly?.charter_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
-                        <table class="min-w-full text-left text-[11px]">
+                    <div class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                        <table class="w-full text-left text-[11px]">
                             <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                                 <tr>
                                     <th class="py-2 pr-2 font-semibold">Berangkat</th>
@@ -737,8 +737,8 @@
                             {formatCurrency(monthly?.luggage_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div class="mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
-                        <table class="min-w-full text-left text-[11px]">
+                    <div class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                        <table class="w-full text-left text-[11px]">
                             <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                                 <tr>
                                     <th class="py-2 pr-2 font-semibold">Berangkat</th>

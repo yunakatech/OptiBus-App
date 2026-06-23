@@ -623,7 +623,7 @@
                     <CardContent>
                         {#if invoices.length > 0}
                             <div
-                                class="hidden overflow-hidden rounded-lg border md:block"
+                                class="table-container hidden rounded-lg border md:block"
                             >
                                 <table class="w-full text-sm">
                                     <thead
@@ -644,7 +644,7 @@
                                             >
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-border/70">
+                                    <tbody class="divide-y divide-border/70 text-[13px]">
                                         {#each invoices as invoice}
                                             <tr>
                                                 <td class="px-3 py-3">
