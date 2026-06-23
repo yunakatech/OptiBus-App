@@ -2058,7 +2058,7 @@
         }
 
         const match = normalized.match(/^(\d{4})-(\d{2})/);
-        return match ? `${match[1]}-${match[2]}` : normalized;
+        return match ? `${match[1]}-${match[2]}-01` : normalized;
     };
     const poolMonthlyTargetRowsForYear = (
         year: string,
@@ -2125,7 +2125,8 @@
                 booking_target: parseRupiahInput(target.booking_target),
                 bagasi_target: parseRupiahInput(target.bagasi_target),
                 carter_target: parseRupiahInput(target.carter_target),
-            }));
+            }))
+            .filter((row) => row.target_month !== '');
     const poolMonthlyTargetRowHasValue = (
         row: PoolMonthlyTargetFormRow | undefined,
     ) => {
@@ -9178,22 +9179,19 @@
                                     class="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground"
                                 >
                                     <tr>
-                                        <th class="w-[28%] px-4 py-3 text-left"
+                                        <th class="w-[32%] px-4 py-3 text-left"
                                             >Nama Kategori Armada</th
                                         >
-                                        <th class="w-[16%] px-4 py-3 text-left"
+                                        <th class="w-[18%] px-4 py-3 text-left"
                                             >Kategori</th
                                         >
-                                        <th class="w-[14%] px-4 py-3 text-left"
-                                            >Pool</th
-                                        >
-                                        <th class="w-[18%] px-4 py-3 text-left"
+                                        <th class="w-[22%] px-4 py-3 text-left"
                                             >Kapasitas/Layout</th
                                         >
-                                        <th class="w-[12%] px-4 py-3 text-left"
+                                        <th class="w-[14%] px-4 py-3 text-left"
                                             >Status</th
                                         >
-                                        <th class="w-[12%] px-4 py-3 text-left"
+                                        <th class="w-[14%] px-4 py-3 text-left"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -9220,14 +9218,6 @@
                                                         row.category,
                                                     )}</span
                                                 >
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <Badge
-                                                    variant="secondary"
-                                                    class="rounded-full px-2.5 py-1 text-[11px]"
-                                                >
-                                                    {rowPoolName(row)}
-                                                </Badge>
                                             </td>
                                             <td class="px-4 py-3">
                                                 <div class="font-medium">
