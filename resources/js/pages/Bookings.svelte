@@ -852,8 +852,11 @@
             activeScheduleUnitOption()?.seats ?? activeSchedule()?.seats ?? 0,
         );
     const bookedCount = () => bookedSeats().length;
-    const activeSegment = () =>
-        segments.find((item) => item.id === Number(formSegmentId)) ?? null;
+    const activeSegment = () => {
+        const options = scheduleSegmentOptions();
+        const found = options.find((item) => item.id === Number(formSegmentId));
+        return found ?? segments.find((item) => item.id === Number(formSegmentId)) ?? null;
+    };
     const selectedTotal = () => {
         const price = Number(activeSegment()?.harga ?? 0);
         const discount = parseCurrencyInput(formDiscount);
@@ -1813,7 +1816,7 @@
             return;
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${bookingDate}`;
+        const header = `BOOKING BERHASIL ✅\n\nTanggal : ${bookingDate}`;
         const lines = rekapItems.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
@@ -1879,7 +1882,7 @@
             return lines.join('\n');
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal & Jam : ${snapshot.tanggal} | ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || '-'}`;
+        const header = `BOOKING BERHASIL ✅\n\nTanggal : ${snapshot.tanggal}`;
         const lines = snapshot.items.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
