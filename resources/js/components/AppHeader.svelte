@@ -5,6 +5,7 @@
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
+    import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
     import {
         NavigationMenu,
         NavigationMenuItem,
@@ -101,6 +102,7 @@
             </div>
 
             <div class="ml-auto flex items-center gap-2">
+                <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
                 <ProfileMenu user={auth.user} />
             </div>
         </div>

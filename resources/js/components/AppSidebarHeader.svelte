@@ -4,6 +4,7 @@
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
+    import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
     import { Button } from '@/components/ui/button';
     import { SidebarTrigger } from '@/components/ui/sidebar';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
@@ -89,9 +90,8 @@
         </Button>
     </div>
 
-    <div
-        class="flex min-w-0 items-center gap-2 justify-self-end md:col-start-3"
-    >
+    <div class="flex min-w-0 items-center gap-2 justify-self-end md:col-start-3">
+        <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
         <ProfileMenu user={auth.user} />
     </div>
 </header>
