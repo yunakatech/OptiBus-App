@@ -22,7 +22,6 @@
     import type { Snippet } from 'svelte';
     import AppLogo from '@/components/AppLogo.svelte';
     import NavMain from '@/components/NavMain.svelte';
-    import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
     import {
         Sidebar,
         SidebarContent,
@@ -289,9 +288,6 @@
                         </Link>
                     {/snippet}
                 </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem class={`px-1 group-data-[collapsible=icon]:hidden ${billingLocked ? 'hidden' : ''}`}>
-                <TenantPoolSwitcher mode="desktop" />
             </SidebarMenuItem>
         </SidebarMenu>
     </SidebarHeader>
