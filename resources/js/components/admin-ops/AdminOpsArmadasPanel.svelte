@@ -1,10 +1,12 @@
 <script lang="ts">
     import { Download, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
-    import { Badge } from '@/components/ui/badge';
-    import { Button } from '@/components/ui/button';
-    import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-    import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import DataTable from '@/components/terminal/DataTable.svelte';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+import RevenueChartTable from './RevenueChartTable.svelte';
 
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
     type ArmadaPoolOption = {
@@ -521,9 +523,93 @@
                 ? 'text-emerald-700 dark:text-emerald-300'
                 : armadaSummary.achievement >= 80
                   ? 'text-amber-700 dark:text-amber-300'
+                : 'text-rose-700 dark:text-rose-300',
+        },
+    ]);
+
+    const armadaSummaryCards = $derived([
+        {
+            key: 'revenue',
+            label: 'Total Revenue',
+            valueText: formatCurrency(armadaSummary.revenue),
+            note: 'Sum Revenue unit aktif',
+            formula: 'Total Revenue = Sum Revenue',
+            tone: 'text-emerald-700 dark:text-emerald-300',
+        },
+        {
+            key: 'bop',
+            label: 'Total BOP',
+            valueText: formatCurrency(armadaSummary.bop),
+            note: 'Biaya operasional perjalanan',
+            formula: 'Total BOP = Sum BOP unit',
+            tone: 'text-amber-700 dark:text-amber-300',
+        },
+        {
+            key: 'gross',
+            label: 'Gross Margin',
+            valueText: formatCurrency(armadaSummary.gross),
+            note: 'Revenue - BOP',
+            formula: 'Gross = Revenue - BOP',
+            tone: summaryTone(armadaSummary.gross),
+        },
+        {
+            key: 'fixedCost',
+            label: 'Total Fixed Cost',
+            valueText: formatCurrency(armadaSummary.fixedCost),
+            note: 'Biaya tetap bulanan',
+            formula: 'Fixed Cost = Sum Fixed Cost',
+            tone: 'text-slate-700 dark:text-slate-300',
+        },
+        {
+            key: 'net',
+            label: 'Net Margin',
+            valueText: formatCurrency(armadaSummary.net),
+            note: 'Gross - Fixed Cost',
+            formula: 'Net = Gross - Fixed Cost',
+            tone: summaryTone(armadaSummary.net),
+        },
+        {
+            key: 'achievement',
+            label: 'Achievement Gabungan',
+            valueText: `${armadaSummary.achievement.toFixed(1)}%`,
+            note: `${armadaSummary.count} armada aktif`,
+            formula: 'Achievement = Revenue / Target × 100%',
+            tone: armadaSummary.achievement >= 100
+                ? 'text-emerald-700 dark:text-emerald-300'
+                : armadaSummary.achievement >= 80
+                  ? 'text-amber-700 dark:text-amber-300'
                   : 'text-rose-700 dark:text-rose-300',
         },
     ]);
+
+    const armadaChartBars = $derived.by(() =>
+        [...armadas]
+            .sort(
+                (left, right) =>
+                    Number(right.revenue || 0) - Number(left.revenue || 0),
+            )
+            .slice(0, 6)
+            .map((row) => ({
+                key: String(row.id),
+                label: row.nopol,
+                subtitle: `${row.driver_name ?? 'Driver belum diatur'} · ${row.pool_name ?? 'Semua Pool'}`,
+                value: Number(row.revenue || 0),
+                valueText: formatCurrency(Number(row.revenue || 0)),
+                tone: 'bg-cyan-500',
+            })),
+    );
+
+    const armadaTableColumns = [
+        { key: 'armada', label: 'Armada', width: 'w-[180px]', sticky: 'left' },
+        { key: 'driver', label: 'Driver / Pool', width: 'w-[220px]' },
+        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[150px]' },
+        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[130px]' },
+        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[140px]' },
+        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[150px]' },
+        { key: 'target', label: 'Target', align: 'right', numeric: true, width: 'w-[140px]' },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'gps', label: 'GPS', align: 'center', width: 'w-[110px]' },
+    ];
 </script>
 
 {#if activeMode === 'view'}
@@ -791,6 +877,7 @@
         <Button type="button" variant="outline" class="h-9" onclick={goBackToData}>Kembali</Button>
     {/if}
     {:else}
+        {#if false}
         <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div class="space-y-1">
@@ -1030,4 +1117,217 @@
             {/each}
         </div>
     </div>
+        {/if}
 {/if}
+
+<RevenueChartTable
+    title="Armada"
+    subtitle="Revenue-heavy armada list. Desktop pakai chart table; mobile tetap kartu ringkas."
+    badges={[
+        { key: 'total', label: `${armadas.length} unit` },
+        { key: 'period', label: selectedPeriodLabel() },
+    ]}
+    summaryCards={armadaSummaryCards}
+    chartBars={armadaChartBars}
+>
+    {#snippet controls()}
+        <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_minmax(180px,220px)_auto]">
+            <div class="min-w-0">
+                <TerminalFilter
+                    bind:query={armadaSearch}
+                    placeholder="Cari nopol, driver, pool, atau GPS"
+                    class="min-w-0"
+                    on:search={() => void loadArmadas()}
+                />
+            </div>
+
+            <label class="space-y-1">
+                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Pool
+                </span>
+                <select
+                    class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    bind:value={armadaPoolId}
+                    onchange={() => void loadArmadas()}
+                >
+                    {#each armadaPoolOptions as pool (pool.id)}
+                        <option value={pool.id}>{pool.name}</option>
+                    {/each}
+                </select>
+            </label>
+
+            <label class="space-y-1">
+                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Periode
+                </span>
+                <select
+                    class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    bind:value={armadaPeriod}
+                    onchange={() => void loadArmadas()}
+                >
+                    {#each periodOptions as period (period.value)}
+                        <option value={period.value}>{period.label}</option>
+                    {/each}
+                </select>
+            </label>
+
+            {#if canExport}
+                <a
+                    href={exportHref}
+                    class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
+                >
+                    <Download class="h-4 w-4" />
+                    Export ke Excel
+                </a>
+            {/if}
+        </div>
+    {/snippet}
+
+    {#snippet table()}
+        <div class="grid gap-3 md:hidden">
+            {#if armadas.length === 0}
+                <div class="col-span-full rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+                    Belum ada armada untuk filter yang dipilih.
+                </div>
+            {/if}
+
+            {#each armadas as row (row.id)}
+                {@const gross = armadaGrossMargin(row)}
+                {@const net = armadaNetMargin(row)}
+                {@const achievement = armadaAchievement(row)}
+                {@const activeGps = gpsActive(row)}
+                {@const achievementStyle = achievementTone(achievement)}
+                <article class="group flex min-w-0 flex-col space-y-2 overflow-hidden rounded-xl border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:border-blue-400/70 hover:shadow-[0_12px_24px_-16px_rgba(59,130,246,0.5)]">
+                    <header class="flex min-w-0 items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="min-w-0 break-words text-base leading-6 font-bold tracking-tight text-foreground">{row.nopol}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {row.driver_name ?? 'Driver belum diatur'} · {row.pool_name ?? 'Semua Pool'}
+                            </p>
+                        </div>
+                        <span class={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums ${achievementStyle.badge}`}>
+                            {achievement.toFixed(0)}%
+                        </span>
+                    </header>
+
+                    <div class="flex min-w-0 flex-wrap items-center gap-2" aria-label="Informasi driver dan GPS">
+                        <span class={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold ${gpsTone(activeGps)}`}>
+                            <span class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                            GPS {activeGps ? 'Aktif' : 'Mati'}
+                        </span>
+                    </div>
+
+                    <div class="flex min-w-0 items-end justify-between gap-3 pt-1">
+                        <dl class="min-w-0">
+                            <dt class="text-xs font-medium text-muted-foreground">Net Margin</dt>
+                            <dd class="mt-0.5 min-w-0">
+                                <p class="max-w-full break-words text-left text-base leading-6 font-bold tabular-nums text-emerald-600">
+                                    {formatCurrency(net)}
+                                </p>
+                            </dd>
+                        </dl>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-11 w-11 shrink-0 rounded-full border border-border/70 bg-muted/30"
+                                    aria-label="Aksi armada"
+                                >
+                                    <MoreHorizontal class="h-5 w-5" />
+                                    <span class="sr-only">Aksi armada</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
+                                    <Eye class="mr-2 h-3.5 w-3.5" />
+                                    Lihat Detail
+                                </DropdownMenuItem>
+                                {#if canManage}
+                                    <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
+                                        <Pencil class="mr-2 h-3.5 w-3.5" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                        Hapus
+                                    </DropdownMenuItem>
+                                {/if}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+
+                    <div class="relative h-1.5 w-full rounded-full bg-muted/70" aria-hidden="true">
+                        <div class={`absolute inset-y-0 left-0 rounded-full ${achievementStyle.bar}`} style={`width: ${Math.max(0, Math.min(100, achievement))}%`}></div>
+                    </div>
+                </article>
+            {/each}
+        </div>
+
+        <div class="hidden md:block">
+            <DataTable columns={armadaTableColumns} rows={armadas} class="min-w-[1320px]">
+                {#snippet row({ row })}
+                    {@const armada = row as ArmadaRow}
+                    {@const gross = armadaGrossMargin(armada)}
+                    {@const net = armadaNetMargin(armada)}
+                    {@const achievement = armadaAchievement(armada)}
+                    {@const activeGps = gpsActive(armada)}
+                    {@const achievementStyle = achievementTone(achievement)}
+
+                    <td class="px-3 py-2 align-top">
+                        <div class="font-semibold text-foreground">{armada.nopol}</div>
+                        <div class="mt-0.5 text-[10px] text-muted-foreground">{armada.kategori ?? '-'} / {armada.ac_type}</div>
+                    </td>
+
+                    <td class="px-3 py-2 align-top">
+                        <div class="font-medium text-foreground">{armada.driver_name ?? 'Driver belum diatur'}</div>
+                        <div class="mt-0.5 text-[10px] text-muted-foreground">{armada.pool_name ?? 'Semua Pool'}</div>
+                    </td>
+
+                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(armada.revenue || 0))}</td>
+                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(armada.bop || 0))}</td>
+                    <td class="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(gross)}</td>
+                    <td class="px-3 py-2 text-right tabular-nums">{formatCurrency(Number(armada.fixed_cost || 0))}</td>
+                    <td class="px-3 py-2 text-right tabular-nums">{formatCurrency(Number(armada.target_bulanan || 0))}</td>
+                    <td class="px-3 py-2 text-right tabular-nums">{achievement.toFixed(1)}%</td>
+                    <td class="px-3 py-2 text-center">
+                        <span class={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${gpsTone(activeGps)}`}>
+                            <span class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                            GPS {activeGps ? 'Aktif' : 'Mati'}
+                        </span>
+                    </td>
+                {/snippet}
+
+                {#snippet actions({ row })}
+                    {@const armada = row as ArmadaRow}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                <MoreHorizontal class="h-4 w-4" />
+                                <span class="sr-only">Aksi armada</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                            <DropdownMenuItem onclick={() => openArmadaView(armada.id)}>
+                                <Eye class="mr-2 h-3.5 w-3.5" />
+                                Lihat Detail
+                            </DropdownMenuItem>
+                            {#if canManage}
+                                <DropdownMenuItem onclick={() => openArmadaEditor(armada)}>
+                                    <Pencil class="mr-2 h-3.5 w-3.5" />
+                                    Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onclick={() => void removeArmada(armada.id)}>
+                                    <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                    Hapus
+                                </DropdownMenuItem>
+                            {/if}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                {/snippet}
+            </DataTable>
+        </div>
+    {/snippet}
+</RevenueChartTable>

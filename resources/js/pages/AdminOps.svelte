@@ -1563,6 +1563,98 @@
 
         return 'border-emerald-200 bg-emerald-50 text-emerald-700';
     };
+    const poolSummaryCards = $derived.by(() => {
+        const totalRevenue = pools.reduce(
+            (sum, row) => sum + Number(row.revenue || 0),
+            0,
+        );
+        const totalBop = pools.reduce(
+            (sum, row) => sum + Number(row.bop || 0),
+            0,
+        );
+        const totalFixedCost = pools.reduce(
+            (sum, row) => sum + Number(row.fixed_cost || 0),
+            0,
+        );
+        const totalTarget = pools.reduce(
+            (sum, row) => sum + Number(poolTargetTotal(row as PoolRow) || 0),
+            0,
+        );
+        const gross = totalRevenue - totalBop;
+        const net = gross - totalFixedCost;
+        const achievement = totalTarget > 0 ? (totalRevenue / totalTarget) * 100 : 0;
+
+        return [
+            {
+                key: 'revenue',
+                label: 'Total Revenue',
+                valueText: formatCurrency(totalRevenue),
+                note: 'Revenue cabang aktif',
+                formula: 'Revenue = Σ revenue',
+                tone: 'text-emerald-700 dark:text-emerald-300',
+            },
+            {
+                key: 'bop',
+                label: 'Total BOP',
+                valueText: formatCurrency(totalBop),
+                note: 'Beban operasional cabang',
+                formula: 'BOP = Σ bop',
+                tone: 'text-amber-700 dark:text-amber-300',
+            },
+            {
+                key: 'gross',
+                label: 'Gross Margin',
+                valueText: formatCurrency(gross),
+                note: 'Revenue - BOP',
+                formula: 'Gross = Revenue - BOP',
+                tone: gross >= 0 ? 'text-foreground' : 'text-rose-700 dark:text-rose-300',
+            },
+            {
+                key: 'fixedCost',
+                label: 'Total Fixed Cost',
+                valueText: formatCurrency(totalFixedCost),
+                note: 'Biaya tetap cabang',
+                formula: 'Fixed Cost = Σ fixed cost',
+                tone: 'text-slate-700 dark:text-slate-300',
+            },
+            {
+                key: 'net',
+                label: 'Net Margin',
+                valueText: formatCurrency(net),
+                note: 'Gross - Fixed Cost',
+                formula: 'Net = Gross - Fixed Cost',
+                tone: net >= 0 ? 'text-foreground' : 'text-rose-700 dark:text-rose-300',
+            },
+            {
+                key: 'achievement',
+                label: 'Achievement Gabungan',
+                valueText: `${achievement.toFixed(1)}%`,
+                note: `${pools.length} cabang aktif`,
+                formula: 'Achievement = Revenue / Target × 100%',
+                tone: achievement >= 100
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : achievement >= 80
+                      ? 'text-amber-700 dark:text-amber-300'
+                      : 'text-rose-700 dark:text-rose-300',
+            },
+        ];
+    });
+    const poolChartBars = $derived.by(() =>
+        [...pools]
+            .sort(
+                (left, right) =>
+                    Number(right.revenue || 0) - Number(left.revenue || 0),
+            )
+            .slice(0, 6)
+            .map((row) => ({
+                key: String(row.id),
+                label: row.name,
+                subtitle: `${row.region || 'Lainnya'} · ${row.code || 'Tanpa kode'}`,
+                value: Number(row.revenue || 0),
+                valueText: formatCurrency(Number(row.revenue || 0)),
+                tone: 'bg-cyan-500',
+            })),
+    );
     const exportPools = () => {
         const params = poolQueryParams();
         const search = params.toString();
@@ -9813,6 +9905,59 @@
                                 {pools.length} cabang
                             </Badge>
                         </div>
+                        <div class="grid gap-3 border-b border-border/70 p-3 xl:grid-cols-3 2xl:grid-cols-6">
+                            {#each poolSummaryCards as card (card.key)}
+                                <div class="rounded-2xl border border-border/70 bg-muted/10 p-4 shadow-sm">
+                                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                        {card.label}
+                                    </p>
+                                    <p class={`mt-2 text-2xl font-bold tabular-nums ${card.tone}`}>
+                                        {card.valueText}
+                                    </p>
+                                    <p class="mt-1 text-[11px] text-muted-foreground">
+                                        {card.note}
+                                    </p>
+                                </div>
+                            {/each}
+                        </div>
+                        <div class="border-b border-border/70 p-3">
+                            <div class="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm">
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                            Top Revenue Snapshot
+                                        </p>
+                                        <p class="mt-1 text-sm text-muted-foreground">
+                                            Cabang dengan revenue terbesar tampil lebih dulu supaya cepat dibaca di desktop.
+                                        </p>
+                                    </div>
+                                    <Badge variant="secondary" class="rounded-full">
+                                        {poolChartBars.length} cabang
+                                    </Badge>
+                                </div>
+                                <div class="mt-4 space-y-3">
+                                    {#each poolChartBars as bar (bar.key)}
+                                        <div class="space-y-1.5">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <p class="truncate text-sm font-semibold text-foreground">{bar.label}</p>
+                                                    <p class="truncate text-[11px] text-muted-foreground">{bar.subtitle}</p>
+                                                </div>
+                                                <p class="shrink-0 text-xs font-semibold tabular-nums text-foreground">
+                                                    {bar.valueText}
+                                                </p>
+                                            </div>
+                                            <div class="h-2.5 overflow-hidden rounded-full bg-muted/70">
+                                                <div
+                                                    class={`h-full rounded-full ${bar.tone}`}
+                                                    style={`width: ${Math.max(8, Math.min(100, (bar.value / Math.max(1, poolChartBars[0]?.value || 1)) * 100))}%`}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    {/each}
+                                </div>
+                            </div>
+                        </div>
                         <div class="grid gap-3 border-b border-border/70 p-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.55fr)_minmax(220px,0.55fr)]">
                             <div class="min-w-0 lg:col-span-1">
                                 <TerminalFilter
@@ -10083,7 +10228,6 @@
                     </div>
                 {/if}
             {/if}
-
             {#if activeTab === 'users'}
                 {#if activeMode === 'form'}
                     <form
