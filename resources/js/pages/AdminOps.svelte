@@ -59,6 +59,7 @@
     import DataTable from '@/components/terminal/DataTable.svelte';
     import EntityBadge from '@/components/terminal/EntityBadge.svelte';
     import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+    import AdminOpsPoolsPanel from '@/components/admin-ops/AdminOpsPoolsPanel.svelte';
     import { hasPermission } from '@/lib/access';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import {
@@ -9875,6 +9876,30 @@
                         </div>
                     </form>
                 {:else}
+                    <AdminOpsPoolsPanel
+                        pools={pools}
+                        poolsColumns={poolsColumns}
+                        bind:poolSearch
+                        bind:poolRegionFilter
+                        bind:poolSortOrder
+                        poolRegionOptions={poolRegionOptions}
+                        summaryCards={poolSummaryCards}
+                        chartBars={poolChartBars}
+                        {formatCurrency}
+                        {poolAchievement}
+                        {poolGrossMargin}
+                        {poolNetMargin}
+                        {poolProgressClass}
+                        {poolProgressBadgeClass}
+                        {poolReadyLabel}
+                        {poolTargetTotal}
+                        {formatPoolRoutes}
+                        {loadPools}
+                        {openPoolEditor}
+                        {removeItem}
+                        {canManagePools}
+                    />
+                    {#if false}
                     <div
                         class="overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-sm"
                     >
@@ -10226,6 +10251,7 @@
                             </DataTable>
                         </div>
                     </div>
+                    {/if}
                 {/if}
             {/if}
             {#if activeTab === 'users'}
