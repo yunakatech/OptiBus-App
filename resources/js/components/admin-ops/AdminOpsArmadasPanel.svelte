@@ -827,44 +827,54 @@
 
             <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_minmax(180px,220px)_auto]">
                 <div class="min-w-0">
-                <TerminalFilter
-                    bind:query={armadaSearch}
-                    placeholder="Cari nopol, driver, pool, atau GPS"
-                    class="min-w-0"
-                    on:search={() => void loadArmadas()}
-                />
+                    <TerminalFilter
+                        bind:query={armadaSearch}
+                        placeholder="Cari nopol, driver, pool, atau GPS"
+                        class="min-w-0"
+                        on:search={() => void loadArmadas()}
+                    />
+                </div>
+
+                <label class="space-y-1">
+                    <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Pool
+                    </span>
+                    <select
+                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        bind:value={armadaPoolId}
+                        onchange={() => void loadArmadas()}
+                    >
+                        {#each armadaPoolOptions as pool (pool.id)}
+                            <option value={pool.id}>{pool.name}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="space-y-1">
+                    <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Periode
+                    </span>
+                    <select
+                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        bind:value={armadaPeriod}
+                        onchange={() => void loadArmadas()}
+                    >
+                        {#each periodOptions as period (period.value)}
+                            <option value={period.value}>{period.label}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                {#if canExport}
+                    <a
+                        href={exportHref}
+                        class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
+                    >
+                        <Download class="h-4 w-4" />
+                        Export ke Excel
+                    </a>
+                {/if}
             </div>
-
-            <select
-                class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                bind:value={armadaPoolId}
-                onchange={() => void loadArmadas()}
-            >
-                {#each armadaPoolOptions as pool (pool.id)}
-                    <option value={pool.id}>{pool.name}</option>
-                {/each}
-            </select>
-
-            <select
-                class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                bind:value={armadaPeriod}
-                onchange={() => void loadArmadas()}
-            >
-                {#each periodOptions as period (period.value)}
-                    <option value={period.value}>{period.label}</option>
-                {/each}
-            </select>
-
-            {#if canExport}
-                <a
-                    href={exportHref}
-                    class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
-                >
-                    <Download class="h-4 w-4" />
-                    Export ke Excel
-                </a>
-            {/if}
-        </div>
 
         <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {#if armadas.length === 0}

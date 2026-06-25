@@ -604,23 +604,28 @@
                                             {row.status || '-'}
                                         </span>
                                     </div>
-                                    <div class="mt-3 grid gap-2 text-xs">
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute</p>
-                                            <p class="mt-1 font-medium text-foreground">{row.rute || '-'}</p>
-                                            <p class="mt-1 text-[11px] text-muted-foreground">{row.pickup_point || '-'}</p>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Unit / Seat</p>
-                                                <p class="mt-1 font-medium text-foreground">{row.unit || '-'} / {row.seat || '-'}</p>
+                                    <details class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs">
+                                        <summary class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground">
+                                            Detail
+                                        </summary>
+                                        <div class="grid gap-2 border-t border-border/70 p-3">
+                                            <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute</p>
+                                                <p class="mt-1 font-medium text-foreground">{row.rute || '-'}</p>
+                                                <p class="mt-1 text-[11px] text-muted-foreground">{row.pickup_point || '-'}</p>
                                             </div>
-                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Potongan</p>
-                                                <p class="mt-1 font-medium text-foreground">{formatCurrency(row.discount)}</p>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Unit / Seat</p>
+                                                    <p class="mt-1 font-medium text-foreground">{row.unit || '-'} / {row.seat || '-'}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Potongan</p>
+                                                    <p class="mt-1 font-medium text-foreground">{formatCurrency(row.discount)}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </details>
                                 </article>
                             {/each}
                         </div>
@@ -751,26 +756,31 @@
                                             {row.status || row.bop_status || '-'}
                                         </span>
                                     </div>
-                                    <div class="mt-3 grid gap-2 text-xs">
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute Carter</p>
-                                            <p class="mt-1 font-medium text-foreground">{routeLabel(row.pickup_point, row.drop_point)}</p>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Driver</p>
-                                                <p class="mt-1 font-medium text-foreground">{row.driver_name || '-'}</p>
+                                    <details class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs">
+                                        <summary class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground">
+                                            Detail
+                                        </summary>
+                                        <div class="grid gap-2 border-t border-border/70 p-3">
+                                            <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute Carter</p>
+                                                <p class="mt-1 font-medium text-foreground">{routeLabel(row.pickup_point, row.drop_point)}</p>
                                             </div>
-                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Armada</p>
-                                                <p class="mt-1 font-medium text-foreground">{charterVehicle(row)}</p>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Driver</p>
+                                                    <p class="mt-1 font-medium text-foreground">{row.driver_name || '-'}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Armada</p>
+                                                    <p class="mt-1 font-medium text-foreground">{charterVehicle(row)}</p>
+                                                </div>
+                                            </div>
+                                            <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
+                                                <p class="mt-1 font-medium text-foreground">{row.layanan || '-'}</p>
                                             </div>
                                         </div>
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
-                                            <p class="mt-1 font-medium text-foreground">{row.layanan || '-'}</p>
-                                        </div>
-                                    </div>
+                                    </details>
                                 </article>
                             {/each}
                         </div>
@@ -901,24 +911,29 @@
                                             {row.payment_status || '-'}
                                         </span>
                                     </div>
-                                    <div class="mt-3 grid gap-2 text-xs">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pengirim</p>
-                                                <p class="mt-1 font-medium text-foreground">{row.sender_name || '-'}</p>
-                                                <p class="mt-1 text-[11px] text-muted-foreground">{row.sender_phone || '-'}</p>
+                                    <details class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs">
+                                        <summary class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground">
+                                            Detail
+                                        </summary>
+                                        <div class="grid gap-2 border-t border-border/70 p-3">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pengirim</p>
+                                                    <p class="mt-1 font-medium text-foreground">{row.sender_name || '-'}</p>
+                                                    <p class="mt-1 text-[11px] text-muted-foreground">{row.sender_phone || '-'}</p>
+                                                </div>
+                                                <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Penerima</p>
+                                                    <p class="mt-1 font-medium text-foreground">{row.receiver_name || '-'}</p>
+                                                    <p class="mt-1 text-[11px] text-muted-foreground">{row.receiver_phone || '-'}</p>
+                                                </div>
                                             </div>
-                                            <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Penerima</p>
-                                                <p class="mt-1 font-medium text-foreground">{row.receiver_name || '-'}</p>
-                                                <p class="mt-1 text-[11px] text-muted-foreground">{row.receiver_phone || '-'}</p>
+                                            <div class="rounded-xl bg-background/80 px-3 py-2">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
+                                                <p class="mt-1 font-medium text-foreground">{row.service_name || '-'} / {row.quantity} item</p>
                                             </div>
                                         </div>
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
-                                            <p class="mt-1 font-medium text-foreground">{row.service_name || '-'} / {row.quantity} item</p>
-                                        </div>
-                                    </div>
+                                    </details>
                                 </article>
                             {/each}
                         </div>
