@@ -9646,7 +9646,7 @@
                             <label class="space-y-1.5">
                                 <span
                                     class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >Target Legacy / Fallback</span
+                                    >Target Cadangan</span
                                 >
                                 <Input
                                     placeholder="Rp 0"
@@ -9662,7 +9662,8 @@
                                     disabled={!canManagePools}
                                 />
                                 <p class="mt-1 text-xs text-muted-foreground">
-                                    Dipakai hanya jika target bulanan belum ada untuk bulan yang dipilih.
+                                    Dipakai kalau target bulanan untuk bulan
+                                    terpilih belum ada.
                                 </p>
                             </label>
                             <label class="space-y-1.5">
@@ -9800,9 +9801,9 @@
                                 <p
                                     class="mt-1 max-w-3xl text-sm text-muted-foreground"
                                 >
-                                    Mini-card padat untuk memantau revenue, BOP,
-                                    gross, net margin, dan target tanpa scroll
-                                    horizontal.
+                                    Desktop pakai tabel supaya rapat, mobile
+                                    tetap pakai kartu ringkas untuk revenue,
+                                    BOP, gross, net margin, dan target.
                                 </p>
                             </div>
                             <Badge
@@ -9850,7 +9851,7 @@
                             </label>
                         </div>
 
-                        <div class="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                        <div class="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 lg:hidden">
                             {#each pools as row (row.id)}
                                 {@const achievement = poolAchievement(row as PoolRow)}
                                 {@const gross = poolGrossMargin(row as PoolRow)}
@@ -9922,7 +9923,7 @@
                                                 </div>
                                             </div>
                                             <p class="mt-2 text-[11px] text-muted-foreground">
-                                                Target bulan ini {formatCurrency(poolTargetTotal(row as PoolRow))}{row.monthly_target_source === 'monthly' ? '' : ' · fallback legacy'}
+                                                Target bulan ini {formatCurrency(poolTargetTotal(row as PoolRow))}{row.monthly_target_source === 'monthly' ? '' : ' · pakai target lama'}
                                             </p>
                                         </div>
 
@@ -10024,7 +10025,7 @@
                                 </article>
                             {/each}
                         </div>
-                        <div class="hidden">
+                        <div class="hidden lg:block">
                             <DataTable columns={poolsColumns} rows={pools} class="min-w-[1780px]">
                                 {#snippet row({ row })}
                                     {@const gross = financialGrossMargin(row as PoolRow)}
