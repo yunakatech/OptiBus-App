@@ -32,6 +32,7 @@
         SlidersHorizontal,
         Send,
         Trash2,
+        Users,
         Wallet,
     } from 'lucide-svelte';
     import { onDestroy, onMount, tick, untrack } from 'svelte';
@@ -10292,10 +10293,12 @@
                                                     {poolReadyLabel(row as PoolRow)}
                                                 </span>
                                                 <span class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5">
-                                                    👤 {row.driver_count || 0} Driver
+                                                    <Users class="h-3 w-3" />
+                                                    {row.driver_count || 0} Driver
                                                 </span>
                                                 <span class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5">
-                                                    🛣️ {row.route_ids?.length || 0} Rute
+                                                    <Route class="h-3 w-3" />
+                                                    {row.route_ids?.length || 0} Rute
                                                 </span>
                                             </div>
 

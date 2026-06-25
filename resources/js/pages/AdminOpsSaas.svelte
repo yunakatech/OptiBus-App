@@ -592,8 +592,9 @@
                     {message}
                     <button
                         onclick={() => (message = '')}
+                        aria-label="Tutup pesan"
                         class="text-emerald-600 hover:text-emerald-800"
-                        >Ã—</button
+                        >×</button
                     >
                 </div>
             {/if}

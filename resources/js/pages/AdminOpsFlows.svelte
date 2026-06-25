@@ -3072,7 +3072,14 @@ params.set('to', filterTo);
                                 class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                             />
                             <Input placeholder="Cari nama / no hp / resi / rute" bind:value={filterQuery} />
-                            <Input type="number" min="10" max="100" bind:value={filterPerPage} />
+                            <Input
+                                type="number"
+                                min="10"
+                                max="100"
+                                bind:value={filterPerPage}
+                                placeholder="Data per halaman"
+                                aria-label="Data per halaman"
+                            />
                             <Button type="button" onclick={() => void applyFilters()}>Apply Filters</Button>
                         </div>
                         {/if}
