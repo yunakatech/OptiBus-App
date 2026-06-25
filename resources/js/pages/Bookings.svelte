@@ -64,6 +64,7 @@
     } from '@/lib/currency';
     import { consumeDataStale, markDataStale } from '@/lib/data-invalidation';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
+    import { readUiPreferences, saveUiPreferences } from '@/lib/ui-preferences';
 
     type Totals = {
         bookings: number;
@@ -372,7 +373,28 @@
         }).format(date);
     };
 
-    const today = toDateKey(new Date());
+    const today = (() => {
+        const serverToday = String(
+            page.props.server_today ??
+                serverNow ??
+                '',
+        ).slice(0, 10);
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(serverToday)) {
+            return serverToday;
+        }
+
+        return toDateKey(new Date());
+    })();
+    const initialUiPreferences = readUiPreferences();
+    const isIsoDateKey = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+    const initialBookingListDate = isIsoDateKey(
+        String(initialUiPreferences.defaultDateRange ?? ''),
+    )
+        ? String(initialUiPreferences.defaultDateRange)
+        : today;
+    const initialBookingListDesktopView =
+        initialUiPreferences.defaultViewMode === 'cards' ? 'cards' : 'sheet';
     const paymentOptions = [
         'Belum Lunas',
         'Lunas',
@@ -416,9 +438,9 @@
     let bookingListScope = $state<'active' | 'history'>('active');
     let bookingListSearch = $state('');
     let bookingListRoute = $state('all');
-    let bookingListDate = $state('');
+    let bookingListDate = $state(initialBookingListDate);
     let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>('all');
-    let bookingListDesktopView = $state<'sheet' | 'cards'>('sheet');
+    let bookingListDesktopView = $state<'sheet' | 'cards'>(initialBookingListDesktopView);
     let bookingListVisibleCount = $state(24);
     let lastBookingListFilterSignature = $state('');
     let bookingListFiltersExpanded = $state(false);
@@ -2579,6 +2601,31 @@
         lastBookingListFilterSignature = bookingListFilterSignature;
         bookingListVisibleCount = BOOKING_LIST_PAGE_SIZE;
     });
+    const persistUiPreferences = (preferences: Parameters<typeof saveUiPreferences>[0]) => {
+        void saveUiPreferences(preferences).catch((error) => {
+            if (typeof console !== 'undefined') {
+                console.warn('Gagal menyimpan preferensi UI.', error);
+            }
+        });
+    };
+    const setBookingListDesktopView = (viewMode: 'sheet' | 'cards') => {
+        if (bookingListDesktopView === viewMode) {
+            return;
+        }
+
+        bookingListDesktopView = viewMode;
+        persistUiPreferences({ defaultViewMode: viewMode });
+    };
+    const setBookingListDate = (date: string) => {
+        const nextDate = isIsoDateKey(date) ? date : today;
+
+        if (bookingListDate === nextDate) {
+            return;
+        }
+
+        bookingListDate = nextDate;
+        persistUiPreferences({ defaultDateRange: nextDate });
+    };
     const reloadBookingListData = () => {
         if (bookingListReloadTimer) {
             clearTimeout(bookingListReloadTimer);
@@ -2615,9 +2662,10 @@
         bookingListScope = 'active';
         bookingListSearch = '';
         bookingListRoute = 'all';
-        bookingListDate = '';
+        bookingListDate = today;
         bookingListPayment = 'all';
-        bookingListDatePicker?.clear();
+        bookingListDatePicker?.setDate(today, false, 'Y-m-d');
+        persistUiPreferences({ defaultDateRange: today });
     };
 
     const loadEmptyDepartureSchedules = async () => {
@@ -5322,7 +5370,7 @@
                     defaultDate: bookingListDate || undefined,
                     disableMobile: true,
                     onChange: (_selectedDates, dateStr) => {
-                        bookingListDate = dateStr || '';
+                        setBookingListDate(dateStr || today);
                     },
                 });
             }
@@ -5987,9 +6035,10 @@
                             </h3>
                             <div class="grid gap-3 md:grid-cols-2">
                                 <div class="md:col-span-2">
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Cari Database Customer</label>
+                                    <label for="booking-customer-lookup" class="mb-1.5 block text-xs font-medium text-muted-foreground">Cari Database Customer</label>
                                     <div class="relative">
                                         <Input
+                                            id="booking-customer-lookup"
                                             placeholder="Cari customer lama (nama / telepon)"
                                             class="h-11 rounded-xl !pl-10"
                                             bind:value={customerLookupQuery}
@@ -6047,9 +6096,10 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Nama Penumpang</label>
+                                    <label for="booking-form-name" class="mb-1.5 block text-xs font-medium text-muted-foreground">Nama Penumpang</label>
                                     <div class="relative">
                                         <Input
+                                            id="booking-form-name"
                                             class="h-11 rounded-xl !pl-10"
                                             placeholder="Cth: BUDI"
                                             bind:value={formName}
@@ -6061,9 +6111,10 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Telepon</label>
+                                    <label for="booking-form-phone" class="mb-1.5 block text-xs font-medium text-muted-foreground">Telepon</label>
                                     <div class="relative">
                                         <Input
+                                            id="booking-form-phone"
                                             class="h-11 rounded-xl !pl-10"
                                             placeholder="Cth: 08123456789"
                                             bind:value={formPhone}
@@ -6076,9 +6127,10 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Pilih Kursi</label>
+                                    <label for="booking-form-seat" class="mb-1.5 block text-xs font-medium text-muted-foreground">Pilih Kursi</label>
                                     <div class="relative">
                                         <Input
+                                            id="booking-form-seat"
                                             class="h-11 rounded-xl !pl-10"
                                             placeholder="Cth: 1, 2, 3"
                                             bind:value={formSeat}
@@ -6090,8 +6142,9 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Segment & Harga</label>
+                                    <label for="booking-form-segment" class="mb-1.5 block text-xs font-medium text-muted-foreground">Segment & Harga</label>
                                     <select
+                                        id="booking-form-segment"
                                         class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formSegmentId}
                                         disabled={loadingSegments}
@@ -6113,8 +6166,9 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Status Pembayaran</label>
+                                    <label for="booking-form-payment" class="mb-1.5 block text-xs font-medium text-muted-foreground">Status Pembayaran</label>
                                     <select
+                                        id="booking-form-payment"
                                         class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formPayment}
                                     >
@@ -6124,8 +6178,9 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Diskon Spesial</label>
+                                    <label for="booking-form-discount" class="mb-1.5 block text-xs font-medium text-muted-foreground">Diskon Spesial</label>
                                     <Input
+                                        id="booking-form-discount"
                                         class="h-11 rounded-xl"
                                         type="text"
                                         inputmode="numeric"
@@ -6141,21 +6196,23 @@
                                     />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Titik Jemput (Pickup Point)</label>
+                                    <label for="booking-form-pickup" class="mb-1.5 block text-xs font-medium text-muted-foreground">Titik Jemput (Pickup Point)</label>
                                     <Input
+                                        id="booking-form-pickup"
                                         class="h-11 rounded-xl"
                                         placeholder="Cth: Depan Indomaret"
                                         bind:value={formPickupPoint}
                                     />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label class="text-xs font-medium text-muted-foreground mb-1.5 block">Catatan Tambahan</label>
+                                    <label for="booking-form-address" class="mb-1.5 block text-xs font-medium text-muted-foreground">Catatan Tambahan</label>
                                     <Input
+                                        id="booking-form-address"
                                         class="h-11 rounded-xl"
-                                    placeholder="URL Google Map (opsional)"
-                                    bind:value={formAddress}
-                                />
-                            </div>
+                                        placeholder="URL Google Map (opsional)"
+                                        bind:value={formAddress}
+                                    />
+                                </div>
                             <div
                                 class="rounded-xl border bg-muted/20 p-3 text-sm"
                             >
@@ -6202,8 +6259,9 @@
                                 {/if}
                             </div>
                         </div>
-                    </div>
-                </div>
+            </div>
+            </div>
+            </div>
             </CardContent>
         </Card>
 
@@ -8584,7 +8642,7 @@
                                             : 'ghost'}
                                         class="h-7 gap-1.5 rounded-lg px-2.5 text-[11px]"
                                         onclick={() =>
-                                            (bookingListDesktopView = 'sheet')}
+                                            setBookingListDesktopView('sheet')}
                                     >
                                         <Rows3 class="h-3.5 w-3.5" />
                                         Sheet
@@ -8598,7 +8656,7 @@
                                             : 'ghost'}
                                         class="h-7 gap-1.5 rounded-lg px-2.5 text-[11px]"
                                         onclick={() =>
-                                            (bookingListDesktopView = 'cards')}
+                                            setBookingListDesktopView('cards')}
                                     >
                                         <LayoutGrid class="h-3.5 w-3.5" />
                                         Card
@@ -9261,13 +9319,13 @@
                             <div
                                 class={bookingListDesktopView === 'sheet'
                                     ? 'space-y-2.5 lg:hidden'
-                                    : 'grid gap-2.5 md:grid-cols-2 xl:grid-cols-3'}
+                                    : 'grid gap-2 md:grid-cols-2 xl:grid-cols-3'}
                             >
                                 {#each visibleBookingGroups() as group (group.key)}
                                     {@const unpaidAmount =
                                         bookingGroupUnpaidAmount(group)}
                                     <div
-                                        class={`group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 hover:border-rose-300/90 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
+                                        class={`group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 hover:border-rose-300/90 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
                                     >
                                         <div
                                             class="pointer-events-none absolute inset-x-0 top-0 h-14 bg-linear-to-r from-cyan-500/12 via-sky-500/10 to-transparent opacity-85 transition-opacity duration-200 group-hover:opacity-100"

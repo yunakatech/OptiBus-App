@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/svelte';
+import type { ResolvedComponent } from '@inertiajs/svelte';
 import AppHeaderLayout from '@/layouts/app/AppHeaderLayout.svelte';
 import AppLayout from '@/layouts/AppLayout.svelte';
 import AuthLayout from '@/layouts/AuthLayout.svelte';
@@ -8,17 +9,17 @@ import { initializeInertiaLoading } from '@/lib/inertia-loading';
 import { initializeTheme } from '@/lib/theme.svelte';
 
 const appName = import.meta.env.VITE_APP_NAME || 'OptiBus';
-const pages = import.meta.glob('./pages/**/*.svelte');
+const pages = import.meta.glob<ResolvedComponent>('./pages/**/*.svelte');
 
 createInertiaApp({
     resolve: async (name) => {
-        const page = pages[`./pages/${name}.svelte`];
+        const pageModule = pages[`./pages/${name}.svelte`];
 
-        if (!page) {
+        if (!pageModule) {
             throw new Error(`Inertia page not found: ${name}`);
         }
 
-        return page();
+        return await pageModule();
     },
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {

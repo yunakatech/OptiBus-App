@@ -14,6 +14,7 @@ use App\Http\Controllers\LuggageDocumentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlatformDashboardController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\StaticAssetController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'subscription.active'])->group(function () {
+    Route::patch('api/user/ui-preferences', [UserPreferenceController::class, 'update'])->name('user.ui_preferences.update');
     Route::get('dashboard', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
     Route::inertia('menu', 'Menu')->name('menu.index');
     Route::get('bookings', BookingController::class)->middleware('permission:booking.view')->name('bookings.index');

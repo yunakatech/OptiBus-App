@@ -319,7 +319,8 @@
     };
 
     const detailMetricCards = (row: ArmadaDetailRow) => {
-        const monthly = row.monthly?.summary;
+        const monthlyDetail = row.monthly ?? null;
+        const monthly = monthlyDetail?.summary ?? null;
         const gross = monthly?.gross ?? armadaGrossMargin(row);
         const net = monthly?.net_margin ?? armadaNetMargin(row);
         const achievement = monthly?.achievement ?? armadaAchievement(row);
@@ -549,7 +550,8 @@
             </div>
         </div>
     {:else if armadaDetail}
-        {@const monthly = armadaDetail.monthly?.summary ?? null}
+        {@const monthlyDetail = armadaDetail.monthly ?? null}
+        {@const monthly = monthlyDetail?.summary ?? null}
         {@const detailCards = detailMetricCards(armadaDetail)}
         <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
             <div class="flex items-start justify-between gap-3">
@@ -637,12 +639,12 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
-                                {#if (monthly?.bookings ?? []).length === 0}
+                                {#if (monthlyDetail?.bookings ?? []).length === 0}
                                     <tr>
                                         <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data manifest keberangkatan pada periode ini.</td>
                                     </tr>
                                 {:else}
-                                    {#each monthly?.bookings ?? [] as row (row.id)}
+                                    {#each monthlyDetail?.bookings ?? [] as row (row.id)}
                                         <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
                                             <td class="py-2 pr-2 text-muted-foreground">
                                                 <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.tanggal)}</div>
@@ -690,12 +692,12 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
-                                {#if (monthly?.charters ?? []).length === 0}
+                                {#if (monthlyDetail?.charters ?? []).length === 0}
                                     <tr>
                                         <td class="py-3 text-muted-foreground" colspan="6">Tidak ada data charter pada periode ini.</td>
                                     </tr>
                                 {:else}
-                                    {#each monthly?.charters ?? [] as row (row.id)}
+                                    {#each monthlyDetail?.charters ?? [] as row (row.id)}
                                         <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
                                             <td class="py-2 pr-2 text-muted-foreground">
                                                 <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.start_date)}</div>
@@ -750,12 +752,12 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
-                                {#if (monthly?.bagasi ?? []).length === 0}
+                                {#if (monthlyDetail?.bagasi ?? []).length === 0}
                                     <tr>
                                         <td class="py-3 text-muted-foreground" colspan="6">Tidak ada data bagasi pada periode ini.</td>
                                     </tr>
                                 {:else}
-                                    {#each monthly?.bagasi ?? [] as row (row.id)}
+                                    {#each monthlyDetail?.bagasi ?? [] as row (row.id)}
                                         <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
                                             <td class="py-2 pr-2 text-muted-foreground">
                                                 <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.tanggal)}</div>

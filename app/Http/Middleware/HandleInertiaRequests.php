@@ -202,6 +202,9 @@ class HandleInertiaRequests extends Middleware
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
                     'is_super_admin' => AccessControl::userIsSuperAdmin($userId),
+                    'ui_preferences' => is_array($user->ui_preferences ?? null)
+                        ? $user->ui_preferences
+                        : [],
                 ] : null,
                 'permissions' => $userId > 0 ? AccessControl::userPermissions($userId) : [],
                 'tenants' => $availableTenants,
@@ -224,6 +227,7 @@ class HandleInertiaRequests extends Middleware
                 'billing_access' => $billingAccess,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'server_today' => now()->toDateString(),
         ];
     }
 
