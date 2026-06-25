@@ -4,6 +4,12 @@ export type User = {
     email: string;
     avatar?: string;
     is_super_admin?: boolean;
+    ui_preferences?: {
+        defaultViewMode?: 'sheet' | 'cards';
+        defaultDateRange?: string;
+        itemsPerPage?: number;
+        [key: string]: unknown;
+    };
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;

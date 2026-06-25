@@ -1567,7 +1567,13 @@
         const search = params.toString();
         const url = `/api/admin/pools/export${search === '' ? '' : `?${search}`}`;
 
-        window.location.assign(url);
+        const link = document.createElement('a');
+        link.href = url;
+        link.rel = 'noopener';
+        link.target = '_self';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     };
     const routeNameById = (routeId: number) =>
         routes.find((route) => route.id === Number(routeId || 0))?.name ?? '';

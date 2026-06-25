@@ -30,6 +30,7 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
+    import { getUiPreference } from '@/lib/ui-preferences';
 
     type TabName = 'customer-bagasi' | 'customer-charter' | 'rute-carter';
     type ViewMode = 'data' | 'form';
@@ -89,9 +90,14 @@
     let charterCustomers = $state<CharterCustomer[]>([]);
     let carterRoutes = $state<CarterRoute[]>([]);
 
-    let bagasiMeta = $state<Pagination>({ page: 1, per_page: 20, total: 0, last_page: 1 });
-    let charterMeta = $state<Pagination>({ page: 1, per_page: 20, total: 0, last_page: 1 });
-    let carterRouteMeta = $state<Pagination>({ page: 1, per_page: 20, total: 0, last_page: 1 });
+    const defaultMasterItemsPerPage = Math.max(
+        1,
+        Number(getUiPreference('itemsPerPage', 20) ?? 20) || 20,
+    );
+
+    let bagasiMeta = $state<Pagination>({ page: 1, per_page: defaultMasterItemsPerPage, total: 0, last_page: 1 });
+    let charterMeta = $state<Pagination>({ page: 1, per_page: defaultMasterItemsPerPage, total: 0, last_page: 1 });
+    let carterRouteMeta = $state<Pagination>({ page: 1, per_page: defaultMasterItemsPerPage, total: 0, last_page: 1 });
 
     let bagasiQ = $state('');
     let charterQ = $state('');
