@@ -3977,7 +3977,14 @@ params.set('to', filterTo);
                         placeholder="Jam"
                         class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                     />
-                    <Input type="number" min="1" bind:value={assignmentForm.unit} required />
+                    <Input
+                        type="number"
+                        min="1"
+                        bind:value={assignmentForm.unit}
+                        required
+                        placeholder="Nomor unit"
+                        aria-label="Nomor unit"
+                    />
                     <select class="h-9 rounded-md border border-input bg-background px-3 text-sm" bind:value={assignmentForm.driver_id} required>
                         <option value={0}>Pilih Driver</option>{#each drivers as driver (driver.id)}<option value={driver.id}>{driver.nama}</option>{/each}
                     </select>

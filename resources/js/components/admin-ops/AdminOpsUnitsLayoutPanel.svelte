@@ -178,15 +178,25 @@
                     <div class={layoutFiltersExpanded
                         ? 'mt-3 space-y-2'
                         : 'mt-3 hidden space-y-2 md:block'}>
-                        <Input placeholder="Cari kategori/model referensi" bind:value={layoutTemplateSearch} />
-                        <select class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" bind:value={layoutTemplateChoice}>
-                            <option value="">Pilih template layout referensi</option>
-                            {#each layoutTemplateOptions as unit (unit.id)}
-                                <option value={unit.id}>
-                                    {unit.nopol} · {normalizeUnitCategory(unit.category)} · {unitSeatCount(unit.layout)} kursi
-                                </option>
-                            {/each}
-                        </select>
+                        <label class="space-y-1">
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                Cari template
+                            </span>
+                            <Input placeholder="Cari kategori/model referensi" bind:value={layoutTemplateSearch} />
+                        </label>
+                        <label class="space-y-1">
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                Template referensi
+                            </span>
+                            <select class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" bind:value={layoutTemplateChoice}>
+                                <option value="">Pilih template layout referensi</option>
+                                {#each layoutTemplateOptions as unit (unit.id)}
+                                    <option value={unit.id}>
+                                        {unit.nopol} · {normalizeUnitCategory(unit.category)} · {unitSeatCount(unit.layout)} kursi
+                                    </option>
+                                {/each}
+                            </select>
+                        </label>
                         <Button
                             type="button"
                             variant="outline"
