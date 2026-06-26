@@ -686,6 +686,7 @@
 
     let activeTab = $state<TabName>('routes');
     let activeMode = $state<ViewMode>('data');
+    let poolDetail = $state<PoolRow | null>(null);
     let lockedMenuView = $state(false);
     let busy = $state(false);
     let message = $state('');
@@ -1895,21 +1896,15 @@
     };
 
     const poolsColumns = [
-        { key: 'name', label: 'Pool', width: 'w-[130px]', sticky: 'left' },
-        { key: 'routes', label: 'Rute', width: 'w-[170px]', sticky: 'left' },
-        { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
-        { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
-        { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
-        { key: 'revenue', label: 'Total Revenue', align: 'right', numeric: true },
-        { key: 'charter_bop', label: 'Charter BOP', align: 'right', numeric: true },
-        { key: 'departure_bop', label: 'Keberangkatan BOP', align: 'right', numeric: true },
-        { key: 'bop', label: 'Total BOP', align: 'right', numeric: true },
-        { key: 'gross', label: 'Gross', align: 'right', numeric: true },
-        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true },
-        { key: 'net', label: 'Net Margin', align: 'right', numeric: true },
-        { key: 'target_revenue', label: 'Target Revenue', align: 'right', numeric: true },
-        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true },
-        { key: 'status', label: 'Status', align: 'center' },
+        { key: 'name', label: 'Pool', width: 'w-[150px]', sticky: 'left' },
+        { key: 'routes', label: 'Rute', width: 'w-[180px]' },
+        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
+        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'target_revenue', label: 'Target', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[100px]' },
+        { key: 'status', label: 'Status', align: 'center', width: 'w-[100px]' },
     ];
     const routesColumns = [
         { key: 'name', label: 'Rute Induk', width: 'w-[220px]', sticky: 'left' },
@@ -2284,6 +2279,10 @@
         poolMonthlyTargetActiveMonthIndex = currentMonthIndex;
         setFormMode('form');
         void focusPoolMonthlyTargetMonth(currentMonthIndex);
+    };
+    const openPoolView = (row: PoolRow) => {
+        poolDetail = row;
+        setFormMode('view');
     };
     const armadaGrossMargin = (row: ArmadaRow) =>
         financialGrossMargin(row);
@@ -9785,6 +9784,8 @@
                     </form>
                 {:else}
                     <AdminOpsPoolsPanel
+                        activeMode={activeMode}
+                        poolDetail={poolDetail}
                         pools={pools}
                         poolsColumns={poolsColumns}
                         bind:poolSearch
@@ -9802,7 +9803,12 @@
                         {formatPoolRoutes}
                         {loadPools}
                         {openPoolEditor}
+                        {openPoolView}
                         {removeItem}
+                        goBackToData={() => {
+                            poolDetail = null;
+                            activeMode = 'data';
+                        }}
                         {canManagePools}
                     />
                 {/if}

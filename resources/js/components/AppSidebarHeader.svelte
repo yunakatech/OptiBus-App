@@ -67,14 +67,18 @@
         {/if}
     </div>
 
-    <div class="hidden items-center justify-center md:flex">
+    <div class="hidden min-w-0 items-center justify-center lg:flex">
+        <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
+    </div>
+
+    <div class="flex min-w-0 items-center justify-end gap-2 md:col-start-3">
         <Button
             asChild
             size="sm"
             variant={url.isCurrentUrl('/booking-console', url.currentUrl)
                 ? 'default'
                 : 'outline'}
-            class="h-8 gap-2 rounded-md px-3.5"
+            class="h-8 shrink-0 gap-2 rounded-md px-3.5"
         >
             {#snippet children(props)}
                 <Link
@@ -88,10 +92,6 @@
                 </Link>
             {/snippet}
         </Button>
-    </div>
-
-    <div class="flex min-w-0 items-center gap-2 justify-self-end md:col-start-3">
-        <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
         <ProfileMenu user={auth.user} />
     </div>
 </header>

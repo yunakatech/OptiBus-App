@@ -168,8 +168,8 @@
     };
     const driverTableColumns = [
         { key: 'driver', label: 'Driver', width: 'w-[180px]', sticky: 'left' },
-        { key: 'unit', label: 'Unit / Pool', width: 'w-[150px]' },
-        { key: 'trips', label: 'Trip', align: 'center', numeric: true, width: 'w-[72px]' },
+        { key: 'unit', label: 'Unit', width: 'w-[150px]' },
+        { key: 'target', label: 'Target', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
         { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
@@ -241,9 +241,9 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="truncate text-lg font-bold tracking-tight text-foreground">{row.nama}</p>
-                            <p class="mt-1 truncate text-xs text-muted-foreground">
-                                {row.phone ?? '-'} | {row.nopol ?? '-'}
-                            </p>
+                        <p class="mt-1 truncate text-xs text-muted-foreground">
+                            {row.phone ?? '-'} | {row.nopol ?? '-'}
+                        </p>
                         </div>
 
                         {#if canManage}
@@ -277,7 +277,7 @@
                                 </p>
                             </div>
                             <Badge variant="outline" class="rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wide">
-                                {Number(row.departure_count || 0)} Rit
+                                Target {formatCurrency(Number(row.target_revenue_bulanan || 0))}
                             </Badge>
                         </div>
                         <p class="mt-2 text-xs text-muted-foreground">
@@ -330,10 +330,9 @@
 
                     <td class="px-2.5 py-1.5 align-top">
                         <div class="truncate font-medium text-foreground">{driver.nopol ?? '-'}</div>
-                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">{driver.pool_name ?? 'Semua Pool'}</div>
                     </td>
 
-                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{Number(driver.departure_count || 0)}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-slate-700 dark:text-slate-300">{formatCurrency(Number(driver.target_revenue_bulanan || 0))}</td>
                     <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(driver.revenue || 0))}</td>
                     <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(driver.bop || 0))}</td>
                     <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>

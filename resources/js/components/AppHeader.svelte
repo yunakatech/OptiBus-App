@@ -1,11 +1,13 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
+    import Monitor from 'lucide-svelte/icons/monitor';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import AppLogo from '@/components/AppLogo.svelte';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
     import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
+    import { Button } from '@/components/ui/button';
     import {
         NavigationMenu,
         NavigationMenuItem,
@@ -101,11 +103,34 @@
                 </NavigationMenu>
             </div>
 
-            <div class="ml-auto flex min-w-0 items-center gap-2">
+            <div class="hidden min-w-0 items-center justify-center lg:flex">
                 <TenantPoolSwitcher
                     mode="desktop"
                     class="hidden min-w-0 flex-[0_1_14.5rem] lg:block xl:flex-[0_1_16rem] 2xl:flex-[0_1_17.5rem]"
                 />
+            </div>
+
+            <div class="ml-auto flex min-w-0 items-center gap-2">
+                <Button
+                    asChild
+                    size="sm"
+                    variant={url.isCurrentUrl('/booking-console', url.currentUrl)
+                        ? 'default'
+                        : 'outline'}
+                    class="h-8 shrink-0 gap-2 rounded-md px-3.5"
+                >
+                    {#snippet children(props)}
+                        <Link
+                            {...props}
+                            href={toUrl('/booking-console')}
+                            prefetch
+                            cacheFor={30000}
+                        >
+                            <Monitor class="size-4" />
+                            <span>Booking Console</span>
+                        </Link>
+                    {/snippet}
+                </Button>
                 <ProfileMenu user={auth.user} triggerClass="shrink-0" />
             </div>
         </div>
