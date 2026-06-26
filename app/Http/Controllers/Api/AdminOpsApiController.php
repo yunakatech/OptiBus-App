@@ -10200,7 +10200,7 @@ XML;
             'enabled' => (bool) config('mayar.enabled', false),
             'configured' => $apiKey !== '',
             'api_url' => $apiUrl,
-            'payment_create_path' => (string) config('mayar.payment_create_path', '/hl/v1/payment/create'),
+            'payment_create_path' => (string) config('mayar.payment_create_path', '/hl/v1/invoice/create'),
             'webhook_url' => route('api.webhooks.mayar', absolute: true),
             'webhook_secret_configured' => trim((string) config('mayar.webhook_secret')) !== '',
         ];
