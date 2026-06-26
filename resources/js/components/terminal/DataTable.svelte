@@ -27,6 +27,7 @@
         columns = [],
         rows = [],
         class: className = '',
+        density = 'comfortable',
         tone = 'terminal',
         row,
         actions,
@@ -36,6 +37,7 @@
         columns?: TableColumn[];
         rows?: TableRow[];
         class?: string;
+        density?: 'comfortable' | 'compact';
         tone?: 'terminal' | 'default';
         row?: Snippet<[TableSnippetProps]>;
         actions?: Snippet<[TableSnippetProps]>;
@@ -44,6 +46,7 @@
     } = $props();
 
     let computedColumns = $derived(columns);
+    const isCompact = $derived(density === 'compact');
     const headerRowClass = $derived(
         tone === 'default'
             ? 'border-b border-border/70 bg-muted/20 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'
@@ -62,17 +65,32 @@
             : 'sticky z-20 bg-card transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60',
     );
     const actionSeparatorClass = $derived(tone === 'default' ? 'text-border' : 'text-slate-700');
+    const tablePaddingClass = $derived(
+        isCompact ? 'px-2.5 py-1.5' : 'px-3 py-2',
+    );
+    const tableTextClass = $derived(
+        isCompact ? 'text-[11px]' : 'text-xs',
+    );
+    const compactHeaderRowClass = $derived(
+        isCompact
+            ? 'border-b border-border/70 bg-muted/20 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground'
+            : headerRowClass,
+    );
+    const compactBodyClass = $derived(
+        isCompact ? 'divide-y divide-border/70 text-[11px]' : bodyClass,
+    );
 </script>
 
-<div class={cn('w-full overflow-x-auto rounded-lg border border-border/70 bg-card shadow-sm', className)}>
-    <table class="min-w-full border-collapse text-left text-xs text-foreground">
+<div class={cn('w-full max-w-full overflow-x-auto rounded-lg border border-border/70 bg-card shadow-sm', className)}>
+    <table class={cn('min-w-full border-collapse text-left text-foreground', tableTextClass)}>
         <thead>
-            <tr class={headerRowClass}>
+            <tr class={compactHeaderRowClass}>
                 {#each columns as col}
                     {#if col}
                         <th
                             class={cn(
-                            'whitespace-nowrap px-3 py-2',
+                            'whitespace-nowrap',
+                                tablePaddingClass,
                                 col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
                                 col.numeric ? 'tabular-nums font-mono' : '',
                                 col.width ? col.width : '',
@@ -84,11 +102,11 @@
                         </th>
                     {/if}
                 {/each}
-                <th class={cn('sticky right-0 px-3 py-2 text-right', stickyHeaderClass)}>Aksi</th>
+                <th class={cn('sticky right-0 text-right', tablePaddingClass, stickyHeaderClass)}>Aksi</th>
             </tr>
         </thead>
 
-        <tbody class={bodyClass}>
+        <tbody class={compactBodyClass}>
             {#each rows as entry, idx (entry.id ?? idx)}
                 {@const rowId = (entry.id ?? idx) as RowKey}
                 {@const snippetProps = { row: entry, index: idx, columns: computedColumns }}
@@ -100,7 +118,8 @@
                         {#each computedColumns as col}
                             <td
                                 class={cn(
-                                    'whitespace-nowrap px-3 py-2 align-middle',
+                                    'whitespace-nowrap align-middle',
+                                    tablePaddingClass,
                                     col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : '',
                                     col.numeric ? 'tabular-nums font-mono' : '',
                                     col.sticky ? stickyCellClass : '',
@@ -112,7 +131,7 @@
                         {/each}
                     {/if}
 
-                    <td class="whitespace-nowrap px-3 py-2 text-right">
+                    <td class={cn('whitespace-nowrap text-right', tablePaddingClass)}>
                         {#if actions}
                             {@render actions(snippetProps)}
                         {:else}

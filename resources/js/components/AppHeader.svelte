@@ -101,9 +101,12 @@
                 </NavigationMenu>
             </div>
 
-            <div class="ml-auto flex items-center gap-2">
-                <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
-                <ProfileMenu user={auth.user} />
+            <div class="ml-auto flex min-w-0 items-center gap-2">
+                <TenantPoolSwitcher
+                    mode="desktop"
+                    class="hidden min-w-0 flex-[0_1_14.5rem] lg:block xl:flex-[0_1_16rem] 2xl:flex-[0_1_17.5rem]"
+                />
+                <ProfileMenu user={auth.user} triggerClass="shrink-0" />
             </div>
         </div>
     </div>

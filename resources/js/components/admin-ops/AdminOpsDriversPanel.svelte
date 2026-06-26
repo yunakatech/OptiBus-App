@@ -167,16 +167,16 @@
         return `${from}-${to} dari ${total}`;
     };
     const driverTableColumns = [
-        { key: 'driver', label: 'Driver', width: 'w-[220px]', sticky: 'left' },
-        { key: 'unit', label: 'Unit / Pool', width: 'w-[180px]' },
-        { key: 'trips', label: 'Trip', align: 'center', numeric: true, width: 'w-[90px]' },
-        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[150px]' },
-        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[130px]' },
-        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[140px]' },
-        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[150px]' },
-        { key: 'net', label: 'Net Margin', align: 'right', numeric: true, width: 'w-[150px]' },
-        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'status', label: 'Status', align: 'center', width: 'w-[120px]' },
+        { key: 'driver', label: 'Driver', width: 'w-[180px]', sticky: 'left' },
+        { key: 'unit', label: 'Unit / Pool', width: 'w-[150px]' },
+        { key: 'trips', label: 'Trip', align: 'center', numeric: true, width: 'w-[72px]' },
+        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
+        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'net', label: 'Net Margin', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[100px]' },
+        { key: 'status', label: 'Status', align: 'center', width: 'w-[100px]' },
     ];
 </script>
 
@@ -188,6 +188,7 @@
         { key: 'period', label: selectedPeriodLabel() },
         { key: 'page', label: pageSummary() },
     ]}
+    density="compact"
 >
     {#snippet controls()}
         <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_auto]">
@@ -201,7 +202,7 @@
             </div>
 
             <select
-                class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 bind:value={driverPeriod}
                 onchange={() => void loadDrivers(1)}
             >
@@ -213,7 +214,7 @@
             {#if canExport}
                 <a
                     href={exportHref}
-                    class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
+                    class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-[13px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
                 >
                     <Download class="h-4 w-4" />
                     Export Data Driver (Excel)
@@ -313,7 +314,7 @@
         </div>
 
         <div class="hidden md:block">
-            <DataTable columns={driverTableColumns} rows={drivers} class="min-w-[1320px]">
+            <DataTable columns={driverTableColumns} rows={drivers} density="compact">
                 {#snippet row({ row })}
                     {@const driver = row as DriverRow}
                     {@const gross = driverGrossMargin(driver)}
@@ -322,25 +323,25 @@
                     {@const status = driverStatus(driver)}
                     {@const tone = achievementTone(achievement)}
 
-                    <td class="px-3 py-2 align-top">
-                        <div class="font-semibold text-foreground">{driver.nama}</div>
-                        <div class="mt-0.5 text-[10px] text-muted-foreground">{driver.phone ?? '-'}</div>
+                    <td class="px-2.5 py-1.5 align-top">
+                        <div class="truncate text-[11px] font-semibold leading-4 text-foreground">{driver.nama}</div>
+                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">{driver.phone ?? '-'}</div>
                     </td>
 
-                    <td class="px-3 py-2 align-top">
-                        <div class="font-medium text-foreground">{driver.nopol ?? '-'}</div>
-                        <div class="mt-0.5 text-[10px] text-muted-foreground">{driver.pool_name ?? 'Semua Pool'}</div>
+                    <td class="px-2.5 py-1.5 align-top">
+                        <div class="truncate font-medium text-foreground">{driver.nopol ?? '-'}</div>
+                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">{driver.pool_name ?? 'Semua Pool'}</div>
                     </td>
 
-                    <td class="px-3 py-2 text-right tabular-nums">{Number(driver.departure_count || 0)}</td>
-                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(driver.revenue || 0))}</td>
-                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(driver.bop || 0))}</td>
-                    <td class="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(gross)}</td>
-                    <td class="px-3 py-2 text-right tabular-nums">{formatCurrency(Number(driver.fixed_cost || 0))}</td>
-                    <td class="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(net)}</td>
-                    <td class="px-3 py-2 text-right tabular-nums">{achievement.toFixed(1)}%</td>
-                    <td class="px-3 py-2 text-center">
-                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{Number(driver.departure_count || 0)}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(driver.revenue || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(driver.bop || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(driver.fixed_cost || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(net)}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{achievement.toFixed(1)}%</td>
+                    <td class="px-2.5 py-1.5 text-center">
+                        <span class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${
                             status === 'Tercapai'
                                 ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
                                 : tone.label === 'Aman/Menuju Target'

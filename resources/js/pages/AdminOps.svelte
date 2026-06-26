@@ -1895,8 +1895,8 @@
     };
 
     const poolsColumns = [
-        { key: 'name', label: 'Pool', width: 'w-[150px]', sticky: 'left' },
-        { key: 'routes', label: 'Rute', width: 'w-[200px]', sticky: 'left' },
+        { key: 'name', label: 'Pool', width: 'w-[130px]', sticky: 'left' },
+        { key: 'routes', label: 'Rute', width: 'w-[170px]', sticky: 'left' },
         { key: 'charter_revenue', label: 'Charter', align: 'right', numeric: true },
         { key: 'departure_revenue', label: 'Keberangkatan', align: 'right', numeric: true },
         { key: 'luggage_revenue', label: 'Bagasi', align: 'right', numeric: true },
