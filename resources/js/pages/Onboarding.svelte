@@ -1,4 +1,12 @@
 
+<script module lang="ts">
+    export const layout = {
+        title: 'Lengkapi Data Travel',
+        description:
+            'Isi data travel untuk menyiapkan akun dan konteks operasional Anda.',
+    };
+</script>
+
 <script lang="ts">
     import { Form, page } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -13,7 +21,7 @@
     const formAction = '/onboarding';
 </script>
 
-<AppHead title="Lengkapi Data" />
+<AppHead title="Lengkapi Data Travel" />
 
 <Form
     action={formAction}
