@@ -313,7 +313,7 @@
 
     @media (min-width: 1024px) {
         html[data-ui-scale='app'] {
-            font-size: 50%;
+            font-size: 70%;
         }
     }
 }

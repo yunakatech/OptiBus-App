@@ -80,10 +80,11 @@ class SubscriptionTest extends TestCase
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/payment/create' => Http::response([
+            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
                 'data' => [
                     'id' => 'pay_123',
-                    'linkPayment' => 'https://mayar.test/pay/pay_123',
+                    'transactionId' => 'txn_123',
+                    'link' => 'https://mayar.test/pay/pay_123',
                     'status' => 'open',
                 ],
             ]),
@@ -108,14 +109,18 @@ class SubscriptionTest extends TestCase
             'subscription_id' => $subscriptionId,
             'status' => 'pending',
             'payment_gateway' => 'Mayar',
-            'gateway_reference' => 'pay_123',
+            'gateway_reference' => 'txn_123',
             'gateway_status' => 'pending',
             'gateway_checkout_url' => 'https://mayar.test/pay/pay_123',
         ]);
 
-        Http::assertSent(fn ($request) => $request->url() === 'https://api.mayar.id/hl/v1/payment/create'
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.mayar.id/hl/v1/invoice/create'
             && $request['metadata']['invoice_id'] > 0
-            && $request['metadata']['tenant_id'] === $tenantId);
+            && $request['metadata']['tenant_id'] === $tenantId
+            && $request['redirectURL'] === route('subscription.index', absolute: true)
+            && $request['extraData']['invoice_id'] > 0
+            && $request['extraData']['tenant_id'] === $tenantId
+            && $request['items'][0]['rate'] === 99000);
     }
 
     public function test_create_invoice_marks_payment_link_error_when_mayar_fails(): void
@@ -126,7 +131,7 @@ class SubscriptionTest extends TestCase
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/payment/create' => Http::response(['message' => 'Mayar unavailable'], 500),
+            'https://api.mayar.id/hl/v1/invoice/create' => Http::response(['message' => 'Mayar unavailable'], 500),
         ]);
 
         [$user, $tenantId, $subscriptionId] = $this->tenantWithPendingSubscription();
@@ -163,10 +168,11 @@ class SubscriptionTest extends TestCase
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/payment/create' => Http::response([
+            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
                 'data' => [
                     'id' => 'pay_fleet_123',
-                    'linkPayment' => 'https://mayar.test/pay/pay_fleet_123',
+                    'transactionId' => 'txn_fleet_123',
+                    'link' => 'https://mayar.test/pay/pay_fleet_123',
                     'status' => 'open',
                 ],
             ]),
@@ -201,7 +207,7 @@ class SubscriptionTest extends TestCase
         $this->assertDatabaseHas('invoice_subscriptions', [
             'tenant_id' => $tenantId,
             'payment_gateway' => 'Mayar',
-            'gateway_reference' => 'pay_fleet_123',
+            'gateway_reference' => 'txn_fleet_123',
             'gateway_checkout_url' => 'https://mayar.test/pay/pay_fleet_123',
         ]);
     }
@@ -212,12 +218,15 @@ class SubscriptionTest extends TestCase
 
         $this->postJson(route('api.webhooks.mayar'), [
             'event_id' => 'evt_paid_1',
-            'event' => 'payment.paid',
-            'status' => 'paid',
+            'event' => 'payment.received',
+            'status' => true,
             'data' => [
                 'id' => 'pay_123',
-                'metadata' => [
+                'transactionId' => 'txn_123',
+                'status' => true,
+                'extraData' => [
                     'invoice_id' => $invoiceId,
+                    'invoice_number' => 'INV-TEST-001',
                 ],
             ],
         ])
@@ -254,11 +263,12 @@ class SubscriptionTest extends TestCase
 
         $payload = [
             'event_id' => 'evt_paid_duplicate',
-            'event' => 'payment.paid',
-            'status' => 'paid',
+            'event' => 'payment.received',
+            'status' => true,
             'data' => [
-                'id' => 'pay_123',
-                'metadata' => ['invoice_id' => $invoiceId],
+                'transactionId' => 'txn_123',
+                'status' => true,
+                'extraData' => ['invoice_id' => $invoiceId],
             ],
         ];
 
