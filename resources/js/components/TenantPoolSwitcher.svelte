@@ -128,13 +128,13 @@
 
 {#if mode === 'desktop'}
     {#if showTenant || showPool}
-        <DropdownMenu class={cn('relative w-full', className)}>
+        <DropdownMenu class={cn('relative min-w-0 w-full', className)}>
             <DropdownMenuTrigger asChild>
                 {#snippet children(props)}
                     <button
                         type="button"
                         class={cn(
-                            'flex min-h-11 w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                            'flex min-h-11 w-full min-w-0 items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                             props['data-state'] === 'open'
                                 ? 'border-primary/35 bg-slate-50'
                                 : '',
@@ -160,7 +160,7 @@
             <DropdownMenuContent
                 align="end"
                 sideOffset={8}
-                class="w-[22rem] max-w-[calc(100vw-1.5rem)] p-2"
+                class="w-[18rem] max-w-[calc(100vw-1rem)] p-2"
             >
                 <div class="max-h-[70svh] space-y-1 overflow-y-auto pr-1 scrollbar-thin">
                     {#if showTenant}

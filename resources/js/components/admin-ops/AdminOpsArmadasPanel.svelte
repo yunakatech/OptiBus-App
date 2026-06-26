@@ -599,15 +599,15 @@ import RevenueChartTable from './RevenueChartTable.svelte';
     );
 
     const armadaTableColumns = [
-        { key: 'armada', label: 'Armada', width: 'w-[180px]', sticky: 'left' },
-        { key: 'driver', label: 'Driver / Pool', width: 'w-[220px]' },
-        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[150px]' },
-        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[130px]' },
-        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[140px]' },
-        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[150px]' },
-        { key: 'target', label: 'Target', align: 'right', numeric: true, width: 'w-[140px]' },
-        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'gps', label: 'GPS', align: 'center', width: 'w-[110px]' },
+        { key: 'armada', label: 'Armada', width: 'w-[160px]', sticky: 'left' },
+        { key: 'driver', label: 'Driver / Pool', width: 'w-[170px]' },
+        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
+        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'target', label: 'Target', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[100px]' },
+        { key: 'gps', label: 'GPS', align: 'center', width: 'w-[96px]' },
     ];
 </script>
 
@@ -883,6 +883,7 @@ import RevenueChartTable from './RevenueChartTable.svelte';
         { key: 'total', label: `${armadas.length} unit` },
         { key: 'period', label: selectedPeriodLabel() },
     ]}
+    density="compact"
 >
     {#snippet controls()}
         <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_minmax(180px,220px)_auto]">
@@ -900,7 +901,7 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                     Pool
                 </span>
                 <select
-                    class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     bind:value={armadaPoolId}
                     onchange={() => void loadArmadas()}
                 >
@@ -915,7 +916,7 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                     Periode
                 </span>
                 <select
-                    class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     bind:value={armadaPeriod}
                     onchange={() => void loadArmadas()}
                 >
@@ -928,7 +929,7 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             {#if canExport}
                 <a
                     href={exportHref}
-                    class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
+                    class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-[13px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
                 >
                     <Download class="h-4 w-4" />
                     Export ke Excel
@@ -1021,7 +1022,7 @@ import RevenueChartTable from './RevenueChartTable.svelte';
         </div>
 
         <div class="hidden md:block">
-            <DataTable columns={armadaTableColumns} rows={armadas} class="min-w-[1320px]">
+            <DataTable columns={armadaTableColumns} rows={armadas} density="compact">
                 {#snippet row({ row })}
                     {@const armada = row as ArmadaRow}
                     {@const gross = armadaGrossMargin(armada)}
@@ -1030,24 +1031,24 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                     {@const activeGps = gpsActive(armada)}
                     {@const achievementStyle = achievementTone(achievement)}
 
-                    <td class="px-3 py-2 align-top">
-                        <div class="font-semibold text-foreground">{armada.nopol}</div>
+                    <td class="px-2.5 py-1.5 align-top">
+                        <div class="truncate text-[11px] font-semibold leading-4 text-foreground">{armada.nopol}</div>
                         <div class="mt-0.5 text-[10px] text-muted-foreground">{armada.kategori ?? '-'} / {armada.ac_type}</div>
                     </td>
 
-                    <td class="px-3 py-2 align-top">
-                        <div class="font-medium text-foreground">{armada.driver_name ?? 'Driver belum diatur'}</div>
-                        <div class="mt-0.5 text-[10px] text-muted-foreground">{armada.pool_name ?? 'Semua Pool'}</div>
+                    <td class="px-2.5 py-1.5 align-top">
+                        <div class="truncate font-medium text-foreground">{armada.driver_name ?? 'Driver belum diatur'}</div>
+                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">{armada.pool_name ?? 'Semua Pool'}</div>
                     </td>
 
-                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(armada.revenue || 0))}</td>
-                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(armada.bop || 0))}</td>
-                    <td class="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(gross)}</td>
-                    <td class="px-3 py-2 text-right tabular-nums">{formatCurrency(Number(armada.fixed_cost || 0))}</td>
-                    <td class="px-3 py-2 text-right tabular-nums">{formatCurrency(Number(armada.target_bulanan || 0))}</td>
-                    <td class="px-3 py-2 text-right tabular-nums">{achievement.toFixed(1)}%</td>
-                    <td class="px-3 py-2 text-center">
-                        <span class={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${gpsTone(activeGps)}`}>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(armada.revenue || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(armada.bop || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(armada.fixed_cost || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(armada.target_bulanan || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{achievement.toFixed(1)}%</td>
+                    <td class="px-2.5 py-1.5 text-center">
+                        <span class={`inline-flex items-center gap-1.5 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${gpsTone(activeGps)}`}>
                             <span class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
                             GPS {activeGps ? 'Aktif' : 'Mati'}
                         </span>

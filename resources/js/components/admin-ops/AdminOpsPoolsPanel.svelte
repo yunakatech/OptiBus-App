@@ -55,9 +55,10 @@
     title="Pool"
     subtitle="Daftar pool operasional dengan pencarian dan filter wilayah."
     badges={[{ key: 'count', label: `${pools.length} cabang` }]}
+    density="compact"
 >
     {#snippet controls()}
-        <div class="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.55fr)_minmax(220px,0.55fr)]">
+        <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.55fr)_minmax(220px,0.55fr)]">
             <div class="min-w-0 lg:col-span-1">
                 <TerminalFilter
                     bind:query={poolSearch}
@@ -70,7 +71,7 @@
                     Wilayah/Region
                 </span>
                 <select
-                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring/20"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
                     bind:value={poolRegionFilter}
                     onchange={() => void loadPools()}
                 >
@@ -85,7 +86,7 @@
                     Urutan Kinerja
                 </span>
                 <select
-                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring/20"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
                     bind:value={poolSortOrder}
                     onchange={() => void loadPools()}
                 >
@@ -208,34 +209,34 @@
         </div>
 
         <div class="hidden lg:block">
-            <DataTable columns={poolsColumns} rows={pools} class="min-w-[1780px]">
+            <DataTable columns={poolsColumns} rows={pools} density="compact">
                 {#snippet row({ row })}
                     {@const gross = poolGrossMargin(row)}
                     {@const net = poolNetMargin(row)}
                     {@const achievement = poolAchievement(row)}
                     {@const healthStatus = achievement >= 100 ? 'Tercapai' : 'Kurang'}
 
-                    <td class="px-3 py-2 align-top">
-                        <div class="truncate text-[11px] font-semibold text-foreground">{row.name}</div>
+                    <td class="px-2.5 py-1.5 align-top">
+                        <div class="truncate text-[11px] font-semibold leading-4 text-foreground">{row.name}</div>
                         <div class="mt-0.5 text-[10px] text-muted-foreground">{row.code || 'Tanpa kode'}</div>
-                        <span class={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
+                        <span class={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
                     </td>
 
-                    <td class="px-3 py-2 align-top"><div class="line-clamp-2 text-[11px] leading-4 text-foreground">{formatPoolRoutes(row)}</div></td>
+                    <td class="px-2.5 py-1.5 align-top"><div class="line-clamp-2 text-[10px] leading-4 text-foreground">{formatPoolRoutes(row)}</div></td>
 
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(gross)}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] font-semibold tabular-nums">{formatCurrency(net)}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
-                    <td class="px-3 py-2 text-right text-[11px] tabular-nums">{achievement.toFixed(1)}%</td>
-                    <td class="px-3 py-2 text-center"><span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.charter_revenue || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.departure_revenue || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.luggage_revenue || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(Number(row.revenue || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.charter_bop || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.departure_bop || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(Number(row.bop || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(gross)}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(net)}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
+                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{achievement.toFixed(1)}%</td>
+                    <td class="px-2.5 py-1.5 text-center"><span class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
                 {/snippet}
 
                 {#snippet actions({ row })}
