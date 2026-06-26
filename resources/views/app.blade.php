@@ -1,5 +1,31 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'light') == 'dark'])>
+@php
+    $publicUiScaleRoutes = [
+        'home',
+        'pricing',
+        'login',
+        'register',
+        'onboarding',
+    ];
+
+    $publicUiScaleRoutePatterns = [
+        'password.*',
+        'verification.*',
+        'two-factor.*',
+    ];
+
+    $uiScale = 'app';
+
+    if (request()->routeIs($publicUiScaleRoutes) || request()->routeIs($publicUiScaleRoutePatterns)) {
+        $uiScale = 'public';
+    }
+@endphp
+
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    data-ui-scale="{{ $uiScale }}"
+    @class(['dark' => ($appearance ?? 'light') == 'dark'])
+>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=0.5, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
