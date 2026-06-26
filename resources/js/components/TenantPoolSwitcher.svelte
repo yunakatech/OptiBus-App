@@ -139,19 +139,14 @@
                                 ? 'border-primary/35 bg-slate-50'
                                 : '',
                         )}
-                        aria-label={`Konteks aktif: ${activeSummary}`}
+                        aria-label={`Tenant/pool aktif: ${activeSummary}`}
                         onclick={props.onclick}
                         aria-expanded={props['aria-expanded']}
                         data-state={props['data-state']}
                     >
                         <Building2 class="size-4 shrink-0 text-primary" />
-                        <span class="min-w-0 flex-1 text-left">
-                            <span class="block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                Konteks aktif
-                            </span>
-                            <span class="block truncate text-sm font-semibold text-foreground">
-                                {activeSummary}
-                            </span>
+                        <span class="min-w-0 flex-1 truncate text-left text-sm font-semibold text-foreground">
+                            {activeSummary}
                         </span>
                         <ChevronDown class="size-4 shrink-0 text-muted-foreground" />
                     </button>
