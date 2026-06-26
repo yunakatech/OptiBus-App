@@ -30,6 +30,7 @@ class MayarGateway
                 'tenants.email as tenant_email',
                 'tenants.phone as tenant_phone',
                 'tenants.mayar_customer_id',
+                'plans.slug as plan_slug',
                 'plans.name as plan_name',
             )
             ->first();
@@ -268,18 +269,37 @@ class MayarGateway
             ? CarbonImmutable::parse((string) $invoice->due_date)->endOfDay()
             : now()->addDay()->endOfDay();
 
+        $invoiceNumber = (string) ($invoice->invoice_number ?? '');
+        $planSlug = (string) ($invoice->plan_slug ?? '');
+        $planName = (string) ($invoice->plan_name ?? 'Subscription');
+        $description = trim(sprintf(
+            'OptiBus %s - %s',
+            $planName !== '' ? $planName : 'Subscription',
+            $invoiceNumber !== '' ? $invoiceNumber : 'invoice',
+        ));
+
         return [
             'name' => (string) ($invoice->tenant_name ?? 'Tenant OptiBus'),
             'email' => $email,
             'amount' => (int) round((float) $invoice->amount),
             'mobile' => $phone,
             'redirectUrl' => route('subscription.index', absolute: true),
-            'description' => trim(sprintf(
-                'OptiBus %s - %s',
-                (string) ($invoice->plan_name ?? 'Subscription'),
-                (string) $invoice->invoice_number,
-            )),
+            'redirectURL' => route('subscription.index', absolute: true),
+            'description' => $description,
             'expiredAt' => $dueDate->toISOString(),
+            'items' => [[
+                'quantity' => 1,
+                'rate' => (int) round((float) $invoice->amount),
+                'description' => $description,
+            ]],
+            'extraData' => [
+                'noCustomer' => $invoiceNumber !== '' ? $invoiceNumber : 'optibus-'.(int) $invoice->tenant_id,
+                'idProd' => $planSlug !== '' ? $planSlug : $planName,
+                'invoice_id' => (int) $invoice->id,
+                'invoice_number' => $invoiceNumber,
+                'tenant_id' => (int) $invoice->tenant_id,
+                'subscription_id' => (int) $invoice->subscription_id,
+            ],
             'metadata' => [
                 'invoice_id' => (int) $invoice->id,
                 'invoice_number' => (string) $invoice->invoice_number,
@@ -322,16 +342,20 @@ class MayarGateway
             'event',
             'type',
             'event_type',
+            'event.received',
             'status',
             'data.event',
+            'data.event.received',
             'data.type',
+            'data.eventType',
+            'data.event_type',
             'data.status',
             'data.paymentStatus',
             'data.payment_status',
             'transaction_status',
         ]);
 
-        $status = $this->extractString($payload, [
+        $statusValue = $this->extractValue($payload, [
             'status',
             'payment_status',
             'transaction_status',
@@ -346,6 +370,10 @@ class MayarGateway
             'data.metadata.invoice_id',
             'payment.metadata.invoice_id',
             'data.payment.metadata.invoice_id',
+            'extraData.invoice_id',
+            'data.extraData.invoice_id',
+            'data.extra_data.invoice_id',
+            'extra_data.invoice_id',
         ]) ?: 0);
 
         $reference = $this->extractString($payload, [
@@ -353,6 +381,8 @@ class MayarGateway
             'data.metadata.invoice_number',
             'payment.metadata.invoice_number',
             'data.payment.metadata.invoice_number',
+            'extraData.invoice_number',
+            'data.extraData.invoice_number',
             'external_id',
             'externalId',
             'order_id',
@@ -361,12 +391,18 @@ class MayarGateway
             'data.externalId',
             'data.order_id',
             'data.invoice_number',
+            'data.transactionId',
+            'data.transaction_id',
+            'transactionId',
+            'transaction_id',
             'reference',
             'data.reference',
             'id',
             'data.id',
             'paymentId',
             'data.paymentId',
+            'data.link',
+            'link',
         ]);
 
         return [
@@ -382,7 +418,7 @@ class MayarGateway
             'event_type' => Str::lower($eventType),
             'reference' => $reference,
             'invoice_id' => $invoiceId,
-            'status' => Str::lower($status ?: $eventType),
+            'status' => $this->normalizeWebhookStatus($statusValue, $eventType),
         ];
     }
 
@@ -460,14 +496,25 @@ class MayarGateway
     {
         $needle = Str::lower($status.' '.$eventType);
 
-        return Str::contains($needle, ['paid', 'settlement', 'success', 'completed', 'capture']);
+        return Str::contains($needle, ['paid', 'settlement', 'success', 'completed', 'capture', 'received']);
     }
 
     private function isFailedStatus(string $status, string $eventType): bool
     {
         $needle = Str::lower($status.' '.$eventType);
 
-        return Str::contains($needle, ['failed', 'failure', 'expired', 'expire', 'cancel', 'denied', 'deny']);
+        return Str::contains($needle, [
+            'failed',
+            'failure',
+            'expired',
+            'expire',
+            'cancel',
+            'denied',
+            'deny',
+            'rejected',
+            'void',
+            'chargeback',
+        ]);
     }
 
     private function extractCheckoutUrl(array $body): string
@@ -512,6 +559,55 @@ class MayarGateway
         }
 
         return '';
+    }
+
+    /**
+     * @param  array<int, string>  $paths
+     * @return mixed
+     */
+    private function extractValue(array $payload, array $paths): mixed
+    {
+        foreach ($paths as $path) {
+            if (! Arr::has($payload, $path)) {
+                continue;
+            }
+
+            return Arr::get($payload, $path);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  mixed  $rawStatus
+     */
+    private function normalizeWebhookStatus(mixed $rawStatus, string $eventType): string
+    {
+        $eventType = Str::lower($eventType);
+
+        if ($eventType !== '' && Str::contains($eventType, 'received')) {
+            return 'paid';
+        }
+
+        if (is_bool($rawStatus)) {
+            return $rawStatus ? 'paid' : 'received';
+        }
+
+        $status = Str::lower(trim((string) $rawStatus));
+
+        if ($status === '') {
+            return $eventType !== '' ? $eventType : 'received';
+        }
+
+        if (in_array($status, ['true', '1', 'yes'], true)) {
+            return 'paid';
+        }
+
+        if (in_array($status, ['false', '0', 'no'], true)) {
+            return 'received';
+        }
+
+        return $status;
     }
 
     private function json(array $payload): string
