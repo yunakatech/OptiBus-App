@@ -107,6 +107,10 @@ class DashboardController extends Controller
                 $this->activePoolId = $deferredPoolId;
                 return $this->topDriversByRevenue($today);
             }, 'dashboard-data'),
+            'topArmadas' => Inertia::defer(function () use ($today, $deferredPoolId): array {
+                $this->activePoolId = $deferredPoolId;
+                return $this->topArmadasByRevenue($today);
+            }, 'dashboard-data'),
         ]);
     }
 
@@ -1788,5 +1792,68 @@ class DashboardController extends Controller
         unset($list);
 
         return $categories;
+    }
+
+    private function topArmadasByRevenue(Carbon $today): array
+    {
+        if (! Schema::hasTable('trip_assignments') || ! Schema::hasTable('armadas') || ! Schema::hasTable('bookings')) {
+            return [];
+        }
+
+        $monthStart = $today->copy()->startOfMonth()->toDateString();
+        $monthEnd = $today->copy()->endOfMonth()->toDateString();
+        $hasPool = Schema::hasColumn('armadas', 'pool_id') && Schema::hasTable('pools');
+
+        try {
+            $query = DB::table('trip_assignments as t')
+                ->join('armadas as a', 't.armada_id', '=', 'a.id')
+                ->join('bookings as b', function ($join) {
+                    $join->on('b.rute', '=', 't.rute')
+                        ->on('b.tanggal', '=', 't.tanggal')
+                        ->on('b.unit', '=', 't.unit')
+                        ->where('b.status', '!=', 'canceled');
+                })
+                ->whereBetween('t.tanggal', [$monthStart, $monthEnd]);
+
+            if ($hasPool) {
+                $query->leftJoin('pools as p', 'a.pool_id', '=', 'p.id')
+                    ->selectRaw(
+                        'a.id as armada_id,
+                         a.nopol as armada_nopol,
+                         a.kategori as category,
+                         p.name as pool_name,
+                         COUNT(DISTINCT CONCAT(t.rute, \'|\', t.tanggal, \'|\', t.unit)) as trip_count,
+                         COALESCE(SUM(COALESCE(b.price,0) - COALESCE(b.discount,0)), 0) as revenue,
+                         MAX(t.rute) as top_route'
+                    )
+                    ->groupBy('a.id', 'a.nopol', 'a.kategori', 'p.name');
+            } else {
+                $query->selectRaw(
+                        'a.id as armada_id,
+                         a.nopol as armada_nopol,
+                         a.kategori as category,
+                         NULL as pool_name,
+                         COUNT(DISTINCT CONCAT(t.rute, \'|\', t.tanggal, \'|\', t.unit)) as trip_count,
+                         COALESCE(SUM(COALESCE(b.price,0) - COALESCE(b.discount,0)), 0) as revenue,
+                         MAX(t.rute) as top_route'
+                    )
+                    ->groupBy('a.id', 'a.nopol', 'a.kategori');
+            }
+
+            $rows = $query->orderByDesc('revenue')->limit(5)->get();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return $rows->values()->map(static function ($row, int $index): array {
+            return [
+                'rank' => $index + 1,
+                'nopol' => (string) ($row->armada_nopol ?? '-'),
+                'trip_count' => (int) ($row->trip_count ?? 0),
+                'revenue' => (float) ($row->revenue ?? 0),
+                'pool_name' => $row->pool_name ? (string) $row->pool_name : null,
+                'category' => $row->category ? (string) $row->category : null,
+            ];
+        })->all();
     }
 }

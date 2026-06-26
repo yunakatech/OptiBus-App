@@ -8,23 +8,6 @@
 
     type PoolRow = any;
 
-    type SummaryCard = {
-        key: string;
-        label: string;
-        valueText: string;
-        note?: string;
-        tone?: string;
-    };
-
-    type ChartBar = {
-        key: string;
-        label: string;
-        value: number;
-        valueText: string;
-        subtitle?: string;
-        tone?: string;
-    };
-
     let {
         pools = [],
         poolsColumns = [],
@@ -32,8 +15,6 @@
         poolRegionFilter = $bindable('all'),
         poolSortOrder = $bindable('desc'),
         poolRegionOptions = [],
-        summaryCards = [],
-        chartBars = [],
         formatCurrency,
         poolAchievement,
         poolGrossMargin,
@@ -54,8 +35,6 @@
         poolRegionFilter?: string;
         poolSortOrder?: string;
         poolRegionOptions?: string[];
-        summaryCards?: SummaryCard[];
-        chartBars?: ChartBar[];
         formatCurrency: (value: number) => string;
         poolAchievement: (row: PoolRow) => number;
         poolGrossMargin: (row: PoolRow) => number;
@@ -73,11 +52,9 @@
 </script>
 
 <RevenueChartTable
-    title="Performa Cabang"
-    subtitle="Desktop pakai chart table supaya rapat, mobile tetap pakai kartu ringkas untuk revenue, BOP, gross, net margin, dan target."
+    title="Pool"
+    subtitle="Daftar pool operasional dengan pencarian dan filter wilayah."
     badges={[{ key: 'count', label: `${pools.length} cabang` }]}
-    summaryCards={summaryCards}
-    chartBars={chartBars}
 >
     {#snippet controls()}
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.55fr)_minmax(220px,0.55fr)]">

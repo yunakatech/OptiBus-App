@@ -15,6 +15,7 @@
     import { Deferred, router } from '@inertiajs/svelte';
     import { Copy } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import ArmadaPerformanceCard from '@/components/dashboard/ArmadaPerformanceCard.svelte';
     import CommandCenter from '@/components/dashboard/CommandCenter.svelte';
     import RevenueActivityChart from '@/components/dashboard/RevenueActivityChart.svelte';
     import RevenueChannelPieChart from '@/components/dashboard/RevenueChannelPieChart.svelte';
@@ -139,6 +140,15 @@
         items: UpcomingCharterItem[];
     };
 
+    type ArmadaPerformanceItem = {
+        rank: number;
+        nopol: string;
+        trip_count: number;
+        revenue: number;
+        pool_name?: string | null;
+        category?: string | null;
+    };
+
     type PoolOption = {
         id: number;
         name: string;
@@ -158,6 +168,7 @@
         recentActivityTotal = 0,
         recentActivityVisibleCount = 0,
         topDrivers = { 'Minibus': [], 'Mediumbus': [], 'Bigbus': [] } as Record<string, any[]>,
+        topArmadas = [] as ArmadaPerformanceItem[],
         summaryStatsByScope = {
             day: {
                 total_bookings: 0,
@@ -270,6 +281,7 @@
         recentActivityTotal?: number;
         recentActivityVisibleCount?: number;
         topDrivers?: Record<string, any[]>;
+        topArmadas?: ArmadaPerformanceItem[];
         summaryStatsByScope?: Record<
             'day' | 'month' | 'year',
             SummaryScopeStats
@@ -686,6 +698,7 @@
             'departuresToday',
             'upcomingCharterReminder',
             'topDrivers',
+            'topArmadas',
         ]}
     >
         {#snippet fallback()}
@@ -754,6 +767,12 @@
                 <!-- Driver Performance Card -->
                 <DriverPerformanceCard
                     categories={topDrivers}
+                    {toCurrency}
+                    period="Bulan Ini"
+                />
+
+                <ArmadaPerformanceCard
+                    items={topArmadas}
                     {toCurrency}
                     period="Bulan Ini"
                 />
