@@ -312,7 +312,7 @@ class MayarGateway
     private function endpoint(): string
     {
         return rtrim((string) config('mayar.api_url', 'https://api.mayar.id'), '/')
-            .'/'.ltrim((string) config('mayar.payment_create_path', '/hl/v1/payment/create'), '/');
+            .'/'.ltrim((string) config('mayar.payment_create_path', '/hl/v1/invoice/create'), '/');
     }
 
     private function markCheckoutError(int $invoiceId, array $payload): void
@@ -520,6 +520,7 @@ class MayarGateway
     private function extractCheckoutUrl(array $body): string
     {
         return $this->extractString($body, [
+            'data.link',
             'data.linkPayment',
             'data.link_payment',
             'data.checkoutUrl',
@@ -527,6 +528,7 @@ class MayarGateway
             'data.paymentUrl',
             'data.payment_url',
             'data.url',
+            'link',
             'linkPayment',
             'link_payment',
             'checkoutUrl',
@@ -540,9 +542,13 @@ class MayarGateway
     private function extractReference(array $body): string
     {
         return $this->extractString($body, [
+            'data.transactionId',
+            'data.transaction_id',
             'data.id',
             'data.paymentId',
             'data.reference',
+            'transactionId',
+            'transaction_id',
             'id',
             'paymentId',
             'reference',
