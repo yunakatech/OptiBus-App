@@ -219,6 +219,7 @@
         route_id?: number;
         rute?: string;
         region?: string;
+        performance?: string;
         pool_id?: number;
         period?: string;
         sort?: string;
@@ -686,6 +687,7 @@
 
     let activeTab = $state<TabName>('routes');
     let activeMode = $state<ViewMode>('data');
+    let driverDetail = $state<DriverRow | null>(null);
     let poolDetail = $state<PoolRow | null>(null);
     let lockedMenuView = $state(false);
     let busy = $state(false);
@@ -917,6 +919,7 @@
     let armadaDetailLoading = $state(false);
     let poolSearch = $state('');
     let poolRegions = $state<string[]>([]);
+    let poolPerformanceFilter = $state<'all' | 'tercapai' | 'kurang'>('all');
     let poolRegionFilter = $state('all');
     let poolSortOrder = $state<'desc' | 'asc'>('desc');
     const currentMonthIndex = new Date().getMonth();
@@ -1472,6 +1475,10 @@
             params.set('q', poolSearch.trim());
         }
 
+        if (poolPerformanceFilter !== 'all') {
+            params.set('performance', poolPerformanceFilter);
+        }
+
         if (poolRegionFilter !== 'all') {
             params.set('region', poolRegionFilter);
         }
@@ -1506,8 +1513,10 @@
     const formatPoolRoutes = (pool: PoolRow) => {
         const names = Array.isArray(pool.route_names) ? pool.route_names : [];
 
-        return names.length > 0 ? names.join(', ') : 'Belum ada rute';
+        return names.length > 0 ? names : ['Belum ada rute'];
     };
+    const poolGap = (pool: PoolRow) =>
+        Number(pool.revenue || 0) - poolTargetTotal(pool);
     const poolGrossMargin = (pool: PoolRow) =>
         Number(pool.gross_margin ?? financialGrossMargin(pool));
     const poolNetMargin = (pool: PoolRow) =>
@@ -1899,6 +1908,7 @@
         { key: 'name', label: 'Pool', width: 'w-[150px]', sticky: 'left' },
         { key: 'routes', label: 'Rute', width: 'w-[180px]' },
         { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'gap', label: 'Gap', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
         { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[120px]' },
@@ -3530,6 +3540,10 @@
             query.q = poolSearch.trim();
         }
 
+        if (activeTab === 'pools' && poolPerformanceFilter !== 'all') {
+            query.performance = poolPerformanceFilter;
+        }
+
         if (activeTab === 'pools' && poolRegionFilter !== 'all') {
             query.region = poolRegionFilter;
         }
@@ -3598,6 +3612,11 @@
 
         if (initialTab === 'pools') {
             poolSearch = settingsQuery.q ?? '';
+            poolPerformanceFilter = String(settingsQuery.performance ?? 'all') === 'tercapai'
+                ? 'tercapai'
+                : String(settingsQuery.performance ?? 'all') === 'kurang'
+                  ? 'kurang'
+                  : 'all';
             poolRegionFilter = String(settingsQuery.region ?? 'all') || 'all';
             poolSortOrder = String(settingsQuery.sort ?? 'desc') === 'asc' ? 'asc' : 'desc';
         }
@@ -4205,6 +4224,10 @@
         };
         driverUnitSearch = row.nopol ?? '';
         setFormMode('form');
+    };
+    const openDriverView = (row: DriverRow) => {
+        driverDetail = row;
+        setFormMode('view');
     };
     const resetServiceForm = () => (serviceForm = { id: 0, name: '' });
     const resetSegmentForm = (routeId = Number(selectedSegmentRouteId || 0)) => {
@@ -7130,6 +7153,8 @@
                 {:else}
                     {#if DriversPanelComponent}
                         <DriversPanelComponent
+                            activeMode={activeMode}
+                            driverDetail={driverDetail}
                             {drivers}
                             {driverMeta}
                             bind:driverSearch
@@ -7140,6 +7165,7 @@
                             {driverAchievement}
                             {driverStatus}
                             {loadDrivers}
+                            {openDriverView}
                             canManage={canWriteTab('drivers')}
                             canExport={canExportArmadas}
                             {editDriver}
@@ -7148,6 +7174,10 @@
                                     `/api/admin/drivers/${id}`,
                                     'Driver deleted.',
                                 )}
+                            goBackToData={() => {
+                                driverDetail = null;
+                                activeMode = 'data';
+                            }}
                         />
                     {:else}
                         <div class="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4">
@@ -9789,6 +9819,7 @@
                         pools={pools}
                         poolsColumns={poolsColumns}
                         bind:poolSearch
+                        bind:poolPerformanceFilter
                         bind:poolRegionFilter
                         bind:poolSortOrder
                         poolRegionOptions={poolRegionOptions}
@@ -9796,6 +9827,7 @@
                         {poolAchievement}
                         {poolGrossMargin}
                         {poolNetMargin}
+                        {poolGap}
                         {poolProgressClass}
                         {poolProgressBadgeClass}
                         {poolReadyLabel}

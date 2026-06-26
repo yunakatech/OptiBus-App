@@ -11,6 +11,7 @@
     } from 'lucide-svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
+    import { Input } from '@/components/ui/input';
     import {
         DropdownMenu,
         DropdownMenuContent,
@@ -18,7 +19,6 @@
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
     import DataTable from '@/components/terminal/DataTable.svelte';
-    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
     import RevenueChartTable from './RevenueChartTable.svelte';
 
     type PoolMonthlyTargetRow = {
@@ -37,6 +37,7 @@
         pools = [],
         poolsColumns = [],
         poolSearch = $bindable(''),
+        poolPerformanceFilter = $bindable('all'),
         poolRegionFilter = $bindable('all'),
         poolSortOrder = $bindable('desc'),
         poolRegionOptions = [],
@@ -48,6 +49,7 @@
         poolProgressBadgeClass,
         poolReadyLabel,
         poolTargetTotal,
+        poolGap,
         formatPoolRoutes,
         loadPools,
         openPoolEditor,
@@ -61,6 +63,7 @@
         pools?: PoolRow[];
         poolsColumns?: any[];
         poolSearch?: string;
+        poolPerformanceFilter?: string;
         poolRegionFilter?: string;
         poolSortOrder?: string;
         poolRegionOptions?: string[];
@@ -72,7 +75,8 @@
         poolProgressBadgeClass: (achievement: number) => string;
         poolReadyLabel: (row: PoolRow) => string;
         poolTargetTotal: (row: PoolRow) => number;
-        formatPoolRoutes: (row: PoolRow) => string;
+        poolGap: (row: PoolRow) => number;
+        formatPoolRoutes: (row: PoolRow) => string[];
         loadPools: () => void | Promise<void>;
         openPoolEditor: (row: PoolRow) => void;
         openPoolView: (row: PoolRow) => void;
@@ -113,6 +117,7 @@
         const achievement = poolAchievement(pool);
         const gross = poolGrossMargin(pool);
         const net = poolNetMargin(pool);
+        const gap = poolGap(pool);
 
         return [
             {
@@ -164,6 +169,16 @@
                 tone: 'text-slate-700 dark:text-slate-300',
             },
             {
+                key: 'gap',
+                label: 'Gap Revenue',
+                valueText: formatCurrency(gap),
+                note: 'Revenue - target aktif',
+                tone:
+                    gap >= 0
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : 'text-rose-700 dark:text-rose-300',
+            },
+            {
                 key: 'achievement',
                 label: 'Achievement',
                 valueText: `${achievement.toFixed(1)}%`,
@@ -192,6 +207,7 @@
         {@const achievement = poolAchievement(pool)}
         {@const gross = poolGrossMargin(pool)}
         {@const net = poolNetMargin(pool)}
+        {@const gap = poolGap(pool)}
         {@const detailCards = poolDetailCards(pool)}
         {@const routes = Array.isArray(pool.route_names) ? pool.route_names : []}
         {@const targets = monthlyTargetRows(pool)}
@@ -389,7 +405,7 @@
                             </span>
                         </div>
                         <p class="mt-2 text-xs text-muted-foreground">
-                            Gross {formatCurrency(gross)} · Net {formatCurrency(net)} · Fixed Cost {formatCurrency(Number(pool.fixed_cost || 0))}
+                            Gross {formatCurrency(gross)} · Net {formatCurrency(net)} · Gap {formatCurrency(gap)} · Fixed Cost {formatCurrency(Number(pool.fixed_cost || 0))}
                         </p>
                     </div>
                 </section>
@@ -484,22 +500,44 @@
         density="compact"
     >
         {#snippet controls()}
-            <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.55fr)_minmax(220px,0.55fr)]">
-                <div class="min-w-0 lg:col-span-1">
-                    <TerminalFilter
-                        bind:query={poolSearch}
+            <div class="grid gap-3 rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm xl:grid-cols-[minmax(0,1.2fr)_minmax(180px,0.62fr)_minmax(180px,0.62fr)_minmax(180px,0.62fr)_auto] xl:items-end">
+                <div class="min-w-0">
+                    <span class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Cari Pool
+                    </span>
+                    <Input
+                        bind:value={poolSearch}
                         placeholder="Cari cabang, kode, alamat, atau catatan"
-                        on:search={() => void loadPools()}
+                        class="h-10"
+                        on:keydown={(event) => {
+                            if (event.key === 'Enter') {
+                                void loadPools();
+                            }
+                        }}
                     />
                 </div>
+
                 <label class="space-y-1.5">
-                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span class="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Tipe Filter
+                    </span>
+                    <select
+                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
+                        bind:value={poolPerformanceFilter}
+                    >
+                        <option value="all">Semua</option>
+                        <option value="tercapai">Tercapai</option>
+                        <option value="kurang">Belum Tercapai</option>
+                    </select>
+                </label>
+
+                <label class="space-y-1.5">
+                    <span class="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Wilayah/Region
                     </span>
                     <select
-                        class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
+                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
                         bind:value={poolRegionFilter}
-                        onchange={() => void loadPools()}
                     >
                         <option value="all">Semua Wilayah</option>
                         {#each poolRegionOptions as region (region)}
@@ -507,19 +545,29 @@
                         {/each}
                     </select>
                 </label>
+
                 <label class="space-y-1.5">
-                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span class="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Urutan Kinerja
                     </span>
                     <select
-                        class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
+                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
                         bind:value={poolSortOrder}
-                        onchange={() => void loadPools()}
                     >
                         <option value="desc">Kinerja Tertinggi</option>
                         <option value="asc">Kinerja Terendah</option>
                     </select>
                 </label>
+
+                <div class="flex items-end">
+                    <Button
+                        type="button"
+                        class="h-10 w-full rounded-md px-5 text-sm font-semibold"
+                        onclick={() => void loadPools()}
+                    >
+                        Terapkan
+                    </Button>
+                </div>
             </div>
         {/snippet}
 
@@ -529,6 +577,8 @@
                     {@const achievement = poolAchievement(row)}
                     {@const gross = poolGrossMargin(row)}
                     {@const net = poolNetMargin(row)}
+                    {@const gap = poolGap(row)}
+                    {@const routes = formatPoolRoutes(row)}
                     {@const barClass = poolProgressClass(achievement)}
                     {@const badgeClass = poolProgressBadgeClass(achievement)}
                     <article
@@ -572,6 +622,9 @@
                                         <Route class="h-3 w-3" />
                                         {row.route_ids?.length || 0} Rute
                                     </span>
+                                    <span class={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${gap >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                                        Gap {formatCurrency(gap)}
+                                    </span>
                                 </div>
 
                                 <div class="mt-3 flex items-end justify-between gap-3">
@@ -598,6 +651,18 @@
                                 <p class="mt-2 text-[11px] text-muted-foreground">
                                     Target bulan ini {formatCurrency(poolTargetTotal(row))}
                                 </p>
+                                <div class="mt-2 space-y-1.5">
+                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                        Rute
+                                    </p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        {#each routes as routeName (routeName)}
+                                            <span class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[10px] font-medium text-foreground">
+                                                <span class="truncate">{routeName}</span>
+                                            </span>
+                                        {/each}
+                                    </div>
+                                </div>
                             </div>
 
                             <DropdownMenu>
@@ -646,6 +711,8 @@
                         {@const gross = poolGrossMargin(row)}
                         {@const net = poolNetMargin(row)}
                         {@const achievement = poolAchievement(row)}
+                        {@const gap = poolGap(row)}
+                        {@const routes = formatPoolRoutes(row)}
                         {@const healthStatus = achievement >= 100 ? 'Tercapai' : 'Kurang'}
 
                         <td class="px-2.5 py-1.5 align-top">
@@ -655,10 +722,17 @@
                         </td>
 
                         <td class="px-2.5 py-1.5 align-top">
-                            <div class="line-clamp-2 text-[10px] leading-4 text-foreground">{formatPoolRoutes(row)}</div>
+                            <div class="flex max-w-[220px] flex-wrap gap-1.5">
+                                {#each routes as routeName (routeName)}
+                                    <span class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[10px] font-medium leading-4 text-foreground">
+                                        <span class="truncate">{routeName}</span>
+                                    </span>
+                                {/each}
+                            </div>
                         </td>
 
                         <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(row.revenue || 0))}</td>
+                        <td class={`px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums ${gap < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{formatCurrency(gap)}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(row.bop || 0))}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>

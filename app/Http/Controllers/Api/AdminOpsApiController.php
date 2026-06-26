@@ -4693,12 +4693,14 @@ class AdminOpsApiController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'region' => ['nullable', 'string', 'max:120'],
             'sort' => ['nullable', Rule::in(['desc', 'asc'])],
+            'performance' => ['nullable', Rule::in(['all', 'tercapai', 'kurang'])],
         ]);
 
         return $this->ok($this->poolListingPayload(
             trim((string) ($validated['q'] ?? '')),
             trim((string) ($validated['region'] ?? '')),
             (string) ($validated['sort'] ?? 'desc'),
+            (string) ($validated['performance'] ?? 'all'),
         ));
     }
 
@@ -4712,12 +4714,14 @@ class AdminOpsApiController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'region' => ['nullable', 'string', 'max:120'],
             'sort' => ['nullable', Rule::in(['desc', 'asc'])],
+            'performance' => ['nullable', Rule::in(['all', 'tercapai', 'kurang'])],
         ]);
 
         $payload = $this->poolListingPayload(
             trim((string) ($validated['q'] ?? '')),
             trim((string) ($validated['region'] ?? '')),
             (string) ($validated['sort'] ?? 'desc'),
+            (string) ($validated['performance'] ?? 'all'),
         );
 
         $period = now()->format('Y-m');
@@ -4733,7 +4737,7 @@ class AdminOpsApiController extends Controller
     /**
      * @return array{pools: array<int, array<string, mixed>>, routes: array<int, mixed>, can_manage: bool}
      */
-    private function poolListingPayload(string $q = '', string $region = '', string $sort = 'desc'): array
+    private function poolListingPayload(string $q = '', string $region = '', string $sort = 'desc', string $performance = 'all'): array
     {
         if (! $this->poolTablesReady()) {
             $routes = [];
@@ -4806,16 +4810,9 @@ class AdminOpsApiController extends Controller
                 $routeName = trim((string) ($row->name ?? ''));
                 $origin = trim((string) ($row->origin ?? ''));
                 $destination = trim((string) ($row->destination ?? ''));
-
-                foreach ([$routeName, $origin, $destination] as $label) {
-                    if ($label !== '') {
-                        $routesByPool[$poolId]['names'][] = $label;
-                    }
-                }
-
-                if ($origin !== '' && $destination !== '') {
-                    $routesByPool[$poolId]['names'][] = $origin.' - '.$destination;
-                }
+                $routesByPool[$poolId]['names'][] = $routeName !== ''
+                    ? $routeName
+                    : trim($origin !== '' && $destination !== '' ? $origin.' - '.$destination : '');
             }
         }
 
@@ -4897,6 +4894,7 @@ class AdminOpsApiController extends Controller
                         ->map(static fn ($name): string => trim((string) $name))
                         ->filter(static fn ($name): bool => $name !== '')
                         ->unique()
+                        ->sortBy(static fn (string $name): string => mb_strtolower($name))
                         ->values()
                         ->all(),
                 ];
@@ -4914,7 +4912,7 @@ class AdminOpsApiController extends Controller
             ->all();
 
         $rows = collect($mappedRows)
-            ->filter(function (array $row) use ($q, $region): bool {
+            ->filter(function (array $row) use ($q, $region, $performance): bool {
                 $haystack = mb_strtolower(implode(' ', [
                     (string) ($row['name'] ?? ''),
                     (string) ($row['code'] ?? ''),
@@ -4930,6 +4928,14 @@ class AdminOpsApiController extends Controller
                 }
 
                 if ($region !== '' && mb_strtolower((string) ($row['region'] ?? '')) !== mb_strtolower($region)) {
+                    return false;
+                }
+
+                if ($performance === 'tercapai' && (float) ($row['achievement'] ?? 0) < 100) {
+                    return false;
+                }
+
+                if ($performance === 'kurang' && (float) ($row['achievement'] ?? 0) >= 100) {
                     return false;
                 }
 
