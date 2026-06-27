@@ -732,11 +732,11 @@
                         </td>
 
                         <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(row.revenue || 0))}</td>
-                        <td class={`px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums ${gap < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{formatCurrency(gap)}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(row.bop || 0))}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
+                        <td class={`px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums ${gap < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{formatCurrency(gap)}</td>
                         <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{achievement.toFixed(1)}%</td>
                         <td class="px-2.5 py-1.5 text-center"><span class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
                     {/snippet}

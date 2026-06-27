@@ -1908,11 +1908,11 @@
         { key: 'name', label: 'Pool', width: 'w-[150px]', sticky: 'left' },
         { key: 'routes', label: 'Rute', width: 'w-[180px]' },
         { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'gap', label: 'Gap', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
         { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'target_revenue', label: 'Target', align: 'right', numeric: true, width: 'w-[120px]' },
+        { key: 'gap', label: 'Gap', align: 'right', numeric: true, width: 'w-[120px]' },
         { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[100px]' },
         { key: 'status', label: 'Status', align: 'center', width: 'w-[100px]' },
     ];
