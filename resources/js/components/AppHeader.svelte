@@ -117,7 +117,7 @@
                     variant={url.isCurrentUrl('/booking-console', url.currentUrl)
                         ? 'default'
                         : 'outline'}
-                    class="h-8 shrink-0 gap-2 rounded-md px-3.5"
+                    class="hidden h-8 shrink-0 gap-2 rounded-md px-3.5 md:inline-flex"
                 >
                     {#snippet children(props)}
                         <Link
