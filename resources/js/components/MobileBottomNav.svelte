@@ -4,6 +4,7 @@
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CreditCard from 'lucide-svelte/icons/credit-card';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
+    import Monitor from 'lucide-svelte/icons/monitor';
     import Tickets from 'lucide-svelte/icons/tickets';
     import { onMount } from 'svelte';
     import MobileMenuSheet from '@/components/MobileMenuSheet.svelte';
@@ -28,6 +29,12 @@
             title: 'Keberangkatan',
             href: '/bookings',
             icon: Tickets,
+            permission: 'booking.view',
+        },
+        {
+            title: 'Console',
+            href: '/booking-console',
+            icon: Monitor,
             permission: 'booking.view',
         },
         {

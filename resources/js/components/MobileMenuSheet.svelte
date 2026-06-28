@@ -21,6 +21,7 @@
     import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
     import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
+    import { mobileHiddenMenuHrefs } from '@/lib/mobileNavigation';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
 
@@ -100,6 +101,7 @@
     const activeTenant = $derived(page.props.auth?.active_tenant ?? null);
     const showTenantScopedSections = $derived(!isSuperAdmin || Boolean(activeTenant));
     const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
+    const hiddenMenuHrefs = $derived(mobileHiddenMenuHrefs(billingLocked));
     const visibleMenuSections = $derived(
         (billingLocked ? billingMenuSections : menuSections)
             .map((section) => ({
@@ -111,7 +113,8 @@
                     ) &&
                     (!('superAdminOnly' in item) ||
                         !item.superAdminOnly ||
-                        isSuperAdmin),
+                        isSuperAdmin) &&
+                    !hiddenMenuHrefs.has(toUrl(item.href)),
                 ),
             }))
             .map((section) =>
