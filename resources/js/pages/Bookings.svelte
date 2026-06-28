@@ -5383,37 +5383,6 @@
 <div
     class="flex h-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-4 pb-32"
 >
-    {#if consoleOnly}
-        <section
-            class="overflow-hidden rounded-xl border border-sky-200/70 bg-background shadow-sm dark:border-sky-900/50"
-        >
-            <div
-                class="flex flex-col gap-2 border-b border-border/70 bg-linear-to-r from-sky-50 via-background to-emerald-50/60 p-3 dark:from-sky-950/20 dark:via-background dark:to-emerald-950/10 md:flex-row md:items-center md:justify-between md:p-4"
-            >
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <Badge
-                            variant="secondary"
-                            class="rounded-full border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold tracking-[0.16em] text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/30 dark:text-sky-200"
-                        >
-                            LIVE
-                        </Badge>
-                        <span
-                            class="truncate text-xs font-medium text-muted-foreground"
-                        >
-                            {serverNow || bookingDate}
-                        </span>
-                    </div>
-                    <h1
-                        class="mt-1 text-xl font-bold tracking-normal text-foreground md:text-2xl"
-                    >
-                        Booking Console
-                    </h1>
-                </div>
-            </div>
-        </section>
-    {/if}
-
     {#if !listOnly}
         <Card
             class="overflow-hidden border-sidebar-border/70 bg-gradient-to-b from-background to-muted/10 dark:border-sidebar-border"
@@ -5496,7 +5465,7 @@
                 </div>
 
                 <div
-                    class={`gap-3 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.5fr)] ${mobileBookingStep === 1 ? 'grid' : 'hidden md:grid'}`}
+                    class={`gap-3 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)] ${mobileBookingStep === 1 ? 'grid' : 'hidden md:grid'}`}
                 >
                     <div>
                         <div
@@ -5525,7 +5494,7 @@
                                 <input
                                     id="booking-date"
                                     bind:this={bookingDateInput}
-                                    class="flex h-12 w-full rounded-lg border border-input bg-background px-3 py-1 text-center text-sm font-semibold shadow-sm transition-colors placeholder:text-xs placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-center text-sm font-semibold shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                     type="text"
                                     value={bookingDate}
                                     readonly
@@ -5561,7 +5530,7 @@
                             >
                                 <select
                                     id="booking-route"
-                                    class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-sm font-semibold"
+                                    class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
                                     bind:value={selectedRoute}
                                     onchange={() => void onRouteChange()}
                                     disabled={loadingRoutes}
@@ -5581,7 +5550,7 @@
                                 >
                                     <select
                                         id="booking-jam"
-                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-sm font-semibold"
+                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
                                         bind:value={selectedJam}
                                         onchange={() => void onScheduleChange()}
                                         disabled={loadingSchedules ||
@@ -5618,7 +5587,7 @@
                                 >
                                     <select
                                         id="booking-unit"
-                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-sm font-semibold"
+                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-sm lg:h-10 lg:text-xs"
                                         bind:value={selectedUnit}
                                         onchange={() => void loadSeatDetails()}
                                     >
@@ -5681,7 +5650,7 @@
                 <p class="sr-only" aria-live="assertive">{formError}</p>
 
                 <div
-                    class={`gap-4 xl:grid-cols-[minmax(560px,1.55fr)_minmax(360px,0.9fr)] 2xl:grid-cols-[minmax(680px,1.65fr)_minmax(380px,0.85fr)] ${mobileBookingStep === 1 ? 'hidden md:grid' : 'grid'}`}
+                    class={`gap-4 xl:grid-cols-[1.3fr_1fr] ${mobileBookingStep === 1 ? 'hidden md:grid' : 'grid'}`}
                 >
                     <div
                         class={`space-y-3 rounded-2xl border border-border/70 bg-linear-to-b from-background to-cyan-500/[0.03] p-4 shadow-sm ${mobileBookingStep === 2 ? 'block' : 'hidden md:block'}`}
@@ -5693,6 +5662,10 @@
                                 >
                                     Peta Kursi
                                 </h3>
+                                <p class="text-[11px] text-muted-foreground">
+                                    Tap kursi untuk pilih, tap kursi terisi
+                                    untuk detail.
+                                </p>
                             </div>
                             <Button
                                 type="button"
@@ -5711,12 +5684,12 @@
                                     Memuat layout kursi...
                                 </p>
                                 <div
-                                    class="grid gap-3"
+                                    class="grid gap-2"
                                     style="grid-template-columns: repeat(4, minmax(0, 1fr));"
                                 >
                                     {#each Array.from( { length: 12 }, ) as _, idx (`seat-skeleton-${idx}`)}
                                         <div
-                                            class="h-16 animate-pulse rounded-xl border bg-muted/40"
+                                            class="h-14 animate-pulse rounded-xl border bg-muted/40"
                                         ></div>
                                     {/each}
                                 </div>
@@ -5755,20 +5728,20 @@
                                         Tersedia
                                     </div>
                                 </div>
-                                <div class="space-y-3">
+                                <div class="space-y-2">
                                     {#each visibleSeatLayoutRows() as row, rowIndex (`seat-row-${rowIndex}`)}
                                         <div
-                                            class="grid gap-3"
+                                            class="grid gap-2"
                                             style={`grid-template-columns: repeat(${Math.max(row.length, 1)}, minmax(0, 1fr));`}
                                         >
                                             {#each row as cell, colIndex (`seat-col-${rowIndex}-${colIndex}`)}
                                                 {#if cell.kind === 'empty'}
                                                     <div
-                                                        class="h-16 rounded-xl border border-dashed border-muted-foreground/20 bg-muted/20 xl:h-[4.25rem]"
+                                                        class="h-14 rounded-xl border border-dashed border-muted-foreground/20 bg-muted/20"
                                                     ></div>
                                                 {:else if cell.kind === 'driver'}
                                                     <div
-                                                        class="flex h-16 flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 text-[10px] font-semibold text-muted-foreground xl:h-[4.25rem]"
+                                                        class="flex h-14 flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 text-[10px] font-semibold text-muted-foreground"
                                                     >
                                                         <BusFront
                                                             class="mb-1 size-4"
@@ -5793,7 +5766,7 @@
                                                             ? 'dialog'
                                                             : undefined}
                                                         variant="outline"
-                                                        class={`h-16 w-full rounded-xl border transition-all duration-200 xl:h-[4.25rem] ${isSeatSelected(cell.seat ?? '') ? 'border-primary bg-primary/15 text-primary ring-1 ring-primary/20' : ''} ${isSeatBooked(cell.seat ?? '') ? 'border-destructive/40 bg-destructive/15 text-destructive' : ''} ${!isSeatSelected(cell.seat ?? '') && !isSeatBooked(cell.seat ?? '') ? 'bg-background hover:bg-muted/40' : ''} ${isSeatTapAnimating(cell.seat ?? '') ? 'seat-tap-pop' : ''} ${isSeatSelectedPulseAnimating(cell.seat ?? '') ? 'seat-selected-pulse' : ''} ${!hasSelectedTrip() ? 'opacity-70' : ''}`}
+                                                        class={`h-14 w-full rounded-xl border transition-all duration-200 ${isSeatSelected(cell.seat ?? '') ? 'border-primary bg-primary/15 text-primary ring-1 ring-primary/20' : ''} ${isSeatBooked(cell.seat ?? '') ? 'border-destructive/40 bg-destructive/15 text-destructive' : ''} ${!isSeatSelected(cell.seat ?? '') && !isSeatBooked(cell.seat ?? '') ? 'bg-background hover:bg-muted/40' : ''} ${isSeatTapAnimating(cell.seat ?? '') ? 'seat-tap-pop' : ''} ${isSeatSelectedPulseAnimating(cell.seat ?? '') ? 'seat-selected-pulse' : ''} ${!hasSelectedTrip() ? 'opacity-70' : ''}`}
                                                         disabled={!hasSelectedTrip()}
                                                         onclick={() =>
                                                             onSeatCellClick(
@@ -5809,10 +5782,10 @@
                                                             class="flex flex-col items-center justify-center gap-0.5 leading-none"
                                                         >
                                                             <Armchair
-                                                                class="size-5"
+                                                                class="size-4"
                                                             />
                                                             <span
-                                                                class="text-sm font-semibold"
+                                                                class="text-[11px] font-semibold"
                                                                 >{cell.seat}</span
                                                             >
                                                         </span>
@@ -6029,8 +6002,8 @@
                                     <div class="relative">
                                         <Input
                                             id="booking-customer-lookup"
-                                            placeholder="Nama / telepon"
-                                            class="h-12 rounded-xl !pl-10 text-sm placeholder:text-xs placeholder:font-normal"
+                                            placeholder="Cari customer lama (nama / telepon)"
+                                            class="h-11 rounded-xl !pl-10"
                                             bind:value={customerLookupQuery}
                                             oninput={onCustomerLookupInput}
                                             onfocus={() =>
@@ -6095,8 +6068,8 @@
                                     <div class="relative">
                                         <Input
                                             id="booking-form-name"
-                                            class="h-12 rounded-xl !pl-10 text-sm placeholder:text-xs placeholder:font-normal"
-                                            placeholder="Nama"
+                                            class="h-11 rounded-xl !pl-10"
+                                            placeholder="Cth: BUDI"
                                             bind:value={formName}
                                             oninput={onFormNameInput}
                                         />
@@ -6114,8 +6087,8 @@
                                     <div class="relative">
                                         <Input
                                             id="booking-form-phone"
-                                            class="h-12 rounded-xl !pl-10 text-sm placeholder:text-xs placeholder:font-normal"
-                                            placeholder="08..."
+                                            class="h-11 rounded-xl !pl-10"
+                                            placeholder="Cth: 08123456789"
                                             bind:value={formPhone}
                                             oninput={onFormPhoneInput}
                                             onblur={() =>
@@ -6135,8 +6108,8 @@
                                     <div class="relative">
                                         <Input
                                             id="booking-form-seat"
-                                            class="h-12 rounded-xl !pl-10 text-sm placeholder:text-xs placeholder:font-normal"
-                                            placeholder="1, 2"
+                                            class="h-11 rounded-xl !pl-10"
+                                            placeholder="Cth: 1, 2, 3"
                                             bind:value={formSeat}
                                             oninput={syncSelectedSeatsFromInput}
                                         />
@@ -6153,7 +6126,7 @@
                                     >
                                     <select
                                         id="booking-form-segment"
-                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
+                                        class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formSegmentId}
                                         disabled={loadingSegments}
                                     >
@@ -6183,7 +6156,7 @@
                                     >
                                     <select
                                         id="booking-form-payment"
-                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
+                                        class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formPayment}
                                     >
                                         {#each paymentOptions as option (option)}
@@ -6201,10 +6174,10 @@
                                     >
                                     <Input
                                         id="booking-form-discount"
-                                        class="h-12 rounded-xl text-sm placeholder:text-xs placeholder:font-normal"
+                                        class="h-11 rounded-xl"
                                         type="text"
                                         inputmode="numeric"
-                                        placeholder="0"
+                                        placeholder="Cth: 10.000"
                                         value={formatCurrencyInput(
                                             formDiscount,
                                         )}
@@ -6225,8 +6198,8 @@
                                     >
                                     <Input
                                         id="booking-form-pickup"
-                                        class="h-12 rounded-xl text-sm placeholder:text-xs placeholder:font-normal"
-                                        placeholder="Pickup"
+                                        class="h-11 rounded-xl"
+                                        placeholder="Cth: Depan Indomaret"
                                         bind:value={formPickupPoint}
                                     />
                                 </div>
@@ -6238,8 +6211,8 @@
                                     >
                                     <Input
                                         id="booking-form-address"
-                                        class="h-12 rounded-xl text-sm placeholder:text-xs placeholder:font-normal"
-                                        placeholder="Maps / catatan"
+                                        class="h-11 rounded-xl"
+                                        placeholder="URL Google Map (opsional)"
                                         bind:value={formAddress}
                                     />
                                 </div>
