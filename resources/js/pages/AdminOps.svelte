@@ -1797,6 +1797,22 @@
                 : current.filter((item) => Number(item) !== id),
         };
     };
+    const compactListPreview = (values: string[] | null | undefined, limit = 2) => {
+        const items = Array.isArray(values)
+            ? values
+                  .map((value) => String(value ?? '').trim())
+                  .filter((value) => value !== '')
+            : [];
+
+        return {
+            items: items.slice(0, limit),
+            overflow: Math.max(0, items.length - limit),
+        };
+    };
+    const userPoolPreview = (row: UserRow, limit = 2) =>
+        row.is_super_admin
+            ? { items: ['Semua Pool'], overflow: 0 }
+            : compactListPreview(row.pool_names, limit);
     const armadaCategoryOptions = $derived.by<string[]>(() => {
         const categories = [...unitCategoryOptions];
 
@@ -1907,6 +1923,13 @@
     const routesColumns = [
         { key: 'name', label: 'Rute Induk', width: 'w-[220px]', sticky: 'left' },
         { key: 'direction', label: 'Arah Perjalanan', width: 'w-[300px]', sticky: 'left' },
+    ];
+    const usersColumns = [
+        { key: 'name', label: 'Nama', width: 'w-[180px]', sticky: 'left' },
+        { key: 'email', label: 'Email', width: 'w-[290px]' },
+        { key: 'verified', label: 'Verified', align: 'center', width: 'w-[150px]' },
+        { key: 'role', label: 'Role', width: 'w-[230px]' },
+        { key: 'pool', label: 'Pool', width: 'w-[230px]' },
     ];
     const filteredArmadaTemplateOptions = $derived.by<UnitRow[]>(() => {
         const keyword = armadaTemplateSearch.trim().toLowerCase();
@@ -10124,18 +10147,20 @@
                                 >
                             </div>
                         </div>
-                        <div class="grid gap-3 p-3 md:hidden">
+                        <div class="grid gap-2.5 p-2.5 md:hidden">
                             {#each users as row (row.id)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
+                                {@const rolePreview = compactListPreview(row.role_names, 2)}
+                                {@const poolPreview = userPoolPreview(row, 2)}
+                                <article class="rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-sm">
+                                    <div class="flex items-start justify-between gap-2.5">
                                         <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold text-foreground">{row.name}</p>
-                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">{row.email}</p>
+                                            <p class="truncate text-[13px] font-semibold text-foreground">{row.name}</p>
+                                            <p class="mt-0.5 truncate text-[11px] text-muted-foreground">{row.email}</p>
                                         </div>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 shrink-0 rounded-full border border-border/70">
-                                                    <MoreHorizontal class="h-4 w-4" />
+                                                <Button type="button" variant="ghost" size="icon" class="h-7 w-7 shrink-0 rounded-full border border-border/70">
+                                                    <MoreHorizontal class="h-3.5 w-3.5" />
                                                     <span class="sr-only">Aksi user</span>
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -10178,270 +10203,192 @@
                                         </DropdownMenu>
                                     </div>
 
-                                    <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                                    <div class="mt-2.5 flex flex-wrap gap-1">
+                                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
                                             {row.email_verified_at ? 'Verified' : 'Belum Verified'}
                                         </span>
-                                        <span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-foreground">
+                                        <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-foreground">
                                             {row.is_super_admin ? 'Super Admin' : 'User Pool'}
                                         </span>
                                     </div>
 
-                                    <div class="mt-3 grid gap-2 text-xs">
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Role</p>
-                                            <p class="mt-1 break-words font-medium text-foreground">
-                                                {(row.role_names ?? []).length ? (row.role_names ?? []).join(', ') : 'Belum ada role'}
-                                            </p>
+                                    <div class="mt-2.5 grid gap-1.5 text-xs">
+                                        <div class="rounded-xl bg-muted/20 px-2.5 py-2">
+                                            <p class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Role</p>
+                                            <div class="mt-1 flex flex-wrap gap-1">
+                                                {#if rolePreview.items.length > 0}
+                                                    {#each rolePreview.items as roleName (roleName)}
+                                                        <span class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[10px] font-medium text-foreground">
+                                                            <span class="truncate">{roleName}</span>
+                                                        </span>
+                                                    {/each}
+                                                    {#if rolePreview.overflow > 0}
+                                                        <span class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                                            +{rolePreview.overflow}
+                                                        </span>
+                                                    {/if}
+                                                {:else}
+                                                    <span class="text-[10px] text-muted-foreground">Belum ada role</span>
+                                                {/if}
+                                            </div>
                                         </div>
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pool</p>
-                                            <p class="mt-1 break-words font-medium text-foreground">
-                                                {row.is_super_admin
-                                                    ? 'Semua Pool'
-                                                    : (row.pool_names ?? []).length
-                                                      ? (row.pool_names ?? []).join(', ')
-                                                      : 'Belum dimapping'}
-                                            </p>
+                                        <div class="rounded-xl bg-muted/20 px-2.5 py-2">
+                                            <p class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Pool</p>
+                                            <div class="mt-1 flex flex-wrap gap-1">
+                                                {#if poolPreview.items.length > 0}
+                                                    {#each poolPreview.items as poolName (poolName)}
+                                                        <span class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[10px] font-medium text-foreground">
+                                                            <span class="truncate">{poolName}</span>
+                                                        </span>
+                                                    {/each}
+                                                    {#if poolPreview.overflow > 0}
+                                                        <span class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                                            +{poolPreview.overflow}
+                                                        </span>
+                                                    {/if}
+                                                {:else}
+                                                    <span class="text-[10px] text-muted-foreground">Belum dimapping</span>
+                                                {/if}
+                                            </div>
                                         </div>
                                     </div>
                                 </article>
                             {/each}
                         </div>
-                        <div class="hidden overflow-x-auto md:block">
-                            <table
-                                class="min-w-[1380px] w-full border-separate border-spacing-0 text-sm"
+                        <div class="hidden md:block">
+                            <DataTable
+                                columns={usersColumns}
+                                rows={users}
+                                density="compact"
+                                class="w-full"
                             >
-                                <thead
-                                    class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
-                                >
-                                    <tr>
-                                        <th
-                                            class="sticky left-0 z-20 w-[240px] border-b border-r border-border/70 bg-background px-4 py-3 text-left font-semibold"
-                                            >Nama</th
+                                {#snippet row({ row, columns })}
+                                    {@const user = row as UserRow}
+                                    {@const rolePreview = compactListPreview(user.role_names, 2)}
+                                    {@const poolPreview = userPoolPreview(user, 2)}
+
+                                    <td
+                                        class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-2.5 py-1.5 align-top group-hover:bg-muted/15"
+                                        style={`left: ${columns[0]?.leftOffset ?? '0px'}`}
+                                    >
+                                        <div class="truncate text-[11px] font-semibold leading-4 text-foreground">
+                                            {user.name}
+                                        </div>
+                                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">
+                                            {user.is_super_admin ? 'Super Admin' : 'User Pool'}
+                                        </div>
+                                    </td>
+
+                                    <td class="border-b border-r border-border/60 px-2.5 py-1.5 align-top">
+                                        <div class="truncate text-[11px] font-medium leading-4 text-foreground">
+                                            {user.email}
+                                        </div>
+                                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">
+                                            Alamat email login
+                                        </div>
+                                    </td>
+
+                                    <td class="border-b border-r border-border/60 px-2.5 py-1.5 text-center">
+                                        <span
+                                            class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${user.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
                                         >
-                                        <th
-                                            class="w-[390px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
-                                            >Email</th
-                                        >
-                                        <th
-                                            class="w-[190px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
-                                            >Verified</th
-                                        >
-                                        <th
-                                            class="w-[260px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
-                                            >Role</th
-                                        >
-                                        <th
-                                            class="w-[260px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
-                                            >Pool</th
-                                        >
-                                        <th
-                                            class="sticky right-0 z-20 w-[90px] border-b border-l border-border/70 bg-background px-4 py-3 text-center font-semibold"
-                                            >Aksi</th
-                                        >
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each users as row (row.id)}
-                                        <tr
-                                            class="group transition hover:bg-muted/15"
-                                        >
-                                            <td
-                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                            >
-                                                <div
-                                                    class="font-semibold text-foreground"
-                                                >
-                                                    {row.name}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    {row.is_super_admin
-                                                        ? 'Super Admin'
-                                                        : 'User Pool'}
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-r border-border/60 px-4 py-4"
-                                            >
-                                                <div
-                                                    class="font-medium text-foreground"
-                                                >
-                                                    {row.email}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    Alamat email login
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-r border-border/60 px-4 py-4"
-                                            >
-                                                <span
-                                                    class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${row.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
-                                                >
-                                                    {row.email_verified_at
-                                                        ? 'Sudah diverifikasi'
-                                                        : 'Belum diverifikasi'}
-                                                </span>
-                                            </td>
-                                            <td
-                                                class="border-b border-r border-border/60 px-4 py-4 align-top"
-                                            >
-                                                <div
-                                                    class="text-sm font-medium text-foreground"
-                                                >
-                                                    {(row.role_names ?? [])
-                                                        .length
-                                                        ? (
-                                                              row.role_names ??
-                                                              []
-                                                          ).join(', ')
-                                                        : 'Belum ada role'}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    Hak akses menu dan aksi
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-b border-r border-border/60 px-4 py-4 align-top"
-                                            >
-                                                <div
-                                                    class="text-sm font-medium text-foreground"
-                                                >
-                                                    {row.is_super_admin
-                                                        ? 'Semua Pool'
-                                                        : (row.pool_names ?? [])
-                                                                .length
-                                                          ? (
-                                                                row.pool_names ??
-                                                                []
-                                                            ).join(
-                                                                ', ',
-                                                            )
-                                                          : 'Belum dimapping'}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    Akses data operasional
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-4 py-4 text-center group-hover:bg-muted/15"
-                                            >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-8 w-8 rounded-full border border-border/70"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-4 w-4"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi user</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() => {
-                                                                userForm = {
-                                                                    id: row.id,
-                                                                    name: row.name,
-                                                                    email: row.email,
-                                                                    password:
-                                                                        '',
-                                                                    is_super_admin:
-                                                                        Boolean(
-                                                                            row.is_super_admin,
-                                                                        ),
-                                                                    pool_ids: [
-                                                                        ...(row.pool_ids ??
-                                                                            []),
-                                                                    ],
-                                                                    role_ids: [
-                                                                        ...(row.role_ids ??
-                                                                            []),
-                                                                    ],
-                                                                };
-                                                                setFormMode(
-                                                                    'form',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        {#if row.email_verified_at}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void runUserVerificationAction(
-                                                                        row,
-                                                                        'unverify',
-                                                                    )}
-                                                            >
-                                                                <MailX class="mr-2 h-3.5 w-3.5" />
-                                                                Unverify
-                                                            </DropdownMenuItem>
-                                                        {:else}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void runUserVerificationAction(
-                                                                        row,
-                                                                        'verify',
-                                                                    )}
-                                                            >
-                                                                <CheckCircle2 class="mr-2 h-3.5 w-3.5" />
-                                                                Verify
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void runUserVerificationAction(
-                                                                        row,
-                                                                        'send-verification',
-                                                                    )}
-                                                            >
-                                                                <Send class="mr-2 h-3.5 w-3.5" />
-                                                                Kirim Link
-                                                            </DropdownMenuItem>
-                                                        {/if}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/users/${row.id}`,
-                                                                    'User deleted.',
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
-                                        </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
+                                            {user.email_verified_at ? 'Sudah diverifikasi' : 'Belum diverifikasi'}
+                                        </span>
+                                    </td>
+
+                                    <td class="border-b border-r border-border/60 px-2.5 py-1.5 align-top">
+                                        <div class="flex max-w-[220px] flex-wrap gap-1">
+                                            {#if rolePreview.items.length > 0}
+                                                {#each rolePreview.items as roleName (roleName)}
+                                                    <span class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[10px] font-medium leading-4 text-foreground">
+                                                        <span class="truncate">{roleName}</span>
+                                                    </span>
+                                                {/each}
+                                                {#if rolePreview.overflow > 0}
+                                                    <span class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                                        +{rolePreview.overflow}
+                                                    </span>
+                                                {/if}
+                                            {:else}
+                                                <span class="text-[10px] text-muted-foreground">Belum ada role</span>
+                                            {/if}
+                                        </div>
+                                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">
+                                            Hak akses menu dan aksi
+                                        </div>
+                                    </td>
+
+                                    <td class="border-b border-r border-border/60 px-2.5 py-1.5 align-top">
+                                        <div class="flex max-w-[220px] flex-wrap gap-1">
+                                            {#if poolPreview.items.length > 0}
+                                                {#each poolPreview.items as poolName (poolName)}
+                                                    <span class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[10px] font-medium leading-4 text-foreground">
+                                                        <span class="truncate">{poolName}</span>
+                                                    </span>
+                                                {/each}
+                                                {#if poolPreview.overflow > 0}
+                                                    <span class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                                        +{poolPreview.overflow}
+                                                    </span>
+                                                {/if}
+                                            {:else}
+                                                <span class="text-[10px] text-muted-foreground">Belum dimapping</span>
+                                            {/if}
+                                        </div>
+                                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">
+                                            Akses data operasional
+                                        </div>
+                                    </td>
+                                {/snippet}
+
+                                {#snippet actions({ row })}
+                                    {@const user = row as UserRow}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button type="button" variant="ghost" size="icon" class="h-7 w-7 rounded-full border border-border/70">
+                                                <MoreHorizontal class="h-3.5 w-3.5" />
+                                                <span class="sr-only">Aksi user</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                            <DropdownMenuItem onclick={() => {
+                                                userForm = {
+                                                    id: user.id,
+                                                    name: user.name,
+                                                    email: user.email,
+                                                    password: '',
+                                                    is_super_admin: Boolean(user.is_super_admin),
+                                                    pool_ids: [...(user.pool_ids ?? [])],
+                                                    role_ids: [...(user.role_ids ?? [])],
+                                                };
+                                                setFormMode('form');
+                                            }}>
+                                                <Pencil class="mr-2 h-3.5 w-3.5" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            {#if user.email_verified_at}
+                                                <DropdownMenuItem onclick={() => void runUserVerificationAction(user, 'unverify')}>
+                                                    <MailX class="mr-2 h-3.5 w-3.5" />
+                                                    Unverify
+                                                </DropdownMenuItem>
+                                            {:else}
+                                                <DropdownMenuItem onclick={() => void runUserVerificationAction(user, 'verify')}>
+                                                    <CheckCircle2 class="mr-2 h-3.5 w-3.5" />
+                                                    Verify
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onclick={() => void runUserVerificationAction(user, 'send-verification')}>
+                                                    <Send class="mr-2 h-3.5 w-3.5" />
+                                                    Kirim Link
+                                                </DropdownMenuItem>
+                                            {/if}
+                                            <DropdownMenuItem onclick={() => void removeItem(`/api/admin/users/${user.id}`, 'User deleted.')}>
+                                                <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                                Hapus
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                {/snippet}
+                            </DataTable>
                         </div>
                     </div>
                 {/if}

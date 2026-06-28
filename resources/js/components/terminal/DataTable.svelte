@@ -53,6 +53,11 @@
             : 'border-b border-slate-800 bg-[#151d33] text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8D99AE]',
     );
     const stickyHeaderClass = $derived(tone === 'default' ? 'sticky z-30 bg-muted/20' : 'sticky z-30 bg-card');
+    const stickyActionHeaderClass = $derived(
+        tone === 'default'
+            ? 'sticky right-0 z-30 border-l border-border/70 bg-muted/20'
+            : 'sticky right-0 z-30 border-l border-slate-800 bg-card',
+    );
     const bodyClass = $derived(tone === 'default' ? 'divide-y divide-border/70 text-xs' : 'divide-y divide-slate-800 text-xs');
     const rowClass = $derived(
         tone === 'default'
@@ -102,7 +107,7 @@
                         </th>
                     {/if}
                 {/each}
-                <th class={cn('sticky right-0 text-right', tablePaddingClass, stickyHeaderClass)}>Aksi</th>
+                <th class={cn('sticky right-0 text-right', tablePaddingClass, stickyActionHeaderClass)}>Aksi</th>
             </tr>
         </thead>
 
@@ -131,7 +136,13 @@
                         {/each}
                     {/if}
 
-                    <td class={cn('whitespace-nowrap text-right', tablePaddingClass)}>
+                    <td class={cn(
+                        'sticky right-0 whitespace-nowrap text-right',
+                        tablePaddingClass,
+                        tone === 'default'
+                            ? 'z-20 border-l border-border/60 bg-background transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60'
+                            : 'z-20 border-l border-slate-800 bg-card transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60',
+                    )}>
                         {#if actions}
                             {@render actions(snippetProps)}
                         {:else}

@@ -15,7 +15,6 @@
     import type { NavItem } from '@/types';
 
     const url = currentUrlState();
-    const ACTIVE_NAV_STORAGE_KEY = 'cabooq_mobile_bottom_active';
     const NAV_PREFETCH_CACHE_MS = 30_000;
 
     const mainItems: NavItem[] = [
@@ -66,7 +65,6 @@
             : mainItems.filter((item) => hasPermission(permissions, item.permission)),
     );
     const navCount = $derived(Math.max(visibleMainItems.length, 1));
-    let rememberedActiveHref = $state<string>(toUrl(dashboard()));
     let isCompact = $state(false);
     let pendingHref = $state('');
     let prefetchedHrefs = new Set<string>();
@@ -75,8 +73,6 @@
 
     const SCROLL_THRESHOLD = 24;
     const SCROLL_DELTA = 6;
-
-    const isMenuPage = $derived(url.isCurrentUrl('/menu', url.currentUrl));
     const activeIndex = $derived.by(() => {
         const matchedIndex = visibleMainItems.findIndex((item) =>
             isNavItemActive(item.href),
@@ -85,17 +81,8 @@
         return matchedIndex >= 0 ? matchedIndex : 0;
     });
 
-    function markActive(href: string): void {
-        rememberedActiveHref = href;
-
-        if (typeof window !== 'undefined') {
-            window.localStorage.setItem(ACTIVE_NAV_STORAGE_KEY, href);
-        }
-    }
-
     function prepareNavPress(href: string): void {
         prefetchNavItem(href);
-        markActive(href);
         isCompact = false;
     }
 
@@ -152,12 +139,6 @@
     }
 
     function isNavItemActive(itemHref: NonNullable<NavItem['href']>): boolean {
-        const resolved = toUrl(itemHref);
-
-        if (isMenuPage) {
-            return rememberedActiveHref === resolved;
-        }
-
         return url.isCurrentOrParentUrl(itemHref, url.currentUrl);
     }
 
@@ -203,12 +184,6 @@
     }
 
     onMount(() => {
-        const stored = window.localStorage.getItem(ACTIVE_NAV_STORAGE_KEY);
-
-        if (stored) {
-            rememberedActiveHref = stored;
-        }
-
         const handleOpenMobileMenu = () => {
             menuSheetOpen = true;
         };
@@ -229,10 +204,6 @@
     });
 
     $effect(() => {
-        if (isMenuPage) {
-            return;
-        }
-
         const matched = visibleMainItems.find((item) =>
             url.isCurrentOrParentUrl(item.href, url.currentUrl),
         );
@@ -241,7 +212,6 @@
             return;
         }
 
-        markActive(toUrl(matched.href));
         isCompact = false;
 
         if (typeof window !== 'undefined') {

@@ -321,7 +321,9 @@
             : 0,
     );
     const poolContextBadge = $derived(
-        poolContextIsAll ? 'Semua pool' : `${poolContextRouteCount} rute mapped`,
+        poolContextIsAll
+            ? 'Semua pool'
+            : `${poolContextRouteCount} rute mapped`,
     );
     const poolContextDescription = $derived(
         poolContextIsAll
@@ -375,9 +377,7 @@
 
     const today = (() => {
         const serverToday = String(
-            page.props.server_today ??
-                serverNow ??
-                '',
+            page.props.server_today ?? serverNow ?? '',
         ).slice(0, 10);
 
         if (/^\d{4}-\d{2}-\d{2}$/.test(serverToday)) {
@@ -439,7 +439,9 @@
     let bookingListDateFrom = $state(initialBookingListDate);
     let bookingListDateTo = $state(initialBookingListDate);
     let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>('all');
-    let bookingListDesktopView = $state<'sheet' | 'cards'>(initialBookingListDesktopView);
+    let bookingListDesktopView = $state<'sheet' | 'cards'>(
+        initialBookingListDesktopView,
+    );
     let bookingListVisibleCount = $state(24);
     let lastBookingListFilterSignature = $state('');
     let bookingListFiltersExpanded = $state(false);
@@ -687,7 +689,9 @@
     });
 
     const isCanceledBooking = (status: string | null | undefined) =>
-        String(status || '').trim().toLowerCase() === 'canceled';
+        String(status || '')
+            .trim()
+            .toLowerCase() === 'canceled';
     const statusVariant = (status: string) =>
         isCanceledBooking(status) ? 'secondary' : 'default';
     const paymentVariant = (pembayaran: string) => {
@@ -720,9 +724,8 @@
     const isHiddenCanceledUnpaidBooking = (
         row: BookingGroup['bookings'][number],
     ) => isCanceledBooking(row.status) && isBelumLunasPayment(row.pembayaran);
-    const visibleGroupBookingRows = (
-        rows: BookingGroup['bookings'],
-    ) => rows.filter((row) => !isHiddenCanceledUnpaidBooking(row));
+    const visibleGroupBookingRows = (rows: BookingGroup['bookings']) =>
+        rows.filter((row) => !isHiddenCanceledUnpaidBooking(row));
     const isSettledPayment = (pembayaran: string) =>
         isLunasPayment(pembayaran) || isRefundPayment(pembayaran);
     const canRefundCanceledBooking = (row: BookingGroup['bookings'][number]) =>
@@ -875,7 +878,11 @@
     const activeSegment = () => {
         const options = scheduleSegmentOptions();
         const found = options.find((item) => item.id === Number(formSegmentId));
-        return found ?? segments.find((item) => item.id === Number(formSegmentId)) ?? null;
+        return (
+            found ??
+            segments.find((item) => item.id === Number(formSegmentId)) ??
+            null
+        );
     };
     const selectedTotal = () => {
         const price = Number(activeSegment()?.harga ?? 0);
@@ -1868,9 +1875,7 @@
         }
     };
 
-    const buildBookingSuccessCopyText = (
-        snapshot: BookingSuccessSnapshot,
-    ) => {
+    const buildBookingSuccessCopyText = (snapshot: BookingSuccessSnapshot) => {
         if (snapshot.items.length === 0) {
             return '';
         }
@@ -1934,9 +1939,7 @@
         }
 
         try {
-            await copyText(
-                buildBookingSuccessCopyText(bookingSuccessSnapshot),
-            );
+            await copyText(buildBookingSuccessCopyText(bookingSuccessSnapshot));
             bookingSuccessFeedback = 'Detail booking berhasil disalin.';
         } catch {
             bookingSuccessFeedback = 'Gagal menyalin detail booking.';
@@ -2133,9 +2136,8 @@
             : segmentJamLabel(value)
               ? [segmentJamLabel(value)]
               : [];
-    const segmentJamSummary = (
-        value: string[] | string | null | undefined,
-    ) => segmentJamList(value).join(', ');
+    const segmentJamSummary = (value: string[] | string | null | undefined) =>
+        segmentJamList(value).join(', ');
     const formatCurrency = (value: number) => formatCurrencyDisplay(value);
     const parseGroupDateTime = (tanggal: string, jam: string) => {
         const datePart = String(tanggal || '').slice(0, 10);
@@ -2277,9 +2279,11 @@
     const formatGroupTimeLabel = (jam: string) =>
         normalizeJamToken(jam) || '--:--';
     const activeGroupBookings = () =>
-        visibleGroupBookingRows((openGroupDetail?.bookings ?? []).filter(
-            (row) => !isCanceledBooking(row.status),
-        ));
+        visibleGroupBookingRows(
+            (openGroupDetail?.bookings ?? []).filter(
+                (row) => !isCanceledBooking(row.status),
+            ),
+        );
     const visibleGroupBookings = () => {
         if (groupPassengerTab === 'ritur') {
             return [];
@@ -2292,9 +2296,8 @@
             (total, row) => total + Number(row.price || 0),
             0,
         );
-    const bookingRowFinalPrice = (
-        row: BookingGroup['bookings'][number],
-    ) => Math.max(Number(row.price || 0) - Number(row.discount || 0), 0);
+    const bookingRowFinalPrice = (row: BookingGroup['bookings'][number]) =>
+        Math.max(Number(row.price || 0) - Number(row.discount || 0), 0);
     const groupPaymentTotals = () => {
         const rows = activeGroupBookings();
 
@@ -2318,7 +2321,8 @@
     const bookingAssignmentText = (
         value: string | null | undefined,
         fallback: string,
-    ) => (hasMeaningfulAssignmentValue(value) ? String(value).trim() : fallback);
+    ) =>
+        hasMeaningfulAssignmentValue(value) ? String(value).trim() : fallback;
     const bookingAssignmentMissing = (value: string | null | undefined) =>
         !hasMeaningfulAssignmentValue(value);
     const normalizeRiturRoute = (value: string | null | undefined) =>
@@ -2488,7 +2492,10 @@
     );
     const visibleBookingGroups = () => visibleBookingGroupsMemo;
     const remainingBookingGroupsCount = $derived(
-        Math.max(filteredBookingGroupsMemo.length - visibleBookingGroupsMemo.length, 0),
+        Math.max(
+            filteredBookingGroupsMemo.length - visibleBookingGroupsMemo.length,
+            0,
+        ),
     );
     const bookingListSummary = $derived.by<BookingListSummary>(() => {
         const summary: BookingListSummary = {
@@ -2557,7 +2564,9 @@
         lastBookingListFilterSignature = bookingListFilterSignature;
         bookingListVisibleCount = BOOKING_LIST_PAGE_SIZE;
     });
-    const persistUiPreferences = (preferences: Parameters<typeof saveUiPreferences>[0]) => {
+    const persistUiPreferences = (
+        preferences: Parameters<typeof saveUiPreferences>[0],
+    ) => {
         void saveUiPreferences(preferences).catch((error) => {
             if (typeof console !== 'undefined') {
                 console.warn('Gagal menyimpan preferensi UI.', error);
@@ -5164,17 +5173,18 @@
                           ticket_code: record.ticket_code
                               ? String(record.ticket_code)
                               : undefined,
-                    };
-                })
+                      };
+                  })
                 : [];
             const recordBySeat = new Map<string, CreatedBookingRecord>(
                 createdRecords.map((item) => [item.seat, item]),
             );
             const seatPrice = Math.max(Number(activeSegment()?.harga ?? 0), 0);
             const totalDiscount = parseCurrencyInput(formDiscount);
-            const seatDiscount = seatCandidates.length > 0
-                ? totalDiscount / seatCandidates.length
-                : 0;
+            const seatDiscount =
+                seatCandidates.length > 0
+                    ? totalDiscount / seatCandidates.length
+                    : 0;
             const activeSegmentJamPickups = segmentJamList(
                 activeSegment()?.jam_pickups,
             );
@@ -5400,11 +5410,106 @@
     });
 </script>
 
-<AppHead title="Data Keberangkatan" />
+<AppHead title={consoleOnly ? 'Booking Console' : 'Data Keberangkatan'} />
 
 <div
     class="flex h-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-4 pb-32"
 >
+    {#if consoleOnly}
+        <section
+            class="overflow-hidden rounded-xl border border-sky-200/70 bg-background shadow-sm dark:border-sky-900/50"
+        >
+            <div
+                class="grid gap-3 border-b border-border/70 bg-linear-to-r from-sky-50 via-background to-emerald-50/60 p-3 dark:from-sky-950/20 dark:via-background dark:to-emerald-950/10 md:grid-cols-[minmax(0,1fr)_auto] md:p-4"
+            >
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold tracking-[0.16em] text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/30 dark:text-sky-200"
+                        >
+                            LIVE
+                        </Badge>
+                        <span
+                            class="truncate text-xs font-medium text-muted-foreground"
+                        >
+                            {serverNow || bookingDate}
+                        </span>
+                    </div>
+                    <h1
+                        class="mt-1 text-xl font-bold tracking-normal text-foreground md:text-2xl"
+                    >
+                        Booking Console
+                    </h1>
+                    <p class="mt-1 truncate text-sm text-muted-foreground">
+                        {poolContextName} - {poolContextBadge}
+                    </p>
+                </div>
+
+                <div
+                    class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4 md:min-w-[30rem]"
+                >
+                    <div
+                        class="rounded-lg border border-border/70 bg-background/85 px-3 py-2"
+                    >
+                        <p
+                            class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                        >
+                            <Route class="h-3.5 w-3.5" />
+                            Rute
+                        </p>
+                        <p class="mt-1 truncate font-semibold text-foreground">
+                            {selectedRoute || '-'}
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-lg border border-border/70 bg-background/85 px-3 py-2"
+                    >
+                        <p
+                            class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                        >
+                            <Clock3 class="h-3.5 w-3.5" />
+                            Jadwal
+                        </p>
+                        <p class="mt-1 truncate font-semibold text-foreground">
+                            {selectedJam || '-'} / Unit {Number(
+                                selectedUnit || 1,
+                            ) || 1}
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-lg border border-border/70 bg-background/85 px-3 py-2"
+                    >
+                        <p
+                            class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                        >
+                            <Armchair class="h-3.5 w-3.5" />
+                            Kursi
+                        </p>
+                        <p class="mt-1 truncate font-semibold text-foreground">
+                            {bookedCount()} / {totalSeats() || '-'} terisi
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-lg border border-border/70 bg-background/85 px-3 py-2"
+                    >
+                        <p
+                            class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                        >
+                            <WalletCards class="h-3.5 w-3.5" />
+                            Sesi
+                        </p>
+                        <p class="mt-1 truncate font-semibold text-foreground">
+                            {grandCount()} kursi - {formatCurrency(
+                                grandTotal(),
+                            )}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    {/if}
+
     {#if !listOnly}
         <Card
             class="overflow-hidden border-sidebar-border/70 bg-gradient-to-b from-background to-muted/10 dark:border-sidebar-border"
@@ -5442,7 +5547,6 @@
                 </CardHeader>
             {/if}
             <CardContent class="space-y-5 p-4 md:p-5">
-
                 <div class="space-y-3 md:hidden">
                     <div
                         class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
@@ -5478,7 +5582,9 @@
                             >
                                 Ringkasan Jadwal
                             </p>
-                            <p class="truncate text-xs font-semibold text-foreground">
+                            <p
+                                class="truncate text-xs font-semibold text-foreground"
+                            >
                                 {mobileTripSummary()}
                             </p>
                         </div>
@@ -5584,7 +5690,9 @@
                                                     ? ` | ${schedule.unit_label}`
                                                     : ''}{schedule.nopol
                                                     ? ` | ${schedule.nopol}`
-                                                    : ''}{scheduleSegmentCount(schedule) > 0
+                                                    : ''}{scheduleSegmentCount(
+                                                    schedule,
+                                                ) > 0
                                                     ? ` | ${scheduleSegmentCount(schedule)} segment`
                                                     : ''}{!consoleOnly
                                                     ? ` | BOP ${formatCurrency(Number(schedule.bop || 0))}`
@@ -5593,7 +5701,9 @@
                                         {/each}
                                     </select>
                                 </div>
-                                <p class="mt-1 text-[11px] text-muted-foreground">
+                                <p
+                                    class="mt-1 text-[11px] text-muted-foreground"
+                                >
                                     {scheduleSegmentHint(activeSchedule())}
                                 </p>
                             </div>
@@ -5657,7 +5767,9 @@
                     <p class="text-sm text-destructive">{detailError}</p>
                 {/if}
                 {#if formError}
-                    <p class="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive md:hidden">
+                    <p
+                        class="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive md:hidden"
+                    >
                         {formError}
                     </p>
                 {/if}
@@ -6009,7 +6121,11 @@
                             </h3>
                             <div class="grid gap-3 md:grid-cols-2">
                                 <div class="md:col-span-2">
-                                    <label for="booking-customer-lookup" class="mb-1.5 block text-xs font-medium text-muted-foreground">Cari Database Customer</label>
+                                    <label
+                                        for="booking-customer-lookup"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Cari Database Customer</label
+                                    >
                                     <div class="relative">
                                         <Input
                                             id="booking-customer-lookup"
@@ -6019,7 +6135,8 @@
                                             oninput={onCustomerLookupInput}
                                             onfocus={() =>
                                                 (customerSuggestOpen =
-                                                    customerSuggestions.length > 0)}
+                                                    customerSuggestions.length >
+                                                    0)}
                                             onblur={onCustomerLookupBlur}
                                         />
                                         <Search
@@ -6070,7 +6187,11 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label for="booking-form-name" class="mb-1.5 block text-xs font-medium text-muted-foreground">Nama Penumpang</label>
+                                    <label
+                                        for="booking-form-name"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Nama Penumpang</label
+                                    >
                                     <div class="relative">
                                         <Input
                                             id="booking-form-name"
@@ -6085,7 +6206,11 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label for="booking-form-phone" class="mb-1.5 block text-xs font-medium text-muted-foreground">Telepon</label>
+                                    <label
+                                        for="booking-form-phone"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Telepon</label
+                                    >
                                     <div class="relative">
                                         <Input
                                             id="booking-form-phone"
@@ -6093,7 +6218,8 @@
                                             placeholder="Cth: 08123456789"
                                             bind:value={formPhone}
                                             oninput={onFormPhoneInput}
-                                            onblur={() => void autofillByPhone()}
+                                            onblur={() =>
+                                                void autofillByPhone()}
                                         />
                                         <Phone
                                             class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -6101,7 +6227,11 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label for="booking-form-seat" class="mb-1.5 block text-xs font-medium text-muted-foreground">Pilih Kursi</label>
+                                    <label
+                                        for="booking-form-seat"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Pilih Kursi</label
+                                    >
                                     <div class="relative">
                                         <Input
                                             id="booking-form-seat"
@@ -6116,7 +6246,11 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label for="booking-form-segment" class="mb-1.5 block text-xs font-medium text-muted-foreground">Segment & Harga</label>
+                                    <label
+                                        for="booking-form-segment"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Segment & Harga</label
+                                    >
                                     <select
                                         id="booking-form-segment"
                                         class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
@@ -6130,7 +6264,9 @@
                                         </option>
                                         {#each scheduleSegmentOptions() as segment (`segment-opt-${segment.id}`)}
                                             <option value={segment.id}>
-                                                {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
+                                                {segment.rute}{segmentJamSummary(
+                                                    segment.jam_pickups,
+                                                ) || segment.jam
                                                     ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
                                                     : ''} (Rp {Number(
                                                     segment.harga,
@@ -6140,26 +6276,38 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="booking-form-payment" class="mb-1.5 block text-xs font-medium text-muted-foreground">Status Pembayaran</label>
+                                    <label
+                                        for="booking-form-payment"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Status Pembayaran</label
+                                    >
                                     <select
                                         id="booking-form-payment"
                                         class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formPayment}
                                     >
                                         {#each paymentOptions as option (option)}
-                                            <option value={option}>{option}</option>
+                                            <option value={option}
+                                                >{option}</option
+                                            >
                                         {/each}
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="booking-form-discount" class="mb-1.5 block text-xs font-medium text-muted-foreground">Diskon Spesial</label>
+                                    <label
+                                        for="booking-form-discount"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Diskon Spesial</label
+                                    >
                                     <Input
                                         id="booking-form-discount"
                                         class="h-11 rounded-xl"
                                         type="text"
                                         inputmode="numeric"
                                         placeholder="Cth: 10.000"
-                                        value={formatCurrencyInput(formDiscount)}
+                                        value={formatCurrencyInput(
+                                            formDiscount,
+                                        )}
                                         oninput={(event) => {
                                             formDiscount = parseCurrencyInput(
                                                 (
@@ -6170,7 +6318,11 @@
                                     />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label for="booking-form-pickup" class="mb-1.5 block text-xs font-medium text-muted-foreground">Titik Jemput (Pickup Point)</label>
+                                    <label
+                                        for="booking-form-pickup"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Titik Jemput (Pickup Point)</label
+                                    >
                                     <Input
                                         id="booking-form-pickup"
                                         class="h-11 rounded-xl"
@@ -6179,7 +6331,11 @@
                                     />
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label for="booking-form-address" class="mb-1.5 block text-xs font-medium text-muted-foreground">Catatan Tambahan</label>
+                                    <label
+                                        for="booking-form-address"
+                                        class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >Catatan Tambahan</label
+                                    >
                                     <Input
                                         id="booking-form-address"
                                         class="h-11 rounded-xl"
@@ -6187,61 +6343,63 @@
                                         bind:value={formAddress}
                                     />
                                 </div>
-                            <div
-                                class="rounded-xl border bg-muted/20 p-3 text-sm"
-                            >
-                                <p class="text-xs text-muted-foreground">
-                                    Ringkasan
-                                </p>
-                                <p class="font-semibold">
-                                    {selectedCount()} kursi - Total Rp {selectedTotal().toLocaleString(
-                                        'id-ID',
-                                    )}
-                                </p>
-                            </div>
-                            <div
-                                class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3"
-                            >
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="h-11 w-full rounded-xl md:hidden"
-                                    onclick={() => (mobileBookingStep = 2)}
+                                <div
+                                    class="rounded-xl border bg-muted/20 p-3 text-sm"
                                 >
-                                    Back
-                                </Button>
-                                <LoadingButton
-                                    class="h-11 w-full rounded-xl px-5 text-sm sm:w-auto"
-                                    onclick={() => void submitBooking()}
-                                    disabled={submittingBooking ||
-                                        !selectedRoute ||
-                                        !selectedJam}
-                                    loading={submittingBooking}
-                                    loadingText="Menyimpan..."
+                                    <p class="text-xs text-muted-foreground">
+                                        Ringkasan
+                                    </p>
+                                    <p class="font-semibold">
+                                        {selectedCount()} kursi - Total Rp {selectedTotal().toLocaleString(
+                                            'id-ID',
+                                        )}
+                                    </p>
+                                </div>
+                                <div
+                                    class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3"
                                 >
-                                    Simpan Booking
-                                </LoadingButton>
-                                {#if formSuccess}
-                                    <span class="text-sm text-green-600"
-                                        >{formSuccess}</span
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-11 w-full rounded-xl md:hidden"
+                                        onclick={() => (mobileBookingStep = 2)}
                                     >
-                                {/if}
-                                {#if formError}
-                                    <span class="text-sm text-destructive"
-                                        >{formError}</span
+                                        Back
+                                    </Button>
+                                    <LoadingButton
+                                        class="h-11 w-full rounded-xl px-5 text-sm sm:w-auto"
+                                        onclick={() => void submitBooking()}
+                                        disabled={submittingBooking ||
+                                            !selectedRoute ||
+                                            !selectedJam}
+                                        loading={submittingBooking}
+                                        loadingText="Menyimpan..."
                                     >
-                                {/if}
+                                        Simpan Booking
+                                    </LoadingButton>
+                                    {#if formSuccess}
+                                        <span class="text-sm text-green-600"
+                                            >{formSuccess}</span
+                                        >
+                                    {/if}
+                                    {#if formError}
+                                        <span class="text-sm text-destructive"
+                                            >{formError}</span
+                                        >
+                                    {/if}
+                                </div>
                             </div>
                         </div>
-            </div>
-            </div>
-            </div>
+                    </div>
+                </div>
             </CardContent>
         </Card>
 
         {#if selectedRoute && selectedJam}
             {#if consoleOnly}
-                <div class="hidden space-y-3 rounded-xl border bg-background/95 p-3 md:block">
+                <div
+                    class="hidden space-y-3 rounded-xl border bg-background/95 p-3 md:block"
+                >
                     <div
                         class="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center"
                     >
@@ -6360,7 +6518,9 @@
                                 )}
                             </p>
                         </div>
-                        <div class="grid w-full gap-2 sm:flex sm:w-auto sm:items-center">
+                        <div
+                            class="grid w-full gap-2 sm:flex sm:w-auto sm:items-center"
+                        >
                             <Button
                                 type="button"
                                 variant="outline"
@@ -6407,7 +6567,9 @@
                                 {detailSeat.pembayaran || '-'}
                             </Badge>
                         </div>
-                        <h3 class="truncate text-sm font-semibold sm:text-base md:text-lg">
+                        <h3
+                            class="truncate text-sm font-semibold sm:text-base md:text-lg"
+                        >
                             {detailSeat.name || '-'}
                         </h3>
                         <p class="text-[11px] text-muted-foreground sm:text-xs">
@@ -6427,83 +6589,125 @@
                     </Button>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-5 md:py-4">
+                <div
+                    class="min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-5 md:py-4"
+                >
                     {#if !detailEditMode}
                         <div class="grid gap-2.5 text-sm sm:grid-cols-2">
                             <div
                                 class="rounded-xl border border-primary/15 bg-primary/5 p-3 sm:col-span-2"
                             >
-                                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                                <p
+                                    class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]"
+                                >
                                     Ringkasan Harga
                                 </p>
                                 <div
                                     class="mt-1 flex flex-wrap items-end justify-between gap-2"
                                 >
-                                    <p class="text-xl font-semibold text-foreground sm:text-2xl">
+                                    <p
+                                        class="text-xl font-semibold text-foreground sm:text-2xl"
+                                    >
                                         Rp {Math.max(
                                             Number(detailSeat.price || 0) -
-                                                Number(detailSeat.discount || 0),
+                                                Number(
+                                                    detailSeat.discount || 0,
+                                                ),
                                             0,
                                         ).toLocaleString('id-ID')}
                                     </p>
-                                    <p class="text-[11px] text-muted-foreground sm:text-xs">
+                                    <p
+                                        class="text-[11px] text-muted-foreground sm:text-xs"
+                                    >
                                         Diskon Rp {Number(
                                             detailSeat.discount || 0,
                                         ).toLocaleString('id-ID')}
                                     </p>
                                 </div>
                             </div>
-                            <div class="sm:col-span-2 grid gap-px bg-border/40 border rounded-xl overflow-hidden shadow-sm">
+                            <div
+                                class="sm:col-span-2 grid gap-px bg-border/40 border rounded-xl overflow-hidden shadow-sm"
+                            >
                                 <div class="grid grid-cols-2 gap-px">
                                     <div class="bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                        <p
+                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                        >
                                             Nama
                                         </p>
-                                        <p class="break-words text-sm font-semibold">
+                                        <p
+                                            class="break-words text-sm font-semibold"
+                                        >
                                             {detailSeat.name || '-'}
                                         </p>
                                     </div>
                                     <div class="bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                        <p
+                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                        >
                                             Telepon
                                         </p>
-                                        <p class="break-words text-sm font-semibold">
+                                        <p
+                                            class="break-words text-sm font-semibold"
+                                        >
                                             {detailSeat.phone || '-'}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-px">
                                     <div class="bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                        <p
+                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                        >
                                             Segment
                                         </p>
-                                        <p class="break-words text-sm font-semibold">
+                                        <p
+                                            class="break-words text-sm font-semibold"
+                                        >
                                             {detailSeat.segment_name || '-'}
                                         </p>
                                     </div>
                                     <div class="bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                        <p
+                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                        >
                                             Jam Segment
                                         </p>
-                                        <p class="break-words text-sm font-semibold">
-                                            {segmentJamSummary(detailSeat.segment_jam_pickups) || segmentJamLabel(detailSeat.segment_jam) || '-'}
+                                        <p
+                                            class="break-words text-sm font-semibold"
+                                        >
+                                            {segmentJamSummary(
+                                                detailSeat.segment_jam_pickups,
+                                            ) ||
+                                                segmentJamLabel(
+                                                    detailSeat.segment_jam,
+                                                ) ||
+                                                '-'}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-px">
                                     <div class="bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                        <p
+                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                        >
                                             Pembayaran
                                         </p>
-                                        <p class="break-words text-sm font-semibold">
+                                        <p
+                                            class="break-words text-sm font-semibold"
+                                        >
                                             {detailSeat.pembayaran || '-'}
                                         </p>
                                     </div>
                                     <div class="bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                        <p
+                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                        >
                                             Pickup Point
                                         </p>
-                                        <p class="break-words text-sm font-semibold">
+                                        <p
+                                            class="break-words text-sm font-semibold"
+                                        >
                                             {detailSeat.pickup_point || '-'}
                                         </p>
                                     </div>
@@ -6560,12 +6764,15 @@
                             >
                                 <option value={0}
                                     >{segments.length === 0
-                                        ? detailSeat.segment_name || 'Tanpa Segment'
+                                        ? detailSeat.segment_name ||
+                                          'Tanpa Segment'
                                         : 'Pilih segment rute'}</option
                                 >
                                 {#each scheduleSegmentOptions() as segment (`detail-segment-${segment.id}`)}
                                     <option value={segment.id}>
-                                        {segment.rute}{segmentJamSummary(segment.jam_pickups) || segment.jam
+                                        {segment.rute}{segmentJamSummary(
+                                            segment.jam_pickups,
+                                        ) || segment.jam
                                             ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
                                             : ''} (Rp {Number(
                                             segment.harga,
@@ -6577,14 +6784,24 @@
                     {/if}
 
                     {#if formSuccess}
-                        <p class="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">{formSuccess}</p>
+                        <p
+                            class="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300"
+                        >
+                            {formSuccess}
+                        </p>
                     {/if}
                     {#if formError}
-                        <p class="mt-3 rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>
+                        <p
+                            class="mt-3 rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                        >
+                            {formError}
+                        </p>
                     {/if}
                 </div>
 
-                <div class="shrink-0 border-t bg-background/95 px-3 py-3 backdrop-blur md:px-5">
+                <div
+                    class="shrink-0 border-t bg-background/95 px-3 py-3 backdrop-blur md:px-5"
+                >
                     {#if detailEditMode}
                         <div class="grid grid-cols-2 gap-2">
                             <Button
@@ -6607,7 +6824,9 @@
                             </Button>
                         </div>
                     {:else}
-                        <div class="flex flex-wrap gap-2 justify-end sm:justify-start">
+                        <div
+                            class="flex flex-wrap gap-2 justify-end sm:justify-start"
+                        >
                             <div class="flex flex-1 sm:flex-none gap-2">
                                 <Button
                                     type="button"
@@ -6634,7 +6853,9 @@
                                     aria-label="Edit detail"
                                     size="icon"
                                 >
-                                    <Pencil class="h-3.5 w-3.5 text-muted-foreground" />
+                                    <Pencil
+                                        class="h-3.5 w-3.5 text-muted-foreground"
+                                    />
                                 </Button>
                             </div>
 
@@ -6645,10 +6866,13 @@
                                         variant="outline"
                                         class="h-10 flex-1 sm:flex-none border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
                                         onclick={() => void markDetailAsPaid()}
-                                        disabled={markingPaidSeatId === detailSeat.id ||
+                                        disabled={markingPaidSeatId ===
+                                            detailSeat.id ||
                                             cancelingSeatId === detailSeat.id}
                                     >
-                                        <WalletCards class="mr-1.5 h-3.5 w-3.5" />
+                                        <WalletCards
+                                            class="mr-1.5 h-3.5 w-3.5"
+                                        />
                                         {markingPaidSeatId === detailSeat.id
                                             ? 'Loading'
                                             : 'Tandai Lunas'}
@@ -6658,14 +6882,28 @@
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    class="h-10 sm:flex-none border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 {isLunasPayment(detailSeat.pembayaran) ? 'flex-1 sm:flex-none' : 'px-3'}"
-                                    onclick={() => void cancelSeat(detailSeat!.id)}
-                                    disabled={cancelingSeatId === detailSeat!.id ||
+                                    class="h-10 sm:flex-none border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 {isLunasPayment(
+                                        detailSeat.pembayaran,
+                                    )
+                                        ? 'flex-1 sm:flex-none'
+                                        : 'px-3'}"
+                                    onclick={() =>
+                                        void cancelSeat(detailSeat!.id)}
+                                    disabled={cancelingSeatId ===
+                                        detailSeat!.id ||
                                         markingPaidSeatId === detailSeat.id}
                                     aria-label="Cancel seat"
                                 >
-                                    <X class="h-3.5 w-3.5 {isLunasPayment(detailSeat.pembayaran) ? 'mr-1.5' : ''}" />
-                                    {isLunasPayment(detailSeat.pembayaran) ? 'Cancel Kursi' : ''}
+                                    <X
+                                        class="h-3.5 w-3.5 {isLunasPayment(
+                                            detailSeat.pembayaran,
+                                        )
+                                            ? 'mr-1.5'
+                                            : ''}"
+                                    />
+                                    {isLunasPayment(detailSeat.pembayaran)
+                                        ? 'Cancel Kursi'
+                                        : ''}
                                 </Button>
                             </div>
                         </div>
@@ -6684,7 +6922,9 @@
             <div
                 class="w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-200/70 bg-background shadow-2xl dark:border-emerald-500/20"
             >
-                <div class="h-1 bg-linear-to-r from-emerald-400 via-emerald-500 to-lime-400"></div>
+                <div
+                    class="h-1 bg-linear-to-r from-emerald-400 via-emerald-500 to-lime-400"
+                ></div>
                 <div class="p-4 md:p-5">
                     <div class="flex items-start gap-3">
                         <div
@@ -6693,20 +6933,26 @@
                             <CheckCircle2 class="h-7 w-7" />
                         </div>
                         <div class="min-w-0 flex-1">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300">
+                            <p
+                                class="text-[11px] font-medium uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300"
+                            >
                                 Booking sukses
                             </p>
                             <h3 class="truncate text-lg font-semibold">
-                                {bookingSuccessSnapshot.items.length} kursi berhasil tersimpan
+                                {bookingSuccessSnapshot.items.length} kursi berhasil
+                                tersimpan
                             </h3>
                             <p class="mt-1 text-sm text-muted-foreground">
                                 {bookingSuccessSnapshot.tanggal} · {segmentJamSummary(
                                     bookingSuccessSnapshot.segment_jam_pickups,
-                                ) || segmentJamLabel(
-                                    bookingSuccessSnapshot.segment_jam,
-                                ) || normalizeJamToken(
-                                    bookingSuccessSnapshot.jam,
-                                ) || '-'} · Unit {bookingSuccessSnapshot.unit}
+                                ) ||
+                                    segmentJamLabel(
+                                        bookingSuccessSnapshot.segment_jam,
+                                    ) ||
+                                    normalizeJamToken(
+                                        bookingSuccessSnapshot.jam,
+                                    ) ||
+                                    '-'} · Unit {bookingSuccessSnapshot.unit}
                             </p>
                         </div>
                         <Button
@@ -6722,20 +6968,30 @@
                     </div>
 
                     <div class="mt-4 rounded-2xl border bg-muted/20 p-4">
-                        <p class="text-xs uppercase tracking-wide text-muted-foreground">
+                        <p
+                            class="text-xs uppercase tracking-wide text-muted-foreground"
+                        >
                             Ringkasan booking
                         </p>
                         <div class="mt-2 grid gap-2 text-sm md:grid-cols-2">
                             <div>
                                 <span class="text-muted-foreground">Rute</span>
-                                <p class="font-medium">{bookingSuccessSnapshot.rute || '-'}</p>
+                                <p class="font-medium">
+                                    {bookingSuccessSnapshot.rute || '-'}
+                                </p>
                             </div>
                             <div>
                                 <span class="text-muted-foreground">Total</span>
-                                <p class="font-medium">Rp {bookingSuccessSnapshot.total.toLocaleString('id-ID')}</p>
+                                <p class="font-medium">
+                                    Rp {bookingSuccessSnapshot.total.toLocaleString(
+                                        'id-ID',
+                                    )}
+                                </p>
                             </div>
                         </div>
-                        <div class="mt-3 rounded-xl border bg-background p-3 text-sm">
+                        <div
+                            class="mt-3 rounded-xl border bg-background p-3 text-sm"
+                        >
                             <p class="text-xs text-muted-foreground">
                                 Kursi tersimpan
                             </p>
@@ -6769,7 +7025,9 @@
                     </div>
 
                     {#if bookingSuccessFeedback}
-                        <p class="mt-3 text-sm text-emerald-700 dark:text-emerald-300">
+                        <p
+                            class="mt-3 text-sm text-emerald-700 dark:text-emerald-300"
+                        >
                             {bookingSuccessFeedback}
                         </p>
                     {/if}
@@ -7002,7 +7260,9 @@
                                         >
                                             Total
                                         </p>
-                                        <p class="mt-1 text-xs font-semibold sm:text-sm">
+                                        <p
+                                            class="mt-1 text-xs font-semibold sm:text-sm"
+                                        >
                                             {openGroupDetail.total}
                                         </p>
                                     </div>
@@ -7014,7 +7274,9 @@
                                         >
                                             Aktif
                                         </p>
-                                        <p class="mt-1 text-xs font-semibold sm:text-sm">
+                                        <p
+                                            class="mt-1 text-xs font-semibold sm:text-sm"
+                                        >
                                             {openGroupDetail.active}
                                         </p>
                                     </div>
@@ -7076,20 +7338,36 @@
                                     </div>
                                 </div>
                                 <div class="mt-3 grid gap-2 sm:grid-cols-2">
-                                    <div class="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-950/20">
-                                        <p class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300">
+                                    <div
+                                        class="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                                    >
+                                        <p
+                                            class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
+                                        >
                                             Total Pembayaran Lunas
                                         </p>
-                                        <p class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-200">
-                                            Rp {groupPaymentTotals().lunas.toLocaleString('id-ID')}
+                                        <p
+                                            class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-200"
+                                        >
+                                            Rp {groupPaymentTotals().lunas.toLocaleString(
+                                                'id-ID',
+                                            )}
                                         </p>
                                     </div>
-                                    <div class="rounded-2xl border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-950/20">
-                                        <p class="text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
+                                    <div
+                                        class="rounded-2xl border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-950/20"
+                                    >
+                                        <p
+                                            class="text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
+                                        >
                                             Total Pembayaran Belum Lunas
                                         </p>
-                                        <p class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-200">
-                                            Rp {groupPaymentTotals().belumLunas.toLocaleString('id-ID')}
+                                        <p
+                                            class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-200"
+                                        >
+                                            Rp {groupPaymentTotals().belumLunas.toLocaleString(
+                                                'id-ID',
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -7646,7 +7924,11 @@
                                 </div>
                             </div>
 
-                            <div class={groupRiturFiltersExpanded ? 'block' : 'hidden md:block'}>
+                            <div
+                                class={groupRiturFiltersExpanded
+                                    ? 'block'
+                                    : 'hidden md:block'}
+                            >
                                 <div class="mb-3">
                                     <div class="relative">
                                         <Search
@@ -7669,14 +7951,16 @@
                                             ? 'default'
                                             : 'outline'}
                                         class="rounded-full"
-                                        onclick={() => (groupRiturFilter = 'all')}
+                                        onclick={() =>
+                                            (groupRiturFilter = 'all')}
                                     >
                                         Semua
                                     </Button>
                                     <Button
                                         type="button"
                                         size="sm"
-                                        variant={groupRiturFilter === 'same_route'
+                                        variant={groupRiturFilter ===
+                                        'same_route'
                                             ? 'default'
                                             : 'outline'}
                                         class="rounded-full"
@@ -7688,7 +7972,8 @@
                                     <Button
                                         type="button"
                                         size="sm"
-                                        variant={groupRiturFilter === 'same_date'
+                                        variant={groupRiturFilter ===
+                                        'same_date'
                                             ? 'default'
                                             : 'outline'}
                                         class="rounded-full"
@@ -7706,7 +7991,8 @@
                                             : 'outline'}
                                         class="rounded-full"
                                         onclick={() =>
-                                            (groupRiturFilter = 'same_route_date')}
+                                            (groupRiturFilter =
+                                                'same_route_date')}
                                     >
                                         Rute + Tanggal
                                     </Button>
@@ -7838,7 +8124,8 @@
                             <div
                                 class="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground"
                             >
-                                Belum ada penumpang aktif pada keberangkatan ini.
+                                Belum ada penumpang aktif pada keberangkatan
+                                ini.
                             </div>
                         {/if}
                         {#each visibleGroupBookings() as row (row.id)}
@@ -8086,7 +8373,8 @@
                                             colspan="6"
                                             class="px-3 py-6 text-center text-sm text-muted-foreground"
                                         >
-                                            Belum ada penumpang aktif pada keberangkatan ini.
+                                            Belum ada penumpang aktif pada
+                                            keberangkatan ini.
                                         </td>
                                     </tr>
                                 {/if}
@@ -8497,25 +8785,27 @@
 
     {#if !consoleOnly && !groupDetailPage}
         <Card class="border-sidebar-border/70 dark:border-sidebar-border">
-                <CardHeader>
-                    <CardTitle
-                        >{listOnly
+            <CardHeader>
+                <CardTitle
+                    >{listOnly
                         ? 'Keberangkatan'
                         : 'Keberangkatan Terbaru'}</CardTitle
-                    >
+                >
                 {#if !listOnly}
                     <CardDescription>
-                        Preview data keberangkatan terbaru dari tabel `bookings`.
+                        Preview data keberangkatan terbaru dari tabel
+                        `bookings`.
                     </CardDescription>
                 {/if}
-
             </CardHeader>
             <CardContent>
                 {#if listOnly}
                     <div
                         class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/90 md:top-2 md:mx-0 md:rounded-2xl md:border md:border-border/80 md:bg-linear-to-br md:from-background md:via-background md:to-cyan-50/35 md:p-3 md:shadow-sm md:dark:to-cyan-950/15"
                     >
-                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm">
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                        >
                             <Button
                                 type="button"
                                 size="sm"
@@ -8523,8 +8813,7 @@
                                     ? 'secondary'
                                     : 'default'}
                                 class="h-9 rounded-xl px-4 text-xs"
-                                onclick={() =>
-                                    void openEmptyDepartureForm()}
+                                onclick={() => void openEmptyDepartureForm()}
                             >
                                 {#if emptyDepartureOpen}
                                     <X class="mr-1.5 h-3.5 w-3.5" />
@@ -8535,27 +8824,44 @@
                                 {/if}
                             </Button>
                         </div>
-                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm">
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
+                        >
                             <div class="space-y-1">
-                                <p class="text-xs font-medium text-muted-foreground">
-                                    Rentang aktif {bookingListDateFrom === bookingListDateTo
+                                <p
+                                    class="text-xs font-medium text-muted-foreground"
+                                >
+                                    Rentang aktif {bookingListDateFrom ===
+                                    bookingListDateTo
                                         ? bookingListDateFrom
                                         : `${bookingListDateFrom} s/d ${bookingListDateTo}`}
                                 </p>
-                                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                                    <span class="rounded-full border border-border/70 bg-background px-2 py-0.5 font-medium text-muted-foreground">
+                                <div
+                                    class="flex flex-wrap items-center gap-1.5 text-[11px]"
+                                >
+                                    <span
+                                        class="rounded-full border border-border/70 bg-background px-2 py-0.5 font-medium text-muted-foreground"
+                                    >
                                         {bookingListSummary.schedules} jadwal
                                     </span>
-                                    <span class="rounded-full border border-border/70 bg-background px-2 py-0.5 font-medium text-muted-foreground">
-                                        {bookingListSummary.activePassengers} penumpang aktif
+                                    <span
+                                        class="rounded-full border border-border/70 bg-background px-2 py-0.5 font-medium text-muted-foreground"
+                                    >
+                                        {bookingListSummary.activePassengers} penumpang
+                                        aktif
                                     </span>
-                                    <span class="rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200">
-                                        {bookingListSummary.unpaidSchedules} jadwal belum lunas
+                                    <span
+                                        class="rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
+                                    >
+                                        {bookingListSummary.unpaidSchedules} jadwal
+                                        belum lunas
                                     </span>
                                 </div>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
-                                <div class="hidden items-center rounded-xl border border-border/70 bg-background/80 p-1 lg:inline-flex">
+                                <div
+                                    class="hidden items-center rounded-xl border border-border/70 bg-background/80 p-1 lg:inline-flex"
+                                >
                                     <Button
                                         type="button"
                                         size="sm"
@@ -8602,8 +8908,12 @@
                                 </Button>
                             </div>
                         </div>
-                        <div class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-2xl border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}>
-                            <div class="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+                        <div
+                            class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-2xl border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
+                        >
+                            <div
+                                class="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                            >
                                 <select
                                     class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
                                     bind:value={bookingListRoute}
@@ -8616,7 +8926,8 @@
                                 <input
                                     bind:this={bookingListDateInput}
                                     type="text"
-                                    value={bookingListDateFrom === bookingListDateTo
+                                    value={bookingListDateFrom ===
+                                    bookingListDateTo
                                         ? bookingListDateFrom
                                         : `${bookingListDateFrom} to ${bookingListDateTo}`}
                                     readonly
@@ -8628,7 +8939,8 @@
                                     class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
                                     bind:value={bookingListPayment}
                                 >
-                                    <option value="all">Semua Pembayaran</option>
+                                    <option value="all">Semua Pembayaran</option
+                                    >
                                     <option value="lunas">Lunas Semua</option>
                                     <option value="belum_lunas"
                                         >Masih Belum Lunas</option
@@ -8786,20 +9098,42 @@
                                     class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
                                     aria-hidden="true"
                                 >
-                                    <div class="mb-3 flex items-center justify-between gap-3">
-                                        <Skeleton class="h-4 w-32 rounded-full" />
-                                        <Skeleton class="h-7 w-16 rounded-full" />
+                                    <div
+                                        class="mb-3 flex items-center justify-between gap-3"
+                                    >
+                                        <Skeleton
+                                            class="h-4 w-32 rounded-full"
+                                        />
+                                        <Skeleton
+                                            class="h-7 w-16 rounded-full"
+                                        />
                                     </div>
-                                    <div class="rounded-xl border border-cyan-100/70 bg-cyan-50/35 px-3 py-3 dark:border-cyan-500/15 dark:bg-cyan-950/10">
-                                        <Skeleton class="h-3 w-44 rounded-full" />
-                                        <Skeleton class="mt-3 h-5 w-56 rounded-full" />
-                                        <div class="mt-4 grid gap-2 sm:grid-cols-3">
-                                            <Skeleton class="h-3.5 rounded-full" />
-                                            <Skeleton class="h-3.5 rounded-full" />
-                                            <Skeleton class="h-3.5 rounded-full" />
+                                    <div
+                                        class="rounded-xl border border-cyan-100/70 bg-cyan-50/35 px-3 py-3 dark:border-cyan-500/15 dark:bg-cyan-950/10"
+                                    >
+                                        <Skeleton
+                                            class="h-3 w-44 rounded-full"
+                                        />
+                                        <Skeleton
+                                            class="mt-3 h-5 w-56 rounded-full"
+                                        />
+                                        <div
+                                            class="mt-4 grid gap-2 sm:grid-cols-3"
+                                        >
+                                            <Skeleton
+                                                class="h-3.5 rounded-full"
+                                            />
+                                            <Skeleton
+                                                class="h-3.5 rounded-full"
+                                            />
+                                            <Skeleton
+                                                class="h-3.5 rounded-full"
+                                            />
                                         </div>
                                     </div>
-                                    <div class="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+                                    <div
+                                        class="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-6"
+                                    >
                                         {#each bookingListSkeletonStats as _stat, statIndex (`booking-list-skeleton-stat-${index}-${statIndex}`)}
                                             <Skeleton class="h-7 rounded-md" />
                                         {/each}
@@ -8838,8 +9172,8 @@
                                                         class="text-xs text-muted-foreground"
                                                     >
                                                         {section.totalSchedules}
-                                                        keberangkatan aktif di
-                                                        hari ini.
+                                                        keberangkatan aktif di hari
+                                                        ini.
                                                     </p>
                                                 </div>
                                                 <div
@@ -8875,20 +9209,30 @@
                                                         class="sticky top-0 z-10 bg-muted/25 text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
                                                     >
                                                         <tr>
-                                                            <th class="w-[128px] px-4 py-3 font-medium">
+                                                            <th
+                                                                class="w-[128px] px-4 py-3 font-medium"
+                                                            >
                                                                 Jam
                                                             </th>
-                                                            <th class="w-[300px] px-4 py-3 font-medium">
+                                                            <th
+                                                                class="w-[300px] px-4 py-3 font-medium"
+                                                            >
                                                                 Rute
                                                             </th>
-                                                            <th class="w-[260px] px-4 py-3 font-medium">
+                                                            <th
+                                                                class="w-[260px] px-4 py-3 font-medium"
+                                                            >
                                                                 Mapping
                                                             </th>
-                                                            <th class="px-4 py-3 font-medium">
+                                                            <th
+                                                                class="px-4 py-3 font-medium"
+                                                            >
                                                                 Manifest &
                                                                 Pembayaran
                                                             </th>
-                                                            <th class="w-[176px] px-4 py-3 text-right font-medium">
+                                                            <th
+                                                                class="w-[176px] px-4 py-3 text-right font-medium"
+                                                            >
                                                                 Aksi
                                                             </th>
                                                         </tr>
@@ -8910,7 +9254,9 @@
                                                             <tr
                                                                 class={`border-t border-border/70 align-top transition-colors hover:bg-cyan-50/30 dark:hover:bg-cyan-950/10 ${isCanceledDeparture(group) ? 'bg-rose-50/35 dark:bg-rose-950/10' : ''}`}
                                                             >
-                                                                <td class="px-4 py-4">
+                                                                <td
+                                                                    class="px-4 py-4"
+                                                                >
                                                                     <div
                                                                         class="space-y-2"
                                                                     >
@@ -8952,7 +9298,9 @@
                                                                         </div>
                                                                     </div>
                                                                 </td>
-                                                                <td class="px-4 py-4">
+                                                                <td
+                                                                    class="px-4 py-4"
+                                                                >
                                                                     <div
                                                                         class="space-y-2"
                                                                     >
@@ -8986,7 +9334,9 @@
                                                                         </div>
                                                                     </div>
                                                                 </td>
-                                                                <td class="px-4 py-4">
+                                                                <td
+                                                                    class="px-4 py-4"
+                                                                >
                                                                     <div
                                                                         class="space-y-2"
                                                                     >
@@ -9026,7 +9376,9 @@
                                                                         </div>
                                                                     </div>
                                                                 </td>
-                                                                <td class="px-4 py-4">
+                                                                <td
+                                                                    class="px-4 py-4"
+                                                                >
                                                                     <div
                                                                         class="space-y-3"
                                                                     >
@@ -9110,7 +9462,9 @@
                                                                         </div>
                                                                     </div>
                                                                 </td>
-                                                                <td class="px-4 py-4">
+                                                                <td
+                                                                    class="px-4 py-4"
+                                                                >
                                                                     <div
                                                                         class="flex items-center justify-end gap-2"
                                                                     >
@@ -9125,7 +9479,8 @@
                                                                         >
                                                                             Detail
                                                                         </Button>
-                                                                        <DropdownMenu>
+                                                                        <DropdownMenu
+                                                                        >
                                                                             <DropdownMenuTrigger
                                                                                 asChild
                                                                             >
@@ -9170,7 +9525,8 @@
                                                                                             group,
                                                                                         )}
                                                                                 >
-                                                                                    Copy Data
+                                                                                    Copy
+                                                                                    Data
                                                                                 </DropdownMenuItem>
                                                                                 <DropdownMenuItem
                                                                                     onclick={() =>
@@ -9178,7 +9534,8 @@
                                                                                             group,
                                                                                         )}
                                                                                 >
-                                                                                    Print Manifest
+                                                                                    Print
+                                                                                    Manifest
                                                                                 </DropdownMenuItem>
                                                                                 {#if canMarkDepartureArrived(group)}
                                                                                     <DropdownMenuItem
@@ -9213,7 +9570,8 @@
                                                                                                 group,
                                                                                             )}
                                                                                     >
-                                                                                        Lunas Semua
+                                                                                        Lunas
+                                                                                        Semua
                                                                                     </DropdownMenuItem>
                                                                                 {/if}
                                                                             </DropdownMenuContent>
@@ -9427,7 +9785,8 @@
                                                             <UserRound
                                                                 class="h-3.5 w-3.5 shrink-0 text-primary"
                                                             />
-                                                            <span class="truncate"
+                                                            <span
+                                                                class="truncate"
                                                                 >Driver:
                                                                 {bookingAssignmentText(
                                                                     group.driver_name,
@@ -9441,7 +9800,8 @@
                                                             <CarFront
                                                                 class="h-3.5 w-3.5 shrink-0 text-primary"
                                                             />
-                                                            <span class="truncate"
+                                                            <span
+                                                                class="truncate"
                                                                 >Nopol:
                                                                 {bookingAssignmentText(
                                                                     group.armada_nopol,
