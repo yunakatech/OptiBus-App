@@ -4,7 +4,7 @@
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CreditCard from 'lucide-svelte/icons/credit-card';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
-    import Monitor from 'lucide-svelte/icons/monitor';
+    import Plus from 'lucide-svelte/icons/plus';
     import Tickets from 'lucide-svelte/icons/tickets';
     import { onMount } from 'svelte';
     import MobileMenuSheet from '@/components/MobileMenuSheet.svelte';
@@ -33,7 +33,7 @@
         {
             title: 'Console',
             href: '/booking-console',
-            icon: Monitor,
+            icon: Plus,
             permission: 'booking.view',
         },
         {
@@ -58,11 +58,15 @@
     ];
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
-    const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
+    const billingLocked = $derived(
+        Boolean(page.props.auth?.billing_access?.locked),
+    );
     const visibleMainItems = $derived(
         billingLocked
             ? billingItems
-            : mainItems.filter((item) => hasPermission(permissions, item.permission)),
+            : mainItems.filter((item) =>
+                  hasPermission(permissions, item.permission),
+              ),
     );
     const navCount = $derived(Math.max(visibleMainItems.length, 1));
     let isCompact = $state(false);
@@ -87,7 +91,11 @@
     }
 
     function prefetchNavItem(href: string): void {
-        if (typeof window === 'undefined' || url.isCurrentUrl(href, url.currentUrl) || prefetchedHrefs.has(href)) {
+        if (
+            typeof window === 'undefined' ||
+            url.isCurrentUrl(href, url.currentUrl) ||
+            prefetchedHrefs.has(href)
+        ) {
             return;
         }
 
@@ -151,7 +159,10 @@
     }
 
     function updateCompactState(): void {
-        const currentScrollY = Math.max(window.scrollY || document.documentElement.scrollTop || 0, 0);
+        const currentScrollY = Math.max(
+            window.scrollY || document.documentElement.scrollTop || 0,
+            0,
+        );
 
         if (!pageCanScroll() || currentScrollY < SCROLL_THRESHOLD) {
             isCompact = false;
@@ -190,14 +201,22 @@
 
         window.addEventListener('open-mobile-menu', handleOpenMobileMenu);
 
-        lastScrollY = Math.max(window.scrollY || document.documentElement.scrollTop || 0, 0);
+        lastScrollY = Math.max(
+            window.scrollY || document.documentElement.scrollTop || 0,
+            0,
+        );
         updateCompactState();
 
-        window.addEventListener('scroll', requestCompactUpdate, { passive: true });
+        window.addEventListener('scroll', requestCompactUpdate, {
+            passive: true,
+        });
         window.addEventListener('resize', requestCompactUpdate);
 
         return () => {
-            window.removeEventListener('open-mobile-menu', handleOpenMobileMenu);
+            window.removeEventListener(
+                'open-mobile-menu',
+                handleOpenMobileMenu,
+            );
             window.removeEventListener('scroll', requestCompactUpdate);
             window.removeEventListener('resize', requestCompactUpdate);
         };
@@ -215,7 +234,10 @@
         isCompact = false;
 
         if (typeof window !== 'undefined') {
-            lastScrollY = Math.max(window.scrollY || document.documentElement.scrollTop || 0, 0);
+            lastScrollY = Math.max(
+                window.scrollY || document.documentElement.scrollTop || 0,
+                0,
+            );
         }
     });
 </script>
@@ -227,15 +249,22 @@
     <div
         class={`mx-auto w-full border border-sidebar-border/70 bg-background/88 ring-1 ring-black/5 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[16rem] rounded-2xl p-1 shadow-[0_12px_24px_-22px_hsl(201_96%_30%_/_0.75)]' : 'max-w-md rounded-2xl p-1.5 shadow-[0_14px_30px_-24px_hsl(201_96%_30%_/_0.7)]'}`}
     >
-        <div class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1rem]' : 'rounded-[1.15rem]'}`}>
+        <div
+            class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1rem]' : 'rounded-[1.15rem]'}`}
+        >
             <div
                 class={`pointer-events-none absolute left-0 z-0 transition-[transform,padding,inset] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'inset-y-0.5 px-1' : 'inset-y-[3px] px-[5px]'}`}
                 style={`width: ${100 / navCount}%; transform: translateX(${activeIndex * 100}%);`}
             >
-                <div class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/25 to-sky-500/15 shadow-[0_8px_20px_-12px_hsl(200_95%_45%_/_0.7)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-lg' : 'rounded-xl'}`}></div>
+                <div
+                    class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/25 to-sky-500/15 shadow-[0_8px_20px_-12px_hsl(200_95%_45%_/_0.7)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-lg' : 'rounded-xl'}`}
+                ></div>
             </div>
 
-            <ul class="relative z-10 grid" style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}>
+            <ul
+                class="relative z-10 grid"
+                style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}
+            >
                 {#each visibleMainItems as item (toUrl(item.href))}
                     {@const itemHref = toUrl(item.href)}
                     <li>
@@ -248,9 +277,12 @@
                             onpointerdown={() => prepareNavPress(itemHref)}
                             onfocus={() => prefetchNavItem(itemHref)}
                             onclick={(event) => visitNavItem(event, itemHref)}
-                            class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref === itemHref ? 'opacity-70' : ''} {isCompact ? 'h-10 rounded-lg' : 'h-12 rounded-xl'} {isNavItemActive(
-                                item.href,
-                            )
+                            class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref ===
+                            itemHref
+                                ? 'opacity-70'
+                                : ''} {isCompact
+                                ? 'h-10 rounded-lg'
+                                : 'h-12 rounded-xl'} {isNavItemActive(item.href)
                                 ? 'text-primary'
                                 : 'text-muted-foreground/90'}"
                         >
@@ -261,9 +293,9 @@
                             {/if}
                             {#if item.icon}
                                 <item.icon
-                                    class="shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {isCompact ? 'size-4' : 'size-5'} {isNavItemActive(
-                                        item.href,
-                                    )
+                                    class="shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {isCompact
+                                        ? 'size-4'
+                                        : 'size-5'} {isNavItemActive(item.href)
                                         ? '-translate-y-0.5 scale-110'
                                         : 'group-hover:-translate-y-0.5'}"
                                 />
