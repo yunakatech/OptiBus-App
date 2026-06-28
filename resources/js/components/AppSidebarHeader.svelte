@@ -2,7 +2,6 @@
     import { Link, page } from '@inertiajs/svelte';
     import Monitor from 'lucide-svelte/icons/monitor';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
-    import ActiveContextInfo from '@/components/ActiveContextInfo.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
     import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
@@ -71,35 +70,33 @@
         {/if}
     </div>
 
-    <div class="hidden min-w-0 items-center justify-center lg:flex">
-        {#if isBookingConsolePage}
-            <ActiveContextInfo class="hidden min-w-0 w-full max-w-[20rem] lg:block" />
-        {:else}
+    {#if !isBookingConsolePage}
+        <div class="hidden min-w-0 items-center justify-center lg:flex">
             <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
-        {/if}
-    </div>
+        </div>
+    {/if}
 
     <div class="flex min-w-0 items-center justify-end gap-2 md:col-start-3">
-        <Button
-            asChild
-            size="sm"
-            variant={url.isCurrentUrl('/booking-console', url.currentUrl)
-                ? 'default'
-                : 'outline'}
-            class="hidden h-8 shrink-0 gap-2 rounded-md px-3.5 md:inline-flex"
-        >
-            {#snippet children(props)}
-                <Link
-                    {...props}
-                    href={toUrl('/booking-console')}
-                    prefetch
-                    cacheFor={30000}
-                >
-                    <Monitor class="size-4" />
-                    <span>Booking Console</span>
-                </Link>
-            {/snippet}
-        </Button>
+        {#if !isBookingConsolePage}
+            <Button
+                asChild
+                size="sm"
+                variant="outline"
+                class="hidden h-8 shrink-0 gap-2 rounded-md px-3.5 md:inline-flex"
+            >
+                {#snippet children(props)}
+                    <Link
+                        {...props}
+                        href={toUrl('/booking-console')}
+                        prefetch
+                        cacheFor={30000}
+                    >
+                        <Monitor class="size-4" />
+                        <span>Booking Console</span>
+                    </Link>
+                {/snippet}
+            </Button>
+        {/if}
         <ProfileMenu user={auth.user} />
     </div>
 </header>

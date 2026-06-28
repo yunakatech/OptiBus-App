@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
-    import ActiveContextInfo from '@/components/ActiveContextInfo.svelte';
     import AppContent from '@/components/AppContent.svelte';
     import AppShell from '@/components/AppShell.svelte';
     import AppSidebar from '@/components/AppSidebar.svelte';
@@ -31,13 +30,15 @@
     <AppSidebar />
     <AppContent variant="sidebar" class="overflow-x-clip pb-20 md:pb-0">
         <AppSidebarHeader {breadcrumbs} />
-        <div class="border-b border-sidebar-border/70 bg-background/95 px-4 py-3 md:hidden">
-            {#if isBookingConsolePage}
-                <ActiveContextInfo class="w-full" />
-            {:else}
+        {#if !isBookingConsolePage}
+            <div
+                class="border-b border-sidebar-border/70 bg-background/95 px-4 py-3 md:hidden"
+            >
                 <div class="mb-2 flex items-center justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        <p
+                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                        >
                             Konteks aktif
                         </p>
                         <p class="truncate text-xs text-muted-foreground">
@@ -46,8 +47,8 @@
                     </div>
                 </div>
                 <TenantPoolSwitcher mode="mobile" />
-            {/if}
-        </div>
+            </div>
+        {/if}
         {@render children?.()}
     </AppContent>
     <MobileBottomNav />
