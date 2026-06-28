@@ -18,7 +18,12 @@
     import Truck from 'lucide-svelte/icons/truck';
     import UserCog from 'lucide-svelte/icons/user-cog';
     import Users from 'lucide-svelte/icons/users';
-    import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+    import {
+        Sheet,
+        SheetContent,
+        SheetHeader,
+        SheetTitle,
+    } from '@/components/ui/sheet';
     import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { mobileHiddenMenuHrefs } from '@/lib/mobileNavigation';
@@ -26,7 +31,7 @@
     import { dashboard } from '@/routes';
 
     let {
-        open = $bindable(false)
+        open = $bindable(false),
     }: {
         open: boolean;
     } = $props();
@@ -36,50 +41,173 @@
         {
             label: 'Operasional',
             items: [
-                { title: 'Dashboard', href: dashboard(), icon: LayoutGrid, permission: 'dashboard.view' },
-                { title: 'Keberangkatan', href: '/bookings', icon: CalendarDays, permission: 'booking.view' },
-                { title: 'Console', href: '/booking-console', icon: Plus, permission: 'booking.view' },
-                { title: 'Carter', href: '/charters', icon: BusFront, permission: 'charter.view' },
-                { title: 'Bagasi', href: '/luggages', icon: Briefcase, permission: 'luggage.view' },
-                { title: 'Pembayaran', href: '/payments', icon: CreditCard, permission: ['payment.update', 'booking.update', 'charter.update', 'luggage.update'] },
+                {
+                    title: 'Dashboard',
+                    href: dashboard(),
+                    icon: LayoutGrid,
+                    permission: 'dashboard.view',
+                },
+                {
+                    title: 'Keberangkatan',
+                    href: '/bookings',
+                    icon: CalendarDays,
+                    permission: 'booking.view',
+                },
+                {
+                    title: 'Console',
+                    href: '/booking-console',
+                    icon: Plus,
+                    permission: 'booking.view',
+                },
+                {
+                    title: 'Carter',
+                    href: '/charters',
+                    icon: BusFront,
+                    permission: 'charter.view',
+                },
+                {
+                    title: 'Bagasi',
+                    href: '/luggages',
+                    icon: Briefcase,
+                    permission: 'luggage.view',
+                },
+                {
+                    title: 'Pembayaran',
+                    href: '/payments',
+                    icon: CreditCard,
+                    permission: [
+                        'payment.update',
+                        'booking.update',
+                        'charter.update',
+                        'luggage.update',
+                    ],
+                },
             ],
         },
         {
             label: 'Pelanggan',
             items: [
-                { title: 'Reguler', href: '/admin-ops/customers', icon: Users, permission: 'customer.view' },
-                { title: 'Bagasi', href: '/admin-ops/customer-bagasi', icon: Briefcase, permission: 'customer.view' },
-                { title: 'Carter', href: '/admin-ops/customer-charter', icon: BusFront, permission: 'customer.view' },
+                {
+                    title: 'Reguler',
+                    href: '/admin-ops/customers',
+                    icon: Users,
+                    permission: 'customer.view',
+                },
+                {
+                    title: 'Bagasi',
+                    href: '/admin-ops/customer-bagasi',
+                    icon: Briefcase,
+                    permission: 'customer.view',
+                },
+                {
+                    title: 'Carter',
+                    href: '/admin-ops/customer-charter',
+                    icon: BusFront,
+                    permission: 'customer.view',
+                },
             ],
         },
         {
             label: 'Data Master',
             items: [
-                { title: 'Jadwal', href: '/admin-ops/jadwal', icon: CalendarDays, permission: 'master.view' },
-                { title: 'Rute Induk', href: '/admin-ops/rute-induk', icon: Route, permission: 'master.view' },
-                { title: 'Pool', href: '/admin-ops/pool', icon: Building2, permission: 'pool.manage' },
-                { title: 'Master Carter', href: '/admin-ops/rute-carter', icon: MapPinned, permission: 'master.view' },
-                { title: 'Tarif Bagasi', href: '/admin-ops/tarif-bagasi', icon: Package, permission: 'master.view' },
-                { title: 'Kategori Armada', href: '/admin-ops/kategori-armada', icon: Truck, permission: 'master.view' },
-                { title: 'Armada', href: '/admin-ops/armada', icon: CarFront, permission: 'armada.view' },
-                { title: 'Driver', href: '/admin-ops/driver', icon: IdCard, permission: 'driver.view' },
+                {
+                    title: 'Jadwal',
+                    href: '/admin-ops/jadwal',
+                    icon: CalendarDays,
+                    permission: 'master.view',
+                },
+                {
+                    title: 'Rute Induk',
+                    href: '/admin-ops/rute-induk',
+                    icon: Route,
+                    permission: 'master.view',
+                },
+                {
+                    title: 'Pool',
+                    href: '/admin-ops/pool',
+                    icon: Building2,
+                    permission: 'pool.manage',
+                },
+                {
+                    title: 'Master Carter',
+                    href: '/admin-ops/rute-carter',
+                    icon: MapPinned,
+                    permission: 'master.view',
+                },
+                {
+                    title: 'Tarif Bagasi',
+                    href: '/admin-ops/tarif-bagasi',
+                    icon: Package,
+                    permission: 'master.view',
+                },
+                {
+                    title: 'Kategori Armada',
+                    href: '/admin-ops/kategori-armada',
+                    icon: Truck,
+                    permission: 'master.view',
+                },
+                {
+                    title: 'Armada',
+                    href: '/admin-ops/armada',
+                    icon: CarFront,
+                    permission: 'armada.view',
+                },
+                {
+                    title: 'Driver',
+                    href: '/admin-ops/driver',
+                    icon: IdCard,
+                    permission: 'driver.view',
+                },
             ],
         },
         {
             label: 'Tenant',
             items: [
-                { title: 'Laporan', href: '/report', icon: ChartColumn, permission: 'report.view' },
+                {
+                    title: 'Laporan',
+                    href: '/report',
+                    icon: ChartColumn,
+                    permission: 'report.view',
+                },
                 { title: 'Langganan', href: '/subscription', icon: CreditCard },
-                { title: 'Users', href: '/admin-ops/users', icon: UserCog, permission: 'user.manage' },
-                { title: 'Logs', href: '/admin-ops/cancellations', icon: History, permission: 'logs.view' },
+                {
+                    title: 'Users',
+                    href: '/admin-ops/users',
+                    icon: UserCog,
+                    permission: 'user.manage',
+                },
+                {
+                    title: 'Logs',
+                    href: '/admin-ops/cancellations',
+                    icon: History,
+                    permission: 'logs.view',
+                },
             ],
         },
         {
             label: 'Sistem',
             items: [
-                { title: 'Platform Dashboard', href: '/platform/dashboard', icon: Building2, permission: 'platform.manage', superAdminOnly: true },
-                { title: 'SaaS', href: '/admin-ops/saas', icon: Building2, permission: 'platform.manage', superAdminOnly: true },
-                { title: 'Role & Hak Akses', href: '/admin-ops/roles', icon: ShieldCheck, permission: 'role.manage', superAdminOnly: true },
+                {
+                    title: 'Platform Dashboard',
+                    href: '/platform/dashboard',
+                    icon: Building2,
+                    permission: 'platform.manage',
+                    superAdminOnly: true,
+                },
+                {
+                    title: 'SaaS',
+                    href: '/admin-ops/saas',
+                    icon: Building2,
+                    permission: 'platform.manage',
+                    superAdminOnly: true,
+                },
+                {
+                    title: 'Role & Hak Akses',
+                    href: '/admin-ops/roles',
+                    icon: ShieldCheck,
+                    permission: 'role.manage',
+                    superAdminOnly: true,
+                },
             ],
         },
     ] as const;
@@ -97,24 +225,31 @@
     ] as const;
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
-    const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
+    const isSuperAdmin = $derived(
+        Boolean(page.props.auth?.user?.is_super_admin),
+    );
     const activeTenant = $derived(page.props.auth?.active_tenant ?? null);
-    const showTenantScopedSections = $derived(!isSuperAdmin || Boolean(activeTenant));
-    const billingLocked = $derived(Boolean(page.props.auth?.billing_access?.locked));
+    const showTenantScopedSections = $derived(
+        !isSuperAdmin || Boolean(activeTenant),
+    );
+    const billingLocked = $derived(
+        Boolean(page.props.auth?.billing_access?.locked),
+    );
     const hiddenMenuHrefs = $derived(mobileHiddenMenuHrefs(billingLocked));
     const visibleMenuSections = $derived(
         (billingLocked ? billingMenuSections : menuSections)
             .map((section) => ({
                 ...section,
-                items: section.items.filter((item) =>
-                    hasPermission(
-                        permissions,
-                        'permission' in item ? item.permission : undefined,
-                    ) &&
-                    (!('superAdminOnly' in item) ||
-                        !item.superAdminOnly ||
-                        isSuperAdmin) &&
-                    !hiddenMenuHrefs.has(toUrl(item.href)),
+                items: section.items.filter(
+                    (item) =>
+                        hasPermission(
+                            permissions,
+                            'permission' in item ? item.permission : undefined,
+                        ) &&
+                        (!('superAdminOnly' in item) ||
+                            !item.superAdminOnly ||
+                            isSuperAdmin) &&
+                        !hiddenMenuHrefs.has(toUrl(item.href)),
                 ),
             }))
             .map((section) =>
@@ -124,39 +259,53 @@
                           ...section,
                           items: section.items.filter((item) => {
                               const href = toUrl(item.href);
-                              return href === '/platform/dashboard' || href === '/admin-ops/saas';
+                              return (
+                                  href === '/platform/dashboard' ||
+                                  href === '/admin-ops/saas'
+                              );
                           }),
                       },
             )
-            .filter((section) => showTenantScopedSections || section.label === 'Sistem')
+            .filter(
+                (section) =>
+                    showTenantScopedSections || section.label === 'Sistem',
+            )
             .filter((section) => section.items.length > 0),
     );
 </script>
 
 <Sheet bind:open>
-    <SheetContent side="bottom" class="h-[85vh] rounded-t-3xl sm:h-[90vh]">
-        <SheetHeader class="text-left px-2 sm:px-0 mt-3 pb-2">
+    <SheetContent side="bottom" class="h-[82vh] rounded-t-3xl sm:h-[88vh]">
+        <SheetHeader class="mt-2 px-1 pb-1 text-left sm:px-0">
             <SheetTitle>Menu Navigasi</SheetTitle>
         </SheetHeader>
-        <div class="h-full w-full overflow-y-auto px-2 pb-24 pt-2">
-            <div class="mx-auto w-full max-w-6xl space-y-6">
+        <div class="h-full w-full overflow-y-auto px-1 pb-4 pt-1">
+            <div class="mx-auto w-full max-w-6xl space-y-4">
                 {#each visibleMenuSections as section (section.label)}
-                    <section class="space-y-3">
-                        <h2 class="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{section.label}</h2>
-                        <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                    <section class="space-y-2">
+                        <h2
+                            class="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        >
+                            {section.label}
+                        </h2>
+                        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
                             {#each section.items as item (item.href)}
                                 <Link
                                     href={toUrl(item.href)}
-                                    onclick={() => { open = false; }}
-                                    class="flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-xl border bg-card px-2 py-3 text-center text-xs font-semibold text-foreground transition-colors {url.isCurrentOrParentUrl(
+                                    onclick={() => {
+                                        open = false;
+                                    }}
+                                    class="flex min-h-[5rem] flex-col items-center justify-center gap-1.5 rounded-xl border bg-card px-2 py-2.5 text-center text-xs font-semibold text-foreground transition-colors {url.isCurrentOrParentUrl(
                                         item.href,
                                         url.currentUrl,
                                     )
                                         ? 'border-primary bg-primary/10 text-primary'
                                         : 'hover:bg-accent'}"
                                 >
-                                    <item.icon class="size-6 shrink-0" />
-                                    <span class="line-clamp-2 leading-snug">{item.title}</span>
+                                    <item.icon class="size-5 shrink-0" />
+                                    <span class="line-clamp-2 leading-snug"
+                                        >{item.title}</span
+                                    >
                                 </Link>
                             {/each}
                         </div>

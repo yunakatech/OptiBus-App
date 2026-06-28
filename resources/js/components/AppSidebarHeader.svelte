@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
-    import Monitor from 'lucide-svelte/icons/monitor';
+    import Plus from 'lucide-svelte/icons/plus';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
@@ -91,7 +91,7 @@
                         prefetch
                         cacheFor={30000}
                     >
-                        <Monitor class="size-4" />
+                        <Plus class="size-4" />
                         <span>Booking Console</span>
                     </Link>
                 {/snippet}
