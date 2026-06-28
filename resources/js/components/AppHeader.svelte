@@ -3,7 +3,6 @@
     import Monitor from 'lucide-svelte/icons/monitor';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import AppLogo from '@/components/AppLogo.svelte';
-    import ActiveContextInfo from '@/components/ActiveContextInfo.svelte';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
@@ -104,16 +103,14 @@
                 </NavigationMenu>
             </div>
 
-            <div class="hidden min-w-0 items-center justify-center lg:flex">
-                {#if isBookingConsolePage}
-                    <ActiveContextInfo class="hidden min-w-0 flex-[0_1_20rem] lg:block xl:flex-[0_1_22rem]" />
-                {:else}
+            {#if !isBookingConsolePage}
+                <div class="hidden min-w-0 items-center justify-center lg:flex">
                     <TenantPoolSwitcher
                         mode="desktop"
                         class="hidden min-w-0 flex-[0_1_14.5rem] lg:block xl:flex-[0_1_16rem] 2xl:flex-[0_1_17.5rem]"
                     />
-                {/if}
-            </div>
+                </div>
+            {/if}
 
             <div class="ml-auto flex min-w-0 items-center gap-2">
                 <Button
