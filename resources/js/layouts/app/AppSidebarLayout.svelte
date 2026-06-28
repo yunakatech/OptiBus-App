@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
+    import ActiveContextInfo from '@/components/ActiveContextInfo.svelte';
     import AppContent from '@/components/AppContent.svelte';
     import AppShell from '@/components/AppShell.svelte';
     import AppSidebar from '@/components/AppSidebar.svelte';
@@ -21,7 +22,9 @@
     } = $props();
 
     const url = currentUrlState();
-    const isMenuPage = $derived(url.isCurrentUrl('/menu', url.currentUrl));
+    const isBookingConsolePage = $derived(
+        url.isCurrentUrl('/booking-console', url.currentUrl),
+    );
 </script>
 
 <AppShell variant="sidebar">
@@ -29,17 +32,21 @@
     <AppContent variant="sidebar" class="overflow-x-clip pb-20 md:pb-0">
         <AppSidebarHeader {breadcrumbs} />
         <div class="border-b border-sidebar-border/70 bg-background/95 px-4 py-3 md:hidden">
-            <div class="mb-2 flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Konteks aktif
-                    </p>
-                    <p class="truncate text-xs text-muted-foreground">
-                        Tenant dan pool untuk data yang sedang dibuka
-                    </p>
+            {#if isBookingConsolePage}
+                <ActiveContextInfo class="w-full" />
+            {:else}
+                <div class="mb-2 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            Konteks aktif
+                        </p>
+                        <p class="truncate text-xs text-muted-foreground">
+                            Tenant dan pool untuk data yang sedang dibuka
+                        </p>
+                    </div>
                 </div>
-            </div>
-            <TenantPoolSwitcher mode="mobile" />
+                <TenantPoolSwitcher mode="mobile" />
+            {/if}
         </div>
         {@render children?.()}
     </AppContent>

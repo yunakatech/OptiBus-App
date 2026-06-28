@@ -9,7 +9,6 @@
     import X from 'lucide-svelte/icons/x';
     import { onMount, tick } from 'svelte';
     import { cn } from '@/lib/utils';
-    import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
     import type { ActivePool, ActiveTenant, PoolOption, TenantOption } from '@/types/auth';
 
     type Kind = 'tenant' | 'pool';

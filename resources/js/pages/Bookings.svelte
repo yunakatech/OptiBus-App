@@ -435,10 +435,9 @@
         }
     });
 
-    let bookingListScope = $state<'active' | 'history'>('active');
-    let bookingListSearch = $state('');
     let bookingListRoute = $state('all');
-    let bookingListDate = $state(initialBookingListDate);
+    let bookingListDateFrom = $state(initialBookingListDate);
+    let bookingListDateTo = $state(initialBookingListDate);
     let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>('all');
     let bookingListDesktopView = $state<'sheet' | 'cards'>(initialBookingListDesktopView);
     let bookingListVisibleCount = $state(24);
@@ -539,7 +538,7 @@
     let groupArmadaSearch = $state('');
     let loadingGroupArmada = $state(false);
     let groupArmadaLookupOpen = $state(false);
-    let groupPassengerTab = $state<'active' | 'history' | 'ritur'>('active');
+    let groupPassengerTab = $state<'active' | 'ritur'>('active');
     let loadingGroupRiturs = $state(false);
     let savingGroupRiturId = $state<number | null>(null);
     let groupRiturSearch = $state('');
@@ -661,7 +660,6 @@
     ];
     const bookingListSkeletonRows = Array.from({ length: 6 });
     const bookingListSkeletonStats = Array.from({ length: 6 });
-    const bookingGroupSearchTextCache = new WeakMap<BookingGroup, string>();
 
     const bookingDateLabel = $derived(formatDateHuman(bookingDate));
     const bookingListLoading = $derived(listOnly && !bookingListHydrated);
@@ -2282,15 +2280,7 @@
         visibleGroupBookingRows((openGroupDetail?.bookings ?? []).filter(
             (row) => !isCanceledBooking(row.status),
         ));
-    const historyGroupBookings = () =>
-        (openGroupDetail?.bookings ?? []).filter((row) =>
-            isCanceledBooking(row.status),
-        );
     const visibleGroupBookings = () => {
-        if (groupPassengerTab === 'history') {
-            return historyGroupBookings();
-        }
-
         if (groupPassengerTab === 'ritur') {
             return [];
         }
@@ -2448,44 +2438,19 @@
               ).sort((a, b) => a.localeCompare(b, 'id-ID')),
     );
     const bookingListRoutes = () => bookingListRoutesMemo;
-    const bookingGroupSearchText = (group: BookingGroup) => {
-        const cached = bookingGroupSearchTextCache.get(group);
-        if (typeof cached === 'string') {
-            return cached;
-        }
-
-        const text = [
-            group.rute,
-            group.driver_name,
-            group.armada_nopol,
-            group.departure_code,
-            group.tanggal,
-            normalizeJamToken(group.jam),
-            `unit ${group.unit}`,
-            ...group.bookings.map(
-                (row) =>
-                    `${row.ticket_code} ${row.name} ${row.phone} ${row.pickup_point}`,
-            ),
-        ]
-            .join(' ')
-            .toLowerCase();
-
-        bookingGroupSearchTextCache.set(group, text);
-
-        return text;
-    };
     const filteredBookingGroupsMemo = $derived.by(() => {
-        const q = bookingListSearch.trim().toLowerCase();
         const filtered = localBookingGroups.filter((group) => {
-            if (bookingListScope === 'active' && isHistoryGroup(group)) {
+            const groupDate = String(group.tanggal || '').slice(0, 10);
+            if (!groupDate) {
                 return false;
             }
 
-            if (bookingListScope === 'history' && !isHistoryGroup(group)) {
-                return false;
-            }
+            const dateFrom = bookingListDateFrom || today;
+            const dateTo = bookingListDateTo || dateFrom;
+            const startDate = dateFrom <= dateTo ? dateFrom : dateTo;
+            const endDate = dateFrom <= dateTo ? dateTo : dateFrom;
 
-            if (bookingListDate && group.tanggal !== bookingListDate) {
+            if (groupDate < startDate || groupDate > endDate) {
                 return false;
             }
 
@@ -2507,20 +2472,12 @@
                 return false;
             }
 
-            if (!q) {
-                return true;
-            }
-
-            return bookingGroupSearchText(group).includes(q);
+            return true;
         });
 
         return filtered.sort((a, b) => {
             const ta = parseGroupDateTime(a.tanggal, a.jam)?.getTime() ?? 0;
             const tb = parseGroupDateTime(b.tanggal, b.jam)?.getTime() ?? 0;
-
-            if (bookingListScope === 'history') {
-                return tb - ta;
-            }
 
             return ta - tb;
         });
@@ -2584,10 +2541,9 @@
     });
     const bookingListFilterSignature = $derived(
         [
-            bookingListScope,
-            bookingListSearch.trim(),
             bookingListRoute,
-            bookingListDate,
+            bookingListDateFrom,
+            bookingListDateTo,
             bookingListPayment,
             localBookingGroups.length,
         ].join('|'),
@@ -2616,15 +2572,22 @@
         bookingListDesktopView = viewMode;
         persistUiPreferences({ defaultViewMode: viewMode });
     };
-    const setBookingListDate = (date: string) => {
-        const nextDate = isIsoDateKey(date) ? date : today;
+    const setBookingListDateRange = (from: string, to: string) => {
+        const safeFrom = isIsoDateKey(from) ? from : today;
+        const safeTo = isIsoDateKey(to) ? to : safeFrom;
+        const startDate = safeFrom <= safeTo ? safeFrom : safeTo;
+        const endDate = safeFrom <= safeTo ? safeTo : safeFrom;
 
-        if (bookingListDate === nextDate) {
+        if (
+            bookingListDateFrom === startDate &&
+            bookingListDateTo === endDate
+        ) {
             return;
         }
 
-        bookingListDate = nextDate;
-        persistUiPreferences({ defaultDateRange: nextDate });
+        bookingListDateFrom = startDate;
+        bookingListDateTo = endDate;
+        persistUiPreferences({ defaultDateRange: startDate });
     };
     const reloadBookingListData = () => {
         if (bookingListReloadTimer) {
@@ -2659,10 +2622,9 @@
         }, 180);
     };
     const resetBookingListFilters = () => {
-        bookingListScope = 'active';
-        bookingListSearch = '';
         bookingListRoute = 'all';
-        bookingListDate = today;
+        bookingListDateFrom = today;
+        bookingListDateTo = today;
         bookingListPayment = 'all';
         bookingListDatePicker?.setDate(today, false, 'Y-m-d');
         persistUiPreferences({ defaultDateRange: today });
@@ -2741,7 +2703,7 @@
             return;
         }
 
-        emptyDepartureDate = bookingListDate || today;
+        emptyDepartureDate = bookingListDateFrom || today;
         emptyDepartureRoute =
             bookingListRoute !== 'all' ? bookingListRoute : '';
         emptyDepartureJam = '';
@@ -5366,11 +5328,23 @@
 
             if (bookingListDateInput && !bookingListDatePicker) {
                 bookingListDatePicker = flatpickr(bookingListDateInput, {
+                    mode: 'range',
                     dateFormat: 'Y-m-d',
-                    defaultDate: bookingListDate || undefined,
+                    defaultDate: [bookingListDateFrom, bookingListDateTo],
                     disableMobile: true,
-                    onChange: (_selectedDates, dateStr) => {
-                        setBookingListDate(dateStr || today);
+                    onChange: (selectedDates, dateStr) => {
+                        if (selectedDates.length === 0) {
+                            setBookingListDateRange(today, today);
+                            return;
+                        }
+
+                        const start = dateStr.split(' to ')[0] || today;
+                        const end =
+                            selectedDates.length > 1
+                                ? dateStr.split(' to ')[1] || start
+                                : start;
+
+                        setBookingListDateRange(start, end);
                     },
                 });
             }
@@ -7465,22 +7439,11 @@
                         >
                             Bagasi {groupMappedRiturs.length}
                         </button>
-                        <button
-                            type="button"
-                            class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'history' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                            onclick={() => {
-                                groupPassengerTab = 'history';
-                            }}
-                        >
-                            History {openGroupDetail.canceled}
-                        </button>
                     </div>
                     <p class="text-xs text-muted-foreground">
                         {groupPassengerTab === 'active'
                             ? 'Daftar penumpang aktif pada keberangkatan ini.'
-                            : groupPassengerTab === 'history'
-                              ? 'Daftar penumpang yang sudah dicancel.'
-                              : `Bagasi dengan status ${luggageReceivedStatus} dan rute yang sama muncul otomatis agar lebih cepat dimapping.`}
+                            : `Bagasi dengan status ${luggageReceivedStatus} dan rute yang sama muncul otomatis agar lebih cepat dimapping.`}
                     </p>
                 </div>
 
@@ -7875,9 +7838,7 @@
                             <div
                                 class="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground"
                             >
-                                {groupPassengerTab === 'history'
-                                    ? 'Belum ada penumpang cancel pada keberangkatan ini.'
-                                    : 'Belum ada penumpang aktif pada keberangkatan ini.'}
+                                Belum ada penumpang aktif pada keberangkatan ini.
                             </div>
                         {/if}
                         {#each visibleGroupBookings() as row (row.id)}
@@ -7953,26 +7914,24 @@
                                                 >
                                                     Copy Data
                                                 </DropdownMenuItem>
-                                                {#if groupPassengerTab !== 'history' && !isReadonlyHistoryGroup(openGroupDetail)}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void openGroupRowEdit(
-                                                                openGroupDetail!,
-                                                                row,
-                                                            )}
-                                                    >
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void openGroupRowReschedule(
-                                                                openGroupDetail!,
-                                                                row,
-                                                            )}
-                                                    >
-                                                        Reschedule
-                                                    </DropdownMenuItem>
-                                                {/if}
+                                                <DropdownMenuItem
+                                                    onclick={() =>
+                                                        void openGroupRowEdit(
+                                                            openGroupDetail!,
+                                                            row,
+                                                        )}
+                                                >
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onclick={() =>
+                                                        void openGroupRowReschedule(
+                                                            openGroupDetail!,
+                                                            row,
+                                                        )}
+                                                >
+                                                    Reschedule
+                                                </DropdownMenuItem>
                                                 {#if !isSettledPayment(row.pembayaran)}
                                                     <DropdownMenuItem
                                                         onclick={() =>
@@ -8003,18 +7962,16 @@
                                                 >
                                                     Print Tiket
                                                 </DropdownMenuItem>
-                                                {#if groupPassengerTab !== 'history' && !isReadonlyHistoryGroup(openGroupDetail)}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void cancelBookingRow(
-                                                                row.id,
-                                                                row.seat,
-                                                                row.status,
-                                                            )}
-                                                    >
-                                                        Cancel
-                                                    </DropdownMenuItem>
-                                                {/if}
+                                                <DropdownMenuItem
+                                                    onclick={() =>
+                                                        void cancelBookingRow(
+                                                            row.id,
+                                                            row.seat,
+                                                            row.status,
+                                                        )}
+                                                >
+                                                    Cancel
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
@@ -8129,9 +8086,7 @@
                                             colspan="6"
                                             class="px-3 py-6 text-center text-sm text-muted-foreground"
                                         >
-                                            {groupPassengerTab === 'history'
-                                                ? 'Belum ada penumpang cancel pada keberangkatan ini.'
-                                                : 'Belum ada penumpang aktif pada keberangkatan ini.'}
+                                            Belum ada penumpang aktif pada keberangkatan ini.
                                         </td>
                                     </tr>
                                 {/if}
@@ -8184,26 +8139,24 @@
                                                         >
                                                             Copy Data
                                                         </DropdownMenuItem>
-                                                        {#if groupPassengerTab !== 'history' && !isReadonlyHistoryGroup(openGroupDetail)}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void openGroupRowEdit(
-                                                                        openGroupDetail!,
-                                                                        row,
-                                                                    )}
-                                                            >
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void openGroupRowReschedule(
-                                                                        openGroupDetail!,
-                                                                        row,
-                                                                    )}
-                                                            >
-                                                                Reschedule
-                                                            </DropdownMenuItem>
-                                                        {/if}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void openGroupRowEdit(
+                                                                    openGroupDetail!,
+                                                                    row,
+                                                                )}
+                                                        >
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void openGroupRowReschedule(
+                                                                    openGroupDetail!,
+                                                                    row,
+                                                                )}
+                                                        >
+                                                            Reschedule
+                                                        </DropdownMenuItem>
                                                         {#if !isSettledPayment(row.pembayaran)}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
@@ -8236,18 +8189,16 @@
                                                         >
                                                             Print Tiket
                                                         </DropdownMenuItem>
-                                                        {#if groupPassengerTab !== 'history' && !isReadonlyHistoryGroup(openGroupDetail)}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void cancelBookingRow(
-                                                                        row.id,
-                                                                        row.seat,
-                                                                        row.status,
-                                                                    )}
-                                                            >
-                                                                Cancel
-                                                            </DropdownMenuItem>
-                                                        {/if}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void cancelBookingRow(
+                                                                    row.id,
+                                                                    row.seat,
+                                                                    row.status,
+                                                                )}
+                                                        >
+                                                            Cancel
+                                                        </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </div>
@@ -8583,41 +8534,13 @@
                                     Tambah Jadwal
                                 {/if}
                             </Button>
-                            <div
-                                class="inline-flex items-center rounded-xl border border-border/70 bg-background/80 p-1"
-                            >
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={bookingListScope === 'active'
-                                        ? 'default'
-                                        : 'ghost'}
-                                    class="h-7 rounded-lg px-2.5 text-[11px]"
-                                    onclick={() =>
-                                        (bookingListScope = 'active')}
-                                >
-                                    Aktif
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={bookingListScope === 'history'
-                                        ? 'default'
-                                        : 'ghost'}
-                                    class="h-7 rounded-lg px-2.5 text-[11px]"
-                                    onclick={() =>
-                                        (bookingListScope = 'history')}
-                                >
-                                    History
-                                </Button>
-                            </div>
                         </div>
                         <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm">
                             <div class="space-y-1">
                                 <p class="text-xs font-medium text-muted-foreground">
-                                    {bookingListScope === 'history'
-                                        ? 'Mode history: data keberangkatan selesai dan dibatalkan'
-                                        : 'Mode aktif: jadwal keberangkatan berjalan'}
+                                    Rentang aktif {bookingListDateFrom === bookingListDateTo
+                                        ? bookingListDateFrom
+                                        : `${bookingListDateFrom} s/d ${bookingListDateTo}`}
                                 </p>
                                 <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
                                     <span class="rounded-full border border-border/70 bg-background px-2 py-0.5 font-medium text-muted-foreground">
@@ -8680,18 +8603,7 @@
                             </div>
                         </div>
                         <div class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-2xl border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}>
-                            <div class="grid gap-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-                                <div class="relative">
-                                    <Search
-                                        class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                    />
-                                    <Input
-                                        type="text"
-                                        placeholder="Cari keberangkatan..."
-                                        bind:value={bookingListSearch}
-                                        class="h-10 rounded-xl !pl-9 text-sm md:h-9 md:!pl-9"
-                                    />
-                                </div>
+                            <div class="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
                                 <select
                                     class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
                                     bind:value={bookingListRoute}
@@ -8704,10 +8616,12 @@
                                 <input
                                     bind:this={bookingListDateInput}
                                     type="text"
-                                    value={bookingListDate}
+                                    value={bookingListDateFrom === bookingListDateTo
+                                        ? bookingListDateFrom
+                                        : `${bookingListDateFrom} to ${bookingListDateTo}`}
                                     readonly
                                     autocomplete="off"
-                                    placeholder="Pilih tanggal"
+                                    placeholder="Pilih rentang tanggal"
                                     class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
                                 />
                                 <select
@@ -9292,7 +9206,7 @@
                                                                                             : 'Batalkan Jadwal'}
                                                                                     </DropdownMenuItem>
                                                                                 {/if}
-                                                                                {#if bookingListScope !== 'history' && !isCanceledDeparture(group) && !isArrivedDeparture(group) && group.belum_lunas > 0}
+                                                                                {#if !isCanceledDeparture(group) && !isArrivedDeparture(group) && group.belum_lunas > 0}
                                                                                     <DropdownMenuItem
                                                                                         onclick={() =>
                                                                                             void markBookingGroupAsPaid(
@@ -9450,7 +9364,7 @@
                                                                         : 'Batalkan Jadwal'}
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if bookingListScope !== 'history' && !isCanceledDeparture(group) && !isArrivedDeparture(group) && group.belum_lunas > 0}
+                                                            {#if !isCanceledDeparture(group) && !isArrivedDeparture(group) && group.belum_lunas > 0}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
                                                                         void markBookingGroupAsPaid(

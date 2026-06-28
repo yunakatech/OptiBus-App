@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { X } from 'lucide-svelte';
     import { onDestroy } from 'svelte';
     import { Chart, type ChartConfiguration } from 'chart.js/auto';
 
@@ -39,6 +40,7 @@
         x: number;
         y: number;
         title: string;
+        key: string;
         revenue: number;
         booking_revenue: number;
         charter_revenue: number;
@@ -49,12 +51,14 @@
         x: 0,
         y: 0,
         title: '',
+        key: '',
         revenue: 0,
         booking_revenue: 0,
         charter_revenue: 0,
         luggage_revenue: 0,
         align: 'center',
     });
+    let dismissedTooltipKey = $state('');
 
     const trendRevenueTotal = $derived(
         monthlyTrend.reduce(
@@ -169,12 +173,19 @@
                                 const { chart, tooltip } = context;
                                 if (tooltip.opacity === 0) {
                                     tooltipData.visible = false;
+                                    dismissedTooltipKey = '';
                                     return;
                                 }
 
                                 if (tooltip.body) {
                                     const dataIndex = tooltip.dataPoints[0].dataIndex;
                                     const item = monthlyTrend[dataIndex];
+                                    const key = `${item.month_key ?? item.date ?? item.label ?? dataIndex}`;
+
+                                    if (dismissedTooltipKey === key) {
+                                        tooltipData.visible = false;
+                                        return;
+                                    }
 
                                     const left = tooltip.caretX;
                                     const width = chart.width;
@@ -188,6 +199,7 @@
                                         x: tooltip.caretX,
                                         y: tooltip.caretY,
                                         title: item.name || item.date || item.label || '',
+                                        key,
                                         revenue: Number(item.revenue || 0),
                                         booking_revenue: Number(item.booking_revenue || 0),
                                         charter_revenue: Number(item.charter_revenue || 0),
@@ -225,8 +237,17 @@
             ? 'left-5'
             : tooltipData.align === 'right'
               ? 'right-5'
-              : 'left-1/2 -px-1 -translate-x-1/2'
+              : 'left-1/2 -translate-x-1/2'
     );
+
+    const closeTooltip = () => {
+        if (!tooltipData.visible) {
+            return;
+        }
+
+        dismissedTooltipKey = tooltipData.key;
+        tooltipData.visible = false;
+    };
 </script>
 
 <div
@@ -248,12 +269,22 @@
 
         {#if tooltipData.visible}
             <div
-                class={`pointer-events-none absolute z-10 w-[min(92vw,240px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass}`}
+                class={`pointer-events-auto absolute z-20 w-[min(92vw,240px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass}`}
                 style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
             >
-                <p class="text-sm font-semibold text-cyan-400">
-                    {tooltipData.title}
-                </p>
+                <div class="flex items-start justify-between gap-2">
+                    <p class="text-sm font-semibold text-cyan-400">
+                        {tooltipData.title}
+                    </p>
+                    <button
+                        type="button"
+                        class="rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
+                        aria-label="Tutup tooltip"
+                        onclick={closeTooltip}
+                    >
+                        <X class="h-3.5 w-3.5" />
+                    </button>
+                </div>
                 <div class="mt-2 space-y-1 text-[12px]">
                     <div class="flex items-center justify-between gap-3">
                         <span class="text-white/68">Booking</span>
@@ -289,7 +320,7 @@
         <div
             class="h-[180px] overflow-visible rounded-[22px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-2 shadow-inner sm:h-[220px] sm:p-3 md:h-[260px]"
         >
-            <canvas bind:this={chartCanvas}></canvas>
+            <canvas bind:this={chartCanvas} class="relative z-10"></canvas>
         </div>
     </div>
 </div>

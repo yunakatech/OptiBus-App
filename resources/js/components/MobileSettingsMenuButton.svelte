@@ -1,8 +1,6 @@
 <script lang="ts">
-    import { Link } from '@inertiajs/svelte';
+    import { Button } from '@/components/ui/button';
     import Settings2 from 'lucide-svelte/icons/settings-2';
-    import { currentUrlState } from '@/lib/currentUrl.svelte';
-    import { toUrl } from '@/lib/utils';
 
     let {
         class: className = '',
@@ -10,18 +8,22 @@
         class?: string;
     } = $props();
 
-    const url = currentUrlState();
-    const isActive = $derived(url.isCurrentUrl('/menu', url.currentUrl));
+    const openMobileMenu = () => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.dispatchEvent(new CustomEvent('open-mobile-menu'));
+    };
 </script>
 
-<Link
-    href={toUrl('/menu')}
-    prefetch
-    cacheFor={30000}
-    aria-label="Buka menu pengaturan"
-    class={`inline-flex size-9 items-center justify-center rounded-md border border-input bg-background transition-colors hover:bg-accent hover:text-accent-foreground md:hidden ${
-        isActive ? 'border-primary/40 bg-primary/10 text-primary' : 'text-foreground'
-    } ${className}`}
+<Button
+    type="button"
+    variant="ghost"
+    size="icon"
+    aria-label="Buka menu navigasi"
+    class={`inline-flex size-9 items-center justify-center rounded-md border border-input bg-background text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:hidden ${className}`}
+    onclick={openMobileMenu}
 >
     <Settings2 class="size-4" />
-</Link>
+</Button>

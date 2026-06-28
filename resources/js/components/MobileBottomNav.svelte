@@ -4,7 +4,6 @@
     import BusFront from 'lucide-svelte/icons/bus-front';
     import CreditCard from 'lucide-svelte/icons/credit-card';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
-    import Plus from 'lucide-svelte/icons/plus';
     import Tickets from 'lucide-svelte/icons/tickets';
     import { onMount } from 'svelte';
     import MobileMenuSheet from '@/components/MobileMenuSheet.svelte';
@@ -32,21 +31,16 @@
             permission: 'booking.view',
         },
         {
-            title: 'Console',
-            href: '/booking-console',
-            icon: Plus,
-            permission: 'booking.view',
+            title: 'Bagasi',
+            href: '/luggages',
+            icon: Briefcase,
+            permission: 'luggage.view',
         },
         {
             title: 'Carter',
             href: '/charters',
             icon: BusFront,
             permission: 'charter.view',
-        },
-        {
-            title: 'Menu',
-            href: '#menu',
-            icon: LayoutGrid,
         },
     ];
     const billingItems: NavItem[] = [
@@ -127,11 +121,6 @@
 
     function visitNavItem(event: MouseEvent, href: string): void {
         event.preventDefault();
-        
-        if (href === '#menu') {
-            menuSheetOpen = true;
-            return;
-        }
 
         prepareNavPress(href);
 
@@ -213,6 +202,12 @@
             rememberedActiveHref = stored;
         }
 
+        const handleOpenMobileMenu = () => {
+            menuSheetOpen = true;
+        };
+
+        window.addEventListener('open-mobile-menu', handleOpenMobileMenu);
+
         lastScrollY = Math.max(window.scrollY || document.documentElement.scrollTop || 0, 0);
         updateCompactState();
 
@@ -220,6 +215,7 @@
         window.addEventListener('resize', requestCompactUpdate);
 
         return () => {
+            window.removeEventListener('open-mobile-menu', handleOpenMobileMenu);
             window.removeEventListener('scroll', requestCompactUpdate);
             window.removeEventListener('resize', requestCompactUpdate);
         };
@@ -227,16 +223,16 @@
 
     $effect(() => {
         if (isMenuPage) {
-return;
-}
+            return;
+        }
 
         const matched = visibleMainItems.find((item) =>
             url.isCurrentOrParentUrl(item.href, url.currentUrl),
         );
 
         if (!matched) {
-return;
-}
+            return;
+        }
 
         markActive(toUrl(matched.href));
         isCompact = false;
