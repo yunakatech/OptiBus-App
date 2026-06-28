@@ -12,12 +12,9 @@
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
     import {
-        Building2,
         Armchair,
         ArrowUpRight,
-        CalendarDays,
         CheckCircle2,
-        Check,
         Clock3,
         ChevronDown,
         ChevronUp,
@@ -25,15 +22,9 @@
         MoreHorizontal,
         Pencil,
         Plus,
-        Download,
-        MapPin,
         Route,
-        Search,
-        SlidersHorizontal,
         Send,
         Trash2,
-        Users,
-        Wallet,
     } from 'lucide-svelte';
     import { onDestroy, onMount, tick, untrack } from 'svelte';
     import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
@@ -50,14 +41,11 @@
         DropdownMenu,
         DropdownMenuContent,
         DropdownMenuItem,
-        DropdownMenuLabel,
-        DropdownMenuSeparator,
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import DataTable from '@/components/terminal/DataTable.svelte';
-    import EntityBadge from '@/components/terminal/EntityBadge.svelte';
     import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
     import AdminOpsPoolsPanel from '@/components/admin-ops/AdminOpsPoolsPanel.svelte';
     import { hasPermission } from '@/lib/access';

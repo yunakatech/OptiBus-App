@@ -709,7 +709,6 @@
                 <DataTable columns={poolsColumns} rows={pools} density="compact">
                     {#snippet row({ row })}
                         {@const gross = poolGrossMargin(row)}
-                        {@const net = poolNetMargin(row)}
                         {@const achievement = poolAchievement(row)}
                         {@const gap = poolGap(row)}
                         {@const routes = formatPoolRoutes(row)}

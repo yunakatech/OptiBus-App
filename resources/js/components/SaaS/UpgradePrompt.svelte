@@ -1,7 +1,6 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
     import { ArrowUpCircle, X } from 'lucide-svelte';
-    import { Button } from '@/components/ui/button';
     import { Card, CardContent } from '@/components/ui/card';
 
     type PlanInfo = {

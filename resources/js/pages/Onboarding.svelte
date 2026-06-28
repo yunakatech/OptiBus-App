@@ -8,7 +8,7 @@
 </script>
 
 <script lang="ts">
-    import { Form, page } from '@inertiajs/svelte';
+    import { Form } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import InputError from '@/components/InputError.svelte';
     import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@
     import { Label } from '@/components/ui/label';
     import { Spinner } from '@/components/ui/spinner';
 
-    let { user_name = '', user_email = '' }: { user_name?: string; user_email?: string } = $props();
+    let { user_email = '' }: { user_email?: string } = $props();
 
     const formAction = '/onboarding';
 </script>

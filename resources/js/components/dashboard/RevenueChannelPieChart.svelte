@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { X } from 'lucide-svelte';
     import { onDestroy } from 'svelte';
     import { Chart, PieController, ArcElement, Tooltip, Legend } from 'chart.js';
 
@@ -25,6 +26,24 @@
 
     let chartCanvas: HTMLCanvasElement;
     let chartInstance: Chart | null = null;
+    let tooltipData = $state<{
+        visible: boolean;
+        x: number;
+        y: number;
+        key: string;
+        label: string;
+        value: number;
+        align: 'left' | 'right' | 'center';
+    }>({
+        visible: false,
+        x: 0,
+        y: 0,
+        key: '',
+        label: '',
+        value: 0,
+        align: 'center',
+    });
+    let dismissedTooltipKey = $state('');
 
     $effect(() => {
         if (!chartCanvas) return;
@@ -76,23 +95,46 @@
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: '#0f172a', // non-transparent
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: 'rgba(51, 65, 85, 1)', // border-slate-700
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    if (!hasData) return ' Rp 0';
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.raw !== null) {
-                                        label += toCurrency(context.raw as number);
-                                    }
-                                    return label;
+                            enabled: false,
+                            external: (context) => {
+                                const { chart, tooltip } = context;
+
+                                if (tooltip.opacity === 0) {
+                                    tooltipData.visible = false;
+                                    dismissedTooltipKey = '';
+                                    return;
                                 }
+
+                                if (!tooltip.dataPoints?.length) {
+                                    tooltipData.visible = false;
+                                    return;
+                                }
+
+                                const point = tooltip.dataPoints[0];
+                                const label = String(point.label || '');
+                                const key = label || String(point.dataIndex);
+
+                                if (dismissedTooltipKey === key) {
+                                    tooltipData.visible = false;
+                                    return;
+                                }
+
+                                const left = tooltip.caretX;
+                                const width = chart.width;
+                                let align: 'left' | 'right' | 'center' = 'center';
+
+                                if (left < width * 0.2) align = 'left';
+                                else if (left > width * 0.8) align = 'right';
+
+                                tooltipData = {
+                                    visible: true,
+                                    x: tooltip.caretX,
+                                    y: tooltip.caretY,
+                                    key,
+                                    label,
+                                    value: hasData ? Number(point.raw ?? 0) : 0,
+                                    align,
+                                };
                             }
                         }
                     }
@@ -112,6 +154,29 @@
         Number(summaryStats.revenue_charter || 0) +
         Number(summaryStats.revenue_luggage || 0)
     );
+
+    const tooltipTranslateClass = $derived(
+        tooltipData.align === 'left'
+            ? 'translate-x-0'
+            : tooltipData.align === 'right'
+              ? '-translate-x-full'
+              : '-translate-x-1/2'
+    );
+    const tooltipArrowClass = $derived(
+        tooltipData.align === 'left'
+            ? 'left-5'
+            : tooltipData.align === 'right'
+              ? 'right-5'
+              : 'left-1/2 -translate-x-1/2'
+    );
+    const closeTooltip = () => {
+        if (!tooltipData.visible) {
+            return;
+        }
+
+        dismissedTooltipKey = tooltipData.key;
+        tooltipData.visible = false;
+    };
 </script>
 
 <div class="flex flex-col rounded-3xl border border-gray-200 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] md:p-5">
@@ -131,8 +196,39 @@
     </div>
 
     <div class="relative mt-5 h-[160px] w-full">
-        <canvas bind:this={chartCanvas}></canvas>
-        <div class="absolute inset-0 flex pointer-events-none flex-col items-center justify-center pt-2">
+        {#if tooltipData.visible}
+            <div
+                class={`pointer-events-auto absolute z-20 w-[min(92vw,220px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition ${tooltipTranslateClass}`}
+                style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
+            >
+                <div class="flex items-start justify-between gap-2">
+                    <p class="text-sm font-semibold text-cyan-400">
+                        {tooltipData.label}
+                    </p>
+                    <button
+                        type="button"
+                        class="rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
+                        aria-label="Tutup tooltip"
+                        onclick={closeTooltip}
+                    >
+                        <X class="h-3.5 w-3.5" />
+                    </button>
+                </div>
+                <div class="mt-2 text-[12px]">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-white/68">Total Revenue</span>
+                        <span class="font-semibold tabular-nums">
+                            {toCurrency(tooltipData.value)}
+                        </span>
+                    </div>
+                </div>
+                <span
+                    class={`absolute top-full h-3.5 w-3.5 -translate-y-1/2 rotate-45 bg-slate-900/96 ${tooltipArrowClass}`}
+                ></span>
+            </div>
+        {/if}
+        <canvas bind:this={chartCanvas} class="relative z-10"></canvas>
+        <div class="absolute inset-0 z-0 flex pointer-events-none flex-col items-center justify-center pt-2">
             <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400">Total</span>
             <span class="mt-0.5 text-[15px] font-extrabold tracking-tight text-slate-800">{toCurrency(activeTotalRevenue)}</span>
         </div>

@@ -2,6 +2,7 @@
     import { Link, page } from '@inertiajs/svelte';
     import Monitor from 'lucide-svelte/icons/monitor';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
+    import ActiveContextInfo from '@/components/ActiveContextInfo.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
     import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
@@ -21,6 +22,9 @@
     const url = currentUrlState();
     const isDashboardPage = $derived(
         url.isCurrentUrl('/dashboard', url.currentUrl),
+    );
+    const isBookingConsolePage = $derived(
+        url.isCurrentUrl('/booking-console', url.currentUrl),
     );
     const dashboardDateLabel = $derived.by(() => {
         const props = page.props as Record<string, unknown>;
@@ -68,7 +72,11 @@
     </div>
 
     <div class="hidden min-w-0 items-center justify-center lg:flex">
-        <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
+        {#if isBookingConsolePage}
+            <ActiveContextInfo class="hidden min-w-0 w-full max-w-[20rem] lg:block" />
+        {:else}
+            <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
+        {/if}
     </div>
 
     <div class="flex min-w-0 items-center justify-end gap-2 md:col-start-3">
