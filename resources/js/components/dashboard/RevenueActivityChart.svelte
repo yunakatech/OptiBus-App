@@ -94,7 +94,8 @@
         } else {
             // Create Gradient
             const ctx = chartCanvas.getContext('2d');
-            let gradientFill: CanvasGradient | string = 'rgba(14, 165, 233, 0.2)';
+            let gradientFill: CanvasGradient | string =
+                'rgba(14, 165, 233, 0.2)';
             if (ctx) {
                 gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
                 gradientFill.addColorStop(0, 'rgba(14, 165, 233, 0.32)');
@@ -115,8 +116,9 @@
                             pointBackgroundColor: '#2563eb',
                             pointBorderColor: '#ffffff',
                             pointBorderWidth: 2,
-                            pointRadius: 0,
+                            pointRadius: 3,
                             pointHoverRadius: 6,
+                            pointHitRadius: 14,
                             fill: true,
                             tension: 0.4, // Smooth spline curves
                         },
@@ -178,7 +180,8 @@
                                 }
 
                                 if (tooltip.body) {
-                                    const dataIndex = tooltip.dataPoints[0].dataIndex;
+                                    const dataIndex =
+                                        tooltip.dataPoints[0].dataIndex;
                                     const item = monthlyTrend[dataIndex];
                                     const key = `${item.month_key ?? item.date ?? item.label ?? dataIndex}`;
 
@@ -189,21 +192,33 @@
 
                                     const left = tooltip.caretX;
                                     const width = chart.width;
-                                    let align: 'left' | 'right' | 'center' = 'center';
+                                    let align: 'left' | 'right' | 'center' =
+                                        'center';
 
                                     if (left < width * 0.2) align = 'left';
-                                    else if (left > width * 0.8) align = 'right';
+                                    else if (left > width * 0.8)
+                                        align = 'right';
 
                                     tooltipData = {
                                         visible: true,
                                         x: tooltip.caretX,
                                         y: tooltip.caretY,
-                                        title: item.name || item.date || item.label || '',
+                                        title:
+                                            item.name ||
+                                            item.date ||
+                                            item.label ||
+                                            '',
                                         key,
                                         revenue: Number(item.revenue || 0),
-                                        booking_revenue: Number(item.booking_revenue || 0),
-                                        charter_revenue: Number(item.charter_revenue || 0),
-                                        luggage_revenue: Number(item.luggage_revenue || 0),
+                                        booking_revenue: Number(
+                                            item.booking_revenue || 0,
+                                        ),
+                                        charter_revenue: Number(
+                                            item.charter_revenue || 0,
+                                        ),
+                                        luggage_revenue: Number(
+                                            item.luggage_revenue || 0,
+                                        ),
                                         align,
                                     };
                                 }
@@ -229,7 +244,7 @@
             ? 'translate-x-0'
             : tooltipData.align === 'right'
               ? '-translate-x-full'
-              : '-translate-x-1/2'
+              : '-translate-x-1/2',
     );
 
     const tooltipArrowClass = $derived(
@@ -237,7 +252,7 @@
             ? 'left-5'
             : tooltipData.align === 'right'
               ? 'right-5'
-              : 'left-1/2 -translate-x-1/2'
+              : 'left-1/2 -translate-x-1/2',
     );
 
     const closeTooltip = () => {
@@ -253,15 +268,20 @@
 <div
     class="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
 >
-
-
-    <div class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4">
+    <div
+        class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4"
+    >
         <div class="mb-5 px-1 sm:px-2">
             <h3 class="text-sm font-bold text-slate-800">Revenue Harian</h3>
-            <p class="mt-0.5 text-[11px] leading-relaxed text-slate-500">Melihat pergerakan revenue operasional sistem Anda dalam 30 hari terakhir. Tooltip dapat di-hover untuk melihat rincian.</p>
+            <p class="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                Melihat pergerakan revenue operasional sistem Anda dalam 30 hari
+                terakhir. Tooltip dapat di-hover untuk melihat rincian.
+            </p>
         </div>
 
-        <div class="mb-2 flex items-center justify-end text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        <div
+            class="mb-2 flex items-center justify-end text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
+        >
             <span class="normal-case tracking-normal">
                 {monthlyTrend.length} titik
             </span>
@@ -304,7 +324,9 @@
                             {toCurrency(tooltipData.charter_revenue)}
                         </span>
                     </div>
-                    <div class="mt-1 flex items-center justify-between gap-3 border-t border-white/12 pt-2">
+                    <div
+                        class="mt-1 flex items-center justify-between gap-3 border-t border-white/12 pt-2"
+                    >
                         <span class="font-medium text-white/68">Total</span>
                         <span class="font-bold text-emerald-400 tabular-nums">
                             {toCurrency(tooltipData.revenue)}

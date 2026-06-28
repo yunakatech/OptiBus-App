@@ -74,8 +74,12 @@
                             borderColor: '#cbd5e1', // slate-300
                             backgroundColor: gradientTarget,
                             borderWidth: 2,
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#cbd5e1',
+                            pointBorderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 14,
                             fill: true,
                             tension: 0.4,
                             borderDash: [5, 5],
@@ -88,8 +92,9 @@
                             borderWidth: 2.5,
                             pointBackgroundColor: '#0ea5e9',
                             pointBorderColor: '#ffffff',
-                            pointRadius: 0,
+                            pointRadius: 3,
                             pointHoverRadius: 6,
+                            pointHitRadius: 14,
                             fill: true,
                             tension: 0.4,
                         },
@@ -145,7 +150,8 @@
                                     return;
                                 }
 
-                                const dataIndex = tooltip.dataPoints[0].dataIndex;
+                                const dataIndex =
+                                    tooltip.dataPoints[0].dataIndex;
                                 const label = String(labels[dataIndex] ?? '');
                                 const key = label || String(dataIndex);
 
@@ -156,7 +162,8 @@
 
                                 const left = tooltip.caretX;
                                 const width = chart.width;
-                                let align: 'left' | 'right' | 'center' = 'center';
+                                let align: 'left' | 'right' | 'center' =
+                                    'center';
 
                                 if (left < width * 0.2) align = 'left';
                                 else if (left > width * 0.8) align = 'right';
@@ -169,10 +176,13 @@
                                     key,
                                     align,
                                     items: tooltip.dataPoints.map((point) => ({
-                                        label: String(point.dataset.label ?? ''),
+                                        label: String(
+                                            point.dataset.label ?? '',
+                                        ),
                                         value: Number(point.raw ?? 0),
                                         color: String(
-                                            point.dataset.borderColor ?? '#0ea5e9',
+                                            point.dataset.borderColor ??
+                                                '#0ea5e9',
                                         ),
                                     })),
                                 };
@@ -229,7 +239,7 @@
                 Pemantauan target omset bulanan terhadap pencapaian aktual
             </p>
         </div>
-        
+
         <!-- Legend -->
         <div class="flex shrink-0 items-center gap-3 pt-0.5">
             <div class="flex items-center gap-1.5">
@@ -257,7 +267,8 @@
             {#if tooltipData.visible}
                 <div
                     class={`pointer-events-auto absolute z-20 w-[min(92vw,260px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition ${tooltipTranslateClass}`}
-                    style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
+                    style="left: {tooltipData.x}px; top: {tooltipData.y -
+                        10}px;"
                 >
                     <div class="flex items-start justify-between gap-2">
                         <p class="text-sm font-semibold text-cyan-400">
@@ -274,8 +285,12 @@
                     </div>
                     <div class="mt-2 space-y-1 text-[12px]">
                         {#each tooltipData.items as item (item.label)}
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="flex items-center gap-1.5 text-white/68">
+                            <div
+                                class="flex items-center justify-between gap-3"
+                            >
+                                <span
+                                    class="flex items-center gap-1.5 text-white/68"
+                                >
                                     <span
                                         class="h-1.5 w-1.5 rounded-full"
                                         style={`background-color:${item.color}`}
