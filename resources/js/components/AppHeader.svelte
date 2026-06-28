@@ -44,7 +44,9 @@
 </script>
 
 <div>
-    <div class="mobile-safe-header-shell border-b border-sidebar-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+    <div
+        class="mobile-safe-header-shell border-b border-sidebar-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85"
+    >
         <div class="mx-auto flex h-14 max-w-6xl items-center px-4 md:px-6">
             <MobileSettingsMenuButton class="mr-2" />
 
@@ -71,7 +73,9 @@
             <!-- Desktop Menu -->
             <div class="hidden h-full lg:flex lg:flex-1">
                 <NavigationMenu class="ml-8 flex h-full items-stretch">
-                    <NavigationMenuList class="flex h-full items-stretch gap-1.5">
+                    <NavigationMenuList
+                        class="flex h-full items-stretch gap-1.5"
+                    >
                         {#each mainNavItems as item (toUrl(item.href))}
                             <NavigationMenuItem
                                 class="relative flex h-full items-center"
@@ -82,7 +86,8 @@
                                         url.currentUrl,
                                         activeItemStyles,
                                         '',
-                                    ) ?? ''} h-8 cursor-pointer rounded-md px-3.5 text-sm"
+                                    ) ??
+                                        ''} h-8 cursor-pointer rounded-md px-3.5 text-sm"
                                     href={toUrl(item.href)}
                                     prefetch={['hover', 'click']}
                                     cacheFor={30000}
@@ -113,26 +118,26 @@
             {/if}
 
             <div class="ml-auto flex min-w-0 items-center gap-2">
-                <Button
-                    asChild
-                    size="sm"
-                    variant={url.isCurrentUrl('/booking-console', url.currentUrl)
-                        ? 'default'
-                        : 'outline'}
-                    class="hidden h-8 shrink-0 gap-2 rounded-md px-3.5 md:inline-flex"
-                >
-                    {#snippet children(props)}
-                        <Link
-                            {...props}
-                            href={toUrl('/booking-console')}
-                            prefetch
-                            cacheFor={30000}
-                        >
-                            <Monitor class="size-4" />
-                            <span>Booking Console</span>
-                        </Link>
-                    {/snippet}
-                </Button>
+                {#if !isBookingConsolePage}
+                    <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        class="hidden h-8 shrink-0 gap-2 rounded-md px-3.5 md:inline-flex"
+                    >
+                        {#snippet children(props)}
+                            <Link
+                                {...props}
+                                href={toUrl('/booking-console')}
+                                prefetch
+                                cacheFor={30000}
+                            >
+                                <Monitor class="size-4" />
+                                <span>Booking Console</span>
+                            </Link>
+                        {/snippet}
+                    </Button>
+                {/if}
                 <ProfileMenu user={auth.user} triggerClass="shrink-0" />
             </div>
         </div>
