@@ -60,6 +60,9 @@
     });
     let dismissedTooltipKey = $state('');
 
+    const trendPointKey = (item: TrendItem, index: number) =>
+        `${item.month_key ?? item.date ?? item.label ?? index}`;
+
     const trendRevenueTotal = $derived(
         monthlyTrend.reduce(
             (total, item) => total + Number(item.revenue || 0),
@@ -127,6 +130,48 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    onClick: (event, elements, chart) => {
+                        const nativeEvent = event.native as
+                            | MouseEvent
+                            | undefined;
+                        const hitElements = nativeEvent
+                            ? chart.getElementsAtEventForMode(
+                                  nativeEvent,
+                                  'nearest',
+                                  { intersect: true },
+                                  true,
+                              )
+                            : elements;
+                        const [firstElement] = hitElements;
+
+                        if (!firstElement) {
+                            return;
+                        }
+
+                        const x =
+                            nativeEvent?.offsetX ?? firstElement.element.x;
+                        const y =
+                            nativeEvent?.offsetY ?? firstElement.element.y;
+
+                        dismissedTooltipKey = '';
+                        tooltipData.visible = false;
+                        chart.tooltip?.setActiveElements(
+                            [
+                                {
+                                    datasetIndex: firstElement.datasetIndex,
+                                    index: firstElement.index,
+                                },
+                            ],
+                            { x, y },
+                        );
+                        chart.setActiveElements([
+                            {
+                                datasetIndex: firstElement.datasetIndex,
+                                index: firstElement.index,
+                            },
+                        ]);
+                        chart.update();
+                    },
                     interaction: {
                         mode: 'index',
                         intersect: false,
@@ -183,7 +228,7 @@
                                     const dataIndex =
                                         tooltip.dataPoints[0].dataIndex;
                                     const item = monthlyTrend[dataIndex];
-                                    const key = `${item.month_key ?? item.date ?? item.label ?? dataIndex}`;
+                                    const key = trendPointKey(item, dataIndex);
 
                                     if (dismissedTooltipKey === key) {
                                         tooltipData.visible = false;
@@ -342,7 +387,8 @@
         <div
             class="h-[180px] overflow-visible rounded-[22px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-2 shadow-inner sm:h-[220px] sm:p-3 md:h-[260px]"
         >
-            <canvas bind:this={chartCanvas} class="relative z-10"></canvas>
+            <canvas bind:this={chartCanvas} class="relative z-10 cursor-pointer"
+            ></canvas>
         </div>
     </div>
 </div>
