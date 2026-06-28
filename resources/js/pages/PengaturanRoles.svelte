@@ -36,6 +36,7 @@
     import { LoadingButton } from '@/components/ui/loading-button';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import { cn } from '@/lib/utils';
+    import { dashboard } from '@/routes';
 
     type Permission = {
         id: number;
@@ -617,7 +618,7 @@
                     </div>
                     <Button asChild variant="outline">
                         {#snippet children(props)}
-                            <Link {...props} href="/menu">Kembali ke Menu</Link>
+                            <Link {...props} href={dashboard()}>Kembali ke Dashboard</Link>
                         {/snippet}
                     </Button>
                 </CardContent>
