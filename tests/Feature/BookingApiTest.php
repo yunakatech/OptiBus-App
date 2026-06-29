@@ -591,10 +591,29 @@ class BookingApiTest extends TestCase
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 31, 8, 0, 0));
 
+        $tenantId = $this->defaultTenantId();
         try {
             $this->actingAsSuperAdmin();
 
             $tanggal = now()->format('Y-m-d');
+            DB::table('routes')->insert([
+                'tenant_id' => $tenantId,
+                'name' => 'PINRANG - MAKASSAR',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'created_at' => now(),
+            ]);
+
+            DB::table('schedules')->insert([
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'dow' => Carbon::now()->dayOfWeek,
+                'jam' => '23:59:00',
+                'units' => 1,
+                'unit_label' => 'Reguler',
+                'created_at' => now(),
+            ]);
+
             $driverId = DB::table('drivers')->insertGetId([
                 'nama' => 'DRIVER HARI INI',
                 'phone' => '081200000004',
@@ -610,7 +629,20 @@ class BookingApiTest extends TestCase
                 'armada_nopol' => 'DD 5555 TT',
                 'status' => 'active',
                 'created_at' => now(),
+                'updated_at' => now(),
             ]);
+
+            $depart = $this->postJson(route('api.bookings.depart-departure'), [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $tanggal,
+                'jam' => '23:59',
+                'unit' => 1,
+            ]);
+
+            $depart->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('id', $assignmentId)
+                ->assertJsonPath('status', 'departed');
 
             $response = $this->postJson(route('api.bookings.arrive-departure'), [
                 'rute' => 'PINRANG - MAKASSAR',
@@ -658,5 +690,58 @@ class BookingApiTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonPath('success', false)
             ->assertJsonPath('error', 'Armada hanya bisa ditandai tiba jika Driver dan Nopol sudah diisi.');
+    }
+
+    public function test_bulk_payment_update_marks_all_booking_rows_lunas_in_one_request(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $bookingIds = [];
+        foreach (['1', '2'] as $seat) {
+            $bookingIds[] = DB::table('bookings')->insertGetId([
+                'tenant_id' => $tenantId,
+                'route_id' => $routeId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => now()->toDateString(),
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => $seat,
+                'name' => 'PENUMPANG '.$seat,
+                'phone' => '0812000001'.$seat.$seat.$seat,
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Belum Lunas',
+                'status' => 'active',
+                'price' => 150000,
+                'discount' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $response = $this->postJson(route('api.bookings.bulk-payment'), [
+            'booking_ids' => $bookingIds,
+            'pembayaran' => 'Lunas',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('payment_status', 'Lunas')
+            ->assertJsonPath('updated_count', 2);
+
+        foreach ($bookingIds as $bookingId) {
+            $this->assertDatabaseHas('bookings', [
+                'id' => $bookingId,
+                'pembayaran' => 'Lunas',
+            ]);
+        }
     }
 }

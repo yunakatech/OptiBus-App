@@ -802,10 +802,15 @@ class BookingApiController extends Controller
         }
 
         if ($existing) {
-            DB::table('trip_assignments')->where('id', (int) $existing->id)->update($payload);
+            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, [
+                'updated_at' => now(),
+            ]));
             $id = (int) $existing->id;
         } else {
-            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, ['created_at' => now()]));
+            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
         }
 
         ActivityLog::write(
@@ -879,15 +884,20 @@ class BookingApiController extends Controller
 
         $existing = $this->findTripAssignment($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
         $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
-        if ($existingStatus === 'arrived') {
-            return $this->error('Keberangkatan yang sudah tiba tidak bisa dibatalkan.', 409);
+        if (in_array($existingStatus, ['departed', 'arrived'], true)) {
+            return $this->error('Keberangkatan yang sudah berangkat tidak bisa dibatalkan.', 409);
         }
 
         if ($existing) {
-            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, $assignmentMetaReset));
+            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, $assignmentMetaReset, [
+                'updated_at' => now(),
+            ]));
             $id = (int) $existing->id;
         } else {
-            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, $assignmentMetaReset, ['created_at' => now()]));
+            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, $assignmentMetaReset, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
         }
 
         ActivityLog::write(
@@ -911,6 +921,92 @@ class BookingApiController extends Controller
             'bop' => 0,
             'driver_name' => '-',
             'armada_nopol' => '-',
+        ]);
+    }
+
+    public function departDeparture(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'rute' => ['required', 'string', 'max:120'],
+            'tanggal' => ['required', 'date_format:Y-m-d'],
+            'jam' => ['required', 'regex:/^\d{2}:\d{2}$/'],
+            'unit' => ['required', 'integer', 'min:1'],
+        ]);
+
+        if (! Schema::hasTable('trip_assignments')) {
+            return $this->error('Tabel keberangkatan belum tersedia.', 422);
+        }
+
+        $schedule = $this->findScheduleForDeparture((string) $data['rute'], (string) $data['tanggal'], (string) $data['jam']);
+        $routeName = (string) ($schedule->rute ?? $data['rute']);
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+        $unit = (int) $data['unit'];
+
+        $payload = [
+            'rute' => $routeName,
+            'tanggal' => (string) $data['tanggal'],
+            'jam' => $data['jam'].':00',
+            'unit' => $unit,
+        ];
+        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
+
+        if ($this->tripAssignmentsHasStatus()) {
+            $payload['status'] = 'departed';
+        }
+
+        $existing = $this->findTripAssignment($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
+        $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
+
+        if ($existingStatus === 'canceled') {
+            return $this->error('Jadwal yang sudah dibatalkan tidak bisa ditandai berangkat.', 409);
+        }
+
+        if ($existingStatus === 'arrived') {
+            return $this->error('Keberangkatan yang sudah tiba tidak bisa ditandai berangkat.', 409);
+        }
+
+        if (! $this->departureHasRequiredAssignmentMeta($existing)) {
+            return $this->error('Armada hanya bisa ditandai berangkat jika Driver dan Nopol sudah diisi.', 422);
+        }
+
+        if (! $this->departureCanBeMarkedDeparted((string) $data['tanggal'], (string) $data['jam'])) {
+            return $this->error('Armada hanya bisa ditandai berangkat pada hari keberangkatan atau setelahnya.', 422);
+        }
+
+        if ($existing) {
+            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, [
+                'updated_at' => now(),
+            ]));
+            $id = (int) $existing->id;
+        } else {
+            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
+        }
+
+        $actor = (string) ($request->user()?->email ?? $request->user()?->name ?? 'system');
+        ActivityLog::write(
+            'BOOKING',
+            'Armada untuk jadwal '.$this->departureIdentityLabel($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit).' sudah berangkat',
+            'Status keberangkatan: active -> departed',
+            $actor,
+            [
+                'trip_assignment_id' => $id,
+                'rute' => $routeName,
+                'tanggal' => $payload['tanggal'],
+                'jam' => substr((string) $payload['jam'], 0, 5),
+                'unit' => $unit,
+            ],
+        );
+
+        return $this->ok([
+            'message' => 'Armada berhasil ditandai sudah berangkat.',
+            'id' => $id,
+            'status' => 'departed',
+            'bop' => (float) ($schedule->bop ?? 0),
         ]);
     }
 
@@ -957,15 +1053,24 @@ class BookingApiController extends Controller
             return $this->error('Armada hanya bisa ditandai tiba jika Driver dan Nopol sudah diisi.', 422);
         }
 
+        if ($existingStatus !== 'departed') {
+            return $this->error('Armada harus ditandai berangkat terlebih dahulu.', 422);
+        }
+
         if (! $this->departureCanBeMarkedArrived((string) $data['tanggal'], (string) $data['jam'])) {
             return $this->error('Armada hanya bisa ditandai tiba pada hari keberangkatan atau setelahnya.', 422);
         }
 
         if ($existing) {
-            DB::table('trip_assignments')->where('id', (int) $existing->id)->update($payload);
+            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, [
+                'updated_at' => now(),
+            ]));
             $id = (int) $existing->id;
         } else {
-            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, ['created_at' => now()]));
+            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
         }
 
         $actor = (string) ($request->user()?->email ?? $request->user()?->name ?? 'system');
@@ -981,7 +1086,7 @@ class BookingApiController extends Controller
         ActivityLog::write(
             'BOOKING',
             'Armada untuk jadwal '.$this->departureIdentityLabel($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit).' sudah tiba',
-            'Status keberangkatan: active -> arrived'.($arrivedLuggageCount > 0 ? ' | Bagasi ikut tiba: '.$arrivedLuggageCount : ''),
+            'Status keberangkatan: departed -> arrived'.($arrivedLuggageCount > 0 ? ' | Bagasi ikut tiba: '.$arrivedLuggageCount : ''),
             $actor,
             [
                 'trip_assignment_id' => $id,
@@ -1418,6 +1523,7 @@ class BookingApiController extends Controller
                         'created_by_user_id' => $createdByUserId,
                         'created_by_username' => $createdByUsername,
                         'created_at' => now(),
+                        'updated_at' => now(),
                         'seat' => $seat,
                     ];
                     if ($this->bookingsHasRouteId()) {
@@ -1433,7 +1539,10 @@ class BookingApiController extends Controller
 
                     $ticketCode = BookingCode::ticketCode($id, $tanggal);
                     if ($supportsTicketCode) {
-                        DB::table('bookings')->where('id', $id)->update(['ticket_code' => $ticketCode]);
+                        DB::table('bookings')->where('id', $id)->update([
+                            'ticket_code' => $ticketCode,
+                            'updated_at' => now(),
+                        ]);
                     }
 
                     $records[] = [
@@ -1553,6 +1662,7 @@ class BookingApiController extends Controller
                 ->where('id', $id)
                 ->update([
                     'pembayaran' => $payment,
+                    'updated_at' => now(),
                 ]);
 
             $bookingIdentity = $this->bookingIdentityLabel($current);
@@ -1631,7 +1741,9 @@ class BookingApiController extends Controller
         DB::table('bookings')
             ->where('id', $id)
             ->where('status', '!=', 'canceled')
-            ->update(array_merge($updatePayload, $this->tenantPayload('bookings')));
+            ->update(array_merge($updatePayload, $this->tenantPayload('bookings'), [
+                'updated_at' => now(),
+            ]));
 
         $this->upsertCustomer($name, $phone, $pickupPoint, $address, $targetRouteId);
 
@@ -1677,6 +1789,88 @@ class BookingApiController extends Controller
         ]);
     }
 
+    public function bulkUpdatePayments(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'booking_ids' => ['required', 'array', 'min:1'],
+            'booking_ids.*' => ['integer', 'min:1'],
+            'pembayaran' => ['required', 'string', 'max:50'],
+        ]);
+
+        $bookingIds = collect($payload['booking_ids'])
+            ->map(static fn ($id) => (int) $id)
+            ->filter(static fn (int $id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($bookingIds === []) {
+            return $this->error('booking_not_found', 404);
+        }
+
+        $payment = $this->normalizePayment((string) $payload['pembayaran']);
+        $rows = DB::table('bookings as b')
+            ->whereIn('b.id', $bookingIds)
+            ->get([
+                'b.id',
+                'b.rute',
+                'b.seat',
+                'b.status',
+            ]);
+
+        $updatableIds = [];
+        $seatLabels = [];
+        foreach ($rows as $row) {
+            $routeName = (string) ($row->rute ?? '');
+            if ($routeName === '' || ! PoolScope::canAccessRouteName($routeName)) {
+                continue;
+            }
+
+            if (strtolower(trim((string) ($row->status ?? ''))) === 'canceled') {
+                continue;
+            }
+
+            $id = (int) ($row->id ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+
+            $updatableIds[] = $id;
+            $seat = trim((string) ($row->seat ?? ''));
+            if ($seat !== '') {
+                $seatLabels[] = $seat;
+            }
+        }
+
+        $updatableIds = array_values(array_unique($updatableIds));
+        if ($updatableIds === []) {
+            return $this->error('booking_not_found', 404);
+        }
+
+        $updatedCount = DB::table('bookings')
+            ->whereIn('id', $updatableIds)
+            ->where('status', '!=', 'canceled')
+            ->update([
+                'pembayaran' => $payment,
+                'updated_at' => now(),
+            ]);
+
+        ActivityLog::write(
+            'PAYMENT',
+            'Pembayaran booking serentak diperbarui',
+            'Jumlah booking: '.$updatedCount.' | Kursi: '.implode(', ', array_slice($seatLabels, 0, 10)).($updatedCount > 10 ? ' ...' : ''),
+            (string) ($request->user()?->email ?? $request->user()?->name ?? 'system'),
+            ['booking_ids' => $updatableIds],
+        );
+
+        return $this->ok([
+            'message' => 'Status pembayaran booking berhasil diperbarui.',
+            'payment_status' => $payment,
+            'updated_count' => $updatedCount,
+            'booking_ids' => $updatableIds,
+        ]);
+    }
+
     public function cancel(Request $request): JsonResponse
     {
         $payload = $request->validate([
@@ -1700,6 +1894,7 @@ class BookingApiController extends Controller
             ->where('status', '!=', 'canceled')
             ->update([
                 'status' => 'canceled',
+                'updated_at' => now(),
             ]);
 
         DB::table('cancellations')->insert([
@@ -2202,7 +2397,10 @@ class BookingApiController extends Controller
             $payload['status'] = 'active';
         }
 
-        $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, ['created_at' => now()]));
+        $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
 
         return (object) array_merge($payload, [
             'id' => $id,
@@ -2213,6 +2411,20 @@ class BookingApiController extends Controller
     private function departureIdentityLabel(string $rute, string $tanggal, string $jam, int $unit): string
     {
         return trim($rute).' | '.$tanggal.' | '.substr($jam, 0, 5).' | Unit '.$unit;
+    }
+
+    private function departureCanBeMarkedDeparted(string $tanggal, string $jam): bool
+    {
+        $datePart = substr(trim($tanggal), 0, 10);
+
+        try {
+            $today = now()->startOfDay();
+            $departureDate = Carbon::createFromFormat('Y-m-d', $datePart)->startOfDay();
+
+            return $departureDate->lte($today);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     private function departureCanBeMarkedArrived(string $tanggal, string $jam): bool

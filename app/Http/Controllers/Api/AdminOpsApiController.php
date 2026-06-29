@@ -3435,7 +3435,9 @@ class AdminOpsApiController extends Controller
         }
 
         if ($id > 0) {
-            DB::table('trip_assignments')->where('id', $id)->update($payload);
+            DB::table('trip_assignments')->where('id', $id)->update(array_merge($payload, [
+                'updated_at' => now(),
+            ]));
 
             return $this->ok([
                 'message' => 'Assignment updated.',
@@ -3462,7 +3464,9 @@ class AdminOpsApiController extends Controller
             if ($this->tripAssignmentsHasArmadaNopol()) {
                 $updatePayload['armada_nopol'] = $payload['armada_nopol'] ?? null;
             }
-            DB::table('trip_assignments')->where('id', (int) $existingId)->update($updatePayload);
+            DB::table('trip_assignments')->where('id', (int) $existingId)->update(array_merge($updatePayload, [
+                'updated_at' => now(),
+            ]));
 
             return $this->ok([
                 'message' => 'Assignment updated by trip.',
@@ -3472,7 +3476,10 @@ class AdminOpsApiController extends Controller
             ]);
         }
 
-        $newId = DB::table('trip_assignments')->insertGetId(array_merge($payload, $this->tenantPayload('trip_assignments'), ['created_at' => now()]));
+        $newId = DB::table('trip_assignments')->insertGetId(array_merge($payload, $this->tenantPayload('trip_assignments'), [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
 
         return $this->ok([
             'message' => 'Assignment created.',
