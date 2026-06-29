@@ -9123,24 +9123,24 @@
                                 <div class="hidden space-y-4 lg:block">
                                     {#each bookingDateSectionsMemo as section (section.key)}
                                         <section
-                                            class="overflow-hidden rounded-[28px] border border-border/80 bg-background/95 shadow-sm"
+                                            class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                                         >
                                             <div
-                                                class="flex flex-wrap items-start justify-between gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(255,255,255,0.98))] px-4 py-4"
+                                                class="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-4 py-3"
                                             >
                                                 <div class="space-y-1">
                                                     <p
-                                                        class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300"
+                                                        class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                                                     >
                                                         Tanggal Operasional
                                                     </p>
                                                     <h3
-                                                        class="text-lg font-semibold text-foreground"
+                                                        class="text-base font-semibold text-foreground"
                                                     >
                                                         {section.label}
                                                     </h3>
                                                     <p
-                                                        class="text-xs text-muted-foreground"
+                                                        class="text-[11px] text-muted-foreground"
                                                     >
                                                         {section.totalSchedules}
                                                         keberangkatan aktif di hari
@@ -9148,22 +9148,22 @@
                                                     </p>
                                                 </div>
                                                 <div
-                                                    class="flex flex-wrap items-center gap-2 text-[11px]"
+                                                    class="flex flex-wrap items-center gap-1.5 text-[11px]"
                                                 >
                                                     <span
-                                                        class="rounded-full border border-border/70 bg-background px-2.5 py-1 font-medium text-muted-foreground"
+                                                        class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
                                                     >
                                                         {section.totalPassengers}
                                                         penumpang aktif
                                                     </span>
                                                     <span
-                                                        class="rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
+                                                        class="rounded-md border border-amber-200/80 bg-amber-50 px-2 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
                                                     >
                                                         {section.totalUnpaid}
                                                         belum lunas
                                                     </span>
                                                     <span
-                                                        class="rounded-full border border-amber-200/80 bg-background px-2.5 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:text-amber-200"
+                                                        class="rounded-md border border-amber-200/80 bg-background px-2 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:text-amber-200"
                                                     >
                                                         {formatCurrency(
                                                             section.unpaidAmount,
@@ -9177,7 +9177,7 @@
                                                     class="min-w-full table-fixed text-sm"
                                                 >
                                                     <thead
-                                                        class="sticky top-0 z-10 bg-muted/25 text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+                                                        class="sticky top-0 z-10 bg-background/95 text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground backdrop-blur"
                                                     >
                                                         <tr>
                                                             <th
@@ -9223,19 +9223,19 @@
                                                                     group.armada_nopol,
                                                                 )}
                                                             <tr
-                                                                class={`border-t border-border/70 align-top transition-colors hover:bg-cyan-50/30 dark:hover:bg-cyan-950/10 ${isCanceledDeparture(group) ? 'bg-rose-50/35 dark:bg-rose-950/10' : ''}`}
+                                                                class={`border-t border-border/60 align-top transition-colors hover:bg-muted/20 ${isCanceledDeparture(group) ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}
                                                             >
                                                                 <td
-                                                                    class="px-4 py-4"
+                                                                    class="px-4 py-3.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-2"
+                                                                        class="space-y-1.5"
                                                                     >
                                                                         <div
-                                                                            class="inline-flex items-center gap-2 rounded-2xl border border-cyan-200/70 bg-cyan-50/80 px-3 py-2 text-base font-semibold text-cyan-900 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
+                                                                            class="inline-flex items-center gap-2 text-sm font-semibold text-foreground"
                                                                         >
                                                                             <Clock3
-                                                                                class="h-4 w-4"
+                                                                                class="h-3.5 w-3.5 text-primary"
                                                                             />
                                                                             {formatGroupTimeLabel(
                                                                                 group.jam,
@@ -9246,7 +9246,7 @@
                                                                         >
                                                                             <Badge
                                                                                 variant="secondary"
-                                                                                class="rounded-full px-2.5 py-0.5 text-[10px]"
+                                                                                class="rounded-md px-2 py-0.5 text-[10px]"
                                                                             >
                                                                                 Unit
                                                                                 {group.unit}
@@ -9254,21 +9254,21 @@
                                                                             {#if isCanceledDeparture(group)}
                                                                                 <Badge
                                                                                     variant="destructive"
-                                                                                    class="rounded-full px-2.5 py-0.5 text-[10px]"
+                                                                                    class="rounded-md px-2 py-0.5 text-[10px]"
                                                                                 >
                                                                                     Batal
                                                                                 </Badge>
                                                                             {:else if isDepartedDeparture(group)}
                                                                                 <Badge
                                                                                     variant="secondary"
-                                                                                    class="rounded-full border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
+                                                                                    class="rounded-md border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
                                                                                 >
                                                                                     Berangkat
                                                                                 </Badge>
                                                                             {:else if isArrivedDeparture(group)}
                                                                                 <Badge
                                                                                     variant="secondary"
-                                                                                    class="rounded-full border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
+                                                                                    class="rounded-md border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
                                                                                 >
                                                                                     Tiba
                                                                                 </Badge>
@@ -9277,10 +9277,10 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-4"
+                                                                    class="px-4 py-3.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-2"
+                                                                        class="space-y-1.5"
                                                                     >
                                                                         <div>
                                                                             <p
@@ -9298,13 +9298,13 @@
                                                                             class="flex flex-wrap gap-1.5 text-[11px]"
                                                                         >
                                                                             <span
-                                                                                class="rounded-full border border-border/70 bg-background px-2.5 py-1 font-medium text-muted-foreground"
+                                                                                class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
                                                                             >
                                                                                 Total
                                                                                 {group.total}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-full border border-border/70 bg-background px-2.5 py-1 font-medium text-muted-foreground"
+                                                                                class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
                                                                             >
                                                                                 Aktif
                                                                                 {group.active}
@@ -9313,84 +9313,86 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-4"
+                                                                    class="px-4 py-3.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-2"
+                                                                        class="space-y-2 text-xs"
                                                                     >
                                                                         <div
-                                                                            class={`rounded-2xl border px-3 py-2 ${driverMissing ? 'border-amber-200/80 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-950/20' : 'border-border/70 bg-background/85'}`}
+                                                                            class={driverMissing
+                                                                                ? 'text-amber-700 dark:text-amber-200'
+                                                                                : 'text-foreground'}
                                                                         >
-                                                                            <p
-                                                                                class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                                            <span
+                                                                                class="font-medium text-muted-foreground"
+                                                                                >Driver:</span
                                                                             >
-                                                                                Driver
-                                                                            </p>
-                                                                            <p
-                                                                                class={`mt-1 text-sm font-semibold ${driverMissing ? 'text-amber-700 dark:text-amber-200' : 'text-foreground'}`}
+                                                                            <span
+                                                                                class="ml-1 font-semibold"
                                                                             >
                                                                                 {bookingAssignmentText(
                                                                                     group.driver_name,
                                                                                     'Belum ditugaskan',
                                                                                 )}
-                                                                            </p>
+                                                                            </span>
                                                                         </div>
                                                                         <div
-                                                                            class={`rounded-2xl border px-3 py-2 ${armadaMissing ? 'border-amber-200/80 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-950/20' : 'border-border/70 bg-background/85'}`}
+                                                                            class={armadaMissing
+                                                                                ? 'text-amber-700 dark:text-amber-200'
+                                                                                : 'text-foreground'}
                                                                         >
-                                                                            <p
-                                                                                class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                                            <span
+                                                                                class="font-medium text-muted-foreground"
+                                                                                >Armada:</span
                                                                             >
-                                                                                Armada
-                                                                            </p>
-                                                                            <p
-                                                                                class={`mt-1 text-sm font-semibold ${armadaMissing ? 'text-amber-700 dark:text-amber-200' : 'text-foreground'}`}
+                                                                            <span
+                                                                                class="ml-1 font-semibold"
                                                                             >
                                                                                 {bookingAssignmentText(
                                                                                     group.armada_nopol,
                                                                                     'Belum ditugaskan',
                                                                                 )}
-                                                                            </p>
+                                                                            </span>
                                                                         </div>
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-4"
+                                                                    class="px-4 py-3.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-3"
+                                                                        class="space-y-2"
                                                                     >
                                                                         <div
                                                                             class="flex flex-wrap gap-1.5 text-[11px]"
                                                                         >
                                                                             <span
-                                                                                class="rounded-full border border-border/70 bg-background px-2.5 py-1 font-medium text-muted-foreground"
+                                                                                class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
                                                                             >
                                                                                 Total
                                                                                 {group.total}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-200"
+                                                                                class="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-1 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-200"
                                                                             >
                                                                                 Lunas
                                                                                 {group.lunas}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
+                                                                                class="rounded-md border border-amber-200/80 bg-amber-50 px-2 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
                                                                             >
                                                                                 Belum
                                                                                 Lunas
                                                                                 {group.belum_lunas}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-full border border-sky-200/80 bg-sky-50 px-2.5 py-1 font-medium text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/20 dark:text-sky-200"
+                                                                                class="rounded-md border border-sky-200/80 bg-sky-50 px-2 py-1 font-medium text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/20 dark:text-sky-200"
                                                                             >
                                                                                 Refund
                                                                                 {group.refund}
                                                                             </span>
                                                                             {#if group.canceled > 0}
                                                                                 <span
-                                                                                    class="rounded-full border border-rose-200/80 bg-rose-50 px-2.5 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-200"
+                                                                                    class="rounded-md border border-rose-200/80 bg-rose-50 px-2 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-200"
                                                                                 >
                                                                                     Cancel
                                                                                     {group.canceled}
@@ -9398,16 +9400,15 @@
                                                                             {/if}
                                                                         </div>
                                                                         <div
-                                                                            class="rounded-2xl border border-border/70 bg-background/85 px-3 py-2 text-[11px]"
+                                                                            class="grid gap-1 rounded-xl border border-border/70 bg-muted/20 px-3 py-2 text-[11px]"
                                                                         >
                                                                             <div
                                                                                 class="flex items-center justify-between gap-3"
                                                                             >
                                                                                 <span
                                                                                     class="text-muted-foreground"
+                                                                                    >BOP</span
                                                                                 >
-                                                                                    BOP
-                                                                                </span>
                                                                                 <span
                                                                                     class="font-semibold text-foreground"
                                                                                 >
@@ -9420,15 +9421,14 @@
                                                                                 </span>
                                                                             </div>
                                                                             <div
-                                                                                class="mt-1 flex items-center justify-between gap-3"
+                                                                                class="flex items-center justify-between gap-3"
                                                                             >
                                                                                 <span
                                                                                     class="text-muted-foreground"
-                                                                                >
-                                                                                    Nilai
+                                                                                    >Nilai
                                                                                     belum
-                                                                                    lunas
-                                                                                </span>
+                                                                                    lunas</span
+                                                                                >
                                                                                 <span
                                                                                     class={`font-semibold ${unpaidAmount > 0 ? 'text-amber-700 dark:text-amber-200' : 'text-foreground'}`}
                                                                                 >
@@ -9441,7 +9441,7 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-4"
+                                                                    class="px-4 py-3.5"
                                                                 >
                                                                     <div
                                                                         class="flex items-center justify-end gap-2"
@@ -9449,7 +9449,7 @@
                                                                         <Button
                                                                             type="button"
                                                                             size="sm"
-                                                                            class="h-8 rounded-full px-3 text-xs"
+                                                                            class="h-8 rounded-md px-3 text-xs"
                                                                             onclick={() =>
                                                                                 navigateToGroupDetail(
                                                                                     group,
@@ -9469,7 +9469,7 @@
                                                                                         type="button"
                                                                                         size="icon"
                                                                                         variant="outline"
-                                                                                        class="h-8 w-8 rounded-full bg-background/90"
+                                                                                        class="h-8 w-8 rounded-md bg-background/90"
                                                                                         onclick={props.onclick}
                                                                                         aria-expanded={props[
                                                                                             'aria-expanded'
