@@ -15,8 +15,18 @@
     import { onDestroy, onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
-    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-    import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+    import {
+        Card,
+        CardContent,
+        CardHeader,
+        CardTitle,
+    } from '@/components/ui/card';
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuTrigger,
+    } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
@@ -54,15 +64,119 @@
     };
     type Driver = { id: number; nama: string; phone?: string | null };
     type Service = { id: number; name: string };
-    type Pagination = { page: number; per_page: number; total: number; last_page: number };
-    type PoolOption = { id: number; name: string; code?: string | null; status?: string | null; route_ids?: number[]; route_names?: string[] };
-    type Charter = { id: number; pool_id: number | null; master_carter_id: number | null; name: string; company_name: string | null; phone: string | null; start_date: string; end_date: string; departure_time: string | null; pickup_point: string | null; drop_point: string | null; unit_id: number | null; unit_nopol: string | null; unit_category: string | null; armada_id: number | null; armada_nopol: string | null; driver_name: string | null; price: number; layanan: string | null; bop_price: number; bop_status: string | null; down_payment: number; payment_status: string | null; status: string | null };
-    type CharterCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; company: string | null };
-    type BagasiCustomer = { id: number; nama: string; no_hp: string; alamat: string | null; tipe: string | null };
-    type Luggage = { id: number; pool_id: number | null; sender_name: string; sender_phone: string; sender_address: string | null; receiver_name: string; receiver_phone: string; receiver_address: string | null; service_id: number | null; service_name: string | null; rute_id: number | null; rute: string | null; route_name: string | null; tanggal: string | null; unit_id: number | null; trip_assignment_id?: number | null; departure_date?: string | null; departure_time?: string | null; departure_unit?: number | null; departure_driver_name?: string | null; departure_armada_nopol?: string | null; quantity: number; notes: string | null; price: number; status: string | null; payment_status: string | null; kode_resi: string | null; created_at: string | null };
-    type Assignment = { id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; nama: string | null };
-    type AssignmentConflict = { type: string; message: string; assignment_id: number; rute: string; tanggal: string; jam: string; unit: number; driver_id: number; driver_name: string | null };
-    type CharterRoute = { id: number; name: string; origin: string | null; destination: string | null; duration: string | null; rental_price: number; bop_price: number };
+    type Pagination = {
+        page: number;
+        per_page: number;
+        total: number;
+        last_page: number;
+    };
+    type PoolOption = {
+        id: number;
+        name: string;
+        code?: string | null;
+        status?: string | null;
+        route_ids?: number[];
+        route_names?: string[];
+    };
+    type Charter = {
+        id: number;
+        pool_id: number | null;
+        master_carter_id: number | null;
+        name: string;
+        company_name: string | null;
+        phone: string | null;
+        start_date: string;
+        end_date: string;
+        departure_time: string | null;
+        pickup_point: string | null;
+        drop_point: string | null;
+        unit_id: number | null;
+        unit_nopol: string | null;
+        unit_category: string | null;
+        armada_id: number | null;
+        armada_nopol: string | null;
+        driver_name: string | null;
+        price: number;
+        layanan: string | null;
+        bop_price: number;
+        bop_status: string | null;
+        down_payment: number;
+        payment_status: string | null;
+        status: string | null;
+    };
+    type CharterCustomer = {
+        id: number;
+        nama: string;
+        no_hp: string;
+        alamat: string | null;
+        company: string | null;
+    };
+    type BagasiCustomer = {
+        id: number;
+        nama: string;
+        no_hp: string;
+        alamat: string | null;
+        tipe: string | null;
+    };
+    type Luggage = {
+        id: number;
+        pool_id: number | null;
+        sender_name: string;
+        sender_phone: string;
+        sender_address: string | null;
+        receiver_name: string;
+        receiver_phone: string;
+        receiver_address: string | null;
+        service_id: number | null;
+        service_name: string | null;
+        rute_id: number | null;
+        rute: string | null;
+        route_name: string | null;
+        tanggal: string | null;
+        unit_id: number | null;
+        trip_assignment_id?: number | null;
+        departure_date?: string | null;
+        departure_time?: string | null;
+        departure_unit?: number | null;
+        departure_driver_name?: string | null;
+        departure_armada_nopol?: string | null;
+        quantity: number;
+        notes: string | null;
+        price: number;
+        status: string | null;
+        payment_status: string | null;
+        kode_resi: string | null;
+        created_at: string | null;
+    };
+    type Assignment = {
+        id: number;
+        rute: string;
+        tanggal: string;
+        jam: string;
+        unit: number;
+        driver_id: number;
+        nama: string | null;
+    };
+    type AssignmentConflict = {
+        type: string;
+        message: string;
+        assignment_id: number;
+        rute: string;
+        tanggal: string;
+        jam: string;
+        unit: number;
+        driver_id: number;
+        driver_name: string | null;
+    };
+    type CharterRoute = {
+        id: number;
+        name: string;
+        origin: string | null;
+        destination: string | null;
+        duration: string | null;
+        rental_price: number;
+        bop_price: number;
+    };
     type AuthPoolScope = {
         all?: boolean;
         pool_ids?: number[];
@@ -104,25 +218,63 @@
     } = $props();
 
     const today = new Date().toISOString().slice(0, 10);
-    const charterServiceOptions = ['DROPOFF', 'FULLDAY', 'HALFDAY', '2D1N', '3D2N', '4D3N', '5D4N'];
+    const charterServiceOptions = [
+        'DROPOFF',
+        'FULLDAY',
+        'HALFDAY',
+        '2D1N',
+        '3D2N',
+        '4D3N',
+        '5D4N',
+    ];
     const defaultCharterService = charterServiceOptions[0];
     const grantedPermissions = $derived(page.props.auth?.permissions ?? []);
-    const canCharterCreate = $derived(hasPermission(grantedPermissions, 'charter.create'));
-    const canCharterUpdate = $derived(hasPermission(grantedPermissions, 'charter.update'));
-    const canCharterDelete = $derived(hasPermission(grantedPermissions, 'charter.delete'));
-    const canCharterPrint = $derived(hasPermission(grantedPermissions, 'charter.print'));
-    const canLuggageCreate = $derived(hasPermission(grantedPermissions, 'luggage.create'));
-    const canLuggageUpdate = $derived(hasPermission(grantedPermissions, 'luggage.update'));
-    const canLuggagePrint = $derived(hasPermission(grantedPermissions, 'luggage.print'));
-    const canBookingUpdate = $derived(hasPermission(grantedPermissions, 'booking.update'));
-    const canBookingDelete = $derived(hasPermission(grantedPermissions, 'booking.delete'));
+    const canCharterCreate = $derived(
+        hasPermission(grantedPermissions, 'charter.create'),
+    );
+    const canCharterUpdate = $derived(
+        hasPermission(grantedPermissions, 'charter.update'),
+    );
+    const canCharterDelete = $derived(
+        hasPermission(grantedPermissions, 'charter.delete'),
+    );
+    const canCharterPrint = $derived(
+        hasPermission(grantedPermissions, 'charter.print'),
+    );
+    const canLuggageCreate = $derived(
+        hasPermission(grantedPermissions, 'luggage.create'),
+    );
+    const canLuggageUpdate = $derived(
+        hasPermission(grantedPermissions, 'luggage.update'),
+    );
+    const canLuggagePrint = $derived(
+        hasPermission(grantedPermissions, 'luggage.print'),
+    );
+    const canBookingUpdate = $derived(
+        hasPermission(grantedPermissions, 'booking.update'),
+    );
+    const canBookingDelete = $derived(
+        hasPermission(grantedPermissions, 'booking.delete'),
+    );
     let activeTab = $state<TabName>('charters');
     let activeMode = $state<ViewMode>('data');
-    const authPoolScope = $derived((page.props.auth?.pool_scope ?? null) as AuthPoolScope);
-    const poolContextName = $derived(String(authPoolScope?.pool_name ?? 'Semua Pool'));
+    const authPoolScope = $derived(
+        (page.props.auth?.pool_scope ?? null) as AuthPoolScope,
+    );
+    const poolContextName = $derived(
+        String(authPoolScope?.pool_name ?? 'Semua Pool'),
+    );
     const poolContextIsAll = $derived(Boolean(authPoolScope?.all));
-    const poolContextRouteCount = $derived(Array.isArray(authPoolScope?.route_ids) ? authPoolScope.route_ids.length : 0);
-    const poolContextBadge = $derived(poolContextIsAll ? 'Semua pool' : `${poolContextRouteCount} rute mapped`);
+    const poolContextRouteCount = $derived(
+        Array.isArray(authPoolScope?.route_ids)
+            ? authPoolScope.route_ids.length
+            : 0,
+    );
+    const poolContextBadge = $derived(
+        poolContextIsAll
+            ? 'Semua pool'
+            : `${poolContextRouteCount} rute mapped`,
+    );
     const poolContextDescription = $derived(
         poolContextIsAll
             ? 'Superadmin dapat memilih pool. Saat rute cocok dengan mapping, pool form ikut diarahkan otomatis.'
@@ -150,9 +302,24 @@
     let luggages = $state<Luggage[]>([]);
     let assignments = $state<Assignment[]>([]);
 
-    let charterMeta = $state<Pagination>({ page: 1, per_page: 20, total: 0, last_page: 1 });
-    let luggageMeta = $state<Pagination>({ page: 1, per_page: 20, total: 0, last_page: 1 });
-    let assignmentMeta = $state<Pagination>({ page: 1, per_page: 20, total: 0, last_page: 1 });
+    let charterMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
+    let luggageMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
+    let assignmentMeta = $state<Pagination>({
+        page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+    });
 
     let filterFrom = $state('');
     let filterTo = $state('');
@@ -165,7 +332,8 @@
     let charterFilterArmadaLookupOpen = $state(false);
     let charterFilterArmadaBusy = $state(false);
     let charterFilterArmadas = $state<Armada[]>([]);
-    let charterFilterArmadaSearchTimer: ReturnType<typeof setTimeout> | null = null;
+    let charterFilterArmadaSearchTimer: ReturnType<typeof setTimeout> | null =
+        null;
     let exportType = $state<'reguler' | 'bagasi' | 'charter'>('reguler');
     let filterPerPage = $state(20);
     let mobileFiltersExpanded = $state(false);
@@ -203,8 +371,47 @@
         { key: luggageArrivedStatus, label: luggageArrivedStatus },
         { key: 'canceled', label: 'Canceled' },
     ];
-    const newCharterForm = () => ({ id: 0, pool_id: 0, master_carter_id: 0, name: '', company_name: '', phone: '', start_date: today, end_date: today, departure_time: '08:00', pickup_point: '', drop_point: '', unit_id: 0, armada_id: 0, armada_nopol: '', driver_name: '', price: 0, layanan: defaultCharterService, bop_price: 0, bop_status: 'pending', down_payment: 0, payment_status: 'Belum Lunas' });
-    const newLuggageForm = () => ({ id: 0, pool_id: 0, sender_name: '', sender_phone: '', sender_address: '', receiver_name: '', receiver_phone: '', receiver_address: '', service_id: 0, rute_id: 0, tanggal: today, quantity: 1, notes: '', price: 0, status: luggageReceivedStatus, payment_status: 'Belum Bayar' });
+    const newCharterForm = () => ({
+        id: 0,
+        pool_id: 0,
+        master_carter_id: 0,
+        name: '',
+        company_name: '',
+        phone: '',
+        start_date: today,
+        end_date: today,
+        departure_time: '08:00',
+        pickup_point: '',
+        drop_point: '',
+        unit_id: 0,
+        armada_id: 0,
+        armada_nopol: '',
+        driver_name: '',
+        price: 0,
+        layanan: defaultCharterService,
+        bop_price: 0,
+        bop_status: 'pending',
+        down_payment: 0,
+        payment_status: 'Belum Lunas',
+    });
+    const newLuggageForm = () => ({
+        id: 0,
+        pool_id: 0,
+        sender_name: '',
+        sender_phone: '',
+        sender_address: '',
+        receiver_name: '',
+        receiver_phone: '',
+        receiver_address: '',
+        service_id: 0,
+        rute_id: 0,
+        tanggal: today,
+        quantity: 1,
+        notes: '',
+        price: 0,
+        status: luggageReceivedStatus,
+        payment_status: 'Belum Bayar',
+    });
     let charterForm = $state(newCharterForm());
     let charterUnitSearch = $state('');
     let charterUnitLookupOpen = $state(false);
@@ -230,7 +437,14 @@
     let luggageReceiverLookupBusy = $state(false);
     let luggageReceiverLookupResults = $state<BagasiCustomer[]>([]);
     let luggageReceiverSearchTimer: ReturnType<typeof setTimeout> | null = null;
-    let assignmentForm = $state({ id: 0, rute: '', tanggal: today, jam: '08:00', unit: 1, driver_id: 0 });
+    let assignmentForm = $state({
+        id: 0,
+        rute: '',
+        tanggal: today,
+        jam: '08:00',
+        unit: 1,
+        driver_id: 0,
+    });
     let charterStartDateInput = $state<HTMLInputElement | null>(null);
     let charterEndDateInput = $state<HTMLInputElement | null>(null);
     let charterDepartureTimeInput = $state<HTMLInputElement | null>(null);
@@ -246,17 +460,26 @@
     let CharterViewPanelComponent = $state<any>(null);
     let CharterFormPanelComponent = $state<any>(null);
 
-    const flowTabs: TabName[] = ['charters', 'luggages', 'assignments', 'export'];
+    const flowTabs: TabName[] = [
+        'charters',
+        'luggages',
+        'assignments',
+        'export',
+    ];
     const flowModes: ViewMode[] = ['data', 'form', 'view'];
     const ensureCharterViewPanelLoaded = async () => {
         if (!CharterViewPanelComponent) {
-            CharterViewPanelComponent = (await import('@/components/admin-ops-flows/AdminOpsCharterViewPanel.svelte')).default;
+            CharterViewPanelComponent = (
+                await import('@/components/admin-ops-flows/AdminOpsCharterViewPanel.svelte')
+            ).default;
         }
     };
 
     const ensureCharterFormPanelLoaded = async () => {
         if (!CharterFormPanelComponent) {
-            CharterFormPanelComponent = (await import('@/components/admin-ops-flows/AdminOpsCharterFormPanel.svelte')).default;
+            CharterFormPanelComponent = (
+                await import('@/components/admin-ops-flows/AdminOpsCharterFormPanel.svelte')
+            ).default;
         }
     };
 
@@ -276,16 +499,16 @@
 
     const tabTitle = (tab: TabName) => {
         if (tab === 'charters') {
-return 'Carter';
-}
+            return 'Carter';
+        }
 
         if (tab === 'luggages') {
-return 'Bagasi';
-}
+            return 'Bagasi';
+        }
 
         if (tab === 'assignments') {
-return 'Driver Assignments';
-}
+            return 'Driver Assignments';
+        }
 
         return 'Export CSV';
     };
@@ -298,30 +521,36 @@ return 'Driver Assignments';
         return value !== null && flowModes.includes(value as ViewMode);
     };
 
-    const hasDedicatedFormPage = (tab: TabName): tab is 'charters' | 'luggages' => {
+    const hasDedicatedFormPage = (
+        tab: TabName,
+    ): tab is 'charters' | 'luggages' => {
         return tab === 'charters' || tab === 'luggages';
     };
 
-    const lockedPathFor = (tab: TabName, mode: ViewMode, itemId?: number | null) => {
+    const lockedPathFor = (
+        tab: TabName,
+        mode: ViewMode,
+        itemId?: number | null,
+    ) => {
         if (tab === 'charters') {
             if (mode === 'form') {
-return '/charters/form';
-}
+                return '/charters/form';
+            }
 
             if (mode === 'view' && itemId && itemId > 0) {
-return `/charters/view/${itemId}`;
-}
+                return `/charters/view/${itemId}`;
+            }
 
             return '/charters';
         }
 
         if (tab === 'luggages') {
-return mode === 'form' ? '/luggages/form' : '/luggages';
-}
+            return mode === 'form' ? '/luggages/form' : '/luggages';
+        }
 
         if (tab === 'assignments') {
-return '/admin-ops/flows/assignments';
-}
+            return '/admin-ops/flows/assignments';
+        }
 
         return '/admin-ops/flows/export';
     };
@@ -333,7 +562,11 @@ return '/admin-ops/flows/assignments';
 
         activeMode = mode;
 
-        if (typeof window === 'undefined' || !lockedMenuView || !hasDedicatedFormPage(activeTab)) {
+        if (
+            typeof window === 'undefined' ||
+            !lockedMenuView ||
+            !hasDedicatedFormPage(activeTab)
+        ) {
             return;
         }
 
@@ -351,7 +584,11 @@ return '/admin-ops/flows/assignments';
 
         const url = new URL(window.location.href);
         url.searchParams.set('tab', tab);
-        window.history.replaceState({}, '', `${url.pathname}?${url.searchParams.toString()}`);
+        window.history.replaceState(
+            {},
+            '',
+            `${url.pathname}?${url.searchParams.toString()}`,
+        );
     };
 
     const destroyCharterPickers = () => {
@@ -393,7 +630,11 @@ return '/admin-ops/flows/assignments';
     };
 
     const initCharterFilterDatePicker = async () => {
-        if (typeof window === 'undefined' || !charterFilterDateInput || charterFilterDatePicker) {
+        if (
+            typeof window === 'undefined' ||
+            !charterFilterDateInput ||
+            charterFilterDatePicker
+        ) {
             return;
         }
 
@@ -421,7 +662,11 @@ return '/admin-ops/flows/assignments';
     };
 
     const initLuggageFilterDatePicker = async () => {
-        if (typeof window === 'undefined' || !luggageFilterDateInput || luggageFilterDatePicker) {
+        if (
+            typeof window === 'undefined' ||
+            !luggageFilterDateInput ||
+            luggageFilterDatePicker
+        ) {
             return;
         }
 
@@ -449,7 +694,11 @@ return '/admin-ops/flows/assignments';
     };
 
     const initLuggageDatePicker = async () => {
-        if (typeof window === 'undefined' || !luggageDateInput || luggageDatePicker) {
+        if (
+            typeof window === 'undefined' ||
+            !luggageDateInput ||
+            luggageDatePicker
+        ) {
             return;
         }
 
@@ -546,11 +795,21 @@ return '/admin-ops/flows/assignments';
                 defaultDate: charterForm.start_date || today,
                 onChange: (_selectedDates, dateStr) => {
                     charterForm.start_date = dateStr || today;
-                    charterEndDatePicker?.set('minDate', charterForm.start_date || today);
+                    charterEndDatePicker?.set(
+                        'minDate',
+                        charterForm.start_date || today,
+                    );
 
-                    if (!charterForm.end_date || charterForm.end_date < charterForm.start_date) {
+                    if (
+                        !charterForm.end_date ||
+                        charterForm.end_date < charterForm.start_date
+                    ) {
                         charterForm.end_date = charterForm.start_date;
-                        charterEndDatePicker?.setDate(charterForm.end_date, false, 'Y-m-d');
+                        charterEndDatePicker?.setDate(
+                            charterForm.end_date,
+                            false,
+                            'Y-m-d',
+                        );
                     }
                 },
             });
@@ -563,7 +822,8 @@ return '/admin-ops/flows/assignments';
                 minDate: charterForm.start_date || today,
                 defaultDate: charterForm.end_date || today,
                 onChange: (_selectedDates, dateStr) => {
-                    charterForm.end_date = dateStr || charterForm.start_date || today;
+                    charterForm.end_date =
+                        dateStr || charterForm.start_date || today;
                 },
             });
         }
@@ -586,21 +846,50 @@ return '/admin-ops/flows/assignments';
     const syncCharterPickerValues = () => {
         charterStartDatePicker?.set('minDate', today);
         charterEndDatePicker?.set('minDate', charterForm.start_date || today);
-        charterStartDatePicker?.setDate(charterForm.start_date || today, false, 'Y-m-d');
-        charterEndDatePicker?.setDate(charterForm.end_date || charterForm.start_date || today, false, 'Y-m-d');
-        charterDepartureTimePicker?.setDate(charterForm.departure_time || '08:00', false, 'H:i');
+        charterStartDatePicker?.setDate(
+            charterForm.start_date || today,
+            false,
+            'Y-m-d',
+        );
+        charterEndDatePicker?.setDate(
+            charterForm.end_date || charterForm.start_date || today,
+            false,
+            'Y-m-d',
+        );
+        charterDepartureTimePicker?.setDate(
+            charterForm.departure_time || '08:00',
+            false,
+            'H:i',
+        );
     };
 
     const syncLuggageDatePickerValue = () => {
-        luggageDatePicker?.setDate(luggageForm.tanggal || today, false, 'Y-m-d');
+        luggageDatePicker?.setDate(
+            luggageForm.tanggal || today,
+            false,
+            'Y-m-d',
+        );
     };
 
     const syncAssignmentPickerValues = () => {
-        assignmentDatePicker?.setDate(assignmentForm.tanggal || today, false, 'Y-m-d');
-        assignmentTimePicker?.setDate(assignmentForm.jam || '08:00', false, 'H:i');
+        assignmentDatePicker?.setDate(
+            assignmentForm.tanggal || today,
+            false,
+            'Y-m-d',
+        );
+        assignmentTimePicker?.setDate(
+            assignmentForm.jam || '08:00',
+            false,
+            'H:i',
+        );
     };
 
-    const csrfToken = () => (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
+    const csrfToken = () =>
+        (
+            document.querySelector(
+                'meta[name="csrf-token"]',
+            ) as HTMLMetaElement | null
+        )?.content ?? '';
 
     const xsrfTokenFromCookie = () => {
         if (typeof document === 'undefined') {
@@ -637,13 +926,17 @@ return '/admin-ops/flows/assignments';
                 },
             });
             const html = await response.text();
-            const match = html.match(/<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i);
+            const match = html.match(
+                /<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i,
+            );
 
             if (!match?.[1]) {
                 return false;
             }
 
-            let node = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+            let node = document.querySelector(
+                'meta[name="csrf-token"]',
+            ) as HTMLMetaElement | null;
 
             if (!node) {
                 node = document.createElement('meta');
@@ -659,7 +952,11 @@ return '/admin-ops/flows/assignments';
         }
     };
 
-    const sendApiRequest = async (method: 'GET' | 'POST' | 'DELETE', url: string, body?: Record<string, unknown>) => {
+    const sendApiRequest = async (
+        method: 'GET' | 'POST' | 'DELETE',
+        url: string,
+        body?: Record<string, unknown>,
+    ) => {
         const token = csrfToken() || xsrfTokenFromCookie();
         const isDelete = method === 'DELETE';
         const requestMethod = isDelete ? 'POST' : method;
@@ -667,10 +964,10 @@ return '/admin-ops/flows/assignments';
             method === 'GET'
                 ? body
                 : {
-                    ...(body ?? {}),
-                    ...(isDelete ? { _method: 'DELETE' } : {}),
-                    _token: token,
-                };
+                      ...(body ?? {}),
+                      ...(isDelete ? { _method: 'DELETE' } : {}),
+                      _token: token,
+                  };
 
         return fetch(url, {
             method: requestMethod,
@@ -686,10 +983,18 @@ return '/admin-ops/flows/assignments';
         });
     };
 
-    const api = async (method: 'GET' | 'POST' | 'DELETE', url: string, body?: Record<string, unknown>) => {
+    const api = async (
+        method: 'GET' | 'POST' | 'DELETE',
+        url: string,
+        body?: Record<string, unknown>,
+    ) => {
         let res = await sendApiRequest(method, url, body);
 
-        if (res.status === 419 && method !== 'GET' && await refreshCsrfToken()) {
+        if (
+            res.status === 419 &&
+            method !== 'GET' &&
+            (await refreshCsrfToken())
+        ) {
             res = await sendApiRequest(method, url, body);
         }
 
@@ -711,7 +1016,12 @@ return '/admin-ops/flows/assignments';
         })();
 
         if (!res.ok || json.success === false) {
-            throw new Error(json.error || json.message || firstValidationError || `Request gagal (${res.status})`);
+            throw new Error(
+                json.error ||
+                    json.message ||
+                    firstValidationError ||
+                    `Request gagal (${res.status})`,
+            );
         }
 
         if (method !== 'GET') {
@@ -738,8 +1048,8 @@ return '/admin-ops/flows/assignments';
         q.set('to', filterTo);
 
         if (filterQuery.trim() !== '') {
-q.set('q', filterQuery.trim());
-}
+            q.set('q', filterQuery.trim());
+        }
 
         return q.toString();
     };
@@ -756,8 +1066,8 @@ q.set('q', filterQuery.trim());
         }
 
         if (filterQuery.trim() !== '') {
-q.set('q', filterQuery.trim());
-}
+            q.set('q', filterQuery.trim());
+        }
 
         return q.toString();
     };
@@ -779,8 +1089,8 @@ q.set('q', filterQuery.trim());
         }
 
         if (filterQuery.trim() !== '') {
-q.set('q', filterQuery.trim());
-}
+            q.set('q', filterQuery.trim());
+        }
 
         return q.toString();
     };
@@ -849,7 +1159,11 @@ q.set('q', filterQuery.trim());
     const formatCurrencyId = (value: number | string | null | undefined) =>
         formatCurrencyDisplay(value);
 
-    const activePools = () => pools.filter((pool) => String(pool.status ?? 'active').toLowerCase() === 'active');
+    const activePools = () =>
+        pools.filter(
+            (pool) =>
+                String(pool.status ?? 'active').toLowerCase() === 'active',
+        );
 
     const defaultPoolId = () => {
         const options = activePools();
@@ -862,7 +1176,9 @@ q.set('q', filterQuery.trim());
             return '';
         }
 
-        return [pool.name, pool.code ? `(${pool.code})` : ''].filter(Boolean).join(' ');
+        return [pool.name, pool.code ? `(${pool.code})` : '']
+            .filter(Boolean)
+            .join(' ');
     };
 
     const poolNameById = (poolId: number | null | undefined) => {
@@ -879,13 +1195,24 @@ q.set('q', filterQuery.trim());
             return null;
         }
 
-        return activePools().find((pool) => Array.isArray(pool.route_ids) && pool.route_ids.map(Number).includes(id)) ?? null;
+        return (
+            activePools().find(
+                (pool) =>
+                    Array.isArray(pool.route_ids) &&
+                    pool.route_ids.map(Number).includes(id),
+            ) ?? null
+        );
     };
 
     const normalizePoolLabel = (value: string | null | undefined) =>
-        String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+        String(value ?? '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, ' ');
 
-    const poolForRouteLabels = (...labels: Array<string | null | undefined>) => {
+    const poolForRouteLabels = (
+        ...labels: Array<string | null | undefined>
+    ) => {
         const normalizedLabels = labels
             .map((label) => normalizePoolLabel(label))
             .filter(Boolean);
@@ -894,13 +1221,17 @@ q.set('q', filterQuery.trim());
             return null;
         }
 
-        return activePools().find((pool) => {
-            const routeNames = Array.isArray(pool.route_names) ? pool.route_names : [];
+        return (
+            activePools().find((pool) => {
+                const routeNames = Array.isArray(pool.route_names)
+                    ? pool.route_names
+                    : [];
 
-            return routeNames.some((routeName) =>
-                normalizedLabels.includes(normalizePoolLabel(routeName)),
-            );
-        }) ?? null;
+                return routeNames.some((routeName) =>
+                    normalizedLabels.includes(normalizePoolLabel(routeName)),
+                );
+            }) ?? null
+        );
     };
 
     const poolIdForCharterLabels = (
@@ -966,18 +1297,22 @@ q.set('q', filterQuery.trim());
         const normalized = String(status ?? 'active').toLowerCase();
 
         if (normalized === 'canceled') {
-return 'Canceled';
-}
+            return 'Canceled';
+        }
 
         if (normalized === 'done') {
-return 'Selesai';
-}
+            return 'Selesai';
+        }
 
         return 'Active';
     };
 
     const isPaymentLunas = (paymentStatus: string | null | undefined) => {
-        return String(paymentStatus ?? '').trim().toLowerCase() === 'lunas';
+        return (
+            String(paymentStatus ?? '')
+                .trim()
+                .toLowerCase() === 'lunas'
+        );
     };
 
     const charterPaymentClass = (paymentStatus: string | null | undefined) => {
@@ -999,7 +1334,12 @@ return 'Selesai';
             return '';
         }
 
-        return [String(unit.category ?? '').trim(), String(unit.nopol ?? '').trim()].filter(Boolean).join(' | ');
+        return [
+            String(unit.category ?? '').trim(),
+            String(unit.nopol ?? '').trim(),
+        ]
+            .filter(Boolean)
+            .join(' | ');
     };
 
     const charterUnitMeta = (unit: Unit | null | undefined) => {
@@ -1007,32 +1347,66 @@ return 'Selesai';
             return '-';
         }
 
-        return [String(unit.merek ?? '').trim(), String(unit.type ?? '').trim(), String(unit.kapasitas ?? '').trim() !== '' ? `${unit.kapasitas} seat` : '']
+        return [
+            String(unit.merek ?? '').trim(),
+            String(unit.type ?? '').trim(),
+            String(unit.kapasitas ?? '').trim() !== ''
+                ? `${unit.kapasitas} seat`
+                : '',
+        ]
             .filter(Boolean)
             .join(' | ');
     };
 
-    const selectedCharterUnit = () => units.find((unit) => unit.id === Number(charterForm.unit_id || 0)) ?? null;
+    const selectedCharterUnit = () =>
+        units.find((unit) => unit.id === Number(charterForm.unit_id || 0)) ??
+        null;
 
-    const selectedCharterUnitCategory = () => String(selectedCharterUnit()?.category ?? '').trim();
+    const selectedCharterUnitCategory = () =>
+        String(selectedCharterUnit()?.category ?? '').trim();
 
-    const selectedCharterArmada = () => armadas.find((armada) => armada.id === Number(charterForm.armada_id || 0)) ?? null;
+    const selectedCharterArmada = () =>
+        armadas.find(
+            (armada) => armada.id === Number(charterForm.armada_id || 0),
+        ) ?? null;
     const selectedCharterDriver = () => {
-        const selectedName = String(charterForm.driver_name ?? '').trim().toLowerCase();
+        const selectedName = String(charterForm.driver_name ?? '')
+            .trim()
+            .toLowerCase();
 
         if (selectedName === '') {
             return null;
         }
 
-        return drivers.find((driver) => String(driver.nama ?? '').trim().toLowerCase() === selectedName) ?? null;
+        return (
+            drivers.find(
+                (driver) =>
+                    String(driver.nama ?? '')
+                        .trim()
+                        .toLowerCase() === selectedName,
+            ) ?? null
+        );
     };
 
-    const selectedCharterFilterUnit = () => units.find((unit) => unit.id === Number(charterFilterUnitId || 0)) ?? null;
+    const selectedCharterFilterUnit = () =>
+        units.find((unit) => unit.id === Number(charterFilterUnitId || 0)) ??
+        null;
 
-    const selectedCharterFilterUnitCategory = () => String(selectedCharterFilterUnit()?.category ?? '').trim();
+    const selectedCharterFilterUnitCategory = () =>
+        String(selectedCharterFilterUnit()?.category ?? '').trim();
 
-    const sameArmadaCategory = (left: string | null | undefined, right: string | null | undefined) => {
-        return String(left ?? '').trim().toLowerCase() === String(right ?? '').trim().toLowerCase();
+    const sameArmadaCategory = (
+        left: string | null | undefined,
+        right: string | null | undefined,
+    ) => {
+        return (
+            String(left ?? '')
+                .trim()
+                .toLowerCase() ===
+            String(right ?? '')
+                .trim()
+                .toLowerCase()
+        );
     };
 
     const syncCharterArmadaLookupsFromForm = () => {
@@ -1066,7 +1440,9 @@ return 'Selesai';
         charterFilterArmadaLookupOpen = false;
         charterFilterUnitSearch = charterUnitLabel(selectedCharterFilterUnit());
 
-        const selectedArmada = charterFilterArmadas.find((armada) => armada.id === Number(charterFilterArmadaId || 0));
+        const selectedArmada = charterFilterArmadas.find(
+            (armada) => armada.id === Number(charterFilterArmadaId || 0),
+        );
         charterFilterArmadaSearch = selectedArmada?.nopol ?? '';
     };
 
@@ -1158,7 +1534,10 @@ return 'Selesai';
 
         try {
             const suffix = params.toString();
-            const r = await api('GET', `/api/master/armadas${suffix ? `?${suffix}` : ''}`);
+            const r = await api(
+                'GET',
+                `/api/master/armadas${suffix ? `?${suffix}` : ''}`,
+            );
             armadas = (r.armadas ?? []) as Armada[];
         } catch {
             armadas = [];
@@ -1184,7 +1563,10 @@ return 'Selesai';
 
         try {
             const suffix = params.toString();
-            const r = await api('GET', `/api/master/armadas${suffix ? `?${suffix}` : ''}`);
+            const r = await api(
+                'GET',
+                `/api/master/armadas${suffix ? `?${suffix}` : ''}`,
+            );
             charterFilterArmadas = (r.armadas ?? []) as Armada[];
         } catch {
             charterFilterArmadas = [];
@@ -1239,10 +1621,10 @@ return 'Selesai';
         const currentArmada = selectedCharterArmada();
 
         if (
-            currentArmada
-            && String(currentArmada.kategori ?? '').trim() !== ''
-            && String(unit.category ?? '').trim() !== ''
-            && !sameArmadaCategory(currentArmada.kategori, unit.category)
+            currentArmada &&
+            String(currentArmada.kategori ?? '').trim() !== '' &&
+            String(unit.category ?? '').trim() !== '' &&
+            !sameArmadaCategory(currentArmada.kategori, unit.category)
         ) {
             charterForm.armada_id = 0;
             charterForm.armada_nopol = '';
@@ -1269,13 +1651,15 @@ return 'Selesai';
         charterFilterUnitSearch = charterUnitLabel(unit);
         charterFilterUnitLookupOpen = false;
 
-        const selectedArmada = charterFilterArmadas.find((armada) => armada.id === Number(charterFilterArmadaId || 0));
+        const selectedArmada = charterFilterArmadas.find(
+            (armada) => armada.id === Number(charterFilterArmadaId || 0),
+        );
 
         if (
-            selectedArmada
-            && String(selectedArmada.kategori ?? '').trim() !== ''
-            && String(unit.category ?? '').trim() !== ''
-            && !sameArmadaCategory(selectedArmada.kategori, unit.category)
+            selectedArmada &&
+            String(selectedArmada.kategori ?? '').trim() !== '' &&
+            String(unit.category ?? '').trim() !== '' &&
+            !sameArmadaCategory(selectedArmada.kategori, unit.category)
         ) {
             charterFilterArmadaId = 0;
             charterFilterArmadaSearch = '';
@@ -1343,7 +1727,12 @@ return 'Selesai';
                 return;
             }
 
-            const exact = drivers.find((driver) => String(driver.nama ?? '').trim().toLowerCase() === typed.toLowerCase());
+            const exact = drivers.find(
+                (driver) =>
+                    String(driver.nama ?? '')
+                        .trim()
+                        .toLowerCase() === typed.toLowerCase(),
+            );
 
             if (exact) {
                 charterForm.driver_name = exact.nama;
@@ -1359,7 +1748,9 @@ return 'Selesai';
     const onCharterFilterUnitBlur = () => {
         setTimeout(() => {
             charterFilterUnitLookupOpen = false;
-            charterFilterUnitSearch = charterUnitLabel(selectedCharterFilterUnit());
+            charterFilterUnitSearch = charterUnitLabel(
+                selectedCharterFilterUnit(),
+            );
         }, 120);
     };
 
@@ -1367,26 +1758,46 @@ return 'Selesai';
         setTimeout(() => {
             charterFilterArmadaLookupOpen = false;
 
-            const selectedArmada = charterFilterArmadas.find((armada) => armada.id === Number(charterFilterArmadaId || 0));
+            const selectedArmada = charterFilterArmadas.find(
+                (armada) => armada.id === Number(charterFilterArmadaId || 0),
+            );
             charterFilterArmadaSearch = selectedArmada?.nopol ?? '';
         }, 120);
     };
 
     const charterCanceledCount = () =>
-        charters.filter((row) => String(row.status ?? 'active').toLowerCase() === 'canceled').length;
+        charters.filter(
+            (row) =>
+                String(row.status ?? 'active').toLowerCase() === 'canceled',
+        ).length;
 
-    const charterActiveCount = () => Math.max(charters.length - charterCanceledCount(), 0);
+    const charterActiveCount = () =>
+        Math.max(charters.length - charterCanceledCount(), 0);
 
-    const charterIsDone = (status: string | null | undefined) => String(status ?? 'active').toLowerCase() === 'done';
+    const charterIsDone = (status: string | null | undefined) =>
+        String(status ?? 'active').toLowerCase() === 'done';
 
-    const charterIsCanceled = (status: string | null | undefined) => String(status ?? 'active').toLowerCase() === 'canceled';
+    const charterIsCanceled = (status: string | null | undefined) =>
+        String(status ?? 'active').toLowerCase() === 'canceled';
 
-    const charterCanEdit = (row: Charter | null | undefined) => canCharterUpdate && !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status);
+    const charterCanEdit = (row: Charter | null | undefined) =>
+        canCharterUpdate &&
+        !!row &&
+        !charterIsCanceled(row.status) &&
+        !charterIsDone(row.status);
 
-    const charterCanCancel = (row: Charter | null | undefined) => canCharterDelete && !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status);
+    const charterCanCancel = (row: Charter | null | undefined) =>
+        canCharterDelete &&
+        !!row &&
+        !charterIsCanceled(row.status) &&
+        !charterIsDone(row.status);
 
     const charterCanMarkDone = (row: Charter | null | undefined) =>
-        canCharterUpdate && !!row && !charterIsCanceled(row.status) && !charterIsDone(row.status) && isPaymentLunas(row.payment_status);
+        canCharterUpdate &&
+        !!row &&
+        !charterIsCanceled(row.status) &&
+        !charterIsDone(row.status) &&
+        isPaymentLunas(row.payment_status);
 
     const charterMarkDoneHint = (row: Charter | null | undefined) => {
         if (!row) {
@@ -1420,29 +1831,34 @@ return 'Selesai';
     };
 
     const normalizeLuggageStatus = (status: string | null | undefined) => {
-        const normalized = String(status ?? '').trim().toLowerCase();
+        const normalized = String(status ?? '')
+            .trim()
+            .toLowerCase();
 
         if (
-            normalized === ''
-            || normalized === 'pending'
-            || normalized === 'done'
-            || normalized === 'diterima'
-            || normalized === 'barang sudah diterima'
-            || normalized === luggageReceivedStatus.toLowerCase()
+            normalized === '' ||
+            normalized === 'pending' ||
+            normalized === 'done' ||
+            normalized === 'diterima' ||
+            normalized === 'barang sudah diterima' ||
+            normalized === luggageReceivedStatus.toLowerCase()
         ) {
             return luggageReceivedStatus;
         }
 
         if (
-            normalized === 'active'
-            || normalized === 'sent'
-            || normalized === 'barang sudah dipickup'
-            || normalized === luggagePickedUpStatus.toLowerCase()
+            normalized === 'active' ||
+            normalized === 'sent' ||
+            normalized === 'barang sudah dipickup' ||
+            normalized === luggagePickedUpStatus.toLowerCase()
         ) {
             return luggagePickedUpStatus;
         }
 
-        if (normalized === 'barang sudah tiba' || normalized === luggageArrivedStatus.toLowerCase()) {
+        if (
+            normalized === 'barang sudah tiba' ||
+            normalized === luggageArrivedStatus.toLowerCase()
+        ) {
             return luggageArrivedStatus;
         }
 
@@ -1490,10 +1906,17 @@ return 'Selesai';
     const luggageDepartureInfo = (row: Luggage) => {
         const normalizedStatus = normalizeLuggageStatus(row.status);
         const departureDate = String(row.departure_date ?? '').trim();
-        const departureTime = String(row.departure_time ?? '').trim().slice(0, 5);
+        const departureTime = String(row.departure_time ?? '')
+            .trim()
+            .slice(0, 5);
         const departureUnit = Number(row.departure_unit ?? 0);
 
-        if (![luggagePickedUpStatus, luggageArrivedStatus].includes(normalizedStatus) || departureDate === '') {
+        if (
+            ![luggagePickedUpStatus, luggageArrivedStatus].includes(
+                normalizedStatus,
+            ) ||
+            departureDate === ''
+        ) {
             return null;
         }
 
@@ -1505,7 +1928,10 @@ return 'Selesai';
             .filter(Boolean)
             .join(' • ');
 
-        const secondary = [String(row.departure_driver_name ?? '').trim(), String(row.departure_armada_nopol ?? '').trim()]
+        const secondary = [
+            String(row.departure_driver_name ?? '').trim(),
+            String(row.departure_armada_nopol ?? '').trim(),
+        ]
             .filter(Boolean)
             .join(' • ');
 
@@ -1517,14 +1943,18 @@ return 'Selesai';
 
     const toCharterFormFromRow = (row: Charter) => ({
         id: row.id,
-        pool_id: row.pool_id ?? poolIdForCharterLabels(row.pickup_point, row.drop_point),
+        pool_id:
+            row.pool_id ??
+            poolIdForCharterLabels(row.pickup_point, row.drop_point),
         master_carter_id: row.master_carter_id ?? 0,
         name: row.name,
         company_name: row.company_name ?? '',
         phone: row.phone ?? '',
         start_date: row.start_date,
         end_date: row.end_date,
-        departure_time: row.departure_time ? String(row.departure_time).slice(0, 5) : '08:00',
+        departure_time: row.departure_time
+            ? String(row.departure_time).slice(0, 5)
+            : '08:00',
         pickup_point: row.pickup_point ?? '',
         drop_point: row.drop_point ?? '',
         unit_id: row.unit_id ?? 0,
@@ -1536,7 +1966,9 @@ return 'Selesai';
         bop_price: Number(row.bop_price ?? 0),
         bop_status: row.bop_status ?? 'pending',
         down_payment: Number(row.down_payment ?? 0),
-        payment_status: charterPaymentStatusOptions.includes(String(row.payment_status ?? ''))
+        payment_status: charterPaymentStatusOptions.includes(
+            String(row.payment_status ?? ''),
+        )
             ? String(row.payment_status)
             : 'Belum Lunas',
     });
@@ -1588,7 +2020,10 @@ return 'Selesai';
         resetLuggageFormState();
         luggageForm = {
             id: row.id,
-            pool_id: row.pool_id ?? poolForRouteId(row.rute_id)?.id ?? defaultPoolId(),
+            pool_id:
+                row.pool_id ??
+                poolForRouteId(row.rute_id)?.id ??
+                defaultPoolId(),
             sender_name: row.sender_name ?? '',
             sender_phone: row.sender_phone ?? '',
             sender_address: row.sender_address ?? '',
@@ -1607,9 +2042,13 @@ return 'Selesai';
         setFormMode('form');
     };
 
-    const bagasiCustomerLabel = (customer: BagasiCustomer) => `${String(customer.nama ?? '').trim()} · ${String(customer.no_hp ?? '').trim()}`;
+    const bagasiCustomerLabel = (customer: BagasiCustomer) =>
+        `${String(customer.nama ?? '').trim()} · ${String(customer.no_hp ?? '').trim()}`;
 
-    const applyLuggageCustomer = (customer: BagasiCustomer, role: 'sender' | 'receiver') => {
+    const applyLuggageCustomer = (
+        customer: BagasiCustomer,
+        role: 'sender' | 'receiver',
+    ) => {
         if (role === 'sender') {
             luggageForm.sender_name = customer.nama ?? '';
             luggageForm.sender_phone = customer.no_hp ?? '';
@@ -1627,12 +2066,17 @@ return 'Selesai';
         luggageReceiverLookupResults = [];
     };
 
-    const findExactBagasiCustomer = (keyword: string, customers: BagasiCustomer[]) => {
+    const findExactBagasiCustomer = (
+        keyword: string,
+        customers: BagasiCustomer[],
+    ) => {
         const text = normalizeLookupText(keyword);
         const phone = normalizeLookupPhone(keyword);
 
         if (phone.length >= 5) {
-            const phoneMatch = customers.find((customer) => normalizeLookupPhone(customer.no_hp) === phone);
+            const phoneMatch = customers.find(
+                (customer) => normalizeLookupPhone(customer.no_hp) === phone,
+            );
 
             if (phoneMatch) {
                 return phoneMatch;
@@ -1640,7 +2084,11 @@ return 'Selesai';
         }
 
         if (text.length >= 3) {
-            return customers.find((customer) => normalizeLookupText(customer.nama) === text) ?? null;
+            return (
+                customers.find(
+                    (customer) => normalizeLookupText(customer.nama) === text,
+                ) ?? null
+            );
         }
 
         return null;
@@ -1656,7 +2104,10 @@ return 'Selesai';
         luggageReceiverLookupOpen = false;
     };
 
-    const searchLuggageCustomers = async (keywordRaw: string, role: 'sender' | 'receiver') => {
+    const searchLuggageCustomers = async (
+        keywordRaw: string,
+        role: 'sender' | 'receiver',
+    ) => {
         const keyword = keywordRaw.trim();
         const minLength = 2;
 
@@ -1683,7 +2134,10 @@ return 'Selesai';
         }
 
         try {
-            const r = await api('GET', `/api/admin/customer-bagasi?q=${encodeURIComponent(keyword)}&page=1&per_page=8`);
+            const r = await api(
+                'GET',
+                `/api/admin/customer-bagasi?q=${encodeURIComponent(keyword)}&page=1&per_page=8`,
+            );
             const customers = (r.customers ?? []) as BagasiCustomer[];
             const exactCustomer = findExactBagasiCustomer(keyword, customers);
 
@@ -1717,7 +2171,10 @@ return 'Selesai';
         }
     };
 
-    const onLuggageCustomerInput = (value: string, role: 'sender' | 'receiver') => {
+    const onLuggageCustomerInput = (
+        value: string,
+        role: 'sender' | 'receiver',
+    ) => {
         if (role === 'sender') {
             luggageForm.sender_name = value;
 
@@ -1746,7 +2203,10 @@ return 'Selesai';
     };
 
     const onLuggageCustomerFocus = (role: 'sender' | 'receiver') => {
-        const currentValue = role === 'sender' ? luggageForm.sender_name : luggageForm.receiver_name;
+        const currentValue =
+            role === 'sender'
+                ? luggageForm.sender_name
+                : luggageForm.receiver_name;
 
         if (currentValue.trim().length >= 2) {
             void searchLuggageCustomers(currentValue, role);
@@ -1779,12 +2239,17 @@ return 'Selesai';
     const normalizeLookupPhone = (value: string | null | undefined) =>
         (value ?? '').replace(/\D+/g, '');
 
-    const findExactCharterCustomer = (keyword: string, customers: CharterCustomer[]) => {
+    const findExactCharterCustomer = (
+        keyword: string,
+        customers: CharterCustomer[],
+    ) => {
         const text = normalizeLookupText(keyword);
         const phone = normalizeLookupPhone(keyword);
 
         if (phone.length >= 5) {
-            const phoneMatch = customers.find((customer) => normalizeLookupPhone(customer.no_hp) === phone);
+            const phoneMatch = customers.find(
+                (customer) => normalizeLookupPhone(customer.no_hp) === phone,
+            );
 
             if (phoneMatch) {
                 return phoneMatch;
@@ -1792,7 +2257,11 @@ return 'Selesai';
         }
 
         if (text.length >= 3) {
-            return customers.find((customer) => normalizeLookupText(customer.nama) === text) ?? null;
+            return (
+                customers.find(
+                    (customer) => normalizeLookupText(customer.nama) === text,
+                ) ?? null
+            );
         }
 
         return null;
@@ -1821,23 +2290,28 @@ return 'Selesai';
             route.duration,
             `Harga ${formatCurrencyId(route.rental_price ?? 0)}`,
             `BOP ${formatCurrencyId(route.bop_price ?? 0)}`,
-        ].filter(Boolean).join(' | ');
+        ]
+            .filter(Boolean)
+            .join(' | ');
     };
 
     const filteredCharterRoutes = () => {
         const keyword = normalizeLookupText(charterRouteSearch);
-        const source = keyword === ''
-            ? charterRoutes
-            : charterRoutes.filter((route) => {
-                const haystack = [
-                    route.name,
-                    route.origin,
-                    route.destination,
-                    route.duration,
-                ].map((value) => normalizeLookupText(value)).join(' ');
+        const source =
+            keyword === ''
+                ? charterRoutes
+                : charterRoutes.filter((route) => {
+                      const haystack = [
+                          route.name,
+                          route.origin,
+                          route.destination,
+                          route.duration,
+                      ]
+                          .map((value) => normalizeLookupText(value))
+                          .join(' ');
 
-                return haystack.includes(keyword);
-            });
+                      return haystack.includes(keyword);
+                  });
 
         return source.slice(0, 12);
     };
@@ -1846,17 +2320,22 @@ return 'Selesai';
         const origin = normalizeLookupText(charterForm.pickup_point);
         const destination = normalizeLookupText(charterForm.drop_point);
 
-        const exactRoute = charterRoutes.find((route) =>
-            origin !== ''
-            && destination !== ''
-            && normalizeLookupText(route.origin) === origin
-            && normalizeLookupText(route.destination) === destination
+        const exactRoute = charterRoutes.find(
+            (route) =>
+                origin !== '' &&
+                destination !== '' &&
+                normalizeLookupText(route.origin) === origin &&
+                normalizeLookupText(route.destination) === destination,
         );
 
         charterRouteSearch = exactRoute
             ? charterRouteLabel(exactRoute)
-            : [charterForm.pickup_point, charterForm.drop_point].filter(Boolean).join(' - ');
-        charterForm.master_carter_id = exactRoute ? exactRoute.id : Number(charterForm.master_carter_id || 0);
+            : [charterForm.pickup_point, charterForm.drop_point]
+                  .filter(Boolean)
+                  .join(' - ');
+        charterForm.master_carter_id = exactRoute
+            ? exactRoute.id
+            : Number(charterForm.master_carter_id || 0);
     };
 
     const selectCharterRoute = (route: CharterRoute) => {
@@ -1900,7 +2379,10 @@ return 'Selesai';
         charterCustomerBusy = true;
 
         try {
-            const r = await api('GET', `/api/admin/customer-charter?q=${encodeURIComponent(keyword)}&page=1&per_page=8`);
+            const r = await api(
+                'GET',
+                `/api/admin/customer-charter?q=${encodeURIComponent(keyword)}&page=1&per_page=8`,
+            );
             const customers = (r.customers ?? []) as CharterCustomer[];
             const exactCustomer = findExactCharterCustomer(keyword, customers);
 
@@ -2048,7 +2530,10 @@ return 'Selesai';
     };
 
     const loadCharters = async (page = 1) => {
-        const r = await api('GET', `/api/admin/charters?${charterQueryString(page)}`);
+        const r = await api(
+            'GET',
+            `/api/admin/charters?${charterQueryString(page)}`,
+        );
         charters = r.charters ?? [];
         charterMeta = r.pagination ?? charterMeta;
     };
@@ -2068,7 +2553,8 @@ return 'Selesai';
             charterViewData = (r.charter ?? null) as Charter | null;
             charterViewId = id;
         } catch (e) {
-            error = e instanceof Error ? e.message : 'Gagal memuat detail charter.';
+            error =
+                e instanceof Error ? e.message : 'Gagal memuat detail charter.';
             charterViewData = null;
             charterViewId = null;
             activeMode = 'data';
@@ -2079,8 +2565,8 @@ return 'Selesai';
 
     const openCharterView = async (id: number) => {
         if (id <= 0) {
-return;
-}
+            return;
+        }
 
         activeMode = 'view';
         await loadCharterView(id);
@@ -2118,18 +2604,24 @@ return;
     };
 
     const loadLuggages = async (page = 1) => {
-        const r = await api('GET', `/api/admin/luggages?${luggageQueryString(page)}`);
+        const r = await api(
+            'GET',
+            `/api/admin/luggages?${luggageQueryString(page)}`,
+        );
         luggages = Array.isArray(r.luggages)
             ? r.luggages.map((row: Luggage) => ({
-                ...row,
-                status: normalizeLuggageStatus(row.status),
-            }))
+                  ...row,
+                  status: normalizeLuggageStatus(row.status),
+              }))
             : [];
         luggageMeta = r.pagination ?? luggageMeta;
     };
 
     const loadAssignments = async (page = 1) => {
-        const r = await api('GET', `/api/admin/assignments?${queryString(page)}`);
+        const r = await api(
+            'GET',
+            `/api/admin/assignments?${queryString(page)}`,
+        );
         assignments = r.assignments ?? [];
         assignmentMeta = r.pagination ?? assignmentMeta;
         selectedAssignmentIds = [];
@@ -2141,16 +2633,16 @@ return;
 
         try {
             if (activeTab === 'charters') {
-await loadCharters(charterMeta.page);
-}
+                await loadCharters(charterMeta.page);
+            }
 
             if (activeTab === 'luggages') {
-await loadLuggages(luggageMeta.page);
-}
+                await loadLuggages(luggageMeta.page);
+            }
 
             if (activeTab === 'assignments') {
-await loadAssignments(assignmentMeta.page);
-}
+                await loadAssignments(assignmentMeta.page);
+            }
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat data tab.';
         } finally {
@@ -2226,7 +2718,10 @@ await loadAssignments(assignmentMeta.page);
     };
 
     const selectAllAssignments = () => {
-        selectedAssignmentIds = selectedAssignmentIds.length === assignments.length ? [] : assignments.map((row) => row.id);
+        selectedAssignmentIds =
+            selectedAssignmentIds.length === assignments.length
+                ? []
+                : assignments.map((row) => row.id);
     };
 
     const saveCharter = async (event: SubmitEvent) => {
@@ -2236,35 +2731,46 @@ await loadAssignments(assignmentMeta.page);
         savingCharter = true;
 
         try {
-            await runWithFeedback(async () => {
-                await api('POST', '/api/admin/charters', {
-                    id: charterForm.id || undefined,
-                    pool_id: Number(charterForm.pool_id || 0) || undefined,
-                    master_carter_id: Number(charterForm.master_carter_id || 0) || undefined,
-                    name: charterForm.name,
-                    company_name: charterForm.company_name,
-                    phone: charterForm.phone,
-                    start_date: charterForm.start_date,
-                    end_date: charterForm.end_date,
-                    departure_time: charterForm.departure_time,
-                    pickup_point: charterForm.pickup_point,
-                    drop_point: charterForm.drop_point,
-                    unit_id: charterForm.unit_id || undefined,
-                    armada_id: charterForm.armada_id || undefined,
-                    armada_nopol: charterForm.armada_nopol || undefined,
-                    driver_name: charterForm.driver_name,
-                    price: parseCurrencyInput(charterForm.price),
-                    layanan: charterForm.layanan,
-                    bop_price: parseCurrencyInput(charterForm.bop_price),
-                    bop_status: charterForm.bop_status,
-                    down_payment: parseCurrencyInput(charterForm.down_payment),
-                    payment_status: charterForm.payment_status,
-                });
-            }, {
-                loadingMessage: charterForm.id ? 'Memperbarui data charter...' : 'Menyimpan data charter...',
-                successMessage: charterForm.id ? 'Charter berhasil diperbarui.' : 'Charter berhasil disimpan.',
-                errorMessage: 'Gagal simpan charter.',
-            });
+            await runWithFeedback(
+                async () => {
+                    await api('POST', '/api/admin/charters', {
+                        id: charterForm.id || undefined,
+                        pool_id: Number(charterForm.pool_id || 0) || undefined,
+                        master_carter_id:
+                            Number(charterForm.master_carter_id || 0) ||
+                            undefined,
+                        name: charterForm.name,
+                        company_name: charterForm.company_name,
+                        phone: charterForm.phone,
+                        start_date: charterForm.start_date,
+                        end_date: charterForm.end_date,
+                        departure_time: charterForm.departure_time,
+                        pickup_point: charterForm.pickup_point,
+                        drop_point: charterForm.drop_point,
+                        unit_id: charterForm.unit_id || undefined,
+                        armada_id: charterForm.armada_id || undefined,
+                        armada_nopol: charterForm.armada_nopol || undefined,
+                        driver_name: charterForm.driver_name,
+                        price: parseCurrencyInput(charterForm.price),
+                        layanan: charterForm.layanan,
+                        bop_price: parseCurrencyInput(charterForm.bop_price),
+                        bop_status: charterForm.bop_status,
+                        down_payment: parseCurrencyInput(
+                            charterForm.down_payment,
+                        ),
+                        payment_status: charterForm.payment_status,
+                    });
+                },
+                {
+                    loadingMessage: charterForm.id
+                        ? 'Memperbarui data charter...'
+                        : 'Menyimpan data charter...',
+                    successMessage: charterForm.id
+                        ? 'Charter berhasil diperbarui.'
+                        : 'Charter berhasil disimpan.',
+                    errorMessage: 'Gagal simpan charter.',
+                },
+            );
             message = charterForm.id ? 'Charter updated.' : 'Charter created.';
             resetCharterFormState();
             setFormMode('data');
@@ -2283,31 +2789,42 @@ await loadAssignments(assignmentMeta.page);
         savingLuggage = true;
 
         try {
-            await runWithFeedback(async () => {
-                await api('POST', '/api/admin/luggages', {
-                    id: luggageForm.id || undefined,
-                    pool_id: Number(luggageForm.pool_id || 0) || undefined,
-                    sender_name: luggageForm.sender_name,
-                    sender_phone: luggageForm.sender_phone,
-                    sender_address: luggageForm.sender_address,
-                    receiver_name: luggageForm.receiver_name,
-                    receiver_phone: luggageForm.receiver_phone,
-                    receiver_address: luggageForm.receiver_address,
-                    service_id: Number(luggageForm.service_id || 0) || undefined,
-                    layanan_id: Number(luggageForm.service_id || 0) || undefined,
-                    rute_id: Number(luggageForm.rute_id || 0) || undefined,
-                    tanggal: luggageForm.tanggal,
-                    quantity: Number(luggageForm.quantity || 1),
-                    notes: luggageForm.notes,
-                    price: parseCurrencyInput(luggageForm.price),
-                    status: luggageForm.id ? luggageForm.status : luggageReceivedStatus,
-                    payment_status: luggageForm.payment_status,
-                });
-            }, {
-                loadingMessage: luggageForm.id ? 'Memperbarui data bagasi...' : 'Menyimpan data bagasi baru...',
-                successMessage: luggageForm.id ? 'Data bagasi berhasil diperbarui.' : 'Data bagasi berhasil disimpan.',
-                errorMessage: 'Gagal simpan luggage.',
-            });
+            await runWithFeedback(
+                async () => {
+                    await api('POST', '/api/admin/luggages', {
+                        id: luggageForm.id || undefined,
+                        pool_id: Number(luggageForm.pool_id || 0) || undefined,
+                        sender_name: luggageForm.sender_name,
+                        sender_phone: luggageForm.sender_phone,
+                        sender_address: luggageForm.sender_address,
+                        receiver_name: luggageForm.receiver_name,
+                        receiver_phone: luggageForm.receiver_phone,
+                        receiver_address: luggageForm.receiver_address,
+                        service_id:
+                            Number(luggageForm.service_id || 0) || undefined,
+                        layanan_id:
+                            Number(luggageForm.service_id || 0) || undefined,
+                        rute_id: Number(luggageForm.rute_id || 0) || undefined,
+                        tanggal: luggageForm.tanggal,
+                        quantity: Number(luggageForm.quantity || 1),
+                        notes: luggageForm.notes,
+                        price: parseCurrencyInput(luggageForm.price),
+                        status: luggageForm.id
+                            ? luggageForm.status
+                            : luggageReceivedStatus,
+                        payment_status: luggageForm.payment_status,
+                    });
+                },
+                {
+                    loadingMessage: luggageForm.id
+                        ? 'Memperbarui data bagasi...'
+                        : 'Menyimpan data bagasi baru...',
+                    successMessage: luggageForm.id
+                        ? 'Data bagasi berhasil diperbarui.'
+                        : 'Data bagasi berhasil disimpan.',
+                    errorMessage: 'Gagal simpan luggage.',
+                },
+            );
             message = luggageForm.id ? 'Luggage updated.' : 'Luggage created.';
             resetLuggageFormState();
             setFormMode('data');
@@ -2329,28 +2846,45 @@ await loadAssignments(assignmentMeta.page);
             const conflicts = await checkAssignmentConflicts();
 
             if (conflicts.length > 0 && !assignmentAllowConflict) {
-                error = 'Jadwal bentrok. Cek daftar konflik di bawah form atau aktifkan override.';
+                error =
+                    'Jadwal bentrok. Cek daftar konflik di bawah form atau aktifkan override.';
 
                 return;
             }
 
-            await runWithFeedback(async () => {
-                await api('POST', '/api/admin/assignments', {
-                    id: assignmentForm.id || undefined,
-                    rute: assignmentForm.rute,
-                    tanggal: assignmentForm.tanggal,
-                    jam: assignmentForm.jam,
-                    unit: Number(assignmentForm.unit),
-                    driver_id: Number(assignmentForm.driver_id),
-                    allow_conflict: assignmentAllowConflict,
-                });
-            }, {
-                loadingMessage: assignmentForm.id ? 'Memperbarui assignment driver...' : 'Menyimpan assignment driver...',
-                successMessage: assignmentForm.id ? 'Assignment driver berhasil diperbarui.' : 'Assignment driver berhasil dibuat.',
-                errorMessage: 'Gagal simpan assignment.',
-            });
-            message = assignmentForm.id ? 'Assignment updated.' : 'Assignment created.';
-            assignmentForm = { id: 0, rute: '', tanggal: today, jam: '08:00', unit: 1, driver_id: 0 };
+            await runWithFeedback(
+                async () => {
+                    await api('POST', '/api/admin/assignments', {
+                        id: assignmentForm.id || undefined,
+                        rute: assignmentForm.rute,
+                        tanggal: assignmentForm.tanggal,
+                        jam: assignmentForm.jam,
+                        unit: Number(assignmentForm.unit),
+                        driver_id: Number(assignmentForm.driver_id),
+                        allow_conflict: assignmentAllowConflict,
+                    });
+                },
+                {
+                    loadingMessage: assignmentForm.id
+                        ? 'Memperbarui assignment driver...'
+                        : 'Menyimpan assignment driver...',
+                    successMessage: assignmentForm.id
+                        ? 'Assignment driver berhasil diperbarui.'
+                        : 'Assignment driver berhasil dibuat.',
+                    errorMessage: 'Gagal simpan assignment.',
+                },
+            );
+            message = assignmentForm.id
+                ? 'Assignment updated.'
+                : 'Assignment created.';
+            assignmentForm = {
+                id: 0,
+                rute: '',
+                tanggal: today,
+                jam: '08:00',
+                unit: 1,
+                driver_id: 0,
+            };
             assignmentConflicts = [];
             assignmentAllowConflict = false;
             await reloadActiveFlowList(assignmentMeta.page);
@@ -2361,7 +2895,9 @@ await loadAssignments(assignmentMeta.page);
         }
     };
 
-    const checkAssignmentConflicts = async (): Promise<AssignmentConflict[]> => {
+    const checkAssignmentConflicts = async (): Promise<
+        AssignmentConflict[]
+    > => {
         assignmentConflictBusy = true;
 
         try {
@@ -2405,9 +2941,11 @@ await loadAssignments(assignmentMeta.page);
                     await api('DELETE', url);
                 },
                 {
-                    loadingMessage: options.loadingMessage ?? 'Menghapus data...',
+                    loadingMessage:
+                        options.loadingMessage ?? 'Menghapus data...',
                     successMessage: okMessage,
-                    errorMessage: options.errorMessage ?? 'Gagal menghapus data.',
+                    errorMessage:
+                        options.errorMessage ?? 'Gagal menghapus data.',
                 },
             );
 
@@ -2448,30 +2986,43 @@ await loadAssignments(assignmentMeta.page);
         error = '';
 
         try {
-            await runWithFeedback(async () => {
-                await api('POST', `/api/admin/charters/${row.id}/mark-done`);
-            }, {
-                loadingMessage: `Menyelesaikan charter #${row.id}...`,
-                successMessage: `Charter #${row.id} ditandai selesai.`,
-                errorMessage: 'Gagal menandai charter selesai.',
-            });
+            await runWithFeedback(
+                async () => {
+                    await api(
+                        'POST',
+                        `/api/admin/charters/${row.id}/mark-done`,
+                    );
+                },
+                {
+                    loadingMessage: `Menyelesaikan charter #${row.id}...`,
+                    successMessage: `Charter #${row.id} ditandai selesai.`,
+                    errorMessage: 'Gagal menandai charter selesai.',
+                },
+            );
 
             message = `Charter #${row.id} ditandai selesai.`;
 
-            if (activeTab === 'charters' && activeMode === 'view' && charterViewId === row.id) {
+            if (
+                activeTab === 'charters' &&
+                activeMode === 'view' &&
+                charterViewId === row.id
+            ) {
                 charterScope = 'history';
                 await loadCharterView(row.id);
             }
 
             await reloadActiveFlowList(charterMeta.page);
         } catch (e) {
-            error = e instanceof Error ? e.message : 'Gagal menandai charter selesai.';
+            error =
+                e instanceof Error
+                    ? e.message
+                    : 'Gagal menandai charter selesai.';
         }
     };
 
     const setCharterScope = async (scope: CharterScope) => {
         if (charterScope === scope) {
-return;
+            return;
         }
 
         charterScope = scope;
@@ -2484,7 +3035,10 @@ return;
         await loadCharters(1);
     };
 
-    const luggageAction = async (row: Luggage, action: 'paid' | 'active' | 'done' | 'canceled') => {
+    const luggageAction = async (
+        row: Luggage,
+        action: 'paid' | 'active' | 'done' | 'canceled',
+    ) => {
         const actionMap = {
             paid: '/mark-paid',
             active: '/mark-active',
@@ -2496,17 +3050,26 @@ return;
         error = '';
 
         try {
-            await runWithFeedback(async () => {
-                await api('POST', `/api/admin/luggages/${row.id}${actionMap[action]}`);
-                await reloadActiveFlowList(luggageMeta.page);
-            }, {
-                loadingMessage: `Memproses aksi ${action} untuk bagasi #${row.id}...`,
-                successMessage: `Bagasi #${row.id} berhasil diperbarui.`,
-                errorMessage: 'Gagal memperbarui data bagasi.',
-            });
+            await runWithFeedback(
+                async () => {
+                    await api(
+                        'POST',
+                        `/api/admin/luggages/${row.id}${actionMap[action]}`,
+                    );
+                    await reloadActiveFlowList(luggageMeta.page);
+                },
+                {
+                    loadingMessage: `Memproses aksi ${action} untuk bagasi #${row.id}...`,
+                    successMessage: `Bagasi #${row.id} berhasil diperbarui.`,
+                    errorMessage: 'Gagal memperbarui data bagasi.',
+                },
+            );
             message = `Luggage #${row.id} updated (${action}).`;
         } catch (e) {
-            error = e instanceof Error ? e.message : 'Gagal memperbarui data bagasi.';
+            error =
+                e instanceof Error
+                    ? e.message
+                    : 'Gagal memperbarui data bagasi.';
         } finally {
             pendingLuggageActionKey = '';
         }
@@ -2514,10 +3077,14 @@ return;
 
     const openLuggagePrint = (id: number) => {
         if (id <= 0) {
-return;
-}
+            return;
+        }
 
-        window.open(`/luggages/${id}/print?auto_print=1`, '_blank', 'noopener,noreferrer');
+        window.open(
+            `/luggages/${id}/print?auto_print=1`,
+            '_blank',
+            'noopener,noreferrer',
+        );
     };
 
     const copyText = async (text: string) => {
@@ -2553,7 +3120,9 @@ return;
         const schedule = [
             row.start_date || '-',
             row.end_date || '-',
-            row.departure_time ? String(row.departure_time).slice(0, 5) : '--:--',
+            row.departure_time
+                ? String(row.departure_time).slice(0, 5)
+                : '--:--',
         ].join(' • ');
         const totalPrice = formatCurrencyId(row.price ?? 0);
 
@@ -2588,23 +3157,32 @@ return;
 
     const openCharterInvoice = (id: number) => {
         if (id <= 0) {
-return;
-}
+            return;
+        }
 
-        window.open(`/charters/${id}/invoice/print?auto_print=1`, '_blank', 'noopener,noreferrer');
+        window.open(
+            `/charters/${id}/invoice/print?auto_print=1`,
+            '_blank',
+            'noopener,noreferrer',
+        );
     };
 
     const bulkDeleteAssignments = async () => {
         if (selectedAssignmentIds.length === 0) {
-return;
-}
+            return;
+        }
 
-        await api('POST', '/api/admin/assignments/bulk-delete', { ids: selectedAssignmentIds });
+        await api('POST', '/api/admin/assignments/bulk-delete', {
+            ids: selectedAssignmentIds,
+        });
         message = `Deleted ${selectedAssignmentIds.length} assignment(s).`;
         await reloadActiveFlowList(assignmentMeta.page);
     };
 
-    const jumpPage = async (target: number, type: 'charter' | 'luggage' | 'assignment') => {
+    const jumpPage = async (
+        target: number,
+        type: 'charter' | 'luggage' | 'assignment',
+    ) => {
         if (
             (type === 'charter' || type === 'luggage') &&
             reloadFlowDataWithInertia(target)
@@ -2613,44 +3191,46 @@ return;
         }
 
         if (type === 'charter') {
-await loadCharters(target);
-}
+            await loadCharters(target);
+        }
 
         if (type === 'luggage') {
-await loadLuggages(target);
-}
+            await loadLuggages(target);
+        }
 
         if (type === 'assignment') {
-await loadAssignments(target);
-}
+            await loadAssignments(target);
+        }
     };
 
     const exportCsvUrl = () => {
         const params = new URLSearchParams();
 
         if (filterFrom.trim() !== '') {
-params.set('from', filterFrom);
-}
+            params.set('from', filterFrom);
+        }
 
         if (filterTo.trim() !== '') {
-params.set('to', filterTo);
-}
+            params.set('to', filterTo);
+        }
 
         const query = params.toString();
 
-        return query !== '' ? `/api/admin/reports/bookings-csv?${query}` : '/api/admin/reports/bookings-csv';
+        return query !== ''
+            ? `/api/admin/reports/bookings-csv?${query}`
+            : '/api/admin/reports/bookings-csv';
     };
 
     const exportRevenueCsvUrl = () => {
         const params = new URLSearchParams();
 
         if (filterFrom.trim() !== '') {
-params.set('from', filterFrom);
-}
+            params.set('from', filterFrom);
+        }
 
         if (filterTo.trim() !== '') {
-params.set('to', filterTo);
-}
+            params.set('to', filterTo);
+        }
 
         params.set('type', exportType);
 
@@ -2658,7 +3238,8 @@ params.set('to', filterTo);
     };
 
     $effect(() => {
-        const isCharterListFilterVisible = activeTab === 'charters' && activeMode === 'data';
+        const isCharterListFilterVisible =
+            activeTab === 'charters' && activeMode === 'data';
 
         if (!isCharterListFilterVisible) {
             destroyCharterFilterDatePicker();
@@ -2680,7 +3261,8 @@ params.set('to', filterTo);
     });
 
     $effect(() => {
-        const isCharterFormActive = activeTab === 'charters' && activeMode === 'form';
+        const isCharterFormActive =
+            activeTab === 'charters' && activeMode === 'form';
         const startInput = charterStartDateInput;
         const endInput = charterEndDateInput;
         const departureInput = charterDepartureTimeInput;
@@ -2701,7 +3283,8 @@ params.set('to', filterTo);
     });
 
     $effect(() => {
-        const isLuggageListFilterVisible = activeTab === 'luggages' && activeMode === 'data';
+        const isLuggageListFilterVisible =
+            activeTab === 'luggages' && activeMode === 'data';
 
         if (!isLuggageListFilterVisible) {
             destroyLuggageFilterDatePicker();
@@ -2723,7 +3306,8 @@ params.set('to', filterTo);
     });
 
     $effect(() => {
-        const isLuggageFormActive = activeTab === 'luggages' && activeMode === 'form';
+        const isLuggageFormActive =
+            activeTab === 'luggages' && activeMode === 'form';
 
         if (!isLuggageFormActive) {
             destroyLuggageDatePicker();
@@ -2737,7 +3321,8 @@ params.set('to', filterTo);
     });
 
     $effect(() => {
-        const isAssignmentFormActive = activeTab === 'assignments' && activeMode === 'data';
+        const isAssignmentFormActive =
+            activeTab === 'assignments' && activeMode === 'data';
 
         if (!isAssignmentFormActive) {
             destroyAssignmentPickers();
@@ -2796,7 +3381,10 @@ params.set('to', filterTo);
 
         if (initialMode === 'view' && activeTab === 'charters') {
             activeMode = 'view';
-            charterViewId = initialCharterId && initialCharterId > 0 ? initialCharterId : null;
+            charterViewId =
+                initialCharterId && initialCharterId > 0
+                    ? initialCharterId
+                    : null;
         }
 
         if (typeof window !== 'undefined') {
@@ -2822,14 +3410,22 @@ params.set('to', filterTo);
                 filterPerPage = perPage;
             }
 
-            const viewMatch = window.location.pathname.match(/^\/charters\/view\/(\d+)$/);
+            const viewMatch = window.location.pathname.match(
+                /^\/charters\/view\/(\d+)$/,
+            );
 
             if (viewMatch && activeTab === 'charters') {
                 activeMode = 'view';
                 charterViewId = Number(viewMatch[1]);
-            } else if (window.location.pathname.endsWith('/form') && hasDedicatedFormPage(activeTab)) {
+            } else if (
+                window.location.pathname.endsWith('/form') &&
+                hasDedicatedFormPage(activeTab)
+            ) {
                 activeMode = 'form';
-            } else if (isFlowMode(routeMode) && hasDedicatedFormPage(activeTab)) {
+            } else if (
+                isFlowMode(routeMode) &&
+                hasDedicatedFormPage(activeTab)
+            ) {
                 activeMode = routeMode;
             }
         }
@@ -2856,7 +3452,12 @@ params.set('to', filterTo);
                 await loadActiveTab();
             }
 
-            if (activeTab === 'charters' && activeMode === 'view' && charterViewId && charterViewId > 0) {
+            if (
+                activeTab === 'charters' &&
+                activeMode === 'view' &&
+                charterViewId &&
+                charterViewId > 0
+            ) {
                 await loadCharterView(charterViewId);
             }
         } catch (e) {
@@ -2914,7 +3515,9 @@ params.set('to', filterTo);
             {/if}
         </CardHeader>
         <CardContent class="space-y-4">
-            <div class="sticky top-0 z-10 space-y-3 border-b bg-background pb-3">
+            <div
+                class="sticky top-0 z-10 space-y-3 border-b bg-background pb-3"
+            >
                 {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}
                     <div class="flex justify-end md:hidden">
                         <Button
@@ -2923,7 +3526,8 @@ params.set('to', filterTo);
                             variant="outline"
                             class="h-8 rounded-full px-3 text-xs"
                             onclick={() =>
-                                (mobileFiltersExpanded = !mobileFiltersExpanded)}
+                                (mobileFiltersExpanded =
+                                    !mobileFiltersExpanded)}
                             aria-expanded={mobileFiltersExpanded}
                         >
                             {mobileFiltersExpanded
@@ -2931,176 +3535,310 @@ params.set('to', filterTo);
                                 : 'Tampilkan Filter'}
                         </Button>
                     </div>
-                    <div class={mobileFiltersExpanded ? 'block' : 'hidden md:block'}>
+                    <div
+                        class={mobileFiltersExpanded
+                            ? 'block'
+                            : 'hidden md:block'}
+                    >
                         {#if activeTab === 'charters'}
-                            <div class="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_260px_240px_auto_auto]">
-                            <input
-                                bind:this={charterFilterDateInput}
-                                type="text"
-                                value={filterFrom}
-                                readonly
-                                autocomplete="off"
-                                placeholder="Tanggal charter"
-                                class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                            />
-                            <Input placeholder="Cari nama customer, driver, rute, armada" bind:value={filterQuery} />
-                            <div class="relative">
-                                <Input
-                                    placeholder="Filter kategori armada"
-                                    bind:value={charterFilterUnitSearch}
-                                    class="rounded-xl"
-                                    onfocus={() => {
-                                        charterFilterUnitLookupOpen = true;
-                                    }}
-                                    oninput={() => {
-                                        charterFilterUnitLookupOpen = true;
-                                    }}
-                                    onblur={onCharterFilterUnitBlur}
+                            <div
+                                class="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_260px_240px_auto_auto]"
+                            >
+                                <input
+                                    bind:this={charterFilterDateInput}
+                                    type="text"
+                                    value={filterFrom}
+                                    readonly
+                                    autocomplete="off"
+                                    placeholder="Tanggal charter"
+                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                 />
-                                {#if charterFilterUnitLookupOpen}
-                                    <div class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl">
-                                        {#if filteredCharterFilterUnits().length === 0}
-                                            <p class="px-2 py-2 text-xs text-muted-foreground">Kategori armada tidak ditemukan.</p>
-                                        {:else}
-                                            <div class="space-y-1">
-                                                {#each filteredCharterFilterUnits() as unit (`charter-filter-unit-${unit.id}`)}
-                                                    <button
-                                                        type="button"
-                                                        class="flex w-full items-start justify-between rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70"
-                                                        onmousedown={(event) => {
-                                                            event.preventDefault();
-                                                            selectCharterFilterUnit(unit);
-                                                        }}
-                                                    >
-                                                        <span>
-                                                            <span class="block text-sm font-semibold text-foreground">{charterUnitLabel(unit) || unit.nopol}</span>
-                                                            <span class="block text-[11px] text-muted-foreground">{charterUnitMeta(unit)}</span>
-                                                        </span>
-                                                    </button>
-                                                {/each}
-                                            </div>
-                                        {/if}
-                                    </div>
-                                {/if}
-                            </div>
-                            <div class="relative">
                                 <Input
-                                    placeholder="Filter nopol armada"
-                                    bind:value={charterFilterArmadaSearch}
-                                    class="rounded-xl"
-                                    onfocus={() => {
-                                        charterFilterArmadaLookupOpen = true;
+                                    placeholder="Cari nama customer, driver, rute, armada"
+                                    bind:value={filterQuery}
+                                />
+                                <div class="relative">
+                                    <Input
+                                        placeholder="Filter kategori armada"
+                                        bind:value={charterFilterUnitSearch}
+                                        class="rounded-xl"
+                                        onfocus={() => {
+                                            charterFilterUnitLookupOpen = true;
+                                        }}
+                                        oninput={() => {
+                                            charterFilterUnitLookupOpen = true;
+                                        }}
+                                        onblur={onCharterFilterUnitBlur}
+                                    />
+                                    {#if charterFilterUnitLookupOpen}
+                                        <div
+                                            class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
+                                        >
+                                            {#if filteredCharterFilterUnits().length === 0}
+                                                <p
+                                                    class="px-2 py-2 text-xs text-muted-foreground"
+                                                >
+                                                    Kategori armada tidak
+                                                    ditemukan.
+                                                </p>
+                                            {:else}
+                                                <div class="space-y-1">
+                                                    {#each filteredCharterFilterUnits() as unit (`charter-filter-unit-${unit.id}`)}
+                                                        <button
+                                                            type="button"
+                                                            class="flex w-full items-start justify-between rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70"
+                                                            onmousedown={(
+                                                                event,
+                                                            ) => {
+                                                                event.preventDefault();
+                                                                selectCharterFilterUnit(
+                                                                    unit,
+                                                                );
+                                                            }}
+                                                        >
+                                                            <span>
+                                                                <span
+                                                                    class="block text-sm font-semibold text-foreground"
+                                                                    >{charterUnitLabel(
+                                                                        unit,
+                                                                    ) ||
+                                                                        unit.nopol}</span
+                                                                >
+                                                                <span
+                                                                    class="block text-[11px] text-muted-foreground"
+                                                                    >{charterUnitMeta(
+                                                                        unit,
+                                                                    )}</span
+                                                                >
+                                                            </span>
+                                                        </button>
+                                                    {/each}
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="relative">
+                                    <Input
+                                        placeholder="Filter nopol armada"
+                                        bind:value={charterFilterArmadaSearch}
+                                        class="rounded-xl"
+                                        onfocus={() => {
+                                            charterFilterArmadaLookupOpen = true;
 
-                                        if (charterFilterArmadas.length === 0) {
-                                            void loadCharterFilterArmadas(charterFilterArmadaSearch);
-                                        }
-                                    }}
-                                    oninput={(event) => {
-                                        charterFilterArmadaLookupOpen = true;
-                                        queueCharterFilterArmadaSearch((event.currentTarget as HTMLInputElement).value);
-                                    }}
-                                    onblur={onCharterFilterArmadaBlur}
-                                />
-                                {#if charterFilterArmadaLookupOpen}
-                                    <div class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl">
-                                        {#if charterFilterArmadaBusy}
-                                            <p class="px-2 py-2 text-xs text-muted-foreground">Memuat armada...</p>
-                                        {:else if filteredCharterFilterArmadas().length === 0}
-                                            <p class="px-2 py-2 text-xs text-muted-foreground">Armada tidak ditemukan.</p>
-                                        {:else}
-                                            <div class="space-y-1">
-                                                {#each filteredCharterFilterArmadas() as armada (`charter-filter-armada-${armada.id}`)}
-                                                    <button
-                                                        type="button"
-                                                        class="flex w-full items-start justify-between rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70"
-                                                        onmousedown={(event) => {
-                                                            event.preventDefault();
-                                                            selectCharterFilterArmada(armada);
-                                                        }}
-                                                    >
-                                                        <span>
-                                                            <span class="block text-sm font-semibold text-foreground">{armada.nopol}</span>
-                                                            <span class="block text-[11px] text-muted-foreground">{[armada.kategori, armada.merk, armada.tahun].filter(Boolean).join(' | ') || 'Armada aktif'}</span>
-                                                        </span>
-                                                    </button>
-                                                {/each}
-                                            </div>
-                                        {/if}
-                                    </div>
-                                {/if}
+                                            if (
+                                                charterFilterArmadas.length ===
+                                                0
+                                            ) {
+                                                void loadCharterFilterArmadas(
+                                                    charterFilterArmadaSearch,
+                                                );
+                                            }
+                                        }}
+                                        oninput={(event) => {
+                                            charterFilterArmadaLookupOpen = true;
+                                            queueCharterFilterArmadaSearch(
+                                                (
+                                                    event.currentTarget as HTMLInputElement
+                                                ).value,
+                                            );
+                                        }}
+                                        onblur={onCharterFilterArmadaBlur}
+                                    />
+                                    {#if charterFilterArmadaLookupOpen}
+                                        <div
+                                            class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
+                                        >
+                                            {#if charterFilterArmadaBusy}
+                                                <p
+                                                    class="px-2 py-2 text-xs text-muted-foreground"
+                                                >
+                                                    Memuat armada...
+                                                </p>
+                                            {:else if filteredCharterFilterArmadas().length === 0}
+                                                <p
+                                                    class="px-2 py-2 text-xs text-muted-foreground"
+                                                >
+                                                    Armada tidak ditemukan.
+                                                </p>
+                                            {:else}
+                                                <div class="space-y-1">
+                                                    {#each filteredCharterFilterArmadas() as armada (`charter-filter-armada-${armada.id}`)}
+                                                        <button
+                                                            type="button"
+                                                            class="flex w-full items-start justify-between rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70"
+                                                            onmousedown={(
+                                                                event,
+                                                            ) => {
+                                                                event.preventDefault();
+                                                                selectCharterFilterArmada(
+                                                                    armada,
+                                                                );
+                                                            }}
+                                                        >
+                                                            <span>
+                                                                <span
+                                                                    class="block text-sm font-semibold text-foreground"
+                                                                    >{armada.nopol}</span
+                                                                >
+                                                                <span
+                                                                    class="block text-[11px] text-muted-foreground"
+                                                                    >{[
+                                                                        armada.kategori,
+                                                                        armada.merk,
+                                                                        armada.tahun,
+                                                                    ]
+                                                                        .filter(
+                                                                            Boolean,
+                                                                        )
+                                                                        .join(
+                                                                            ' | ',
+                                                                        ) ||
+                                                                        'Armada aktif'}</span
+                                                                >
+                                                            </span>
+                                                        </button>
+                                                    {/each}
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    {/if}
+                                </div>
+                                <Button
+                                    type="button"
+                                    onclick={() => void applyFilters()}
+                                    >Apply Filters</Button
+                                >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onclick={() => void resetCharterFilters()}
+                                    >Reset</Button
+                                >
                             </div>
-                            <Button type="button" onclick={() => void applyFilters()}>Apply Filters</Button>
-                            <Button type="button" variant="outline" onclick={() => void resetCharterFilters()}>Reset</Button>
-                        </div>
                         {:else if activeTab === 'luggages'}
-                            <div class="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto_auto]">
-                            <input
-                                bind:this={luggageFilterDateInput}
-                                type="text"
-                                value={filterFrom}
-                                readonly
-                                autocomplete="off"
-                                placeholder="Tanggal bagasi"
-                                class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                            />
-                            <Input
-                                placeholder="Cari pengirim, penerima, resi, layanan, atau rute"
-                                bind:value={filterQuery}
-                                onkeydown={(event) => event.key === 'Enter' && void applyFilters()}
-                            />
-                            <Button type="button" onclick={() => void applyFilters()}>Cari Data</Button>
-                            <Button type="button" variant="outline" onclick={() => void resetLuggageFilters()}>Reset</Button>
-                        </div>
+                            <div
+                                class="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto_auto]"
+                            >
+                                <input
+                                    bind:this={luggageFilterDateInput}
+                                    type="text"
+                                    value={filterFrom}
+                                    readonly
+                                    autocomplete="off"
+                                    placeholder="Tanggal bagasi"
+                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                />
+                                <Input
+                                    placeholder="Cari pengirim, penerima, resi, layanan, atau rute"
+                                    bind:value={filterQuery}
+                                    onkeydown={(event) =>
+                                        event.key === 'Enter' &&
+                                        void applyFilters()}
+                                />
+                                <Button
+                                    type="button"
+                                    onclick={() => void applyFilters()}
+                                    >Cari Data</Button
+                                >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onclick={() => void resetLuggageFilters()}
+                                    >Reset</Button
+                                >
+                            </div>
                         {:else}
                             <div class="grid gap-3 md:grid-cols-5">
-                            <input
-                                bind:this={exportFromDateInput}
-                                type="text"
-                                value={filterFrom}
-                                readonly
-                                autocomplete="off"
-                                placeholder="Tanggal mulai"
-                                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                            />
-                            <input
-                                bind:this={exportToDateInput}
-                                type="text"
-                                value={filterTo}
-                                readonly
-                                autocomplete="off"
-                                placeholder="Tanggal akhir"
-                                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                            />
-                            <Input placeholder="Cari nama / no hp / resi / rute" bind:value={filterQuery} />
-                            <Input
-                                type="number"
-                                min="10"
-                                max="100"
-                                bind:value={filterPerPage}
-                                placeholder="Data per halaman"
-                                aria-label="Data per halaman"
-                            />
-                            <Button type="button" onclick={() => void applyFilters()}>Apply Filters</Button>
-                        </div>
+                                <input
+                                    bind:this={exportFromDateInput}
+                                    type="text"
+                                    value={filterFrom}
+                                    readonly
+                                    autocomplete="off"
+                                    placeholder="Tanggal mulai"
+                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                />
+                                <input
+                                    bind:this={exportToDateInput}
+                                    type="text"
+                                    value={filterTo}
+                                    readonly
+                                    autocomplete="off"
+                                    placeholder="Tanggal akhir"
+                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                />
+                                <Input
+                                    placeholder="Cari nama / no hp / resi / rute"
+                                    bind:value={filterQuery}
+                                />
+                                <Input
+                                    type="number"
+                                    min="10"
+                                    max="100"
+                                    bind:value={filterPerPage}
+                                    placeholder="Data per halaman"
+                                    aria-label="Data per halaman"
+                                />
+                                <Button
+                                    type="button"
+                                    onclick={() => void applyFilters()}
+                                    >Apply Filters</Button
+                                >
+                            </div>
                         {/if}
                     </div>
                 {/if}
 
                 {#if !lockedMenuView}
                     <div class="flex flex-wrap gap-2">
-                        <Button type="button" variant={activeTab === 'charters' ? 'default' : 'outline'} onclick={() => void setTab('charters')}>Charters</Button>
-                        <Button type="button" variant={activeTab === 'luggages' ? 'default' : 'outline'} onclick={() => void setTab('luggages')}>Luggages</Button>
-                        <Button type="button" variant={activeTab === 'assignments' ? 'default' : 'outline'} onclick={() => void setTab('assignments')}>Driver Assignments</Button>
-                        <Button type="button" variant={activeTab === 'export' ? 'default' : 'outline'} onclick={() => void setTab('export')}>Export CSV</Button>
+                        <Button
+                            type="button"
+                            variant={activeTab === 'charters'
+                                ? 'default'
+                                : 'outline'}
+                            onclick={() => void setTab('charters')}
+                            >Charters</Button
+                        >
+                        <Button
+                            type="button"
+                            variant={activeTab === 'luggages'
+                                ? 'default'
+                                : 'outline'}
+                            onclick={() => void setTab('luggages')}
+                            >Luggages</Button
+                        >
+                        <Button
+                            type="button"
+                            variant={activeTab === 'assignments'
+                                ? 'default'
+                                : 'outline'}
+                            onclick={() => void setTab('assignments')}
+                            >Driver Assignments</Button
+                        >
+                        <Button
+                            type="button"
+                            variant={activeTab === 'export'
+                                ? 'default'
+                                : 'outline'}
+                            onclick={() => void setTab('export')}
+                            >Export CSV</Button
+                        >
                     </div>
                 {/if}
             </div>
 
             {#if busy}
                 <div class="space-y-2">
-                    <div class="h-9 w-full animate-pulse rounded bg-muted"></div>
-                    <div class="h-9 w-full animate-pulse rounded bg-muted"></div>
-                    <div class="h-40 w-full animate-pulse rounded bg-muted"></div>
+                    <div
+                        class="h-9 w-full animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="h-9 w-full animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="h-40 w-full animate-pulse rounded bg-muted"
+                    ></div>
                 </div>
             {/if}
             {#if error}<p class="text-sm text-red-600">{error}</p>{/if}
@@ -3110,40 +3848,48 @@ params.set('to', filterTo);
                 {#if activeMode === 'view'}
                     {#if CharterViewPanelComponent}
                         <CharterViewPanelComponent
-                            charterViewBusy={charterViewBusy}
-                            charterViewData={charterViewData}
-                            defaultCharterService={defaultCharterService}
-                            closeCharterView={closeCharterView}
-                            charterStatusClass={charterStatusClass}
-                            charterStatusLabel={charterStatusLabel}
-                            charterPaymentClass={charterPaymentClass}
-                            openCharterInvoice={openCharterInvoice}
-                            canCharterPrint={canCharterPrint}
-                            copyCharterData={copyCharterData}
-                            charterCanMarkDone={charterCanMarkDone}
-                            markCharterAsDone={markCharterAsDone}
-                            charterCanEdit={charterCanEdit}
-                            openCharterEditor={openCharterEditor}
-                            charterMarkDoneHint={charterMarkDoneHint}
-                            formatCurrencyId={formatCurrencyId}
-                            charterPaymentRemaining={charterPaymentRemaining}
+                            {charterViewBusy}
+                            {charterViewData}
+                            {defaultCharterService}
+                            {closeCharterView}
+                            {charterStatusClass}
+                            {charterStatusLabel}
+                            {charterPaymentClass}
+                            {openCharterInvoice}
+                            {canCharterPrint}
+                            {copyCharterData}
+                            {charterCanMarkDone}
+                            {markCharterAsDone}
+                            {charterCanEdit}
+                            {openCharterEditor}
+                            {charterMarkDoneHint}
+                            {formatCurrencyId}
+                            {charterPaymentRemaining}
                         />
                     {:else}
-                        <div class="space-y-2 rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                            <div class="h-7 w-full animate-pulse rounded bg-muted"></div>
-                            <div class="h-7 w-full animate-pulse rounded bg-muted"></div>
-                            <div class="h-24 w-full animate-pulse rounded bg-muted"></div>
+                        <div
+                            class="space-y-2 rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+                        >
+                            <div
+                                class="h-7 w-full animate-pulse rounded bg-muted"
+                            ></div>
+                            <div
+                                class="h-7 w-full animate-pulse rounded bg-muted"
+                            ></div>
+                            <div
+                                class="h-24 w-full animate-pulse rounded bg-muted"
+                            ></div>
                         </div>
                     {/if}
                 {:else if activeMode === 'form'}
                     {#if CharterFormPanelComponent}
                         <CharterFormPanelComponent
                             bind:charterForm
-                            charterCustomerQuery={charterCustomerQuery}
-                            charterCustomerBusy={charterCustomerBusy}
-                            charterCustomerLookupOpen={charterCustomerLookupOpen}
-                            charterCustomerResults={charterCustomerResults}
-                            charterServiceOptions={charterServiceOptions}
+                            {charterCustomerQuery}
+                            {charterCustomerBusy}
+                            {charterCustomerLookupOpen}
+                            {charterCustomerResults}
+                            {charterServiceOptions}
                             bind:charterRouteSearch
                             bind:charterRouteLookupOpen
                             bind:charterStartDateInput
@@ -3153,61 +3899,79 @@ params.set('to', filterTo);
                             bind:charterUnitLookupOpen
                             bind:charterArmadaSearch
                             bind:charterArmadaLookupOpen
-                            charterArmadaBusy={charterArmadaBusy}
-                            armadas={armadas}
+                            {charterArmadaBusy}
+                            {armadas}
                             bind:charterDriverSearch
                             bind:charterDriverLookupOpen
-                            charterPaymentStatusOptions={charterPaymentStatusOptions}
-                            activePools={activePools}
-                            poolLabel={poolLabel}
-                            poolNameById={poolNameById}
-                            savingCharter={savingCharter}
-                            onCharterCustomerQueryInput={onCharterCustomerQueryInput}
-                            applyCharterCustomer={applyCharterCustomer}
-                            onCharterRouteBlur={onCharterRouteBlur}
-                            filteredCharterRoutes={filteredCharterRoutes}
-                            selectCharterRoute={selectCharterRoute}
-                            charterRouteLabel={charterRouteLabel}
-                            charterRouteMeta={charterRouteMeta}
-                            onCharterUnitBlur={onCharterUnitBlur}
-                            filteredCharterUnits={filteredCharterUnits}
-                            selectCharterUnit={selectCharterUnit}
-                            charterUnitLabel={charterUnitLabel}
-                            charterUnitMeta={charterUnitMeta}
-                            loadCharterArmadas={loadCharterArmadas}
-                            queueCharterArmadaSearch={queueCharterArmadaSearch}
-                            onCharterArmadaBlur={onCharterArmadaBlur}
-                            filteredCharterArmadas={filteredCharterArmadas}
-                            selectCharterArmada={selectCharterArmada}
-                            onCharterDriverBlur={onCharterDriverBlur}
-                            filteredCharterDrivers={filteredCharterDrivers}
-                            selectCharterDriver={selectCharterDriver}
-                            selectedCharterDriver={selectedCharterDriver}
-                            selectedCharterUnit={selectedCharterUnit}
-                            formatCurrencyInput={formatCurrencyInput}
-                            parseCurrencyInput={parseCurrencyInput}
-                            formatCurrencyId={formatCurrencyId}
-                            saveCharter={saveCharter}
-                            setFormMode={setFormMode}
-                            resetCharterFormState={resetCharterFormState}
+                            {charterPaymentStatusOptions}
+                            {activePools}
+                            {poolLabel}
+                            {poolNameById}
+                            {savingCharter}
+                            {onCharterCustomerQueryInput}
+                            {applyCharterCustomer}
+                            {onCharterRouteBlur}
+                            {filteredCharterRoutes}
+                            {selectCharterRoute}
+                            {charterRouteLabel}
+                            {charterRouteMeta}
+                            {onCharterUnitBlur}
+                            {filteredCharterUnits}
+                            {selectCharterUnit}
+                            {charterUnitLabel}
+                            {charterUnitMeta}
+                            {loadCharterArmadas}
+                            {queueCharterArmadaSearch}
+                            {onCharterArmadaBlur}
+                            {filteredCharterArmadas}
+                            {selectCharterArmada}
+                            {onCharterDriverBlur}
+                            {filteredCharterDrivers}
+                            {selectCharterDriver}
+                            {selectedCharterDriver}
+                            {selectedCharterUnit}
+                            {formatCurrencyInput}
+                            {parseCurrencyInput}
+                            {formatCurrencyId}
+                            {saveCharter}
+                            {setFormMode}
+                            {resetCharterFormState}
                         />
                     {:else}
-                        <div class="space-y-2 rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                            <div class="h-7 w-full animate-pulse rounded bg-muted"></div>
-                            <div class="h-32 w-full animate-pulse rounded bg-muted"></div>
-                            <div class="h-48 w-full animate-pulse rounded bg-muted"></div>
+                        <div
+                            class="space-y-2 rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+                        >
+                            <div
+                                class="h-7 w-full animate-pulse rounded bg-muted"
+                            ></div>
+                            <div
+                                class="h-32 w-full animate-pulse rounded bg-muted"
+                            ></div>
+                            <div
+                                class="h-48 w-full animate-pulse rounded bg-muted"
+                            ></div>
                         </div>
                     {/if}
                 {:else}
-                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm">
-                        {#if canCharterCreate}<Button type="button" onclick={() => {
- resetCharterFormState(); setFormMode('form'); 
-}}>Tambah Carter</Button>{/if}
-                        <div class="inline-flex items-center rounded-xl border border-border/70 bg-background/80 p-1">
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                    >
+                        {#if canCharterCreate}<Button
+                                type="button"
+                                onclick={() => {
+                                    resetCharterFormState();
+                                    setFormMode('form');
+                                }}>Tambah Carter</Button
+                            >{/if}
+                        <div
+                            class="inline-flex items-center rounded-xl border border-border/70 bg-background/80 p-1"
+                        >
                             <Button
                                 type="button"
                                 size="sm"
-                                variant={charterScope === 'active' ? 'default' : 'ghost'}
+                                variant={charterScope === 'active'
+                                    ? 'default'
+                                    : 'ghost'}
                                 class="h-7 rounded-lg px-2.5 text-[11px]"
                                 onclick={() => void setCharterScope('active')}
                             >
@@ -3216,7 +3980,9 @@ params.set('to', filterTo);
                             <Button
                                 type="button"
                                 size="sm"
-                                variant={charterScope === 'history' ? 'default' : 'ghost'}
+                                variant={charterScope === 'history'
+                                    ? 'default'
+                                    : 'ghost'}
                                 class="h-7 rounded-lg px-2.5 text-[11px]"
                                 onclick={() => void setCharterScope('history')}
                             >
@@ -3225,88 +3991,174 @@ params.set('to', filterTo);
                         </div>
                     </div>
                     <div class="space-y-3">
-                        <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm">
-                            <p class="text-xs font-medium text-muted-foreground">
-                                {charterScope === 'history' ? 'Mode history: data carter selesai' : 'Mode aktif: data carter berjalan'}
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
+                        >
+                            <p
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                {charterScope === 'history'
+                                    ? 'Mode history: data carter selesai'
+                                    : 'Mode aktif: data carter berjalan'}
                             </p>
                             <div class="flex flex-wrap items-center gap-1.5">
-                                <span class="rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                <span
+                                    class="rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                                >
                                     Total {charters.length}
                                 </span>
-                                <span class="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                                <span
+                                    class="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
+                                >
                                     Aktif {charterActiveCount()}
                                 </span>
-                                <span class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+                                <span
+                                    class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700"
+                                >
                                     Canceled {charterCanceledCount()}
                                 </span>
                             </div>
                         </div>
 
                         {#if charters.length === 0}
-                            <div class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground">
+                            <div
+                                class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
+                            >
                                 Belum ada data carter sesuai filter.
                             </div>
                         {:else}
-                            <div class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                            <div
+                                class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3"
+                            >
                                 {#each charters as row (row.id)}
-                                    <article class="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 svelte-19f8rux">
-                                        <div class="mb-2 flex items-start justify-between gap-2">
+                                    <article
+                                        class="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 svelte-19f8rux"
+                                    >
+                                        <div
+                                            class="mb-2 flex items-start justify-between gap-2"
+                                        >
                                             <div class="min-w-0">
-                                                <p class="truncate text-sm font-semibold leading-tight text-foreground">{row.name}</p>
-                                                <p class="truncate text-[11px] text-muted-foreground">{row.company_name ?? '-'}</p>
-                                                <p class="truncate text-[11px] text-muted-foreground">{row.phone ?? '-'}</p>
+                                                <p
+                                                    class="truncate text-sm font-semibold leading-tight text-foreground"
+                                                >
+                                                    {row.name}
+                                                </p>
+                                                <p
+                                                    class="truncate text-[11px] text-muted-foreground"
+                                                >
+                                                    {row.company_name ?? '-'}
+                                                </p>
+                                                <p
+                                                    class="truncate text-[11px] text-muted-foreground"
+                                                >
+                                                    {row.phone ?? '-'}
+                                                </p>
                                             </div>
-                                            <div class="flex shrink-0 items-center gap-1.5">
-                                                <span class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterStatusClass(row.status)}`}>
-                                                    {charterStatusLabel(row.status)}
+                                            <div
+                                                class="flex shrink-0 items-center gap-1.5"
+                                            >
+                                                <span
+                                                    class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterStatusClass(row.status)}`}
+                                                >
+                                                    {charterStatusLabel(
+                                                        row.status,
+                                                    )}
                                                 </span>
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        {#snippet children(props)}
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        {#snippet children(
+                                                            props,
+                                                        )}
                                                             <Button
                                                                 type="button"
                                                                 size="sm"
                                                                 variant="outline"
                                                                 class="h-8 rounded-full border-border/70 px-2.5"
                                                                 onclick={props.onclick}
-                                                                aria-expanded={props['aria-expanded']}
-                                                                data-state={props['data-state']}
+                                                                aria-expanded={props[
+                                                                    'aria-expanded'
+                                                                ]}
+                                                                data-state={props[
+                                                                    'data-state'
+                                                                ]}
                                                             >
-                                                                <MoreHorizontal class="h-4 w-4" />
+                                                                <MoreHorizontal
+                                                                    class="h-4 w-4"
+                                                                />
                                                             </Button>
                                                         {/snippet}
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" class="w-48">
-                                                        <DropdownMenuItem onclick={() => void openCharterView(row.id)}>
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        class="w-48"
+                                                    >
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void openCharterView(
+                                                                    row.id,
+                                                                )}
+                                                        >
                                                             View Detail
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onclick={() => void copyCharterData(row)}>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void copyCharterData(
+                                                                    row,
+                                                                )}
+                                                        >
                                                             Copy Data
                                                         </DropdownMenuItem>
-                                                        {#if canCharterPrint}<DropdownMenuItem onclick={() => openCharterInvoice(row.id)}>
-                                                            Cetak Invoice
-                                                        </DropdownMenuItem>{/if}
+                                                        {#if canCharterPrint}<DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openCharterInvoice(
+                                                                        row.id,
+                                                                    )}
+                                                            >
+                                                                Cetak Invoice
+                                                            </DropdownMenuItem>{/if}
                                                         {#if charterCanEdit(row)}
-                                                            <DropdownMenuItem onclick={() => openCharterEditor(row)}>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openCharterEditor(
+                                                                        row,
+                                                                    )}
+                                                            >
                                                                 Edit Carter
                                                             </DropdownMenuItem>
                                                         {/if}
                                                         {#if charterCanMarkDone(row)}
-                                                            <DropdownMenuItem onclick={() => void markCharterAsDone(row)}>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void markCharterAsDone(
+                                                                        row,
+                                                                    )}
+                                                            >
                                                                 Tandai Selesai
                                                             </DropdownMenuItem>
                                                         {/if}
                                                         {#if charterCanCancel(row)}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
-                                                                    void removeItem(`/api/admin/charters/${row.id}`, 'Charter canceled.', {
-                                                                        confirmMessage: 'Yakin ingin membatalkan charter ini?',
-                                                                        loadingMessage: 'Membatalkan charter...',
-                                                                        errorMessage: 'Gagal membatalkan charter.',
-                                                                        pendingKey: `charter-${row.id}`,
-                                                                    })}
+                                                                    void removeItem(
+                                                                        `/api/admin/charters/${row.id}`,
+                                                                        'Charter canceled.',
+                                                                        {
+                                                                            confirmMessage:
+                                                                                'Yakin ingin membatalkan charter ini?',
+                                                                            loadingMessage:
+                                                                                'Membatalkan charter...',
+                                                                            errorMessage:
+                                                                                'Gagal membatalkan charter.',
+                                                                            pendingKey: `charter-${row.id}`,
+                                                                        },
+                                                                    )}
                                                             >
-                                                                {pendingDeleteKey === `charter-${row.id}` ? 'Memproses...' : 'Cancel Charter'}
+                                                                {pendingDeleteKey ===
+                                                                `charter-${row.id}`
+                                                                    ? 'Memproses...'
+                                                                    : 'Cancel Charter'}
                                                             </DropdownMenuItem>
                                                         {/if}
                                                     </DropdownMenuContent>
@@ -3314,50 +4166,149 @@ params.set('to', filterTo);
                                             </div>
                                         </div>
 
-                                        <div class="rounded-xl border border-border/60 bg-muted/15 px-2.5 py-2">
-                                            <p class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground">Rute Charter</p>
-                                            <p class="mt-0.5 line-clamp-2 break-words text-xs font-semibold leading-snug text-foreground">{row.pickup_point ?? '-'} - {row.drop_point ?? '-'}</p>
+                                        <div
+                                            class="rounded-xl border border-border/60 bg-muted/15 px-2.5 py-2"
+                                        >
+                                            <p
+                                                class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
+                                            >
+                                                Rute Charter
+                                            </p>
+                                            <p
+                                                class="mt-0.5 line-clamp-2 break-words text-xs font-semibold leading-snug text-foreground"
+                                            >
+                                                {row.pickup_point ?? '-'} - {row.drop_point ??
+                                                    '-'}
+                                            </p>
                                         </div>
 
-                                        <div class="mt-1.5 grid grid-cols-2 gap-1.5 text-xs md:gap-2">
-                                            <div class="order-1 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2">
-                                                <p class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground">Jadwal</p>
-                                                <p class="mt-0.5 font-semibold leading-tight text-foreground">{row.start_date}</p>
-                                                <p class="text-[11px] text-muted-foreground">{row.end_date} • {row.departure_time ? String(row.departure_time).slice(0, 5) : '--:--'}</p>
+                                        <div
+                                            class="mt-1.5 grid grid-cols-2 gap-1.5 text-xs md:gap-2"
+                                        >
+                                            <div
+                                                class="order-1 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2"
+                                            >
+                                                <p
+                                                    class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
+                                                >
+                                                    Jadwal
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-semibold leading-tight text-foreground"
+                                                >
+                                                    {row.start_date}
+                                                </p>
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    {row.end_date} • {row.departure_time
+                                                        ? String(
+                                                              row.departure_time,
+                                                          ).slice(0, 5)
+                                                        : '--:--'}
+                                                </p>
                                             </div>
-                                            <div class="order-3 col-span-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2">
-                                                <p class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground">Driver & Armada</p>
-                                                <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                                    <p class="text-xs font-semibold leading-tight text-foreground">{row.driver_name ?? '-'}</p>
-                                                    <p class="text-[11px] text-muted-foreground">{[row.unit_category, row.unit_nopol, row.armada_nopol].filter(Boolean).join(' | ') || '-'}</p>
+                                            <div
+                                                class="order-3 col-span-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2"
+                                            >
+                                                <p
+                                                    class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
+                                                >
+                                                    Driver & Armada
+                                                </p>
+                                                <div
+                                                    class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5"
+                                                >
+                                                    <p
+                                                        class="text-xs font-semibold leading-tight text-foreground"
+                                                    >
+                                                        {row.driver_name ?? '-'}
+                                                    </p>
+                                                    <p
+                                                        class="text-[11px] text-muted-foreground"
+                                                    >
+                                                        {[
+                                                            row.unit_category,
+                                                            row.unit_nopol,
+                                                            row.armada_nopol,
+                                                        ]
+                                                            .filter(Boolean)
+                                                            .join(' | ') || '-'}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div class="order-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2">
-                                                <p class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground">Biaya</p>
-                                                <p class="mt-0.5 text-xs font-semibold leading-tight text-foreground">{formatCurrencyId(row.price)}</p>
-                                                <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] leading-tight text-muted-foreground">
-                                                    <span>DP {formatCurrencyId(row.down_payment ?? 0)}</span>
-                                                    <span>BOP {formatCurrencyId(row.bop_price ?? 0)}</span>
+                                            <div
+                                                class="order-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2"
+                                            >
+                                                <p
+                                                    class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
+                                                >
+                                                    Biaya
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-xs font-semibold leading-tight text-foreground"
+                                                >
+                                                    {formatCurrencyId(
+                                                        row.price,
+                                                    )}
+                                                </p>
+                                                <div
+                                                    class="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] leading-tight text-muted-foreground"
+                                                >
+                                                    <span
+                                                        >DP {formatCurrencyId(
+                                                            row.down_payment ??
+                                                                0,
+                                                        )}</span
+                                                    >
+                                                    <span
+                                                        >BOP {formatCurrencyId(
+                                                            row.bop_price ?? 0,
+                                                        )}</span
+                                                    >
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                            <span class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterPaymentClass(row.payment_status)}`}>
+                                        <div
+                                            class="mt-1.5 flex flex-wrap items-center gap-1.5"
+                                        >
+                                            <span
+                                                class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterPaymentClass(row.payment_status)}`}
+                                            >
                                                 {row.payment_status ?? '-'}
                                             </span>
                                             {#if Number(row.down_payment ?? 0) > 0}
-                                                <span class="rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
-                                                    DP {formatCurrencyId(row.down_payment ?? 0)}
+                                                <span
+                                                    class="rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700"
+                                                >
+                                                    DP {formatCurrencyId(
+                                                        row.down_payment ?? 0,
+                                                    )}
                                                 </span>
                                             {/if}
                                         </div>
 
-                                        <div class="mt-2 flex items-center justify-end border-t border-border/70 pt-2">
-                                            <p class="mr-auto hidden text-[11px] text-muted-foreground sm:block">
-                                                {charterScope === 'history' ? 'Riwayat charter tampil ringkas untuk mobile.' : 'Aksi ada di menu kanan atas kartu.'}
+                                        <div
+                                            class="mt-2 flex items-center justify-end border-t border-border/70 pt-2"
+                                        >
+                                            <p
+                                                class="mr-auto hidden text-[11px] text-muted-foreground sm:block"
+                                            >
+                                                {charterScope === 'history'
+                                                    ? 'Riwayat charter tampil ringkas untuk mobile.'
+                                                    : 'Aksi ada di menu kanan atas kartu.'}
                                             </p>
-                                            <Button type="button" size="sm" variant="ghost" class="h-8 rounded-xl px-3 text-[11px]" onclick={() => void openCharterView(row.id)}>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="ghost"
+                                                class="h-8 rounded-xl px-3 text-[11px]"
+                                                onclick={() =>
+                                                    void openCharterView(
+                                                        row.id,
+                                                    )}
+                                            >
                                                 Buka Detail
                                             </Button>
                                         </div>
@@ -3366,12 +4317,40 @@ params.set('to', filterTo);
                             </div>
                         {/if}
                     </div>
-                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5">
-                        <p class="text-xs text-muted-foreground">Total data: {charterMeta.total}</p>
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5"
+                    >
+                        <p class="text-xs text-muted-foreground">
+                            Total data: {charterMeta.total}
+                        </p>
                         <div class="flex items-center gap-2">
-                            <Button type="button" variant="outline" class="h-8 rounded-xl px-3 text-xs" disabled={charterMeta.page <= 1} onclick={() => void jumpPage(charterMeta.page - 1, 'charter')}>Prev</Button>
-                            <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-foreground">{charterMeta.page} / {charterMeta.last_page}</span>
-                            <Button type="button" variant="outline" class="h-8 rounded-xl px-3 text-xs" disabled={charterMeta.page >= charterMeta.last_page} onclick={() => void jumpPage(charterMeta.page + 1, 'charter')}>Next</Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-8 rounded-xl px-3 text-xs"
+                                disabled={charterMeta.page <= 1}
+                                onclick={() =>
+                                    void jumpPage(
+                                        charterMeta.page - 1,
+                                        'charter',
+                                    )}>Prev</Button
+                            >
+                            <span
+                                class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-foreground"
+                                >{charterMeta.page} / {charterMeta.last_page}</span
+                            >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-8 rounded-xl px-3 text-xs"
+                                disabled={charterMeta.page >=
+                                    charterMeta.last_page}
+                                onclick={() =>
+                                    void jumpPage(
+                                        charterMeta.page + 1,
+                                        'charter',
+                                    )}>Next</Button
+                            >
                         </div>
                     </div>
                 {/if}
@@ -3379,39 +4358,90 @@ params.set('to', filterTo);
 
             {#if activeTab === 'luggages' && !busy}
                 {#if activeMode === 'form'}
-                    <div class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2">
-                        <p class="text-xs font-medium text-muted-foreground">Halaman Form Bagasi</p>
-                        <Button type="button" size="sm" variant="outline" class="h-8 rounded-lg text-xs" onclick={() => setFormMode('data')}>
+                    <div
+                        class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
+                    >
+                        <p class="text-xs font-medium text-muted-foreground">
+                            Halaman Form Bagasi
+                        </p>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="h-8 rounded-lg text-xs"
+                            onclick={() => setFormMode('data')}
+                        >
                             Kembali ke Data Bagasi
                         </Button>
                     </div>
-                    <div class="overflow-hidden rounded-[28px] border border-border/70 bg-card shadow-sm">
-                        <div class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),rgba(16,185,129,0.08))] px-4 py-4 md:px-5">
-                            <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div
+                        class="overflow-hidden rounded-[28px] border border-border/70 bg-card shadow-sm"
+                    >
+                        <div
+                            class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),rgba(16,185,129,0.08))] px-4 py-4 md:px-5"
+                        >
+                            <div
+                                class="flex flex-wrap items-start justify-between gap-3"
+                            >
                                 <div class="space-y-1">
-                                    <p class="text-lg font-semibold tracking-tight">{luggageForm.id ? 'Edit Data Bagasi' : 'Tambah Data Bagasi Baru'}</p>
-                                    <p class="text-xs text-muted-foreground">Kelola pengirim, penerima, rute kirim, dan biaya bagasi dalam tampilan yang lebih padat.</p>
+                                    <p
+                                        class="text-lg font-semibold tracking-tight"
+                                    >
+                                        {luggageForm.id
+                                            ? 'Edit Data Bagasi'
+                                            : 'Tambah Data Bagasi Baru'}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        Kelola pengirim, penerima, rute kirim,
+                                        dan biaya bagasi dalam tampilan yang
+                                        lebih padat.
+                                    </p>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
-                                    <span class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                                        {luggageForm.id ? 'Mode Edit' : 'Data Baru'}
+                                    <span
+                                        class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                                    >
+                                        {luggageForm.id
+                                            ? 'Mode Edit'
+                                            : 'Data Baru'}
                                     </span>
-                                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                                        {luggageForm.payment_status || 'Belum Bayar'}
+                                    <span
+                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700"
+                                    >
+                                        {luggageForm.payment_status ||
+                                            'Belum Bayar'}
                                     </span>
                                 </div>
                             </div>
                         </div>
-                        <form class="grid gap-4 p-4 md:p-5 xl:grid-cols-[minmax(0,1.55fr)_320px]" onsubmit={saveLuggage}>
+                        <form
+                            class="grid gap-4 p-4 md:p-5 xl:grid-cols-[minmax(0,1.55fr)_320px]"
+                            onsubmit={saveLuggage}
+                        >
                             <div class="space-y-4">
-                                <section class="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                                <section
+                                    class="rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                >
                                     <div class="mb-3">
-                                        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Pengirim</p>
-                                        <p class="text-sm font-medium text-foreground">Cari customer bagasi pengirim supaya kontak terisi otomatis</p>
+                                        <p
+                                            class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                                        >
+                                            Pengirim
+                                        </p>
+                                        <p
+                                            class="text-sm font-medium text-foreground"
+                                        >
+                                            Cari customer bagasi pengirim supaya
+                                            kontak terisi otomatis
+                                        </p>
                                     </div>
                                     <div class="grid gap-3 md:grid-cols-2">
                                         <div class="space-y-1 md:col-span-2">
-                                            <label for="luggage-sender-name" class="text-xs font-medium text-muted-foreground">Nama Pengirim</label>
+                                            <label
+                                                for="luggage-sender-name"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Nama Pengirim</label
+                                            >
                                             <div class="relative">
                                                 <Input
                                                     id="luggage-sender-name"
@@ -3419,52 +4449,140 @@ params.set('to', filterTo);
                                                     type="search"
                                                     placeholder="Cari nama customer bagasi pengirim"
                                                     value={luggageForm.sender_name}
-                                                    oninput={(event) => onLuggageCustomerInput((event.currentTarget as HTMLInputElement).value, 'sender')}
-                                                    onfocus={() => onLuggageCustomerFocus('sender')}
-                                                    onblur={() => onLuggageCustomerBlur('sender')}
+                                                    oninput={(event) =>
+                                                        onLuggageCustomerInput(
+                                                            (
+                                                                event.currentTarget as HTMLInputElement
+                                                            ).value,
+                                                            'sender',
+                                                        )}
+                                                    onfocus={() =>
+                                                        onLuggageCustomerFocus(
+                                                            'sender',
+                                                        )}
+                                                    onblur={() =>
+                                                        onLuggageCustomerBlur(
+                                                            'sender',
+                                                        )}
                                                     autocomplete="off"
                                                     required
                                                 />
                                                 {#if luggageSenderLookupOpen}
-                                                    <div class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl">
+                                                    <div
+                                                        class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl"
+                                                    >
                                                         {#if luggageSenderLookupBusy}
-                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Mencari customer bagasi...</div>
+                                                            <div
+                                                                class="px-3 py-3 text-xs text-muted-foreground"
+                                                            >
+                                                                Mencari customer
+                                                                bagasi...
+                                                            </div>
                                                         {:else if luggageSenderLookupResults.length > 0}
                                                             {#each luggageSenderLookupResults as customer (customer.id)}
                                                                 <button
                                                                     type="button"
                                                                     class="flex w-full flex-col gap-1 border-b border-border/60 px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
-                                                                    onmousedown={(event) => event.preventDefault()}
-                                                                    onclick={() => applyLuggageCustomer(customer, 'sender')}
+                                                                    onmousedown={(
+                                                                        event,
+                                                                    ) =>
+                                                                        event.preventDefault()}
+                                                                    onclick={() =>
+                                                                        applyLuggageCustomer(
+                                                                            customer,
+                                                                            'sender',
+                                                                        )}
                                                                 >
-                                                                    <span class="flex items-center justify-between gap-2">
-                                                                        <span class="font-medium text-foreground">{customer.nama}</span>
-                                                                        <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{customer.tipe ?? '-'}</span>
+                                                                    <span
+                                                                        class="flex items-center justify-between gap-2"
+                                                                    >
+                                                                        <span
+                                                                            class="font-medium text-foreground"
+                                                                            >{customer.nama}</span
+                                                                        >
+                                                                        <span
+                                                                            class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                                            >{customer.tipe ??
+                                                                                '-'}</span
+                                                                        >
                                                                     </span>
-                                                                    <span class="text-xs text-muted-foreground">{customer.no_hp}</span>
-                                                                    <span class="truncate text-xs text-muted-foreground">{customer.alamat || '-'}</span>
+                                                                    <span
+                                                                        class="text-xs text-muted-foreground"
+                                                                        >{customer.no_hp}</span
+                                                                    >
+                                                                    <span
+                                                                        class="truncate text-xs text-muted-foreground"
+                                                                        >{customer.alamat ||
+                                                                            '-'}</span
+                                                                    >
                                                                 </button>
                                                             {/each}
                                                         {:else}
-                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Customer bagasi pengirim tidak ditemukan.</div>
+                                                            <div
+                                                                class="px-3 py-3 text-xs text-muted-foreground"
+                                                            >
+                                                                Customer bagasi
+                                                                pengirim tidak
+                                                                ditemukan.
+                                                            </div>
                                                         {/if}
                                                     </div>
                                                 {/if}
                                             </div>
                                         </div>
-                                        <div class="space-y-1"><label for="luggage-sender-phone" class="text-xs font-medium text-muted-foreground">No HP Pengirim</label><Input id="luggage-sender-phone" class="rounded-xl" bind:value={luggageForm.sender_phone} required /></div>
-                                        <div class="space-y-1 md:col-span-2"><label for="luggage-sender-address" class="text-xs font-medium text-muted-foreground">Alamat Pengirim</label><Input id="luggage-sender-address" class="rounded-xl" bind:value={luggageForm.sender_address} /></div>
+                                        <div class="space-y-1">
+                                            <label
+                                                for="luggage-sender-phone"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >No HP Pengirim</label
+                                            ><Input
+                                                id="luggage-sender-phone"
+                                                class="rounded-xl"
+                                                bind:value={
+                                                    luggageForm.sender_phone
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                        <div class="space-y-1 md:col-span-2">
+                                            <label
+                                                for="luggage-sender-address"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Alamat Pengirim</label
+                                            ><Input
+                                                id="luggage-sender-address"
+                                                class="rounded-xl"
+                                                bind:value={
+                                                    luggageForm.sender_address
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 </section>
 
-                                <section class="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                                <section
+                                    class="rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                >
                                     <div class="mb-3">
-                                        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Penerima</p>
-                                        <p class="text-sm font-medium text-foreground">Cari customer bagasi penerima supaya kontak terisi otomatis</p>
+                                        <p
+                                            class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                                        >
+                                            Penerima
+                                        </p>
+                                        <p
+                                            class="text-sm font-medium text-foreground"
+                                        >
+                                            Cari customer bagasi penerima supaya
+                                            kontak terisi otomatis
+                                        </p>
                                     </div>
                                     <div class="grid gap-3 md:grid-cols-2">
                                         <div class="space-y-1 md:col-span-2">
-                                            <label for="luggage-receiver-name" class="text-xs font-medium text-muted-foreground">Nama Penerima</label>
+                                            <label
+                                                for="luggage-receiver-name"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Nama Penerima</label
+                                            >
                                             <div class="relative">
                                                 <Input
                                                     id="luggage-receiver-name"
@@ -3472,85 +4590,217 @@ params.set('to', filterTo);
                                                     type="search"
                                                     placeholder="Cari nama customer bagasi penerima"
                                                     value={luggageForm.receiver_name}
-                                                    oninput={(event) => onLuggageCustomerInput((event.currentTarget as HTMLInputElement).value, 'receiver')}
-                                                    onfocus={() => onLuggageCustomerFocus('receiver')}
-                                                    onblur={() => onLuggageCustomerBlur('receiver')}
+                                                    oninput={(event) =>
+                                                        onLuggageCustomerInput(
+                                                            (
+                                                                event.currentTarget as HTMLInputElement
+                                                            ).value,
+                                                            'receiver',
+                                                        )}
+                                                    onfocus={() =>
+                                                        onLuggageCustomerFocus(
+                                                            'receiver',
+                                                        )}
+                                                    onblur={() =>
+                                                        onLuggageCustomerBlur(
+                                                            'receiver',
+                                                        )}
                                                     autocomplete="off"
                                                     required
                                                 />
                                                 {#if luggageReceiverLookupOpen}
-                                                    <div class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl">
+                                                    <div
+                                                        class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl"
+                                                    >
                                                         {#if luggageReceiverLookupBusy}
-                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Mencari customer bagasi...</div>
+                                                            <div
+                                                                class="px-3 py-3 text-xs text-muted-foreground"
+                                                            >
+                                                                Mencari customer
+                                                                bagasi...
+                                                            </div>
                                                         {:else if luggageReceiverLookupResults.length > 0}
                                                             {#each luggageReceiverLookupResults as customer (customer.id)}
                                                                 <button
                                                                     type="button"
                                                                     class="flex w-full flex-col gap-1 border-b border-border/60 px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
-                                                                    onmousedown={(event) => event.preventDefault()}
-                                                                    onclick={() => applyLuggageCustomer(customer, 'receiver')}
+                                                                    onmousedown={(
+                                                                        event,
+                                                                    ) =>
+                                                                        event.preventDefault()}
+                                                                    onclick={() =>
+                                                                        applyLuggageCustomer(
+                                                                            customer,
+                                                                            'receiver',
+                                                                        )}
                                                                 >
-                                                                    <span class="flex items-center justify-between gap-2">
-                                                                        <span class="font-medium text-foreground">{customer.nama}</span>
-                                                                        <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{customer.tipe ?? '-'}</span>
+                                                                    <span
+                                                                        class="flex items-center justify-between gap-2"
+                                                                    >
+                                                                        <span
+                                                                            class="font-medium text-foreground"
+                                                                            >{customer.nama}</span
+                                                                        >
+                                                                        <span
+                                                                            class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                                            >{customer.tipe ??
+                                                                                '-'}</span
+                                                                        >
                                                                     </span>
-                                                                    <span class="text-xs text-muted-foreground">{customer.no_hp}</span>
-                                                                    <span class="truncate text-xs text-muted-foreground">{customer.alamat || '-'}</span>
+                                                                    <span
+                                                                        class="text-xs text-muted-foreground"
+                                                                        >{customer.no_hp}</span
+                                                                    >
+                                                                    <span
+                                                                        class="truncate text-xs text-muted-foreground"
+                                                                        >{customer.alamat ||
+                                                                            '-'}</span
+                                                                    >
                                                                 </button>
                                                             {/each}
                                                         {:else}
-                                                            <div class="px-3 py-3 text-xs text-muted-foreground">Customer bagasi penerima tidak ditemukan.</div>
+                                                            <div
+                                                                class="px-3 py-3 text-xs text-muted-foreground"
+                                                            >
+                                                                Customer bagasi
+                                                                penerima tidak
+                                                                ditemukan.
+                                                            </div>
                                                         {/if}
                                                     </div>
                                                 {/if}
                                             </div>
                                         </div>
-                                        <div class="space-y-1"><label for="luggage-receiver-phone" class="text-xs font-medium text-muted-foreground">No HP Penerima</label><Input id="luggage-receiver-phone" class="rounded-xl" bind:value={luggageForm.receiver_phone} required /></div>
-                                        <div class="space-y-1 md:col-span-2"><label for="luggage-receiver-address" class="text-xs font-medium text-muted-foreground">Alamat Penerima</label><Input id="luggage-receiver-address" class="rounded-xl" bind:value={luggageForm.receiver_address} /></div>
+                                        <div class="space-y-1">
+                                            <label
+                                                for="luggage-receiver-phone"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >No HP Penerima</label
+                                            ><Input
+                                                id="luggage-receiver-phone"
+                                                class="rounded-xl"
+                                                bind:value={
+                                                    luggageForm.receiver_phone
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                        <div class="space-y-1 md:col-span-2">
+                                            <label
+                                                for="luggage-receiver-address"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Alamat Penerima</label
+                                            ><Input
+                                                id="luggage-receiver-address"
+                                                class="rounded-xl"
+                                                bind:value={
+                                                    luggageForm.receiver_address
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 </section>
 
-                                <section class="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                                <section
+                                    class="rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                >
                                     <div class="mb-3">
-                                        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Pengiriman</p>
-                                        <p class="text-sm font-medium text-foreground">Layanan, jadwal, dan biaya bagasi</p>
+                                        <p
+                                            class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                                        >
+                                            Pengiriman
+                                        </p>
+                                        <p
+                                            class="text-sm font-medium text-foreground"
+                                        >
+                                            Layanan, jadwal, dan biaya bagasi
+                                        </p>
                                     </div>
-                                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                    <div
+                                        class="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
+                                    >
                                         <div class="space-y-1 xl:col-span-2">
-                                            <label for="luggage-pool" class="text-xs font-medium text-muted-foreground">Perwakilan / Pool</label>
-                                            <select id="luggage-pool" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={luggageForm.pool_id} required={activePools().length > 0}>
-                                                <option value={0}>Pilih pool</option>
+                                            <label
+                                                for="luggage-pool"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Perwakilan / Pool</label
+                                            >
+                                            <select
+                                                id="luggage-pool"
+                                                class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                                                bind:value={luggageForm.pool_id}
+                                                required={activePools().length >
+                                                    0}
+                                            >
+                                                <option value={0}
+                                                    >Pilih pool</option
+                                                >
                                                 {#each activePools() as pool (pool.id)}
-                                                    <option value={pool.id}>{poolLabel(pool)}</option>
+                                                    <option value={pool.id}
+                                                        >{poolLabel(
+                                                            pool,
+                                                        )}</option
+                                                    >
                                                 {/each}
                                             </select>
-                                            <p class="text-[11px] text-muted-foreground">Dipakai untuk akses user dan laporan pool.</p>
+                                            <p
+                                                class="text-[11px] text-muted-foreground"
+                                            >
+                                                Dipakai untuk akses user dan
+                                                laporan pool.
+                                            </p>
                                         </div>
                                         <div class="space-y-1 xl:col-span-2">
-                                            <label for="luggage-service" class="text-xs font-medium text-muted-foreground">Layanan</label>
-                                            <select id="luggage-service" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={luggageForm.service_id}>
-                                                <option value={0}>Pilih layanan</option>
+                                            <label
+                                                for="luggage-service"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Layanan</label
+                                            >
+                                            <select
+                                                id="luggage-service"
+                                                class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                                                bind:value={
+                                                    luggageForm.service_id
+                                                }
+                                            >
+                                                <option value={0}
+                                                    >Pilih layanan</option
+                                                >
                                                 {#each services as service (service.id)}
-                                                    <option value={service.id}>{service.name}</option>
+                                                    <option value={service.id}
+                                                        >{service.name}</option
+                                                    >
                                                 {/each}
                                             </select>
                                         </div>
                                         <div class="space-y-1 xl:col-span-2">
-                                            <label for="luggage-route" class="text-xs font-medium text-muted-foreground">Rute</label>
+                                            <label
+                                                for="luggage-route"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Rute</label
+                                            >
                                             <select
                                                 id="luggage-route"
                                                 class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm"
                                                 bind:value={luggageForm.rute_id}
                                                 onchange={syncLuggagePoolFromRoute}
                                             >
-                                                <option value={0}>Pilih rute</option>
+                                                <option value={0}
+                                                    >Pilih rute</option
+                                                >
                                                 {#each routes as route (route.id)}
-                                                    <option value={route.id}>{route.name}</option>
+                                                    <option value={route.id}
+                                                        >{route.name}</option
+                                                    >
                                                 {/each}
                                             </select>
                                         </div>
                                         <div class="space-y-1">
-                                            <label for="luggage-date" class="text-xs font-medium text-muted-foreground">Tanggal</label>
+                                            <label
+                                                for="luggage-date"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Tanggal</label
+                                            >
                                             <input
                                                 id="luggage-date"
                                                 bind:this={luggageDateInput}
@@ -3563,121 +4813,300 @@ params.set('to', filterTo);
                                             />
                                         </div>
                                         <div class="space-y-1">
-                                            <label for="luggage-quantity" class="text-xs font-medium text-muted-foreground">Jumlah Barang</label>
-                                            <Input id="luggage-quantity" class="rounded-xl" type="number" min="1" bind:value={luggageForm.quantity} required />
+                                            <label
+                                                for="luggage-quantity"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Jumlah Barang</label
+                                            >
+                                            <Input
+                                                id="luggage-quantity"
+                                                class="rounded-xl"
+                                                type="number"
+                                                min="1"
+                                                bind:value={
+                                                    luggageForm.quantity
+                                                }
+                                                required
+                                            />
                                         </div>
                                         <div class="space-y-1">
-                                            <label for="luggage-price" class="text-xs font-medium text-muted-foreground">Biaya Bagasi</label>
+                                            <label
+                                                for="luggage-price"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Biaya Bagasi</label
+                                            >
                                             <Input
                                                 id="luggage-price"
                                                 class="rounded-xl"
                                                 type="text"
                                                 inputmode="numeric"
                                                 placeholder="Rp 0"
-                                                value={formatCurrencyInput(luggageForm.price)}
+                                                value={formatCurrencyInput(
+                                                    luggageForm.price,
+                                                )}
                                                 oninput={(event) => {
-                                                    luggageForm.price = parseCurrencyInput((event.currentTarget as HTMLInputElement).value);
+                                                    luggageForm.price =
+                                                        parseCurrencyInput(
+                                                            (
+                                                                event.currentTarget as HTMLInputElement
+                                                            ).value,
+                                                        );
                                                 }}
                                             />
                                         </div>
                                         <div class="space-y-1">
-                                            <label for="luggage-payment-status" class="text-xs font-medium text-muted-foreground">Status Pembayaran</label>
-                                            <select id="luggage-payment-status" class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm" bind:value={luggageForm.payment_status}>{#each luggagePaymentStatusOptions as status (status)}<option value={status}>{status}</option>{/each}</select>
+                                            <label
+                                                for="luggage-payment-status"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Status Pembayaran</label
+                                            >
+                                            <select
+                                                id="luggage-payment-status"
+                                                class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                                                bind:value={
+                                                    luggageForm.payment_status
+                                                }
+                                                >{#each luggagePaymentStatusOptions as status (status)}<option
+                                                        value={status}
+                                                        >{status}</option
+                                                    >{/each}</select
+                                            >
                                         </div>
                                         <div class="space-y-1 xl:col-span-4">
-                                            <label for="luggage-notes" class="text-xs font-medium text-muted-foreground">Catatan</label>
-                                            <Input id="luggage-notes" class="rounded-xl" placeholder="Catatan tambahan" bind:value={luggageForm.notes} />
+                                            <label
+                                                for="luggage-notes"
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Catatan</label
+                                            >
+                                            <Input
+                                                id="luggage-notes"
+                                                class="rounded-xl"
+                                                placeholder="Catatan tambahan"
+                                                bind:value={luggageForm.notes}
+                                            />
                                         </div>
                                     </div>
                                 </section>
                             </div>
 
                             <aside class="space-y-4">
-                                <section class="rounded-2xl border border-border/70 bg-slate-950 p-4 text-slate-50 shadow-sm">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">Ringkasan Bagasi</p>
+                                <section
+                                    class="rounded-2xl border border-border/70 bg-slate-950 p-4 text-slate-50 shadow-sm"
+                                >
+                                    <p
+                                        class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300"
+                                    >
+                                        Ringkasan Bagasi
+                                    </p>
                                     <div class="mt-3 space-y-3">
-                                        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
-                                            <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Pengirim</p>
-                                            <p class="mt-1 font-semibold">{luggageForm.sender_name || 'Nama pengirim belum diisi'}</p>
-                                            <p class="truncate text-slate-300">{luggageForm.sender_phone || '-'}</p>
-                                            <p class="truncate text-slate-300">{luggageForm.sender_address || '-'}</p>
+                                        <div
+                                            class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs"
+                                        >
+                                            <p
+                                                class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                            >
+                                                Pengirim
+                                            </p>
+                                            <p class="mt-1 font-semibold">
+                                                {luggageForm.sender_name ||
+                                                    'Nama pengirim belum diisi'}
+                                            </p>
+                                            <p class="truncate text-slate-300">
+                                                {luggageForm.sender_phone ||
+                                                    '-'}
+                                            </p>
+                                            <p class="truncate text-slate-300">
+                                                {luggageForm.sender_address ||
+                                                    '-'}
+                                            </p>
                                         </div>
-                                        <div class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
-                                            <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Penerima</p>
-                                            <p class="mt-1 font-semibold">{luggageForm.receiver_name || 'Nama penerima belum diisi'}</p>
-                                            <p class="truncate text-slate-300">{luggageForm.receiver_phone || '-'}</p>
-                                            <p class="truncate text-slate-300">{luggageForm.receiver_address || '-'}</p>
+                                        <div
+                                            class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs"
+                                        >
+                                            <p
+                                                class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                            >
+                                                Penerima
+                                            </p>
+                                            <p class="mt-1 font-semibold">
+                                                {luggageForm.receiver_name ||
+                                                    'Nama penerima belum diisi'}
+                                            </p>
+                                            <p class="truncate text-slate-300">
+                                                {luggageForm.receiver_phone ||
+                                                    '-'}
+                                            </p>
+                                            <p class="truncate text-slate-300">
+                                                {luggageForm.receiver_address ||
+                                                    '-'}
+                                            </p>
                                         </div>
-                                        <div class="grid grid-cols-2 gap-2 text-xs">
-                                            <div class="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                                                <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Tanggal</p>
-                                                <p class="mt-1 font-medium">{luggageForm.tanggal || '-'}</p>
+                                        <div
+                                            class="grid grid-cols-2 gap-2 text-xs"
+                                        >
+                                            <div
+                                                class="rounded-xl border border-white/10 bg-white/5 p-2.5"
+                                            >
+                                                <p
+                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                >
+                                                    Tanggal
+                                                </p>
+                                                <p class="mt-1 font-medium">
+                                                    {luggageForm.tanggal || '-'}
+                                                </p>
                                             </div>
-                                            <div class="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                                                <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Jumlah</p>
-                                                <p class="mt-1 font-medium">{luggageForm.quantity || 0} barang</p>
+                                            <div
+                                                class="rounded-xl border border-white/10 bg-white/5 p-2.5"
+                                            >
+                                                <p
+                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                >
+                                                    Jumlah
+                                                </p>
+                                                <p class="mt-1 font-medium">
+                                                    {luggageForm.quantity || 0} barang
+                                                </p>
                                             </div>
-                                            <div class="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                                                <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Status</p>
-                                                <p class="mt-1 font-medium">{luggageStatusLabel(luggageForm.status)}</p>
+                                            <div
+                                                class="rounded-xl border border-white/10 bg-white/5 p-2.5"
+                                            >
+                                                <p
+                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                >
+                                                    Status
+                                                </p>
+                                                <p class="mt-1 font-medium">
+                                                    {luggageStatusLabel(
+                                                        luggageForm.status,
+                                                    )}
+                                                </p>
                                             </div>
-                                            <div class="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                                                <p class="text-[10px] uppercase tracking-[0.08em] text-slate-300">Bayar</p>
-                                                <p class="mt-1 font-medium">{luggageForm.payment_status || '-'}</p>
+                                            <div
+                                                class="rounded-xl border border-white/10 bg-white/5 p-2.5"
+                                            >
+                                                <p
+                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                >
+                                                    Bayar
+                                                </p>
+                                                <p class="mt-1 font-medium">
+                                                    {luggageForm.payment_status ||
+                                                        '-'}
+                                                </p>
                                             </div>
                                         </div>
-                                        <div class="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-xs">
-                                            <div class="flex items-center justify-between gap-2">
-                                                <span class="text-emerald-100">Rute</span>
-                                                <span class="font-medium text-right">{routes.find((route) => route.id === Number(luggageForm.rute_id))?.name ?? '-'}</span>
+                                        <div
+                                            class="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-xs"
+                                        >
+                                            <div
+                                                class="flex items-center justify-between gap-2"
+                                            >
+                                                <span class="text-emerald-100"
+                                                    >Rute</span
+                                                >
+                                                <span
+                                                    class="font-medium text-right"
+                                                    >{routes.find(
+                                                        (route) =>
+                                                            route.id ===
+                                                            Number(
+                                                                luggageForm.rute_id,
+                                                            ),
+                                                    )?.name ?? '-'}</span
+                                                >
                                             </div>
-                                            <div class="mt-1 flex items-center justify-between gap-2">
-                                                <span class="text-emerald-100">Layanan</span>
-                                                <span class="font-medium text-right">{services.find((service) => service.id === Number(luggageForm.service_id))?.name ?? '-'}</span>
+                                            <div
+                                                class="mt-1 flex items-center justify-between gap-2"
+                                            >
+                                                <span class="text-emerald-100"
+                                                    >Layanan</span
+                                                >
+                                                <span
+                                                    class="font-medium text-right"
+                                                    >{services.find(
+                                                        (service) =>
+                                                            service.id ===
+                                                            Number(
+                                                                luggageForm.service_id,
+                                                            ),
+                                                    )?.name ?? '-'}</span
+                                                >
                                             </div>
-                                            <div class="mt-1 flex items-center justify-between gap-2">
-                                                <span class="text-emerald-100">Biaya</span>
-                                                <span class="font-semibold">{formatCurrencyId(luggageForm.price)}</span>
+                                            <div
+                                                class="mt-1 flex items-center justify-between gap-2"
+                                            >
+                                                <span class="text-emerald-100"
+                                                    >Biaya</span
+                                                >
+                                                <span class="font-semibold"
+                                                    >{formatCurrencyId(
+                                                        luggageForm.price,
+                                                    )}</span
+                                                >
                                             </div>
                                         </div>
                                     </div>
                                 </section>
 
-                                <div class="flex flex-wrap items-center gap-2 border-t border-border/70 pt-1 xl:border-0 xl:pt-0">
+                                <div
+                                    class="flex flex-wrap items-center gap-2 border-t border-border/70 pt-1 xl:border-0 xl:pt-0"
+                                >
                                     <LoadingButton
                                         type="submit"
                                         class="h-9 rounded-xl px-4 text-xs"
                                         loading={savingLuggage}
-                                        loadingText={luggageForm.id ? 'Menyimpan perubahan...' : 'Menyimpan bagasi...'}
+                                        loadingText={luggageForm.id
+                                            ? 'Menyimpan perubahan...'
+                                            : 'Menyimpan bagasi...'}
                                     >
-                                        {luggageForm.id ? 'Update Data Bagasi' : 'Simpan Bagasi Baru'}
+                                        {luggageForm.id
+                                            ? 'Update Data Bagasi'
+                                            : 'Simpan Bagasi Baru'}
                                     </LoadingButton>
-                                    <Button type="button" variant="outline" class="h-9 rounded-xl px-4 text-xs" onclick={() => setFormMode('data')}>Batal</Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-9 rounded-xl px-4 text-xs"
+                                        onclick={() => setFormMode('data')}
+                                        >Batal</Button
+                                    >
                                 </div>
                             </aside>
                         </form>
                     </div>
                 {:else}
-                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm">
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                    >
                         <div class="space-y-1">
-                            <p class="text-sm font-semibold tracking-tight text-foreground">Workspace Bagasi</p>
-                            <p class="text-xs text-muted-foreground">Kelola transaksi bagasi, status kirim, dan tracking resi dalam tampilan yang lebih ringkas.</p>
+                            <p
+                                class="text-sm font-semibold tracking-tight text-foreground"
+                            >
+                                Workspace Bagasi
+                            </p>
+                            <p class="text-xs text-muted-foreground">
+                                Kelola transaksi bagasi, status kirim, dan
+                                tracking resi dalam tampilan yang lebih ringkas.
+                            </p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             {#if canLuggageCreate}<Button
-                                type="button"
-                                class="h-9 rounded-xl px-4 text-xs"
-                                onclick={() => {
-                                    resetLuggageFormState();
-                                    setFormMode('form');
-                                }}
-                            >
-                                Tambah Bagasi
-                            </Button>{/if}
+                                    type="button"
+                                    class="h-9 rounded-xl px-4 text-xs"
+                                    onclick={() => {
+                                        resetLuggageFormState();
+                                        setFormMode('form');
+                                    }}
+                                >
+                                    Tambah Bagasi
+                                </Button>{/if}
                         </div>
                     </div>
                     <!-- Status tabs -->
-                    <div class="flex flex-wrap gap-1.5 rounded-2xl border border-border/60 bg-muted/30 p-1">
+                    <div
+                        class="flex flex-wrap gap-1.5 rounded-2xl border border-border/60 bg-muted/30 p-1"
+                    >
                         {#each luggageStatusTabs() as tab (tab.key)}
                             <button
                                 type="button"
@@ -3697,26 +5126,48 @@ params.set('to', filterTo);
                     </div>
                     <div class="grid gap-3 md:hidden">
                         {#if luggages.length === 0}
-                            <div class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground">
-                                Belum ada data bagasi yang cocok dengan filter saat ini.
+                            <div
+                                class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
+                            >
+                                Belum ada data bagasi yang cocok dengan filter
+                                saat ini.
                             </div>
                         {:else}
                             {#each luggages as row (row.id)}
-                                {@const normalizedLuggageStatus = normalizeLuggageStatus(row.status)}
-                                {@const departureInfo = luggageDepartureInfo(row)}
-                                {@const lockedLuggageActions = [luggagePickedUpStatus, luggageArrivedStatus].includes(normalizedLuggageStatus)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
+                                {@const normalizedLuggageStatus =
+                                    normalizeLuggageStatus(row.status)}
+                                {@const departureInfo =
+                                    luggageDepartureInfo(row)}
+                                {@const lockedLuggageActions = [
+                                    luggagePickedUpStatus,
+                                    luggageArrivedStatus,
+                                ].includes(normalizedLuggageStatus)}
+                                <article
+                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
                                         <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold text-foreground">
-                                                {row.kode_resi ?? `Bagasi #${row.id}`}
+                                            <p
+                                                class="truncate text-sm font-semibold text-foreground"
+                                            >
+                                                {row.kode_resi ??
+                                                    `Bagasi #${row.id}`}
                                             </p>
-                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
-                                                {row.service_name ?? '-'} / {row.quantity} barang
+                                            <p
+                                                class="mt-0.5 truncate text-xs text-muted-foreground"
+                                            >
+                                                {row.service_name ?? '-'} / {row.quantity}
+                                                barang
                                             </p>
                                         </div>
-                                        <div class="flex shrink-0 items-center gap-1.5">
-                                            <span class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggageStatusClass(row.status)}`}>
+                                        <div
+                                            class="flex shrink-0 items-center gap-1.5"
+                                        >
+                                            <span
+                                                class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggageStatusClass(row.status)}`}
+                                            >
                                                 {luggageStatusLabel(row.status)}
                                             </span>
                                             <DropdownMenu>
@@ -3728,35 +5179,87 @@ params.set('to', filterTo);
                                                             variant="outline"
                                                             class="h-8 rounded-full border-border/70 px-2.5"
                                                             onclick={props.onclick}
-                                                            aria-expanded={props['aria-expanded']}
-                                                            data-state={props['data-state']}
+                                                            aria-expanded={props[
+                                                                'aria-expanded'
+                                                            ]}
+                                                            data-state={props[
+                                                                'data-state'
+                                                            ]}
                                                         >
-                                                            <MoreHorizontal class="h-4 w-4" />
+                                                            <MoreHorizontal
+                                                                class="h-4 w-4"
+                                                            />
                                                         </Button>
                                                     {/snippet}
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" class="w-52">
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    class="w-52"
+                                                >
                                                     {#if canLuggageUpdate && !lockedLuggageActions}
-                                                        <DropdownMenuItem onclick={() => openLuggageEditor(row)}>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                openLuggageEditor(
+                                                                    row,
+                                                                )}
+                                                        >
                                                             Edit Data
                                                         </DropdownMenuItem>
                                                     {/if}
                                                     {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
-                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-active`} onclick={() => void luggageAction(row, 'active')}>
-                                                            {pendingLuggageActionKey === `action-${row.id}-active` ? 'Memproses...' : 'Tandai Dalam Perjalanan'}
+                                                        <DropdownMenuItem
+                                                            disabled={pendingLuggageActionKey ===
+                                                                `action-${row.id}-active`}
+                                                            onclick={() =>
+                                                                void luggageAction(
+                                                                    row,
+                                                                    'active',
+                                                                )}
+                                                        >
+                                                            {pendingLuggageActionKey ===
+                                                            `action-${row.id}-active`
+                                                                ? 'Memproses...'
+                                                                : 'Tandai Dalam Perjalanan'}
                                                         </DropdownMenuItem>
                                                     {/if}
                                                     {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
-                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-paid`} onclick={() => void luggageAction(row, 'paid')}>
-                                                            {pendingLuggageActionKey === `action-${row.id}-paid` ? 'Memproses...' : 'Tandai Lunas'}
+                                                        <DropdownMenuItem
+                                                            disabled={pendingLuggageActionKey ===
+                                                                `action-${row.id}-paid`}
+                                                            onclick={() =>
+                                                                void luggageAction(
+                                                                    row,
+                                                                    'paid',
+                                                                )}
+                                                        >
+                                                            {pendingLuggageActionKey ===
+                                                            `action-${row.id}-paid`
+                                                                ? 'Memproses...'
+                                                                : 'Tandai Lunas'}
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    {#if canLuggagePrint}<DropdownMenuItem onclick={() => openLuggagePrint(row.id)}>
-                                                        Print Resi
-                                                    </DropdownMenuItem>{/if}
+                                                    {#if canLuggagePrint}<DropdownMenuItem
+                                                            onclick={() =>
+                                                                openLuggagePrint(
+                                                                    row.id,
+                                                                )}
+                                                        >
+                                                            Print Resi
+                                                        </DropdownMenuItem>{/if}
                                                     {#if canLuggageUpdate && !lockedLuggageActions}
-                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-canceled`} onclick={() => void luggageAction(row, 'canceled')}>
-                                                            {pendingLuggageActionKey === `action-${row.id}-canceled` ? 'Memproses...' : 'Batalkan Pengiriman'}
+                                                        <DropdownMenuItem
+                                                            disabled={pendingLuggageActionKey ===
+                                                                `action-${row.id}-canceled`}
+                                                            onclick={() =>
+                                                                void luggageAction(
+                                                                    row,
+                                                                    'canceled',
+                                                                )}
+                                                        >
+                                                            {pendingLuggageActionKey ===
+                                                            `action-${row.id}-canceled`
+                                                                ? 'Memproses...'
+                                                                : 'Batalkan Pengiriman'}
                                                         </DropdownMenuItem>
                                                     {/if}
                                                 </DropdownMenuContent>
@@ -3764,56 +5267,151 @@ params.set('to', filterTo);
                                         </div>
                                     </div>
 
-                                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pengirim</p>
-                                            <p class="mt-1 truncate font-semibold text-foreground">{row.sender_name || '-'}</p>
-                                            <p class="mt-0.5 truncate text-[11px] text-muted-foreground">{row.sender_phone || '-'}</p>
+                                    <div
+                                        class="mt-3 grid grid-cols-2 gap-2 text-xs"
+                                    >
+                                        <div
+                                            class="rounded-xl bg-muted/30 px-3 py-2"
+                                        >
+                                            <p
+                                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Pengirim
+                                            </p>
+                                            <p
+                                                class="mt-1 truncate font-semibold text-foreground"
+                                            >
+                                                {row.sender_name || '-'}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 truncate text-[11px] text-muted-foreground"
+                                            >
+                                                {row.sender_phone || '-'}
+                                            </p>
                                         </div>
-                                        <div class="rounded-xl bg-muted/30 px-3 py-2">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Penerima</p>
-                                            <p class="mt-1 truncate font-semibold text-foreground">{row.receiver_name || '-'}</p>
-                                            <p class="mt-0.5 truncate text-[11px] text-muted-foreground">{row.receiver_phone || '-'}</p>
+                                        <div
+                                            class="rounded-xl bg-muted/30 px-3 py-2"
+                                        >
+                                            <p
+                                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Penerima
+                                            </p>
+                                            <p
+                                                class="mt-1 truncate font-semibold text-foreground"
+                                            >
+                                                {row.receiver_name || '-'}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 truncate text-[11px] text-muted-foreground"
+                                            >
+                                                {row.receiver_phone || '-'}
+                                            </p>
                                         </div>
                                     </div>
 
-                                    <div class="mt-2 rounded-xl bg-muted/30 px-3 py-2 text-xs">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute</p>
-                                        <p class="mt-1 font-semibold text-foreground">
-                                            {row.route_name ?? row.rute ?? routes.find((route) => route.id === Number(row.rute_id || 0))?.name ?? '-'}
+                                    <div
+                                        class="mt-2 rounded-xl bg-muted/30 px-3 py-2 text-xs"
+                                    >
+                                        <p
+                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                        >
+                                            Rute
                                         </p>
-                                        <p class="mt-0.5 text-[11px] text-muted-foreground">{row.tanggal || '-'}</p>
+                                        <p
+                                            class="mt-1 font-semibold text-foreground"
+                                        >
+                                            {row.route_name ??
+                                                row.rute ??
+                                                routes.find(
+                                                    (route) =>
+                                                        route.id ===
+                                                        Number(
+                                                            row.rute_id || 0,
+                                                        ),
+                                                )?.name ??
+                                                '-'}
+                                        </p>
+                                        <p
+                                            class="mt-0.5 text-[11px] text-muted-foreground"
+                                        >
+                                            {row.tanggal || '-'}
+                                        </p>
                                     </div>
 
-                                    <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
-                                        <div class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Biaya</p>
-                                            <p class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200">{formatCurrencyId(row.price)}</p>
+                                    <div
+                                        class="mt-2 grid grid-cols-2 gap-2 text-xs"
+                                    >
+                                        <div
+                                            class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25"
+                                        >
+                                            <p
+                                                class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+                                            >
+                                                Biaya
+                                            </p>
+                                            <p
+                                                class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200"
+                                            >
+                                                {formatCurrencyId(row.price)}
+                                            </p>
                                         </div>
-                                        <div class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">Pembayaran</p>
+                                        <div
+                                            class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25"
+                                        >
+                                            <p
+                                                class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+                                            >
+                                                Pembayaran
+                                            </p>
                                             <p class="mt-1">
-                                                <span class={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggagePaymentClass(row.payment_status)}`}>
+                                                <span
+                                                    class={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                >
                                                     {row.payment_status ?? '-'}
                                                 </span>
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div class="mt-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Keberangkatan</p>
+                                    <div
+                                        class="mt-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs"
+                                    >
+                                        <p
+                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                        >
+                                            Keberangkatan
+                                        </p>
                                         {#if departureInfo}
-                                            <p class="mt-1 font-semibold text-foreground">{departureInfo.primary}</p>
-                                            <p class="mt-0.5 text-[11px] text-muted-foreground">{departureInfo.secondary}</p>
+                                            <p
+                                                class="mt-1 font-semibold text-foreground"
+                                            >
+                                                {departureInfo.primary}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 text-[11px] text-muted-foreground"
+                                            >
+                                                {departureInfo.secondary}
+                                            </p>
                                         {:else if normalizedLuggageStatus === luggageReceivedStatus}
-                                            <p class="mt-1 text-[11px] text-muted-foreground">Belum dimapping ke keberangkatan</p>
+                                            <p
+                                                class="mt-1 text-[11px] text-muted-foreground"
+                                            >
+                                                Belum dimapping ke keberangkatan
+                                            </p>
                                         {:else}
-                                            <p class="mt-1 text-[11px] text-muted-foreground">-</p>
+                                            <p
+                                                class="mt-1 text-[11px] text-muted-foreground"
+                                            >
+                                                -
+                                            </p>
                                         {/if}
                                     </div>
 
                                     {#if row.notes}
-                                        <p class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+                                        <p
+                                            class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground"
+                                        >
                                             {row.notes}
                                         </p>
                                     {/if}
@@ -3822,119 +5420,307 @@ params.set('to', filterTo);
                         {/if}
                     </div>
 
-                    <div class="hidden overflow-x-auto rounded-[24px] border border-border/70 bg-card shadow-sm md:block">
-                        <table class="min-w-full text-[12px] leading-snug">
-                            <thead class="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                    <div
+                        class="hidden overflow-x-auto rounded-2xl border border-border/70 bg-background md:block"
+                    >
+                        <table
+                            class="min-w-full table-fixed text-[12px] leading-snug"
+                        >
+                            <thead
+                                class="bg-muted/30 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                            >
                                 <tr>
-                                    <th class="px-2.5 py-2 text-left">Pengirim</th>
-                                    <th class="px-2.5 py-2 text-left">Penerima</th>
-                                    <th class="px-2.5 py-2 text-left">Rute</th>
-                                    <th class="px-2.5 py-2 text-left">Layanan / Resi</th>
-                                    <th class="px-2.5 py-2 text-left">Jumlah</th>
-                                    <th class="px-2.5 py-2 text-left">Status</th>
-                                    <th class="px-2.5 py-2 text-left">Berangkat</th>
-                                    <th class="px-2.5 py-2 text-left">Pembayaran</th>
-                                    <th class="px-2.5 py-2 text-left">Biaya</th>
-                                    <th class="px-2.5 py-2 text-left">Aksi</th>
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Pengirim</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Penerima</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Rute</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Layanan / Resi</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Jumlah</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Status</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Berangkat</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Pembayaran</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Biaya</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        >Aksi</th
+                                    >
                                 </tr>
                             </thead>
                             <tbody>
                                 {#if luggages.length === 0}
                                     <tr>
-                                        <td colspan="10" class="px-4 py-8 text-center text-xs text-muted-foreground">
-                                            Belum ada data bagasi yang cocok dengan filter saat ini.
+                                        <td
+                                            colspan="10"
+                                            class="px-4 py-8 text-center text-xs text-muted-foreground"
+                                        >
+                                            Belum ada data bagasi yang cocok
+                                            dengan filter saat ini.
                                         </td>
                                     </tr>
                                 {:else}
                                     {#each luggages as row (row.id)}
-                                        {@const normalizedLuggageStatus = normalizeLuggageStatus(row.status)}
-                                        {@const departureInfo = luggageDepartureInfo(row)}
-                                        <tr class="border-t border-border/60 align-top transition-colors hover:bg-muted/10">
-                                            <td class="px-2.5 py-2">
-                                                <span class="block font-semibold text-foreground">{row.sender_name}</span>
-                                                <span class="mt-0.5 block text-[10px] text-muted-foreground">{row.sender_phone || '-'}</span>
-                                                <span class="mt-0.5 block max-w-[18rem] truncate text-[10px] text-muted-foreground">{row.sender_address || '-'}</span>
+                                        {@const normalizedLuggageStatus =
+                                            normalizeLuggageStatus(row.status)}
+                                        {@const departureInfo =
+                                            luggageDepartureInfo(row)}
+                                        <tr
+                                            class="border-b border-border/60 align-top transition-colors hover:bg-muted/20 last:border-b-0"
+                                        >
+                                            <td class="px-3 py-2.5 align-top">
+                                                <span
+                                                    class="block font-medium text-foreground"
+                                                    >{row.sender_name}</span
+                                                >
+                                                <span
+                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    >{row.sender_phone ||
+                                                        '-'}</span
+                                                >
+                                                <span
+                                                    class="mt-0.5 block max-w-[18rem] truncate text-[11px] text-muted-foreground"
+                                                    >{row.sender_address ||
+                                                        '-'}</span
+                                                >
                                             </td>
-                                            <td class="px-2.5 py-2">
-                                                <span class="block font-semibold text-foreground">{row.receiver_name}</span>
-                                                <span class="mt-0.5 block text-[10px] text-muted-foreground">{row.receiver_phone || '-'}</span>
-                                                <span class="mt-0.5 block max-w-[18rem] truncate text-[10px] text-muted-foreground">{row.receiver_address || '-'}</span>
+                                            <td class="px-3 py-2.5 align-top">
+                                                <span
+                                                    class="block font-medium text-foreground"
+                                                    >{row.receiver_name}</span
+                                                >
+                                                <span
+                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    >{row.receiver_phone ||
+                                                        '-'}</span
+                                                >
+                                                <span
+                                                    class="mt-0.5 block max-w-[18rem] truncate text-[11px] text-muted-foreground"
+                                                    >{row.receiver_address ||
+                                                        '-'}</span
+                                                >
                                             </td>
-                                            <td class="px-2.5 py-2">
-                                                <span class="block font-semibold text-foreground">{row.route_name ?? row.rute ?? routes.find((route) => route.id === Number(row.rute_id || 0))?.name ?? '-'}</span>
-                                                <span class="mt-0.5 block text-[10px] text-muted-foreground">{row.tanggal || '-'}</span>
+                                            <td class="px-3 py-2.5 align-top">
+                                                <span
+                                                    class="block font-medium text-foreground"
+                                                    >{row.route_name ??
+                                                        row.rute ??
+                                                        routes.find(
+                                                            (route) =>
+                                                                route.id ===
+                                                                Number(
+                                                                    row.rute_id ||
+                                                                        0,
+                                                                ),
+                                                        )?.name ??
+                                                        '-'}</span
+                                                >
+                                                <span
+                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    >{row.tanggal || '-'}</span
+                                                >
                                             </td>
-                                            <td class="px-2.5 py-2">
-                                                <span class="block font-semibold text-foreground">{row.service_name ?? '-'}</span>
-                                                <span class="mt-0.5 block text-[10px] text-muted-foreground">{row.kode_resi ?? '-'}</span>
-                                                <span class="mt-0.5 block max-w-[14rem] truncate text-[10px] text-muted-foreground">{row.notes ?? 'Tanpa catatan'}</span>
+                                            <td class="px-3 py-2.5 align-top">
+                                                <span
+                                                    class="block font-medium text-foreground"
+                                                    >{row.service_name ??
+                                                        '-'}</span
+                                                >
+                                                <span
+                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    >{row.kode_resi ??
+                                                        '-'}</span
+                                                >
+                                                <span
+                                                    class="mt-0.5 block max-w-[14rem] truncate text-[11px] text-muted-foreground"
+                                                    >{row.notes ??
+                                                        'Tanpa catatan'}</span
+                                                >
                                             </td>
-                                            <td class="px-2.5 py-2">
-                                                <span class="block font-semibold text-foreground">{row.quantity} barang</span>
+                                            <td class="px-3 py-2.5 align-top">
+                                                <span
+                                                    class="block font-medium text-foreground"
+                                                    >{row.quantity} barang</span
+                                                >
                                             </td>
-                                            <td class="px-2.5 py-2">
-                                                <span class={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${luggageStatusClass(row.status)}`}>{luggageStatusLabel(row.status)}</span>
+                                            <td class="px-3 py-2.5 align-top">
+                                                <span
+                                                    class={`inline-flex rounded-md px-2 py-1 text-[10px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                    >{luggageStatusLabel(
+                                                        row.status,
+                                                    )}</span
+                                                >
                                             </td>
-                                            <td class="px-2.5 py-2">
+                                            <td class="px-3 py-2.5 align-top">
                                                 {#if departureInfo}
-                                                    <span class="block font-semibold text-foreground">{departureInfo.primary}</span>
-                                                    <span class="mt-0.5 block text-[10px] text-muted-foreground">{departureInfo.secondary}</span>
+                                                    <span
+                                                        class="block font-medium text-foreground"
+                                                        >{departureInfo.primary}</span
+                                                    >
+                                                    <span
+                                                        class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                        >{departureInfo.secondary}</span
+                                                    >
                                                 {:else if normalizedLuggageStatus === luggageReceivedStatus}
-                                                    <span class="text-[10px] text-muted-foreground">Belum dimapping ke keberangkatan</span>
+                                                    <span
+                                                        class="text-[11px] text-muted-foreground"
+                                                        >Belum dimapping ke
+                                                        keberangkatan</span
+                                                    >
                                                 {:else}
-                                                    <span class="text-[10px] text-muted-foreground">-</span>
+                                                    <span
+                                                        class="text-[11px] text-muted-foreground"
+                                                        >-</span
+                                                    >
                                                 {/if}
                                             </td>
-                                            <td class="px-2.5 py-2">
-                                                <span class={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${luggagePaymentClass(row.payment_status)}`}>{row.payment_status ?? '-'}</span>
+                                            <td class="px-3 py-2.5 align-top">
+                                                <span
+                                                    class={`inline-flex rounded-md px-2 py-1 text-[10px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                    >{row.payment_status ??
+                                                        '-'}</span
+                                                >
                                             </td>
-                                            <td class="px-2.5 py-2 font-semibold text-foreground">Rp {Number(row.price).toLocaleString('id-ID')}</td>
-                                            <td class="px-2.5 py-2">
-                                            <div class="flex items-center justify-end gap-1.5">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    {#snippet children(props)}
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            class="h-7 rounded-lg px-2"
-                                                            onclick={props.onclick}
-                                                            aria-expanded={props['aria-expanded']}
-                                                            data-state={props['data-state']}
+                                            <td
+                                                class="px-3 py-2.5 align-top font-medium text-foreground"
+                                                >Rp {Number(
+                                                    row.price,
+                                                ).toLocaleString('id-ID')}</td
+                                            >
+                                            <td class="px-3 py-2.5 align-top">
+                                                <div
+                                                    class="flex items-center justify-end gap-1.5"
+                                                >
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
                                                         >
-                                                            <MoreHorizontal class="h-4 w-4" />
-                                                        </Button>
-                                                    {/snippet}
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" class="w-52">
-                                                    {@const lockedLuggageActions = [luggagePickedUpStatus, luggageArrivedStatus].includes(normalizedLuggageStatus)}
-                                                    {#if canLuggageUpdate && !lockedLuggageActions}
-                                                        <DropdownMenuItem onclick={() => openLuggageEditor(row)}>
-                                                            Edit Data
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
-                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-active`} onclick={() => void luggageAction(row, 'active')}>
-                                                            {pendingLuggageActionKey === `action-${row.id}-active` ? 'Memproses...' : 'Tandai Dalam Perjalanan'}
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
-                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-paid`} onclick={() => void luggageAction(row, 'paid')}>
-                                                            {pendingLuggageActionKey === `action-${row.id}-paid` ? 'Memproses...' : 'Tandai Lunas'}
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggagePrint}<DropdownMenuItem onclick={() => openLuggagePrint(row.id)}>
-                                                        Print Resi
-                                                    </DropdownMenuItem>{/if}
-                                                    {#if canLuggageUpdate && !lockedLuggageActions}
-                                                        <DropdownMenuItem disabled={pendingLuggageActionKey === `action-${row.id}-canceled`} onclick={() => void luggageAction(row, 'canceled')}>
-                                                            {pendingLuggageActionKey === `action-${row.id}-canceled` ? 'Memproses...' : 'Batalkan Pengiriman'}
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                            </div>
+                                                            {#snippet children(
+                                                                props,
+                                                            )}
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    class="h-8 rounded-md px-2.5"
+                                                                    onclick={props.onclick}
+                                                                    aria-expanded={props[
+                                                                        'aria-expanded'
+                                                                    ]}
+                                                                    data-state={props[
+                                                                        'data-state'
+                                                                    ]}
+                                                                >
+                                                                    <MoreHorizontal
+                                                                        class="h-4 w-4"
+                                                                    />
+                                                                </Button>
+                                                            {/snippet}
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            class="w-52"
+                                                        >
+                                                            {@const lockedLuggageActions =
+                                                                [
+                                                                    luggagePickedUpStatus,
+                                                                    luggageArrivedStatus,
+                                                                ].includes(
+                                                                    normalizedLuggageStatus,
+                                                                )}
+                                                            {#if canLuggageUpdate && !lockedLuggageActions}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openLuggageEditor(
+                                                                            row,
+                                                                        )}
+                                                                >
+                                                                    Edit Data
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
+                                                                <DropdownMenuItem
+                                                                    disabled={pendingLuggageActionKey ===
+                                                                        `action-${row.id}-active`}
+                                                                    onclick={() =>
+                                                                        void luggageAction(
+                                                                            row,
+                                                                            'active',
+                                                                        )}
+                                                                >
+                                                                    {pendingLuggageActionKey ===
+                                                                    `action-${row.id}-active`
+                                                                        ? 'Memproses...'
+                                                                        : 'Tandai Dalam Perjalanan'}
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
+                                                                <DropdownMenuItem
+                                                                    disabled={pendingLuggageActionKey ===
+                                                                        `action-${row.id}-paid`}
+                                                                    onclick={() =>
+                                                                        void luggageAction(
+                                                                            row,
+                                                                            'paid',
+                                                                        )}
+                                                                >
+                                                                    {pendingLuggageActionKey ===
+                                                                    `action-${row.id}-paid`
+                                                                        ? 'Memproses...'
+                                                                        : 'Tandai Lunas'}
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggagePrint}<DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openLuggagePrint(
+                                                                            row.id,
+                                                                        )}
+                                                                >
+                                                                    Print Resi
+                                                                </DropdownMenuItem>{/if}
+                                                            {#if canLuggageUpdate && !lockedLuggageActions}
+                                                                <DropdownMenuItem
+                                                                    disabled={pendingLuggageActionKey ===
+                                                                        `action-${row.id}-canceled`}
+                                                                    onclick={() =>
+                                                                        void luggageAction(
+                                                                            row,
+                                                                            'canceled',
+                                                                        )}
+                                                                >
+                                                                    {pendingLuggageActionKey ===
+                                                                    `action-${row.id}-canceled`
+                                                                        ? 'Memproses...'
+                                                                        : 'Batalkan Pengiriman'}
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
                                             </td>
                                         </tr>
                                     {/each}
@@ -3943,11 +5729,34 @@ params.set('to', filterTo);
                         </table>
                     </div>
                     <div class="flex items-center justify-between">
-                        <p class="text-sm text-muted-foreground">Total: {luggageMeta.total}</p>
+                        <p class="text-sm text-muted-foreground">
+                            Total: {luggageMeta.total}
+                        </p>
                         <div class="flex gap-2">
-                            <Button type="button" variant="outline" disabled={luggageMeta.page <= 1} onclick={() => void jumpPage(luggageMeta.page - 1, 'luggage')}>Prev</Button>
-                            <span class="px-2 py-1 text-sm">{luggageMeta.page} / {luggageMeta.last_page}</span>
-                            <Button type="button" variant="outline" disabled={luggageMeta.page >= luggageMeta.last_page} onclick={() => void jumpPage(luggageMeta.page + 1, 'luggage')}>Next</Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={luggageMeta.page <= 1}
+                                onclick={() =>
+                                    void jumpPage(
+                                        luggageMeta.page - 1,
+                                        'luggage',
+                                    )}>Prev</Button
+                            >
+                            <span class="px-2 py-1 text-sm"
+                                >{luggageMeta.page} / {luggageMeta.last_page}</span
+                            >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={luggageMeta.page >=
+                                    luggageMeta.last_page}
+                                onclick={() =>
+                                    void jumpPage(
+                                        luggageMeta.page + 1,
+                                        'luggage',
+                                    )}>Next</Button
+                            >
                         </div>
                     </div>
                 {/if}
@@ -3955,71 +5764,179 @@ params.set('to', filterTo);
 
             {#if activeTab === 'assignments' && !busy}
                 {#if canBookingDelete}<div class="flex gap-2">
-                    <Button type="button" variant="outline" onclick={() => void bulkDeleteAssignments()} disabled={selectedAssignmentIds.length === 0}>Bulk Delete ({selectedAssignmentIds.length})</Button>
-                </div>{/if}
-                {#if canBookingUpdate}<form class="grid gap-3 md:grid-cols-4" onsubmit={saveAssignment}>
-                    <Input placeholder="Rute" bind:value={assignmentForm.rute} required />
-                    <input
-                        bind:this={assignmentDateInput}
-                        type="text"
-                        value={assignmentForm.tanggal}
-                        readonly
-                        autocomplete="off"
-                        placeholder="Tanggal"
-                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                    />
-                    <input
-                        bind:this={assignmentTimeInput}
-                        type="text"
-                        value={assignmentForm.jam}
-                        readonly
-                        autocomplete="off"
-                        placeholder="Jam"
-                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                    />
-                    <Input
-                        type="number"
-                        min="1"
-                        bind:value={assignmentForm.unit}
-                        required
-                        placeholder="Nomor unit"
-                        aria-label="Nomor unit"
-                    />
-                    <select class="h-9 rounded-md border border-input bg-background px-3 text-sm" bind:value={assignmentForm.driver_id} required>
-                        <option value={0}>Pilih Driver</option>{#each drivers as driver (driver.id)}<option value={driver.id}>{driver.nama}</option>{/each}
-                    </select>
-                    <div class="flex gap-2">
-                        <Button type="button" variant="outline" onclick={() => void checkAssignmentConflicts()} disabled={assignmentConflictBusy}>Check Conflict</Button>
-                        <LoadingButton type="submit" loading={savingAssignment} loadingText={assignmentForm.id ? 'Menyimpan...' : 'Assigning...'}>{assignmentForm.id ? 'Update' : 'Assign'}</LoadingButton>
-                    </div>
-                </form>
-                <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" bind:checked={assignmentAllowConflict} />
-                    Override conflict (paksa simpan)
-                </label>{/if}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onclick={() => void bulkDeleteAssignments()}
+                            disabled={selectedAssignmentIds.length === 0}
+                            >Bulk Delete ({selectedAssignmentIds.length})</Button
+                        >
+                    </div>{/if}
+                {#if canBookingUpdate}<form
+                        class="grid gap-3 md:grid-cols-4"
+                        onsubmit={saveAssignment}
+                    >
+                        <Input
+                            placeholder="Rute"
+                            bind:value={assignmentForm.rute}
+                            required
+                        />
+                        <input
+                            bind:this={assignmentDateInput}
+                            type="text"
+                            value={assignmentForm.tanggal}
+                            readonly
+                            autocomplete="off"
+                            placeholder="Tanggal"
+                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        />
+                        <input
+                            bind:this={assignmentTimeInput}
+                            type="text"
+                            value={assignmentForm.jam}
+                            readonly
+                            autocomplete="off"
+                            placeholder="Jam"
+                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        />
+                        <Input
+                            type="number"
+                            min="1"
+                            bind:value={assignmentForm.unit}
+                            required
+                            placeholder="Nomor unit"
+                            aria-label="Nomor unit"
+                        />
+                        <select
+                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            bind:value={assignmentForm.driver_id}
+                            required
+                        >
+                            <option value={0}>Pilih Driver</option
+                            >{#each drivers as driver (driver.id)}<option
+                                    value={driver.id}>{driver.nama}</option
+                                >{/each}
+                        </select>
+                        <div class="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onclick={() => void checkAssignmentConflicts()}
+                                disabled={assignmentConflictBusy}
+                                >Check Conflict</Button
+                            >
+                            <LoadingButton
+                                type="submit"
+                                loading={savingAssignment}
+                                loadingText={assignmentForm.id
+                                    ? 'Menyimpan...'
+                                    : 'Assigning...'}
+                                >{assignmentForm.id
+                                    ? 'Update'
+                                    : 'Assign'}</LoadingButton
+                            >
+                        </div>
+                    </form>
+                    <label class="flex items-center gap-2 text-sm">
+                        <input
+                            type="checkbox"
+                            bind:checked={assignmentAllowConflict}
+                        />
+                        Override conflict (paksa simpan)
+                    </label>{/if}
                 {#if assignmentConflicts.length > 0}
-                    <div class="rounded-md border border-amber-500/40 bg-amber-50/50 p-3 text-sm">
-                        <p class="font-medium text-amber-700">Ditemukan konflik assignment:</p>
+                    <div
+                        class="rounded-md border border-amber-500/40 bg-amber-50/50 p-3 text-sm"
+                    >
+                        <p class="font-medium text-amber-700">
+                            Ditemukan konflik assignment:
+                        </p>
                         <ul class="mt-2 list-disc pl-5">
                             {#each assignmentConflicts as c (`${c.type}-${c.rute}-${c.tanggal}-${c.jam}-${c.unit}-${c.driver_id}`)}
-                                <li>{c.type} - {c.rute} ({c.tanggal} {c.jam}) unit {c.unit} driver {c.driver_name ?? c.driver_id}</li>
+                                <li>
+                                    {c.type} - {c.rute} ({c.tanggal}
+                                    {c.jam}) unit {c.unit} driver {c.driver_name ??
+                                        c.driver_id}
+                                </li>
                             {/each}
                         </ul>
                     </div>
                 {/if}
                 <div class="overflow-x-auto rounded-md border">
                     <table class="min-w-full text-sm">
-                        <thead class="bg-muted/50"><tr><th class="px-3 py-2 text-left"><input type="checkbox" checked={selectedAssignmentIds.length > 0 && selectedAssignmentIds.length === assignments.length} onchange={selectAllAssignments} /></th><th class="px-3 py-2 text-left">Trip</th><th class="px-3 py-2 text-left">Waktu</th><th class="px-3 py-2 text-left">Unit</th><th class="px-3 py-2 text-left">Driver</th><th class="px-3 py-2 text-left">Aksi</th></tr></thead>
+                        <thead class="bg-muted/50"
+                            ><tr
+                                ><th class="px-3 py-2 text-left"
+                                    ><input
+                                        type="checkbox"
+                                        checked={selectedAssignmentIds.length >
+                                            0 &&
+                                            selectedAssignmentIds.length ===
+                                                assignments.length}
+                                        onchange={selectAllAssignments}
+                                    /></th
+                                ><th class="px-3 py-2 text-left">Trip</th><th
+                                    class="px-3 py-2 text-left">Waktu</th
+                                ><th class="px-3 py-2 text-left">Unit</th><th
+                                    class="px-3 py-2 text-left">Driver</th
+                                ><th class="px-3 py-2 text-left">Aksi</th></tr
+                            ></thead
+                        >
                         <tbody>
                             {#each assignments as row (row.id)}
                                 <tr class="border-t">
-                                    <td class="px-3 py-2"><input type="checkbox" checked={selectedAssignmentIds.includes(row.id)} onchange={() => (selectedAssignmentIds = toggleSelect(selectedAssignmentIds, row.id))} /></td>
-                                    <td class="px-3 py-2">{row.rute}</td><td class="px-3 py-2">{row.tanggal} {String(row.jam).slice(0, 5)}</td><td class="px-3 py-2">{row.unit}</td><td class="px-3 py-2">{row.nama ?? '-'}</td>
+                                    <td class="px-3 py-2"
+                                        ><input
+                                            type="checkbox"
+                                            checked={selectedAssignmentIds.includes(
+                                                row.id,
+                                            )}
+                                            onchange={() =>
+                                                (selectedAssignmentIds =
+                                                    toggleSelect(
+                                                        selectedAssignmentIds,
+                                                        row.id,
+                                                    ))}
+                                        /></td
+                                    >
+                                    <td class="px-3 py-2">{row.rute}</td><td
+                                        class="px-3 py-2"
+                                        >{row.tanggal}
+                                        {String(row.jam).slice(0, 5)}</td
+                                    ><td class="px-3 py-2">{row.unit}</td><td
+                                        class="px-3 py-2">{row.nama ?? '-'}</td
+                                    >
                                     <td class="px-3 py-2 space-x-2">
-                                        {#if canBookingUpdate}<Button type="button" size="sm" variant="outline" onclick={() => {
- assignmentForm = { id: row.id, rute: row.rute, tanggal: row.tanggal, jam: String(row.jam).slice(0,5), unit: row.unit, driver_id: row.driver_id }; assignmentConflicts = []; assignmentAllowConflict = false; 
-}}>Edit</Button>{/if}
-                                        {#if canBookingDelete}<Button type="button" size="sm" variant="outline" onclick={() => void removeItem(`/api/admin/assignments/${row.id}`, 'Assignment deleted.')}>Delete</Button>{/if}
+                                        {#if canBookingUpdate}<Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onclick={() => {
+                                                    assignmentForm = {
+                                                        id: row.id,
+                                                        rute: row.rute,
+                                                        tanggal: row.tanggal,
+                                                        jam: String(
+                                                            row.jam,
+                                                        ).slice(0, 5),
+                                                        unit: row.unit,
+                                                        driver_id:
+                                                            row.driver_id,
+                                                    };
+                                                    assignmentConflicts = [];
+                                                    assignmentAllowConflict = false;
+                                                }}>Edit</Button
+                                            >{/if}
+                                        {#if canBookingDelete}<Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onclick={() =>
+                                                    void removeItem(
+                                                        `/api/admin/assignments/${row.id}`,
+                                                        'Assignment deleted.',
+                                                    )}>Delete</Button
+                                            >{/if}
                                     </td>
                                 </tr>
                             {/each}
@@ -4027,19 +5944,44 @@ params.set('to', filterTo);
                     </table>
                 </div>
                 <div class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">Total: {assignmentMeta.total}</p>
+                    <p class="text-sm text-muted-foreground">
+                        Total: {assignmentMeta.total}
+                    </p>
                     <div class="flex gap-2">
-                        <Button type="button" variant="outline" disabled={assignmentMeta.page <= 1} onclick={() => void jumpPage(assignmentMeta.page - 1, 'assignment')}>Prev</Button>
-                        <span class="px-2 py-1 text-sm">{assignmentMeta.page} / {assignmentMeta.last_page}</span>
-                        <Button type="button" variant="outline" disabled={assignmentMeta.page >= assignmentMeta.last_page} onclick={() => void jumpPage(assignmentMeta.page + 1, 'assignment')}>Next</Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={assignmentMeta.page <= 1}
+                            onclick={() =>
+                                void jumpPage(
+                                    assignmentMeta.page - 1,
+                                    'assignment',
+                                )}>Prev</Button
+                        >
+                        <span class="px-2 py-1 text-sm"
+                            >{assignmentMeta.page} / {assignmentMeta.last_page}</span
+                        >
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={assignmentMeta.page >=
+                                assignmentMeta.last_page}
+                            onclick={() =>
+                                void jumpPage(
+                                    assignmentMeta.page + 1,
+                                    'assignment',
+                                )}>Next</Button
+                        >
                     </div>
                 </div>
             {/if}
 
             {#if activeTab === 'export' && !busy}
-                <div class={mobileFiltersExpanded
-                    ? 'grid gap-3 md:grid-cols-4'
-                    : 'hidden md:grid md:grid-cols-4'}>
+                <div
+                    class={mobileFiltersExpanded
+                        ? 'grid gap-3 md:grid-cols-4'
+                        : 'hidden md:grid md:grid-cols-4'}
+                >
                     <input
                         bind:this={exportFromDateInput}
                         type="text"
@@ -4058,16 +6000,29 @@ params.set('to', filterTo);
                         placeholder="Tanggal akhir"
                         class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                     />
-                    <select class="h-9 rounded-md border border-input bg-background px-3 text-sm" bind:value={exportType}>
+                    <select
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                        bind:value={exportType}
+                    >
                         <option value="reguler">Reguler</option>
                         <option value="bagasi">Bagasi</option>
                         <option value="charter">Charter</option>
                     </select>
-                    <a href={exportCsvUrl()} target="_blank" rel="noopener noreferrer">
+                    <a
+                        href={exportCsvUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <Button type="button">Download Bookings CSV</Button>
                     </a>
-                    <a href={exportRevenueCsvUrl()} target="_blank" rel="noopener noreferrer">
-                        <Button type="button" variant="outline">Download Revenue CSV</Button>
+                    <a
+                        href={exportRevenueCsvUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <Button type="button" variant="outline"
+                            >Download Revenue CSV</Button
+                        >
                     </a>
                 </div>
             {/if}
