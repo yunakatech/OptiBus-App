@@ -2145,6 +2145,10 @@
         String(group?.departure_status || '')
             .trim()
             .toLowerCase() === 'arrived';
+    const isDepartedDeparture = (group: BookingGroup | null | undefined) =>
+        String(group?.departure_status || '')
+            .trim()
+            .toLowerCase() === 'departed';
     const isHistoryGroup = (group: BookingGroup) =>
         isArrivedDeparture(group) || isCanceledDeparture(group);
     const isCanceledDeparture = (group: BookingGroup | null | undefined) =>
@@ -2197,10 +2201,32 @@
             hasMeaningfulAssignmentValue(group.armada_nopol)
         );
     };
+    const canMarkDepartureDeparted = (
+        group: BookingGroup | null | undefined,
+    ) => {
+        if (
+            !group ||
+            isCanceledDeparture(group) ||
+            isDepartedDeparture(group) ||
+            isArrivedDeparture(group)
+        ) {
+            return false;
+        }
+
+        if (!hasRequiredDepartureAssignmentMeta(group)) {
+            return false;
+        }
+
+        return hasDepartureDateReached(group);
+    };
     const canMarkDepartureArrived = (
         group: BookingGroup | null | undefined,
     ) => {
         if (!group || isCanceledDeparture(group) || isArrivedDeparture(group)) {
+            return false;
+        }
+
+        if (!isDepartedDeparture(group)) {
             return false;
         }
 
@@ -2747,7 +2773,13 @@
     };
 
     const cancelDeparture = async (group: BookingGroup) => {
-        if (!group || isCanceledDeparture(group) || cancelingDepartureKey) {
+        if (
+            !group ||
+            isCanceledDeparture(group) ||
+            isDepartedDeparture(group) ||
+            isArrivedDeparture(group) ||
+            cancelingDepartureKey
+        ) {
             return;
         }
 
@@ -2810,6 +2842,61 @@
                 error instanceof Error
                     ? error.message
                     : 'Gagal membatalkan jadwal.';
+        } finally {
+            cancelingDepartureKey = '';
+        }
+    };
+
+    const markDepartureDeparted = async (group: BookingGroup) => {
+        if (!canMarkDepartureDeparted(group) || cancelingDepartureKey) {
+            return;
+        }
+
+        cancelingDepartureKey = group.key;
+        formError = '';
+        formSuccess = '';
+
+        try {
+            await runWithFeedback(
+                async () => {
+                    await apiPost('/api/bookings/depart-departure', {
+                        rute: group.rute,
+                        tanggal: group.tanggal,
+                        jam: normalizeJamToken(group.jam),
+                        unit: Number(group.unit) || 1,
+                    });
+                },
+                {
+                    loadingMessage: `Menandai armada berangkat untuk ${group.rute} ${formatGroupTimeLabel(group.jam)}...`,
+                    successMessage: 'Armada berhasil ditandai sudah berangkat.',
+                    errorMessage: 'Gagal menandai armada sudah berangkat.',
+                },
+            );
+
+            localBookingGroups = localBookingGroups.map((item) =>
+                item.key === group.key
+                    ? {
+                          ...item,
+                          departure_status: 'departed',
+                          departure_can_arrive: true,
+                      }
+                    : item,
+            );
+
+            if (openGroupDetail?.key === group.key) {
+                openGroupDetail = {
+                    ...openGroupDetail,
+                    departure_status: 'departed',
+                    departure_can_arrive: true,
+                };
+            }
+
+            formSuccess = 'Armada berhasil ditandai sudah berangkat.';
+        } catch (error) {
+            formError =
+                error instanceof Error
+                    ? error.message
+                    : 'Gagal menandai armada sudah berangkat.';
         } finally {
             cancelingDepartureKey = '';
         }
@@ -3183,48 +3270,13 @@
         formSuccess = '';
 
         try {
-            await runWithFeedback(
+            const bookingIds = payableRows.map((row) => row.id);
+            const response = await runWithFeedback(
                 async () => {
-                    for (const row of payableRows) {
-                        await apiPost('/api/bookings/update', {
-                            booking_id: row.id,
-                            pembayaran: 'Lunas',
-                        });
-                    }
-
-                    const paidIds = new Set(payableRows.map((row) => row.id));
-
-                    localBookingGroups = localBookingGroups.map((item) => {
-                        if (item.key !== group.key) {
-                            return item;
-                        }
-
-                        return recalculateGroupSummary({
-                            ...item,
-                            bookings: item.bookings.map((row) =>
-                                paidIds.has(row.id)
-                                    ? { ...row, pembayaran: 'Lunas' }
-                                    : row,
-                            ),
-                        });
+                    return apiPost('/api/bookings/bulk-payment', {
+                        booking_ids: bookingIds,
+                        pembayaran: 'Lunas',
                     });
-
-                    if (openGroupDetail?.key === group.key) {
-                        const refreshedGroup = localBookingGroups.find(
-                            (item) => item.key === group.key,
-                        );
-
-                        if (refreshedGroup) {
-                            openGroupDetail = refreshedGroup;
-                        }
-                    }
-
-                    localLatestBookings = localLatestBookings.map((row) =>
-                        paidIds.has(row.id)
-                            ? { ...row, pembayaran: 'Lunas' }
-                            : row,
-                    );
-                    markDataStale(['payments', 'dashboard']);
                 },
                 {
                     loadingMessage: `Memproses ${payableRows.length} pembayaran keberangkatan...`,
@@ -3232,8 +3284,43 @@
                     errorMessage: 'Gagal mengubah seluruh status pembayaran.',
                 },
             );
+            const updatedCount =
+                Number(response?.updated_count ?? bookingIds.length) ||
+                bookingIds.length;
 
-            formSuccess = `Pembayaran ${payableRows.length} penumpang berhasil diubah ke Lunas.`;
+            const paidIds = new Set(bookingIds);
+
+            localBookingGroups = localBookingGroups.map((item) => {
+                if (item.key !== group.key) {
+                    return item;
+                }
+
+                return recalculateGroupSummary({
+                    ...item,
+                    bookings: item.bookings.map((row) =>
+                        paidIds.has(row.id)
+                            ? { ...row, pembayaran: 'Lunas' }
+                            : row,
+                    ),
+                });
+            });
+
+            if (openGroupDetail?.key === group.key) {
+                const refreshedGroup = localBookingGroups.find(
+                    (item) => item.key === group.key,
+                );
+
+                if (refreshedGroup) {
+                    openGroupDetail = refreshedGroup;
+                }
+            }
+
+            localLatestBookings = localLatestBookings.map((row) =>
+                paidIds.has(row.id) ? { ...row, pembayaran: 'Lunas' } : row,
+            );
+            markDataStale(['bookings', 'payments', 'flows', 'dashboard']);
+
+            formSuccess = `Pembayaran ${updatedCount} penumpang berhasil diubah ke Lunas.`;
         } catch (error) {
             formError =
                 error instanceof Error
@@ -4214,9 +4301,8 @@
                           driver_name: groupDriverName,
                           armada_nopol: groupArmadaNopol,
                           departure_can_arrive:
-                              hasDepartureDateReached(group) &&
-                              !isCanceledDeparture(group) &&
-                              !isArrivedDeparture(group),
+                              isDepartedDeparture(group) &&
+                              hasDepartureDateReached(group),
                       }
                     : group,
             );
@@ -4225,9 +4311,8 @@
                 driver_name: groupDriverName,
                 armada_nopol: groupArmadaNopol,
                 departure_can_arrive:
-                    hasDepartureDateReached(openGroupDetail) &&
-                    !isCanceledDeparture(openGroupDetail) &&
-                    !isArrivedDeparture(openGroupDetail),
+                    isDepartedDeparture(openGroupDetail) &&
+                    hasDepartureDateReached(openGroupDetail),
             };
             openGroupDetail = updatedGroupDetail;
             formSuccess = 'Mapping driver dan armada berhasil disimpan.';
@@ -7032,6 +7117,13 @@
                                 >
                                     Batal
                                 </Badge>
+                            {:else if isDepartedDeparture(openGroupDetail)}
+                                <Badge
+                                    variant="secondary"
+                                    class="rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-[11px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
+                                >
+                                    Berangkat
+                                </Badge>
                             {:else if isArrivedDeparture(openGroupDetail)}
                                 <Badge
                                     variant="secondary"
@@ -7457,35 +7549,64 @@
                                     </div>
                                 </div>
 
-                                {#if canMarkDepartureArrived(openGroupDetail)}
+                                {#if canMarkDepartureDeparted(openGroupDetail) || canMarkDepartureArrived(openGroupDetail)}
                                     <div
                                         class="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-200/70 bg-emerald-50/70 p-3 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                     >
-                                        <Button
-                                            type="button"
-                                            class="h-10 rounded-xl bg-emerald-600 px-4 text-white hover:bg-emerald-700"
-                                            onclick={() =>
-                                                openGroupDetail &&
-                                                void markDepartureArrived(
-                                                    openGroupDetail,
-                                                )}
-                                            disabled={cancelingDepartureKey ===
-                                                openGroupDetail?.key}
-                                        >
-                                            <CheckCircle2
-                                                class="mr-1.5 h-4 w-4"
-                                            />
-                                            {cancelingDepartureKey ===
-                                            openGroupDetail?.key
-                                                ? 'Memproses...'
-                                                : 'Armada Sudah Tiba'}
-                                        </Button>
+                                        {#if canMarkDepartureDeparted(openGroupDetail)}
+                                            <Button
+                                                type="button"
+                                                class="h-10 rounded-xl bg-amber-600 px-4 text-white hover:bg-amber-700"
+                                                onclick={() =>
+                                                    openGroupDetail &&
+                                                    void markDepartureDeparted(
+                                                        openGroupDetail,
+                                                    )}
+                                                disabled={cancelingDepartureKey ===
+                                                    openGroupDetail?.key}
+                                            >
+                                                <BusFront
+                                                    class="mr-1.5 h-4 w-4"
+                                                />
+                                                {cancelingDepartureKey ===
+                                                openGroupDetail?.key
+                                                    ? 'Memproses...'
+                                                    : 'Armada Sudah Berangkat'}
+                                            </Button>
+                                        {/if}
+                                        {#if canMarkDepartureArrived(openGroupDetail)}
+                                            <Button
+                                                type="button"
+                                                class="h-10 rounded-xl bg-emerald-600 px-4 text-white hover:bg-emerald-700"
+                                                onclick={() =>
+                                                    openGroupDetail &&
+                                                    void markDepartureArrived(
+                                                        openGroupDetail,
+                                                    )}
+                                                disabled={cancelingDepartureKey ===
+                                                    openGroupDetail?.key}
+                                            >
+                                                <CheckCircle2
+                                                    class="mr-1.5 h-4 w-4"
+                                                />
+                                                {cancelingDepartureKey ===
+                                                openGroupDetail?.key
+                                                    ? 'Memproses...'
+                                                    : 'Armada Sudah Tiba'}
+                                            </Button>
+                                        {/if}
                                         <p
                                             class="text-xs leading-relaxed text-emerald-800 dark:text-emerald-100"
                                         >
-                                            Aksi tersedia untuk keberangkatan
-                                            hari ini atau sebelumnya setelah
-                                            driver dan nopol dipilih.
+                                            {#if canMarkDepartureDeparted(openGroupDetail)}
+                                                Aksi berangkat tersedia untuk
+                                                keberangkatan hari ini atau
+                                                sebelumnya setelah driver dan
+                                                nopol dipilih.
+                                            {:else}
+                                                Armada sudah berangkat. Sekarang
+                                                aksi tiba sudah bisa dipakai.
+                                            {/if}
                                         </p>
                                     </div>
                                 {/if}
@@ -9160,6 +9281,13 @@
                                                                                 >
                                                                                     Batal
                                                                                 </Badge>
+                                                                            {:else if isDepartedDeparture(group)}
+                                                                                <Badge
+                                                                                    variant="secondary"
+                                                                                    class="rounded-full border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
+                                                                                >
+                                                                                    Berangkat
+                                                                                </Badge>
                                                                             {:else if isArrivedDeparture(group)}
                                                                                 <Badge
                                                                                     variant="secondary"
@@ -9410,6 +9538,19 @@
                                                                                     Print
                                                                                     Manifest
                                                                                 </DropdownMenuItem>
+                                                                                {#if canMarkDepartureDeparted(group)}
+                                                                                    <DropdownMenuItem
+                                                                                        onclick={() =>
+                                                                                            void markDepartureDeparted(
+                                                                                                group,
+                                                                                            )}
+                                                                                    >
+                                                                                        {cancelingDepartureKey ===
+                                                                                        group.key
+                                                                                            ? 'Memproses...'
+                                                                                            : 'Armada Sudah Berangkat'}
+                                                                                    </DropdownMenuItem>
+                                                                                {/if}
                                                                                 {#if canMarkDepartureArrived(group)}
                                                                                     <DropdownMenuItem
                                                                                         onclick={() =>
@@ -9423,7 +9564,7 @@
                                                                                             : 'Armada Sudah Tiba'}
                                                                                     </DropdownMenuItem>
                                                                                 {/if}
-                                                                                {#if !isCanceledDeparture(group) && !isArrivedDeparture(group)}
+                                                                                {#if !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
                                                                                     <DropdownMenuItem
                                                                                         onclick={() =>
                                                                                             void cancelDeparture(
@@ -9436,7 +9577,7 @@
                                                                                             : 'Batalkan Jadwal'}
                                                                                     </DropdownMenuItem>
                                                                                 {/if}
-                                                                                {#if !isCanceledDeparture(group) && !isArrivedDeparture(group) && group.belum_lunas > 0}
+                                                                                {#if !isCanceledDeparture(group) && group.belum_lunas > 0}
                                                                                     <DropdownMenuItem
                                                                                         onclick={() =>
                                                                                             void markBookingGroupAsPaid(
@@ -9500,6 +9641,13 @@
                                                             class="rounded-full px-2 py-0.5 text-[10px]"
                                                         >
                                                             Batal
+                                                        </Badge>
+                                                    {:else if isDepartedDeparture(group)}
+                                                        <Badge
+                                                            variant="secondary"
+                                                            class="rounded-full border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
+                                                        >
+                                                            Berangkat
                                                         </Badge>
                                                     {:else if isArrivedDeparture(group)}
                                                         <Badge
@@ -9569,6 +9717,19 @@
                                                             >
                                                                 Print Manifest
                                                             </DropdownMenuItem>
+                                                            {#if canMarkDepartureDeparted(group)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void markDepartureDeparted(
+                                                                            group,
+                                                                        )}
+                                                                >
+                                                                    {cancelingDepartureKey ===
+                                                                    group.key
+                                                                        ? 'Memproses...'
+                                                                        : 'Armada Sudah Berangkat'}
+                                                                </DropdownMenuItem>
+                                                            {/if}
                                                             {#if canMarkDepartureArrived(group)}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
@@ -9582,7 +9743,7 @@
                                                                         : 'Armada Sudah Tiba'}
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if !isCanceledDeparture(group) && !isArrivedDeparture(group)}
+                                                            {#if !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
                                                                         void cancelDeparture(
@@ -9595,7 +9756,7 @@
                                                                         : 'Batalkan Jadwal'}
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if !isCanceledDeparture(group) && !isArrivedDeparture(group) && group.belum_lunas > 0}
+                                                            {#if !isCanceledDeparture(group) && group.belum_lunas > 0}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
                                                                         void markBookingGroupAsPaid(

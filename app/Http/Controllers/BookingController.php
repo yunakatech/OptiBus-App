@@ -773,7 +773,7 @@ class BookingController extends Controller
                     }
 
                     $status = strtolower(trim((string) ($row->status ?? 'active')));
-                    if (! in_array($status, ['active', 'canceled', 'arrived'], true)) {
+                    if (! in_array($status, ['active', 'departed', 'canceled', 'arrived'], true)) {
                         $status = 'active';
                     }
 
@@ -981,7 +981,7 @@ class BookingController extends Controller
         string $driverName = '',
         string $armadaNopol = '',
     ): bool {
-        if (strtolower(trim($status)) !== 'active') {
+        if (strtolower(trim($status)) !== 'departed') {
             return false;
         }
 

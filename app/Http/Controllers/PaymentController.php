@@ -590,6 +590,7 @@ class PaymentController extends Controller
         $before = (string) ($row->pembayaran ?? '');
         DB::table('bookings')->where('id', $id)->update([
             'pembayaran' => $paymentStatus,
+            'updated_at' => now(),
         ]);
 
         $this->writePaymentLog('BOOKING', 'Pembayaran booking '.($row->name ?? '#'.$id).' diperbarui', $before, $paymentStatus, [
