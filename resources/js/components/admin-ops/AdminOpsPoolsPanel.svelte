@@ -5,7 +5,6 @@
         MapPin,
         MoreHorizontal,
         Pencil,
-        Route,
         Trash2,
         Users,
     } from 'lucide-svelte';
@@ -498,6 +497,7 @@
         subtitle="Daftar pool operasional dengan ringkasan singkat dan detail lengkap di halaman detail."
         badges={[{ key: 'count', label: `${pools.length} cabang` }]}
         density="compact"
+        showHeader={false}
     >
         {#snippet controls()}
             <div class="grid gap-3 rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm xl:grid-cols-[minmax(0,1.2fr)_minmax(180px,0.62fr)_minmax(180px,0.62fr)_minmax(180px,0.62fr)_auto] xl:items-end">
@@ -522,7 +522,7 @@
                         Tipe Filter
                     </span>
                     <select
-                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
+                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[12px] outline-none transition focus:ring-2 focus:ring-ring/20"
                         bind:value={poolPerformanceFilter}
                     >
                         <option value="all">Semua</option>
@@ -536,7 +536,7 @@
                         Wilayah/Region
                     </span>
                     <select
-                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
+                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[12px] outline-none transition focus:ring-2 focus:ring-ring/20"
                         bind:value={poolRegionFilter}
                     >
                         <option value="all">Semua Wilayah</option>
@@ -551,7 +551,7 @@
                         Urutan Kinerja
                     </span>
                     <select
-                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring/20"
+                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[12px] outline-none transition focus:ring-2 focus:ring-ring/20"
                         bind:value={poolSortOrder}
                     >
                         <option value="desc">Kinerja Tertinggi</option>
@@ -582,34 +582,34 @@
                     {@const barClass = poolProgressClass(achievement)}
                     {@const badgeClass = poolProgressBadgeClass(achievement)}
                     <article
-                        class="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-md"
+                        class="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-2.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-md sm:p-3"
                         title={`Alamat: ${row.address || 'Belum diisi'} | Kontak: ${row.phone || 'Belum diisi'}`}
                     >
-                        <div class="flex items-start gap-3">
+                        <div class="flex items-start gap-2.5">
                             <div class="min-w-0 flex-1">
-                                <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-start justify-between gap-1.5">
                                     <div class="min-w-0">
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex items-center gap-1.5">
                                             <Building2 class="h-3.5 w-3.5 shrink-0 text-cyan-600" />
-                                            <p class="truncate text-sm font-semibold text-foreground">
+                                            <p class="truncate text-[12px] font-semibold text-foreground">
                                                 {row.name}
                                             </p>
                                         </div>
-                                        <p class="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                        <p class="mt-0.5 truncate text-[9px] text-muted-foreground">
                                             {row.region || 'Lainnya'} · {row.code || 'Tanpa kode'}
                                         </p>
                                     </div>
-                                    <div class="flex shrink-0 flex-col items-end gap-1">
-                                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                                    <div class="flex shrink-0 flex-col items-end gap-0.5">
+                                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
                                             {row.status === 'active' ? 'Aktif' : 'Nonaktif'}
                                         </span>
-                                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
+                                        <span class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${badgeClass}`}>
                                             {achievement.toFixed(0)}%
                                         </span>
                                     </div>
                                 </div>
 
-                                <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                                <div class="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[9px] text-muted-foreground">
                                     <span class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5">
                                         <Users class="h-3 w-3" />
                                         {row.driver_count || 0} Driver
@@ -618,46 +618,42 @@
                                         <MapPin class="h-3 w-3" />
                                         {row.armada_count || 0} Armada
                                     </span>
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5">
-                                        <Route class="h-3 w-3" />
-                                        {row.route_ids?.length || 0} Rute
-                                    </span>
                                     <span class={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${gap >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
                                         Gap {formatCurrency(gap)}
                                     </span>
                                 </div>
 
-                                <div class="mt-3 flex items-end justify-between gap-3">
+                                <div class="mt-2.5 flex items-center justify-between gap-2">
                                     <div class="min-w-0">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                        <p class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground">
                                             Revenue Cabang
                                         </p>
-                                        <p class="truncate text-sm font-bold text-emerald-600">
+                                        <p class="truncate text-[12px] font-bold text-emerald-600">
                                             {formatCurrency(Number(row.revenue || 0))}
                                         </p>
-                                        <p class="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                        <p class="mt-0.5 truncate text-[9px] text-muted-foreground">
                                             Gross {formatCurrency(gross)} · BOP {formatCurrency(Number(row.bop || 0))} · Net {formatCurrency(net)}
                                         </p>
                                     </div>
-                                    <div class="shrink-0 text-right">
-                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    <div class="shrink-0 rounded-full border border-border/70 bg-muted/30 px-2 py-1 text-right">
+                                        <p class="text-[8px] uppercase tracking-wide text-muted-foreground">
                                             Achievement
                                         </p>
-                                        <p class="text-sm font-semibold text-foreground">
+                                        <p class="text-[12px] font-semibold text-foreground">
                                             {achievement.toFixed(1)}%
                                         </p>
                                     </div>
                                 </div>
-                                <p class="mt-2 text-[11px] text-muted-foreground">
+                                <p class="mt-1.5 text-[9px] text-muted-foreground">
                                     Target bulan ini {formatCurrency(poolTargetTotal(row))}
                                 </p>
-                                <div class="mt-2 space-y-1.5">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                <div class="mt-1.5 space-y-1">
+                                    <p class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground">
                                         Rute
                                     </p>
-                                    <div class="flex flex-wrap gap-1.5">
+                                    <div class="flex flex-wrap gap-1">
                                         {#each routes as routeName (routeName)}
-                                            <span class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[10px] font-medium text-foreground">
+                                            <span class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[8px] font-medium text-foreground">
                                                 <span class="truncate">{routeName}</span>
                                             </span>
                                         {/each}
@@ -667,12 +663,12 @@
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button type="button" variant="ghost" size="icon" class="h-8 w-8 shrink-0 rounded-full border border-border/70">
-                                        <MoreHorizontal class="h-4 w-4" />
+                                    <Button type="button" variant="ghost" size="icon" class="h-7 w-7 shrink-0 rounded-full border border-border/70">
+                                        <MoreHorizontal class="h-3.5 w-3.5" />
                                         <span class="sr-only">Aksi cabang</span>
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-40">
                                     <DropdownMenuItem onclick={() => openPoolView(row)}>
                                         <Eye class="mr-2 h-3.5 w-3.5" />
                                         Lihat Detail
@@ -695,7 +691,7 @@
                             </DropdownMenu>
                         </div>
 
-                        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                        <div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
                             <div
                                 class={`h-full rounded-full transition-[width] duration-300 ${barClass}`}
                                 style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
@@ -715,28 +711,28 @@
                         {@const healthStatus = achievement >= 100 ? 'Tercapai' : 'Kurang'}
 
                         <td class="px-2.5 py-1.5 align-top">
-                            <div class="truncate text-[11px] font-semibold leading-4 text-foreground">{row.name}</div>
-                            <div class="mt-0.5 text-[10px] text-muted-foreground">{row.code || 'Tanpa kode'}</div>
-                            <span class={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
+                            <div class="truncate text-[10px] font-semibold leading-4 text-foreground">{row.name}</div>
+                            <div class="mt-0.5 text-[9px] text-muted-foreground">{row.code || 'Tanpa kode'}</div>
+                            <span class={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{row.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
                         </td>
 
                         <td class="px-2.5 py-1.5 align-top">
                             <div class="flex max-w-[220px] flex-wrap gap-1.5">
                                 {#each routes as routeName (routeName)}
-                                    <span class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[10px] font-medium leading-4 text-foreground">
+                                    <span class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[9px] font-medium leading-4 text-foreground">
                                         <span class="truncate">{routeName}</span>
                                     </span>
                                 {/each}
                             </div>
                         </td>
 
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(row.revenue || 0))}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(row.bop || 0))}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
-                        <td class={`px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums ${gap < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{formatCurrency(gap)}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{achievement.toFixed(1)}%</td>
+                        <td class="px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(row.revenue || 0))}</td>
+                        <td class="px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(row.bop || 0))}</td>
+                        <td class="px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
+                        <td class="px-2.5 py-1.5 text-right text-[9px] tabular-nums">{formatCurrency(Number(row.fixed_cost || 0))}</td>
+                        <td class="px-2.5 py-1.5 text-right text-[9px] tabular-nums">{formatCurrency(Number(row.target_revenue || 0))}</td>
+                        <td class={`px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums ${gap < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{formatCurrency(gap)}</td>
+                        <td class="px-2.5 py-1.5 text-right text-[9px] tabular-nums">{achievement.toFixed(1)}%</td>
                         <td class="px-2.5 py-1.5 text-center"><span class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{healthStatus}</span></td>
                     {/snippet}
 

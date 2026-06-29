@@ -33,6 +33,7 @@
         summaryCards = [],
         chartBars = [],
         density = 'comfortable',
+        showHeader = true,
         controls,
         table,
         class: className = '',
@@ -43,6 +44,7 @@
         summaryCards?: SummaryCard[];
         chartBars?: ChartBar[];
         density?: 'comfortable' | 'compact';
+        showHeader?: boolean;
         controls?: Snippet;
         table: Snippet;
         class?: string;
@@ -63,37 +65,39 @@
         className,
     )}
 >
-    <div
-        class={isCompact
-            ? 'flex flex-col gap-2 border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] px-1 pb-3 lg:flex-row lg:items-start lg:justify-between'
-            : 'flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] px-1 pb-4 lg:flex-row lg:items-start lg:justify-between'}
-    >
-        <div class="space-y-1">
-            <div class="flex flex-wrap items-center gap-2">
-                <h3 class={isCompact ? 'text-base font-bold tracking-tight md:text-lg' : 'text-lg font-bold tracking-tight md:text-xl'}>
-                    {title}
-                </h3>
-                {#each badges as badge (badge.key)}
-                    <span
-                        class={cn(
-                            isCompact
-                                ? 'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide'
-                                : 'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide',
-                            badge.tone ??
-                                'border-border/70 bg-muted/30 text-foreground',
-                        )}
-                    >
-                        {badge.label}
-                    </span>
-                {/each}
+    {#if showHeader}
+        <div
+            class={isCompact
+                ? 'flex flex-col gap-2 border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] px-1 pb-3 lg:flex-row lg:items-start lg:justify-between'
+                : 'flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.08),rgba(15,23,42,0.03))] px-1 pb-4 lg:flex-row lg:items-start lg:justify-between'}
+        >
+            <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h3 class={isCompact ? 'text-base font-bold tracking-tight md:text-lg' : 'text-lg font-bold tracking-tight md:text-xl'}>
+                        {title}
+                    </h3>
+                    {#each badges as badge (badge.key)}
+                        <span
+                            class={cn(
+                                isCompact
+                                    ? 'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide'
+                                    : 'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide',
+                                badge.tone ??
+                                    'border-border/70 bg-muted/30 text-foreground',
+                            )}
+                        >
+                            {badge.label}
+                        </span>
+                    {/each}
+                </div>
+                {#if subtitle !== ''}
+                    <p class={isCompact ? 'max-w-3xl text-xs text-muted-foreground' : 'max-w-3xl text-sm text-muted-foreground'}>
+                        {subtitle}
+                    </p>
+                {/if}
             </div>
-            {#if subtitle !== ''}
-                <p class={isCompact ? 'max-w-3xl text-xs text-muted-foreground' : 'max-w-3xl text-sm text-muted-foreground'}>
-                    {subtitle}
-                </p>
-            {/if}
         </div>
-    </div>
+    {/if}
 
     {#if summaryCards.length > 0}
         <div class={isCompact ? 'grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6' : 'grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'}>

@@ -5647,15 +5647,27 @@
                     <CardTitle class="text-lg md:text-xl"
                         >{tabTitle(activeTab)}</CardTitle
                     >
+                    {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
+                        <Button type="button" size="sm" onclick={openCreateForm}>
+                            Tambah Data Baru
+                        </Button>
+                    {/if}
                 </div>
             {:else}
                 <div class="flex items-center justify-between gap-3">
                     <CardTitle class="text-lg md:text-xl"
                         >{tabTitle(activeTab)}</CardTitle
                     >
-                    <Badge variant="secondary" class="rounded-full px-3 py-1">
-                        Active
-                    </Badge>
+                    <div class="flex items-center gap-2">
+                        {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
+                            <Button type="button" size="sm" onclick={openCreateForm}>
+                                Tambah Data Baru
+                            </Button>
+                        {/if}
+                        <Badge variant="secondary" class="rounded-full px-3 py-1">
+                            Active
+                        </Badge>
+                    </div>
                 </div>
             {/if}
         </CardHeader>
@@ -5665,39 +5677,47 @@
                 </p>{/if}
             {#if error}<p class="text-sm text-red-600">{error}</p>{/if}
             {#if message}<p class="text-sm text-emerald-600">{message}</p>{/if}
-            {#if usesHybridSettings('drivers') || usesHybridSettings('pools')}
+            {#if usesHybridSettings('drivers')}
                 <div class="flex flex-col gap-2 md:flex-row">
-                    {#if activeTab === 'drivers'}
-                        <TerminalFilter
-                            bind:query={driverSearch}
-                            placeholder="Cari nama, telepon, atau nopol driver"
-                            on:search={() => reloadSettingsWithInertia(1)}
-                        />
-                    {:else}
-                        <TerminalFilter
-                            bind:query={poolSearch}
-                            placeholder="Cari nama, kode, atau catatan pool"
-                            on:search={() => reloadSettingsWithInertia(1)}
-                        />
-                    {/if}
+                    <TerminalFilter
+                        bind:query={driverSearch}
+                        placeholder="Cari nama, telepon, atau nopol driver"
+                        on:search={() => reloadSettingsWithInertia(1)}
+                    />
                 </div>
             {/if}
             {#if hasFormTab(activeTab) && canWriteTab(activeTab)}
-                <div class="flex items-center gap-2">
-                    {#if activeMode === 'data'}
-                        <Button type="button" size="sm" onclick={openCreateForm}
-                            >Tambah Data Baru</Button
-                        >
-                    {:else}
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onclick={() => setFormMode('data')}
-                            >Kembali ke Data</Button
-                        >
+                {#if activeTab === 'pools'}
+                    {#if activeMode === 'form'}
+                        <div class="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onclick={() => setFormMode('data')}
+                            >
+                                Kembali ke Data
+                            </Button>
+                        </div>
                     {/if}
-                </div>
+                {:else}
+                    <div class="flex items-center gap-2">
+                        {#if activeMode === 'data'}
+                            <Button type="button" size="sm" onclick={openCreateForm}>
+                                Tambah Data Baru
+                            </Button>
+                        {:else}
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onclick={() => setFormMode('data')}
+                            >
+                                Kembali ke Data
+                            </Button>
+                        {/if}
+                    </div>
+                {/if}
             {/if}
 
             {#if activeTab === 'routes'}
