@@ -2611,10 +2611,6 @@
     const scheduleBookingListReload = () => {
         markDataStale(['bookings', 'payments', 'flows', 'dashboard']);
 
-        if (!listOnly) {
-            return;
-        }
-
         if (bookingListReloadTimer) {
             clearTimeout(bookingListReloadTimer);
         }
