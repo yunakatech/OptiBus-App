@@ -1,12 +1,27 @@
 ﻿<script lang="ts">
-    import { Download, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import DataTable from '@/components/terminal/DataTable.svelte';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
-import RevenueChartTable from './RevenueChartTable.svelte';
+    import {
+        Download,
+        Eye,
+        MoreHorizontal,
+        Pencil,
+        Trash2,
+    } from 'lucide-svelte';
+    import { Badge } from '@/components/ui/badge';
+    import { Button } from '@/components/ui/button';
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuTrigger,
+    } from '@/components/ui/dropdown-menu';
+    import DataTable from '@/components/terminal/DataTable.svelte';
+    import {
+        Tooltip,
+        TooltipContent,
+        TooltipTrigger,
+    } from '@/components/ui/tooltip';
+    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+    import RevenueChartTable from './RevenueChartTable.svelte';
 
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
     type ArmadaPoolOption = {
@@ -129,7 +144,9 @@ import RevenueChartTable from './RevenueChartTable.svelte';
         armadas = [],
         armadaSearch = $bindable(''),
         armadaPoolId = $bindable(0),
-        armadaPeriod = $bindable(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`),
+        armadaPeriod = $bindable(
+            `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+        ),
         armadaPoolOptions = [],
         formatCurrency,
         armadaGrossMargin,
@@ -297,7 +314,8 @@ import RevenueChartTable from './RevenueChartTable.svelte';
 
         const gross = totals.revenue - totals.bop;
         const net = gross - totals.fixedCost;
-        const achievement = totals.target > 0 ? (totals.revenue / totals.target) * 100 : 0;
+        const achievement =
+            totals.target > 0 ? (totals.revenue / totals.target) * 100 : 0;
 
         return {
             count: armadas.length,
@@ -325,7 +343,8 @@ import RevenueChartTable from './RevenueChartTable.svelte';
         const gross = monthly?.gross ?? armadaGrossMargin(row);
         const net = monthly?.net_margin ?? armadaNetMargin(row);
         const achievement = monthly?.achievement ?? armadaAchievement(row);
-        const target = monthly?.target_revenue ?? Number(row.target_bulanan || 0);
+        const target =
+            monthly?.target_revenue ?? Number(row.target_bulanan || 0);
         const status = monthly?.status ?? armadaStatus(row);
 
         return [
@@ -353,28 +372,36 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             {
                 key: 'revenue',
                 label: 'Total Revenue',
-                valueText: formatCurrency(monthly?.total_revenue ?? Number(row.revenue || 0)),
+                valueText: formatCurrency(
+                    monthly?.total_revenue ?? Number(row.revenue || 0),
+                ),
                 note: 'Revenue bulanan armada',
                 tone: 'text-emerald-700 dark:text-emerald-300',
             },
             {
                 key: 'charter-bop',
                 label: 'Charter BOP',
-                valueText: formatCurrency(monthly?.charter_bop ?? Number(row.charter_bop || 0)),
+                valueText: formatCurrency(
+                    monthly?.charter_bop ?? Number(row.charter_bop || 0),
+                ),
                 note: 'BOP perjalanan charter',
                 tone: 'text-amber-700 dark:text-amber-300',
             },
             {
                 key: 'departure-bop',
                 label: 'Keberangkatan BOP',
-                valueText: formatCurrency(monthly?.departure_bop ?? Number(row.departure_bop || 0)),
+                valueText: formatCurrency(
+                    monthly?.departure_bop ?? Number(row.departure_bop || 0),
+                ),
                 note: 'BOP perjalanan reguler',
                 tone: 'text-amber-700 dark:text-amber-300',
             },
             {
                 key: 'bop',
                 label: 'Total BOP',
-                valueText: formatCurrency(monthly?.total_bop ?? Number(row.bop || 0)),
+                valueText: formatCurrency(
+                    monthly?.total_bop ?? Number(row.bop || 0),
+                ),
                 note: 'Akumulasi BOP bulanan',
                 tone: 'text-amber-700 dark:text-amber-300',
             },
@@ -388,7 +415,9 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             {
                 key: 'fixed-cost',
                 label: 'Fixed Cost',
-                valueText: formatCurrency(monthly?.fixed_cost ?? Number(row.fixed_cost || 0)),
+                valueText: formatCurrency(
+                    monthly?.fixed_cost ?? Number(row.fixed_cost || 0),
+                ),
                 note: 'Biaya tetap bulanan',
                 tone: 'text-slate-700 dark:text-slate-300',
             },
@@ -411,26 +440,30 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                 label: 'Achievement',
                 valueText: `${achievement.toFixed(1)}%`,
                 note: 'Pencapaian terhadap target',
-                tone: achievement >= 100
-                    ? 'text-emerald-700 dark:text-emerald-300'
-                    : achievement >= 80
-                      ? 'text-amber-700 dark:text-amber-300'
-                      : 'text-rose-700 dark:text-rose-300',
+                tone:
+                    achievement >= 100
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : achievement >= 80
+                          ? 'text-amber-700 dark:text-amber-300'
+                          : 'text-rose-700 dark:text-rose-300',
             },
             {
                 key: 'status',
                 label: 'Status',
                 valueText: status,
                 note: monthly?.period_label ?? selectedPeriodLabel(),
-                tone: achievement >= 100
-                    ? 'text-emerald-700 dark:text-emerald-300'
-                    : 'text-rose-700 dark:text-rose-300',
+                tone:
+                    achievement >= 100
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : 'text-rose-700 dark:text-rose-300',
             },
         ];
     };
 
     const statusTone = (value: string) => {
-        const normalized = String(value ?? '').trim().toLowerCase();
+        const normalized = String(value ?? '')
+            .trim()
+            .toLowerCase();
 
         if (
             normalized === 'done' ||
@@ -518,11 +551,12 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             valueText: `${armadaSummary.achievement.toFixed(1)}%`,
             note: `${armadaSummary.count} armada aktif`,
             formula: 'Achievement = Revenue / Target x 100%',
-            tone: armadaSummary.achievement >= 100
-                ? 'text-emerald-700 dark:text-emerald-300'
-                : armadaSummary.achievement >= 80
-                  ? 'text-amber-700 dark:text-amber-300'
-                : 'text-rose-700 dark:text-rose-300',
+            tone:
+                armadaSummary.achievement >= 100
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : armadaSummary.achievement >= 80
+                      ? 'text-amber-700 dark:text-amber-300'
+                      : 'text-rose-700 dark:text-rose-300',
         },
     ]);
 
@@ -573,11 +607,12 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             valueText: `${armadaSummary.achievement.toFixed(1)}%`,
             note: `${armadaSummary.count} armada aktif`,
             formula: 'Achievement = Revenue / Target × 100%',
-            tone: armadaSummary.achievement >= 100
-                ? 'text-emerald-700 dark:text-emerald-300'
-                : armadaSummary.achievement >= 80
-                  ? 'text-amber-700 dark:text-amber-300'
-                  : 'text-rose-700 dark:text-rose-300',
+            tone:
+                armadaSummary.achievement >= 100
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : armadaSummary.achievement >= 80
+                      ? 'text-amber-700 dark:text-amber-300'
+                      : 'text-rose-700 dark:text-rose-300',
         },
     ]);
 
@@ -591,7 +626,7 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             .map((row) => ({
                 key: String(row.id),
                 label: row.nopol,
-                subtitle: `${row.driver_name ?? 'Driver belum diatur'} · ${row.pool_name ?? 'Semua Pool'}`,
+                subtitle: row.driver_name ?? 'Driver belum diatur',
                 value: Number(row.revenue || 0),
                 valueText: formatCurrency(Number(row.revenue || 0)),
                 tone: 'bg-cyan-500',
@@ -600,20 +635,58 @@ import RevenueChartTable from './RevenueChartTable.svelte';
 
     const armadaTableColumns = [
         { key: 'armada', label: 'Armada', width: 'w-[160px]', sticky: 'left' },
-        { key: 'driver', label: 'Driver / Pool', width: 'w-[170px]' },
-        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
-        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'target', label: 'Target', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[100px]' },
+        { key: 'driver', label: 'Driver', width: 'w-[170px]' },
+        {
+            key: 'revenue',
+            label: 'Revenue',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'bop',
+            label: 'BOP',
+            align: 'right',
+            numeric: true,
+            width: 'w-[110px]',
+        },
+        {
+            key: 'gross',
+            label: 'Gross',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'fixed_cost',
+            label: 'Fixed Cost',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'target',
+            label: 'Target',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'achievement',
+            label: 'Achievement',
+            align: 'right',
+            numeric: true,
+            width: 'w-[100px]',
+        },
         { key: 'gps', label: 'GPS', align: 'center', width: 'w-[96px]' },
     ];
 </script>
 
 {#if activeMode === 'view'}
     {#if armadaDetailLoading}
-        <div class="rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
+        <div
+            class="rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm"
+        >
             <div class="animate-pulse space-y-4">
                 <div class="flex items-center justify-between gap-3">
                     <div class="space-y-2">
@@ -624,13 +697,21 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                 </div>
                 <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                     {#each Array(12) as _, index (index)}
-                        <div class="h-20 rounded-lg border border-border/60 bg-muted/30"></div>
+                        <div
+                            class="h-20 rounded-lg border border-border/60 bg-muted/30"
+                        ></div>
                     {/each}
                 </div>
                 <div class="grid gap-3 xl:grid-cols-3">
-                    <div class="h-72 rounded-lg border border-border/60 bg-muted/30"></div>
-                    <div class="h-72 rounded-lg border border-border/60 bg-muted/30"></div>
-                    <div class="h-72 rounded-lg border border-border/60 bg-muted/30"></div>
+                    <div
+                        class="h-72 rounded-lg border border-border/60 bg-muted/30"
+                    ></div>
+                    <div
+                        class="h-72 rounded-lg border border-border/60 bg-muted/30"
+                    ></div>
+                    <div
+                        class="h-72 rounded-lg border border-border/60 bg-muted/30"
+                    ></div>
                 </div>
             </div>
         </div>
@@ -638,33 +719,56 @@ import RevenueChartTable from './RevenueChartTable.svelte';
         {@const monthlyDetail = armadaDetail.monthly ?? null}
         {@const monthly = monthlyDetail?.summary ?? null}
         {@const detailCards = detailMetricCards(armadaDetail)}
-        <div class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm">
+        <div
+            class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm"
+        >
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 space-y-2">
                     <div class="flex flex-wrap items-center gap-2">
-                        <p class="text-lg font-bold tracking-tight">{armadaDetail.nopol}</p>
-                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                        <p class="text-lg font-bold tracking-tight">
+                            {armadaDetail.nopol}
+                        </p>
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                        >
                             {rowPoolName(armadaDetail)}
                         </Badge>
-                        <Badge variant="outline" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                        <Badge
+                            variant="outline"
+                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                        >
                             {armadaDetail.kategori ?? '-'} / {armadaDetail.ac_type}
                         </Badge>
                     </div>
                     <p class="text-xs text-muted-foreground">
-                        {armadaDetail.driver_name ?? 'Driver belum diatur'} · No. rangka {armadaDetail.nomor_rangka ?? '-'}
+                        {armadaDetail.driver_name ?? 'Driver belum diatur'} · No.
+                        rangka {armadaDetail.nomor_rangka ?? '-'}
                     </p>
-                    <div class="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                        <span>Platform GPS: {armadaDetail.platform_gps ?? '-'}</span>
+                    <div
+                        class="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
+                    >
+                        <span
+                            >Platform GPS: {armadaDetail.platform_gps ??
+                                '-'}</span
+                        >
                         <span>API GPS: {armadaDetail.api_gps ?? '-'}</span>
                     </div>
                 </div>
-                <Button type="button" variant="outline" class="h-9 shrink-0" onclick={goBackToData}>Kembali</Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="h-9 shrink-0"
+                    onclick={goBackToData}>Kembali</Button
+                >
             </div>
 
             <div class="rounded-lg border border-border/70 bg-muted/20 p-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        <p
+                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                        >
                             Ringkasan Bulanan
                         </p>
                         <h4 class="mt-1 text-sm font-semibold tracking-tight">
@@ -672,24 +776,43 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                         </h4>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
-                            {(monthly?.achievement ?? armadaAchievement(armadaDetail)).toFixed(1)}%
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                        >
+                            {(
+                                monthly?.achievement ??
+                                armadaAchievement(armadaDetail)
+                            ).toFixed(1)}%
                         </Badge>
-                        <Badge variant="outline" class={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${statusTone(monthly?.status ?? armadaStatus(armadaDetail))}`}>
+                        <Badge
+                            variant="outline"
+                            class={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${statusTone(monthly?.status ?? armadaStatus(armadaDetail))}`}
+                        >
                             {monthly?.status ?? armadaStatus(armadaDetail)}
                         </Badge>
                     </div>
                 </div>
-                <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <div
+                    class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                >
                     {#each detailCards as card (card.key)}
-                        <article class="rounded-md border border-border/70 bg-background px-3 py-2">
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        <article
+                            class="rounded-md border border-border/70 bg-background px-3 py-2"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                            >
                                 {card.label}
                             </p>
-                            <p class={`mt-1 text-sm font-bold tabular-nums ${card.tone}`}>
+                            <p
+                                class={`mt-1 text-sm font-bold tabular-nums ${card.tone}`}
+                            >
                                 {card.valueText}
                             </p>
-                            <p class="mt-1 text-[11px] leading-4 text-muted-foreground">
+                            <p
+                                class="mt-1 text-[11px] leading-4 text-muted-foreground"
+                            >
                                 {card.note}
                             </p>
                         </article>
@@ -698,50 +821,106 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             </div>
 
             <div class="grid gap-3 xl:grid-cols-3">
-                <section class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm">
+                <section
+                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
+                >
                     <div class="flex items-center justify-between gap-2">
                         <div>
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            >
                                 Manifest Keberangkatan
                             </p>
-                            <h4 class="mt-1 text-sm font-semibold tracking-tight">
+                            <h4
+                                class="mt-1 text-sm font-semibold tracking-tight"
+                            >
                                 {monthly?.departure_count ?? 0} data
                             </h4>
                         </div>
-                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                        >
                             {formatCurrency(monthly?.departure_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                    <div
+                        class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin"
+                    >
                         <table class="w-full text-left text-[11px]">
-                            <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                            <thead
+                                class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                            >
                                 <tr>
-                                    <th class="py-2 pr-2 font-semibold">Manifest</th>
-                                    <th class="py-2 pr-2 font-semibold">Rute</th>
-                                    <th class="py-2 pr-2 font-semibold">Unit</th>
-                                    <th class="py-2 pr-2 font-semibold">Nama</th>
-                                    <th class="py-2 pr-2 text-right font-semibold">Revenue</th>
+                                    <th class="py-2 pr-2 font-semibold"
+                                        >Manifest</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold">Rute</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold">Unit</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold">Nama</th
+                                    >
+                                    <th
+                                        class="py-2 pr-2 text-right font-semibold"
+                                        >Revenue</th
+                                    >
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
                                 {#if (monthlyDetail?.bookings ?? []).length === 0}
                                     <tr>
-                                        <td class="py-3 text-muted-foreground" colspan="5">Tidak ada data manifest keberangkatan pada periode ini.</td>
+                                        <td
+                                            class="py-3 text-muted-foreground"
+                                            colspan="5"
+                                            >Tidak ada data manifest
+                                            keberangkatan pada periode ini.</td
+                                        >
                                     </tr>
                                 {:else}
                                     {#each monthlyDetail?.bookings ?? [] as row (row.id)}
-                                        <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
-                                            <td class="py-2 pr-2 text-muted-foreground">
-                                                <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.tanggal)}</div>
-                                                <div class="text-[10px]">{row.jam}</div>
+                                        <tr
+                                            class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                                        >
+                                            <td
+                                                class="py-2 pr-2 text-muted-foreground"
+                                            >
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {formatDateLabel(
+                                                        row.departure_date ||
+                                                            row.tanggal,
+                                                    )}
+                                                </div>
+                                                <div class="text-[10px]">
+                                                    {row.jam}
+                                                </div>
                                             </td>
-                                            <td class="py-2 pr-2 font-medium">{row.rute}</td>
-                                            <td class="py-2 pr-2 tabular-nums">{row.unit}</td>
+                                            <td class="py-2 pr-2 font-medium"
+                                                >{row.rute}</td
+                                            >
+                                            <td class="py-2 pr-2 tabular-nums"
+                                                >{row.unit}</td
+                                            >
                                             <td class="py-2 pr-2">
-                                                <div class="font-medium text-foreground">{row.name}</div>
-                                                <div class="text-[10px] text-muted-foreground">{row.seat} · {row.pickup_point}</div>
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.name}
+                                                </div>
+                                                <div
+                                                    class="text-[10px] text-muted-foreground"
+                                                >
+                                                    {row.seat} · {row.pickup_point}
+                                                </div>
                                             </td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td>
+                                            <td
+                                                class="py-2 text-right font-semibold tabular-nums"
+                                                >{formatCurrency(
+                                                    row.revenue ?? row.total,
+                                                )}</td
+                                            >
                                         </tr>
                                     {/each}
                                 {/if}
@@ -750,58 +929,137 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm">
+                <section
+                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
+                >
                     <div class="flex items-center justify-between gap-2">
                         <div>
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            >
                                 Carter
                             </p>
-                            <h4 class="mt-1 text-sm font-semibold tracking-tight">
+                            <h4
+                                class="mt-1 text-sm font-semibold tracking-tight"
+                            >
                                 {monthly?.charter_count ?? 0} data
                             </h4>
                         </div>
-                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                        >
                             {formatCurrency(monthly?.charter_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                    <div
+                        class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin"
+                    >
                         <table class="w-full text-left text-[11px]">
-                            <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                            <thead
+                                class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                            >
                                 <tr>
-                                    <th class="py-2 pr-2 font-semibold">Berangkat</th>
-                                    <th class="py-2 pr-2 font-semibold">Rute</th>
-                                    <th class="py-2 pr-2 font-semibold">Penyewa</th>
-                                    <th class="py-2 pr-2 font-semibold">Armada</th>
-                                    <th class="py-2 pr-2 text-right font-semibold">Revenue</th>
-                                    <th class="py-2 pr-2 text-right font-semibold">BOP</th>
+                                    <th class="py-2 pr-2 font-semibold"
+                                        >Berangkat</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold">Rute</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold"
+                                        >Penyewa</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold"
+                                        >Armada</th
+                                    >
+                                    <th
+                                        class="py-2 pr-2 text-right font-semibold"
+                                        >Revenue</th
+                                    >
+                                    <th
+                                        class="py-2 pr-2 text-right font-semibold"
+                                        >BOP</th
+                                    >
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
                                 {#if (monthlyDetail?.charters ?? []).length === 0}
                                     <tr>
-                                        <td class="py-3 text-muted-foreground" colspan="6">Tidak ada data charter pada periode ini.</td>
+                                        <td
+                                            class="py-3 text-muted-foreground"
+                                            colspan="6"
+                                            >Tidak ada data charter pada periode
+                                            ini.</td
+                                        >
                                     </tr>
                                 {:else}
                                     {#each monthlyDetail?.charters ?? [] as row (row.id)}
-                                        <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
-                                            <td class="py-2 pr-2 text-muted-foreground">
-                                                <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.start_date)}</div>
-                                                <div class="text-[10px]">{row.departure_time || '-'}</div>
+                                        <tr
+                                            class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                                        >
+                                            <td
+                                                class="py-2 pr-2 text-muted-foreground"
+                                            >
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {formatDateLabel(
+                                                        row.departure_date ||
+                                                            row.start_date,
+                                                    )}
+                                                </div>
+                                                <div class="text-[10px]">
+                                                    {row.departure_time || '-'}
+                                                </div>
                                             </td>
                                             <td class="py-2 pr-2">
-                                                <div class="font-medium text-foreground">{row.pickup_point}</div>
-                                                <div class="text-[10px] text-muted-foreground">{row.drop_point}</div>
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.pickup_point}
+                                                </div>
+                                                <div
+                                                    class="text-[10px] text-muted-foreground"
+                                                >
+                                                    {row.drop_point}
+                                                </div>
                                             </td>
                                             <td class="py-2 pr-2">
-                                                <div class="font-medium text-foreground">{row.name}</div>
-                                                <div class="text-[10px] text-muted-foreground">{row.phone}</div>
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.name}
+                                                </div>
+                                                <div
+                                                    class="text-[10px] text-muted-foreground"
+                                                >
+                                                    {row.phone}
+                                                </div>
                                             </td>
                                             <td class="py-2 pr-2">
-                                                <div class="font-medium text-foreground">{row.armada_nopol || armadaDetail.nopol}</div>
-                                                <div class="text-[10px] text-muted-foreground">{row.layanan}</div>
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.armada_nopol ||
+                                                        armadaDetail.nopol}
+                                                </div>
+                                                <div
+                                                    class="text-[10px] text-muted-foreground"
+                                                >
+                                                    {row.layanan}
+                                                </div>
                                             </td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.bop ?? 0)}</td>
+                                            <td
+                                                class="py-2 text-right font-semibold tabular-nums"
+                                                >{formatCurrency(
+                                                    row.revenue ?? row.total,
+                                                )}</td
+                                            >
+                                            <td
+                                                class="py-2 text-right font-semibold tabular-nums"
+                                                >{formatCurrency(
+                                                    row.bop ?? 0,
+                                                )}</td
+                                            >
                                         </tr>
                                     {/each}
                                 {/if}
@@ -810,58 +1068,137 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm">
+                <section
+                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
+                >
                     <div class="flex items-center justify-between gap-2">
                         <div>
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            >
                                 Bagasi
                             </p>
-                            <h4 class="mt-1 text-sm font-semibold tracking-tight">
+                            <h4
+                                class="mt-1 text-sm font-semibold tracking-tight"
+                            >
                                 {monthly?.luggage_count ?? 0} data
                             </h4>
                         </div>
-                        <Badge variant="secondary" class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                        >
                             {formatCurrency(monthly?.luggage_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin">
+                    <div
+                        class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin"
+                    >
                         <table class="w-full text-left text-[11px]">
-                            <thead class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                            <thead
+                                class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                            >
                                 <tr>
-                                    <th class="py-2 pr-2 font-semibold">Berangkat</th>
-                                    <th class="py-2 pr-2 font-semibold">Resi</th>
-                                    <th class="py-2 pr-2 font-semibold">Pengirim</th>
-                                    <th class="py-2 pr-2 font-semibold">Penerima</th>
-                                    <th class="py-2 pr-2 text-right font-semibold">Revenue</th>
-                                    <th class="py-2 pr-2 text-right font-semibold">BOP</th>
+                                    <th class="py-2 pr-2 font-semibold"
+                                        >Berangkat</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold">Resi</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold"
+                                        >Pengirim</th
+                                    >
+                                    <th class="py-2 pr-2 font-semibold"
+                                        >Penerima</th
+                                    >
+                                    <th
+                                        class="py-2 pr-2 text-right font-semibold"
+                                        >Revenue</th
+                                    >
+                                    <th
+                                        class="py-2 pr-2 text-right font-semibold"
+                                        >BOP</th
+                                    >
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border/60">
                                 {#if (monthlyDetail?.bagasi ?? []).length === 0}
                                     <tr>
-                                        <td class="py-3 text-muted-foreground" colspan="6">Tidak ada data bagasi pada periode ini.</td>
+                                        <td
+                                            class="py-3 text-muted-foreground"
+                                            colspan="6"
+                                            >Tidak ada data bagasi pada periode
+                                            ini.</td
+                                        >
                                     </tr>
                                 {:else}
                                     {#each monthlyDetail?.bagasi ?? [] as row (row.id)}
-                                        <tr class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30">
-                                            <td class="py-2 pr-2 text-muted-foreground">
-                                                <div class="font-medium text-foreground">{formatDateLabel(row.departure_date || row.tanggal)}</div>
-                                                <div class="text-[10px]">Unit {row.departure_unit || '-'}</div>
+                                        <tr
+                                            class="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                                        >
+                                            <td
+                                                class="py-2 pr-2 text-muted-foreground"
+                                            >
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {formatDateLabel(
+                                                        row.departure_date ||
+                                                            row.tanggal,
+                                                    )}
+                                                </div>
+                                                <div class="text-[10px]">
+                                                    Unit {row.departure_unit ||
+                                                        '-'}
+                                                </div>
                                             </td>
                                             <td class="py-2 pr-2">
-                                                <div class="font-medium text-foreground">{row.kode_resi}</div>
-                                                <div class="text-[10px] text-muted-foreground">{row.service_name}</div>
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.kode_resi}
+                                                </div>
+                                                <div
+                                                    class="text-[10px] text-muted-foreground"
+                                                >
+                                                    {row.service_name}
+                                                </div>
                                             </td>
                                             <td class="py-2 pr-2">
-                                                <div class="font-medium text-foreground">{row.sender_name}</div>
-                                                <div class="text-[10px] text-muted-foreground">Qty {row.quantity}</div>
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.sender_name}
+                                                </div>
+                                                <div
+                                                    class="text-[10px] text-muted-foreground"
+                                                >
+                                                    Qty {row.quantity}
+                                                </div>
                                             </td>
                                             <td class="py-2 pr-2">
-                                                <div class="font-medium text-foreground">{row.receiver_name}</div>
-                                                <div class="text-[10px] text-muted-foreground">Unit {row.departure_unit}</div>
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.receiver_name}
+                                                </div>
+                                                <div
+                                                    class="text-[10px] text-muted-foreground"
+                                                >
+                                                    Unit {row.departure_unit}
+                                                </div>
                                             </td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td>
-                                            <td class="py-2 text-right font-semibold tabular-nums">{formatCurrency(row.bop ?? 0)}</td>
+                                            <td
+                                                class="py-2 text-right font-semibold tabular-nums"
+                                                >{formatCurrency(
+                                                    row.revenue ?? row.total,
+                                                )}</td
+                                            >
+                                            <td
+                                                class="py-2 text-right font-semibold tabular-nums"
+                                                >{formatCurrency(
+                                                    row.bop ?? 0,
+                                                )}</td
+                                            >
                                         </tr>
                                     {/each}
                                 {/if}
@@ -872,21 +1209,22 @@ import RevenueChartTable from './RevenueChartTable.svelte';
             </div>
         </div>
     {:else}
-        <p class="text-sm text-muted-foreground">Data armada tidak ditemukan.</p>
-        <Button type="button" variant="outline" class="h-9" onclick={goBackToData}>Kembali</Button>
+        <p class="text-sm text-muted-foreground">
+            Data armada tidak ditemukan.
+        </p>
+        <Button
+            type="button"
+            variant="outline"
+            class="h-9"
+            onclick={goBackToData}>Kembali</Button
+        >
     {/if}
 {/if}
-<RevenueChartTable
-    title="Armada"
-    subtitle="Daftar armada dengan filter pool dan periode."
-    badges={[
-        { key: 'total', label: `${armadas.length} unit` },
-        { key: 'period', label: selectedPeriodLabel() },
-    ]}
-    density="compact"
->
+<RevenueChartTable title="Armada" subtitle="" badges={[]} density="compact">
     {#snippet controls()}
-        <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_minmax(180px,220px)_auto]">
+        <div
+            class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(170px,220px)_minmax(170px,220px)_auto]"
+        >
             <div class="min-w-0">
                 <TerminalFilter
                     bind:query={armadaSearch}
@@ -896,11 +1234,9 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                 />
             </div>
 
-            <label class="space-y-1">
-                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Pool
-                </span>
+            <div class="space-y-1">
                 <select
+                    aria-label="Filter pool"
                     class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     bind:value={armadaPoolId}
                     onchange={() => void loadArmadas()}
@@ -909,13 +1245,11 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                         <option value={pool.id}>{pool.name}</option>
                     {/each}
                 </select>
-            </label>
+            </div>
 
-            <label class="space-y-1">
-                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Periode
-                </span>
+            <div class="space-y-1">
                 <select
+                    aria-label="Filter periode"
                     class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     bind:value={armadaPeriod}
                     onchange={() => void loadArmadas()}
@@ -924,7 +1258,7 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                         <option value={period.value}>{period.label}</option>
                     {/each}
                 </select>
-            </label>
+            </div>
 
             {#if canExport}
                 <a
@@ -941,7 +1275,9 @@ import RevenueChartTable from './RevenueChartTable.svelte';
     {#snippet table()}
         <div class="grid gap-3 md:hidden">
             {#if armadas.length === 0}
-                <div class="col-span-full rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+                <div
+                    class="col-span-full rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground"
+                >
                     Belum ada armada untuk filter yang dipilih.
                 </div>
             {/if}
@@ -952,31 +1288,56 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                 {@const achievement = armadaAchievement(row)}
                 {@const activeGps = gpsActive(row)}
                 {@const achievementStyle = achievementTone(achievement)}
-                <article class="group flex min-w-0 flex-col space-y-2 overflow-hidden rounded-xl border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:border-blue-400/70 hover:shadow-[0_12px_24px_-16px_rgba(59,130,246,0.5)]">
-                    <header class="flex min-w-0 items-start justify-between gap-3">
+                <article
+                    class="group flex min-w-0 flex-col space-y-2 overflow-hidden rounded-xl border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:border-blue-400/70 hover:shadow-[0_12px_24px_-16px_rgba(59,130,246,0.5)]"
+                >
+                    <header
+                        class="flex min-w-0 items-start justify-between gap-3"
+                    >
                         <div class="min-w-0">
-                            <p class="min-w-0 break-words text-base leading-6 font-bold tracking-tight text-foreground">{row.nopol}</p>
+                            <p
+                                class="min-w-0 break-words text-base leading-6 font-bold tracking-tight text-foreground"
+                            >
+                                {row.nopol}
+                            </p>
                             <p class="mt-1 text-xs text-muted-foreground">
-                                {row.driver_name ?? 'Driver belum diatur'} · {row.pool_name ?? 'Semua Pool'}
+                                {row.driver_name ?? 'Driver belum diatur'}
                             </p>
                         </div>
-                        <span class={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums ${achievementStyle.badge}`}>
+                        <span
+                            class={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums ${achievementStyle.badge}`}
+                        >
                             {achievement.toFixed(0)}%
                         </span>
                     </header>
 
-                    <div class="flex min-w-0 flex-wrap items-center gap-2" aria-label="Informasi driver dan GPS">
-                        <span class={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold ${gpsTone(activeGps)}`}>
-                            <span class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                    <div
+                        class="flex min-w-0 flex-wrap items-center gap-2"
+                        aria-label="Informasi driver dan GPS"
+                    >
+                        <span
+                            class={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold ${gpsTone(activeGps)}`}
+                        >
+                            <span
+                                class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                            ></span>
                             GPS {activeGps ? 'Aktif' : 'Mati'}
                         </span>
                     </div>
 
-                    <div class="flex min-w-0 items-end justify-between gap-3 pt-1">
+                    <div
+                        class="flex min-w-0 items-end justify-between gap-3 pt-1"
+                    >
                         <dl class="min-w-0">
-                            <dt class="text-xs font-medium text-muted-foreground">Net Margin</dt>
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Net Margin
+                            </dt>
                             <dd class="mt-0.5 min-w-0">
-                                <p class="max-w-full break-words text-left text-base leading-6 font-bold tabular-nums text-emerald-600">
+                                <p
+                                    class="max-w-full break-words text-left text-base leading-6 font-bold tabular-nums text-emerald-600"
+                                >
                                     {formatCurrency(net)}
                                 </p>
                             </dd>
@@ -995,17 +1356,28 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                                     <span class="sr-only">Aksi armada</span>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                <DropdownMenuItem onclick={() => openArmadaView(row.id)}>
+                            <DropdownMenuContent
+                                align="end"
+                                sideOffset={8}
+                                class="z-[120] w-44"
+                            >
+                                <DropdownMenuItem
+                                    onclick={() => openArmadaView(row.id)}
+                                >
                                     <Eye class="mr-2 h-3.5 w-3.5" />
                                     Lihat Detail
                                 </DropdownMenuItem>
                                 {#if canManage}
-                                    <DropdownMenuItem onclick={() => openArmadaEditor(row)}>
+                                    <DropdownMenuItem
+                                        onclick={() => openArmadaEditor(row)}
+                                    >
                                         <Pencil class="mr-2 h-3.5 w-3.5" />
                                         Edit
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onclick={() => void removeArmada(row.id)}>
+                                    <DropdownMenuItem
+                                        onclick={() =>
+                                            void removeArmada(row.id)}
+                                    >
                                         <Trash2 class="mr-2 h-3.5 w-3.5" />
                                         Hapus
                                     </DropdownMenuItem>
@@ -1014,15 +1386,25 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                         </DropdownMenu>
                     </div>
 
-                    <div class="relative h-1.5 w-full rounded-full bg-muted/70" aria-hidden="true">
-                        <div class={`absolute inset-y-0 left-0 rounded-full ${achievementStyle.bar}`} style={`width: ${Math.max(0, Math.min(100, achievement))}%`}></div>
+                    <div
+                        class="relative h-1.5 w-full rounded-full bg-muted/70"
+                        aria-hidden="true"
+                    >
+                        <div
+                            class={`absolute inset-y-0 left-0 rounded-full ${achievementStyle.bar}`}
+                            style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
+                        ></div>
                     </div>
                 </article>
             {/each}
         </div>
 
         <div class="hidden md:block">
-            <DataTable columns={armadaTableColumns} rows={armadas} density="compact">
+            <DataTable
+                columns={armadaTableColumns}
+                rows={armadas}
+                density="compact"
+            >
                 {#snippet row({ row })}
                     {@const armada = row as ArmadaRow}
                     {@const gross = armadaGrossMargin(armada)}
@@ -1032,24 +1414,55 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                     {@const achievementStyle = achievementTone(achievement)}
 
                     <td class="px-2.5 py-1.5 align-top">
-                        <div class="truncate text-[11px] font-semibold leading-4 text-foreground">{armada.nopol}</div>
-                        <div class="mt-0.5 text-[10px] text-muted-foreground">{armada.kategori ?? '-'} / {armada.ac_type}</div>
+                        <div
+                            class="truncate text-[11px] font-semibold leading-4 text-foreground"
+                        >
+                            {armada.nopol}
+                        </div>
+                        <div class="mt-0.5 text-[10px] text-muted-foreground">
+                            {armada.kategori ?? '-'} / {armada.ac_type}
+                        </div>
                     </td>
 
                     <td class="px-2.5 py-1.5 align-top">
-                        <div class="truncate font-medium text-foreground">{armada.driver_name ?? 'Driver belum diatur'}</div>
-                        <div class="mt-0.5 truncate text-[10px] text-muted-foreground">{armada.pool_name ?? 'Semua Pool'}</div>
+                        <div class="truncate font-medium text-foreground">
+                            {armada.driver_name ?? 'Driver belum diatur'}
+                        </div>
                     </td>
 
-                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(armada.revenue || 0))}</td>
-                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(armada.bop || 0))}</td>
-                    <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
-                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(armada.fixed_cost || 0))}</td>
-                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(armada.target_bulanan || 0))}</td>
-                    <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{achievement.toFixed(1)}%</td>
+                    <td
+                        class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300"
+                        >{formatCurrency(Number(armada.revenue || 0))}</td
+                    >
+                    <td
+                        class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300"
+                        >{formatCurrency(Number(armada.bop || 0))}</td
+                    >
+                    <td
+                        class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums"
+                        >{formatCurrency(gross)}</td
+                    >
+                    <td
+                        class="px-2.5 py-1.5 text-right text-[10px] tabular-nums"
+                        >{formatCurrency(Number(armada.fixed_cost || 0))}</td
+                    >
+                    <td
+                        class="px-2.5 py-1.5 text-right text-[10px] tabular-nums"
+                        >{formatCurrency(
+                            Number(armada.target_bulanan || 0),
+                        )}</td
+                    >
+                    <td
+                        class="px-2.5 py-1.5 text-right text-[10px] tabular-nums"
+                        >{achievement.toFixed(1)}%</td
+                    >
                     <td class="px-2.5 py-1.5 text-center">
-                        <span class={`inline-flex items-center gap-1.5 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${gpsTone(activeGps)}`}>
-                            <span class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                        <span
+                            class={`inline-flex items-center gap-1.5 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${gpsTone(activeGps)}`}
+                        >
+                            <span
+                                class={`size-1.5 rounded-full ${activeGps ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                            ></span>
                             GPS {activeGps ? 'Aktif' : 'Mati'}
                         </span>
                     </td>
@@ -1059,22 +1472,37 @@ import RevenueChartTable from './RevenueChartTable.svelte';
                     {@const armada = row as ArmadaRow}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                class="h-8 w-8 rounded-full border border-border/70"
+                            >
                                 <MoreHorizontal class="h-4 w-4" />
                                 <span class="sr-only">Aksi armada</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                            <DropdownMenuItem onclick={() => openArmadaView(armada.id)}>
+                        <DropdownMenuContent
+                            align="end"
+                            sideOffset={8}
+                            class="z-[120] w-44"
+                        >
+                            <DropdownMenuItem
+                                onclick={() => openArmadaView(armada.id)}
+                            >
                                 <Eye class="mr-2 h-3.5 w-3.5" />
                                 Lihat Detail
                             </DropdownMenuItem>
                             {#if canManage}
-                                <DropdownMenuItem onclick={() => openArmadaEditor(armada)}>
+                                <DropdownMenuItem
+                                    onclick={() => openArmadaEditor(armada)}
+                                >
                                     <Pencil class="mr-2 h-3.5 w-3.5" />
                                     Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onclick={() => void removeArmada(armada.id)}>
+                                <DropdownMenuItem
+                                    onclick={() => void removeArmada(armada.id)}
+                                >
                                     <Trash2 class="mr-2 h-3.5 w-3.5" />
                                     Hapus
                                 </DropdownMenuItem>
