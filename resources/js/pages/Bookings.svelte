@@ -2575,22 +2575,19 @@
         bookingListDesktopView = viewMode;
         persistUiPreferences({ defaultViewMode: viewMode });
     };
-    const setBookingListDateRange = (from: string, to: string) => {
-        const safeFrom = isIsoDateKey(from) ? from : today;
-        const safeTo = isIsoDateKey(to) ? to : safeFrom;
-        const startDate = safeFrom <= safeTo ? safeFrom : safeTo;
-        const endDate = safeFrom <= safeTo ? safeTo : safeFrom;
+    const setBookingListDate = (value: string) => {
+        const safeDate = isIsoDateKey(value) ? value : today;
 
         if (
-            bookingListDateFrom === startDate &&
-            bookingListDateTo === endDate
+            bookingListDateFrom === safeDate &&
+            bookingListDateTo === safeDate
         ) {
             return;
         }
 
-        bookingListDateFrom = startDate;
-        bookingListDateTo = endDate;
-        persistUiPreferences({ defaultDateRange: startDate });
+        bookingListDateFrom = safeDate;
+        bookingListDateTo = safeDate;
+        persistUiPreferences({ defaultDateRange: safeDate });
     };
     const reloadBookingListData = () => {
         if (bookingListReloadTimer) {
@@ -2625,7 +2622,7 @@
         bookingListDateFrom = today;
         bookingListDateTo = today;
         bookingListPayment = 'all';
-        bookingListDatePicker?.setDate(today, false, 'Y-m-d');
+        bookingListDatePicker?.setDate(today, true, 'Y-m-d');
         persistUiPreferences({ defaultDateRange: today });
     };
 
@@ -5387,23 +5384,13 @@
 
             if (bookingListDateInput && !bookingListDatePicker) {
                 bookingListDatePicker = flatpickr(bookingListDateInput, {
-                    mode: 'range',
                     dateFormat: 'Y-m-d',
-                    defaultDate: [bookingListDateFrom, bookingListDateTo],
+                    defaultDate: bookingListDateFrom || today,
                     disableMobile: true,
-                    onChange: (selectedDates, dateStr) => {
-                        if (selectedDates.length === 0) {
-                            setBookingListDateRange(today, today);
-                            return;
+                    onChange: (_selectedDates, dateStr) => {
+                        if (dateStr && dateStr !== bookingListDateFrom) {
+                            setBookingListDate(dateStr);
                         }
-
-                        const start = dateStr.split(' to ')[0] || today;
-                        const end =
-                            selectedDates.length > 1
-                                ? dateStr.split(' to ')[1] || start
-                                : start;
-
-                        setBookingListDateRange(start, end);
                     },
                 });
             }
@@ -8821,10 +8808,7 @@
                                 <p
                                     class="text-xs font-medium text-muted-foreground"
                                 >
-                                    Rentang aktif {bookingListDateFrom ===
-                                    bookingListDateTo
-                                        ? bookingListDateFrom
-                                        : `${bookingListDateFrom} s/d ${bookingListDateTo}`}
+                                    Tanggal aktif {bookingListDateFrom}
                                 </p>
                                 <div
                                     class="flex flex-wrap items-center gap-1.5 text-[11px]"
@@ -8916,13 +8900,10 @@
                                 <input
                                     bind:this={bookingListDateInput}
                                     type="text"
-                                    value={bookingListDateFrom ===
-                                    bookingListDateTo
-                                        ? bookingListDateFrom
-                                        : `${bookingListDateFrom} to ${bookingListDateTo}`}
+                                    value={bookingListDateFrom}
                                     readonly
                                     autocomplete="off"
-                                    placeholder="Pilih rentang tanggal"
+                                    placeholder="Pilih tanggal"
                                     class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
                                 />
                                 <select
