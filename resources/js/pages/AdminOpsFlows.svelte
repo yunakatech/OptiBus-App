@@ -261,25 +261,6 @@
     const authPoolScope = $derived(
         (page.props.auth?.pool_scope ?? null) as AuthPoolScope,
     );
-    const poolContextName = $derived(
-        String(authPoolScope?.pool_name ?? 'Semua Pool'),
-    );
-    const poolContextIsAll = $derived(Boolean(authPoolScope?.all));
-    const poolContextRouteCount = $derived(
-        Array.isArray(authPoolScope?.route_ids)
-            ? authPoolScope.route_ids.length
-            : 0,
-    );
-    const poolContextBadge = $derived(
-        poolContextIsAll
-            ? 'Semua pool'
-            : `${poolContextRouteCount} rute mapped`,
-    );
-    const poolContextDescription = $derived(
-        poolContextIsAll
-            ? 'Superadmin dapat memilih pool. Saat rute cocok dengan mapping, pool form ikut diarahkan otomatis.'
-            : `Input ${activeTab === 'luggages' ? 'bagasi' : 'carter'} otomatis diarahkan ke ${poolContextName}.`,
-    );
     let lockedMenuView = $state(false);
     let busy = $state(false);
     let error = $state('');
@@ -3493,26 +3474,7 @@
         <CardHeader class="space-y-3">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <CardTitle>{tabTitle(activeTab)}</CardTitle>
-                {#if activeTab === 'charters' || activeTab === 'luggages'}
-                    <span
-                        class="rounded-full border border-cyan-300/70 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-900/35 dark:text-cyan-100"
-                    >
-                        {poolContextBadge}
-                    </span>
-                {/if}
             </div>
-            {#if activeTab === 'charters' || activeTab === 'luggages'}
-                <div
-                    class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
-                >
-                    <p class="font-semibold">Pool aktif: {poolContextName}</p>
-                    <p
-                        class="mt-0.5 text-[11px] leading-snug text-cyan-800/80 dark:text-cyan-200/75"
-                    >
-                        {poolContextDescription}
-                    </p>
-                </div>
-            {/if}
         </CardHeader>
         <CardContent class="space-y-4">
             <div
@@ -5077,19 +5039,8 @@
                     </div>
                 {:else}
                     <div
-                        class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                        class="flex flex-wrap items-center justify-between gap-2 rounded-[24px] border border-border/70 bg-background px-3 py-3 shadow-sm"
                     >
-                        <div class="space-y-1">
-                            <p
-                                class="text-sm font-semibold tracking-tight text-foreground"
-                            >
-                                Workspace Bagasi
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                Kelola transaksi bagasi, status kirim, dan
-                                tracking resi dalam tampilan yang lebih ringkas.
-                            </p>
-                        </div>
                         <div class="flex flex-wrap items-center gap-2">
                             {#if canLuggageCreate}<Button
                                     type="button"
@@ -5150,13 +5101,13 @@
                                     >
                                         <div class="min-w-0">
                                             <p
-                                                class="truncate text-[11px] font-semibold text-foreground"
+                                                class="truncate text-[10px] font-semibold text-foreground"
                                             >
                                                 {row.kode_resi ??
                                                     `Bagasi #${row.id}`}
                                             </p>
                                             <p
-                                                class="mt-0.5 truncate text-[10px] text-muted-foreground"
+                                                class="mt-0.5 truncate text-[9px] text-muted-foreground"
                                             >
                                                 {row.service_name ?? '-'} / {row.quantity}
                                                 barang
@@ -5166,7 +5117,7 @@
                                             class="flex shrink-0 items-center gap-1"
                                         >
                                             <span
-                                                class={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageStatusClass(row.status)}`}
                                             >
                                                 {luggageStatusLabel(row.status)}
                                             </span>
@@ -5194,7 +5145,7 @@
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent
                                                     align="end"
-                                                    class="w-52"
+                                                    class="w-52 text-[10px]"
                                                 >
                                                     {#if canLuggageUpdate && !lockedLuggageActions}
                                                         <DropdownMenuItem
@@ -5268,42 +5219,42 @@
                                     </div>
 
                                     <div
-                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[10px]"
+                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[9px]"
                                     >
                                         <div
-                                            class="rounded-xl bg-muted/30 px-3 py-2"
+                                            class="rounded-xl bg-muted/30 px-2 py-1.25"
                                         >
                                             <p
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
                                             >
                                                 Pengirim
                                             </p>
                                             <p
-                                                class="mt-1 truncate font-semibold text-foreground"
+                                                class="mt-0.5 truncate font-medium text-foreground"
                                             >
                                                 {row.sender_name || '-'}
                                             </p>
                                             <p
-                                                class="mt-0.5 truncate text-[11px] text-muted-foreground"
+                                                class="mt-0.5 truncate text-[9px] text-muted-foreground"
                                             >
                                                 {row.sender_phone || '-'}
                                             </p>
                                         </div>
                                         <div
-                                            class="rounded-xl bg-muted/30 px-3 py-2"
+                                            class="rounded-xl bg-muted/30 px-2 py-1.25"
                                         >
                                             <p
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
                                             >
                                                 Penerima
                                             </p>
                                             <p
-                                                class="mt-1 truncate font-semibold text-foreground"
+                                                class="mt-0.5 truncate font-medium text-foreground"
                                             >
                                                 {row.receiver_name || '-'}
                                             </p>
                                             <p
-                                                class="mt-0.5 truncate text-[11px] text-muted-foreground"
+                                                class="mt-0.5 truncate text-[9px] text-muted-foreground"
                                             >
                                                 {row.receiver_phone || '-'}
                                             </p>
@@ -5340,33 +5291,33 @@
                                     </div>
 
                                     <div
-                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[10px]"
+                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[9px]"
                                     >
                                         <div
-                                            class="rounded-xl bg-emerald-50/70 px-2.5 py-1.5 dark:bg-emerald-950/25"
+                                            class="rounded-xl bg-emerald-50/70 px-2 py-1 dark:bg-emerald-950/25"
                                         >
                                             <p
-                                                class="text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+                                                class="text-[7px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
                                             >
                                                 Biaya
                                             </p>
                                             <p
-                                                class="mt-0.5 font-semibold text-emerald-800 dark:text-emerald-200"
+                                                class="mt-0.5 font-medium text-emerald-800 dark:text-emerald-200"
                                             >
                                                 {formatCurrencyId(row.price)}
                                             </p>
                                         </div>
                                         <div
-                                            class="rounded-xl bg-amber-50/80 px-2.5 py-1.5 dark:bg-amber-950/25"
+                                            class="rounded-xl bg-amber-50/80 px-2 py-1 dark:bg-amber-950/25"
                                         >
                                             <p
-                                                class="text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+                                                class="text-[7px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
                                             >
                                                 Pembayaran
                                             </p>
                                             <p class="mt-0.5">
                                                 <span
-                                                    class={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                    class={`inline-flex rounded-full px-1.5 py-0.5 text-[7px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
                                                 >
                                                     {row.payment_status ?? '-'}
                                                 </span>
@@ -5375,10 +5326,10 @@
                                     </div>
 
                                     <div
-                                        class="mt-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-1.5 text-[10px]"
+                                        class="mt-2 rounded-xl border border-border/60 bg-background/80 px-2 py-1 text-[8px]"
                                     >
                                         <p
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            class="text-[7px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >
                                             Keberangkatan
                                         </p>
@@ -5389,19 +5340,19 @@
                                                 {departureInfo.primary}
                                             </p>
                                             <p
-                                                class="mt-0.5 text-[10px] text-muted-foreground"
+                                                class="mt-0.5 text-[8px] text-muted-foreground"
                                             >
                                                 {departureInfo.secondary}
                                             </p>
                                         {:else if normalizedLuggageStatus === luggageReceivedStatus}
                                             <p
-                                                class="mt-0.5 text-[10px] text-muted-foreground"
+                                                class="mt-0.5 text-[8px] text-muted-foreground"
                                             >
                                                 Belum dimapping ke keberangkatan
                                             </p>
                                         {:else}
                                             <p
-                                                class="mt-0.5 text-[10px] text-muted-foreground"
+                                                class="mt-0.5 text-[8px] text-muted-foreground"
                                             >
                                                 -
                                             </p>
@@ -5410,7 +5361,7 @@
 
                                     {#if row.notes}
                                         <p
-                                            class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-2.5 py-1.5 text-[10px] text-muted-foreground"
+                                            class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-2 py-1 text-[8px] text-muted-foreground"
                                         >
                                             {row.notes}
                                         </p>
@@ -5498,39 +5449,39 @@
                                         >
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class="block font-medium text-foreground"
+                                                    class="block text-[9px] font-medium text-foreground"
                                                     >{row.sender_name}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 block text-[7px] text-muted-foreground"
                                                     >{row.sender_phone ||
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block max-w-[18rem] truncate text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 block max-w-[18rem] truncate text-[8px] text-muted-foreground"
                                                     >{row.sender_address ||
                                                         '-'}</span
                                                 >
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class="block font-medium text-foreground"
+                                                    class="block text-[8px] font-medium text-foreground"
                                                     >{row.receiver_name}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 block text-[8px] text-muted-foreground"
                                                     >{row.receiver_phone ||
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block max-w-[18rem] truncate text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 block max-w-[18rem] truncate text-[8px] text-muted-foreground"
                                                     >{row.receiver_address ||
                                                         '-'}</span
                                                 >
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class="block font-medium text-foreground"
+                                                    class="block text-[9px] font-medium text-foreground"
                                                     >{row.route_name ??
                                                         row.rute ??
                                                         routes.find(
@@ -5544,38 +5495,38 @@
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 block text-[8px] text-muted-foreground"
                                                     >{row.tanggal || '-'}</span
                                                 >
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class="block font-medium text-foreground"
+                                                    class="block text-[9px] font-medium text-foreground"
                                                     >{row.service_name ??
                                                         '-'}</span
                                                 >
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class="block font-medium text-foreground"
+                                                    class="block text-[8px] font-medium text-foreground"
                                                     >{row.kode_resi ??
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block max-w-[14rem] truncate text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 block max-w-[14rem] truncate text-[7px] text-muted-foreground"
                                                     >{row.notes ??
                                                         'Tanpa catatan'}</span
                                                 >
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class="block font-medium text-foreground"
+                                                    class="block text-[8px] font-medium text-foreground"
                                                     >{row.quantity} barang</span
                                                 >
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageStatusClass(row.status)}`}
                                                     >{luggageStatusLabel(
                                                         row.status,
                                                     )}</span
@@ -5584,35 +5535,35 @@
                                             <td class="px-2.5 py-2 align-top">
                                                 {#if departureInfo}
                                                     <span
-                                                        class="block font-medium text-foreground"
+                                                        class="block text-[8px] font-medium text-foreground"
                                                         >{departureInfo.primary}</span
                                                     >
                                                     <span
-                                                        class="mt-0.5 block text-[10px] text-muted-foreground"
+                                                        class="mt-0.5 block text-[7px] text-muted-foreground"
                                                         >{departureInfo.secondary}</span
                                                     >
                                                 {:else if normalizedLuggageStatus === luggageReceivedStatus}
                                                     <span
-                                                        class="text-[10px] text-muted-foreground"
+                                                        class="text-[7px] text-muted-foreground"
                                                         >Belum dimapping ke
                                                         keberangkatan</span
                                                     >
                                                 {:else}
                                                     <span
-                                                        class="text-[10px] text-muted-foreground"
+                                                        class="text-[7px] text-muted-foreground"
                                                         >-</span
                                                     >
                                                 {/if}
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
                                                     >{row.payment_status ??
                                                         '-'}</span
                                                 >
                                             </td>
                                             <td
-                                                class="px-2.5 py-2 align-top font-medium text-foreground"
+                                                class="px-2.5 py-1.75 align-top text-[8px] font-medium text-foreground"
                                                 >Rp {Number(
                                                     row.price,
                                                 ).toLocaleString('id-ID')}</td
