@@ -5647,11 +5647,37 @@
                     <CardTitle class="text-lg md:text-xl"
                         >{tabTitle(activeTab)}</CardTitle
                     >
-                    {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
-                        <Button type="button" size="sm" onclick={openCreateForm}>
-                            Tambah Data Baru
-                        </Button>
-                    {/if}
+                    <div class="flex items-center gap-2">
+                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab) && units.length > 0}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button type="button" size="sm" variant="outline">
+                                        <Armchair class="mr-2 h-3.5 w-3.5" />
+                                        Atur Layout
+                                        <ChevronDown class="ml-2 h-3.5 w-3.5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-56 max-h-72 overflow-auto">
+                                    {#each units as row (row.id)}
+                                        <DropdownMenuItem onclick={() => openLayoutEditor(row)}>
+                                            <Armchair class="mr-2 h-3.5 w-3.5" />
+                                            {row.nopol}
+                                        </DropdownMenuItem>
+                                    {/each}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        {/if}
+                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
+                            <Button type="button" size="sm" onclick={openCreateForm}>
+                                Tambah Data Baru
+                            </Button>
+                        {/if}
+                        {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
+                            <Button type="button" size="sm" onclick={openCreateForm}>
+                                Tambah Data Baru
+                            </Button>
+                        {/if}
+                    </div>
                 </div>
             {:else}
                 <div class="flex items-center justify-between gap-3">
@@ -5659,6 +5685,30 @@
                         >{tabTitle(activeTab)}</CardTitle
                     >
                     <div class="flex items-center gap-2">
+                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab) && units.length > 0}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button type="button" size="sm" variant="outline">
+                                        <Armchair class="mr-2 h-3.5 w-3.5" />
+                                        Atur Layout
+                                        <ChevronDown class="ml-2 h-3.5 w-3.5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-56 max-h-72 overflow-auto">
+                                    {#each units as row (row.id)}
+                                        <DropdownMenuItem onclick={() => openLayoutEditor(row)}>
+                                            <Armchair class="mr-2 h-3.5 w-3.5" />
+                                            {row.nopol}
+                                        </DropdownMenuItem>
+                                    {/each}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        {/if}
+                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
+                            <Button type="button" size="sm" onclick={openCreateForm}>
+                                Tambah Data Baru
+                            </Button>
+                        {/if}
                         {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
                             <Button type="button" size="sm" onclick={openCreateForm}>
                                 Tambah Data Baru
@@ -5687,7 +5737,7 @@
                 </div>
             {/if}
             {#if hasFormTab(activeTab) && canWriteTab(activeTab)}
-                {#if activeTab === 'pools'}
+                {#if activeTab === 'pools' || activeTab === 'units'}
                     {#if activeMode === 'form'}
                         <div class="flex items-center gap-2">
                             <Button
@@ -9510,38 +9560,23 @@
                     {/if}
                 {:else}
                     <div class="space-y-4">
-                        <div
-                            class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
-                        >
-                            <div
-                                class="flex flex-wrap items-center justify-between gap-3 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.13),transparent_34%),linear-gradient(135deg,rgba(248,250,252,0.94),rgba(255,255,255,0.82))] p-5"
-                            >
-                                <h3 class="text-xl font-semibold">
-                                    Kategori Armada
-                                </h3>
-                                <Button type="button" onclick={openCreateForm}
-                                    >Tambah Kategori</Button
-                                >
-                            </div>
-                        </div>
-
                         <div class="grid gap-3 lg:hidden">
                             {#each units as row (row.id)}
                                 <div
-                                    class="rounded-2xl border border-border/70 bg-background/95 p-4 shadow-sm"
+                                    class="rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm sm:p-4"
                                 >
                                     <div
-                                        class="flex items-start justify-between gap-3"
+                                        class="flex items-start justify-between gap-2.5"
                                     >
                                         <div>
-                                            <p class="font-semibold">
+                                            <p class="text-[13px] font-semibold">
                                                 {row.nopol}
                                             </p>
                                             <div
-                                                class="mt-2 flex flex-wrap gap-2"
+                                                class="mt-1.5 flex flex-wrap gap-1.5"
                                             >
                                                 <span
-                                                    class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${categoryTone(row.category)}`}
+                                                    class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.category)}`}
                                                     >{normalizeUnitCategory(
                                                         row.category,
                                                     )}</span
@@ -9551,13 +9586,13 @@
                                                     'Aktif'
                                                         ? 'default'
                                                         : 'secondary'}
-                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                    class="rounded-full px-2 py-0.5 text-[10px]"
                                                 >
                                                     {row.status ?? '-'}
                                                 </Badge>
                                                 <Badge
                                                     variant="secondary"
-                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                    class="rounded-full px-2 py-0.5 text-[10px]"
                                                 >
                                                     {rowPoolName(row)}
                                                 </Badge>
@@ -9569,10 +9604,10 @@
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    class="h-8 w-8 rounded-full border border-border/70"
+                                                    class="h-7 w-7 rounded-full border border-border/70"
                                                 >
                                                     <MoreHorizontal
-                                                        class="h-4 w-4"
+                                                        class="h-3.5 w-3.5"
                                                     />
                                                     <span class="sr-only"
                                                         >Aksi kategori armada</span
@@ -9609,42 +9644,33 @@
                                         </DropdownMenu>
                                     </div>
                                     <div
-                                        class="mt-4 grid grid-cols-2 gap-3 text-sm"
+                                        class="mt-3 grid grid-cols-2 gap-2.5 text-sm"
                                     >
                                         <div
-                                            class="rounded-xl border border-border/70 bg-muted/20 p-3"
+                                            class="rounded-xl border border-border/70 bg-muted/20 p-2.5"
                                         >
                                             <p
-                                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                                class="text-[10px] uppercase tracking-wide text-muted-foreground"
                                             >
                                                 Kapasitas
                                             </p>
-                                            <p class="mt-1 font-semibold">
+                                            <p class="mt-0.5 text-[13px] font-semibold">
                                                 {row.kapasitas ?? 0} kursi
                                             </p>
                                         </div>
                                         <div
-                                            class="rounded-xl border border-border/70 bg-muted/20 p-3"
+                                            class="rounded-xl border border-border/70 bg-muted/20 p-2.5"
                                         >
                                             <p
-                                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                                class="text-[10px] uppercase tracking-wide text-muted-foreground"
                                             >
                                                 Layout
                                             </p>
-                                            <p class="mt-1 font-semibold">
+                                            <p class="mt-0.5 text-[13px] font-semibold">
                                                 {unitSeatCount(row.layout)} aktif
                                             </p>
                                         </div>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        class="mt-4 w-full justify-center"
-                                        onclick={() => openLayoutEditor(row)}
-                                    >
-                                        <Armchair class="mr-2 h-3.5 w-3.5" />
-                                        Atur Layout
-                                    </Button>
                                 </div>
                             {/each}
                         </div>
@@ -9652,24 +9678,24 @@
                         <div
                             class="table-container hidden rounded-2xl border border-border/70 bg-background/90 lg:block"
                         >
-                            <table class="w-full table-fixed text-sm">
+                            <table class="w-full table-fixed text-[10px]">
                                 <thead
-                                    class="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground"
+                                    class="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground"
                                 >
                                     <tr>
-                                        <th class="w-[32%] px-4 py-3 text-left"
+                                        <th class="w-[32%] px-3 py-2.5 text-left"
                                             >Nama Kategori Armada</th
                                         >
-                                        <th class="w-[18%] px-4 py-3 text-left"
+                                        <th class="w-[18%] px-3 py-2.5 text-left"
                                             >Kategori</th
                                         >
-                                        <th class="w-[22%] px-4 py-3 text-left"
+                                        <th class="w-[22%] px-3 py-2.5 text-left"
                                             >Kapasitas/Layout</th
                                         >
-                                        <th class="w-[14%] px-4 py-3 text-left"
+                                        <th class="w-[14%] px-3 py-2.5 text-left"
                                             >Status</th
                                         >
-                                        <th class="w-[14%] px-4 py-3 text-left"
+                                        <th class="w-[14%] px-3 py-2.5 text-left"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -9679,60 +9705,45 @@
                                         <tr
                                             class="border-t border-border/60 align-top transition hover:bg-muted/20"
                                         >
-                                            <td class="px-4 py-3">
-                                                <div class="font-medium">
+                                            <td class="px-3 py-2.5">
+                                                <div class="text-[11px] font-medium">
                                                     {row.nopol}
                                                 </div>
                                             </td>
-                                            <td class="px-4 py-3">
+                                            <td class="px-3 py-2.5">
                                                 <span
-                                                    class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${categoryTone(row.category)}`}
+                                                    class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.category)}`}
                                                     >{normalizeUnitCategory(
                                                         row.category,
                                                     )}</span
                                                 >
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <div class="font-medium">
+                                            <td class="px-3 py-2.5">
+                                                <div class="text-[11px] font-medium">
                                                     {row.kapasitas ?? 0} kursi
                                                 </div>
                                                 <div
-                                                    class="text-xs text-muted-foreground"
+                                                    class="text-[10px] text-muted-foreground"
                                                 >
                                                     {unitSeatCount(row.layout)} kursi
                                                     aktif di layout
                                                 </div>
                                             </td>
-                                            <td class="px-4 py-3">
+                                            <td class="px-3 py-2.5">
                                                 <Badge
                                                     variant={row.status ===
                                                     'Aktif'
                                                         ? 'default'
                                                         : 'secondary'}
-                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                    class="rounded-full px-2 py-0.5 text-[10px]"
                                                 >
                                                     {row.status ?? '-'}
                                                 </Badge>
                                             </td>
-                                            <td class="px-4 py-3">
+                                            <td class="px-3 py-2.5">
                                                 <div
-                                                    class="flex items-center justify-end gap-2"
+                                                    class="flex items-center justify-end gap-1.5"
                                                 >
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        class="shrink-0"
-                                                        onclick={() =>
-                                                            openLayoutEditor(
-                                                                row,
-                                                            )}
-                                                    >
-                                                        <Armchair
-                                                            class="mr-2 h-3.5 w-3.5"
-                                                        />
-                                                        Atur Layout
-                                                    </Button>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
                                                             asChild
@@ -9741,10 +9752,10 @@
                                                                 type="button"
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                class="h-8 w-8 rounded-full border border-border/70"
+                                                                class="h-7 w-7 rounded-full border border-border/70"
                                                             >
                                                                 <MoreHorizontal
-                                                                    class="h-4 w-4"
+                                                                    class="h-3.5 w-3.5"
                                                                 />
                                                                 <span
                                                                     class="sr-only"
