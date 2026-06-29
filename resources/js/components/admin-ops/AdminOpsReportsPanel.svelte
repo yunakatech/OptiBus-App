@@ -238,7 +238,12 @@
         pools = [],
         reportPoolId = $bindable(0),
         reportRouteId = $bindable(0),
-        routes = [] as Array<{ id: number; name: string; origin: string | null; destination: string | null }>,
+        routes = [] as Array<{
+            id: number;
+            name: string;
+            origin: string | null;
+            destination: string | null;
+        }>,
         reportFromInput = $bindable<HTMLInputElement | null>(null),
         reportToInput = $bindable<HTMLInputElement | null>(null),
         formatCurrency,
@@ -255,7 +260,12 @@
         pools?: PoolOption[];
         reportPoolId?: number;
         reportRouteId?: number;
-        routes?: Array<{ id: number; name: string; origin: string | null; destination: string | null }>;
+        routes?: Array<{
+            id: number;
+            name: string;
+            origin: string | null;
+            destination: string | null;
+        }>;
         reportFromInput?: HTMLInputElement | null;
         reportToInput?: HTMLInputElement | null;
         formatCurrency: (value: number) => string;
@@ -342,17 +352,17 @@
             </div>
             <div
                 class={reportFiltersExpanded
-                    ? `grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-[190px_minmax(160px,0.8fr)_minmax(160px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`
-                    : `hidden rounded-[24px] border p-3 md:grid md:grid-cols-2 xl:grid-cols-[190px_minmax(160px,0.8fr)_minmax(160px,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] ${resolvedMeta(reportSummary, reportType).subtleTone}`}
+                    ? `grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`
+                    : `hidden rounded-[24px] border p-3 md:grid md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`}
             >
-                <label class="flex flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-1.5">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Kategori laporan
                     </span>
                     <select
-                        class="h-11 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        class="h-10 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                         bind:value={reportType}
                         onchange={() => void loadReport(1)}
                     >
@@ -362,14 +372,14 @@
                     </select>
                 </label>
 
-                <label class="flex flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-1.5">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Pool
                     </span>
                     <select
-                        class="h-11 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        class="h-10 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                         bind:value={reportPoolId}
                         onchange={() => void loadReport(1)}
                     >
@@ -382,27 +392,29 @@
                     </select>
                 </label>
 
-                <label class="flex flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-1.5">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Rute Induk
                     </span>
                     <select
-                        class="h-11 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        class="h-10 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                         bind:value={reportRouteId}
                         onchange={() => void loadReport(1)}
                     >
                         <option value={0}>Semua Rute</option>
                         {#each routes as route (route.id)}
                             <option value={route.id}>
-                                {route.name}{route.origin ? ` (${route.origin}→${route.destination ?? '-'})` : ''}
+                                {route.name}{route.origin
+                                    ? ` (${route.origin}→${route.destination ?? '-'})`
+                                    : ''}
                             </option>
                         {/each}
                     </select>
                 </label>
 
-                <label class="flex flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-1.5">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
@@ -415,11 +427,11 @@
                         readonly
                         autocomplete="off"
                         placeholder="Tanggal mulai"
-                        class="flex h-11 w-full rounded-2xl border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
+                        class="flex h-10 w-full rounded-2xl border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-xs placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
                     />
                 </label>
 
-                <label class="flex flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-1.5">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
@@ -432,14 +444,14 @@
                         readonly
                         autocomplete="off"
                         placeholder="Tanggal akhir"
-                        class="flex h-11 w-full rounded-2xl border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
+                        class="flex h-10 w-full rounded-2xl border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-xs placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
                     />
                 </label>
 
-                <div class="flex items-end">
+                <div class="flex items-end md:col-span-2 xl:col-span-1">
                     <Button
                         type="button"
-                        class="h-11 w-full rounded-2xl px-5 xl:min-w-[188px]"
+                        class="h-10 w-full rounded-2xl px-5"
                         onclick={() => void loadReport(1)}
                         disabled={reportLoading}
                     >
@@ -452,7 +464,7 @@
 
             {#if reportSummary}
                 <div
-                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-3 lg:grid-cols-5"
+                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-2 lg:grid-cols-4"
                 >
                     <div class="rounded-2xl bg-muted/20 px-4 py-3">
                         <p
@@ -519,28 +531,6 @@
                             {resolvedMeta(reportSummary, reportType).dataLabel}
                         </p>
                     </div>
-
-                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
-                        <p
-                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-                        >
-                            Pool & Target
-                        </p>
-                        <p class="mt-2 text-lg font-semibold tracking-tight">
-                            {reportSummary.pool_name || 'Semua Pool'}
-                        </p>
-                        {#if (reportSummary.target_revenue ?? 0) > 0}
-                            <p class="mt-1 text-xs font-medium text-muted-foreground">
-                                Target: {formatCurrency(reportSummary.target_revenue ?? 0)}
-                            </p>
-                            <div class="mt-1.5 h-1.5 rounded-full bg-muted/80">
-                                <div class="h-1.5 rounded-full bg-emerald-500/70 transition-all" style={`width:${Math.min(reportSummary.achievement_percent ?? 0, 100)}%`}></div>
-                            </div>
-                            <p class="mt-0.5 text-[10px] text-muted-foreground">{reportSummary.achievement_percent ?? 0}% tercapai</p>
-                        {:else}
-                            <p class="mt-1 text-xs text-muted-foreground">Target belum diatur</p>
-                        {/if}
-                    </div>
                 </div>
             {/if}
         </div>
@@ -582,46 +572,105 @@
                     {#if reportSummary.type === 'booking'}
                         <div class="grid gap-3 p-3 md:hidden">
                             {#each asBookingRows(reportRows) as row (row.id)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
+                                <article
+                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
                                         <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold text-foreground">
+                                            <p
+                                                class="truncate text-sm font-semibold text-foreground"
+                                            >
                                                 {row.name || '-'}
                                             </p>
-                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
-                                                {row.tanggal || '-'} / {shortTime(row.jam)}
+                                            <p
+                                                class="mt-0.5 truncate text-xs text-muted-foreground"
+                                            >
+                                                {row.tanggal || '-'} / {shortTime(
+                                                    row.jam,
+                                                )}
                                             </p>
                                         </div>
-                                        <p class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                                        <p
+                                            class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground"
+                                        >
                                             {formatCurrency(row.total)}
                                         </p>
                                     </div>
                                     <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.pembayaran)}`}>
+                                        <span
+                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.pembayaran)}`}
+                                        >
                                             {row.pembayaran || '-'}
                                         </span>
-                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}>
+                                        <span
+                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}
+                                        >
                                             {row.status || '-'}
                                         </span>
                                     </div>
-                                    <details class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs">
-                                        <summary class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground">
+                                    <details
+                                        class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
+                                    >
+                                        <summary
+                                            class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
+                                        >
                                             Detail
                                         </summary>
-                                        <div class="grid gap-2 border-t border-border/70 p-3">
-                                            <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute</p>
-                                                <p class="mt-1 font-medium text-foreground">{row.rute || '-'}</p>
-                                                <p class="mt-1 text-[11px] text-muted-foreground">{row.pickup_point || '-'}</p>
+                                        <div
+                                            class="grid gap-2 border-t border-border/70 p-3"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-background/80 px-3 py-2"
+                                            >
+                                                <p
+                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Rute
+                                                </p>
+                                                <p
+                                                    class="mt-1 font-medium text-foreground"
+                                                >
+                                                    {row.rute || '-'}
+                                                </p>
+                                                <p
+                                                    class="mt-1 text-[11px] text-muted-foreground"
+                                                >
+                                                    {row.pickup_point || '-'}
+                                                </p>
                                             </div>
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Unit / Seat</p>
-                                                    <p class="mt-1 font-medium text-foreground">{row.unit || '-'} / {row.seat || '-'}</p>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Unit / Seat
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {row.unit || '-'} / {row.seat ||
+                                                            '-'}
+                                                    </p>
                                                 </div>
-                                                <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Potongan</p>
-                                                    <p class="mt-1 font-medium text-foreground">{formatCurrency(row.discount)}</p>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Potongan
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {formatCurrency(
+                                                            row.discount,
+                                                        )}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -636,13 +685,34 @@
                                 <tr
                                     class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
-                                    <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Rute</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Seat / Unit</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Pembayaran</th>
-                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Potongan</th>
-                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Tanggal</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Pelanggan</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Rute</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Seat / Unit</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Pembayaran</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-right font-semibold tabular-nums"
+                                        >Potongan</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-right font-semibold tabular-nums"
+                                        >Total</th
+                                    >
                                 </tr>
                             </thead>
                             <tbody class="text-[13px]">
@@ -727,57 +797,126 @@
                     {:else if reportSummary.type === 'charter'}
                         <div class="grid gap-3 p-3 md:hidden">
                             {#each asCharterRows(reportRows) as row (row.id)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
+                                <article
+                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
                                         <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold text-foreground">
+                                            <p
+                                                class="truncate text-sm font-semibold text-foreground"
+                                            >
                                                 {row.name || '-'}
                                             </p>
-                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
-                                                {row.start_date || '-'} / {shortTime(row.departure_time)}
+                                            <p
+                                                class="mt-0.5 truncate text-xs text-muted-foreground"
+                                            >
+                                                {row.start_date || '-'} / {shortTime(
+                                                    row.departure_time,
+                                                )}
                                             </p>
                                         </div>
                                         <div class="shrink-0 text-right">
-                                            <p class="text-sm font-semibold tabular-nums text-foreground">
+                                            <p
+                                                class="text-sm font-semibold tabular-nums text-foreground"
+                                            >
                                                 {formatCurrency(row.total)}
                                             </p>
                                             {#if row.bop_status}
-                                                <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeClass(row.bop_status)}`}>
+                                                <span
+                                                    class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeClass(row.bop_status)}`}
+                                                >
                                                     {row.bop_status}
                                                 </span>
                                             {/if}
                                         </div>
                                     </div>
                                     <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}>
+                                        <span
+                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
+                                        >
                                             {row.payment_status || '-'}
                                         </span>
-                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status || row.bop_status)}`}>
-                                            {row.status || row.bop_status || '-'}
+                                        <span
+                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status || row.bop_status)}`}
+                                        >
+                                            {row.status ||
+                                                row.bop_status ||
+                                                '-'}
                                         </span>
                                     </div>
-                                    <details class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs">
-                                        <summary class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground">
+                                    <details
+                                        class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
+                                    >
+                                        <summary
+                                            class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
+                                        >
                                             Detail
                                         </summary>
-                                        <div class="grid gap-2 border-t border-border/70 p-3">
-                                            <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Rute Carter</p>
-                                                <p class="mt-1 font-medium text-foreground">{routeLabel(row.pickup_point, row.drop_point)}</p>
+                                        <div
+                                            class="grid gap-2 border-t border-border/70 p-3"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-background/80 px-3 py-2"
+                                            >
+                                                <p
+                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Rute Carter
+                                                </p>
+                                                <p
+                                                    class="mt-1 font-medium text-foreground"
+                                                >
+                                                    {routeLabel(
+                                                        row.pickup_point,
+                                                        row.drop_point,
+                                                    )}
+                                                </p>
                                             </div>
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Driver</p>
-                                                    <p class="mt-1 font-medium text-foreground">{row.driver_name || '-'}</p>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Driver
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {row.driver_name || '-'}
+                                                    </p>
                                                 </div>
-                                                <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Armada</p>
-                                                    <p class="mt-1 font-medium text-foreground">{charterVehicle(row)}</p>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Armada
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {charterVehicle(row)}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
-                                                <p class="mt-1 font-medium text-foreground">{row.layanan || '-'}</p>
+                                            <div
+                                                class="rounded-xl bg-background/80 px-3 py-2"
+                                            >
+                                                <p
+                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Layanan
+                                                </p>
+                                                <p
+                                                    class="mt-1 font-medium text-foreground"
+                                                >
+                                                    {row.layanan || '-'}
+                                                </p>
                                             </div>
                                         </div>
                                     </details>
@@ -791,13 +930,34 @@
                                 <tr
                                     class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
-                                    <th class="px-4 py-3 text-left font-semibold">Perjalanan</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Penyewa</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Rute</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Layanan</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Armada</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Status</th>
-                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Perjalanan</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Penyewa</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Rute</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Layanan</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Armada</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Status</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-right font-semibold tabular-nums"
+                                        >Total</th
+                                    >
                                 </tr>
                             </thead>
                             <tbody class="text-[13px]">
@@ -889,48 +1049,112 @@
                     {:else}
                         <div class="grid gap-3 p-3 md:hidden">
                             {#each asLuggageRows(reportRows) as row (row.id)}
-                                <article class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
+                                <article
+                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                >
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
                                         <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold text-foreground">
+                                            <p
+                                                class="truncate text-sm font-semibold text-foreground"
+                                            >
                                                 {row.kode_resi || '-'}
                                             </p>
-                                            <p class="mt-0.5 truncate text-xs text-muted-foreground">
-                                                {row.tanggal || row.created_at || '-'}
+                                            <p
+                                                class="mt-0.5 truncate text-xs text-muted-foreground"
+                                            >
+                                                {row.tanggal ||
+                                                    row.created_at ||
+                                                    '-'}
                                             </p>
                                         </div>
-                                        <p class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                                        <p
+                                            class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground"
+                                        >
                                             {formatCurrency(row.total)}
                                         </p>
                                     </div>
                                     <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}>
+                                        <span
+                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}
+                                        >
                                             {row.status || '-'}
                                         </span>
-                                        <span class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}>
+                                        <span
+                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
+                                        >
                                             {row.payment_status || '-'}
                                         </span>
                                     </div>
-                                    <details class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs">
-                                        <summary class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground">
+                                    <details
+                                        class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
+                                    >
+                                        <summary
+                                            class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
+                                        >
                                             Detail
                                         </summary>
-                                        <div class="grid gap-2 border-t border-border/70 p-3">
+                                        <div
+                                            class="grid gap-2 border-t border-border/70 p-3"
+                                        >
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pengirim</p>
-                                                    <p class="mt-1 font-medium text-foreground">{row.sender_name || '-'}</p>
-                                                    <p class="mt-1 text-[11px] text-muted-foreground">{row.sender_phone || '-'}</p>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Pengirim
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {row.sender_name || '-'}
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 text-[11px] text-muted-foreground"
+                                                    >
+                                                        {row.sender_phone ||
+                                                            '-'}
+                                                    </p>
                                                 </div>
-                                                <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Penerima</p>
-                                                    <p class="mt-1 font-medium text-foreground">{row.receiver_name || '-'}</p>
-                                                    <p class="mt-1 text-[11px] text-muted-foreground">{row.receiver_phone || '-'}</p>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Penerima
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {row.receiver_name ||
+                                                            '-'}
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 text-[11px] text-muted-foreground"
+                                                    >
+                                                        {row.receiver_phone ||
+                                                            '-'}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div class="rounded-xl bg-background/80 px-3 py-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Layanan</p>
-                                                <p class="mt-1 font-medium text-foreground">{row.service_name || '-'} / {row.quantity} item</p>
+                                            <div
+                                                class="rounded-xl bg-background/80 px-3 py-2"
+                                            >
+                                                <p
+                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Layanan
+                                                </p>
+                                                <p
+                                                    class="mt-1 font-medium text-foreground"
+                                                >
+                                                    {row.service_name || '-'} / {row.quantity}
+                                                    item
+                                                </p>
                                             </div>
                                         </div>
                                     </details>
@@ -944,13 +1168,34 @@
                                 <tr
                                     class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
-                                    <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Resi</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Pengirim</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Penerima</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Layanan</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Status</th>
-                                    <th class="px-4 py-3 text-right font-semibold tabular-nums">Total</th>
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Tanggal</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Resi</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Pengirim</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Penerima</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Layanan</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-left font-semibold"
+                                        >Status</th
+                                    >
+                                    <th
+                                        class="px-4 py-3 text-right font-semibold tabular-nums"
+                                        >Total</th
+                                    >
                                 </tr>
                             </thead>
                             <tbody class="text-[13px]">
