@@ -1030,6 +1030,17 @@
     });
 
     $effect(() => {
+        if (
+            activeTab === 'units' &&
+            activeMode === 'layout' &&
+            layoutUnitId > 0 &&
+            units.length > 0
+        ) {
+            syncLayoutUnitById(layoutUnitId);
+        }
+    });
+
+    $effect(() => {
         try {
             if (typeof window !== 'undefined') {
                 window.dispatchEvent(
@@ -5648,25 +5659,6 @@
                         >{tabTitle(activeTab)}</CardTitle
                     >
                     <div class="flex items-center gap-2">
-                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab) && units.length > 0}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button type="button" size="sm" variant="outline">
-                                        <Armchair class="mr-2 h-3.5 w-3.5" />
-                                        Atur Layout
-                                        <ChevronDown class="ml-2 h-3.5 w-3.5" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-56 max-h-72 overflow-auto">
-                                    {#each units as row (row.id)}
-                                        <DropdownMenuItem onclick={() => openLayoutEditor(row)}>
-                                            <Armchair class="mr-2 h-3.5 w-3.5" />
-                                            {row.nopol}
-                                        </DropdownMenuItem>
-                                    {/each}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        {/if}
                         {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
                             <Button type="button" size="sm" onclick={openCreateForm}>
                                 Tambah Data Baru
@@ -5685,25 +5677,6 @@
                         >{tabTitle(activeTab)}</CardTitle
                     >
                     <div class="flex items-center gap-2">
-                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab) && units.length > 0}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button type="button" size="sm" variant="outline">
-                                        <Armchair class="mr-2 h-3.5 w-3.5" />
-                                        Atur Layout
-                                        <ChevronDown class="ml-2 h-3.5 w-3.5" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-56 max-h-72 overflow-auto">
-                                    {#each units as row (row.id)}
-                                        <DropdownMenuItem onclick={() => openLayoutEditor(row)}>
-                                            <Armchair class="mr-2 h-3.5 w-3.5" />
-                                            {row.nopol}
-                                        </DropdownMenuItem>
-                                    {/each}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        {/if}
                         {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
                             <Button type="button" size="sm" onclick={openCreateForm}>
                                 Tambah Data Baru
@@ -9597,6 +9570,16 @@
                                                     {rowPoolName(row)}
                                                 </Badge>
                                             </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                class="mt-3 h-8 w-full justify-center rounded-full px-3 text-xs"
+                                                onclick={() =>
+                                                    openLayoutEditor(row)}
+                                            >
+                                                <Armchair class="mr-2 h-3 w-3" />
+                                                Atur Layout
+                                            </Button>
                                         </div>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -9744,6 +9727,21 @@
                                                 <div
                                                     class="flex items-center justify-end gap-1.5"
                                                 >
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        class="h-8 shrink-0 rounded-full px-3 text-xs"
+                                                        onclick={() =>
+                                                            openLayoutEditor(
+                                                                row,
+                                                            )}
+                                                    >
+                                                        <Armchair
+                                                            class="mr-2 h-3 w-3"
+                                                        />
+                                                        Atur Layout
+                                                    </Button>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
                                                             asChild
