@@ -19,7 +19,7 @@ const DEFAULT_APPEARANCE: Appearance = 'light';
 const appearance = $state<{ value: Appearance }>({
     value: DEFAULT_APPEARANCE,
 });
-const density = $state<{ value: Density }>({ value: 'compact' });
+const density = $state<{ value: Density }>({ value: 'comfortable' });
 
 let themeChangeMediaQuery: MediaQueryList | null = null;
 
@@ -80,14 +80,14 @@ const getStoredAppearance = (): Appearance => {
 
 const getStoredDensity = (): Density => {
     if (typeof window === 'undefined') {
-        return 'compact';
+        return 'comfortable';
     }
 
     const stored = localStorage.getItem('density');
 
     return stored === 'compact' || stored === 'comfortable'
         ? stored
-        : 'compact';
+        : 'comfortable';
 };
 
 const handleSystemThemeChange = (): void => {
@@ -124,8 +124,8 @@ export function initializeTheme(): () => void {
     }
 
     if (!localStorage.getItem('density')) {
-        localStorage.setItem('density', 'compact');
-        setCookie('density', 'compact');
+        localStorage.setItem('density', 'comfortable');
+        setCookie('density', 'comfortable');
     }
 
     appearance.value = getStoredAppearance();
