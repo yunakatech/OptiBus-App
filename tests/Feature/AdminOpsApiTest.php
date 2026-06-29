@@ -815,6 +815,107 @@ class AdminOpsApiTest extends TestCase
         $this->assertEquals(50000.0, $luggageReport['summary']['revenue_total'] ?? 0);
     }
 
+    public function test_booking_reports_sum_bop_by_departure_schedule(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $today = now()->toDateString();
+
+        $routePayload = [
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'bop' => 0,
+            'created_at' => now(),
+        ];
+        $routeId = DB::table('routes')->insertGetId($routePayload);
+
+        $scheduleRows = [
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'dow' => now()->dayOfWeek,
+                'jam' => '08:00:00',
+                'units' => 1,
+                'unit_label' => 'Reguler',
+                'bop' => 150000,
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'dow' => now()->dayOfWeek,
+                'jam' => '10:00:00',
+                'units' => 1,
+                'unit_label' => 'Reguler',
+                'bop' => 175000,
+                'created_at' => now(),
+            ],
+        ];
+        if (Schema::hasColumn('schedules', 'route_id')) {
+            foreach ($scheduleRows as &$scheduleRow) {
+                $scheduleRow['route_id'] = $routeId;
+            }
+            unset($scheduleRow);
+        }
+        DB::table('schedules')->insert($scheduleRows);
+
+        $bookingRows = [
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $today,
+                'jam' => '08:00:00',
+                'unit' => 1,
+                'seat' => 'A1',
+                'name' => 'BOOKING 1',
+                'phone' => '08110001',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Lunas',
+                'status' => 'active',
+                'price' => 120000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $today,
+                'jam' => '10:00:00',
+                'unit' => 1,
+                'seat' => 'A2',
+                'name' => 'BOOKING 2',
+                'phone' => '08110002',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Lunas',
+                'status' => 'active',
+                'price' => 90000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+        ];
+        if (Schema::hasColumn('bookings', 'route_id')) {
+            foreach ($bookingRows as &$bookingRow) {
+                $bookingRow['route_id'] = $routeId;
+            }
+            unset($bookingRow);
+        }
+        DB::table('bookings')->insert($bookingRows);
+
+        $report = $this->getJson(route('api.admin.reports.summary', [
+            'from' => $today,
+            'to' => $today,
+            'type' => 'booking',
+        ]))
+            ->assertOk()
+            ->json();
+
+        $this->assertSame('booking', $report['summary']['type'] ?? null);
+        $this->assertSame(325000.0, (float) ($report['summary']['bop_total'] ?? 0));
+        $this->assertSame(2, $report['summary']['total_rows'] ?? null);
+    }
+
     public function test_driver_and_armada_revenue_include_luggage_revenue_in_totals(): void
     {
         $this->actingAsSuperAdmin();

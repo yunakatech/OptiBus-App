@@ -10,8 +10,8 @@ use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\FeatureGate;
 use App\Support\PoolScope;
-use App\Support\SegmentName;
 use App\Support\RoleAccessData;
+use App\Support\SegmentName;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Query\Builder;
@@ -260,13 +260,13 @@ class AdminOpsApiController extends Controller
         $scheduleSegmentsPivot = [];
         if (Schema::hasTable('schedule_segment')) {
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
-            if (!empty($scheduleIds)) {
+            if (! empty($scheduleIds)) {
                 $pivots = DB::table('schedule_segment')
                     ->whereIn('schedule_id', $scheduleIds)
                     ->get(['schedule_id', 'segment_id', 'jam_pickup']);
                 foreach ($pivots as $pivot) {
                     $sId = (int) $pivot->schedule_id;
-                    if (!isset($scheduleSegmentsPivot[$sId])) {
+                    if (! isset($scheduleSegmentsPivot[$sId])) {
                         $scheduleSegmentsPivot[$sId] = [];
                     }
                     $scheduleSegmentsPivot[$sId][(int) $pivot->segment_id] = substr((string) $pivot->jam_pickup, 0, 5);
@@ -291,7 +291,7 @@ class AdminOpsApiController extends Controller
             $segmentMatches = array_values(array_filter(
                 $segmentCache[$cacheKey],
                 static function (array $segment) use ($scheduleJam, $explicitMappings): bool {
-                    if (!empty($explicitMappings)) {
+                    if (! empty($explicitMappings)) {
                         return isset($explicitMappings[$segment['id']]);
                     }
 
@@ -301,12 +301,13 @@ class AdminOpsApiController extends Controller
                         || (string) ($segment['jam'] ?? '') === $scheduleJam;
                 },
             ));
-            
+
             // Map explicitly selected pickup
             $segmentMatches = array_map(function ($segment) use ($explicitMappings) {
-                if (!empty($explicitMappings) && isset($explicitMappings[$segment['id']])) {
+                if (! empty($explicitMappings) && isset($explicitMappings[$segment['id']])) {
                     $segment['jam_pickups'] = [$explicitMappings[$segment['id']]];
                 }
+
                 return $segment;
             }, $segmentMatches);
 
@@ -566,9 +567,11 @@ class AdminOpsApiController extends Controller
                     $savedSegments = [];
                     foreach ($segmentConfigs as $sc) {
                         $sId = (int) $sc['segment_id'];
-                        if (isset($savedSegments[$sId])) continue;
+                        if (isset($savedSegments[$sId])) {
+                            continue;
+                        }
                         $savedSegments[$sId] = true;
-                        
+
                         $pivotRows[] = [
                             'schedule_id' => $scheduleId,
                             'segment_id' => $sId,
@@ -593,6 +596,7 @@ class AdminOpsApiController extends Controller
             if (preg_match('/ERROR:\s*(.+?)(?:\s+DETAIL|\s+HINT|$)/s', $msg, $m)) {
                 $msg = trim($m[1]);
             }
+
             return $this->error('Failed saving schedule: '.$msg, 500);
         }
     }
@@ -610,7 +614,7 @@ class AdminOpsApiController extends Controller
             $this->applyWriteTenantScopeIfExists($scheduleUnitsDelete, 'schedule_units');
             $scheduleUnitsDelete->delete();
         }
-        
+
         if (Schema::hasTable('schedule_segment')) {
             DB::table('schedule_segment')->where('schedule_id', $id)->delete();
         }
@@ -1538,34 +1542,199 @@ class AdminOpsApiController extends Controller
      */
     private function estimateReportBookingBop(string $from, string $to, int $poolId = 0, array $routeFilter = []): float
     {
-        if (! Schema::hasTable('routes') || ! Schema::hasColumn('routes', 'bop') || ! Schema::hasTable('bookings')) {
+        if (! Schema::hasTable('bookings')) {
             return 0.0;
         }
 
-        $routeQuery = DB::table('bookings')
-            ->whereBetween('tanggal', [$from, $to])
-            ->select('rute')
-            ->distinct();
-        $this->applyNotCanceledFilter($routeQuery, 'status');
-        $this->applyRouteScopeToQuery($routeQuery, '', 'rute', $poolId);
-        $this->applyTenantScopeIfExists($routeQuery, 'bookings');
+        $departures = $this->reportBookingDeparturesForBop($from, $to, $poolId, $routeFilter);
+        if ($departures->isEmpty()) {
+            return 0.0;
+        }
+
+        $lookup = $this->reportBookingBopLookup($departures, $poolId);
+
+        return (float) $departures->sum(fn ($departure): float => $this->reportBookingDepartureBop($departure, $lookup));
+    }
+
+    /**
+     * @param  array{requested?: bool, id?: int, name?: string}  $routeFilter
+     */
+    private function reportBookingDeparturesForBop(string $from, string $to, int $poolId = 0, array $routeFilter = []): Collection
+    {
+        $query = DB::table('bookings as b')
+            ->whereBetween('b.tanggal', [$from, $to]);
+        $this->applyNotCanceledFilter($query, 'b.status');
+        $this->applyRouteScopeToQuery($query, '', 'b.rute', $poolId);
+        $this->applyTenantScopeIfExists($query, 'bookings', 'b');
         $this->applyResolvedRouteFilter(
-            $routeQuery,
+            $query,
             $routeFilter,
-            Schema::hasColumn('bookings', 'route_id') ? 'route_id' : '',
-            'rute',
+            Schema::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
+            'b.rute',
         );
 
-        $routes = $routeQuery->pluck('rute')->all();
+        return $query
+            ->distinct()
+            ->get([
+                Schema::hasColumn('bookings', 'route_id') ? 'b.route_id' : DB::raw('NULL as route_id'),
+                'b.rute',
+                'b.tanggal',
+                'b.jam',
+                'b.unit',
+            ]);
+    }
 
-        if (empty($routes)) {
-            return 0.0;
+    /**
+     * @param  Collection<int, object>  $departures
+     * @return array{schedule_route: array<string, float>, schedule_name: array<string, float>, route_id: array<int, float>, route_name: array<string, float>}
+     */
+    private function reportBookingBopLookup(Collection $departures, int $poolId = 0): array
+    {
+        $lookup = [
+            'schedule_route' => [],
+            'schedule_name' => [],
+            'route_id' => [],
+            'route_name' => [],
+        ];
+
+        if ($departures->isEmpty()) {
+            return $lookup;
         }
 
-        $routesQuery = DB::table('routes')->whereIn('name', $routes);
-        $this->applyTenantScopeIfExists($routesQuery, 'routes');
+        $routeIds = $departures
+            ->pluck('route_id')
+            ->map(static fn ($value): int => (int) $value)
+            ->filter(static fn (int $value): bool => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
 
-        return (float) $routesQuery->sum('bop');
+        if (Schema::hasTable('routes') && Schema::hasColumn('routes', 'bop')) {
+            $routeQuery = DB::table('routes');
+            $this->applyTenantScopeIfExists($routeQuery, 'routes');
+            $this->applyRouteScopeToQuery($routeQuery, 'routes.id', 'routes.name', $poolId);
+            if ($routeIds !== []) {
+                $routeQuery->whereIn('id', $routeIds);
+            }
+
+            $routeSelect = [
+                'id',
+                'name',
+                Schema::hasColumn('routes', 'origin') ? 'origin' : DB::raw('NULL as origin'),
+                Schema::hasColumn('routes', 'destination') ? 'destination' : DB::raw('NULL as destination'),
+                'bop',
+            ];
+
+            foreach ($routeQuery->get($routeSelect) as $route) {
+                $routeId = (int) ($route->id ?? 0);
+                $bop = (float) ($route->bop ?? 0);
+                if ($routeId > 0) {
+                    $lookup['route_id'][$routeId] = $bop;
+                }
+
+                foreach ($this->reportRouteNameCandidates($route) as $candidate) {
+                    $key = $this->normalizeRouteName($candidate);
+                    if ($key !== '') {
+                        $lookup['route_name'][$key] = $bop;
+                    }
+                }
+            }
+        }
+
+        if (Schema::hasTable('schedules') && Schema::hasColumn('schedules', 'bop')) {
+            $scheduleQuery = DB::table('schedules')->where('bop', '>', 0);
+            $this->applyTenantScopeIfExists($scheduleQuery, 'schedules');
+            $this->applyRouteScopeToQuery(
+                $scheduleQuery,
+                Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '',
+                'schedules.rute',
+                $poolId,
+            );
+
+            $scheduleSelect = [
+                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : DB::raw('NULL as route_id'),
+                'rute',
+                'dow',
+                'jam',
+                'bop',
+            ];
+
+            foreach ($scheduleQuery->get($scheduleSelect) as $schedule) {
+                $dow = (int) ($schedule->dow ?? -1);
+                $time = substr(trim((string) ($schedule->jam ?? '')), 0, 5);
+                $bop = (float) ($schedule->bop ?? 0);
+
+                if ($dow < 0 || $time === '' || $bop <= 0) {
+                    continue;
+                }
+
+                $routeId = (int) ($schedule->route_id ?? 0);
+                if ($routeId > 0) {
+                    $lookup['schedule_route'][$routeId.'|'.$dow.'|'.$time] = $bop;
+                }
+
+                $routeKey = $this->normalizeRouteName((string) ($schedule->rute ?? ''));
+                if ($routeKey !== '') {
+                    $lookup['schedule_name'][$routeKey.'|'.$dow.'|'.$time] = $bop;
+                }
+            }
+        }
+
+        return $lookup;
+    }
+
+    /**
+     * @param  array{schedule_route: array<string, float>, schedule_name: array<string, float>, route_id: array<int, float>, route_name: array<string, float>}  $lookup
+     */
+    private function reportBookingDepartureBop(object $departure, array $lookup): float
+    {
+        $routeId = (int) ($departure->route_id ?? 0);
+        $routeKey = $this->normalizeRouteName((string) ($departure->rute ?? ''));
+        $time = substr(trim((string) ($departure->jam ?? '')), 0, 5);
+
+        try {
+            $dow = Carbon::parse((string) ($departure->tanggal ?? ''))->dayOfWeek;
+        } catch (\Throwable) {
+            $dow = -1;
+        }
+
+        if ($dow >= 0 && $time !== '') {
+            if ($routeId > 0) {
+                $scheduleKey = $routeId.'|'.$dow.'|'.$time;
+                if (isset($lookup['schedule_route'][$scheduleKey])) {
+                    return (float) $lookup['schedule_route'][$scheduleKey];
+                }
+            }
+
+            if ($routeKey !== '') {
+                $scheduleKey = $routeKey.'|'.$dow.'|'.$time;
+                if (isset($lookup['schedule_name'][$scheduleKey])) {
+                    return (float) $lookup['schedule_name'][$scheduleKey];
+                }
+            }
+        }
+
+        if ($routeId > 0 && isset($lookup['route_id'][$routeId])) {
+            return (float) $lookup['route_id'][$routeId];
+        }
+
+        return $routeKey !== '' ? (float) ($lookup['route_name'][$routeKey] ?? 0) : 0.0;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function reportRouteNameCandidates(object $route): array
+    {
+        $candidates = [(string) ($route->name ?? '')];
+        $origin = trim((string) ($route->origin ?? ''));
+        $destination = trim((string) ($route->destination ?? ''));
+
+        if ($origin !== '' && $destination !== '') {
+            $candidates[] = $origin.' - '.$destination;
+        }
+
+        return $candidates;
     }
 
     /**
@@ -1771,7 +1940,7 @@ class AdminOpsApiController extends Controller
                 ...$poolTables,
             ]))),
             'bagasi' => $this->buildTablesMutationSignature(array_merge(['luggages', 'luggage_services'], $poolTables)),
-            default => $this->buildTablesMutationSignature(array_merge(['bookings'], $poolTables)),
+            default => $this->buildTablesMutationSignature(array_merge(['bookings', 'routes', 'schedules'], $poolTables)),
         };
     }
 
@@ -4146,8 +4315,7 @@ class AdminOpsApiController extends Controller
     public function armadasExport(Request $request): StreamedResponse
     {
         if (! Schema::hasTable('armadas')) {
-            return response()->streamDownload(static function (): void {
-            }, 'armadas.csv', ['Content-Type' => 'text/csv']);
+            return response()->streamDownload(static function (): void {}, 'armadas.csv', ['Content-Type' => 'text/csv']);
         }
 
         $validated = $request->validate([
@@ -4971,7 +5139,6 @@ class AdminOpsApiController extends Controller
         if (Schema::hasColumn('routes', 'tenant_id')) {
             PoolScope::applyTenantScope($routeQuery, 'routes.tenant_id');
         }
-
 
         if (! $canManage) {
             $routeIds = [];
@@ -6001,6 +6168,7 @@ class AdminOpsApiController extends Controller
 
             if ($bookingTarget <= 0 && $bagasiTarget <= 0 && $carterTarget <= 0) {
                 $query->delete();
+
                 continue;
             }
 
@@ -7448,7 +7616,7 @@ class AdminOpsApiController extends Controller
             ], 500));
         }
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $opened = $zip->open($tmpPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
         if ($opened !== true) {
             @unlink($tmpPath);
@@ -7529,7 +7697,7 @@ class AdminOpsApiController extends Controller
             ], 500));
         }
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $opened = $zip->open($tmpPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
         if ($opened !== true) {
             @unlink($tmpPath);
@@ -7749,7 +7917,7 @@ XML;
             return 4;
         }
 
-        return is_float($value) || is_double($value) ? 4 : 3;
+        return is_float($value) || is_float($value) ? 4 : 3;
     }
 
     private function xmlText(string $value): string
