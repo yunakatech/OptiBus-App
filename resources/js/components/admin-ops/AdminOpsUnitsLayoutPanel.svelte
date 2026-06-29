@@ -115,20 +115,20 @@
 
         <div class="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
             <div class="space-y-4">
-                <div class="rounded-2xl border border-border/70 bg-background/90 p-4">
+                <div class="rounded-2xl border border-border/70 bg-background/90 p-3">
                     <div class="space-y-1">
                         <h4 class="text-sm font-semibold">Preset Cepat</h4>
-                        <p class="text-xs text-muted-foreground">Gunakan template penuh untuk membentuk karakter bus lebih cepat, lalu detailkan dari preview.</p>
+                        <p class="text-[11px] leading-5 text-muted-foreground">Template penuh buat bentuk kabin cepat, lalu rapikan detail dari preview.</p>
                     </div>
-                    <div class="mt-3 grid gap-2">
-                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('2-2')}>Template 2-2 · Bus Besar</Button>
-                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('2-1')}>Template 2-1 · Executive</Button>
-                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('2-3')}>Template 2-3 · High Capacity</Button>
-                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('3-0')}>Template 3-0 · Triple Seat</Button>
-                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('4-0')}>Template 4-0 · Tanpa Lorong</Button>
-                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('1-1')}>Template 1-1 · Shuttle</Button>
-                        <Button type="button" variant="outline" class="justify-start" onclick={() => applyPatternToAllRows('sleep')}>Template Sleep Seat</Button>
-                        <Button type="button" variant="outline" class="justify-start" onclick={resetLayoutDraft}>Reset ke Default</Button>
+                    <div class="mt-2.5 grid gap-1.5">
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={() => applyPatternToAllRows('2-2')}>Template 2-2</Button>
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={() => applyPatternToAllRows('2-1')}>Template 2-1</Button>
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={() => applyPatternToAllRows('2-3')}>Template 2-3</Button>
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={() => applyPatternToAllRows('3-0')}>Template 3-0</Button>
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={() => applyPatternToAllRows('4-0')}>Template 4-0</Button>
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={() => applyPatternToAllRows('1-1')}>Template 1-1</Button>
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={() => applyPatternToAllRows('sleep')}>Sleep Seat</Button>
+                        <Button type="button" variant="outline" class="h-8 justify-start rounded-full px-3 text-xs" onclick={resetLayoutDraft}>Reset</Button>
                     </div>
                 </div>
 
@@ -137,18 +137,18 @@
                         <h4 class="text-sm font-semibold">Tambah Baris</h4>
                         <p class="text-xs text-muted-foreground">Pilih pola baris yang ingin ditambahkan di bagian belakang layout.</p>
                     </div>
-                    <div class="mt-3 grid grid-cols-2 gap-2">
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('2-2')}>+ Baris 2-2</Button>
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('2-1')}>+ Baris 2-1</Button>
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('2-3')}>+ Baris 2-3</Button>
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('3-0')}>+ Baris 3-0</Button>
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('4-0')}>+ Baris 4-0</Button>
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('1-1')}>+ Baris 1-1</Button>
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('sleep')}>+ Sleep Seat</Button>
-                        <Button type="button" variant="outline" onclick={() => addLayoutRow('empty')}>+ Baris Kosong</Button>
+                    <div class="mt-2.5 grid grid-cols-2 gap-1.5">
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('2-2')}>2-2</Button>
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('2-1')}>2-1</Button>
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('2-3')}>2-3</Button>
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('3-0')}>3-0</Button>
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('4-0')}>4-0</Button>
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('1-1')}>1-1</Button>
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('sleep')}>Sleep</Button>
+                        <Button type="button" variant="outline" class="h-8 rounded-full px-2 text-xs" onclick={() => addLayoutRow('empty')}>Kosong</Button>
                     </div>
                     <div class="mt-2">
-                        <Button type="button" variant="ghost" class="w-full justify-start text-muted-foreground" onclick={() => removeLayoutRow()}>
+                        <Button type="button" variant="ghost" class="h-8 w-full justify-start rounded-full px-2 text-xs text-muted-foreground" onclick={() => removeLayoutRow()}>
                             Hapus baris terakhir
                         </Button>
                     </div>
@@ -252,15 +252,15 @@
                                         </div>
                                         {#if rowIdx > 0}
                                             <div class="flex flex-wrap gap-1">
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '2-2')}>2-2</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '2-1')}>2-1</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '2-3')}>2-3</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '3-0')}>3-0</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '4-0')}>4-0</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, '1-1')}>1-1</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => replaceLayoutRowPattern(rowIdx, 'sleep')}>Sleep</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => duplicateLayoutRow(rowIdx)}>Duplikat</Button>
-                                                <Button type="button" size="sm" variant="ghost" onclick={() => removeLayoutRow(rowIdx)}>Hapus</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => replaceLayoutRowPattern(rowIdx, '2-2')}>2-2</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => replaceLayoutRowPattern(rowIdx, '2-1')}>2-1</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => replaceLayoutRowPattern(rowIdx, '2-3')}>2-3</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => replaceLayoutRowPattern(rowIdx, '3-0')}>3-0</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => replaceLayoutRowPattern(rowIdx, '4-0')}>4-0</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => replaceLayoutRowPattern(rowIdx, '1-1')}>1-1</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => replaceLayoutRowPattern(rowIdx, 'sleep')}>Sleep</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => duplicateLayoutRow(rowIdx)}>Duplikat</Button>
+                                                <Button type="button" size="sm" variant="ghost" class="h-7 rounded-full px-2 text-[11px]" onclick={() => removeLayoutRow(rowIdx)}>Hapus</Button>
                                             </div>
                                         {/if}
                                     </div>
@@ -278,7 +278,7 @@
                                                     {:else}
                                                         <button
                                                             type="button"
-                                                            class={`flex h-12 items-center justify-center rounded-2xl border border-dashed text-xs font-medium transition hover:border-foreground/30 ${
+                                                        class={`flex h-10 items-center justify-center rounded-2xl border border-dashed px-2 text-[11px] font-medium transition hover:border-foreground/30 ${
                                                                 cell.seatStyle === 'sleeper'
                                                                     ? 'border-sky-200 bg-sky-50/70 text-sky-700 hover:bg-sky-100'
                                                                     : 'border-border text-muted-foreground hover:bg-muted'
@@ -291,10 +291,10 @@
                                                 {:else}
                                                     <button
                                                         type="button"
-                                                        class={`flex items-center justify-center rounded-2xl border text-sm font-semibold transition ${
+                                                        class={`flex items-center justify-center rounded-2xl border px-2 text-[11px] font-semibold transition ${
                                                             cell.seatStyle === 'sleeper'
-                                                                ? 'h-16 border-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200'
-                                                                : 'h-12 border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                                                ? 'h-14 border-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200'
+                                                                : 'h-10 border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                                                         }`}
                                                         onclick={() => removeLayoutItem(rowIdx, colIdx)}
                                                     >
@@ -315,8 +315,8 @@
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                    <LoadingButton type="button" onclick={() => void saveUnitLayout()} loading={layoutEditorBusy} loadingText="Menyimpan layout...">Simpan Layout</LoadingButton>
-                    <Button type="button" variant="outline" onclick={goBackToData}>Kembali ke Data</Button>
+                    <LoadingButton type="button" class="h-8 rounded-full px-3 text-xs" onclick={() => void saveUnitLayout()} loading={layoutEditorBusy} loadingText="Menyimpan layout...">Simpan Layout</LoadingButton>
+                    <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={goBackToData}>Kembali ke Data</Button>
                 </div>
             </div>
         </div>
@@ -327,3 +327,4 @@
         <Button type="button" variant="outline" class="mt-3" onclick={goBackToData}>Kembali ke Data</Button>
     </div>
 {/if}
+
