@@ -2312,6 +2312,14 @@
                     isBelumLunasPayment(row.pembayaran),
             )
             .reduce((total, row) => total + bookingRowFinalPrice(row), 0);
+    const bookingGroupPaidAmount = (group: BookingGroup) =>
+        visibleGroupBookingRows(group.bookings)
+            .filter(
+                (row) =>
+                    !isCanceledBooking(row.status) &&
+                    isLunasPayment(row.pembayaran),
+            )
+            .reduce((total, row) => total + bookingRowFinalPrice(row), 0);
     const bookingAssignmentText = (
         value: string | null | undefined,
         fallback: string,
@@ -7093,6 +7101,16 @@
                             >
                                 Unit {openGroupDetail.unit}
                             </Badge>
+                            {#if !consoleOnly}
+                                <Badge
+                                    variant="secondary"
+                                    class="rounded-full border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/25 dark:text-cyan-200"
+                                >
+                                    BOP {formatCurrency(
+                                        Number(openGroupDetail.bop || 0),
+                                    )}
+                                </Badge>
+                            {/if}
                             {#if isCanceledDeparture(openGroupDetail)}
                                 <Badge
                                     variant="destructive"
@@ -7642,12 +7660,12 @@
                                         <p
                                             class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                                         >
-                                            BOP
+                                            Nilai sudah lunas
                                         </p>
                                         <p class="mt-1 text-sm font-semibold">
                                             {formatCurrency(
-                                                Number(
-                                                    openGroupDetail.bop || 0,
+                                                bookingGroupPaidAmount(
+                                                    openGroupDetail,
                                                 ),
                                             )}
                                         </p>
@@ -9407,15 +9425,16 @@
                                                                             >
                                                                                 <span
                                                                                     class="text-muted-foreground"
-                                                                                    >BOP</span
+                                                                                    >Nilai
+                                                                                    sudah
+                                                                                    lunas</span
                                                                                 >
                                                                                 <span
                                                                                     class="font-semibold text-foreground"
                                                                                 >
                                                                                     {formatCurrency(
-                                                                                        Number(
-                                                                                            group.bop ||
-                                                                                                0,
+                                                                                        bookingGroupPaidAmount(
+                                                                                            group,
                                                                                         ),
                                                                                     )}
                                                                                 </span>
@@ -9639,6 +9658,19 @@
                                                         class="rounded-full px-2 py-0.5 text-[10px]"
                                                         >Unit {group.unit}</Badge
                                                     >
+                                                    {#if !consoleOnly}
+                                                        <Badge
+                                                            variant="secondary"
+                                                            class="rounded-full border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/25 dark:text-cyan-200"
+                                                        >
+                                                            BOP {formatCurrency(
+                                                                Number(
+                                                                    group.bop ||
+                                                                        0,
+                                                                ),
+                                                            )}
+                                                        </Badge>
+                                                    {/if}
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
                                                             asChild
