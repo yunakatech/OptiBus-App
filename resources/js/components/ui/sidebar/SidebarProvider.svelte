@@ -66,6 +66,12 @@
         }
     };
 
+    $effect(() => {
+        if (!$isMobile && !$open) {
+            setOpen(true);
+        }
+    });
+
     onMount(() => {
         const handler = (event: KeyboardEvent) => {
             if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {

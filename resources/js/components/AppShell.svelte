@@ -58,8 +58,12 @@
 
     onMount(() => {
         if (typeof window !== 'undefined') {
-            previousDensity = document.documentElement.getAttribute('data-density');
-            document.documentElement.setAttribute('data-density', 'compact');
+            previousDensity =
+                document.documentElement.getAttribute('data-density');
+            document.documentElement.setAttribute(
+                'data-density',
+                'comfortable',
+            );
             document.documentElement.setAttribute('data-ui-scale', 'app');
             window.addEventListener('set-theme', themeHandler as EventListener);
         }
@@ -67,7 +71,10 @@
 
     onDestroy(() => {
         if (typeof window !== 'undefined') {
-            window.removeEventListener('set-theme', themeHandler as EventListener);
+            window.removeEventListener(
+                'set-theme',
+                themeHandler as EventListener,
+            );
             document.documentElement.setAttribute(
                 'data-ui-scale',
                 shouldUsePublicUiScale(window.location.pathname)
@@ -77,7 +84,10 @@
             if (previousDensity === null) {
                 document.documentElement.removeAttribute('data-density');
             } else {
-                document.documentElement.setAttribute('data-density', previousDensity);
+                document.documentElement.setAttribute(
+                    'data-density',
+                    previousDensity,
+                );
             }
         }
     });
