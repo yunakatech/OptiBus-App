@@ -5143,30 +5143,30 @@
                                     luggageArrivedStatus,
                                 ].includes(normalizedLuggageStatus)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                    class="rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-sm"
                                 >
                                     <div
-                                        class="flex items-start justify-between gap-3"
+                                        class="flex items-start justify-between gap-2.5"
                                     >
                                         <div class="min-w-0">
                                             <p
-                                                class="truncate text-sm font-semibold text-foreground"
+                                                class="truncate text-[11px] font-semibold text-foreground"
                                             >
                                                 {row.kode_resi ??
                                                     `Bagasi #${row.id}`}
                                             </p>
                                             <p
-                                                class="mt-0.5 truncate text-xs text-muted-foreground"
+                                                class="mt-0.5 truncate text-[10px] text-muted-foreground"
                                             >
                                                 {row.service_name ?? '-'} / {row.quantity}
                                                 barang
                                             </p>
                                         </div>
                                         <div
-                                            class="flex shrink-0 items-center gap-1.5"
+                                            class="flex shrink-0 items-center gap-1"
                                         >
                                             <span
-                                                class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                class={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${luggageStatusClass(row.status)}`}
                                             >
                                                 {luggageStatusLabel(row.status)}
                                             </span>
@@ -5177,7 +5177,7 @@
                                                             type="button"
                                                             size="sm"
                                                             variant="outline"
-                                                            class="h-8 rounded-full border-border/70 px-2.5"
+                                                            class="h-7 w-7 rounded-md border-border/70 p-0"
                                                             onclick={props.onclick}
                                                             aria-expanded={props[
                                                                 'aria-expanded'
@@ -5187,7 +5187,7 @@
                                                             ]}
                                                         >
                                                             <MoreHorizontal
-                                                                class="h-4 w-4"
+                                                                class="h-3.5 w-3.5"
                                                             />
                                                         </Button>
                                                     {/snippet}
@@ -5268,7 +5268,7 @@
                                     </div>
 
                                     <div
-                                        class="mt-3 grid grid-cols-2 gap-2 text-xs"
+                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[10px]"
                                     >
                                         <div
                                             class="rounded-xl bg-muted/30 px-3 py-2"
@@ -5311,10 +5311,10 @@
                                     </div>
 
                                     <div
-                                        class="mt-2 rounded-xl bg-muted/30 px-3 py-2 text-xs"
+                                        class="mt-2 rounded-xl bg-muted/30 px-2.5 py-1.5 text-[10px]"
                                     >
                                         <p
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >
                                             Rute
                                         </p>
@@ -5340,33 +5340,33 @@
                                     </div>
 
                                     <div
-                                        class="mt-2 grid grid-cols-2 gap-2 text-xs"
+                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[10px]"
                                     >
                                         <div
-                                            class="rounded-xl bg-emerald-50/70 px-3 py-2 dark:bg-emerald-950/25"
+                                            class="rounded-xl bg-emerald-50/70 px-2.5 py-1.5 dark:bg-emerald-950/25"
                                         >
                                             <p
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+                                                class="text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
                                             >
                                                 Biaya
                                             </p>
                                             <p
-                                                class="mt-1 font-semibold text-emerald-800 dark:text-emerald-200"
+                                                class="mt-0.5 font-semibold text-emerald-800 dark:text-emerald-200"
                                             >
                                                 {formatCurrencyId(row.price)}
                                             </p>
                                         </div>
                                         <div
-                                            class="rounded-xl bg-amber-50/80 px-3 py-2 dark:bg-amber-950/25"
+                                            class="rounded-xl bg-amber-50/80 px-2.5 py-1.5 dark:bg-amber-950/25"
                                         >
                                             <p
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+                                                class="text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
                                             >
                                                 Pembayaran
                                             </p>
-                                            <p class="mt-1">
+                                            <p class="mt-0.5">
                                                 <span
-                                                    class={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                    class={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
                                                 >
                                                     {row.payment_status ?? '-'}
                                                 </span>
@@ -5375,7 +5375,7 @@
                                     </div>
 
                                     <div
-                                        class="mt-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs"
+                                        class="mt-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-1.5 text-[10px]"
                                     >
                                         <p
                                             class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
@@ -5384,24 +5384,24 @@
                                         </p>
                                         {#if departureInfo}
                                             <p
-                                                class="mt-1 font-semibold text-foreground"
+                                                class="mt-0.5 font-medium text-foreground"
                                             >
                                                 {departureInfo.primary}
                                             </p>
                                             <p
-                                                class="mt-0.5 text-[11px] text-muted-foreground"
+                                                class="mt-0.5 text-[10px] text-muted-foreground"
                                             >
                                                 {departureInfo.secondary}
                                             </p>
                                         {:else if normalizedLuggageStatus === luggageReceivedStatus}
                                             <p
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-0.5 text-[10px] text-muted-foreground"
                                             >
                                                 Belum dimapping ke keberangkatan
                                             </p>
                                         {:else}
                                             <p
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-0.5 text-[10px] text-muted-foreground"
                                             >
                                                 -
                                             </p>
@@ -5410,7 +5410,7 @@
 
                                     {#if row.notes}
                                         <p
-                                            class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground"
+                                            class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-2.5 py-1.5 text-[10px] text-muted-foreground"
                                         >
                                             {row.notes}
                                         </p>
@@ -5424,50 +5424,54 @@
                         class="hidden overflow-x-auto rounded-2xl border border-border/70 bg-background md:block"
                     >
                         <table
-                            class="min-w-full table-fixed text-[12px] leading-snug"
+                            class="min-w-full table-fixed text-[11px] leading-tight"
                         >
                             <thead
-                                class="bg-muted/30 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                class="bg-muted/30 text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
                             >
                                 <tr>
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Pengirim</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Penerima</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Rute</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
-                                        >Layanan / Resi</th
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                        >Layanan</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                        >Nomor Resi</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Jumlah</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Status</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Berangkat</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Pembayaran</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Biaya</th
                                     >
                                     <th
-                                        class="border-b border-border/60 px-3 py-2 text-left font-semibold"
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Aksi</th
                                     >
                                 </tr>
@@ -5476,8 +5480,8 @@
                                 {#if luggages.length === 0}
                                     <tr>
                                         <td
-                                            colspan="10"
-                                            class="px-4 py-8 text-center text-xs text-muted-foreground"
+                                            colspan="11"
+                                            class="px-4 py-8 text-center text-[11px] text-muted-foreground"
                                         >
                                             Belum ada data bagasi yang cocok
                                             dengan filter saat ini.
@@ -5492,39 +5496,39 @@
                                         <tr
                                             class="border-b border-border/60 align-top transition-colors hover:bg-muted/20 last:border-b-0"
                                         >
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
                                                     class="block font-medium text-foreground"
                                                     >{row.sender_name}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    class="mt-0.5 block text-[10px] text-muted-foreground"
                                                     >{row.sender_phone ||
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block max-w-[18rem] truncate text-[11px] text-muted-foreground"
+                                                    class="mt-0.5 block max-w-[18rem] truncate text-[10px] text-muted-foreground"
                                                     >{row.sender_address ||
                                                         '-'}</span
                                                 >
                                             </td>
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
                                                     class="block font-medium text-foreground"
                                                     >{row.receiver_name}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    class="mt-0.5 block text-[10px] text-muted-foreground"
                                                     >{row.receiver_phone ||
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block max-w-[18rem] truncate text-[11px] text-muted-foreground"
+                                                    class="mt-0.5 block max-w-[18rem] truncate text-[10px] text-muted-foreground"
                                                     >{row.receiver_address ||
                                                         '-'}</span
                                                 >
                                             </td>
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
                                                     class="block font-medium text-foreground"
                                                     >{row.route_name ??
@@ -5540,80 +5544,82 @@
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    class="mt-0.5 block text-[10px] text-muted-foreground"
                                                     >{row.tanggal || '-'}</span
                                                 >
                                             </td>
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
                                                     class="block font-medium text-foreground"
                                                     >{row.service_name ??
                                                         '-'}</span
                                                 >
+                                            </td>
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                    class="block font-medium text-foreground"
                                                     >{row.kode_resi ??
                                                         '-'}</span
                                                 >
                                                 <span
-                                                    class="mt-0.5 block max-w-[14rem] truncate text-[11px] text-muted-foreground"
+                                                    class="mt-0.5 block max-w-[14rem] truncate text-[10px] text-muted-foreground"
                                                     >{row.notes ??
                                                         'Tanpa catatan'}</span
                                                 >
                                             </td>
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
                                                     class="block font-medium text-foreground"
                                                     >{row.quantity} barang</span
                                                 >
                                             </td>
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class={`inline-flex rounded-md px-2 py-1 text-[10px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-semibold ${luggageStatusClass(row.status)}`}
                                                     >{luggageStatusLabel(
                                                         row.status,
                                                     )}</span
                                                 >
                                             </td>
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 {#if departureInfo}
                                                     <span
                                                         class="block font-medium text-foreground"
                                                         >{departureInfo.primary}</span
                                                     >
                                                     <span
-                                                        class="mt-0.5 block text-[11px] text-muted-foreground"
+                                                        class="mt-0.5 block text-[10px] text-muted-foreground"
                                                         >{departureInfo.secondary}</span
                                                     >
                                                 {:else if normalizedLuggageStatus === luggageReceivedStatus}
                                                     <span
-                                                        class="text-[11px] text-muted-foreground"
+                                                        class="text-[10px] text-muted-foreground"
                                                         >Belum dimapping ke
                                                         keberangkatan</span
                                                     >
                                                 {:else}
                                                     <span
-                                                        class="text-[11px] text-muted-foreground"
+                                                        class="text-[10px] text-muted-foreground"
                                                         >-</span
                                                     >
                                                 {/if}
                                             </td>
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <span
-                                                    class={`inline-flex rounded-md px-2 py-1 text-[10px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
                                                     >{row.payment_status ??
                                                         '-'}</span
                                                 >
                                             </td>
                                             <td
-                                                class="px-3 py-2.5 align-top font-medium text-foreground"
+                                                class="px-2.5 py-2 align-top font-medium text-foreground"
                                                 >Rp {Number(
                                                     row.price,
                                                 ).toLocaleString('id-ID')}</td
                                             >
-                                            <td class="px-3 py-2.5 align-top">
+                                            <td class="px-2.5 py-2 align-top">
                                                 <div
-                                                    class="flex items-center justify-end gap-1.5"
+                                                    class="flex items-center justify-end gap-1"
                                                 >
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
@@ -5626,7 +5632,7 @@
                                                                     type="button"
                                                                     size="sm"
                                                                     variant="outline"
-                                                                    class="h-8 rounded-md px-2.5"
+                                                                    class="h-7 rounded-md px-2"
                                                                     onclick={props.onclick}
                                                                     aria-expanded={props[
                                                                         'aria-expanded'
@@ -5636,7 +5642,7 @@
                                                                     ]}
                                                                 >
                                                                     <MoreHorizontal
-                                                                        class="h-4 w-4"
+                                                                        class="h-3.5 w-3.5"
                                                                     />
                                                                 </Button>
                                                             {/snippet}
