@@ -277,14 +277,16 @@
 <Sheet bind:open>
     <SheetContent
         side="bottom"
-        class="h-[76dvh] gap-1.5 rounded-t-[1.25rem] px-3 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-2 transition-[transform,border-radius] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:h-[84vh] sm:gap-2 sm:px-6 sm:pb-5"
+        class="h-[64dvh] gap-1.5 rounded-t-[1.25rem] px-3 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-2 transition-[transform,border-radius] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:h-[80vh] sm:gap-2 sm:px-6 sm:pb-5"
     >
         <div class="flex h-full w-full flex-col">
             <SheetHeader class="mb-0.5 px-0 pb-0 text-left">
                 <SheetTitle>Menu Navigasi</SheetTitle>
             </SheetHeader>
-            <div class="flex min-h-full w-full overflow-y-auto px-0 pb-0 pt-0">
-                <div class="mx-auto mt-auto w-full max-w-6xl space-y-2.5">
+            <div
+                class="flex min-h-0 w-full flex-1 overflow-y-auto px-0 pb-0 pt-0"
+            >
+                <div class="mx-auto w-full max-w-6xl space-y-2.5 pb-1">
                     {#each visibleMenuSections as section (section.label)}
                         <section class="space-y-1">
                             <h2
