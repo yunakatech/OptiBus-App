@@ -8987,8 +8987,8 @@
                             </div>
                             <div
                                 class={customerFiltersExpanded
-                                    ? 'flex flex-col gap-1.5 md:w-[260px] md:flex-row md:items-center'
-                                    : 'hidden md:flex md:w-[260px] md:flex-row md:items-center'}
+                                    ? 'flex flex-col gap-1.5 md:w-[260px] md:flex-row md:items-center md:gap-3'
+                                    : 'hidden md:flex md:w-[260px] md:flex-row md:items-center md:gap-3'}
                             >
                                 <Input
                                     placeholder="Cari nama, phone, atau pickup point"
@@ -8997,7 +8997,7 @@
                                 />
                                 <Button
                                     type="button"
-                                    class="h-8 px-3 text-[11px] md:w-auto md:shrink-0"
+                                    class="h-8 px-3 text-[11px] md:ml-1 md:w-auto md:shrink-0"
                                     onclick={() => void loadCustomers(1)}
                                     >Cari</Button
                                 >
