@@ -146,7 +146,7 @@
                                 <SidebarMenuButton
                                     asChild
                                     isActive={isItemActive(item.href)}
-                                    class="h-8 rounded-lg text-[13px]"
+                                    class="h-7 rounded-lg text-xs"
                                 >
                                     {#snippet children(props)}
                                         <Link
@@ -156,7 +156,7 @@
                                             onclick={handleNavigate}
                                         >
                                             {#if item.icon}
-                                                <item.icon class="size-3.5 shrink-0" />
+                                                <item.icon class="size-3 shrink-0" />
                                             {/if}
                                             <span>{item.title}</span>
                                         </Link>
@@ -176,10 +176,10 @@
                                 <Link
                                     href={toUrl(item.href)}
                                     onclick={handleNavigate}
-                                    class={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isItemActive(item.href) ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : ''}`}
+                                    class={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isItemActive(item.href) ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : ''}`}
                                 >
                                     {#if item.icon}
-                                        <item.icon class="size-3.5 shrink-0" />
+                                        <item.icon class="size-3 shrink-0" />
                                     {/if}
                                     <span>{item.title}</span>
                                 </Link>
