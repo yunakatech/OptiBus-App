@@ -666,6 +666,7 @@
 <AppHead title="Dashboard" />
 
 <div
+    data-content-density="compact"
     class="flex h-full flex-1 flex-col gap-2 overflow-x-clip rounded-xl px-2 py-2 md:gap-3 md:p-4"
 >
     <div class="space-y-2">

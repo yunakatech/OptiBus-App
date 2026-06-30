@@ -487,7 +487,10 @@
     </DropdownMenu>
 {/snippet}
 
-<div class="min-h-full space-y-4 overflow-x-hidden p-3 pb-28 md:p-4">
+<div
+    data-content-density="compact"
+    class="min-h-full space-y-4 overflow-x-hidden p-3 pb-28 md:p-4"
+>
     <Card class="overflow-hidden border-sidebar-border/70 bg-linear-to-br from-background via-background to-cyan-50/30 dark:border-sidebar-border dark:to-cyan-950/15">
         <CardHeader class="space-y-4 border-b bg-background/80 backdrop-blur">
             <div class="flex flex-wrap items-start justify-between gap-3">
