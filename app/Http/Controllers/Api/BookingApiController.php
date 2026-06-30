@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
 use App\Support\BookingCode;
+use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
 use App\Support\SegmentName;
 use Carbon\Carbon;
@@ -786,14 +787,17 @@ class BookingApiController extends Controller
             'unit' => $unit,
         ];
         $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
+        if (ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
+            return $this->error('Manifest sudah ditutup. Keberangkatan baru tidak bisa dibuat lagi.', 409);
+        }
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'active';
         }
 
         $existing = $this->findTripAssignment($payload['rute'], $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
-        $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
-        if ($existing && $existingStatus !== 'canceled') {
+        $existingStatus = $this->manifestAssignmentStatus($existing);
+        if ($existing && ! in_array($existingStatus, ['canceled'], true)) {
             return $this->error('Keberangkatan untuk rute, tanggal, jam, dan unit ini sudah ada.', 409);
         }
 
@@ -866,6 +870,9 @@ class BookingApiController extends Controller
             'unit' => $unit,
         ];
         $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
+        if (ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
+            return $this->error('Manifest sudah ditutup. Jadwal tidak bisa dibatalkan lagi.', 409);
+        }
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'canceled';
@@ -883,8 +890,8 @@ class BookingApiController extends Controller
         }
 
         $existing = $this->findTripAssignment($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
-        $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
-        if (in_array($existingStatus, ['departed', 'arrived'], true)) {
+        $existingStatus = $this->manifestAssignmentStatus($existing);
+        if (in_array($existingStatus, ['departed', 'arrived', 'closed'], true)) {
             return $this->error('Keberangkatan yang sudah berangkat tidak bisa dibatalkan.', 409);
         }
 
@@ -957,10 +964,10 @@ class BookingApiController extends Controller
         }
 
         $existing = $this->findTripAssignment($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
-        $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
+        $existingStatus = $this->manifestAssignmentStatus($existing);
 
-        if ($existingStatus === 'canceled') {
-            return $this->error('Jadwal yang sudah dibatalkan tidak bisa ditandai berangkat.', 409);
+        if ($existingStatus === 'canceled' || $existingStatus === 'closed' || ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
+            return $this->error('Manifest sudah ditutup. Jadwal tidak bisa ditandai berangkat lagi.', 409);
         }
 
         if ($existingStatus === 'arrived') {
@@ -1043,10 +1050,10 @@ class BookingApiController extends Controller
         }
 
         $existing = $this->findTripAssignment($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
-        $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
+        $existingStatus = $this->manifestAssignmentStatus($existing);
 
-        if ($existingStatus === 'canceled') {
-            return $this->error('Jadwal yang sudah dibatalkan tidak bisa ditandai tiba.', 409);
+        if ($existingStatus === 'canceled' || $existingStatus === 'closed' || ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
+            return $this->error('Manifest sudah ditutup. Jadwal tidak bisa ditandai tiba lagi.', 409);
         }
 
         if (! $this->departureHasRequiredAssignmentMeta($existing)) {
@@ -1104,6 +1111,72 @@ class BookingApiController extends Controller
             'status' => 'arrived',
             'bop' => (float) ($schedule->bop ?? 0),
             'luggage_arrived_count' => $arrivedLuggageCount,
+        ]);
+    }
+
+    public function closeManifest(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'rute' => ['required', 'string', 'max:120'],
+            'tanggal' => ['required', 'date_format:Y-m-d'],
+            'jam' => ['required', 'regex:/^\d{2}:\d{2}$/'],
+            'unit' => ['required', 'integer', 'min:1'],
+        ]);
+
+        if (! Schema::hasTable('trip_assignments')) {
+            return $this->error('Tabel keberangkatan belum tersedia.', 422);
+        }
+
+        $schedule = $this->findScheduleForDeparture((string) $data['rute'], (string) $data['tanggal'], (string) $data['jam']);
+        $routeName = (string) ($schedule->rute ?? $data['rute']);
+        if (! PoolScope::canAccessRouteName($routeName)) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
+        $unit = (int) $data['unit'];
+        $assignment = $this->findTripAssignment($routeName, (string) $data['tanggal'], (string) $data['jam'], $unit);
+        if (! $assignment) {
+            return $this->error('Keberangkatan tidak ditemukan.', 404);
+        }
+
+        $status = $this->manifestAssignmentStatus($assignment);
+        if ($status === 'closed') {
+            return $this->ok([
+                'message' => 'Manifest sudah tertutup.',
+                'id' => (int) ($assignment->id ?? 0),
+                'status' => 'closed',
+            ]);
+        }
+
+        if ($status !== 'arrived') {
+            return $this->error('Manifest hanya bisa ditutup setelah armada tiba.', 422);
+        }
+
+        DB::table('trip_assignments')
+            ->where('id', (int) $assignment->id)
+            ->update([
+                'status' => 'closed',
+                'updated_at' => now(),
+            ]);
+
+        ActivityLog::write(
+            'BOOKING',
+            'Manifest untuk jadwal '.$this->departureIdentityLabel($routeName, (string) $data['tanggal'], (string) $data['jam'], $unit).' ditutup',
+            'Status keberangkatan: arrived -> closed',
+            (string) ($request->user()?->email ?? $request->user()?->name ?? 'system'),
+            [
+                'trip_assignment_id' => (int) $assignment->id,
+                'rute' => $routeName,
+                'tanggal' => (string) $data['tanggal'],
+                'jam' => (string) $data['jam'],
+                'unit' => $unit,
+            ],
+        );
+
+        return $this->ok([
+            'message' => 'Manifest berhasil ditutup.',
+            'id' => (int) $assignment->id,
+            'status' => 'closed',
         ]);
     }
 
@@ -1354,6 +1427,9 @@ class BookingApiController extends Controller
         if ($assignmentId <= 0) {
             return $this->error('Keberangkatan belum punya mapping bagasi.', 404);
         }
+        if ($this->manifestTripIsLocked($assignment, (string) $data['tanggal'], (string) $data['jam'])) {
+            return $this->error('Manifest sudah ditutup. Mapping bagasi tidak bisa diubah lagi.', 409);
+        }
 
         $luggageQuery = DB::table('luggages')->where('id', (int) $data['luggage_id']);
         $this->applyLuggagePoolScope($luggageQuery);
@@ -1442,6 +1518,18 @@ class BookingApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
         $routeId = PoolScope::routeIdForName($rute);
+        $targetAssignment = Schema::hasTable('trip_assignments')
+            ? $this->findTripAssignment($rute, $tanggal, substr($jamSql, 0, 5), $unit)
+            : null;
+        if (
+            $this->manifestTripIsLocked(
+                $targetAssignment,
+                $tanggal,
+                substr($jamSql, 0, 5),
+            )
+        ) {
+            return $this->error('Manifest sudah ditutup. Booking baru tidak bisa ditambahkan lagi.', 409);
+        }
 
         $seats = $data['seats'] ?? null;
         if (! is_array($seats)) {
@@ -1643,11 +1731,28 @@ class BookingApiController extends Controller
         $segmentId = array_key_exists('segment_id', $payload) ? (int) ($payload['segment_id'] ?? 0) : (int) ($current['segment_id'] ?? 0);
         $discount = array_key_exists('discount', $payload) ? max(0, (float) ($payload['discount'] ?? 0)) : (float) ($current['discount'] ?? 0);
         $payment = $this->normalizePayment((string) ($payload['pembayaran'] ?? ($current['pembayaran'] ?? 'Belum Lunas')));
+        $currentAssignment = Schema::hasTable('trip_assignments')
+            ? $this->findTripAssignment(
+                (string) ($current['rute'] ?? ''),
+                (string) ($current['tanggal'] ?? ''),
+                substr((string) ($current['jam'] ?? ''), 0, 5),
+                max(1, (int) ($current['unit'] ?? 1)),
+            )
+            : null;
+        $currentManifestLocked = $this->manifestTripIsLocked(
+            $currentAssignment,
+            (string) ($current['tanggal'] ?? ''),
+            substr((string) ($current['jam'] ?? ''), 0, 5),
+        );
 
         if (! PoolScope::canAccessRouteName($targetRoute)) {
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
         $targetRouteId = PoolScope::routeIdForName($targetRoute);
+
+        if ($currentManifestLocked) {
+            return $this->error('Manifest sudah ditutup. Data booking tidak bisa diubah lagi.', 409);
+        }
 
         if ($isCanceled && ! $paymentOnlyUpdate) {
             return $this->error('Booking cancel hanya bisa diubah status pembayarannya.', 422);
@@ -1814,6 +1919,9 @@ class BookingApiController extends Controller
             ->get([
                 'b.id',
                 'b.rute',
+                'b.tanggal',
+                'b.jam',
+                'b.unit',
                 'b.seat',
                 'b.status',
             ]);
@@ -1824,6 +1932,24 @@ class BookingApiController extends Controller
             $routeName = (string) ($row->rute ?? '');
             if ($routeName === '' || ! PoolScope::canAccessRouteName($routeName)) {
                 continue;
+            }
+
+            $assignment = Schema::hasTable('trip_assignments')
+                ? $this->findTripAssignment(
+                    $routeName,
+                    (string) ($row->tanggal ?? ''),
+                    substr((string) ($row->jam ?? ''), 0, 5),
+                    max(1, (int) ($row->unit ?? 1)),
+                )
+                : null;
+            if (
+                $this->manifestTripIsLocked(
+                    $assignment,
+                    (string) ($row->tanggal ?? ''),
+                    substr((string) ($row->jam ?? ''), 0, 5),
+                )
+            ) {
+                return $this->error('Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.', 409);
             }
 
             if (strtolower(trim((string) ($row->status ?? ''))) === 'canceled') {
@@ -1887,6 +2013,24 @@ class BookingApiController extends Controller
         $current = $this->resolveBooking($payload, false);
         if (! $current || ($current['status'] ?? '') === 'canceled') {
             return $this->error('booking_not_found', 404);
+        }
+
+        $currentAssignment = Schema::hasTable('trip_assignments')
+            ? $this->findTripAssignment(
+                (string) ($current['rute'] ?? ''),
+                (string) ($current['tanggal'] ?? ''),
+                substr((string) ($current['jam'] ?? ''), 0, 5),
+                max(1, (int) ($current['unit'] ?? 1)),
+            )
+            : null;
+        if (
+            $this->manifestTripIsLocked(
+                $currentAssignment,
+                (string) ($current['tanggal'] ?? ''),
+                substr((string) ($current['jam'] ?? ''), 0, 5),
+            )
+        ) {
+            return $this->error('Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.', 409);
         }
 
         DB::table('bookings')
@@ -2264,8 +2408,12 @@ class BookingApiController extends Controller
         );
 
         $rows = $query->get($select);
+        $row = $rows->first(fn ($row) => $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute);
+        if ($row) {
+            $this->manifestAssignmentStatus($row);
+        }
 
-        return $rows->first(fn ($row) => $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute);
+        return $row;
     }
 
     private function findTripAssignment(string $rute, string $tanggal, string $jam, int $unit): ?object
@@ -2374,10 +2522,14 @@ class BookingApiController extends Controller
             ]);
         }
         $existing = $this->findTripAssignment($routeName, $tanggal, $jam, $unit);
-        $existingStatus = strtolower(trim((string) ($existing->status ?? 'active')));
-        if ($existingStatus === 'canceled') {
+        $existingStatus = $this->manifestAssignmentStatus($existing);
+        if (
+            $existingStatus === 'canceled'
+            || $existingStatus === 'closed'
+            || ManifestLifecycle::isAutoCloseDue($tanggal, $jam)
+        ) {
             throw ValidationException::withMessages([
-                'rute' => 'Keberangkatan yang dibatalkan tidak bisa dipakai untuk mapping bagasi.',
+                'rute' => 'Manifest sudah ditutup. Keberangkatan ini tidak bisa dipakai untuk mapping bagasi.',
             ]);
         }
 
@@ -2439,6 +2591,38 @@ class BookingApiController extends Controller
         } catch (\Throwable) {
             return false;
         }
+    }
+
+    private function manifestAssignmentStatus(?object $assignment): string
+    {
+        if (! $assignment) {
+            return 'active';
+        }
+
+        return ManifestLifecycle::syncTripAssignmentStatus($assignment);
+    }
+
+    private function manifestTripIsLocked(?object $assignment, string $tanggal, string $jam): bool
+    {
+        if (! $assignment) {
+            return ManifestLifecycle::isAutoCloseDue($tanggal, $jam);
+        }
+
+        $status = $this->manifestAssignmentStatus($assignment);
+
+        return in_array($status, ['canceled', 'closed'], true)
+            || ManifestLifecycle::isAutoCloseDue($tanggal, $jam);
+    }
+
+    private function manifestCanBeClosed(?object $assignment): bool
+    {
+        if (! $assignment) {
+            return false;
+        }
+
+        $status = $this->manifestAssignmentStatus($assignment);
+
+        return $status === 'arrived';
     }
 
     private function departureHasRequiredAssignmentMeta(?object $assignment): bool

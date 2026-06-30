@@ -587,6 +587,181 @@ class BookingApiTest extends TestCase
         ]);
     }
 
+    public function test_closed_manifest_blocks_booking_and_assignment_edits(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        DB::table('schedules')->insert([
+            'tenant_id' => $tenantId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'dow' => Carbon::createFromFormat('Y-m-d', '2026-05-15')->dayOfWeek,
+            'jam' => '09:00:00',
+            'units' => 1,
+            'unit_label' => 'Reguler',
+            'created_at' => now(),
+        ]);
+
+        $driverId = DB::table('drivers')->insertGetId([
+            'nama' => 'DRIVER LOCKED',
+            'phone' => '081200000099',
+            'created_at' => now(),
+        ]);
+
+        DB::table('armadas')->insert([
+            'tenant_id' => $tenantId,
+            'nopol' => 'DD 9999 ZZ',
+            'created_at' => now(),
+        ]);
+
+        $bookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => '1',
+            'name' => 'PENUMPANG LOCK',
+            'phone' => '081200000090',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
+
+        $assignmentId = DB::table('trip_assignments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'driver_id' => $driverId,
+            'armada_nopol' => 'DD 9999 ZZ',
+            'status' => 'arrived',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $closeResponse = $this->postJson(route('api.bookings.close-manifest'), [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00',
+            'unit' => 1,
+        ]);
+
+        $closeResponse->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('status', 'closed');
+
+        $this->assertDatabaseHas('trip_assignments', [
+            'id' => $assignmentId,
+            'status' => 'closed',
+        ]);
+
+        $bookingUpdate = $this->postJson(route('api.bookings.update'), [
+            'booking_id' => $bookingId,
+            'name' => 'PENUMPANG BARU',
+        ]);
+
+        $bookingUpdate->assertStatus(409)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error', 'Manifest sudah ditutup. Data booking tidak bisa diubah lagi.');
+
+        $assignmentUpdate = $this->postJson(route('api.admin.assignments.save'), [
+            'id' => $assignmentId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00',
+            'unit' => 1,
+            'driver_id' => $driverId,
+        ]);
+
+        $assignmentUpdate->assertStatus(409)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error', 'Manifest sudah ditutup. Data assignment tidak bisa diubah lagi.');
+    }
+
+    public function test_booking_updates_are_blocked_once_auto_close_time_is_reached(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        Carbon::setTestNow(Carbon::create(2026, 5, 17, 10, 0, 0));
+        try {
+            $routeId = DB::table('routes')->insertGetId([
+                'tenant_id' => $tenantId,
+                'name' => 'PINRANG - MAKASSAR',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'created_at' => now(),
+            ]);
+
+            DB::table('schedules')->insert([
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'dow' => Carbon::createFromFormat('Y-m-d', '2026-05-16')->dayOfWeek,
+                'jam' => '10:00:00',
+                'units' => 1,
+                'unit_label' => 'Reguler',
+                'created_at' => now(),
+            ]);
+
+            $bookingId = DB::table('bookings')->insertGetId([
+                'tenant_id' => $tenantId,
+                'route_id' => $routeId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-05-16',
+                'jam' => '10:00:00',
+                'unit' => 1,
+                'seat' => '1',
+                'name' => 'PENUMPANG AUTO',
+                'phone' => '081200000091',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Belum Lunas',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('trip_assignments')->insert([
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-05-16',
+                'jam' => '10:00:00',
+                'unit' => 1,
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $response = $this->postJson(route('api.bookings.update'), [
+                'booking_id' => $bookingId,
+                'pembayaran' => 'Lunas',
+            ]);
+
+            $response->assertStatus(409)
+                ->assertJsonPath('success', false)
+                ->assertJsonPath('error', 'Manifest sudah ditutup. Data booking tidak bisa diubah lagi.');
+
+            $this->assertDatabaseHas('trip_assignments', [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-05-16',
+                'jam' => '10:00:00',
+                'status' => 'closed',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     public function test_same_day_departure_can_be_marked_arrived_after_driver_and_nopol_are_set(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 31, 8, 0, 0));

@@ -123,6 +123,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::post('cancel-departure', [BookingApiController::class, 'cancelDeparture'])->middleware('permission:booking.delete')->name('cancel-departure');
         Route::post('depart-departure', [BookingApiController::class, 'departDeparture'])->middleware('permission:booking.update')->name('depart-departure');
         Route::post('arrive-departure', [BookingApiController::class, 'arriveDeparture'])->middleware('permission:booking.update')->name('arrive-departure');
+        Route::post('close-manifest', [BookingApiController::class, 'closeManifest'])->middleware('permission:booking.update')->name('close-manifest');
         Route::post('bulk-payment', [BookingApiController::class, 'bulkUpdatePayments'])->middleware('permission:booking.update')->name('bulk-payment');
         Route::post('departure-riturs/map', [BookingApiController::class, 'mapDepartureRitur'])->middleware('permission:booking.update')->name('departure-riturs.map');
         Route::post('departure-riturs/unmap', [BookingApiController::class, 'unmapDepartureRitur'])->middleware('permission:booking.update')->name('departure-riturs.unmap');

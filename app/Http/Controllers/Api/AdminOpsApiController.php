@@ -9,6 +9,7 @@ use App\Services\TenantProvisioningService;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\FeatureGate;
+use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
 use App\Support\RoleAccessData;
 use App\Support\SegmentName;
@@ -3591,6 +3592,10 @@ class AdminOpsApiController extends Controller
             $payload['armada_nopol'] = $armadaNopol ? strtoupper(trim((string) $armadaNopol)) : null;
         }
 
+        if (ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
+            return $this->error('Manifest sudah ditutup. Data assignment tidak bisa diubah lagi.', 409);
+        }
+
         $conflicts = $this->assignmentConflicts(
             $payload['tanggal'],
             $payload['jam'],
@@ -3601,6 +3606,26 @@ class AdminOpsApiController extends Controller
         $allowConflict = (bool) ($data['allow_conflict'] ?? false);
         if (count($conflicts) > 0 && ! $allowConflict) {
             return $this->error('assignment_conflict', 409, ['conflicts' => $conflicts]);
+        }
+
+        $currentAssignment = null;
+        if ($id > 0) {
+            $currentAssignment = DB::table('trip_assignments')->where('id', $id)->first(['id', 'tanggal', 'jam', 'status']);
+        } else {
+            $existingAssignmentId = DB::table('trip_assignments')
+                ->where('rute', $payload['rute'])
+                ->where('tanggal', $payload['tanggal'])
+                ->where('jam', $payload['jam'])
+                ->where('unit', $payload['unit'])
+                ->value('id');
+
+            if ($existingAssignmentId) {
+                $currentAssignment = DB::table('trip_assignments')->where('id', (int) $existingAssignmentId)->first(['id', 'tanggal', 'jam', 'status']);
+            }
+        }
+
+        if ($this->tripAssignmentIsLocked($currentAssignment)) {
+            return $this->error('Manifest sudah ditutup. Data assignment tidak bisa diubah lagi.', 409);
         }
 
         if ($id > 0) {
@@ -3660,6 +3685,11 @@ class AdminOpsApiController extends Controller
 
     public function assignmentsDelete(int $id): JsonResponse
     {
+        $assignment = DB::table('trip_assignments')->where('id', $id)->first(['id', 'tanggal', 'jam', 'status']);
+        if ($this->tripAssignmentIsLocked($assignment)) {
+            return $this->error('Manifest sudah ditutup. Assignment tidak bisa dihapus.', 409);
+        }
+
         DB::table('trip_assignments')->where('id', $id)->delete();
 
         return $this->ok(['message' => 'Assignment deleted.']);
@@ -3671,6 +3701,16 @@ class AdminOpsApiController extends Controller
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'min:1'],
         ]);
+
+        $locked = DB::table('trip_assignments')
+            ->whereIn('id', $data['ids'])
+            ->get(['id', 'tanggal', 'jam', 'status'])
+            ->first(function ($assignment): bool {
+                return $this->tripAssignmentIsLocked($assignment);
+            });
+        if ($locked) {
+            return $this->error('Manifest sudah ditutup. Ada assignment yang tidak bisa dihapus.', 409);
+        }
 
         $deleted = DB::table('trip_assignments')->whereIn('id', $data['ids'])->delete();
 
@@ -9478,6 +9518,17 @@ XML;
         }
 
         return $this->tripAssignmentsHasStatus;
+    }
+
+    private function tripAssignmentIsLocked(?object $assignment): bool
+    {
+        if (! $assignment) {
+            return false;
+        }
+
+        $status = ManifestLifecycle::syncTripAssignmentStatus($assignment);
+
+        return in_array($status, ['canceled', 'closed'], true);
     }
 
     private function driversHasArmadaId(): bool

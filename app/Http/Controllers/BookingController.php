@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\BookingCode;
 use App\Support\Code39;
 use App\Support\HeadlessPdf;
+use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -738,6 +739,7 @@ class BookingController extends Controller
                     ->get();
 
                 foreach ($assignmentRows as $row) {
+                    $status = ManifestLifecycle::syncTripAssignmentStatus($row);
                     $jam = substr((string) ($row->jam ?? ''), 0, 5);
                     $unit = max(1, (int) ($row->unit ?? 1));
                     $route = (string) ($row->rute ?? '');
@@ -772,9 +774,9 @@ class BookingController extends Controller
                         ];
                     }
 
-                    $status = strtolower(trim((string) ($row->status ?? 'active')));
+                    $status = strtolower(trim((string) ($status ?: ($row->status ?? 'active'))));
                     if (! in_array($status, ['active', 'departed', 'canceled', 'arrived'], true)) {
-                        $status = 'active';
+                        $status = 'closed';
                     }
 
                     $grouped[$tripKey]['assignment_id'] = (int) ($row->id ?? 0) ?: null;
@@ -981,7 +983,12 @@ class BookingController extends Controller
         string $driverName = '',
         string $armadaNopol = '',
     ): bool {
-        if (strtolower(trim($status)) !== 'departed') {
+        $normalizedStatus = strtolower(trim($status));
+        if ($normalizedStatus !== 'departed') {
+            return false;
+        }
+
+        if (ManifestLifecycle::isClosedStatus($normalizedStatus)) {
             return false;
         }
 
@@ -1059,7 +1066,7 @@ class BookingController extends Controller
             ->get();
         $routeKey = $this->normalizeTripRoute($rute);
         $row = $rows->first(fn ($item) => $this->normalizeTripRoute((string) ($item->rute ?? '')) === $routeKey);
-        $status = strtolower(trim((string) ($row->status ?? 'active')));
+        $status = strtolower(trim((string) ManifestLifecycle::syncTripAssignmentStatus($row)));
 
         if ($status === 'canceled') {
             return [
