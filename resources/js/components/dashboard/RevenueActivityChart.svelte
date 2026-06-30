@@ -59,6 +59,7 @@
         align: 'center',
     });
     let dismissedTooltipKey = $state('');
+    let activeTooltipSignature = $state('');
 
     const trendPointKey = (item: TrendItem, index: number) =>
         `${item.month_key ?? item.date ?? item.label ?? index}`;
@@ -115,15 +116,15 @@
                             data,
                             borderColor: '#2563eb', // blue-600
                             backgroundColor: gradientFill,
-                            borderWidth: 2,
+                            borderWidth: 2.5,
                             pointBackgroundColor: '#2563eb',
                             pointBorderColor: '#ffffff',
                             pointBorderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 6,
-                            pointHitRadius: 14,
-                            fill: true,
-                            tension: 0.4, // Smooth spline curves
+                            pointRadius: 3.25,
+                            pointHoverRadius: 7,
+                            pointHitRadius: 18,
+                            fill: false,
+                            tension: 0.32,
                         },
                     ],
                 },
@@ -221,52 +222,80 @@
                                 if (tooltip.opacity === 0) {
                                     tooltipData.visible = false;
                                     dismissedTooltipKey = '';
+                                    activeTooltipSignature = '';
                                     return;
                                 }
 
-                                if (tooltip.body) {
-                                    const dataIndex =
-                                        tooltip.dataPoints[0].dataIndex;
-                                    const item = monthlyTrend[dataIndex];
-                                    const key = trendPointKey(item, dataIndex);
-
-                                    if (dismissedTooltipKey === key) {
-                                        tooltipData.visible = false;
-                                        return;
-                                    }
-
-                                    const left = tooltip.caretX;
-                                    const width = chart.width;
-                                    let align: 'left' | 'right' | 'center' =
-                                        'center';
-
-                                    if (left < width * 0.2) align = 'left';
-                                    else if (left > width * 0.8)
-                                        align = 'right';
-
-                                    tooltipData = {
-                                        visible: true,
-                                        x: tooltip.caretX,
-                                        y: tooltip.caretY,
-                                        title:
-                                            item.name ||
-                                            item.date ||
-                                            item.label ||
-                                            '',
-                                        key,
-                                        revenue: Number(item.revenue || 0),
-                                        booking_revenue: Number(
-                                            item.booking_revenue || 0,
-                                        ),
-                                        charter_revenue: Number(
-                                            item.charter_revenue || 0,
-                                        ),
-                                        luggage_revenue: Number(
-                                            item.luggage_revenue || 0,
-                                        ),
-                                        align,
-                                    };
+                                if (!tooltip.dataPoints?.length) {
+                                    tooltipData.visible = false;
+                                    return;
                                 }
+
+                                const dataIndex =
+                                    tooltip.dataPoints[0].dataIndex;
+                                const item = monthlyTrend[dataIndex];
+                                if (!item) {
+                                    tooltipData.visible = false;
+                                    return;
+                                }
+
+                                const key = trendPointKey(item, dataIndex);
+
+                                if (dismissedTooltipKey === key) {
+                                    tooltipData.visible = false;
+                                    return;
+                                }
+
+                                const left = tooltip.caretX;
+                                const width = chart.width;
+                                let align: 'left' | 'right' | 'center' =
+                                    'center';
+
+                                if (left < width * 0.2) align = 'left';
+                                else if (left > width * 0.8) align = 'right';
+
+                                const nextSignature = [
+                                    key,
+                                    align,
+                                    Number(item.revenue || 0),
+                                    Number(item.booking_revenue || 0),
+                                    Number(item.charter_revenue || 0),
+                                    Number(item.luggage_revenue || 0),
+                                    item.name || '',
+                                    item.date || '',
+                                    item.label || '',
+                                ].join('|');
+
+                                if (
+                                    activeTooltipSignature === nextSignature &&
+                                    tooltipData.visible
+                                ) {
+                                    return;
+                                }
+
+                                activeTooltipSignature = nextSignature;
+                                tooltipData = {
+                                    visible: true,
+                                    x: tooltip.caretX,
+                                    y: tooltip.caretY,
+                                    title:
+                                        item.name ||
+                                        item.date ||
+                                        item.label ||
+                                        '',
+                                    key,
+                                    revenue: Number(item.revenue || 0),
+                                    booking_revenue: Number(
+                                        item.booking_revenue || 0,
+                                    ),
+                                    charter_revenue: Number(
+                                        item.charter_revenue || 0,
+                                    ),
+                                    luggage_revenue: Number(
+                                        item.luggage_revenue || 0,
+                                    ),
+                                    align,
+                                };
                             },
                         },
                     },
@@ -306,6 +335,7 @@
         }
 
         dismissedTooltipKey = tooltipData.key;
+        activeTooltipSignature = '';
         tooltipData.visible = false;
     };
 </script>
@@ -316,12 +346,60 @@
     <div
         class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4"
     >
-        <div class="mb-5 px-1 sm:px-2">
-            <h3 class="text-sm font-bold text-slate-800">Revenue Harian</h3>
-            <p class="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                Melihat pergerakan revenue operasional sistem Anda dalam 30 hari
-                terakhir. Tooltip dapat di-hover untuk melihat rincian.
-            </p>
+        <div class="mb-4 px-1 sm:px-2">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            {title}
+                        </h3>
+                        <span
+                            class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700"
+                        >
+                            {subtitle}
+                        </span>
+                    </div>
+                    <p class="mt-0.5 max-w-xl text-[11px] leading-relaxed text-slate-500">
+                        {description}
+                    </p>
+                </div>
+                <div
+                    class="rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-2 text-right shadow-sm"
+                >
+                    <p class="text-[9px] font-semibold uppercase tracking-[0.22em] text-sky-600/80">
+                        {currentMonthLabel}
+                    </p>
+                    <p class="mt-0.5 text-[13px] font-bold text-slate-900 tabular-nums">
+                        {toCurrency(currentMonthRevenue)}
+                    </p>
+                </div>
+            </div>
+            <div class="mt-3 grid grid-cols-3 gap-2">
+                <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2">
+                    <p class="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Total
+                    </p>
+                    <p class="mt-0.5 text-[12px] font-bold text-slate-900 tabular-nums">
+                        {toCurrency(trendRevenueTotal)}
+                    </p>
+                </div>
+                <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2">
+                    <p class="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Rata-rata
+                    </p>
+                    <p class="mt-0.5 text-[12px] font-bold text-slate-900 tabular-nums">
+                        {toCurrency(trendRevenueAverage)}
+                    </p>
+                </div>
+                <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2">
+                    <p class="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Puncak
+                    </p>
+                    <p class="mt-0.5 truncate text-[12px] font-bold text-slate-900">
+                        {trendRevenuePeak?.label ?? '-'}
+                    </p>
+                </div>
+            </div>
         </div>
 
         <div
@@ -334,7 +412,7 @@
 
         {#if tooltipData.visible}
             <div
-                class={`pointer-events-auto absolute z-20 w-[min(92vw,240px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass}`}
+                class={`pointer-events-none absolute z-20 w-[min(92vw,240px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass}`}
                 style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
             >
                 <div class="flex items-start justify-between gap-2">
@@ -343,7 +421,7 @@
                     </p>
                     <button
                         type="button"
-                        class="rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
+                        class="pointer-events-auto rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
                         aria-label="Tutup tooltip"
                         onclick={closeTooltip}
                     >
