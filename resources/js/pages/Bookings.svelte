@@ -9215,7 +9215,7 @@
                                                                 Mapping
                                                             </th>
                                                             <th
-                                                                class="px-4 py-3 font-medium"
+                                                                class="w-[340px] px-4 py-3 font-medium"
                                                             >
                                                                 Manifest &
                                                                 Pembayaran
@@ -9373,6 +9373,19 @@
                                                                                 )}
                                                                             </span>
                                                                         </div>
+                                                                        {#if !consoleOnly}
+                                                                            <div class="text-foreground">
+                                                                                <span class="font-medium text-muted-foreground">BOP:</span>
+                                                                                <span class="ml-1 font-semibold">
+                                                                                    {formatCurrency(
+                                                                                        Number(
+                                                                                            group.bop ||
+                                                                                                0,
+                                                                                        ),
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
+                                                                        {/if}
                                                                     </div>
                                                                 </td>
                                                                 <td
@@ -9461,22 +9474,42 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3.5"
+                                                                    class="w-[190px] px-4 py-3.5"
                                                                 >
                                                                     <div
-                                                                        class="flex items-center justify-end gap-2"
+                                                                        class="flex flex-col items-end gap-1.5"
                                                                     >
-                                                                        <Button
-                                                                            type="button"
-                                                                            size="sm"
-                                                                            class="h-8 rounded-md px-3 text-xs"
-                                                                            onclick={() =>
-                                                                                navigateToGroupDetail(
-                                                                                    group,
-                                                                                )}
-                                                                        >
-                                                                            Detail
-                                                                        </Button>
+                                                                        {#if canMarkDepartureDeparted(group)}
+                                                                            <Button
+                                                                                type="button"
+                                                                                size="sm"
+                                                                                class="h-7 w-full justify-center rounded-md px-2.5 text-[11px]"
+                                                                                onclick={() =>
+                                                                                    void markDepartureDeparted(
+                                                                                        group,
+                                                                                    )}
+                                                                            >
+                                                                                Armada
+                                                                                Sudah
+                                                                                Berangkat
+                                                                            </Button>
+                                                                        {/if}
+                                                                        {#if canMarkDepartureArrived(group)}
+                                                                            <Button
+                                                                                type="button"
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                class="h-7 w-full justify-center rounded-md px-2.5 text-[11px]"
+                                                                                onclick={() =>
+                                                                                    void markDepartureArrived(
+                                                                                        group,
+                                                                                    )}
+                                                                            >
+                                                                                Armada
+                                                                                Sudah
+                                                                                Tiba
+                                                                            </Button>
+                                                                        {/if}
                                                                         <DropdownMenu
                                                                         >
                                                                             <DropdownMenuTrigger
@@ -9659,19 +9692,6 @@
                                                         class="rounded-full px-2 py-0.5 text-[10px]"
                                                         >Unit {group.unit}</Badge
                                                     >
-                                                    {#if !consoleOnly}
-                                                        <Badge
-                                                            variant="secondary"
-                                                            class="rounded-full border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/25 dark:text-cyan-200"
-                                                        >
-                                                            BOP {formatCurrency(
-                                                                Number(
-                                                                    group.bop ||
-                                                                        0,
-                                                                ),
-                                                            )}
-                                                        </Badge>
-                                                    {/if}
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
                                                             asChild
