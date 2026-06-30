@@ -3547,7 +3547,8 @@
         lockedFromServer &&
         activeTab === tab &&
         initialTab === tab &&
-        isHybridSettingsTab(tab);
+        isHybridSettingsTab(tab) &&
+        !(tab === 'units' && initialMode === 'layout');
 
     const syncScheduleSelection = () => {
         const fallbackOption = scheduleRouteSelectOptions[0] ?? null;
