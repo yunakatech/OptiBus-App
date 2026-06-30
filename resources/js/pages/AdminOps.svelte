@@ -48,6 +48,7 @@
     import DataTable from '@/components/terminal/DataTable.svelte';
     import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
     import AdminOpsPoolsPanel from '@/components/admin-ops/AdminOpsPoolsPanel.svelte';
+    import AdminOpsUnitsLayoutPanel from '@/components/admin-ops/AdminOpsUnitsLayoutPanel.svelte';
     import { hasPermission } from '@/lib/access';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import {
@@ -975,7 +976,6 @@
     let layoutUnit = $state<UnitRow | null>(null);
     let seatLayoutDraft = $state<LayoutGrid>([]);
     let ReportsPanelComponent = $state<any>(null);
-    let UnitsLayoutPanelComponent = $state<any>(null);
     let ArmadasPanelComponent = $state<any>(null);
     let DriversPanelComponent = $state<any>(null);
 
@@ -983,14 +983,6 @@
         if (!ReportsPanelComponent) {
             ReportsPanelComponent = (
                 await import('@/components/admin-ops/AdminOpsReportsPanel.svelte')
-            ).default;
-        }
-    };
-
-    const ensureUnitsLayoutPanelLoaded = async () => {
-        if (!UnitsLayoutPanelComponent) {
-            UnitsLayoutPanelComponent = (
-                await import('@/components/admin-ops/AdminOpsUnitsLayoutPanel.svelte')
             ).default;
         }
     };
@@ -1014,10 +1006,6 @@
     $effect(() => {
         if (activeTab === 'reports') {
             void ensureReportsPanelLoaded();
-        }
-
-        if (activeTab === 'units' && activeMode === 'layout') {
-            void ensureUnitsLayoutPanelLoaded();
         }
 
         if (activeTab === 'armadas' && activeMode !== 'form') {
@@ -9493,44 +9481,34 @@
                         </div>
                     </form>
                 {:else if activeMode === 'layout'}
-                    {#if UnitsLayoutPanelComponent}
-                        <UnitsLayoutPanelComponent
-                            {layoutUnit}
-                            {layoutCapacity}
-                            {layoutSeatCount}
-                            {layoutOverCapacity}
-                            {layoutRemainingSeats}
-                            bind:layoutTemplateSearch
-                            bind:layoutTemplateChoice
-                            {layoutTemplateOptions}
-                            {layoutEditorMessage}
-                            {seatLayoutDraft}
-                            {layoutEditorBusy}
-                            {normalizeUnitCategory}
-                            {unitSeatCount}
-                            {rowPatternLabel}
-                            {rowSeatCount}
-                            {applyPatternToAllRows}
-                            {resetLayoutDraft}
-                            {addLayoutRow}
-                            {removeLayoutRow}
-                            {cloneLayoutFromTemplate}
-                            {replaceLayoutRowPattern}
-                            {duplicateLayoutRow}
-                            {addLayoutItem}
-                            {removeLayoutItem}
-                            {saveUnitLayout}
-                            goBackToData={() => setFormMode('data')}
-                        />
-                    {:else}
-                        <div
-                            class="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4"
-                        >
-                            <p class="text-sm text-muted-foreground">
-                                Memuat editor layout armada...
-                            </p>
-                        </div>
-                    {/if}
+                    <AdminOpsUnitsLayoutPanel
+                        {layoutUnit}
+                        {layoutCapacity}
+                        {layoutSeatCount}
+                        {layoutOverCapacity}
+                        {layoutRemainingSeats}
+                        bind:layoutTemplateSearch
+                        bind:layoutTemplateChoice
+                        {layoutTemplateOptions}
+                        {layoutEditorMessage}
+                        {seatLayoutDraft}
+                        {layoutEditorBusy}
+                        {normalizeUnitCategory}
+                        {unitSeatCount}
+                        {rowPatternLabel}
+                        {rowSeatCount}
+                        {applyPatternToAllRows}
+                        {resetLayoutDraft}
+                        {addLayoutRow}
+                        {removeLayoutRow}
+                        {cloneLayoutFromTemplate}
+                        {replaceLayoutRowPattern}
+                        {duplicateLayoutRow}
+                        {addLayoutItem}
+                        {removeLayoutItem}
+                        {saveUnitLayout}
+                        goBackToData={() => setFormMode('data')}
+                    />
                 {:else}
                     <div class="space-y-4">
                         <div class="grid gap-3 lg:hidden">
