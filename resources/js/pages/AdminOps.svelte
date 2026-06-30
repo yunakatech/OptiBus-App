@@ -8791,20 +8791,20 @@
                         onsubmit={saveCustomer}
                     >
                         <div
-                            class="border-b border-border/70 bg-muted/20 px-5 py-4"
+                            class="border-b border-border/70 bg-muted/20 px-3 py-2.5"
                         >
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                class="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                             >
                                 Form Customer Reguler
                             </p>
-                            <h3 class="mt-1 text-lg font-semibold">
+                            <h3 class="mt-1 text-base font-semibold">
                                 {customerForm.id
                                     ? 'Perbarui data customer'
                                     : 'Tambah customer reguler baru'}
                             </h3>
                             <p
-                                class="mt-1 max-w-2xl text-sm text-muted-foreground"
+                                class="mt-1 max-w-2xl text-[11px] leading-relaxed text-muted-foreground"
                             >
                                 Simpan data kontak, titik jemput, dan link Maps
                                 agar tim operasional tidak perlu mencari ulang
@@ -8812,16 +8812,16 @@
                             </p>
                         </div>
                         <div
-                            class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4"
+                            class="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-4"
                         >
                             {#if isAllPoolMode}
-                                <label class="space-y-1.5">
+                                <label class="space-y-1">
                                     <span
-                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >Pool Target</span
                                     >
                                     <select
-                                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                        class="h-8 w-full rounded-md border border-input bg-background px-2.5 text-xs"
                                         bind:value={customerForm.pool_id}
                                         required
                                     >
@@ -8834,67 +8834,72 @@
                                     </select>
                                 </label>
                             {:else}
-                                <div class="space-y-1.5">
+                                <div class="space-y-1">
                                     <span
-                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >Pool Aktif</span
                                     >
                                     <div
-                                        class="flex h-9 items-center rounded-md border border-input bg-muted/30 px-3 text-sm font-medium"
+                                        class="flex h-8 items-center rounded-md border border-input bg-muted/30 px-2.5 text-xs font-medium"
                                     >
                                         {activePoolName}
                                     </div>
                                 </div>
                             {/if}
-                            <label class="space-y-1.5">
+                            <label class="space-y-1">
                                 <span
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Nama Customer</span
                                 >
                                 <Input
                                     placeholder="Nama customer"
                                     bind:value={customerForm.name}
+                                    class="h-8 text-xs"
                                     required
                                 />
                             </label>
-                            <label class="space-y-1.5">
+                            <label class="space-y-1">
                                 <span
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Phone</span
                                 >
                                 <Input
                                     placeholder="Nomor aktif"
                                     bind:value={customerForm.phone}
+                                    class="h-8 text-xs"
                                     required
                                 />
                             </label>
-                            <label class="space-y-1.5">
+                            <label class="space-y-1">
                                 <span
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Pickup Point</span
                                 >
                                 <Input
                                     placeholder="Titik jemput utama"
                                     bind:value={customerForm.pickup_point}
+                                    class="h-8 text-xs"
                                 />
                             </label>
-                            <label class="space-y-1.5">
+                            <label class="space-y-1">
                                 <span
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Google Maps URL</span
                                 >
                                 <Input
                                     placeholder="URL Google Map (opsional)"
                                     bind:value={customerForm.gmaps}
+                                    class="h-8 text-xs"
                                 />
                             </label>
                         </div>
                         <div
-                            class="flex flex-wrap gap-2 border-t border-border/70 bg-muted/20 p-5"
+                            class="flex flex-wrap gap-2 border-t border-border/70 bg-muted/20 px-3 py-2.5"
                         >
                             <LoadingButton
                                 type="submit"
                                 loading={isSubmitActive('customer')}
+                                class="h-8 px-3 text-xs"
                                 loadingText={customerForm.id
                                     ? 'Menyimpan...'
                                     : 'Membuat...'}
@@ -8905,6 +8910,7 @@
                             <Button
                                 type="button"
                                 variant="outline"
+                                class="h-8 px-3 text-xs"
                                 onclick={resetCustomerForm}>Reset</Button
                             >
                         </div>
@@ -8914,31 +8920,31 @@
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
-                            class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-4 py-3"
+                            class="flex flex-col gap-2.5 border-b border-border/70 bg-muted/20 px-3 py-2.5"
                         >
                             <div
-                                class="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between"
+                                class="flex flex-col gap-1.5 lg:flex-row lg:items-end lg:justify-between"
                             >
                                 <div>
                                     <p
-                                        class="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                        class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                                     >
                                         Customer Reguler
                                     </p>
-                                    <h3 class="mt-1 text-base font-semibold">
+                                    <h3 class="mt-1 text-sm font-semibold">
                                         Data pickup dan kontak pelanggan
                                     </h3>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <Badge
                                         variant="secondary"
-                                        class="w-fit rounded-full px-3 py-1 text-[10px] uppercase tracking-wide"
+                                        class="w-fit rounded-full px-2.5 py-0.5 text-[9px] uppercase tracking-wide"
                                     >
                                         {customerMeta.total} customer
                                     </Badge>
                                     <a
                                         href="/api/admin/customers/template"
-                                        class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                                        class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-2.5 py-1.5 text-[11px] font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                                     >
                                         Download Template
                                     </a>
@@ -8955,7 +8961,7 @@
                                         loading={customerImporting}
                                         loadingText="Mengimpor..."
                                         onclick={openCustomerImportPicker}
-                                        class="h-8 px-3 text-xs"
+                                        class="h-8 px-2.5 text-[11px]"
                                     >
                                         Import Data
                                     </LoadingButton>
@@ -8966,7 +8972,7 @@
                                     type="button"
                                     size="sm"
                                     variant="outline"
-                                    class="h-8 rounded-lg text-[11px]"
+                                    class="h-8 rounded-lg text-[10px]"
                                     onclick={() =>
                                         (customerFiltersExpanded =
                                             !customerFiltersExpanded)}
@@ -8979,24 +8985,24 @@
                             </div>
                             <div
                                 class={customerFiltersExpanded
-                                    ? 'flex flex-col gap-2 md:flex-row'
+                                    ? 'flex flex-col gap-1.5 md:flex-row'
                                     : 'hidden md:flex md:flex-row'}
                             >
                                 <Input
                                     placeholder="Cari nama, phone, atau pickup point"
                                     bind:value={customerSearch}
-                                    class="h-8 text-xs"
+                                    class="h-8 text-[11px]"
                                 />
                                 <Button
                                     type="button"
-                                    class="h-8 md:min-w-[120px]"
+                                    class="h-8 md:min-w-[120px] text-[11px]"
                                     onclick={() => void loadCustomers(1)}
                                     >Cari</Button
                                 >
                             </div>
                             {#if customerImportSummary}
                                 <div
-                                    class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
+                                    class="rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] text-emerald-800"
                                 >
                                     <p class="font-semibold">
                                         Import selesai:
@@ -9008,7 +9014,7 @@
                                     </p>
                                     {#if customerImportSummary.errors.length > 0}
                                         <p
-                                            class="mt-1 text-[11px] text-emerald-700"
+                                            class="mt-1 text-[10px] text-emerald-700"
                                         >
                                             Catatan:
                                             {customerImportSummary.errors.join(
