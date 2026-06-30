@@ -1024,7 +1024,7 @@
             layoutUnitId > 0 &&
             units.length > 0
         ) {
-            syncLayoutUnitById(layoutUnitId);
+            untrack(() => syncLayoutUnitById(layoutUnitId));
         }
     });
 
