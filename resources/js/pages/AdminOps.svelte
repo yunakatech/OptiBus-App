@@ -8932,19 +8932,6 @@
                                         >
                                             Customer Reguler
                                         </p>
-                                        {#if activeMode === 'data'}
-                                            <Button
-                                                type="button"
-                                                class="h-8 rounded-full px-3 text-[11px]"
-                                                onclick={() => {
-                                                    resetCustomerForm();
-                                                    setFormMode('form');
-                                                }}
-                                            >
-                                                <Plus class="mr-1 h-3.5 w-3.5" />
-                                                Tambah Data Baru
-                                            </Button>
-                                        {/if}
                                     </div>
                                     <h3 class="mt-1 text-sm font-semibold">
                                         Data pickup dan kontak pelanggan
@@ -9000,17 +8987,17 @@
                             </div>
                             <div
                                 class={customerFiltersExpanded
-                                    ? 'flex flex-col gap-1.5 md:w-[300px] md:flex-row'
-                                    : 'hidden md:flex md:w-[300px] md:flex-row'}
+                                    ? 'flex flex-col gap-1.5 md:w-[260px] md:flex-row md:items-center'
+                                    : 'hidden md:flex md:w-[260px] md:flex-row md:items-center'}
                             >
                                 <Input
                                     placeholder="Cari nama, phone, atau pickup point"
                                     bind:value={customerSearch}
-                                    class="h-8 text-[11px] md:flex-1"
+                                    class="h-8 text-[11px] md:flex-1 md:min-w-0"
                                 />
                                 <Button
                                     type="button"
-                                    class="h-8 text-[11px] md:w-auto md:shrink-0"
+                                    class="h-8 px-3 text-[11px] md:w-auto md:shrink-0"
                                     onclick={() => void loadCustomers(1)}
                                     >Cari</Button
                                 >
@@ -9176,34 +9163,34 @@
                         </div>
                         <div class="hidden overflow-x-auto md:block">
                             <table
-                                class="min-w-[980px] w-full border-separate border-spacing-0 text-[10px]"
+                                class="min-w-full w-full border-collapse border border-border/70 bg-background text-[10px]"
                             >
                                 <thead
-                                    class="bg-muted/20 text-[8px] uppercase tracking-[0.16em] text-muted-foreground"
+                                    class="bg-muted/30 text-[8px] uppercase tracking-[0.16em] text-muted-foreground"
                                 >
                                     <tr>
                                         <th
-                                            class="sticky left-0 z-20 w-[200px] border-b border-r border-border/70 bg-background px-1.5 py-1.5 text-left font-semibold"
+                                            class="w-[22%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
                                             >Customer</th
                                         >
                                         <th
-                                            class="w-[150px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
+                                            class="w-[15%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
                                             >Phone</th
                                         >
                                         <th
-                                            class="w-[130px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
+                                            class="w-[12%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
                                             >Pool</th
                                         >
                                         <th
-                                            class="w-[230px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
+                                            class="w-[31%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
                                             >Pickup Point</th
                                         >
                                         <th
-                                            class="w-[180px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
+                                            class="w-[12%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
                                             >Google Maps</th
                                         >
                                         <th
-                                            class="sticky right-0 z-20 w-[70px] border-b border-l border-border/70 bg-background px-1.5 py-1.5 text-center font-semibold"
+                                            class="w-[8%] border-b border-border/70 px-2 py-1.5 text-center font-semibold"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -9211,10 +9198,10 @@
                                 <tbody>
                                     {#each customers as row (row.id)}
                                         <tr
-                                            class="group transition hover:bg-muted/15"
+                                            class="transition hover:bg-muted/20 odd:bg-background even:bg-muted/10"
                                         >
                                             <td
-                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-1.5 py-1.5 align-top group-hover:bg-muted/15"
+                                                class="border-r border-b border-border/60 px-2 py-1.5 align-top"
                                             >
                                                 <div
                                                     class="text-[11px] font-semibold leading-tight text-foreground"
@@ -9228,7 +9215,7 @@
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
+                                                class="border-r border-b border-border/60 px-2 py-1.5"
                                             >
                                                 <div
                                                     class="text-[11px] font-medium leading-tight text-foreground"
@@ -9242,7 +9229,7 @@
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
+                                                class="border-r border-b border-border/60 px-2 py-1.5"
                                             >
                                                 <Badge
                                                     variant="secondary"
@@ -9252,7 +9239,7 @@
                                                 </Badge>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
+                                                class="border-r border-b border-border/60 px-2 py-1.5"
                                             >
                                                 <div
                                                     class="text-[11px] font-medium leading-tight text-foreground"
@@ -9266,7 +9253,7 @@
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
+                                                class="border-r border-b border-border/60 px-2 py-1.5"
                                             >
                                                 {#if row.gmaps}
                                                     <a
@@ -9285,7 +9272,7 @@
                                                 {/if}
                                             </td>
                                             <td
-                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-1.5 py-1.5 text-center group-hover:bg-muted/15"
+                                                class="border-b border-border/60 px-2 py-1.5 text-center"
                                             >
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger
