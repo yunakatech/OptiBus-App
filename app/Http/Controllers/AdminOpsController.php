@@ -58,14 +58,16 @@ class AdminOpsController extends Controller
         $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users', 'roles', 'cancellations', 'reports'];
         $requestedTab = (string) ($request->route('tab') ?? '');
         $initialTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : null;
+        $initialMode = trim((string) ($request->route('mode') ?? ''));
         $hybridTabs = ['schedules', 'drivers', 'segments', 'units', 'armadas', 'pools', 'users'];
-        $usesHybridInertia = $lockedMenuView && in_array($initialTab, $hybridTabs, true);
+        $usesHybridInertia = $lockedMenuView
+            && in_array($initialTab, $hybridTabs, true)
+            && ! ($initialTab === 'units' && $initialMode === 'layout');
 
         if ($initialTab === 'roles' && ! AccessControl::userIsSuperAdmin((int) ($request->user()?->id ?? 0))) {
             abort(403, 'Hanya Super Admin yang bisa mengakses halaman role.');
         }
 
-        $initialMode = trim((string) ($request->route('mode') ?? ''));
         $recordId = (int) ($request->route('id') ?? 0);
 
         $stats = [
