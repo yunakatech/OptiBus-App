@@ -103,6 +103,13 @@
 
     const isSectionOpen = (id: string) => Boolean(openSections[id] ?? false);
     const isCollapsedDesktop = () => $sidebarState === 'collapsed' && !$isMobile;
+    const compactMenuTitles = new Set([
+        'Dashboard',
+        'Data Keberangkatan',
+        'Carter',
+        'Pembayaran',
+    ]);
+    const isCompactMenuItem = (item: NavItem) => compactMenuTitles.has(item.title);
 
     const toggleSection = (id: string) => {
         if (isCollapsedDesktop()) {
@@ -146,7 +153,7 @@
                                 <SidebarMenuButton
                                     asChild
                                     isActive={isItemActive(item.href)}
-                                    class="h-7 rounded-lg text-xs"
+                                    class={`h-7 rounded-lg ${isCompactMenuItem(item) ? 'text-[11px]' : 'text-xs'}`}
                                 >
                                     {#snippet children(props)}
                                         <Link
@@ -176,7 +183,7 @@
                                 <Link
                                     href={toUrl(item.href)}
                                     onclick={handleNavigate}
-                                    class={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isItemActive(item.href) ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : ''}`}
+                                    class={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 ${isCompactMenuItem(item) ? 'text-[11px]' : 'text-xs'} transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isItemActive(item.href) ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : ''}`}
                                 >
                                     {#if item.icon}
                                         <item.icon class="size-3 shrink-0" />
