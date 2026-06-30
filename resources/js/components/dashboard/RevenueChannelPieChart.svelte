@@ -70,7 +70,7 @@
             chartInstance.update();
         } else {
             chartInstance = new Chart(chartCanvas, {
-                type: 'doughnut',
+                type: 'pie',
                 data: {
                     labels: ['Booking', 'Carter', 'Bagasi'],
                     datasets: [
@@ -81,15 +81,20 @@
                                 'rgba(129, 140, 248, 0.9)',
                                 'rgba(52, 211, 153, 0.9)',
                             ] : ['#e2e8f0', '#e2e8f0', '#e2e8f0'],
-                            borderWidth: 0,
-                            hoverOffset: 4
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            hoverOffset: 12,
+                            offset: 2,
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '72%',
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false,
+                    },
                     plugins: {
                         legend: {
                             display: false

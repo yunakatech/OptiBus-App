@@ -11,7 +11,7 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import { MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
+    import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
@@ -704,7 +704,18 @@
                 {masterTabTitle(activeTab)}
             </h1>
             {#if !lockedMenuView}
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    {#if activeMode === 'data' && activeTab !== 'rute-carter'}
+                        <Button
+                            type="button"
+                            size="sm"
+                            class="h-10 w-full justify-center rounded-2xl px-4 sm:h-9 sm:w-auto sm:rounded-full"
+                            onclick={openCreateMasterForm}
+                        >
+                            <Plus class="mr-2 h-4 w-4" />
+                            Tambah Data Baru
+                        </Button>
+                    {/if}
                     <Button
                         type="button"
                         size="sm"
@@ -834,12 +845,6 @@
                             type="button"
                             onclick={() => void applySearch('customer-bagasi')}
                             >Search</Button
-                        >
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onclick={openCreateMasterForm}
-                            >Tambah Data Baru</Button
                         >
                     </div>
                     <div class="grid gap-3 md:hidden">
@@ -1134,12 +1139,6 @@
                             type="button"
                             onclick={() => void applySearch('customer-charter')}
                             >Search</Button
-                        >
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onclick={openCreateMasterForm}
-                            >Tambah Data Baru</Button
                         >
                     </div>
                     <div class="grid gap-3 md:hidden">

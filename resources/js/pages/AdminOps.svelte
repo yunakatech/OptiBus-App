@@ -8937,6 +8937,19 @@
                                     </p>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2">
+                                    {#if activeMode === 'data'}
+                                        <Button
+                                            type="button"
+                                            class="h-10 w-full justify-center rounded-2xl px-4 sm:h-9 sm:w-auto sm:rounded-full"
+                                            onclick={() => {
+                                                resetCustomerForm();
+                                                setFormMode('form');
+                                            }}
+                                        >
+                                            <Plus class="mr-2 h-4 w-4" />
+                                            Tambah Data Baru
+                                        </Button>
+                                    {/if}
                                     <Badge
                                         variant="secondary"
                                         class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
