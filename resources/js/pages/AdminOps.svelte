@@ -8925,12 +8925,27 @@
                             <div
                                 class="flex flex-col gap-1.5 lg:flex-row lg:items-end lg:justify-between"
                             >
-                                <div>
-                                    <p
-                                        class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
-                                    >
-                                        Customer Reguler
-                                    </p>
+                                <div class="space-y-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <p
+                                            class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                        >
+                                            Customer Reguler
+                                        </p>
+                                        {#if activeMode === 'data'}
+                                            <Button
+                                                type="button"
+                                                class="h-8 rounded-full px-3 text-[11px]"
+                                                onclick={() => {
+                                                    resetCustomerForm();
+                                                    setFormMode('form');
+                                                }}
+                                            >
+                                                <Plus class="mr-1 h-3.5 w-3.5" />
+                                                Tambah Data Baru
+                                            </Button>
+                                        {/if}
+                                    </div>
                                     <h3 class="mt-1 text-sm font-semibold">
                                         Data pickup dan kontak pelanggan
                                     </h3>
@@ -8985,17 +9000,17 @@
                             </div>
                             <div
                                 class={customerFiltersExpanded
-                                    ? 'flex flex-col gap-1.5 md:flex-row'
-                                    : 'hidden md:flex md:flex-row'}
+                                    ? 'flex flex-col gap-1.5 md:w-[300px] md:flex-row'
+                                    : 'hidden md:flex md:w-[300px] md:flex-row'}
                             >
                                 <Input
                                     placeholder="Cari nama, phone, atau pickup point"
                                     bind:value={customerSearch}
-                                    class="h-8 text-[11px]"
+                                    class="h-8 text-[11px] md:flex-1"
                                 />
                                 <Button
                                     type="button"
-                                    class="h-8 md:min-w-[120px] text-[11px]"
+                                    class="h-8 text-[11px] md:w-auto md:shrink-0"
                                     onclick={() => void loadCustomers(1)}
                                     >Cari</Button
                                 >
@@ -9161,34 +9176,34 @@
                         </div>
                         <div class="hidden overflow-x-auto md:block">
                             <table
-                                class="min-w-[1120px] w-full border-separate border-spacing-0 text-[11px]"
+                                class="min-w-[980px] w-full border-separate border-spacing-0 text-[10px]"
                             >
                                 <thead
-                                    class="bg-muted/20 text-[9px] uppercase tracking-[0.18em] text-muted-foreground"
+                                    class="bg-muted/20 text-[8px] uppercase tracking-[0.16em] text-muted-foreground"
                                 >
                                     <tr>
                                         <th
-                                            class="sticky left-0 z-20 w-[220px] border-b border-r border-border/70 bg-background px-2 py-2 text-left font-semibold"
+                                            class="sticky left-0 z-20 w-[200px] border-b border-r border-border/70 bg-background px-1.5 py-1.5 text-left font-semibold"
                                             >Customer</th
                                         >
                                         <th
-                                            class="w-[180px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
+                                            class="w-[150px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
                                             >Phone</th
                                         >
                                         <th
-                                            class="w-[160px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
+                                            class="w-[130px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
                                             >Pool</th
                                         >
                                         <th
-                                            class="w-[280px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
+                                            class="w-[230px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
                                             >Pickup Point</th
                                         >
                                         <th
-                                            class="w-[220px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
+                                            class="w-[180px] border-b border-r border-border/70 px-1.5 py-1.5 text-left font-semibold"
                                             >Google Maps</th
                                         >
                                         <th
-                                            class="sticky right-0 z-20 w-[80px] border-b border-l border-border/70 bg-background px-2 py-2 text-center font-semibold"
+                                            class="sticky right-0 z-20 w-[70px] border-b border-l border-border/70 bg-background px-1.5 py-1.5 text-center font-semibold"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -9199,66 +9214,66 @@
                                             class="group transition hover:bg-muted/15"
                                         >
                                             <td
-                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-2 py-2 align-top group-hover:bg-muted/15"
+                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-1.5 py-1.5 align-top group-hover:bg-muted/15"
                                             >
                                                 <div
-                                                    class="text-[12px] font-semibold text-foreground"
+                                                    class="text-[11px] font-semibold leading-tight text-foreground"
                                                 >
                                                     {row.name}
                                                 </div>
                                                 <div
-                                                    class="mt-0.5 text-[9px] text-muted-foreground"
+                                                    class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
                                                 >
                                                     Pelanggan reguler terdaftar
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-2 py-2"
+                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
                                             >
                                                 <div
-                                                    class="text-[12px] font-medium text-foreground"
+                                                    class="text-[11px] font-medium leading-tight text-foreground"
                                                 >
                                                     {row.phone}
                                                 </div>
                                                 <div
-                                                    class="mt-0.5 text-[9px] text-muted-foreground"
+                                                    class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
                                                 >
                                                     Kontak utama
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-2 py-2"
+                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
                                             >
                                                 <Badge
                                                     variant="secondary"
-                                                    class="rounded-full px-2 py-0.5 text-[9px]"
+                                                    class="rounded-full px-1.5 py-0.5 text-[8px]"
                                                 >
                                                     {rowPoolName(row)}
                                                 </Badge>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-2 py-2"
+                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
                                             >
                                                 <div
-                                                    class="text-[12px] font-medium text-foreground"
+                                                    class="text-[11px] font-medium leading-tight text-foreground"
                                                 >
                                                     {row.pickup_point ?? '-'}
                                                 </div>
                                                 <div
-                                                    class="mt-0.5 text-[9px] text-muted-foreground"
+                                                    class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
                                                 >
                                                     Titik jemput operasional
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-2 py-2"
+                                                class="border-b border-r border-border/60 px-1.5 py-1.5"
                                             >
                                                 {#if row.gmaps}
                                                     <a
                                                         href={row.gmaps}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-[9px] font-semibold text-primary transition hover:bg-primary/10"
+                                                        class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-1.5 py-0.5 text-[8px] font-semibold text-primary transition hover:bg-primary/10"
                                                     >
                                                         Buka Maps
                                                     </a>
@@ -9270,7 +9285,7 @@
                                                 {/if}
                                             </td>
                                             <td
-                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-2 py-2 text-center group-hover:bg-muted/15"
+                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-1.5 py-1.5 text-center group-hover:bg-muted/15"
                                             >
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger
@@ -9280,10 +9295,10 @@
                                                             type="button"
                                                             variant="ghost"
                                                             size="icon"
-                                                            class="h-6 w-6 rounded-full border border-border/70"
+                                                            class="h-5 w-5 rounded-full border border-border/70"
                                                         >
                                                             <MoreHorizontal
-                                                                class="h-3 w-3"
+                                                                class="h-2.5 w-2.5"
                                                             />
                                                             <span
                                                                 class="sr-only"
