@@ -16,6 +16,7 @@ Documentation for all Laravel starter kits can be found on the [Laravel website]
 
 - Coolify: [docs/coolify-deploy.md](docs/coolify-deploy.md)
 - Render + Neon: [docs/render-neon-deploy.md](docs/render-neon-deploy.md)
+- Cloudflare migration: [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md)
 
 ## Legacy Data Import (Booking Core)
 

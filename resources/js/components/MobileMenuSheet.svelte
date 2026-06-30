@@ -275,42 +275,49 @@
 </script>
 
 <Sheet bind:open>
-    <SheetContent side="bottom" class="h-[82vh] rounded-t-3xl sm:h-[88vh]">
-        <SheetHeader class="mt-2 px-1 pb-1 text-left sm:px-0">
-            <SheetTitle>Menu Navigasi</SheetTitle>
-        </SheetHeader>
-        <div class="h-full w-full overflow-y-auto px-1 pb-4 pt-1">
-            <div class="mx-auto w-full max-w-6xl space-y-4">
-                {#each visibleMenuSections as section (section.label)}
-                    <section class="space-y-2">
-                        <h2
-                            class="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
-                        >
-                            {section.label}
-                        </h2>
-                        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                            {#each section.items as item (item.href)}
-                                <Link
-                                    href={toUrl(item.href)}
-                                    onclick={() => {
-                                        open = false;
-                                    }}
-                                    class="flex min-h-[5rem] flex-col items-center justify-center gap-1.5 rounded-xl border bg-card px-2 py-2.5 text-center text-xs font-semibold text-foreground transition-colors {url.isCurrentOrParentUrl(
-                                        item.href,
-                                        url.currentUrl,
-                                    )
-                                        ? 'border-primary bg-primary/10 text-primary'
-                                        : 'hover:bg-accent'}"
-                                >
-                                    <item.icon class="size-5 shrink-0" />
-                                    <span class="line-clamp-2 leading-snug"
-                                        >{item.title}</span
+    <SheetContent
+        side="bottom"
+        class="h-[78dvh] gap-2 rounded-t-[1.35rem] px-4 pb-[calc(0.4rem+env(safe-area-inset-bottom))] pt-2 transition-[transform,border-radius] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:h-[84vh] sm:px-6 sm:pb-5"
+    >
+        <div class="flex h-full w-full flex-col">
+            <SheetHeader class="mb-1 px-0 pb-0 text-left">
+                <SheetTitle>Menu Navigasi</SheetTitle>
+            </SheetHeader>
+            <div class="flex min-h-full w-full overflow-y-auto px-0 pb-0 pt-0">
+                <div class="mx-auto mt-auto w-full max-w-6xl space-y-3">
+                    {#each visibleMenuSections as section (section.label)}
+                        <section class="space-y-1.5">
+                            <h2
+                                class="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                            >
+                                {section.label}
+                            </h2>
+                            <div
+                                class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2"
+                            >
+                                {#each section.items as item (item.href)}
+                                    <Link
+                                        href={toUrl(item.href)}
+                                        onclick={() => {
+                                            open = false;
+                                        }}
+                                        class="flex min-h-[4.75rem] flex-col items-center justify-center gap-1 rounded-xl border bg-card px-2 py-2 text-center text-xs font-semibold text-foreground transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-0.5 {url.isCurrentOrParentUrl(
+                                            item.href,
+                                            url.currentUrl,
+                                        )
+                                            ? 'border-primary bg-primary/10 text-primary'
+                                            : 'hover:bg-accent'}"
                                     >
-                                </Link>
-                            {/each}
-                        </div>
-                    </section>
-                {/each}
+                                        <item.icon class="size-5 shrink-0" />
+                                        <span class="line-clamp-2 leading-snug"
+                                            >{item.title}</span
+                                        >
+                                    </Link>
+                                {/each}
+                            </div>
+                        </section>
+                    {/each}
+                </div>
             </div>
         </div>
     </SheetContent>
