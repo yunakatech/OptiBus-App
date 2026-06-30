@@ -18,19 +18,13 @@
     let {
         monthlyTrend = [],
         toCurrency,
-        currentMonthRevenue = 0,
-        currentMonthLabel = 'Bulan ini',
         title = 'Tren Revenue 12 Bulan Terakhir',
         subtitle = 'Aktivitas Operasional',
-        description = 'Grafik ini menampilkan total revenue per bulan. Kartu Command Center di atas memakai periode aktif yang sama agar angka lebih mudah dibandingkan.',
     }: {
         monthlyTrend: TrendItem[];
         toCurrency: (value: number) => string;
-        currentMonthRevenue?: number;
-        currentMonthLabel?: string;
         title?: string;
         subtitle?: string;
-        description?: string;
     } = $props();
 
     let chartCanvas: HTMLCanvasElement;
@@ -63,25 +57,6 @@
 
     const trendPointKey = (item: TrendItem, index: number) =>
         `${item.month_key ?? item.date ?? item.label ?? index}`;
-
-    const trendRevenueTotal = $derived(
-        monthlyTrend.reduce(
-            (total, item) => total + Number(item.revenue || 0),
-            0,
-        ),
-    );
-    const trendRevenueAverage = $derived(
-        monthlyTrend.length > 0 ? trendRevenueTotal / monthlyTrend.length : 0,
-    );
-    const trendRevenuePeak = $derived(
-        monthlyTrend.reduce<TrendItem | null>(
-            (best, item) =>
-                !best || Number(item.revenue || 0) > Number(best.revenue || 0)
-                    ? item
-                    : best,
-            monthlyTrend[0] ?? null,
-        ),
-    );
 
     $effect(() => {
         if (!chartCanvas) return;
@@ -347,58 +322,13 @@
         class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4"
     >
         <div class="mb-4 px-1 sm:px-2">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h3 class="text-sm font-bold text-slate-800">
-                            {title}
-                        </h3>
-                        <span
-                            class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700"
-                        >
-                            {subtitle}
-                        </span>
-                    </div>
-                    <p class="mt-0.5 max-w-xl text-[11px] leading-relaxed text-slate-500">
-                        {description}
-                    </p>
-                </div>
-                <div
-                    class="rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-2 text-right shadow-sm"
+            <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm font-bold text-slate-800">{title}</h3>
+                <span
+                    class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700"
                 >
-                    <p class="text-[9px] font-semibold uppercase tracking-[0.22em] text-sky-600/80">
-                        {currentMonthLabel}
-                    </p>
-                    <p class="mt-0.5 text-[13px] font-bold text-slate-900 tabular-nums">
-                        {toCurrency(currentMonthRevenue)}
-                    </p>
-                </div>
-            </div>
-            <div class="mt-3 grid grid-cols-3 gap-2">
-                <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2">
-                    <p class="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Total
-                    </p>
-                    <p class="mt-0.5 text-[12px] font-bold text-slate-900 tabular-nums">
-                        {toCurrency(trendRevenueTotal)}
-                    </p>
-                </div>
-                <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2">
-                    <p class="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Rata-rata
-                    </p>
-                    <p class="mt-0.5 text-[12px] font-bold text-slate-900 tabular-nums">
-                        {toCurrency(trendRevenueAverage)}
-                    </p>
-                </div>
-                <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 px-3 py-2">
-                    <p class="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Puncak
-                    </p>
-                    <p class="mt-0.5 truncate text-[12px] font-bold text-slate-900">
-                        {trendRevenuePeak?.label ?? '-'}
-                    </p>
-                </div>
+                    {subtitle}
+                </span>
             </div>
         </div>
 

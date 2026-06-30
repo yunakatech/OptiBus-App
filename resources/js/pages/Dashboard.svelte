@@ -319,12 +319,6 @@
             0,
               ),
     );
-    const activeTrendRevenueTotal = $derived(
-        activeTrendRows.reduce(
-            (total, item) => total + Number(item.revenue || 0),
-            0,
-        ),
-    );
     const departuresTodayTotalBookings = $derived(
         departuresToday.reduce(
             (total, item) => total + Number(item.total_bookings || 0),
@@ -679,9 +673,6 @@
                 {toCurrency}
                 title="Revenue 30 Hari Terakhir"
                 subtitle="Aktivitas Harian"
-                description="Grafik line chart ini menampilkan pergerakan revenue operasional sistem Anda dalam 30 hari ke belakang secara presisi."
-                currentMonthLabel="Total 30 Hari"
-                currentMonthRevenue={activeTrendRevenueTotal}
             />
 
             <!-- Prioritas Hari Ini replaced with RevenueChannelPieChart -->
