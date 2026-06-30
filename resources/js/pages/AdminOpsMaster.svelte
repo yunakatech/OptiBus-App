@@ -834,18 +834,39 @@
                     </div>
                     <div
                         class={masterFiltersExpanded
-                            ? 'mt-2 flex flex-wrap gap-2'
-                            : 'mt-2 hidden md:flex md:flex-wrap md:gap-2'}
+                            ? 'mt-2 rounded-2xl border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
+                            : 'mt-2 hidden md:block md:max-w-sm'}
                     >
-                        <Input
-                            placeholder="Cari nama/no hp/alamat"
-                            bind:value={bagasiQ}
-                        />
-                        <Button
-                            type="button"
-                            onclick={() => void applySearch('customer-bagasi')}
-                            >Search</Button
+                        <div
+                            class="mb-2 flex items-center justify-between gap-2"
                         >
+                            <p
+                                class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                            >
+                                Filter Data
+                            </p>
+                            <span
+                                class="rounded-full border border-border/60 bg-background px-2 py-0.5 text-[9px] font-medium text-muted-foreground"
+                            >
+                                Bagasi
+                            </span>
+                        </div>
+                        <div
+                            class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2.5"
+                        >
+                            <Input
+                                placeholder="Cari nama/no hp/alamat"
+                                bind:value={bagasiQ}
+                                class="h-8 text-[11px] md:flex-1 md:min-w-0"
+                            />
+                            <Button
+                                type="button"
+                                class="h-8 px-3 text-[11px] md:shrink-0"
+                                onclick={() =>
+                                    void applySearch('customer-bagasi')}
+                                >Search</Button
+                            >
+                        </div>
                     </div>
                     <div class="grid gap-3 md:hidden">
                         {#each bagasiCustomers as row (row.id)}
@@ -1128,18 +1149,39 @@
                     </div>
                     <div
                         class={masterFiltersExpanded
-                            ? 'mt-2 flex flex-wrap gap-2'
-                            : 'mt-2 hidden md:flex md:flex-wrap md:gap-2'}
+                            ? 'mt-2 rounded-2xl border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
+                            : 'mt-2 hidden md:block md:max-w-sm'}
                     >
-                        <Input
-                            placeholder="Cari nama/no hp/company"
-                            bind:value={charterQ}
-                        />
-                        <Button
-                            type="button"
-                            onclick={() => void applySearch('customer-charter')}
-                            >Search</Button
+                        <div
+                            class="mb-2 flex items-center justify-between gap-2"
                         >
+                            <p
+                                class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                            >
+                                Filter Data
+                            </p>
+                            <span
+                                class="rounded-full border border-border/60 bg-background px-2 py-0.5 text-[9px] font-medium text-muted-foreground"
+                            >
+                                Carter
+                            </span>
+                        </div>
+                        <div
+                            class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2.5"
+                        >
+                            <Input
+                                placeholder="Cari nama/no hp/company"
+                                bind:value={charterQ}
+                                class="h-8 text-[11px] md:flex-1 md:min-w-0"
+                            />
+                            <Button
+                                type="button"
+                                class="h-8 px-3 text-[11px] md:shrink-0"
+                                onclick={() =>
+                                    void applySearch('customer-charter')}
+                                >Search</Button
+                            >
+                        </div>
                     </div>
                     <div class="grid gap-3 md:hidden">
                         {#each charterCustomers as row (row.id)}
