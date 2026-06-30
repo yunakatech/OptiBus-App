@@ -9019,10 +9019,10 @@
                                 </div>
                             {/if}
                         </div>
-                        <div class="grid gap-2.5 p-2.5 md:hidden">
+                        <div class="grid gap-2 p-2 md:hidden">
                             {#each customers as row (row.id)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-sm"
+                                    class="rounded-2xl border border-border/80 bg-card/95 p-2 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2.5"
@@ -9106,12 +9106,12 @@
                                         </DropdownMenu>
                                     </div>
 
-                                    <div class="mt-2.5 grid gap-1.5 text-[11px]">
+                                    <div class="mt-2 grid gap-1.5 text-[10px]">
                                         <div
-                                            class="rounded-xl bg-muted/30 px-2.5 py-1.5"
+                                            class="rounded-xl bg-muted/30 px-2 py-1"
                                         >
                                             <p
-                                                class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
                                             >
                                                 Pickup Point
                                             </p>
@@ -9122,11 +9122,11 @@
                                             </p>
                                         </div>
                                         <div
-                                            class="flex items-center justify-between gap-2 rounded-xl bg-muted/30 px-2.5 py-1.5"
+                                            class="flex items-center justify-between gap-2 rounded-xl bg-muted/30 px-2 py-1"
                                         >
                                             <div class="min-w-0">
                                                 <p
-                                                    class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                 >
                                                     Google Maps
                                                 </p>
@@ -9143,7 +9143,7 @@
                                                     href={row.gmaps}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    class="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-2.5 py-0.5 text-[10px] font-semibold text-primary"
+                                                    class="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-[9px] font-semibold text-primary"
                                                 >
                                                     Maps
                                                 </a>
@@ -9155,34 +9155,34 @@
                         </div>
                         <div class="hidden overflow-x-auto md:block">
                             <table
-                                class="min-w-[1180px] w-full border-separate border-spacing-0 text-xs"
+                                class="min-w-[1120px] w-full border-separate border-spacing-0 text-[11px]"
                             >
                                 <thead
-                                    class="bg-muted/20 text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+                                    class="bg-muted/20 text-[9px] uppercase tracking-[0.18em] text-muted-foreground"
                                 >
                                     <tr>
                                         <th
-                                            class="sticky left-0 z-20 w-[240px] border-b border-r border-border/70 bg-background px-3 py-2.5 text-left font-semibold"
+                                            class="sticky left-0 z-20 w-[220px] border-b border-r border-border/70 bg-background px-2 py-2 text-left font-semibold"
                                             >Customer</th
                                         >
                                         <th
-                                            class="w-[190px] border-b border-r border-border/70 px-3 py-2.5 text-left font-semibold"
+                                            class="w-[180px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
                                             >Phone</th
                                         >
                                         <th
-                                            class="w-[180px] border-b border-r border-border/70 px-3 py-2.5 text-left font-semibold"
+                                            class="w-[160px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
                                             >Pool</th
                                         >
                                         <th
-                                            class="w-[310px] border-b border-r border-border/70 px-3 py-2.5 text-left font-semibold"
+                                            class="w-[280px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
                                             >Pickup Point</th
                                         >
                                         <th
-                                            class="w-[250px] border-b border-r border-border/70 px-3 py-2.5 text-left font-semibold"
+                                            class="w-[220px] border-b border-r border-border/70 px-2 py-2 text-left font-semibold"
                                             >Google Maps</th
                                         >
                                         <th
-                                            class="sticky right-0 z-20 w-[90px] border-b border-l border-border/70 bg-background px-3 py-2.5 text-center font-semibold"
+                                            class="sticky right-0 z-20 w-[80px] border-b border-l border-border/70 bg-background px-2 py-2 text-center font-semibold"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -9193,66 +9193,66 @@
                                             class="group transition hover:bg-muted/15"
                                         >
                                             <td
-                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-3 py-2.5 align-top group-hover:bg-muted/15"
+                                                class="sticky left-0 z-10 border-b border-r border-border/60 bg-background px-2 py-2 align-top group-hover:bg-muted/15"
                                             >
                                                 <div
-                                                    class="text-[13px] font-semibold text-foreground"
+                                                    class="text-[12px] font-semibold text-foreground"
                                                 >
                                                     {row.name}
                                                 </div>
                                                 <div
-                                                    class="mt-0.5 text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 text-[9px] text-muted-foreground"
                                                 >
                                                     Pelanggan reguler terdaftar
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-3 py-2.5"
+                                                class="border-b border-r border-border/60 px-2 py-2"
                                             >
                                                 <div
-                                                    class="font-medium text-foreground"
+                                                    class="text-[12px] font-medium text-foreground"
                                                 >
                                                     {row.phone}
                                                 </div>
                                                 <div
-                                                    class="mt-0.5 text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 text-[9px] text-muted-foreground"
                                                 >
                                                     Kontak utama
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-3 py-2.5"
+                                                class="border-b border-r border-border/60 px-2 py-2"
                                             >
                                                 <Badge
                                                     variant="secondary"
-                                                    class="rounded-full px-2.5 py-0.5 text-[10px]"
+                                                    class="rounded-full px-2 py-0.5 text-[9px]"
                                                 >
                                                     {rowPoolName(row)}
                                                 </Badge>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-3 py-2.5"
+                                                class="border-b border-r border-border/60 px-2 py-2"
                                             >
                                                 <div
-                                                    class="font-medium text-foreground"
+                                                    class="text-[12px] font-medium text-foreground"
                                                 >
                                                     {row.pickup_point ?? '-'}
                                                 </div>
                                                 <div
-                                                    class="mt-0.5 text-[10px] text-muted-foreground"
+                                                    class="mt-0.5 text-[9px] text-muted-foreground"
                                                 >
                                                     Titik jemput operasional
                                                 </div>
                                             </td>
                                             <td
-                                                class="border-b border-r border-border/60 px-3 py-2.5"
+                                                class="border-b border-r border-border/60 px-2 py-2"
                                             >
                                                 {#if row.gmaps}
                                                     <a
                                                         href={row.gmaps}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-2.5 py-0.5 text-[10px] font-semibold text-primary transition hover:bg-primary/10"
+                                                        class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-[9px] font-semibold text-primary transition hover:bg-primary/10"
                                                     >
                                                         Buka Maps
                                                     </a>
@@ -9264,7 +9264,7 @@
                                                 {/if}
                                             </td>
                                             <td
-                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-3 py-2.5 text-center group-hover:bg-muted/15"
+                                                class="relative sticky right-0 z-10 border-b border-l border-border/60 bg-background px-2 py-2 text-center group-hover:bg-muted/15"
                                             >
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger
@@ -9274,10 +9274,10 @@
                                                             type="button"
                                                             variant="ghost"
                                                             size="icon"
-                                                            class="h-7 w-7 rounded-full border border-border/70"
+                                                            class="h-6 w-6 rounded-full border border-border/70"
                                                         >
                                                             <MoreHorizontal
-                                                                class="h-3.5 w-3.5"
+                                                                class="h-3 w-3"
                                                             />
                                                             <span
                                                                 class="sr-only"
@@ -9339,17 +9339,19 @@
                             </table>
                         </div>
                         <div
-                            class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-5 py-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+                            class="flex flex-col gap-2 border-t border-border/70 bg-muted/10 px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between"
                         >
                             <p class="text-muted-foreground">
                                 Total {customerMeta.total} customer · halaman
                                 {customerMeta.page} dari
                                 {customerMeta.last_page}
                             </p>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5">
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    size="sm"
+                                    class="h-8 rounded-full px-3 text-xs"
                                     disabled={customerMeta.page <= 1}
                                     onclick={() =>
                                         void jumpCustomerPage(
@@ -9357,13 +9359,15 @@
                                         )}>Prev</Button
                                 >
                                 <span
-                                    class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-foreground"
+                                    class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold text-foreground"
                                 >
                                     {customerMeta.page} / {customerMeta.last_page}
                                 </span>
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    size="sm"
+                                    class="h-8 rounded-full px-3 text-xs"
                                     disabled={customerMeta.page >=
                                         customerMeta.last_page}
                                     onclick={() =>
