@@ -225,28 +225,28 @@
                 <div class="rounded-2xl border border-border/70 bg-background/90 p-4">
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h4 class="text-sm font-semibold">Preview Layout</h4>
-                            <p class="text-xs text-muted-foreground">Preview ini memakai gaya kabin bus agar lorong, kursi reguler, dan sleep seat langsung terbaca.</p>
+                            <h4 class="text-xs font-semibold">Preview Layout</h4>
+                            <p class="text-[11px] leading-5 text-muted-foreground">Preview kabin bus. Lorong, kursi reguler, sleep seat langsung kebaca.</p>
                         </div>
                         {#if layoutEditorMessage !== ''}
                             <p class={`text-xs ${layoutOverCapacity ? 'text-red-600' : 'text-muted-foreground'}`}>{layoutEditorMessage}</p>
                         {/if}
                     </div>
 
-                    <div class="mt-4 overflow-hidden rounded-[28px] border border-dashed border-border/70 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.04),_transparent_38%),linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.92))] p-4">
-                        <div class="mb-3 flex items-center justify-between rounded-2xl border border-border/60 bg-background/85 px-4 py-2">
+                    <div class="mt-3 overflow-hidden rounded-[24px] border border-dashed border-border/70 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.04),_transparent_38%),linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.92))] p-3">
+                        <div class="mb-2 flex items-center justify-between rounded-2xl border border-border/60 bg-background/85 px-3 py-1.5">
                             <span class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Depan Bus</span>
                             <span class="text-[11px] text-muted-foreground">Lorong tengah ditandai khusus</span>
                         </div>
-                        <div class="space-y-3">
+                        <div class="space-y-2.5">
                             {#each seatLayoutDraft as row, rowIdx (`layout-preview-row-${rowIdx}`)}
-                                <div class="rounded-2xl border border-border/60 bg-background/75 p-3 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-                                    <div class="mb-2 flex items-center justify-between gap-2">
+                                <div class="rounded-2xl border border-border/60 bg-background/75 p-2.5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+                                    <div class="mb-1.5 flex items-center justify-between gap-1.5">
                                         <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                                                 {rowIdx === 0 ? 'Baris Driver' : `Baris ${rowIdx}`}
                                             </p>
-                                            <p class="text-[11px] text-muted-foreground">
+                                            <p class="text-[9px] text-muted-foreground">
                                                 {rowIdx === 0 ? 'Kabin depan' : `Pola ${rowPatternLabel(row)} · ${rowSeatCount(row)} kursi`}
                                             </p>
                                         </div>
@@ -269,10 +269,10 @@
                                         {#each row as cell, colIdx (`layout-preview-cell-${rowIdx}-${colIdx}-${cell.label}-${cell.type}`)}
                                             {#if !cell.hidden}
                                                 {#if cell.type === 'driver'}
-                                                    <div class="flex h-12 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-xs font-semibold uppercase tracking-wide text-white">Driver</div>
+                                                    <div class="flex h-10 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-[11px] font-semibold uppercase tracking-wide text-white">Driver</div>
                                                 {:else if cell.type === 'empty'}
                                                     {#if cell.marker === 'aisle'}
-                                                        <div class="flex h-12 items-center justify-center rounded-2xl border border-dashed border-amber-300/80 bg-amber-50/80 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+                                                        <div class="flex h-10 items-center justify-center rounded-2xl border border-dashed border-amber-300/80 bg-amber-50/80 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
                                                             Lorong
                                                         </div>
                                                     {:else}
@@ -293,8 +293,8 @@
                                                         type="button"
                                                         class={`flex items-center justify-center rounded-2xl border px-2 text-[11px] font-semibold transition ${
                                                             cell.seatStyle === 'sleeper'
-                                                                ? 'h-14 border-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200'
-                                                                : 'h-10 border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                                                ? 'h-12 border-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200'
+                                                                : 'h-9 border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                                                         }`}
                                                         onclick={() => removeLayoutItem(rowIdx, colIdx)}
                                                     >
@@ -307,9 +307,9 @@
                                 </div>
                             {/each}
                         </div>
-                        <div class="mt-3 flex items-center justify-between rounded-2xl border border-border/60 bg-background/85 px-4 py-2">
-                            <span class="text-[11px] text-muted-foreground">Regular seat: hijau · Sleep seat: biru · Lorong: amber</span>
-                            <span class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Belakang</span>
+                        <div class="mt-2.5 flex items-center justify-between rounded-2xl border border-border/60 bg-background/85 px-3 py-1.5">
+                            <span class="text-[10px] text-muted-foreground">Regular: hijau · Sleep: biru · Lorong: amber</span>
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Belakang</span>
                         </div>
                     </div>
                 </div>
