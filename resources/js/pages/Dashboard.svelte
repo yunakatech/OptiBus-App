@@ -679,7 +679,7 @@
                 {toCurrency}
                 title="Revenue 30 Hari Terakhir"
                 subtitle="Aktivitas Harian"
-                description="Grafik spline ini menampilkan pergerakan revenue operasional sistem Anda dalam 30 hari ke belakang secara presisi."
+                description="Grafik line chart ini menampilkan pergerakan revenue operasional sistem Anda dalam 30 hari ke belakang secara presisi."
                 currentMonthLabel="Total 30 Hari"
                 currentMonthRevenue={activeTrendRevenueTotal}
             />
