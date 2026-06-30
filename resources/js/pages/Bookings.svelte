@@ -1457,6 +1457,13 @@
             return;
         }
 
+        if (isSelectedTripManifestClosed()) {
+            formError = 'Manifest sudah ditutup. Data penumpang tidak bisa diedit.';
+            formSuccess = '';
+
+            return;
+        }
+
         detailEditMode = true;
         formError = '';
     };
@@ -1642,6 +1649,13 @@
             return;
         }
 
+        if (isSelectedTripManifestClosed()) {
+            formError = 'Manifest sudah ditutup. Data penumpang tidak bisa diubah lagi.';
+            formSuccess = '';
+
+            return;
+        }
+
         const currentDetailSeat = detailSeat;
 
         const seat = normalizeSeatToken(detailEditSeat);
@@ -1726,6 +1740,13 @@
 
     const markDetailAsPaid = async () => {
         if (!detailSeat || !detailSeat.id || markingPaidSeatId !== null) {
+            return;
+        }
+
+        if (isSelectedTripManifestClosed()) {
+            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formSuccess = '';
+
             return;
         }
 
@@ -2149,8 +2170,16 @@
         String(group?.departure_status || '')
             .trim()
             .toLowerCase() === 'departed';
+    const isManifestClosed = (group: BookingGroup | null | undefined) =>
+        String(group?.departure_status || '')
+            .trim()
+            .toLowerCase() === 'closed';
+    const isManifestLocked = (group: BookingGroup | null | undefined) =>
+        isCanceledDeparture(group) || isManifestClosed(group);
     const isHistoryGroup = (group: BookingGroup) =>
-        isArrivedDeparture(group) || isCanceledDeparture(group);
+        isArrivedDeparture(group) ||
+        isCanceledDeparture(group) ||
+        isManifestClosed(group);
     const isCanceledDeparture = (group: BookingGroup | null | undefined) =>
         String(group?.departure_status || '')
             .trim()
@@ -2201,6 +2230,13 @@
             hasMeaningfulAssignmentValue(group.armada_nopol)
         );
     };
+    const canCloseManifest = (group: BookingGroup | null | undefined) => {
+        if (!group || isCanceledDeparture(group) || isManifestClosed(group)) {
+            return false;
+        }
+
+        return isArrivedDeparture(group);
+    };
     const canMarkDepartureDeparted = (
         group: BookingGroup | null | undefined,
     ) => {
@@ -2208,7 +2244,8 @@
             !group ||
             isCanceledDeparture(group) ||
             isDepartedDeparture(group) ||
-            isArrivedDeparture(group)
+            isArrivedDeparture(group) ||
+            isManifestClosed(group)
         ) {
             return false;
         }
@@ -2222,7 +2259,12 @@
     const canMarkDepartureArrived = (
         group: BookingGroup | null | undefined,
     ) => {
-        if (!group || isCanceledDeparture(group) || isArrivedDeparture(group)) {
+        if (
+            !group ||
+            isCanceledDeparture(group) ||
+            isArrivedDeparture(group) ||
+            isManifestClosed(group)
+        ) {
             return false;
         }
 
@@ -2236,6 +2278,19 @@
 
         return hasDepartureDateReached(group);
     };
+    const selectedTripGroup = () =>
+        localBookingGroups.find((group) => {
+            return (
+                normalizeRiturRoute(group.rute) ===
+                    normalizeRiturRoute(selectedRoute) &&
+                String(group.tanggal || '').slice(0, 10) ===
+                    String(bookingDate || '').slice(0, 10) &&
+                normalizeJamToken(group.jam) === normalizeJamToken(selectedJam) &&
+                Number(group.unit || 1) === Number(selectedUnit || 1)
+            );
+        }) ?? null;
+    const isSelectedTripManifestClosed = () =>
+        isManifestLocked(selectedTripGroup());
     const hasSavedGroupDriverMapping = () =>
         !!openGroupDetail &&
         hasMeaningfulAssignmentValue(openGroupDetail.driver_name) &&
@@ -2972,6 +3027,61 @@
         }
     };
 
+    const closeManifest = async (group: BookingGroup) => {
+        if (!canCloseManifest(group) || cancelingDepartureKey) {
+            return;
+        }
+
+        cancelingDepartureKey = group.key;
+        formError = '';
+        formSuccess = '';
+
+        try {
+            await runWithFeedback(
+                async () => {
+                    await apiPost('/api/bookings/close-manifest', {
+                        rute: group.rute,
+                        tanggal: group.tanggal,
+                        jam: normalizeJamToken(group.jam),
+                        unit: Number(group.unit) || 1,
+                    });
+                },
+                {
+                    loadingMessage: `Menutup manifest untuk ${group.rute} ${formatGroupTimeLabel(group.jam)}...`,
+                    successMessage: 'Manifest berhasil ditutup.',
+                    errorMessage: 'Gagal menutup manifest.',
+                },
+            );
+
+            localBookingGroups = localBookingGroups.map((item) =>
+                item.key === group.key
+                    ? {
+                          ...item,
+                          departure_status: 'closed',
+                          departure_can_arrive: false,
+                      }
+                    : item,
+            );
+
+            if (openGroupDetail?.key === group.key) {
+                openGroupDetail = {
+                    ...openGroupDetail,
+                    departure_status: 'closed',
+                    departure_can_arrive: false,
+                };
+            }
+
+            formSuccess = 'Manifest berhasil ditutup.';
+        } catch (error) {
+            formError =
+                error instanceof Error
+                    ? error.message
+                    : 'Gagal menutup manifest.';
+        } finally {
+            cancelingDepartureKey = '';
+        }
+    };
+
     const recalculateGroupSummary = (group: BookingGroup): BookingGroup => {
         const visibleRows = visibleGroupBookingRows(group.bookings);
         const total = visibleRows.length;
@@ -3137,6 +3247,13 @@
             return;
         }
 
+        if (isManifestLocked(openGroupDetail)) {
+            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formSuccess = '';
+
+            return;
+        }
+
         if (isRefundPayment(currentPayment)) {
             formSuccess = 'Pembayaran sudah berstatus Refund.';
             formError = '';
@@ -3198,6 +3315,13 @@
             return;
         }
 
+        if (isManifestLocked(openGroupDetail)) {
+            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formSuccess = '';
+
+            return;
+        }
+
         if (isRefundPayment(currentPayment)) {
             formSuccess = 'Pembayaran sudah berstatus Refund.';
             formError = '';
@@ -3253,6 +3377,13 @@
 
     const markBookingGroupAsPaid = async (group: BookingGroup) => {
         if (markingPaidSeatId !== null) {
+            return;
+        }
+
+        if (isManifestLocked(group)) {
+            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formSuccess = '';
+
             return;
         }
 
@@ -3338,6 +3469,13 @@
         currentStatus: string,
     ) => {
         if (!bookingId || cancelingSeatId !== null) {
+            return;
+        }
+
+        if (isManifestLocked(openGroupDetail)) {
+            formError = 'Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.';
+            formSuccess = '';
+
             return;
         }
 
@@ -3873,6 +4011,13 @@
             return;
         }
 
+        if (isManifestLocked(openGroupDetail)) {
+            formError = 'Manifest sudah ditutup. Data penumpang tidak bisa diubah lagi.';
+            formSuccess = '';
+
+            return;
+        }
+
         const seat = normalizeSeatToken(groupEditSeat);
         const name = normalizeNameForBooking(groupEditName);
         const phone = normalizePhoneForBooking(groupEditPhone);
@@ -4209,6 +4354,13 @@
 
     const saveGroupDriverMapping = async () => {
         if (!openGroupDetail) {
+            return;
+        }
+
+        if (isManifestLocked(openGroupDetail)) {
+            formError = 'Manifest sudah ditutup. Driver dan armada tidak bisa diubah lagi.';
+            formSuccess = '';
+
             return;
         }
 
@@ -5320,6 +5472,13 @@
 
     const cancelSeat = async (bookingId: number) => {
         if (!bookingId || cancelingSeatId !== null) {
+            return;
+        }
+
+        if (isSelectedTripManifestClosed()) {
+            formError = 'Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.';
+            formSuccess = '';
+
             return;
         }
 
@@ -6795,68 +6954,77 @@
                                     <Plus class="mr-1.5 h-3.5 w-3.5" />
                                     Msk Rekap
                                 </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="h-10 sm:flex-none"
-                                    onclick={startDetailEdit}
-                                    aria-label="Edit detail"
-                                    size="icon"
-                                >
-                                    <Pencil
-                                        class="h-3.5 w-3.5 text-muted-foreground"
-                                    />
-                                </Button>
-                            </div>
-
-                            <div class="flex w-full sm:w-auto gap-2">
-                                {#if !isLunasPayment(detailSeat.pembayaran)}
+                                {#if !isSelectedTripManifestClosed()}
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        class="h-10 flex-1 sm:flex-none border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                                        onclick={() => void markDetailAsPaid()}
-                                        disabled={markingPaidSeatId ===
-                                            detailSeat.id ||
-                                            cancelingSeatId === detailSeat.id}
+                                        class="h-10 sm:flex-none"
+                                        onclick={startDetailEdit}
+                                        aria-label="Edit detail"
+                                        size="icon"
                                     >
-                                        <WalletCards
-                                            class="mr-1.5 h-3.5 w-3.5"
+                                        <Pencil
+                                            class="h-3.5 w-3.5 text-muted-foreground"
                                         />
-                                        {markingPaidSeatId === detailSeat.id
-                                            ? 'Loading'
-                                            : 'Tandai Lunas'}
                                     </Button>
                                 {/if}
+                            </div>
 
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="h-10 sm:flex-none border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 {isLunasPayment(
-                                        detailSeat.pembayaran,
-                                    )
-                                        ? 'flex-1 sm:flex-none'
-                                        : 'px-3'}"
-                                    onclick={() =>
-                                        void cancelSeat(detailSeat!.id)}
-                                    disabled={cancelingSeatId ===
-                                        detailSeat!.id ||
-                                        markingPaidSeatId === detailSeat.id}
-                                    aria-label="Cancel seat"
-                                >
-                                    <X
-                                        class="h-3.5 w-3.5 {isLunasPayment(
+                            {#if !isSelectedTripManifestClosed()}
+                                <div class="flex w-full sm:w-auto gap-2">
+                                    {#if !isLunasPayment(detailSeat.pembayaran)}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            class="h-10 flex-1 sm:flex-none border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                                            onclick={() => void markDetailAsPaid()}
+                                            disabled={markingPaidSeatId ===
+                                                detailSeat.id ||
+                                                cancelingSeatId === detailSeat.id}
+                                        >
+                                            <WalletCards
+                                                class="mr-1.5 h-3.5 w-3.5"
+                                            />
+                                            {markingPaidSeatId === detailSeat.id
+                                                ? 'Loading'
+                                                : 'Tandai Lunas'}
+                                        </Button>
+                                    {/if}
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-10 sm:flex-none border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 {isLunasPayment(
                                             detailSeat.pembayaran,
                                         )
-                                            ? 'mr-1.5'
-                                            : ''}"
-                                    />
-                                    {isLunasPayment(detailSeat.pembayaran)
-                                        ? 'Cancel Kursi'
-                                        : ''}
-                                </Button>
-                            </div>
+                                            ? 'flex-1 sm:flex-none'
+                                            : 'px-3'}"
+                                        onclick={() =>
+                                            void cancelSeat(detailSeat!.id)}
+                                        disabled={cancelingSeatId ===
+                                            detailSeat!.id ||
+                                            markingPaidSeatId === detailSeat.id}
+                                        aria-label="Cancel seat"
+                                    >
+                                        <X
+                                            class="h-3.5 w-3.5 {isLunasPayment(
+                                                detailSeat.pembayaran,
+                                            )
+                                                ? 'mr-1.5'
+                                                : ''}"
+                                        />
+                                        {isLunasPayment(detailSeat.pembayaran)
+                                            ? 'Cancel Kursi'
+                                            : ''}
+                                    </Button>
+                                </div>
+                            {/if}
                         </div>
+                        {#if isSelectedTripManifestClosed()}
+                            <p class="mt-2 text-xs text-muted-foreground sm:text-right">
+                                Manifest sudah ditutup. Hanya print manifest yang masih aktif.
+                            </p>
+                        {/if}
                     {/if}
                 </div>
             </div>
@@ -7133,6 +7301,13 @@
                                 >
                                     Armada Tiba
                                 </Badge>
+                            {:else if isManifestClosed(openGroupDetail)}
+                                <Badge
+                                    variant="secondary"
+                                    class="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
+                                >
+                                    Manifest Tertutup
+                                </Badge>
                             {/if}
                             <Badge
                                 variant="secondary"
@@ -7166,33 +7341,47 @@
                             <Printer class="mr-1 h-3.5 w-3.5" />
                             Print Manifest
                         </Button>
-                        <Button
-                            type="button"
-                            size="sm"
-                            class="rounded-full"
-                            onclick={() =>
-                                void markBookingGroupAsPaid(openGroupDetail!)}
-                            disabled={markingPaidSeatId !== null ||
-                                isCanceledDeparture(openGroupDetail) ||
-                                payableBookingRows(openGroupDetail).length ===
-                                    0}
-                        >
-                            <WalletCards class="mr-1 h-3.5 w-3.5" />
-                            {markingPaidSeatId !== null && markingPaidSeatId < 0
-                                ? 'Melunaskan...'
-                                : 'Lunaskan Semua'}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            class="rounded-full"
-                            onclick={() =>
-                                void copyBookingGroup(openGroupDetail!)}
-                        >
-                            <Copy class="mr-1 h-3.5 w-3.5" />
-                            Copy Data
-                        </Button>
+                        {#if !isManifestLocked(openGroupDetail)}
+                            <Button
+                                type="button"
+                                size="sm"
+                                class="rounded-full"
+                                onclick={() =>
+                                    void markBookingGroupAsPaid(openGroupDetail!)}
+                                disabled={markingPaidSeatId !== null ||
+                                    isCanceledDeparture(openGroupDetail) ||
+                                    payableBookingRows(openGroupDetail).length ===
+                                        0}
+                            >
+                                <WalletCards class="mr-1 h-3.5 w-3.5" />
+                                {markingPaidSeatId !== null &&
+                                markingPaidSeatId < 0
+                                    ? 'Melunaskan...'
+                                    : 'Lunaskan Semua'}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="rounded-full"
+                                onclick={() =>
+                                    void copyBookingGroup(openGroupDetail!)}
+                            >
+                                <Copy class="mr-1 h-3.5 w-3.5" />
+                                Copy Data
+                            </Button>
+                        {/if}
+                {#if isArrivedDeparture(openGroupDetail) && !isManifestLocked(openGroupDetail)}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="rounded-full border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-900/40"
+                                onclick={() => void closeManifest(openGroupDetail!)}
+                            >
+                                Close Manifest
+                            </Button>
+                        {/if}
                         <Button
                             type="button"
                             variant="outline"
@@ -8197,25 +8386,27 @@
                                                 >
                                                     Copy Data
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void openGroupRowEdit(
-                                                            openGroupDetail!,
-                                                            row,
-                                                        )}
-                                                >
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void openGroupRowReschedule(
-                                                            openGroupDetail!,
-                                                            row,
-                                                        )}
-                                                >
-                                                    Reschedule
-                                                </DropdownMenuItem>
-                                                {#if !isSettledPayment(row.pembayaran)}
+                                                {#if !isManifestLocked(openGroupDetail)}
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void openGroupRowEdit(
+                                                                openGroupDetail!,
+                                                                row,
+                                                            )}
+                                                    >
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void openGroupRowReschedule(
+                                                                openGroupDetail!,
+                                                                row,
+                                                            )}
+                                                    >
+                                                        Reschedule
+                                                    </DropdownMenuItem>
+                                                {/if}
+                                                {#if !isManifestLocked(openGroupDetail) && !isSettledPayment(row.pembayaran)}
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void markBookingRowAsPaid(
@@ -8227,7 +8418,7 @@
                                                         Lunas
                                                     </DropdownMenuItem>
                                                 {/if}
-                                                {#if canRefundCanceledBooking(row)}
+                                                {#if !isManifestLocked(openGroupDetail) && canRefundCanceledBooking(row)}
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void markBookingRowAsRefund(
@@ -8245,16 +8436,18 @@
                                                 >
                                                     Print Tiket
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void cancelBookingRow(
-                                                            row.id,
-                                                            row.seat,
-                                                            row.status,
-                                                        )}
-                                                >
-                                                    Cancel
-                                                </DropdownMenuItem>
+                                                {#if !isManifestLocked(openGroupDetail)}
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void cancelBookingRow(
+                                                                row.id,
+                                                                row.seat,
+                                                                row.status,
+                                                            )}
+                                                    >
+                                                        Cancel
+                                                    </DropdownMenuItem>
+                                                {/if}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
@@ -8423,46 +8616,58 @@
                                                         >
                                                             Copy Data
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void openGroupRowEdit(
-                                                                    openGroupDetail!,
-                                                                    row,
-                                                                )}
-                                                        >
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void openGroupRowReschedule(
-                                                                    openGroupDetail!,
-                                                                    row,
-                                                                )}
-                                                        >
-                                                            Reschedule
-                                                        </DropdownMenuItem>
-                                                        {#if !isSettledPayment(row.pembayaran)}
+                                                        {#if !isManifestLocked(openGroupDetail)}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
-                                                                    void markBookingRowAsPaid(
-                                                                        row.id,
-                                                                        row.seat,
-                                                                        row.pembayaran,
+                                                                    void openGroupRowEdit(
+                                                                        openGroupDetail!,
+                                                                        row,
                                                                     )}
                                                             >
-                                                                Lunas
+                                                                Edit
                                                             </DropdownMenuItem>
-                                                        {/if}
-                                                        {#if canRefundCanceledBooking(row)}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
-                                                                    void markBookingRowAsRefund(
-                                                                        row.id,
-                                                                        row.seat,
-                                                                        row.pembayaran,
+                                                                    void openGroupRowReschedule(
+                                                                        openGroupDetail!,
+                                                                        row,
                                                                     )}
                                                             >
-                                                                Refund
+                                                                Reschedule
+                                                            </DropdownMenuItem>
+                                                            {#if !isSettledPayment(row.pembayaran)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void markBookingRowAsPaid(
+                                                                            row.id,
+                                                                            row.seat,
+                                                                            row.pembayaran,
+                                                                        )}
+                                                                >
+                                                                    Lunas
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canRefundCanceledBooking(row)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void markBookingRowAsRefund(
+                                                                            row.id,
+                                                                            row.seat,
+                                                                            row.pembayaran,
+                                                                        )}
+                                                                >
+                                                                    Refund
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void cancelBookingRow(
+                                                                        row.id,
+                                                                        row.seat,
+                                                                        row.status,
+                                                                    )}
+                                                            >
+                                                                Cancel
                                                             </DropdownMenuItem>
                                                         {/if}
                                                         <DropdownMenuItem
@@ -8472,16 +8677,6 @@
                                                                 )}
                                                         >
                                                             Print Tiket
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void cancelBookingRow(
-                                                                    row.id,
-                                                                    row.seat,
-                                                                    row.status,
-                                                                )}
-                                                        >
-                                                            Cancel
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -9550,15 +9745,17 @@
                                                                                 >
                                                                                     Detail
                                                                                 </DropdownMenuItem>
-                                                                                <DropdownMenuItem
-                                                                                    onclick={() =>
-                                                                                        void copyBookingGroup(
-                                                                                            group,
-                                                                                        )}
-                                                                                >
-                                                                                    Copy
-                                                                                    Data
-                                                                                </DropdownMenuItem>
+                                                                                {#if !isManifestLocked(group)}
+                                                                                    <DropdownMenuItem
+                                                                                        onclick={() =>
+                                                                                            void copyBookingGroup(
+                                                                                                group,
+                                                                                            )}
+                                                                                    >
+                                                                                        Copy
+                                                                                        Data
+                                                                                    </DropdownMenuItem>
+                                                                                {/if}
                                                                                 <DropdownMenuItem
                                                                                     onclick={() =>
                                                                                         openManifestPrint(
@@ -9594,7 +9791,18 @@
                                                                                             : 'Armada Sudah Tiba'}
                                                                                     </DropdownMenuItem>
                                                                                 {/if}
-                                                                                {#if !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
+                                                                                {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                                                    <DropdownMenuItem
+                                                                                        onclick={() =>
+                                                                                            void closeManifest(
+                                                                                                group,
+                                                                                            )}
+                                                                                    >
+                                                                                        Close
+                                                                                        Manifest
+                                                                                    </DropdownMenuItem>
+                                                                                {/if}
+                                                                                {#if !isManifestLocked(group) && !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
                                                                                     <DropdownMenuItem
                                                                                         onclick={() =>
                                                                                             void cancelDeparture(
@@ -9607,7 +9815,7 @@
                                                                                             : 'Batalkan Jadwal'}
                                                                                     </DropdownMenuItem>
                                                                                 {/if}
-                                                                                {#if !isCanceledDeparture(group) && group.belum_lunas > 0}
+                                                                                {#if !isManifestLocked(group) && !isCanceledDeparture(group) && group.belum_lunas > 0}
                                                                                     <DropdownMenuItem
                                                                                         onclick={() =>
                                                                                             void markBookingGroupAsPaid(
@@ -9731,14 +9939,16 @@
                                                             >
                                                                 Detail
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void copyBookingGroup(
-                                                                        group,
-                                                                    )}
-                                                            >
-                                                                Copy Data
-                                                            </DropdownMenuItem>
+                                                            {#if !isManifestLocked(group)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void copyBookingGroup(
+                                                                            group,
+                                                                        )}
+                                                                >
+                                                                    Copy Data
+                                                                </DropdownMenuItem>
+                                                            {/if}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
                                                                     openManifestPrint(
@@ -9773,7 +9983,17 @@
                                                                         : 'Armada Sudah Tiba'}
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
+                                                            {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void closeManifest(
+                                                                            group,
+                                                                        )}
+                                                                >
+                                                                    Close Manifest
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if !isManifestLocked(group) && !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
                                                                         void cancelDeparture(
@@ -9786,7 +10006,7 @@
                                                                         : 'Batalkan Jadwal'}
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if !isCanceledDeparture(group) && group.belum_lunas > 0}
+                                                            {#if !isManifestLocked(group) && !isCanceledDeparture(group) && group.belum_lunas > 0}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
                                                                         void markBookingGroupAsPaid(

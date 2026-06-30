@@ -19,6 +19,9 @@ app()->booted(function () {
 
     // Daily 2am: auto-generate invoices for subscriptions ending within 7 days
     $schedule->command('subscription:generate-invoices')->dailyAt('02:00')->withoutOverlapping();
+
+    // Frequent sweep: close manifest 24 hours after departure time
+    $schedule->command('booking:close-expired-manifests')->everyFiveMinutes()->withoutOverlapping();
 });
 
 Artisan::command('inspire', function () {
