@@ -5457,6 +5457,7 @@
 <AppHead title={consoleOnly ? 'Booking Console' : 'Data Keberangkatan'} />
 
 <div
+    data-content-density="compact"
     class="flex h-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-4 pb-32"
 >
     {#if !listOnly}

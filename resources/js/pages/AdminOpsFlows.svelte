@@ -3469,7 +3469,7 @@
 
 <AppHead title={tabTitle(activeTab)} />
 
-<div class="space-y-4 p-3 pb-28 md:p-4">
+<div data-content-density="compact" class="space-y-4 p-3 pb-28 md:p-4">
     <Card>
         <CardHeader class="space-y-3">
             <div class="flex flex-wrap items-start justify-between gap-3">
