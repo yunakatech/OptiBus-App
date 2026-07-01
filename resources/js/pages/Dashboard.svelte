@@ -167,7 +167,10 @@
         upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
         recentActivityTotal = 0,
         recentActivityVisibleCount = 0,
-        topDrivers = { 'Minibus': [], 'Mediumbus': [], 'Bigbus': [] } as Record<string, any[]>,
+        topDrivers = { Minibus: [], Mediumbus: [], Bigbus: [] } as Record<
+            string,
+            any[]
+        >,
         topArmadas = [] as ArmadaPerformanceItem[],
         summaryStatsByScope = {
             day: {
@@ -317,7 +320,7 @@
             Number(recentActivityTotal || 0) -
                 Number(recentActivityVisibleCount || 0),
             0,
-              ),
+        ),
     );
     const departuresTodayTotalBookings = $derived(
         departuresToday.reduce(
@@ -366,9 +369,7 @@
             .join('|')}`,
     );
     const activeSummaryStats = $derived(summaryStatsByScope.month);
-    const activeSummaryPeriod = $derived(
-        summaryPeriodByScope.month,
-    );
+    const activeSummaryPeriod = $derived(summaryPeriodByScope.month);
     const activeTotalRevenue = $derived(
         Number(activeSummaryStats.revenue_booking || 0) +
             Number(activeSummaryStats.revenue_charter || 0) +
@@ -664,7 +665,6 @@
     class="flex h-full flex-1 flex-col gap-2 overflow-x-clip rounded-xl px-2 py-2 md:gap-3 md:p-4"
 >
     <div class="space-y-2">
-
         <!-- Command Center & Prioritas Grid -->
         <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <!-- Revenue Activity Chart -->
@@ -676,7 +676,7 @@
             />
 
             <!-- Prioritas Hari Ini replaced with RevenueChannelPieChart -->
-            <RevenueChannelPieChart summaryStatsByScope={summaryStatsByScope} {toCurrency} />
+            <RevenueChannelPieChart {summaryStatsByScope} {toCurrency} />
         </div>
     </div>
 
@@ -751,27 +751,18 @@
         <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
             <div class="space-y-2.5 xl:col-span-2">
                 <!-- Command Center -->
-                <CommandCenter
-                    monthlyTrend={monthlyTrend}
-                    {toCurrency}
-                />
+                <CommandCenter {monthlyTrend} {toCurrency} />
 
                 <!-- Driver Performance Card -->
-                <DriverPerformanceCard
-                    categories={topDrivers}
-                    {toCurrency}
-                    period="Bulan Ini"
-                />
+                <DriverPerformanceCard categories={topDrivers} {toCurrency} />
 
-                <ArmadaPerformanceCard
-                    items={topArmadas}
-                    {toCurrency}
-                    period="Bulan Ini"
-                />
+                <ArmadaPerformanceCard items={topArmadas} {toCurrency} />
             </div>
 
             <div class="space-y-2.5 xl:col-span-1">
-                <Card class="overflow-hidden rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border">
+                <Card
+                    class="overflow-hidden rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border"
+                >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <div
                             class="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between"
@@ -794,7 +785,9 @@
                             {/if}
                         </div>
                     </CardHeader>
-                    <CardContent class="space-y-2 px-3 pb-3 pt-0 sm:space-y-2.5 sm:px-5 sm:pb-4">
+                    <CardContent
+                        class="space-y-2 px-3 pb-3 pt-0 sm:space-y-2.5 sm:px-5 sm:pb-4"
+                    >
                         {#if upcomingCharterReminder.items.length === 0}
                             <div
                                 class="rounded-xl border border-dashed p-3 text-[11px] text-muted-foreground text-center"
@@ -866,7 +859,9 @@
                     </CardContent>
                 </Card>
 
-                <Card class="rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border">
+                <Card
+                    class="rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border"
+                >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <CardTitle class="text-[13px] sm:text-[14px]"
                             >Keberangkatan Hari Ini</CardTitle
@@ -875,7 +870,9 @@
                             >Data jadwal dari booking aktif hari ini</CardDescription
                         >
                     </CardHeader>
-                    <CardContent class="space-y-2 px-3 pb-3 pt-0 sm:space-y-2.5 sm:px-5 sm:pb-4">
+                    <CardContent
+                        class="space-y-2 px-3 pb-3 pt-0 sm:space-y-2.5 sm:px-5 sm:pb-4"
+                    >
                         {#if copyMessage}
                             <p class="text-xs text-emerald-600">
                                 {copyMessage}
@@ -944,7 +941,9 @@
                     </CardContent>
                 </Card>
 
-                <Card class="hidden h-fit xl:block rounded-3xl border-gray-200 shadow-sm border">
+                <Card
+                    class="hidden h-fit xl:block rounded-3xl border-gray-200 shadow-sm border"
+                >
                     <CardHeader class="space-y-1 p-4 pb-2 sm:px-5 sm:pt-4">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
