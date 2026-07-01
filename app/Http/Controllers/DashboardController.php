@@ -2105,9 +2105,8 @@ class DashboardController extends Controller
             ->whereBetween(DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal)'), [$monthStart, $monthEnd])
             ->select([
                 $this->tripAssignmentsArmadaNopolExpression(),
-                DB::raw('SUM(COALESCE(l.price, 0)) as revenue'),
-            ])
-            ->groupBy('armada_nopol');
+                'l.price',
+            ]);
 
         $this->applyActiveLuggageFilter($rows, 'l');
         $this->applyActiveTripAssignmentFilter($rows, 't');
@@ -2125,7 +2124,8 @@ class DashboardController extends Controller
         foreach ($rows->get() as $row) {
             $nopolKey = $this->normalizeNopol((string) ($row->armada_nopol ?? ''));
             if ($nopolKey !== '') {
-                $revenue[$nopolKey] = (float) ($row->revenue ?? 0);
+                $revenue[$nopolKey] = (float) ($revenue[$nopolKey] ?? 0)
+                    + (float) ($row->price ?? 0);
             }
         }
 
