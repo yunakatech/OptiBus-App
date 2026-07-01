@@ -7,7 +7,6 @@
     import Plus from 'lucide-svelte/icons/plus';
     import Tickets from 'lucide-svelte/icons/tickets';
     import { onMount } from 'svelte';
-    import MobileMenuSheet from '@/components/MobileMenuSheet.svelte';
     import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
@@ -119,8 +118,6 @@
         }
     }
 
-    let menuSheetOpen = $state(false);
-
     function visitNavItem(event: MouseEvent, href: string): void {
         event.preventDefault();
 
@@ -195,12 +192,6 @@
     }
 
     onMount(() => {
-        const handleOpenMobileMenu = () => {
-            menuSheetOpen = true;
-        };
-
-        window.addEventListener('open-mobile-menu', handleOpenMobileMenu);
-
         lastScrollY = Math.max(
             window.scrollY || document.documentElement.scrollTop || 0,
             0,
@@ -213,10 +204,6 @@
         window.addEventListener('resize', requestCompactUpdate);
 
         return () => {
-            window.removeEventListener(
-                'open-mobile-menu',
-                handleOpenMobileMenu,
-            );
             window.removeEventListener('scroll', requestCompactUpdate);
             window.removeEventListener('resize', requestCompactUpdate);
         };
@@ -307,5 +294,3 @@
         </div>
     </div>
 </nav>
-
-<MobileMenuSheet bind:open={menuSheetOpen} />
