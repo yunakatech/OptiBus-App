@@ -161,6 +161,7 @@
         unit_id: number | null;
         armada_id: number | null;
         nopol: string | null;
+        category: string | null;
         departure_count?: number;
         target_revenue_bulanan: number;
         charter_revenue: number;
@@ -806,7 +807,7 @@
         nama: '',
         phone: '',
         pool_id: 0,
-        armada_id: 0,
+        category: 'Minibus',
         target_revenue_bulanan: '',
         fixed_cost: '',
     });
@@ -920,7 +921,6 @@
     let customerSearch = $state('');
     let customerFiltersExpanded = $state(false);
     let driverSearch = $state('');
-    let driverUnitSearch = $state('');
     let driverPeriod = $state(
         `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
     );
@@ -2109,46 +2109,6 @@
             })
             .slice(0, 12);
     });
-    const driverUnitOptions = $derived.by<ArmadaRow[]>(() => {
-        const keyword = driverUnitSearch.trim().toLowerCase();
-        const selectedPoolId = Number(driverForm.pool_id || 0);
-        const rows = armadas
-            .filter((armada) => String(armada.nopol ?? '').trim() !== '')
-            .filter((armada) =>
-                selectedPoolId > 0
-                    ? Number(armada.pool_id ?? 0) === selectedPoolId
-                    : true,
-            );
-
-        if (keyword === '') {
-            return rows.slice(0, 12);
-        }
-
-        return rows
-            .filter((armada) => {
-                const nopol = String(armada.nopol ?? '').toLowerCase();
-                const category = String(armada.kategori ?? '').toLowerCase();
-                const merek = String(armada.merk ?? '').toLowerCase();
-                const rangka = String(armada.nomor_rangka ?? '').toLowerCase();
-
-                return (
-                    nopol.includes(keyword) ||
-                    category.includes(keyword) ||
-                    merek.includes(keyword) ||
-                    rangka.includes(keyword)
-                );
-            })
-            .slice(0, 12);
-    });
-    const selectedDriverUnit = $derived(
-        armadas.find(
-            (armada) =>
-                armada.id === Number(driverForm.armada_id || 0) &&
-                (Number(driverForm.pool_id || 0) <= 0 ||
-                    Number(armada.pool_id ?? 0) ===
-                        Number(driverForm.pool_id || 0)),
-        ) ?? null,
-    );
     const layoutTemplateOptions = $derived.by<UnitRow[]>(() => {
         const keyword = layoutTemplateSearch.trim().toLowerCase();
         const rows = units.filter(
@@ -2481,29 +2441,6 @@
     const driverNetMargin = (row: DriverRow) => financialNetMargin(row);
     const driverAchievement = (row: DriverRow) => financialAchievement(row);
     const driverStatus = (row: DriverRow) => financialStatus(row);
-    const selectDriverUnit = (armada: ArmadaRow) => {
-        driverForm.armada_id = Number(armada.id);
-        driverUnitSearch = String(armada.nopol ?? '');
-    };
-    const syncDriverUnitSearch = () => {
-        const keyword = driverUnitSearch.trim().toLowerCase();
-
-        if (keyword === '') {
-            driverForm.armada_id = 0;
-
-            return;
-        }
-
-        const exact = armadas.find(
-            (armada) =>
-                String(armada.nopol ?? '')
-                    .trim()
-                    .toLowerCase() === keyword,
-        );
-
-        driverForm.armada_id = exact ? Number(exact.id) : 0;
-    };
-
     const isTabName = (value: string | null): value is TabName => {
         return value !== null && tabs.includes(value as TabName);
     };
@@ -4373,31 +4310,28 @@
         await loadSchedules();
         resetScheduleForm();
     };
-    const resetDriverForm = () => (
-        (driverUnitSearch = ''),
+    const resetDriverForm = () =>
         (driverForm = {
             id: 0,
             nama: '',
             phone: '',
             pool_id: defaultPoolId(),
-            armada_id: 0,
+            category: defaultUnitCategory,
             target_revenue_bulanan: '',
             fixed_cost: '',
-        })
-    );
+        });
     const editDriver = (row: DriverRow) => {
         driverForm = {
             id: row.id,
             nama: row.nama,
             phone: row.phone ?? '',
             pool_id: Number(row.pool_id ?? defaultPoolId()),
-            armada_id: row.armada_id ?? 0,
+            category: normalizeUnitCategory(row.category),
             fixed_cost: formatRupiahInput(row.fixed_cost),
             target_revenue_bulanan: formatRupiahInput(
                 row.target_revenue_bulanan,
             ),
         };
-        driverUnitSearch = row.nopol ?? '';
         setFormMode('form');
     };
     const openDriverView = (row: DriverRow) => {
@@ -4866,8 +4800,7 @@
                         nama: driverForm.nama,
                         phone: driverForm.phone,
                         pool_id: poolPayloadValue(driverForm.pool_id),
-                        armada_id: Number(driverForm.armada_id) || undefined,
-                        armada_nopol: driverUnitSearch.trim() || undefined,
+                        kategori: normalizeUnitCategory(driverForm.category),
                         target_revenue_bulanan: parseRupiahInput(
                             driverForm.target_revenue_bulanan,
                         ),
@@ -5649,12 +5582,20 @@
                     >
                     <div class="flex items-center gap-2">
                         {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
-                            <Button type="button" size="sm" onclick={openCreateForm}>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onclick={openCreateForm}
+                            >
                                 Tambah Data Baru
                             </Button>
                         {/if}
                         {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
-                            <Button type="button" size="sm" onclick={openCreateForm}>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onclick={openCreateForm}
+                            >
                                 Tambah Data Baru
                             </Button>
                         {/if}
@@ -5667,16 +5608,27 @@
                     >
                     <div class="flex items-center gap-2">
                         {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
-                            <Button type="button" size="sm" onclick={openCreateForm}>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onclick={openCreateForm}
+                            >
                                 Tambah Data Baru
                             </Button>
                         {/if}
                         {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
-                            <Button type="button" size="sm" onclick={openCreateForm}>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onclick={openCreateForm}
+                            >
                                 Tambah Data Baru
                             </Button>
                         {/if}
-                        <Badge variant="secondary" class="rounded-full px-3 py-1">
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full px-3 py-1"
+                        >
                             Active
                         </Badge>
                     </div>
@@ -5715,7 +5667,11 @@
                 {:else}
                     <div class="flex items-center gap-2">
                         {#if activeMode === 'data'}
-                            <Button type="button" size="sm" onclick={openCreateForm}>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onclick={openCreateForm}
+                            >
                                 Tambah Data Baru
                             </Button>
                         {:else}
@@ -7674,7 +7630,7 @@
                             title={driverForm.id
                                 ? 'Perbarui data driver'
                                 : 'Tambah driver baru'}
-                            description="Hubungkan driver ke armada lewat pencarian nopol, lalu atur target revenue dan fixed cost untuk perhitungan performa bulan berjalan."
+                            description="Atur kategori driver, target revenue, dan fixed cost untuk perhitungan performa bulan berjalan."
                             toneClass="bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(15,23,42,0.03))]"
                             bodyClass="space-y-4"
                         >
@@ -7690,10 +7646,6 @@
                                         <select
                                             class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm md:max-w-sm"
                                             bind:value={driverForm.pool_id}
-                                            onchange={() => {
-                                                driverForm.armada_id = 0;
-                                                driverUnitSearch = '';
-                                            }}
                                             required
                                         >
                                             <option value={0}>Pilih pool</option
@@ -7730,6 +7682,23 @@
                                         placeholder="Nomor driver"
                                         bind:value={driverForm.phone}
                                     />
+                                </label>
+                                <label class="space-y-1.5">
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                        >Kategori Driver</span
+                                    >
+                                    <select
+                                        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        bind:value={driverForm.category}
+                                        required
+                                    >
+                                        {#each unitCategoryOptions as category (category)}
+                                            <option value={category}
+                                                >{category}</option
+                                            >
+                                        {/each}
+                                    </select>
                                 </label>
                                 <label class="space-y-1.5">
                                     <span
@@ -7775,89 +7744,6 @@
                                         }}
                                     />
                                 </label>
-                            </div>
-
-                            <div
-                                class="rounded-2xl border border-input/70 bg-muted/10 p-4"
-                            >
-                                <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
-                                >
-                                    Pencarian Armada
-                                </p>
-                                <p class="mt-1 text-xs text-muted-foreground">
-                                    Pilih nopol dari menu Armada agar relasi
-                                    driver ke unit tersimpan dengan benar.
-                                </p>
-                                <div class="mt-4 space-y-3">
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Cari Nopol</span
-                                        >
-                                        <Input
-                                            placeholder="Cari nopol dari menu Armada"
-                                            bind:value={driverUnitSearch}
-                                            list="driver-unit-options"
-                                            oninput={syncDriverUnitSearch}
-                                        />
-                                    </label>
-                                    <datalist id="driver-unit-options">
-                                        {#each driverUnitOptions as unit (unit.id)}
-                                            <option value={unit.nopol ?? ''}
-                                                >{unit.nopol ?? ''}</option
-                                            >
-                                        {/each}
-                                    </datalist>
-                                    <div
-                                        class="rounded-xl border border-border/70 bg-background/80 px-4 py-3 text-xs text-muted-foreground"
-                                    >
-                                        {#if selectedDriverUnit}
-                                            <span
-                                                class="font-medium text-foreground"
-                                                >{selectedDriverUnit.nopol}</span
-                                            >
-                                            {#if selectedDriverUnit.kategori}
-                                                <span>
-                                                    · {selectedDriverUnit.kategori}</span
-                                                >
-                                            {/if}
-                                            {#if selectedDriverUnit.merk}
-                                                <span>
-                                                    · {selectedDriverUnit.merk}</span
-                                                >
-                                            {/if}
-                                        {:else if driverUnitSearch.trim() !== ''}
-                                            Pilih salah satu saran nopol dari
-                                            menu Armada agar armada driver
-                                            tersimpan.
-                                        {:else}
-                                            Ketik nopol untuk mencari armada
-                                            yang dipakai driver.
-                                        {/if}
-                                    </div>
-                                    {#if driverUnitOptions.length > 0}
-                                        <div class="flex flex-wrap gap-2">
-                                            {#each driverUnitOptions as unit (unit.id)}
-                                                <button
-                                                    type="button"
-                                                    class={`rounded-full border px-3 py-1 text-xs transition ${
-                                                        Number(
-                                                            driverForm.armada_id ||
-                                                                0,
-                                                        ) === Number(unit.id)
-                                                            ? 'border-primary bg-primary/10 text-primary'
-                                                            : 'border-border/70 bg-background hover:border-primary/50 hover:text-foreground'
-                                                    }`}
-                                                    onclick={() =>
-                                                        selectDriverUnit(unit)}
-                                                >
-                                                    {unit.nopol}
-                                                </button>
-                                            {/each}
-                                        </div>
-                                    {/if}
-                                </div>
                             </div>
 
                             <div
@@ -8926,7 +8812,9 @@
                                 class="flex flex-col gap-1.5 lg:flex-row lg:items-end lg:justify-between"
                             >
                                 <div class="space-y-1">
-                                    <div class="flex flex-wrap items-center gap-2">
+                                    <div
+                                        class="flex flex-wrap items-center gap-2"
+                                    >
                                         <p
                                             class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                                         >
@@ -9528,7 +9416,9 @@
                                         class="flex items-start justify-between gap-2.5"
                                     >
                                         <div>
-                                            <p class="text-[13px] font-semibold">
+                                            <p
+                                                class="text-[13px] font-semibold"
+                                            >
                                                 {row.nopol}
                                             </p>
                                             <div
@@ -9563,7 +9453,9 @@
                                                 onclick={() =>
                                                     openLayoutEditor(row)}
                                             >
-                                                <Armchair class="mr-2 h-3 w-3" />
+                                                <Armchair
+                                                    class="mr-2 h-3 w-3"
+                                                />
                                                 Atur Layout
                                             </Button>
                                         </div>
@@ -9623,7 +9515,9 @@
                                             >
                                                 Kapasitas
                                             </p>
-                                            <p class="mt-0.5 text-[13px] font-semibold">
+                                            <p
+                                                class="mt-0.5 text-[13px] font-semibold"
+                                            >
                                                 {row.kapasitas ?? 0} kursi
                                             </p>
                                         </div>
@@ -9635,7 +9529,9 @@
                                             >
                                                 Layout
                                             </p>
-                                            <p class="mt-0.5 text-[13px] font-semibold">
+                                            <p
+                                                class="mt-0.5 text-[13px] font-semibold"
+                                            >
                                                 {unitSeatCount(row.layout)} aktif
                                             </p>
                                         </div>
@@ -9652,19 +9548,24 @@
                                     class="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground"
                                 >
                                     <tr>
-                                        <th class="w-[32%] px-3 py-2.5 text-left"
+                                        <th
+                                            class="w-[32%] px-3 py-2.5 text-left"
                                             >Nama Kategori Armada</th
                                         >
-                                        <th class="w-[18%] px-3 py-2.5 text-left"
+                                        <th
+                                            class="w-[18%] px-3 py-2.5 text-left"
                                             >Kategori</th
                                         >
-                                        <th class="w-[22%] px-3 py-2.5 text-left"
+                                        <th
+                                            class="w-[22%] px-3 py-2.5 text-left"
                                             >Kapasitas/Layout</th
                                         >
-                                        <th class="w-[14%] px-3 py-2.5 text-left"
+                                        <th
+                                            class="w-[14%] px-3 py-2.5 text-left"
                                             >Status</th
                                         >
-                                        <th class="w-[14%] px-3 py-2.5 text-left"
+                                        <th
+                                            class="w-[14%] px-3 py-2.5 text-left"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -9675,7 +9576,9 @@
                                             class="border-t border-border/60 align-top transition hover:bg-muted/20"
                                         >
                                             <td class="px-3 py-2.5">
-                                                <div class="text-[11px] font-medium">
+                                                <div
+                                                    class="text-[11px] font-medium"
+                                                >
                                                     {row.nopol}
                                                 </div>
                                             </td>
@@ -9688,7 +9591,9 @@
                                                 >
                                             </td>
                                             <td class="px-3 py-2.5">
-                                                <div class="text-[11px] font-medium">
+                                                <div
+                                                    class="text-[11px] font-medium"
+                                                >
                                                     {row.kapasitas ?? 0} kursi
                                                 </div>
                                                 <div

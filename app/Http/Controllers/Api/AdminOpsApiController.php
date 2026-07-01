@@ -64,6 +64,8 @@ class AdminOpsApiController extends Controller
 
     private ?bool $driversHasArmadaNopol = null;
 
+    private ?bool $driversHasKategoriColumn = null;
+
     private ?bool $routesHasBopColumn = null;
 
     private ?bool $routesHasTargetRevenueColumn = null;
@@ -645,7 +647,7 @@ class AdminOpsApiController extends Controller
                 ->filter(static fn (array $row): bool => str_contains(mb_strtolower(implode(' ', [
                     (string) ($row['nama'] ?? ''),
                     (string) ($row['phone'] ?? ''),
-                    (string) ($row['nopol'] ?? ''),
+                    (string) ($row['category'] ?? ''),
                     (string) ($row['pool_name'] ?? ''),
                 ])), $needle))
                 ->values();
@@ -685,7 +687,7 @@ class AdminOpsApiController extends Controller
                 ->filter(static fn (array $row): bool => str_contains(mb_strtolower(implode(' ', [
                     (string) ($row['nama'] ?? ''),
                     (string) ($row['phone'] ?? ''),
-                    (string) ($row['nopol'] ?? ''),
+                    (string) ($row['category'] ?? ''),
                     (string) ($row['pool_name'] ?? ''),
                 ])), $needle))
                 ->values();
@@ -703,7 +705,7 @@ class AdminOpsApiController extends Controller
             return [
                 'Nama Driver' => (string) ($row['nama'] ?? ''),
                 'Kontak' => (string) ($row['phone'] ?? ''),
-                'Nopol Armada' => (string) ($row['nopol'] ?? ''),
+                'Kategori Driver' => (string) ($row['category'] ?? ''),
                 'Pool/Wilayah' => (string) ($row['pool_name'] ?? ''),
                 'Keberangkatan Rit' => (int) ($row['departure_count'] ?? 0),
                 'Charter Revenue' => (float) ($row['charter_revenue'] ?? 0),
@@ -739,6 +741,8 @@ class AdminOpsApiController extends Controller
             'unit_id' => ['nullable', 'integer', 'min:1'],
             'armada_id' => ['nullable', 'integer', 'min:1'],
             'armada_nopol' => ['nullable', 'string', 'max:50'],
+            'kategori' => ['nullable', 'string', Rule::in(['Minibus', 'Mediumbus', 'Bigbus'])],
+            'category' => ['nullable', 'string', Rule::in(['Minibus', 'Mediumbus', 'Bigbus'])],
             'target_revenue_bulanan' => ['nullable', 'numeric', 'min:0'],
             'target_revenue_tahunan' => ['nullable', 'numeric', 'min:0'],
             'revenue' => ['nullable', 'numeric', 'min:0'],
@@ -774,44 +778,16 @@ class AdminOpsApiController extends Controller
                 return $this->error(FeatureGate::limitMessage('master.drivers') ?? 'Batas driver paket Anda sudah tercapai.', 403);
             }
         }
-        $armadaId = (int) ($data['armada_id'] ?? 0);
-        $requestedArmadaNopol = strtoupper(trim((string) ($data['armada_nopol'] ?? '')));
-        $armadaNopol = $requestedArmadaNopol !== '' ? $requestedArmadaNopol : null;
-
-        if (Schema::hasTable('armadas')) {
-            if ($armadaId > 0) {
-                $armadaQuery = DB::table('armadas')->where('id', $armadaId);
-                if (Schema::hasColumn('armadas', 'tenant_id')) {
-                    PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
-                }
-                $this->applyPoolScopeIfExists($armadaQuery, 'armadas', '', $targetPoolId > 0 ? $targetPoolId : null);
-                $armada = $armadaQuery->first(['id', 'nopol', Schema::hasColumn('armadas', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id')]);
-                if (! $armada) {
-                    return $this->error('Nopol armada tidak ditemukan.', 422);
-                }
-                $armadaNopol = strtoupper(trim((string) ($armada->nopol ?? '')));
-            } elseif ($requestedArmadaNopol !== '') {
-                $armadaQuery = DB::table('armadas')
-                    ->whereRaw('UPPER(nopol) = ?', [$requestedArmadaNopol]);
-                if (Schema::hasColumn('armadas', 'tenant_id')) {
-                    PoolScope::applyTenantScope($armadaQuery, 'tenant_id');
-                }
-                $this->applyPoolScopeIfExists($armadaQuery, 'armadas', '', $targetPoolId > 0 ? $targetPoolId : null);
-                $armada = $armadaQuery->first(['id', 'nopol', Schema::hasColumn('armadas', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id')]);
-
-                if (! $armada) {
-                    return $this->error('Nopol armada tidak ditemukan.', 422);
-                }
-
-                $armadaId = (int) $armada->id;
-                $armadaNopol = strtoupper(trim((string) ($armada->nopol ?? '')));
-            }
-        }
+        $driverCategory = $this->normalizeUnitCategory($data['kategori'] ?? $data['category'] ?? null);
 
         $payload = [
             'nama' => strtoupper(trim((string) $data['nama'])),
             'phone' => $this->nullable($data['phone'] ?? null),
         ];
+
+        if ($this->driversHasKategoriColumn()) {
+            $payload['kategori'] = $driverCategory;
+        }
 
         if ($this->hasDriversTargetRevenueBulananColumn()) {
             $payload['target_revenue_bulanan'] = (float) ($data['target_revenue_bulanan'] ?? 0);
@@ -821,15 +797,16 @@ class AdminOpsApiController extends Controller
             $payload['target_revenue_tahunan'] = (float) ($data['target_revenue_tahunan'] ?? 0);
         }
 
-        if ($this->driversHasArmadaId()) {
+        if (Schema::hasColumn('drivers', 'unit_id')) {
             $payload['unit_id'] = null;
-            $payload['armada_id'] = $armadaId > 0 ? $armadaId : null;
-        } else {
-            $payload['unit_id'] = isset($data['unit_id']) ? (int) $data['unit_id'] : null;
+        }
+
+        if ($this->driversHasArmadaId()) {
+            $payload['armada_id'] = null;
         }
 
         if ($this->driversHasArmadaNopol()) {
-            $payload['armada_nopol'] = $armadaNopol ?: null;
+            $payload['armada_nopol'] = null;
         }
 
         if ($this->hasDriversRevenueColumn()) {
@@ -7367,6 +7344,7 @@ class AdminOpsApiController extends Controller
     {
         $hasDriverArmadaId = $this->driversHasArmadaId();
         $hasDriverArmadaNopol = $this->driversHasArmadaNopol();
+        $hasDriverKategori = $this->driversHasKategoriColumn();
         $canJoinArmadas = $hasDriverArmadaId && Schema::hasTable('armadas');
 
         $select = [
@@ -7391,6 +7369,15 @@ class AdminOpsApiController extends Controller
             $select[] = DB::raw('a.nopol as nopol');
         } else {
             $select[] = DB::raw('NULL as nopol');
+        }
+        if ($hasDriverKategori && $canJoinArmadas) {
+            $select[] = DB::raw('COALESCE(d.kategori, a.kategori) as category');
+        } elseif ($hasDriverKategori) {
+            $select[] = DB::raw('d.kategori as category');
+        } elseif ($canJoinArmadas) {
+            $select[] = DB::raw('a.kategori as category');
+        } else {
+            $select[] = DB::raw('NULL as category');
         }
 
         $rows = DB::table('drivers as d')
@@ -7577,6 +7564,7 @@ class AdminOpsApiController extends Controller
             $payload['target_revenue_bulanan'] = (float) ($payload['target_revenue_bulanan'] ?? 0);
             $payload['fixed_cost'] = (float) ($payload['fixed_cost'] ?? 0);
             $payload['nopol'] = (string) ($payload['nopol'] ?? '');
+            $payload['category'] = $this->normalizeUnitCategory($payload['category'] ?? null);
             $payload['departure_count'] = (int) ($departureCountByDriver[$driverId] ?? 0);
             $payload['luggage_revenue'] = $luggageRevenue;
             $payload['departure_revenue'] = $departureRevenue;
@@ -7631,7 +7619,7 @@ class AdminOpsApiController extends Controller
         $headers = [
             'Nama Driver',
             'Kontak',
-            'Nopol Armada',
+            'Kategori Driver',
             'Pool/Wilayah',
             'Keberangkatan Rit',
             'Charter Revenue',
@@ -7920,7 +7908,7 @@ XML;
             : [
                 'Nama Driver',
                 'Kontak',
-                'Nopol Armada',
+                'Kategori Driver',
                 'Pool/Wilayah',
             ];
         foreach (array_values($headers) as $index => $header) {
@@ -9547,6 +9535,15 @@ XML;
         }
 
         return $this->driversHasArmadaNopol;
+    }
+
+    private function driversHasKategoriColumn(): bool
+    {
+        if ($this->driversHasKategoriColumn === null) {
+            $this->driversHasKategoriColumn = Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'kategori');
+        }
+
+        return $this->driversHasKategoriColumn;
     }
 
     /**

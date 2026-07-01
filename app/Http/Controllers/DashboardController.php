@@ -1715,7 +1715,14 @@ class DashboardController extends Controller
 
         $monthStart = $today->copy()->startOfMonth()->toDateString();
         $monthEnd = $today->copy()->endOfMonth()->toDateString();
+        $hasDriverCategory = Schema::hasColumn('drivers', 'kategori');
         $canJoinArmadas = Schema::hasColumn('drivers', 'armada_id') && Schema::hasTable('armadas');
+        $driverCategorySelect = match (true) {
+            $hasDriverCategory && $canJoinArmadas => DB::raw('COALESCE(d.kategori, a.kategori) as category'),
+            $hasDriverCategory => DB::raw('d.kategori as category'),
+            $canJoinArmadas => DB::raw('a.kategori as category'),
+            default => DB::raw('NULL as category'),
+        };
 
         try {
             $driverRows = DB::table('drivers as d')
@@ -1731,7 +1738,7 @@ class DashboardController extends Controller
                 ->get([
                     'd.id',
                     'd.nama',
-                    $canJoinArmadas ? DB::raw('a.kategori as category') : DB::raw('NULL as category'),
+                    $driverCategorySelect,
                 ]);
         } catch (\Throwable) {
             return ['Minibus' => [], 'Mediumbus' => [], 'Bigbus' => []];
@@ -1800,9 +1807,11 @@ class DashboardController extends Controller
                 $drivers[$driverId]['revenue'] += (float) ($bookingRevenueByTrip[$tripKey] ?? 0);
                 $drivers[$driverId]['route'] ??= (string) ($assignment->rute ?? '');
 
-                $category = $this->normalizeBusCategory((string) ($assignment->category ?? ''));
-                if ($category !== 'Minibus' || $drivers[$driverId]['category'] === 'Minibus') {
-                    $drivers[$driverId]['category'] = $category;
+                if (! $hasDriverCategory) {
+                    $category = $this->normalizeBusCategory((string) ($assignment->category ?? ''));
+                    if ($category !== 'Minibus' || $drivers[$driverId]['category'] === 'Minibus') {
+                        $drivers[$driverId]['category'] = $category;
+                    }
                 }
             }
         }

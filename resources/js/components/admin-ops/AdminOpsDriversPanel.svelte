@@ -32,6 +32,7 @@
         nama: string;
         phone: string | null;
         nopol: string | null;
+        category: string | null;
         pool_name?: string | null;
         departure_count?: number;
         charter_revenue: number;
@@ -182,7 +183,9 @@
         return `${from}-${to} dari ${total}`;
     };
     const driverStatusTone = (status: string) => {
-        const normalized = String(status ?? '').trim().toLowerCase();
+        const normalized = String(status ?? '')
+            .trim()
+            .toLowerCase();
 
         if (
             normalized === 'tercapai' ||
@@ -256,7 +259,9 @@
             {
                 key: 'target',
                 label: 'Target Bulanan',
-                valueText: formatCurrency(Number(driver.target_revenue_bulanan || 0)),
+                valueText: formatCurrency(
+                    Number(driver.target_revenue_bulanan || 0),
+                ),
                 note: 'Target yang digunakan untuk achievement',
                 tone: 'text-slate-700 dark:text-slate-300',
             },
@@ -290,14 +295,56 @@
     };
     const driverTableColumns = [
         { key: 'driver', label: 'Driver', width: 'w-[180px]', sticky: 'left' },
-        { key: 'unit', label: 'Unit', width: 'w-[150px]' },
-        { key: 'target', label: 'Target', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'revenue', label: 'Revenue', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'bop', label: 'BOP', align: 'right', numeric: true, width: 'w-[110px]' },
-        { key: 'gross', label: 'Gross', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'fixed_cost', label: 'Fixed Cost', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'net', label: 'Net Margin', align: 'right', numeric: true, width: 'w-[120px]' },
-        { key: 'achievement', label: 'Achievement', align: 'right', numeric: true, width: 'w-[100px]' },
+        { key: 'category', label: 'Kategori', width: 'w-[150px]' },
+        {
+            key: 'target',
+            label: 'Target',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'revenue',
+            label: 'Revenue',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'bop',
+            label: 'BOP',
+            align: 'right',
+            numeric: true,
+            width: 'w-[110px]',
+        },
+        {
+            key: 'gross',
+            label: 'Gross',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'fixed_cost',
+            label: 'Fixed Cost',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'net',
+            label: 'Net Margin',
+            align: 'right',
+            numeric: true,
+            width: 'w-[120px]',
+        },
+        {
+            key: 'achievement',
+            label: 'Achievement',
+            align: 'right',
+            numeric: true,
+            width: 'w-[100px]',
+        },
         { key: 'status', label: 'Status', align: 'center', width: 'w-[100px]' },
     ];
 </script>
@@ -310,18 +357,22 @@
         {@const achievement = driverAchievement(driver)}
         {@const status = driverStatus(driver)}
         {@const detailCards = driverDetailCards(driver)}
-        <div class="space-y-4 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-sm">
+        <div
+            class="space-y-4 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-sm"
+        >
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0 space-y-2">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h3 class="truncate text-lg font-bold tracking-tight text-foreground">
+                        <h3
+                            class="truncate text-lg font-bold tracking-tight text-foreground"
+                        >
                             {driver.nama}
                         </h3>
                         <Badge
                             variant="secondary"
                             class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
                         >
-                            {driver.nopol || '-'}
+                            {driver.category || '-'}
                         </Badge>
                         <Badge
                             variant="outline"
@@ -337,7 +388,8 @@
                         </Badge>
                     </div>
                     <p class="text-sm text-muted-foreground">
-                        {driver.phone || '-'} · {driver.pool_name || 'Semua Pool'} · Unit {driver.unit_id ?? '-'} · Armada {driver.armada_id ?? '-'}
+                        {driver.phone || '-'} · {driver.pool_name ||
+                            'Semua Pool'} · {driver.category || '-'}
                     </p>
                 </div>
 
@@ -365,11 +417,17 @@
 
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {#each detailCards as card (card.key)}
-                    <article class="rounded-xl border border-border/70 bg-card/95 p-3 shadow-sm">
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    <article
+                        class="rounded-xl border border-border/70 bg-card/95 p-3 shadow-sm"
+                    >
+                        <p
+                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                        >
                             {card.label}
                         </p>
-                        <p class={`mt-2 text-xl font-bold tabular-nums ${card.tone}`}>
+                        <p
+                            class={`mt-2 text-xl font-bold tabular-nums ${card.tone}`}
+                        >
                             {card.valueText}
                         </p>
                         <p class="mt-1 text-[11px] text-muted-foreground">
@@ -379,14 +437,22 @@
                 {/each}
             </div>
 
-            <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-                <section class="rounded-xl border border-border/70 bg-card/95 p-4 shadow-sm">
+            <div
+                class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]"
+            >
+                <section
+                    class="rounded-xl border border-border/70 bg-card/95 p-4 shadow-sm"
+                >
                     <div class="flex items-center justify-between gap-3">
                         <div>
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            >
                                 Identitas Driver
                             </p>
-                            <h4 class="mt-1 text-sm font-semibold text-foreground">
+                            <h4
+                                class="mt-1 text-sm font-semibold text-foreground"
+                            >
                                 Informasi utama dan penugasan
                             </h4>
                         </div>
@@ -399,57 +465,95 @@
                     </div>
 
                     <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                        <div class="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div
+                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                            >
                                 Kontak
                             </p>
-                            <p class="mt-1 text-sm font-semibold text-foreground">
+                            <p
+                                class="mt-1 text-sm font-semibold text-foreground"
+                            >
                                 {driver.phone || '-'}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                Nopol
+                        <div
+                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                            >
+                                Kategori
                             </p>
-                            <p class="mt-1 text-sm font-semibold text-foreground">
-                                {driver.nopol || '-'}
+                            <p
+                                class="mt-1 text-sm font-semibold text-foreground"
+                            >
+                                {driver.category || '-'}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div
+                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                            >
                                 Pool
                             </p>
-                            <p class="mt-1 text-sm font-semibold text-foreground">
+                            <p
+                                class="mt-1 text-sm font-semibold text-foreground"
+                            >
                                 {driver.pool_name || 'Semua Pool'}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div
+                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                            >
                                 Trip / Rit
                             </p>
-                            <p class="mt-1 text-sm font-semibold text-foreground">
+                            <p
+                                class="mt-1 text-sm font-semibold text-foreground"
+                            >
                                 {Number(driver.departure_count || 0)}
                             </p>
                         </div>
                     </div>
 
-                    <div class="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3">
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div
+                        class="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3"
+                    >
+                        <p
+                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        >
                             Ringkasan Finansial
                         </p>
                         <p class="mt-1 text-sm text-foreground">
-                            Revenue {formatCurrency(Number(driver.revenue || 0))} · Gross {formatCurrency(gross)} · Net {formatCurrency(net)}
+                            Revenue {formatCurrency(
+                                Number(driver.revenue || 0),
+                            )} · Gross {formatCurrency(gross)} · Net {formatCurrency(
+                                net,
+                            )}
                         </p>
                     </div>
                 </section>
 
-                <section class="rounded-xl border border-border/70 bg-card/95 p-4 shadow-sm">
+                <section
+                    class="rounded-xl border border-border/70 bg-card/95 p-4 shadow-sm"
+                >
                     <div class="flex items-center justify-between gap-3">
                         <div>
-                            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            >
                                 Komposisi Revenue
                             </p>
-                            <h4 class="mt-1 text-sm font-semibold text-foreground">
+                            <h4
+                                class="mt-1 text-sm font-semibold text-foreground"
+                            >
                                 Detail sumber pendapatan
                             </h4>
                         </div>
@@ -457,44 +561,80 @@
                             variant="secondary"
                             class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
                         >
-                            Target {formatCurrency(Number(driver.target_revenue_bulanan || 0))}
+                            Target {formatCurrency(
+                                Number(driver.target_revenue_bulanan || 0),
+                            )}
                         </Badge>
                     </div>
 
                     <div class="mt-4 space-y-3">
-                        <div class="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div
+                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-2"
+                            >
+                                <span
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                >
                                     Charter Revenue
                                 </span>
-                                <span class="font-semibold tabular-nums text-foreground">
-                                    {formatCurrency(Number(driver.charter_revenue || 0))}
+                                <span
+                                    class="font-semibold tabular-nums text-foreground"
+                                >
+                                    {formatCurrency(
+                                        Number(driver.charter_revenue || 0),
+                                    )}
                                 </span>
                             </div>
                             <p class="mt-1 text-xs text-muted-foreground">
-                                Charter BOP {formatCurrency(Number(driver.charter_bop || 0))}
+                                Charter BOP {formatCurrency(
+                                    Number(driver.charter_bop || 0),
+                                )}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div
+                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-2"
+                            >
+                                <span
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                >
                                     Keberangkatan Revenue
                                 </span>
-                                <span class="font-semibold tabular-nums text-foreground">
-                                    {formatCurrency(Number(driver.departure_revenue || 0))}
+                                <span
+                                    class="font-semibold tabular-nums text-foreground"
+                                >
+                                    {formatCurrency(
+                                        Number(driver.departure_revenue || 0),
+                                    )}
                                 </span>
                             </div>
                             <p class="mt-1 text-xs text-muted-foreground">
-                                Keberangkatan BOP {formatCurrency(Number(driver.departure_bop || 0))}
+                                Keberangkatan BOP {formatCurrency(
+                                    Number(driver.departure_bop || 0),
+                                )}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/60 bg-muted/20 p-3">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div
+                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-2"
+                            >
+                                <span
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                >
                                     Bagasi Revenue
                                 </span>
-                                <span class="font-semibold tabular-nums text-foreground">
-                                    {formatCurrency(Number(driver.luggage_revenue || 0))}
+                                <span
+                                    class="font-semibold tabular-nums text-foreground"
+                                >
+                                    {formatCurrency(
+                                        Number(driver.luggage_revenue || 0),
+                                    )}
                                 </span>
                             </div>
                             <p class="mt-1 text-xs text-muted-foreground">
@@ -506,11 +646,18 @@
             </div>
         </div>
     {:else}
-        <div class="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+        <div
+            class="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground"
+        >
             Data driver tidak ditemukan.
         </div>
         <div class="pt-3">
-            <Button type="button" variant="outline" class="h-9 rounded-md" onclick={goBackToData}>
+            <Button
+                type="button"
+                variant="outline"
+                class="h-9 rounded-md"
+                onclick={goBackToData}
+            >
                 Kembali
             </Button>
         </div>
@@ -527,11 +674,13 @@
         density="compact"
     >
         {#snippet controls()}
-            <div class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_auto]">
+            <div
+                class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_auto]"
+            >
                 <div class="min-w-0">
                     <TerminalFilter
                         bind:query={driverSearch}
-                        placeholder="Cari nama, kontak, atau nopol"
+                        placeholder="Cari nama, kontak, atau kategori"
                         class="min-w-0"
                         on:search={() => void loadDrivers(1)}
                     />
@@ -562,7 +711,9 @@
         {#snippet table()}
             <div class="grid gap-3 md:hidden">
                 {#if drivers.length === 0}
-                    <div class="col-span-full rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+                    <div
+                        class="col-span-full rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground"
+                    >
                         Belum ada driver untuk filter yang dipilih.
                     </div>
                 {/if}
@@ -573,62 +724,109 @@
                     {@const achievement = driverAchievement(row)}
                     {@const status = driverStatus(row)}
                     {@const tone = achievementTone(achievement)}
-                    <article class="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300/70 hover:shadow-md">
+                    <article
+                        class="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300/70 hover:shadow-md"
+                    >
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
-                                <p class="truncate text-lg font-bold tracking-tight text-foreground">{row.nama}</p>
-                                <p class="mt-1 truncate text-xs text-muted-foreground">
-                                    {row.phone ?? '-'} | {row.nopol ?? '-'}
+                                <p
+                                    class="truncate text-lg font-bold tracking-tight text-foreground"
+                                >
+                                    {row.nama}
+                                </p>
+                                <p
+                                    class="mt-1 truncate text-xs text-muted-foreground"
+                                >
+                                    {row.phone ?? '-'} | {row.category ?? '-'}
                                 </p>
                             </div>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
-                                    <MoreHorizontal class="h-4 w-4" />
-                                    <span class="sr-only">Aksi driver</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                <DropdownMenuItem onclick={() => openDriverView(row)}>
-                                    <Eye class="mr-2 h-3.5 w-3.5" />
-                                    Lihat Detail
-                                </DropdownMenuItem>
-                                {#if canManage}
-                                    <DropdownMenuItem onclick={() => editDriver(row)}>
-                                        <Pencil class="mr-2 h-3.5 w-3.5" />
-                                        Edit
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        class="h-8 w-8 rounded-full border border-border/70"
+                                    >
+                                        <MoreHorizontal class="h-4 w-4" />
+                                        <span class="sr-only">Aksi driver</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    sideOffset={8}
+                                    class="z-[120] w-44"
+                                >
+                                    <DropdownMenuItem
+                                        onclick={() => openDriverView(row)}
+                                    >
+                                        <Eye class="mr-2 h-3.5 w-3.5" />
+                                        Lihat Detail
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onclick={() => void removeDriver(row.id)}>
-                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                        Hapus
-                                    </DropdownMenuItem>
-                                {/if}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    {#if canManage}
+                                        <DropdownMenuItem
+                                            onclick={() => editDriver(row)}
+                                        >
+                                            <Pencil class="mr-2 h-3.5 w-3.5" />
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onclick={() =>
+                                                void removeDriver(row.id)}
+                                        >
+                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                            Hapus
+                                        </DropdownMenuItem>
+                                    {/if}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
 
-                        <div class="mt-4 rounded-lg border border-border/70 bg-muted/30 p-4">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div
+                            class="mt-4 rounded-lg border border-border/70 bg-muted/30 p-4"
+                        >
+                            <div
+                                class="flex flex-wrap items-center justify-between gap-2"
+                            >
                                 <div>
-                                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Net Margin</p>
-                                    <p class={`mt-2 text-2xl font-bold tabular-nums ${net >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>
+                                    <p
+                                        class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                    >
+                                        Net Margin
+                                    </p>
+                                    <p
+                                        class={`mt-2 text-2xl font-bold tabular-nums ${net >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}
+                                    >
                                         {formatCurrency(net)}
                                     </p>
                                 </div>
-                                <Badge variant="outline" class="rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wide">
-                                    Target {formatCurrency(Number(row.target_revenue_bulanan || 0))}
+                                <Badge
+                                    variant="outline"
+                                    class="rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wide"
+                                >
+                                    Target {formatCurrency(
+                                        Number(row.target_revenue_bulanan || 0),
+                                    )}
                                 </Badge>
                             </div>
                             <p class="mt-2 text-xs text-muted-foreground">
-                                Gross: {formatCurrency(gross)} | BOP: {formatCurrency(Number(row.bop || 0))}
+                                Gross: {formatCurrency(gross)} | BOP: {formatCurrency(
+                                    Number(row.bop || 0),
+                                )}
                             </p>
                         </div>
 
                         <div class="mt-4 space-y-2">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-semibold text-foreground">Achievement Target</span>
-                                <span class={`font-semibold tabular-nums ${tone.text}`}>
+                            <div
+                                class="flex items-center justify-between text-xs"
+                            >
+                                <span class="font-semibold text-foreground"
+                                    >Achievement Target</span
+                                >
+                                <span
+                                    class={`font-semibold tabular-nums ${tone.text}`}
+                                >
                                     {achievement.toFixed(1)}%
                                 </span>
                             </div>
@@ -638,13 +836,19 @@
                                     style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
                                 ></div>
                             </div>
-                            <div class="flex items-center justify-between gap-2">
-                                <p class="text-[11px] text-muted-foreground">{tone.label}</p>
-                                <span class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                                    status === 'Tercapai'
-                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
-                                        : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
-                                }`}>
+                            <div
+                                class="flex items-center justify-between gap-2"
+                            >
+                                <p class="text-[11px] text-muted-foreground">
+                                    {tone.label}
+                                </p>
+                                <span
+                                    class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                        status === 'Tercapai'
+                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
+                                            : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
+                                    }`}
+                                >
                                     {status}
                                 </span>
                             </div>
@@ -654,7 +858,11 @@
             </div>
 
             <div class="hidden md:block">
-                <DataTable columns={driverTableColumns} rows={drivers} density="compact">
+                <DataTable
+                    columns={driverTableColumns}
+                    rows={drivers}
+                    density="compact"
+                >
                     {#snippet row({ row })}
                         {@const driver = row as DriverRow}
                         {@const gross = driverGrossMargin(driver)}
@@ -664,29 +872,66 @@
                         {@const tone = achievementTone(achievement)}
 
                         <td class="px-2.5 py-1.5 align-top">
-                            <div class="truncate text-[11px] font-semibold leading-4 text-foreground">{driver.nama}</div>
-                            <div class="mt-0.5 truncate text-[10px] text-muted-foreground">{driver.phone ?? '-'}</div>
+                            <div
+                                class="truncate text-[11px] font-semibold leading-4 text-foreground"
+                            >
+                                {driver.nama}
+                            </div>
+                            <div
+                                class="mt-0.5 truncate text-[10px] text-muted-foreground"
+                            >
+                                {driver.phone ?? '-'}
+                            </div>
                         </td>
 
                         <td class="px-2.5 py-1.5 align-top">
-                            <div class="truncate font-medium text-foreground">{driver.nopol ?? '-'}</div>
+                            <div class="truncate font-medium text-foreground">
+                                {driver.category ?? '-'}
+                            </div>
                         </td>
 
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-slate-700 dark:text-slate-300">{formatCurrency(Number(driver.target_revenue_bulanan || 0))}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{formatCurrency(Number(driver.revenue || 0))}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300">{formatCurrency(Number(driver.bop || 0))}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(gross)}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{formatCurrency(Number(driver.fixed_cost || 0))}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums">{formatCurrency(net)}</td>
-                        <td class="px-2.5 py-1.5 text-right text-[10px] tabular-nums">{achievement.toFixed(1)}%</td>
+                        <td
+                            class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-slate-700 dark:text-slate-300"
+                            >{formatCurrency(
+                                Number(driver.target_revenue_bulanan || 0),
+                            )}</td
+                        >
+                        <td
+                            class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300"
+                            >{formatCurrency(Number(driver.revenue || 0))}</td
+                        >
+                        <td
+                            class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums text-amber-700 dark:text-amber-300"
+                            >{formatCurrency(Number(driver.bop || 0))}</td
+                        >
+                        <td
+                            class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums"
+                            >{formatCurrency(gross)}</td
+                        >
+                        <td
+                            class="px-2.5 py-1.5 text-right text-[10px] tabular-nums"
+                            >{formatCurrency(
+                                Number(driver.fixed_cost || 0),
+                            )}</td
+                        >
+                        <td
+                            class="px-2.5 py-1.5 text-right text-[10px] font-semibold tabular-nums"
+                            >{formatCurrency(net)}</td
+                        >
+                        <td
+                            class="px-2.5 py-1.5 text-right text-[10px] tabular-nums"
+                            >{achievement.toFixed(1)}%</td
+                        >
                         <td class="px-2.5 py-1.5 text-center">
-                            <span class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${
-                                status === 'Tercapai'
-                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
-                                    : tone.label === 'Aman/Menuju Target'
-                                      ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
-                                      : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/35 dark:text-rose-300'
-                            }`}>
+                            <span
+                                class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${
+                                    status === 'Tercapai'
+                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300'
+                                        : tone.label === 'Aman/Menuju Target'
+                                          ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-300'
+                                          : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/35 dark:text-rose-300'
+                                }`}
+                            >
                                 {status}
                             </span>
                         </td>
@@ -696,22 +941,38 @@
                         {@const driver = row as DriverRow}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" class="h-8 w-8 rounded-full border border-border/70">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-8 w-8 rounded-full border border-border/70"
+                                >
                                     <MoreHorizontal class="h-4 w-4" />
                                     <span class="sr-only">Aksi driver</span>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
-                                <DropdownMenuItem onclick={() => openDriverView(driver)}>
+                            <DropdownMenuContent
+                                align="end"
+                                sideOffset={8}
+                                class="z-[120] w-44"
+                            >
+                                <DropdownMenuItem
+                                    onclick={() => openDriverView(driver)}
+                                >
                                     <Eye class="mr-2 h-3.5 w-3.5" />
                                     Lihat Detail
                                 </DropdownMenuItem>
                                 {#if canManage}
-                                    <DropdownMenuItem onclick={() => editDriver(driver)}>
+                                    <DropdownMenuItem
+                                        onclick={() => editDriver(driver)}
+                                    >
                                         <Pencil class="mr-2 h-3.5 w-3.5" />
                                         Edit
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onclick={() => void removeDriver(driver.id)}>
+                                    <DropdownMenuItem
+                                        onclick={() =>
+                                            void removeDriver(driver.id)}
+                                    >
                                         <Trash2 class="mr-2 h-3.5 w-3.5" />
                                         Hapus
                                     </DropdownMenuItem>
@@ -723,7 +984,9 @@
             </div>
 
             {#if driverMeta.last_page > 1}
-                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-3">
+                <div
+                    class="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-3"
+                >
                     <p class="text-xs text-muted-foreground">
                         Halaman {driverMeta.page} dari {driverMeta.last_page}
                     </p>
