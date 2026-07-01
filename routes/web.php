@@ -50,7 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'subscription.active'])->group(function () {
     Route::patch('api/user/ui-preferences', [UserPreferenceController::class, 'update'])->name('user.ui_preferences.update');
     Route::get('dashboard', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
-    Route::get('menu', fn () => redirect()->route('dashboard'))->name('menu.index');
+    Route::get('menu', fn () => \Inertia\Inertia::render('Menu'))->name('menu.index');
     Route::get('bookings', BookingController::class)->middleware('permission:booking.view')->name('bookings.index');
     Route::get('bookings/detail/{groupKey}', BookingController::class)->middleware('permission:booking.view')->name('bookings.detail');
     Route::get('bookings/manifest/{groupKey}/print', [BookingController::class, 'printManifest'])->middleware('permission:booking.print')->middleware('feature:booking.manifest')->name('bookings.manifest.print');
