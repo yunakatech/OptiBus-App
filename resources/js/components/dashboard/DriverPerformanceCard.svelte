@@ -9,26 +9,28 @@
 
     let {
         categories = {
-            'Minibus': [],
-            'Mediumbus': [],
-            'Bigbus': []
+            Minibus: [],
+            Mediumbus: [],
+            Bigbus: [],
         },
         toCurrency,
-        period = 'Bulan Ini',
     }: {
         categories: Record<string, DriverItem[]>;
         toCurrency: (val: number) => string;
-        period?: string;
     } = $props();
 
     let selectedCategory = $state('Minibus');
-    let currentDrivers = $derived(categories[selectedCategory] || []);
-
-    const maxRevenue = $derived(
-        currentDrivers.length > 0 ? Math.max(...currentDrivers.map((d) => d.revenue)) : 1,
+    let currentDrivers = $derived(
+        [...(categories[selectedCategory] || [])].sort(
+            (left, right) => right.revenue - left.revenue,
+        ),
     );
 
-    const medalColors = ['#f59e0b', '#94a3b8', '#b45309']; // gold, silver, bronze
+    const maxRevenue = $derived(
+        currentDrivers.length > 0
+            ? Math.max(...currentDrivers.map((d) => d.revenue))
+            : 1,
+    );
     const medalLabel = ['🥇', '🥈', '🥉'];
 </script>
 
@@ -44,7 +46,7 @@
                 >
             </p>
             <p class="mt-0.5 text-[10px] text-slate-500 sm:text-[11px]">
-                Berdasarkan jumlah trip & revenue — {period}
+                Diurutkan dari total revenue bulan berjalan
             </p>
         </div>
         <a
@@ -59,7 +61,7 @@
         {#each Object.keys(categories) as cat}
             <button
                 class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === cat ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                onclick={() => selectedCategory = cat}
+                onclick={() => (selectedCategory = cat)}
             >
                 {cat}
             </button>
@@ -74,10 +76,13 @@
         </div>
     {:else}
         <div class="space-y-2">
-            {#each currentDrivers as driver, i (driver.rank)}
+            {#each currentDrivers as driver, i (`${driver.name}-${driver.route ?? 'route'}-${i}`)}
                 {@const barWidth =
                     maxRevenue > 0
-                        ? Math.max(6, Math.round((driver.revenue / maxRevenue) * 100))
+                        ? Math.max(
+                              6,
+                              Math.round((driver.revenue / maxRevenue) * 100),
+                          )
                         : 6}
                 {@const isMedal = i < 3}
                 <div
@@ -93,10 +98,11 @@
                                 {#if isMedal}
                                     {medalLabel[i]}
                                 {:else}
-                            <span
+                                    <span
                                         class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-[9px] font-bold text-slate-500"
-                                        >{driver.rank}</span
                                     >
+                                        {i + 1}
+                                    </span>
                                 {/if}
                             </span>
                             <p

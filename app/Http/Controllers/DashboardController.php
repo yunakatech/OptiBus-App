@@ -1783,13 +1783,17 @@ class DashboardController extends Controller
             $categories[$cat][] = $driver;
         }
 
-        foreach ($categories as &$list) {
+        foreach ($categories as $category => $list) {
+            usort($list, static fn (array $left, array $right): int => $right['revenue'] <=> $left['revenue']);
             $list = array_slice($list, 0, 5);
+
             foreach ($list as $index => &$d) {
                 $d['rank'] = $index + 1;
             }
+            unset($d);
+
+            $categories[$category] = $list;
         }
-        unset($list);
 
         return $categories;
     }
