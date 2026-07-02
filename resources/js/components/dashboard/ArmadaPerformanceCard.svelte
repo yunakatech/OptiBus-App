@@ -8,22 +8,53 @@
         category?: string | null;
     };
 
+    const categoryOptions = ['Minibus', 'Mediumbus', 'Bigbus'] as const;
+    type ArmadaCategory = (typeof categoryOptions)[number];
+
     let {
-        items = [],
+        categories = {
+            Minibus: [],
+            Mediumbus: [],
+            Bigbus: [],
+        },
         toCurrency,
     }: {
-        items: ArmadaItem[];
+        categories: Record<string, ArmadaItem[]>;
         toCurrency: (val: number) => string;
     } = $props();
 
-    const visibleItems = $derived(
-        [...items]
-            .sort((left, right) => right.revenue - left.revenue)
-            .slice(0, 5),
+    const normalizeCategory = (
+        value: string | null | undefined,
+    ): ArmadaCategory => {
+        const normalized = String(value ?? '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '');
+
+        if (normalized === 'mediumbus') {
+            return 'Mediumbus';
+        }
+
+        if (normalized === 'bigbus' || normalized === 'bigbun') {
+            return 'Bigbus';
+        }
+
+        return 'Minibus';
+    };
+
+    let selectedCategory = $state<ArmadaCategory>('Minibus');
+    let currentArmadas = $derived(
+        [...(categories[selectedCategory] ?? [])]
+            .map((item) => ({
+                ...item,
+                category: normalizeCategory(item.category),
+            }))
+            .sort((left, right) => right.revenue - left.revenue),
     );
+
     const maxRevenue = $derived(
-        visibleItems.length > 0
-            ? Math.max(...visibleItems.map((item) => item.revenue), 1)
+        currentArmadas.length > 0
+            ? Math.max(...currentArmadas.map((item) => item.revenue), 1)
             : 1,
     );
 </script>
@@ -45,11 +76,22 @@
         <span
             class="shrink-0 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500"
         >
-            {visibleItems.length} unit
+            {currentArmadas.length} unit
         </span>
     </div>
 
-    {#if visibleItems.length === 0}
+    <div class="mb-3 flex rounded-lg bg-slate-50 p-1">
+        {#each categoryOptions as category (category)}
+            <button
+                class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === category ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                onclick={() => (selectedCategory = category)}
+            >
+                {category}
+            </button>
+        {/each}
+    </div>
+
+    {#if currentArmadas.length === 0}
         <div
             class="flex h-20 items-center justify-center rounded-xl border border-dashed border-gray-200 text-[11px] text-slate-400"
         >
@@ -57,7 +99,7 @@
         </div>
     {:else}
         <div class="space-y-2">
-            {#each visibleItems as item, index (item.nopol)}
+            {#each currentArmadas as item, index (item.nopol)}
                 {@const barWidth =
                     maxRevenue > 0
                         ? Math.max(
@@ -87,7 +129,7 @@
                             >
                                 {item.pool_name || 'Semua Pool'}
                                 {#if item.category}
-                                    · {item.category}
+                                    - {item.category}
                                 {/if}
                             </p>
                         </div>

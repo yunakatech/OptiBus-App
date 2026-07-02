@@ -31,6 +31,7 @@
         items: [],
     });
     let dismissedTooltipKey = $state('');
+    let activeTooltipSignature = $state('');
 
     $effect(() => {
         if (!chartCanvas || monthlyTrend.length === 0) return;
@@ -142,6 +143,7 @@
                                 if (tooltip.opacity === 0) {
                                     tooltipData.visible = false;
                                     dismissedTooltipKey = '';
+                                    activeTooltipSignature = '';
                                     return;
                                 }
 
@@ -167,6 +169,25 @@
 
                                 if (left < width * 0.2) align = 'left';
                                 else if (left > width * 0.8) align = 'right';
+
+                                const nextSignature = [
+                                    key,
+                                    align,
+                                    ...tooltip.dataPoints.flatMap((point) => [
+                                        String(point.dataset.label ?? ''),
+                                        String(point.dataIndex ?? 0),
+                                        Number(point.raw ?? 0).toString(),
+                                    ]),
+                                ].join('|');
+
+                                if (
+                                    activeTooltipSignature === nextSignature &&
+                                    tooltipData.visible
+                                ) {
+                                    return;
+                                }
+
+                                activeTooltipSignature = nextSignature;
 
                                 tooltipData = {
                                     visible: true,
@@ -218,6 +239,7 @@
         }
 
         dismissedTooltipKey = tooltipData.key;
+        activeTooltipSignature = '';
         tooltipData.visible = false;
     };
 </script>
@@ -266,7 +288,7 @@
         <div class="relative w-full" style="height: 250px;">
             {#if tooltipData.visible}
                 <div
-                    class={`pointer-events-auto absolute z-20 w-[min(92vw,260px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition ${tooltipTranslateClass}`}
+                    class={`pointer-events-none absolute z-20 w-[min(92vw,260px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition ${tooltipTranslateClass}`}
                     style="left: {tooltipData.x}px; top: {tooltipData.y -
                         10}px;"
                 >
@@ -276,7 +298,7 @@
                         </p>
                         <button
                             type="button"
-                            class="rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
+                            class="pointer-events-auto rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
                             aria-label="Tutup tooltip"
                             onclick={closeTooltip}
                         >

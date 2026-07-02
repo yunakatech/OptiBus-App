@@ -148,6 +148,7 @@
         pool_name?: string | null;
         category?: string | null;
     };
+    type ArmadaPerformanceCategories = Record<string, ArmadaPerformanceItem[]>;
 
     type PoolOption = {
         id: number;
@@ -171,7 +172,11 @@
             string,
             any[]
         >,
-        topArmadas = [] as ArmadaPerformanceItem[],
+        topArmadas = {
+            Minibus: [],
+            Mediumbus: [],
+            Bigbus: [],
+        } as ArmadaPerformanceCategories,
         summaryStatsByScope = {
             day: {
                 total_bookings: 0,
@@ -284,7 +289,7 @@
         recentActivityTotal?: number;
         recentActivityVisibleCount?: number;
         topDrivers?: Record<string, any[]>;
-        topArmadas?: ArmadaPerformanceItem[];
+        topArmadas?: ArmadaPerformanceCategories;
         summaryStatsByScope?: Record<
             'day' | 'month' | 'year',
             SummaryScopeStats
@@ -756,7 +761,7 @@
                 <!-- Driver Performance Card -->
                 <DriverPerformanceCard categories={topDrivers} {toCurrency} />
 
-                <ArmadaPerformanceCard items={topArmadas} {toCurrency} />
+                <ArmadaPerformanceCard categories={topArmadas} {toCurrency} />
             </div>
 
             <div class="space-y-2.5 xl:col-span-1">

@@ -1871,7 +1871,7 @@ class DashboardController extends Controller
     private function topArmadasByRevenue(Carbon $today): array
     {
         if (! Schema::hasTable('armadas')) {
-            return [];
+            return ['Minibus' => [], 'Mediumbus' => [], 'Bigbus' => []];
         }
 
         $monthStart = $today->copy()->startOfMonth()->toDateString();
@@ -1896,7 +1896,7 @@ class DashboardController extends Controller
                     $hasPool ? DB::raw('p.name as pool_name') : DB::raw('NULL as pool_name'),
                 ]);
         } catch (\Throwable) {
-            return [];
+            return ['Minibus' => [], 'Mediumbus' => [], 'Bigbus' => []];
         }
 
         $armadas = [];
@@ -1912,7 +1912,7 @@ class DashboardController extends Controller
                 'trip_count' => 0,
                 'revenue' => 0.0,
                 'pool_name' => $row->pool_name ? (string) $row->pool_name : null,
-                'category' => $row->kategori ? (string) $row->kategori : null,
+                'category' => $this->normalizeBusCategory((string) ($row->kategori ?? '')),
             ];
         }
 
@@ -1950,7 +1950,7 @@ class DashboardController extends Controller
                     'trip_count' => 0,
                     'revenue' => 0.0,
                     'pool_name' => null,
-                    'category' => $assignment->category ? (string) $assignment->category : null,
+                    'category' => $this->normalizeBusCategory((string) ($assignment->category ?? '')),
                 ];
 
                 $dedupeKey = $nopolKey.'|'.$tripKey;
@@ -1976,25 +1976,44 @@ class DashboardController extends Controller
                 'trip_count' => 0,
                 'revenue' => 0.0,
                 'pool_name' => null,
-                'category' => null,
+                'category' => 'Minibus',
             ];
             $armadas[$nopolKey]['revenue'] += (float) ($bucket['revenue'] ?? 0);
             $armadas[$nopolKey]['trip_count'] += (int) ($bucket['trip_count'] ?? 0);
         }
 
-        $items = array_values(array_filter(
-            $armadas,
-            static fn (array $item): bool => (float) ($item['revenue'] ?? 0) > 0,
-        ));
-        usort($items, static fn (array $left, array $right): int => $right['revenue'] <=> $left['revenue']);
-        $items = array_slice($items, 0, 5);
+        $categories = [
+            'Minibus' => [],
+            'Mediumbus' => [],
+            'Bigbus' => [],
+        ];
 
-        foreach ($items as $index => &$item) {
-            $item['rank'] = $index + 1;
+        foreach ($armadas as $armada) {
+            if ((float) $armada['revenue'] <= 0) {
+                continue;
+            }
+
+            $category = $this->normalizeBusCategory((string) ($armada['category'] ?? ''));
+            if (! isset($categories[$category])) {
+                $category = 'Minibus';
+            }
+
+            $categories[$category][] = $armada;
         }
-        unset($item);
 
-        return $items;
+        foreach ($categories as $category => $items) {
+            usort($items, static fn (array $left, array $right): int => $right['revenue'] <=> $left['revenue']);
+            $items = array_slice($items, 0, 5);
+
+            foreach ($items as $index => &$item) {
+                $item['rank'] = $index + 1;
+            }
+            unset($item);
+
+            $categories[$category] = $items;
+        }
+
+        return $categories;
     }
 
     /**
