@@ -698,14 +698,14 @@
         class="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm"
     >
         <div
-            class="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3"
+            class="flex flex-wrap items-start justify-between gap-3 border-b border-border/70 px-4 py-3"
         >
             <h1 class="text-lg font-semibold tracking-tight text-foreground">
                 {masterTabTitle(activeTab)}
             </h1>
             {#if !lockedMenuView}
                 <div class="flex flex-wrap items-center gap-2">
-                    {#if activeMode === 'data' && activeTab !== 'rute-carter'}
+                    {#if activeMode === 'data'}
                         <Button
                             type="button"
                             size="sm"
@@ -714,6 +714,16 @@
                         >
                             <Plus class="mr-2 h-4 w-4" />
                             Tambah Data Baru
+                        </Button>
+                    {:else if activeMode === 'form'}
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="h-10 w-full justify-center rounded-2xl px-4 sm:h-9 sm:w-auto sm:rounded-full"
+                            onclick={() => setFormMode('data')}
+                        >
+                            Kembali ke Data
                         </Button>
                     {/if}
                     <Button
@@ -760,21 +770,13 @@
             {#if activeTab === 'customer-bagasi' && !busy}
                 {#if activeMode === 'form'}
                     <div
-                        class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
+                        class="rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
                     >
                         <p class="text-xs font-medium text-muted-foreground">
                             {bagasiForm.id
                                 ? 'Halaman Edit Customer Bagasi'
                                 : 'Halaman Tambah Customer Bagasi Baru'}
                         </p>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            class="h-8 rounded-lg text-xs"
-                            onclick={() => setFormMode('data')}
-                            >Kembali ke Data</Button
-                        >
                     </div>
                     <form
                         class="grid gap-3 md:grid-cols-4"
@@ -1079,21 +1081,13 @@
             {#if activeTab === 'customer-charter' && !busy}
                 {#if activeMode === 'form'}
                     <div
-                        class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
+                        class="rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
                     >
                         <p class="text-xs font-medium text-muted-foreground">
                             {charterForm.id
                                 ? 'Halaman Edit Customer Carter'
                                 : 'Halaman Tambah Customer Carter Baru'}
                         </p>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            class="h-8 rounded-lg text-xs"
-                            onclick={() => setFormMode('data')}
-                            >Kembali ke Data</Button
-                        >
                     </div>
                     <form
                         class="grid gap-3 md:grid-cols-4"
@@ -1398,21 +1392,13 @@
             {#if activeTab === 'rute-carter' && !busy}
                 {#if activeMode === 'form'}
                     <div
-                        class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
+                        class="rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
                     >
                         <p class="text-xs font-medium text-muted-foreground">
                             {carterRouteForm.id
                                 ? 'Edit data rute Carter'
                                 : 'Tambah data rute Carter'}
                         </p>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            class="h-8 rounded-lg text-xs"
-                            onclick={() => setFormMode('data')}
-                            >Kembali ke Data</Button
-                        >
                     </div>
                     <form
                         class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
@@ -1635,13 +1621,6 @@
                                                         'rute-carter',
                                                     )}>Cari</Button
                                             >
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                class="h-9 rounded-xl px-4"
-                                                onclick={openCreateMasterForm}
-                                                >Tambah Data Baru</Button
-                                            >
                                         </div>
                                     </div>
                                 </div>
@@ -1838,13 +1817,6 @@
                                             otomatis.
                                         </p>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        class="rounded-full px-4"
-                                        onclick={openCreateMasterForm}
-                                        >Tambah Data Baru</Button
-                                    >
                                 </div>
                             {/if}
 

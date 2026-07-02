@@ -2472,6 +2472,10 @@
 
     const hasFormTab = (tab: TabName) =>
         !['cancellations', 'reports'].includes(tab);
+    const showHeaderCreateAction = (tab: TabName) =>
+        hasFormTab(tab) && canWriteTab(tab) && activeMode === 'data';
+    const showHeaderBackAction = (tab: TabName) =>
+        hasFormTab(tab) && canWriteTab(tab) && activeMode === 'form';
     const tabWritePermission: Record<TabName, string | string[] | null> = {
         routes: 'master.manage',
         schedules: 'master.manage',
@@ -5576,12 +5580,12 @@
     <Card class="overflow-hidden border-border/70 shadow-sm">
         <CardHeader class="border-b border-border/70 bg-muted/20">
             {#if lockedMenuView}
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex flex-wrap items-start justify-between gap-3">
                     <CardTitle class="text-lg md:text-xl"
                         >{tabTitle(activeTab)}</CardTitle
                     >
-                    <div class="flex items-center gap-2">
-                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
+                    <div class="flex flex-wrap items-center gap-2">
+                        {#if showHeaderCreateAction(activeTab)}
                             <Button
                                 type="button"
                                 size="sm"
@@ -5590,24 +5594,25 @@
                                 Tambah Data Baru
                             </Button>
                         {/if}
-                        {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
+                        {#if showHeaderBackAction(activeTab)}
                             <Button
                                 type="button"
                                 size="sm"
-                                onclick={openCreateForm}
+                                variant="outline"
+                                onclick={() => setFormMode('data')}
                             >
-                                Tambah Data Baru
+                                Kembali ke Data
                             </Button>
                         {/if}
                     </div>
                 </div>
             {:else}
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex flex-wrap items-start justify-between gap-3">
                     <CardTitle class="text-lg md:text-xl"
                         >{tabTitle(activeTab)}</CardTitle
                     >
-                    <div class="flex items-center gap-2">
-                        {#if activeTab === 'units' && activeMode === 'data' && canWriteTab(activeTab)}
+                    <div class="flex flex-wrap items-center gap-2">
+                        {#if showHeaderCreateAction(activeTab)}
                             <Button
                                 type="button"
                                 size="sm"
@@ -5616,13 +5621,14 @@
                                 Tambah Data Baru
                             </Button>
                         {/if}
-                        {#if activeTab === 'pools' && activeMode === 'data' && canWriteTab(activeTab)}
+                        {#if showHeaderBackAction(activeTab)}
                             <Button
                                 type="button"
                                 size="sm"
-                                onclick={openCreateForm}
+                                variant="outline"
+                                onclick={() => setFormMode('data')}
                             >
-                                Tambah Data Baru
+                                Kembali ke Data
                             </Button>
                         {/if}
                         <Badge
@@ -5649,43 +5655,6 @@
                         on:search={() => reloadSettingsWithInertia(1)}
                     />
                 </div>
-            {/if}
-            {#if hasFormTab(activeTab) && canWriteTab(activeTab)}
-                {#if activeTab === 'pools' || activeTab === 'units'}
-                    {#if activeMode === 'form'}
-                        <div class="flex items-center gap-2">
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onclick={() => setFormMode('data')}
-                            >
-                                Kembali ke Data
-                            </Button>
-                        </div>
-                    {/if}
-                {:else}
-                    <div class="flex items-center gap-2">
-                        {#if activeMode === 'data'}
-                            <Button
-                                type="button"
-                                size="sm"
-                                onclick={openCreateForm}
-                            >
-                                Tambah Data Baru
-                            </Button>
-                        {:else}
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onclick={() => setFormMode('data')}
-                            >
-                                Kembali ke Data
-                            </Button>
-                        {/if}
-                    </div>
-                {/if}
             {/if}
 
             {#if activeTab === 'routes'}
