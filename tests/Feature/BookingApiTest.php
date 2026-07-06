@@ -547,44 +547,62 @@ class BookingApiTest extends TestCase
         $this->assertNull($assignment->armada_nopol);
     }
 
-    public function test_past_departure_can_be_marked_arrived(): void
+    public function test_past_departure_auto_closes_manifest_when_marked_arrived(): void
     {
-        $this->actingAsSuperAdmin();
+        Carbon::setTestNow(Carbon::create(2026, 5, 16, 8, 0, 0));
 
-        $tanggal = now()->subDay()->format('Y-m-d');
-        $driverId = DB::table('drivers')->insertGetId([
-            'nama' => 'DRIVER TEST',
-            'phone' => '081200000001',
-            'created_at' => now(),
-        ]);
+        try {
+            $this->actingAsSuperAdmin();
 
-        $assignmentId = DB::table('trip_assignments')->insertGetId([
-            'rute' => 'PINRANG - MAKASSAR',
-            'tanggal' => $tanggal,
-            'jam' => '09:00:00',
-            'unit' => 1,
-            'driver_id' => $driverId,
-            'armada_nopol' => 'DD 1234 XX',
-            'status' => 'active',
-            'created_at' => now(),
-        ]);
+            $tanggal = now()->subDay()->format('Y-m-d');
+            $driverId = DB::table('drivers')->insertGetId([
+                'nama' => 'DRIVER TEST',
+                'phone' => '081200000001',
+                'created_at' => now(),
+            ]);
 
-        $response = $this->postJson(route('api.bookings.arrive-departure'), [
-            'rute' => 'PINRANG - MAKASSAR',
-            'tanggal' => $tanggal,
-            'jam' => '09:00',
-            'unit' => 1,
-        ]);
+            $assignmentId = DB::table('trip_assignments')->insertGetId([
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $tanggal,
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'driver_id' => $driverId,
+                'armada_nopol' => 'DD 1234 XX',
+                'status' => 'active',
+                'created_at' => now(),
+            ]);
 
-        $response->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('id', $assignmentId)
-            ->assertJsonPath('status', 'arrived');
+            $departResponse = $this->postJson(route('api.bookings.depart-departure'), [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $tanggal,
+                'jam' => '09:00',
+                'unit' => 1,
+            ]);
 
-        $this->assertDatabaseHas('trip_assignments', [
-            'id' => $assignmentId,
-            'status' => 'arrived',
-        ]);
+            $departResponse->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('id', $assignmentId)
+                ->assertJsonPath('status', 'departed');
+
+            $response = $this->postJson(route('api.bookings.arrive-departure'), [
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => $tanggal,
+                'jam' => '09:00',
+                'unit' => 1,
+            ]);
+
+            $response->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('id', $assignmentId)
+                ->assertJsonPath('status', 'closed');
+
+            $this->assertDatabaseHas('trip_assignments', [
+                'id' => $assignmentId,
+                'status' => 'closed',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_closed_manifest_blocks_booking_and_assignment_edits(): void
@@ -762,7 +780,7 @@ class BookingApiTest extends TestCase
         }
     }
 
-    public function test_same_day_departure_can_be_marked_arrived_after_driver_and_nopol_are_set(): void
+    public function test_same_day_departure_auto_closes_manifest_after_driver_and_nopol_are_set(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 31, 8, 0, 0));
 
@@ -829,11 +847,11 @@ class BookingApiTest extends TestCase
             $response->assertOk()
                 ->assertJsonPath('success', true)
                 ->assertJsonPath('id', $assignmentId)
-                ->assertJsonPath('status', 'arrived');
+                ->assertJsonPath('status', 'closed');
 
             $this->assertDatabaseHas('trip_assignments', [
                 'id' => $assignmentId,
-                'status' => 'arrived',
+                'status' => 'closed',
             ]);
         } finally {
             Carbon::setTestNow();

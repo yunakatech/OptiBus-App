@@ -1105,10 +1105,19 @@ class BookingApiController extends Controller
             ],
         );
 
+        $this->closeManifestAssignment(
+            $id,
+            $routeName,
+            $payload['tanggal'],
+            substr((string) $payload['jam'], 0, 5),
+            $unit,
+            $actor,
+        );
+
         return $this->ok([
-            'message' => 'Armada berhasil ditandai sudah tiba.',
+            'message' => 'Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup.',
             'id' => $id,
-            'status' => 'arrived',
+            'status' => 'closed',
             'bop' => (float) ($schedule->bop ?? 0),
             'luggage_arrived_count' => $arrivedLuggageCount,
         ]);
@@ -1152,25 +1161,13 @@ class BookingApiController extends Controller
             return $this->error('Manifest hanya bisa ditutup setelah armada tiba.', 422);
         }
 
-        DB::table('trip_assignments')
-            ->where('id', (int) $assignment->id)
-            ->update([
-                'status' => 'closed',
-                'updated_at' => now(),
-            ]);
-
-        ActivityLog::write(
-            'BOOKING',
-            'Manifest untuk jadwal '.$this->departureIdentityLabel($routeName, (string) $data['tanggal'], (string) $data['jam'], $unit).' ditutup',
-            'Status keberangkatan: arrived -> closed',
+        $this->closeManifestAssignment(
+            (int) $assignment->id,
+            $routeName,
+            (string) $data['tanggal'],
+            (string) $data['jam'],
+            $unit,
             (string) ($request->user()?->email ?? $request->user()?->name ?? 'system'),
-            [
-                'trip_assignment_id' => (int) $assignment->id,
-                'rute' => $routeName,
-                'tanggal' => (string) $data['tanggal'],
-                'jam' => (string) $data['jam'],
-                'unit' => $unit,
-            ],
         );
 
         return $this->ok([
@@ -2623,6 +2620,40 @@ class BookingApiController extends Controller
         $status = $this->manifestAssignmentStatus($assignment);
 
         return $status === 'arrived';
+    }
+
+    private function closeManifestAssignment(
+        int $assignmentId,
+        string $rute,
+        string $tanggal,
+        string $jam,
+        int $unit,
+        string $actor,
+    ): void {
+        if ($assignmentId <= 0 || ! Schema::hasTable('trip_assignments') || ! $this->tripAssignmentsHasStatus()) {
+            return;
+        }
+
+        DB::table('trip_assignments')
+            ->where('id', $assignmentId)
+            ->update([
+                'status' => 'closed',
+                'updated_at' => now(),
+            ]);
+
+        ActivityLog::write(
+            'BOOKING',
+            'Manifest untuk jadwal '.$this->departureIdentityLabel($rute, $tanggal, $jam, $unit).' ditutup',
+            'Status keberangkatan: arrived -> closed',
+            $actor,
+            [
+                'trip_assignment_id' => $assignmentId,
+                'rute' => $rute,
+                'tanggal' => $tanggal,
+                'jam' => $jam,
+                'unit' => $unit,
+            ],
+        );
     }
 
     private function departureHasRequiredAssignmentMeta(?object $assignment): bool

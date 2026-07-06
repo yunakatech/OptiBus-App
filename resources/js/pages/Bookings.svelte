@@ -2979,30 +2979,34 @@
                 },
                 {
                     loadingMessage: `Menandai armada tiba untuk ${group.rute} ${formatGroupTimeLabel(group.jam)}...`,
-                    successMessage: 'Armada berhasil ditandai sudah tiba.',
+                    successMessage:
+                        'Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup.',
                     errorMessage: 'Gagal menandai armada sudah tiba.',
                 },
             );
             const arrivedLuggageCount =
                 Number(response?.luggage_arrived_count ?? 0) || 0;
+            const nextDepartureStatus = String(response?.status ?? 'closed')
+                .trim()
+                .toLowerCase() || 'closed';
 
             localBookingGroups = localBookingGroups.map((item) =>
                 item.key === group.key
                     ? {
                           ...item,
-                          departure_status: 'arrived',
+                          departure_status: nextDepartureStatus,
                           departure_can_arrive: false,
                       }
                     : item,
             );
 
             if (openGroupDetail?.key === group.key) {
-                const arrivedGroup = {
+                const updatedGroup = {
                     ...openGroupDetail,
-                    departure_status: 'arrived',
+                    departure_status: nextDepartureStatus,
                     departure_can_arrive: false,
                 };
-                openGroupDetail = arrivedGroup;
+                openGroupDetail = updatedGroup;
                 groupMappedRiturs = groupMappedRiturs.map((row) =>
                     String(row.status || '')
                         .trim()
@@ -3010,13 +3014,13 @@
                         ? row
                         : { ...row, status: luggageArrivedStatus },
                 );
-                await loadGroupRiturs(arrivedGroup, groupRiturSearch);
+                await loadGroupRiturs(updatedGroup, groupRiturSearch);
             }
 
             formSuccess =
                 arrivedLuggageCount > 0
-                    ? `Armada berhasil ditandai sudah tiba. ${arrivedLuggageCount} bagasi ikut ditandai ${luggageArrivedStatus}.`
-                    : 'Armada berhasil ditandai sudah tiba.';
+                    ? `Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup. ${arrivedLuggageCount} bagasi ikut ditandai ${luggageArrivedStatus}.`
+                    : 'Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup.';
         } catch (error) {
             formError =
                 error instanceof Error
