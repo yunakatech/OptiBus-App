@@ -56,7 +56,32 @@ class SubscriptionPaymentController extends Controller
                 })
                 ->all();
 
-            if (Schema::hasTable('plans')) {
+            if (
+                Schema::hasTable('plans')
+                && Schema::hasTable('subscriptions')
+                && ($tenantSub['subscription_id'] ?? 0) > 0
+            ) {
+                $currentPlan = DB::table('subscriptions')
+                    ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+                    ->where('subscriptions.id', (int) $tenantSub['subscription_id'])
+                    ->select(
+                        'plans.id',
+                        'plans.name',
+                        'plans.slug',
+                        'plans.description',
+                        'plans.price_monthly as base_price_monthly',
+                        'plans.price_yearly as base_price_yearly',
+                        'subscriptions.custom_price_monthly',
+                        'subscriptions.custom_price_yearly',
+                        'subscriptions.custom_max_pools',
+                        'subscriptions.custom_max_users',
+                        'subscriptions.custom_max_armadas',
+                        'subscriptions.custom_max_routes',
+                        DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
+                        DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
+                    )
+                    ->first();
+            } elseif (Schema::hasTable('plans')) {
                 $currentPlan = DB::table('plans')->where('id', $tenantSub['plan_id'])->first();
             }
         }
@@ -72,8 +97,16 @@ class SubscriptionPaymentController extends Controller
                 'id' => (int) $currentPlan->id,
                 'name' => (string) $currentPlan->name,
                 'slug' => (string) $currentPlan->slug,
-                'price_monthly' => (float) $currentPlan->price_monthly,
-                'price_yearly' => (float) $currentPlan->price_yearly,
+                'price_monthly' => (float) ($currentPlan->price_monthly ?? $currentPlan->base_price_monthly ?? 0),
+                'price_yearly' => (float) ($currentPlan->price_yearly ?? $currentPlan->base_price_yearly ?? 0),
+                'base_price_monthly' => (float) ($currentPlan->base_price_monthly ?? $currentPlan->price_monthly ?? 0),
+                'base_price_yearly' => (float) ($currentPlan->base_price_yearly ?? $currentPlan->price_yearly ?? 0),
+                'custom_price_monthly' => $currentPlan->custom_price_monthly ?? null,
+                'custom_price_yearly' => $currentPlan->custom_price_yearly ?? null,
+                'custom_max_pools' => $currentPlan->custom_max_pools ?? null,
+                'custom_max_users' => $currentPlan->custom_max_users ?? null,
+                'custom_max_armadas' => $currentPlan->custom_max_armadas ?? null,
+                'custom_max_routes' => $currentPlan->custom_max_routes ?? null,
                 'description' => (string) ($currentPlan->description ?? ''),
             ] : null,
             'plans' => $plans->map(fn ($p) => [
@@ -214,15 +247,21 @@ class SubscriptionPaymentController extends Controller
         $subscription = DB::table('subscriptions')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->where('subscriptions.id', $subscriptionId)
-            ->select('subscriptions.*', 'plans.price_monthly', 'plans.price_yearly')
+            ->select(
+                'subscriptions.*',
+                'plans.price_monthly as base_price_monthly',
+                'plans.price_yearly as base_price_yearly',
+                DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
+                DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
+            )
             ->first();
         if (! $subscription) {
             return;
         }
 
         $amount = ($subscription->billing_interval ?? 'monthly') === 'yearly'
-            ? (float) $subscription->price_yearly
-            : (float) $subscription->price_monthly;
+            ? (float) ($subscription->price_yearly ?? $subscription->base_price_yearly ?? 0)
+            : (float) ($subscription->price_monthly ?? $subscription->base_price_monthly ?? 0);
         if ($amount <= 0) {
             return;
         }
