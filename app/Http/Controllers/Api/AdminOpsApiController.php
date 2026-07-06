@@ -9922,7 +9922,10 @@ XML;
                 'tenants.slug as tenant_slug',
                 'plans.name as plan_name',
                 'plans.slug as plan_slug',
-                'plans.price_monthly',
+                'plans.price_monthly as plan_price_monthly',
+                'plans.price_yearly as plan_price_yearly',
+                DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
+                DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
             )
             ->orderBy('subscriptions.created_at', 'desc');
 
@@ -9949,7 +9952,8 @@ XML;
                 'plan_id' => (int) $s->plan_id,
                 'plan_name' => (string) $s->plan_name,
                 'plan_slug' => (string) $s->plan_slug,
-                'price_monthly' => (float) $s->price_monthly,
+                'price_monthly' => (float) ($s->price_monthly ?? $s->plan_price_monthly ?? 0),
+                'price_yearly' => (float) ($s->price_yearly ?? $s->plan_price_yearly ?? 0),
                 'status' => (string) $s->status,
                 'trial_ends_at' => $s->trial_ends_at,
                 'starts_at' => $s->starts_at,
@@ -9958,6 +9962,12 @@ XML;
                 'canceled_at' => $s->canceled_at,
                 'grace_period_days' => (int) ($s->grace_period_days ?? 7),
                 'notes' => $s->notes ?? null,
+                'custom_price_monthly' => $s->custom_price_monthly ?? null,
+                'custom_price_yearly' => $s->custom_price_yearly ?? null,
+                'custom_max_pools' => $s->custom_max_pools ?? null,
+                'custom_max_users' => $s->custom_max_users ?? null,
+                'custom_max_armadas' => $s->custom_max_armadas ?? null,
+                'custom_max_routes' => $s->custom_max_routes ?? null,
                 'created_at' => $s->created_at,
             ];
         })->all();
@@ -9995,34 +10005,54 @@ XML;
             'billing_interval' => ['nullable', Rule::in(['monthly', 'yearly'])],
             'grace_period_days' => ['nullable', 'integer', 'min:0', 'max:90'],
             'notes' => ['nullable', 'string'],
+            'custom_price_monthly' => ['nullable', 'numeric', 'min:0'],
+            'custom_price_yearly' => ['nullable', 'numeric', 'min:0'],
+            'custom_max_pools' => ['nullable', 'integer', 'min:0'],
+            'custom_max_users' => ['nullable', 'integer', 'min:0'],
+            'custom_max_armadas' => ['nullable', 'integer', 'min:0'],
+            'custom_max_routes' => ['nullable', 'integer', 'min:0'],
         ]);
 
         return DB::transaction(function () use ($id, $data): JsonResponse {
             if ($id > 0) {
                 $payload = [];
-                if (isset($data['plan_id'])) {
+                if (array_key_exists('plan_id', $data)) {
                     $payload['plan_id'] = (int) $data['plan_id'];
                 }
-                if (isset($data['status'])) {
+                if (array_key_exists('status', $data)) {
                     $payload['status'] = (string) $data['status'];
                     if ($data['status'] === 'canceled') {
                         $payload['canceled_at'] = now();
                     }
                 }
-                if (isset($data['starts_at'])) {
+                if (array_key_exists('starts_at', $data)) {
                     $payload['starts_at'] = $data['starts_at'];
                 }
-                if (isset($data['ends_at'])) {
+                if (array_key_exists('ends_at', $data)) {
                     $payload['ends_at'] = $data['ends_at'];
                 }
-                if (isset($data['billing_interval'])) {
+                if (array_key_exists('billing_interval', $data)) {
                     $payload['billing_interval'] = $data['billing_interval'];
                 }
-                if (isset($data['grace_period_days'])) {
+                if (array_key_exists('grace_period_days', $data)) {
                     $payload['grace_period_days'] = (int) $data['grace_period_days'];
                 }
-                if (isset($data['notes'])) {
+                if (array_key_exists('notes', $data)) {
                     $payload['notes'] = $this->nullable($data['notes']);
+                }
+                foreach ([
+                    'custom_price_monthly',
+                    'custom_price_yearly',
+                    'custom_max_pools',
+                    'custom_max_users',
+                    'custom_max_armadas',
+                    'custom_max_routes',
+                ] as $field) {
+                    if (array_key_exists($field, $data)) {
+                        $payload[$field] = $data[$field] === null || $data[$field] === ''
+                            ? null
+                            : $data[$field];
+                    }
                 }
 
                 if ($payload !== []) {
@@ -10038,6 +10068,12 @@ XML;
                 $status = (string) ($data['status'] ?? 'active');
                 $startsAt = isset($data['starts_at']) ? $data['starts_at'] : now()->toDateString();
                 $endsAt = $data['ends_at'] ?? now()->addMonth()->toDateString();
+                $customPriceMonthly = array_key_exists('custom_price_monthly', $data)
+                    ? ($data['custom_price_monthly'] === null || $data['custom_price_monthly'] === '' ? null : $data['custom_price_monthly'])
+                    : null;
+                $customPriceYearly = array_key_exists('custom_price_yearly', $data)
+                    ? ($data['custom_price_yearly'] === null || $data['custom_price_yearly'] === '' ? null : $data['custom_price_yearly'])
+                    : null;
 
                 $subId = (int) DB::table('subscriptions')->insertGetId([
                     'tenant_id' => $tenantId,
@@ -10048,6 +10084,20 @@ XML;
                     'billing_interval' => (string) ($data['billing_interval'] ?? 'monthly'),
                     'grace_period_days' => (int) ($data['grace_period_days'] ?? 7),
                     'notes' => $this->nullable($data['notes'] ?? null),
+                    'custom_price_monthly' => $customPriceMonthly,
+                    'custom_price_yearly' => $customPriceYearly,
+                    'custom_max_pools' => array_key_exists('custom_max_pools', $data)
+                        ? ($data['custom_max_pools'] === null || $data['custom_max_pools'] === '' ? null : (int) $data['custom_max_pools'])
+                        : null,
+                    'custom_max_users' => array_key_exists('custom_max_users', $data)
+                        ? ($data['custom_max_users'] === null || $data['custom_max_users'] === '' ? null : (int) $data['custom_max_users'])
+                        : null,
+                    'custom_max_armadas' => array_key_exists('custom_max_armadas', $data)
+                        ? ($data['custom_max_armadas'] === null || $data['custom_max_armadas'] === '' ? null : (int) $data['custom_max_armadas'])
+                        : null,
+                    'custom_max_routes' => array_key_exists('custom_max_routes', $data)
+                        ? ($data['custom_max_routes'] === null || $data['custom_max_routes'] === '' ? null : (int) $data['custom_max_routes'])
+                        : null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

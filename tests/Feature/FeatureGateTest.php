@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\FeatureGate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class FeatureGateTest extends TestCase
@@ -43,6 +44,50 @@ class FeatureGateTest extends TestCase
         FeatureGate::flushRequestCache();
 
         $this->assertTrue(FeatureGate::can('dashboard.view'));
+    }
+
+    public function test_private_unlimited_override_allows_armada_creation_beyond_plan_cap(): void
+    {
+        config(['saas.feature_gating_enabled' => true]);
+        [$user, $tenantId] = $this->tenantUserWithPlan('starter', 'active');
+
+        $baseLimit = (int) DB::table('plans')->where('slug', 'starter')->value('max_armadas');
+        $this->assertGreaterThan(0, $baseLimit);
+
+        for ($i = 1; $i <= $baseLimit; $i++) {
+            $payload = [
+                'nopol' => 'OVR-'.uniqid().'-'.$i,
+                'kategori' => 'EXECUTIVE',
+                'ac_type' => 'AC',
+                'created_at' => now(),
+            ];
+
+            if (Schema::hasColumn('armadas', 'tenant_id')) {
+                $payload['tenant_id'] = $tenantId;
+            }
+
+            if (Schema::hasColumn('armadas', 'nama_kendaraan')) {
+                $payload['nama_kendaraan'] = 'Armada '.$i;
+            }
+
+            DB::table('armadas')->insert($payload);
+        }
+
+        $this->actingAs($user);
+        FeatureGate::flushRequestCache();
+
+        $this->assertFalse(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
+
+        DB::table('subscriptions')
+            ->where('tenant_id', $tenantId)
+            ->update([
+                'custom_max_armadas' => 0,
+                'updated_at' => now(),
+            ]);
+
+        FeatureGate::flushRequestCache();
+
+        $this->assertTrue(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
     }
 
     /**

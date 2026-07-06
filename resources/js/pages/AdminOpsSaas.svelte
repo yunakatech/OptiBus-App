@@ -34,6 +34,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
+    import { Checkbox } from '@/components/ui/checkbox';
     import {
         Card,
         CardContent,
@@ -112,6 +113,12 @@
         starts_at: '',
         ends_at: '',
         notes: '',
+        custom_price_monthly: '',
+        custom_price_yearly: '',
+        unlimited_pools: false,
+        unlimited_users: false,
+        unlimited_armadas: false,
+        unlimited_routes: false,
     });
 
     // Plans state
@@ -327,6 +334,8 @@
     function openSubForm(sub?: any) {
         if (sub) {
             editingSub = sub;
+            const hasUnlimited = (value: unknown) =>
+                Number(value ?? -1) === 0;
             subForm = {
                 tenant_id: sub.tenant_id,
                 plan_id: sub.plan_id,
@@ -334,6 +343,13 @@
                 starts_at: sub.starts_at ?? '',
                 ends_at: sub.ends_at ?? '',
                 notes: sub.notes ?? '',
+                custom_price_monthly:
+                    sub.custom_price_monthly ?? '',
+                custom_price_yearly: sub.custom_price_yearly ?? '',
+                unlimited_pools: hasUnlimited(sub.custom_max_pools),
+                unlimited_users: hasUnlimited(sub.custom_max_users),
+                unlimited_armadas: hasUnlimited(sub.custom_max_armadas),
+                unlimited_routes: hasUnlimited(sub.custom_max_routes),
             };
         } else {
             editingSub = null;
@@ -344,18 +360,40 @@
                 starts_at: '',
                 ends_at: '',
                 notes: '',
+                custom_price_monthly: '',
+                custom_price_yearly: '',
+                unlimited_pools: false,
+                unlimited_users: false,
+                unlimited_armadas: false,
+                unlimited_routes: false,
             };
         }
         showSubForm = true;
     }
 
     async function saveSubscription() {
+        const parseOptionalNumber = (value: unknown) => {
+            const text = String(value ?? '').trim();
+            if (!text) return null;
+            const parsed = Number(text);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
         const body: any = {
             plan_id: subForm.plan_id,
             status: subForm.status,
             starts_at: subForm.starts_at || null,
             ends_at: subForm.ends_at || null,
             notes: subForm.notes || null,
+            custom_price_monthly: parseOptionalNumber(
+                subForm.custom_price_monthly,
+            ),
+            custom_price_yearly: parseOptionalNumber(
+                subForm.custom_price_yearly,
+            ),
+            custom_max_pools: subForm.unlimited_pools ? 0 : null,
+            custom_max_users: subForm.unlimited_users ? 0 : null,
+            custom_max_armadas: subForm.unlimited_armadas ? 0 : null,
+            custom_max_routes: subForm.unlimited_routes ? 0 : null,
         };
         if (editingSub) {
             body.id = editingSub.id;
@@ -502,6 +540,17 @@
             expired: { variant: 'outline', label: 'Expired' },
         };
         return map[status] ?? { variant: 'outline', label: status };
+    }
+
+    function hasPrivateSubscriptionOverride(sub: any): boolean {
+        return [
+            sub.custom_price_monthly,
+            sub.custom_price_yearly,
+            sub.custom_max_pools,
+            sub.custom_max_users,
+            sub.custom_max_armadas,
+            sub.custom_max_routes,
+        ].some((value) => value !== null && value !== undefined && value !== '');
     }
 
     function invoiceBadge(invoice: any): {
@@ -1215,6 +1264,154 @@
                                             placeholder="opsional"
                                         />
                                     </div>
+                                    <div
+                                        class="md:col-span-2 rounded-2xl border border-dashed border-slate-300/80 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/40"
+                                    >
+                                        <div
+                                            class="flex flex-wrap items-start justify-between gap-3"
+                                        >
+                                            <div>
+                                                <p class="text-sm font-semibold text-foreground">
+                                                    Private pricing
+                                                </p>
+                                                <p
+                                                    class="text-xs text-muted-foreground"
+                                                >
+                                                    Override harga dan limit
+                                                    tenant tanpa mengubah plan
+                                                    publik.
+                                                </p>
+                                            </div>
+                                            <Badge variant="secondary"
+                                                >Private</Badge
+                                            >
+                                        </div>
+                                        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                                            <div class="grid gap-2">
+                                                <Label
+                                                    for="custom_price_monthly"
+                                                    >Harga Bulanan
+                                                    Private</Label
+                                                >
+                                                <Input
+                                                    id="custom_price_monthly"
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    bind:value={subForm.custom_price_monthly}
+                                                    placeholder="Ikuti harga plan jika kosong"
+                                                />
+                                            </div>
+                                            <div class="grid gap-2">
+                                                <Label
+                                                    for="custom_price_yearly"
+                                                    >Harga Tahunan
+                                                    Private</Label
+                                                >
+                                                <Input
+                                                    id="custom_price_yearly"
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    bind:value={subForm.custom_price_yearly}
+                                                    placeholder="Ikuti harga plan jika kosong"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"
+                                        >
+                                            <div
+                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                            >
+                                                <Checkbox
+                                                    id="sub_unlimited_pools"
+                                                    bind:checked={subForm.unlimited_pools}
+                                                    class="mt-0.5"
+                                                />
+                                                <div class="space-y-1">
+                                                    <Label
+                                                        for="sub_unlimited_pools"
+                                                        class="cursor-pointer text-sm font-medium"
+                                                        >Unlimited Pool</Label
+                                                    >
+                                                    <p
+                                                        class="text-xs text-muted-foreground"
+                                                    >
+                                                        0 berarti tenant bisa
+                                                        menambah pool tanpa
+                                                        batas.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                            >
+                                                <Checkbox
+                                                    id="sub_unlimited_users"
+                                                    bind:checked={subForm.unlimited_users}
+                                                    class="mt-0.5"
+                                                />
+                                                <div class="space-y-1">
+                                                    <Label
+                                                        for="sub_unlimited_users"
+                                                        class="cursor-pointer text-sm font-medium"
+                                                        >Unlimited User</Label
+                                                    >
+                                                    <p
+                                                        class="text-xs text-muted-foreground"
+                                                    >
+                                                        Cocok untuk tenant
+                                                        dengan tim besar.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                            >
+                                                <Checkbox
+                                                    id="sub_unlimited_armadas"
+                                                    bind:checked={subForm.unlimited_armadas}
+                                                    class="mt-0.5"
+                                                />
+                                                <div class="space-y-1">
+                                                    <Label
+                                                        for="sub_unlimited_armadas"
+                                                        class="cursor-pointer text-sm font-medium"
+                                                        >Unlimited Armada</Label
+                                                    >
+                                                    <p
+                                                        class="text-xs text-muted-foreground"
+                                                    >
+                                                        Armada tambahan tidak
+                                                        dihitung lagi ke limit.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                            >
+                                                <Checkbox
+                                                    id="sub_unlimited_routes"
+                                                    bind:checked={subForm.unlimited_routes}
+                                                    class="mt-0.5"
+                                                />
+                                                <div class="space-y-1">
+                                                    <Label
+                                                        for="sub_unlimited_routes"
+                                                        class="cursor-pointer text-sm font-medium"
+                                                        >Unlimited Rute</Label
+                                                    >
+                                                    <p
+                                                        class="text-xs text-muted-foreground"
+                                                    >
+                                                        Berguna untuk paket
+                                                        private yang fleksibel.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="flex justify-end gap-2 mt-4">
                                     <Button
@@ -1280,11 +1477,20 @@
                                                     class="px-4 py-2.5 font-medium"
                                                     >{s.tenant_name}</td
                                                 >
-                                                <td class="px-4 py-2.5"
-                                                    ><Badge variant="outline"
-                                                        >{s.plan_name}</Badge
-                                                    ></td
-                                                >
+                                                <td class="px-4 py-2.5">
+                                                    <div
+                                                        class="flex flex-wrap items-center gap-2"
+                                                    >
+                                                        <Badge variant="outline"
+                                                            >{s.plan_name}</Badge
+                                                        >
+                                                        {#if hasPrivateSubscriptionOverride(s)}
+                                                            <Badge variant="secondary"
+                                                                >Private</Badge
+                                                            >
+                                                        {/if}
+                                                    </div>
+                                                </td>
                                                 <td class="px-4 py-2.5"
                                                     ><Badge
                                                         variant={statusBadge(

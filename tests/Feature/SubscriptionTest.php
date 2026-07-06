@@ -123,6 +123,54 @@ class SubscriptionTest extends TestCase
             && $request['items'][0]['rate'] === 99000);
     }
 
+    public function test_pending_subscription_uses_private_price_for_invoice_amount(): void
+    {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+        ]);
+
+        Http::fake([
+            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
+                'data' => [
+                    'id' => 'pay_private_123',
+                    'transactionId' => 'txn_private_123',
+                    'link' => 'https://mayar.test/pay/pay_private_123',
+                    'status' => 'open',
+                ],
+            ]),
+        ]);
+
+        [$user, $tenantId, $subscriptionId] = $this->tenantWithPendingSubscription();
+        DB::table('subscriptions')
+            ->where('id', $subscriptionId)
+            ->update([
+                'custom_price_monthly' => 123456,
+                'updated_at' => now(),
+            ]);
+
+        $this->actingAs($user)
+            ->get(route('subscription.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Subscription')
+                ->where('tenant_subscription.subscription_id', $subscriptionId)
+                ->where('invoices.0.gateway_checkout_url', 'https://mayar.test/pay/pay_private_123'));
+
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'tenant_id' => $tenantId,
+            'subscription_id' => $subscriptionId,
+            'status' => 'pending',
+            'payment_gateway' => 'Mayar',
+            'gateway_reference' => 'txn_private_123',
+            'gateway_checkout_url' => 'https://mayar.test/pay/pay_private_123',
+            'amount' => 123456,
+        ]);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.mayar.id/hl/v1/invoice/create'
+            && $request['items'][0]['rate'] === 123456);
+    }
+
     public function test_create_invoice_marks_payment_link_error_when_mayar_fails(): void
     {
         config([

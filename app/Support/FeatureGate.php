@@ -19,6 +19,9 @@ class FeatureGate
     /** @var array<string, mixed> */
     private static array $featureMaxValueCache = [];
 
+    /** @var array<string, string> */
+    private static array $featureNameCache = [];
+
     /** @var array<string, int> */
     private static array $resourceCountCache = [];
 
@@ -45,6 +48,7 @@ class FeatureGate
         self::$featureGateIdCache = [];
         self::$planFeatureCache = [];
         self::$featureMaxValueCache = [];
+        self::$featureNameCache = [];
         self::$resourceCountCache = [];
         self::$planNameCache = [];
         self::$usageLimitsCache = [];
@@ -97,19 +101,78 @@ class FeatureGate
             ->where('subscriptions.tenant_id', $tenantId)
             ->whereIn('subscriptions.status', ['trial', 'active', 'past_due'])
             ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END")
-            ->select('subscriptions.plan_id', 'subscriptions.status', 'plans.slug as plan_slug')
+            ->select(
+                'subscriptions.id as subscription_id',
+                'subscriptions.plan_id',
+                'subscriptions.status',
+                'subscriptions.custom_price_monthly',
+                'subscriptions.custom_price_yearly',
+                'subscriptions.custom_max_pools',
+                'subscriptions.custom_max_users',
+                'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_routes',
+                'plans.slug as plan_slug',
+                'plans.price_monthly as base_price_monthly',
+                'plans.price_yearly as base_price_yearly',
+                'plans.max_pools as base_max_pools',
+                'plans.max_users as base_max_users',
+                'plans.max_armadas as base_max_armadas',
+                'plans.max_routes as base_max_routes',
+            )
             ->first();
 
         if (! $sub) {
-            self::$currentPlanCache[$cacheKey] = (object) ['plan_id' => 0, 'plan_slug' => '', 'status' => 'inactive'];
+            self::$currentPlanCache[$cacheKey] = (object) [
+                'subscription_id' => 0,
+                'plan_id' => 0,
+                'plan_slug' => '',
+                'status' => 'inactive',
+                'custom_price_monthly' => null,
+                'custom_price_yearly' => null,
+                'custom_max_pools' => null,
+                'custom_max_users' => null,
+                'custom_max_armadas' => null,
+                'custom_max_routes' => null,
+                'base_price_monthly' => null,
+                'base_price_yearly' => null,
+                'base_max_pools' => null,
+                'base_max_users' => null,
+                'base_max_armadas' => null,
+                'base_max_routes' => null,
+                'price_monthly' => 0.0,
+                'price_yearly' => 0.0,
+                'max_pools' => null,
+                'max_users' => null,
+                'max_armadas' => null,
+                'max_routes' => null,
+            ];
 
             return self::$currentPlanCache[$cacheKey];
         }
 
         self::$currentPlanCache[$cacheKey] = (object) [
+            'subscription_id' => (int) ($sub->subscription_id ?? 0),
             'plan_id' => (int) $sub->plan_id,
             'plan_slug' => (string) ($sub->plan_slug ?? ''),
             'status' => (string) $sub->status,
+            'custom_price_monthly' => self::nullableFloat($sub->custom_price_monthly ?? null),
+            'custom_price_yearly' => self::nullableFloat($sub->custom_price_yearly ?? null),
+            'custom_max_pools' => self::nullableInt($sub->custom_max_pools ?? null),
+            'custom_max_users' => self::nullableInt($sub->custom_max_users ?? null),
+            'custom_max_armadas' => self::nullableInt($sub->custom_max_armadas ?? null),
+            'custom_max_routes' => self::nullableInt($sub->custom_max_routes ?? null),
+            'base_price_monthly' => self::nullableFloat($sub->base_price_monthly ?? null),
+            'base_price_yearly' => self::nullableFloat($sub->base_price_yearly ?? null),
+            'base_max_pools' => self::nullableInt($sub->base_max_pools ?? null),
+            'base_max_users' => self::nullableInt($sub->base_max_users ?? null),
+            'base_max_armadas' => self::nullableInt($sub->base_max_armadas ?? null),
+            'base_max_routes' => self::nullableInt($sub->base_max_routes ?? null),
+            'price_monthly' => self::effectivePrice($sub->custom_price_monthly ?? null, $sub->base_price_monthly ?? null),
+            'price_yearly' => self::effectivePrice($sub->custom_price_yearly ?? null, $sub->base_price_yearly ?? null),
+            'max_pools' => self::effectiveLimit($sub->custom_max_pools ?? null, $sub->base_max_pools ?? null),
+            'max_users' => self::effectiveLimit($sub->custom_max_users ?? null, $sub->base_max_users ?? null),
+            'max_armadas' => self::effectiveLimit($sub->custom_max_armadas ?? null, $sub->base_max_armadas ?? null),
+            'max_routes' => self::effectiveLimit($sub->custom_max_routes ?? null, $sub->base_max_routes ?? null),
         ];
 
         return self::$currentPlanCache[$cacheKey];
@@ -220,7 +283,11 @@ class FeatureGate
             return false;
         }
 
-        $maxValue = self::maxValueForFeature((int) $plan->plan_id, $resourceKey);
+        if (self::subscriptionOverrideUnlimited($plan, $resourceKey)) {
+            return true;
+        }
+
+        $maxValue = self::maxValueForFeature((int) $plan->plan_id, $resourceKey, $plan);
 
         // null = unlimited
         if ($maxValue === null) {
@@ -281,18 +348,19 @@ class FeatureGate
             return [];
         }
 
-        $cacheKey = self::requestCacheKey('usage:'.$tenantId.':'.$plan->plan_id);
+        $cacheKey = self::requestCacheKey(
+            'usage:'.$tenantId.':'.$plan->plan_id.':'.(int) ($plan->subscription_id ?? 0).':'.md5(json_encode([
+                'custom_price_monthly' => $plan->custom_price_monthly ?? null,
+                'custom_price_yearly' => $plan->custom_price_yearly ?? null,
+                'custom_max_pools' => $plan->custom_max_pools ?? null,
+                'custom_max_users' => $plan->custom_max_users ?? null,
+                'custom_max_armadas' => $plan->custom_max_armadas ?? null,
+                'custom_max_routes' => $plan->custom_max_routes ?? null,
+            ]) ?: ''),
+        );
         if (array_key_exists($cacheKey, self::$usageLimitsCache)) {
             return self::$usageLimitsCache[$cacheKey];
         }
-
-        $mappings = DB::table('plan_feature')
-            ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
-            ->where('plan_feature.plan_id', $plan->plan_id)
-            ->whereNotNull('plan_feature.max_value')
-            ->where('plan_feature.max_value', '>', 0)
-            ->select('feature_gates.feature_key', 'feature_gates.feature_name', 'plan_feature.max_value')
-            ->get();
 
         $limits = [];
         $countMap = [
@@ -303,18 +371,19 @@ class FeatureGate
             'user.management' => ['table' => 'users', 'column' => 'tenant_id'],
         ];
 
-        foreach ($mappings as $mapping) {
-            $info = $countMap[$mapping->feature_key] ?? null;
+        foreach ($countMap as $featureKey => $info) {
             $current = 0;
 
-            if ($info && Schema::hasTable($info['table']) && Schema::hasColumn($info['table'], $info['column'])) {
+            if (Schema::hasTable($info['table']) && Schema::hasColumn($info['table'], $info['column'])) {
                 $current = self::resourceCount($info['table'], $info['column'], $tenantId);
             }
 
-            $limits[$mapping->feature_key] = [
-                'max' => (int) $mapping->max_value,
+            $limits[$featureKey] = [
+                'max' => self::subscriptionOverrideUnlimited($plan, $featureKey)
+                    ? null
+                    : self::maxValueForFeature((int) $plan->plan_id, $featureKey, $plan),
                 'current' => $current,
-                'feature_name' => (string) $mapping->feature_name,
+                'feature_name' => self::featureNameForKey($featureKey),
             ];
         }
 
@@ -335,7 +404,11 @@ class FeatureGate
             return 'Tidak ada langganan aktif.';
         }
 
-        $maxValue = self::maxValueForFeature((int) $plan->plan_id, $resourceKey);
+        if (self::subscriptionOverrideUnlimited($plan, $resourceKey)) {
+            return null;
+        }
+
+        $maxValue = self::maxValueForFeature((int) $plan->plan_id, $resourceKey, $plan);
 
         if ($maxValue === null) {
             return null; // unlimited — no message needed
@@ -372,12 +445,24 @@ class FeatureGate
             ->first();
     }
 
-    private static function maxValueForFeature(int $planId, string $featureKey): mixed
+    private static function maxValueForFeature(int $planId, string $featureKey, ?object $planContext = null): mixed
     {
         $featureKey = trim($featureKey);
-        $cacheKey = self::requestCacheKey("feature-max:{$planId}:{$featureKey}");
+        $overrideSignature = $planContext ? md5(json_encode([
+            'subscription_id' => (int) ($planContext->subscription_id ?? 0),
+            'custom_max_pools' => $planContext->custom_max_pools ?? null,
+            'custom_max_users' => $planContext->custom_max_users ?? null,
+            'custom_max_armadas' => $planContext->custom_max_armadas ?? null,
+            'custom_max_routes' => $planContext->custom_max_routes ?? null,
+        ]) ?: '') : '0';
+        $cacheKey = self::requestCacheKey("feature-max:{$planId}:{$featureKey}:{$overrideSignature}");
         if (array_key_exists($cacheKey, self::$featureMaxValueCache)) {
             return self::$featureMaxValueCache[$cacheKey];
+        }
+
+        $overrideValue = self::subscriptionOverrideLimit($planContext, $featureKey);
+        if ($overrideValue !== null) {
+            return self::$featureMaxValueCache[$cacheKey] = $overrideValue;
         }
 
         $mappedValue = DB::table('plan_feature')
@@ -391,6 +476,101 @@ class FeatureGate
         }
 
         return self::$featureMaxValueCache[$cacheKey] = self::planColumnLimit($planId, $featureKey);
+    }
+
+    private static function subscriptionOverrideLimit(?object $planContext, string $featureKey): ?int
+    {
+        if (! $planContext) {
+            return null;
+        }
+
+        $column = [
+            'master.routes' => 'custom_max_routes',
+            'master.armadas' => 'custom_max_armadas',
+            'tenant.multiple_pools' => 'custom_max_pools',
+            'user.management' => 'custom_max_users',
+        ][$featureKey] ?? null;
+
+        if ($column === null || ! property_exists($planContext, $column)) {
+            return null;
+        }
+
+        return self::nullableInt($planContext->{$column});
+    }
+
+    private static function subscriptionOverrideUnlimited(?object $planContext, string $featureKey): bool
+    {
+        return self::subscriptionOverrideLimit($planContext, $featureKey) === 0;
+    }
+
+    private static function featureNameForKey(string $featureKey): string
+    {
+        $featureKey = trim($featureKey);
+        $cacheKey = self::requestCacheKey('feature-name:'.$featureKey);
+        if (array_key_exists($cacheKey, self::$featureNameCache)) {
+            return self::$featureNameCache[$cacheKey];
+        }
+
+        $name = DB::table('feature_gates')->where('feature_key', $featureKey)->value('feature_name');
+        if (is_string($name) && trim($name) !== '') {
+            return self::$featureNameCache[$cacheKey] = $name;
+        }
+
+        return self::$featureNameCache[$cacheKey] = match ($featureKey) {
+            'master.routes' => 'Rute',
+            'master.armadas' => 'Armada',
+            'master.drivers' => 'Driver',
+            'tenant.multiple_pools' => 'Pool',
+            'user.management' => 'User',
+            default => $featureKey,
+        };
+    }
+
+    private static function effectivePrice(mixed $overrideValue, mixed $baseValue): float
+    {
+        if ($overrideValue !== null && $overrideValue !== '') {
+            return (float) $overrideValue;
+        }
+
+        return (float) ($baseValue ?? 0);
+    }
+
+    private static function effectiveLimit(mixed $overrideValue, mixed $baseValue): ?int
+    {
+        $override = self::nullableInt($overrideValue);
+        if ($override !== null) {
+            return $override > 0 ? $override : null;
+        }
+
+        return self::limitFromNullableValue($baseValue);
+    }
+
+    private static function limitFromNullableValue(mixed $value): ?int
+    {
+        $intValue = self::nullableInt($value);
+        if ($intValue === null) {
+            return null;
+        }
+
+        return $intValue > 0 ? $intValue : null;
+    }
+
+    private static function nullableInt(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
+    private static function nullableFloat(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (float) $value;
     }
 
     private static function planColumnLimit(int $planId, string $featureKey): mixed

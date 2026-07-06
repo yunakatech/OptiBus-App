@@ -369,7 +369,7 @@ class PlatformDashboardController extends Controller
         return (float) DB::table('subscriptions')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->whereIn('subscriptions.status', ['trial', 'active'])
-            ->sum('plans.price_monthly');
+            ->sum(DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly)'));
     }
 
     private function computeMrrAt(Carbon $date): float
@@ -386,7 +386,7 @@ class PlatformDashboardController extends Controller
                 $q->whereNull('subscriptions.ends_at')
                   ->orWhere('subscriptions.ends_at', '>=', $date->toDateString());
             })
-            ->sum('plans.price_monthly');
+            ->sum(DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly)'));
     }
 
     private function countActiveTenants(): int

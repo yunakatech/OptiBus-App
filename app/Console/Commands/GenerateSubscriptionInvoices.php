@@ -29,7 +29,13 @@ class GenerateSubscriptionInvoices extends Command
             ->whereIn('subscriptions.status', ['trial', 'active'])
             ->whereNotNull('subscriptions.ends_at')
             ->where('subscriptions.ends_at', '<=', $dueThreshold)
-            ->select('subscriptions.*', 'plans.price_monthly', 'plans.price_yearly')
+            ->select(
+                'subscriptions.*',
+                'plans.price_monthly as base_price_monthly',
+                'plans.price_yearly as base_price_yearly',
+                DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
+                DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
+            )
             ->get();
 
         foreach ($subs as $sub) {
@@ -44,8 +50,8 @@ class GenerateSubscriptionInvoices extends Command
             }
 
             $amount = $sub->billing_interval === 'yearly'
-                ? (float) $sub->price_yearly
-                : (float) $sub->price_monthly;
+                ? (float) ($sub->price_yearly ?? $sub->base_price_yearly ?? 0)
+                : (float) ($sub->price_monthly ?? $sub->base_price_monthly ?? 0);
 
             if ($amount <= 0) {
                 continue;
