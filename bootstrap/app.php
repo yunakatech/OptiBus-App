@@ -13,7 +13,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request as HttpRequest;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
@@ -70,3 +70,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+
+if (isset($_SERVER['VERCEL_URL']) || isset($_ENV['VERCEL'])) {
+    $storagePath = '/tmp/storage';
+    $app->useStoragePath($storagePath);
+    
+    // Create required directories in /tmp for Vercel
+    foreach (['app/public', 'framework/cache/data', 'framework/views', 'framework/sessions', 'logs'] as $folder) {
+        $path = $storagePath . '/' . $folder;
+        if (!is_dir($path)) {
+            @mkdir($path, 0777, true);
+        }
+    }
+}
+
+return $app;
