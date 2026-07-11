@@ -6,7 +6,7 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
 
-const shouldGenerateWayfinder = process.env.SKIP_WAYFINDER_GENERATE !== 'true';
+const shouldGenerateWayfinder = process.env.SKIP_WAYFINDER_GENERATE !== 'true' && !process.env.VERCEL;
 
 export default defineConfig({
     plugins: [
