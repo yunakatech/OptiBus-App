@@ -71,12 +71,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
         //
     })->create();
 
-if (isset($_SERVER['VERCEL_URL']) || isset($_ENV['VERCEL'])) {
+if (isset($_SERVER['VERCEL_URL']) || getenv('VERCEL') || env('VERCEL') || isset($_ENV['VERCEL'])) {
     $storagePath = '/tmp/storage';
     $app->useStoragePath($storagePath);
     
     // Create required directories in /tmp for Vercel
-    foreach (['app/public', 'framework/cache/data', 'framework/views', 'framework/sessions', 'logs'] as $folder) {
+    foreach (['app/public', 'framework/cache/data', 'framework/views', 'framework/sessions', 'logs', 'bootstrap/cache'] as $folder) {
         $path = $storagePath . '/' . $folder;
         if (!is_dir($path)) {
             @mkdir($path, 0777, true);
