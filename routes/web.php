@@ -31,6 +31,26 @@ Route::middleware(['auth'])->group(function () {
 // Public landing page — no auth required
 Route::get('/', [PublicController::class, 'welcome'])->name('home');
 
+Route::get('dev/migrate', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return response("Migrations completed successfully!<br><pre>{$output}</pre>");
+    } catch (\Throwable $e) {
+        return response("Migrations failed!<br>Message: " . $e->getMessage() . "<br><pre>" . $e->getTraceAsString() . "</pre>", 500);
+    }
+});
+
+Route::get('dev/seed', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return response("Database seeding completed successfully!<br><pre>{$output}</pre>");
+    } catch (\Throwable $e) {
+        return response("Database seeding failed!<br>Message: " . $e->getMessage() . "<br><pre>" . $e->getTraceAsString() . "</pre>", 500);
+    }
+});
+
 // Public pricing page — no auth required
 Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
 
