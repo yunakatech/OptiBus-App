@@ -17,14 +17,16 @@ try {
     /** @var \Illuminate\Foundation\Application $app */
     $app = require_once __DIR__.'/../bootstrap/app.php';
 
-    // Swap ExceptionHandler in container so we get the raw original error
+    // Swap ExceptionHandler in container so we get the raw original error (using a Closure)
     $app->singleton(
         \Illuminate\Contracts\Debug\ExceptionHandler::class,
-        new class implements \Illuminate\Contracts\Debug\ExceptionHandler {
-            public function report(\Throwable $e) {}
-            public function shouldReport(\Throwable $e) { return false; }
-            public function render($request, \Throwable $e) { throw $e; }
-            public function renderForConsole($output, \Throwable $e) { throw $e; }
+        function () {
+            return new class implements \Illuminate\Contracts\Debug\ExceptionHandler {
+                public function report(\Throwable $e) {}
+                public function shouldReport(\Throwable $e) { return false; }
+                public function render($request, \Throwable $e) { throw $e; }
+                public function renderForConsole($output, \Throwable $e) { throw $e; }
+            };
         }
     );
 
