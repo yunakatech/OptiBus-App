@@ -8,8 +8,12 @@
     },
     "routes": [
         {
-            "src": "/build/(.*)",
-            "dest": "/public/build/$1"
+            "src": "/(branding|landing|build)/(.*)",
+            "dest": "/public/$1/$2"
+        },
+        {
+            "src": "/(favicon\\.ico|favicon\\.svg|apple-touch-icon\\.png|apple-touch-icon-v2\\.png|pwa-icon-192\\.png|pwa-icon-192-v2\\.png|pwa-icon-512\\.png|pwa-icon-512-v2\\.png|robots\\.txt|manifest\\.json)",
+            "dest": "/public/$1"
         },
         {
             "src": "/(.*)",
@@ -18,7 +22,7 @@
     ],
     "env": {
         "APP_ENV": "production",
-        "APP_DEBUG": "true",
+        "APP_DEBUG": "false",
         "APP_KEY": "base64:k6wOP1B1N0YpXzW4hY/m3wX7nQK6wOP1B1N0YpXzW4g=",
         "LOG_CHANNEL": "stderr",
         "CACHE_STORE": "array",
