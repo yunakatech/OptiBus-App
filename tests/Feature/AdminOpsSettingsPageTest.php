@@ -33,6 +33,7 @@ class AdminOpsSettingsPageTest extends TestCase
             ['admin-ops.drivers', 'PengaturanDriver', 'drivers', ['armadas']],
             ['admin-ops.armadas', 'PengaturanArmada', 'armadas', ['categories', 'units']],
             ['admin-ops.schedules', 'PengaturanJadwal', 'schedules', ['routes', 'units']],
+            ['admin-ops.segments', 'PengaturanSegment', 'segments', ['routes']],
         ];
 
         foreach ($pages as [$routeName, $component, $tab, $masterKeys]) {
@@ -60,8 +61,10 @@ class AdminOpsSettingsPageTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
+        $tenantId = $this->defaultTenantId();
         for ($index = 1; $index <= 25; $index++) {
             DB::table('drivers')->insert([
+                'tenant_id' => $tenantId,
                 'nama' => $index === 25 ? 'DRIVER KHUSUS FILTER' : "DRIVER UJI {$index}",
                 'phone' => "0812300{$index}",
                 'target_revenue_bulanan' => 0,
@@ -117,7 +120,8 @@ class AdminOpsSettingsPageTest extends TestCase
             ]);
         }
 
-        $operator = User::factory()->create(['is_super_admin' => false]);
+        $tenantId = $this->defaultTenantId();
+        $operator = User::factory()->create(['is_super_admin' => false, 'tenant_id' => $tenantId]);
         DB::table('user_role')->insert([
             'user_id' => $operator->id,
             'role_id' => $roleId,

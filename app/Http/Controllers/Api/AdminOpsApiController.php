@@ -654,7 +654,7 @@ class AdminOpsApiController extends Controller
         }
 
         if (! $request->boolean('paginate')) {
-            return $this->ok(['drivers' => $rows, 'pagination' => null]);
+            return $this->ok(['drivers' => $rows]);
         }
 
         [$page, $perPage] = $this->paginationParams($request);
