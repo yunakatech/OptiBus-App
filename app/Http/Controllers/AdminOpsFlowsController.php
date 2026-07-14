@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Api\AdminOpsApiController;
 use App\Http\Controllers\Api\OperationsApiController;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -67,10 +68,25 @@ class AdminOpsFlowsController extends Controller
      */
     private function flowData(Request $request, string $tab): array
     {
-        $payload = match ($tab) {
-            'luggages' => $this->payload($this->adminOpsApi->luggagesIndex($request)),
-            default => $this->payload($this->adminOpsApi->chartersIndex($request)),
-        };
+        try {
+            $payload = match ($tab) {
+                'luggages' => $this->payload($this->adminOpsApi->luggagesIndex($request)),
+                default => $this->payload($this->adminOpsApi->chartersIndex($request)),
+            };
+        } catch (QueryException) {
+            return match ($tab) {
+                'luggages' => [
+                    'tab' => $tab,
+                    'luggages' => [],
+                    'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1],
+                ],
+                default => [
+                    'tab' => $tab,
+                    'charters' => [],
+                    'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1],
+                ],
+            };
+        }
 
         return ['tab' => $tab, ...$payload];
     }
@@ -80,30 +96,36 @@ class AdminOpsFlowsController extends Controller
      */
     private function flowMasters(Request $request, string $tab): array
     {
-        $pools = $this->payload($this->adminOpsApi->poolsIndex($request));
+        try {
+            $pools = $this->payload($this->adminOpsApi->poolsIndex($request));
 
-        if ($tab === 'luggages') {
-            $services = $this->payload($this->operationsApi->luggageServices());
+            if ($tab === 'luggages') {
+                $services = $this->payload($this->operationsApi->luggageServices());
+
+                return [
+                    'tab' => $tab,
+                    'services' => $services['services'] ?? [],
+                    'pools' => $pools['pools'] ?? [],
+                    'routes' => $pools['routes'] ?? [],
+                ];
+            }
+
+            $units = $this->payload($this->operationsApi->units());
+            $drivers = $this->payload($this->operationsApi->drivers());
+            $charterRoutes = $this->payload($this->operationsApi->charterRoutes());
 
             return [
                 'tab' => $tab,
-                'services' => $services['services'] ?? [],
+                'units' => $units['units'] ?? [],
+                'drivers' => $drivers['drivers'] ?? [],
+                'charterRoutes' => $charterRoutes['routes'] ?? [],
                 'pools' => $pools['pools'] ?? [],
-                'routes' => $pools['routes'] ?? [],
             ];
+        } catch (QueryException) {
+            return $tab === 'luggages'
+                ? ['tab' => $tab, 'services' => [], 'pools' => [], 'routes' => []]
+                : ['tab' => $tab, 'units' => [], 'drivers' => [], 'charterRoutes' => [], 'pools' => []];
         }
-
-        $units = $this->payload($this->operationsApi->units());
-        $drivers = $this->payload($this->operationsApi->drivers());
-        $charterRoutes = $this->payload($this->operationsApi->charterRoutes());
-
-        return [
-            'tab' => $tab,
-            'units' => $units['units'] ?? [],
-            'drivers' => $drivers['drivers'] ?? [],
-            'charterRoutes' => $charterRoutes['routes'] ?? [],
-            'pools' => $pools['pools'] ?? [],
-        ];
     }
 
     /**

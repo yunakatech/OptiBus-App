@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Api\AdminOpsApiController;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -66,11 +67,26 @@ class AdminOpsMasterController extends Controller
      */
     private function masterData(Request $request, string $tab): array
     {
-        $payload = match ($tab) {
-            'customer-charter' => $this->payload($this->adminOpsApi->customerCharterIndex($request)),
-            'rute-carter' => $this->payload($this->adminOpsApi->charterRoutesMasterIndex($request)),
-            default => $this->payload($this->adminOpsApi->customerBagasiIndex($request)),
-        };
+        try {
+            $payload = match ($tab) {
+                'customer-charter' => $this->payload($this->adminOpsApi->customerCharterIndex($request)),
+                'rute-carter' => $this->payload($this->adminOpsApi->charterRoutesMasterIndex($request)),
+                default => $this->payload($this->adminOpsApi->customerBagasiIndex($request)),
+            };
+        } catch (QueryException) {
+            return match ($tab) {
+                'rute-carter' => [
+                    'tab' => $tab,
+                    'routes' => [],
+                    'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1],
+                ],
+                default => [
+                    'tab' => $tab,
+                    'customers' => [],
+                    'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1],
+                ],
+            };
+        }
 
         return ['tab' => $tab, ...$payload];
     }

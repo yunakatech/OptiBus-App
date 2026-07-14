@@ -96,6 +96,31 @@ class AdminOpsFlowsPageTest extends TestCase
             );
     }
 
+    public function test_charter_page_deferred_props_tolerate_missing_charter_and_route_master_tables(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        Schema::dropIfExists('charters');
+        Schema::dropIfExists('master_carter');
+
+        $this->get(route('charters.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('AdminOpsFlows')
+                ->where('initialTab', 'charters')
+                ->loadDeferredProps('flow-data', fn (Assert $reload) => $reload
+                    ->where('flowData.tab', 'charters')
+                    ->has('flowData.charters')
+                    ->where('flowData.charters', [])
+                    ->where('flowData.pagination.total', 0))
+                ->loadDeferredProps('flow-masters', fn (Assert $reload) => $reload
+                    ->where('flowMasters.tab', 'charters')
+                    ->where('flowMasters.units', [])
+                    ->where('flowMasters.drivers', [])
+                    ->where('flowMasters.charterRoutes', [])
+                    ->where('flowMasters.pools', [])),
+            );
+    }
+
     public function test_pool_operator_gets_pool_scope_and_route_labels_on_flow_page(): void
     {
         AccessControl::syncDefaults();

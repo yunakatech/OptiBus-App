@@ -18,6 +18,10 @@ class OperationsApiController extends Controller
 {
     public function charterRoutes(): JsonResponse
     {
+        if (! Schema::hasTable('master_carter')) {
+            return $this->ok(['routes' => []]);
+        }
+
         $routes = DB::table('master_carter')
             ->when(Schema::hasColumn('master_carter', 'tenant_id'), function ($query): void {
                 PoolScope::applyTenantScope($query, 'tenant_id');
@@ -186,6 +190,10 @@ class OperationsApiController extends Controller
 
     public function drivers(): JsonResponse
     {
+        if (! Schema::hasTable('drivers')) {
+            return $this->ok(['drivers' => []]);
+        }
+
         $query = DB::table('drivers')->orderBy('nama');
         if (Schema::hasColumn('drivers', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
