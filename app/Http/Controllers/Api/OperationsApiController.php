@@ -211,6 +211,10 @@ class OperationsApiController extends Controller
 
     public function luggageServices(): JsonResponse
     {
+        if (! Schema::hasTable('luggage_services')) {
+            return $this->ok(['services' => []]);
+        }
+
         $query = DB::table('luggage_services')->orderBy('name');
         if (Schema::hasColumn('luggage_services', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
