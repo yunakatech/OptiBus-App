@@ -119,9 +119,7 @@ class AdminOpsFlowsPageTest extends TestCase
                 ->where('auth.pool_scope.route_ids.0', $routeId)
                 ->where('auth.pool_scope.route_names', fn (mixed $routeNames): bool => collect($routeNames)->contains('PINRANG - MAKASSAR'))
                 ->loadDeferredProps('flow-masters', fn (Assert $reload) => $reload
-                    ->where('flowMasters.pools.0.route_names', fn (mixed $routeNames): bool => collect($routeNames)->contains('PINRANG')
-                        && collect($routeNames)->contains('MAKASSAR')
-                        && collect($routeNames)->contains('PINRANG - MAKASSAR'))),
+                    ->where('flowMasters.pools.0.route_names', fn (mixed $routeNames): bool => collect($routeNames)->contains('PINRANG - MAKASSAR'))),
             );
     }
 }

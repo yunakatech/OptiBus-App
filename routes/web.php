@@ -76,7 +76,8 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin-ops/jadwal', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'schedules')->defaults('locked', true)->name('admin-ops.schedules');
     Route::get('admin-ops/driver', AdminOpsController::class)->middleware('permission:driver.view')->defaults('tab', 'drivers')->defaults('locked', true)->name('admin-ops.drivers');
     Route::get('admin-ops/tarif-bagasi', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'services')->defaults('locked', true)->name('admin-ops.services');
-    Route::get('admin-ops/segments', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'routes')->defaults('locked', true)->name('admin-ops.segments');
+    Route::get('admin-ops/segments', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'segments')->defaults('locked', true)->name('admin-ops.segments');
+    Route::redirect('admin/segments', 'admin-ops/segments');
     Route::get('admin-ops/customers', AdminOpsController::class)->middleware('permission:customer.view')->defaults('tab', 'customers')->defaults('locked', true)->name('admin-ops.customers');
     Route::get('admin-ops/kategori-armada', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'units')->defaults('locked', true)->name('admin-ops.units');
     Route::get('admin-ops/kategori-armada/layout/{id}', AdminOpsController::class)->middleware('permission:master.manage')->defaults('tab', 'units')->defaults('mode', 'layout')->defaults('locked', true)->name('admin-ops.units.layout');
