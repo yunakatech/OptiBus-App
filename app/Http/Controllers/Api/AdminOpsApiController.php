@@ -2155,15 +2155,45 @@ class AdminOpsApiController extends Controller
         $unitId = (int) $request->query('unit_id', 0);
         $armadaId = (int) $request->query('armada_id', 0);
         [$page, $perPage] = $this->paginationParams($request);
+
+        if (! Schema::hasTable('charters')) {
+            return $this->ok([
+                'charters' => [],
+                'pagination' => $this->paginationMeta(0, $page, $perPage),
+            ]);
+        }
+
+        $charterColumns = array_flip(Schema::getColumnListing('charters'));
+        if (! isset($charterColumns['id'])) {
+            return $this->ok([
+                'charters' => [],
+                'pagination' => $this->paginationMeta(0, $page, $perPage),
+            ]);
+        }
+
         $hasStatusColumn = $this->chartersHasStatusColumn();
         $hasArmadaIdColumn = $this->chartersHasArmadaIdColumn();
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
         $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
         $hasMasterCarterIdColumn = $this->chartersHasMasterCarterIdColumn();
+        $hasUnitIdColumn = isset($charterColumns['unit_id']);
+        $hasStartDateColumn = isset($charterColumns['start_date']);
+        $hasDepartureTimeColumn = isset($charterColumns['departure_time']);
+        $hasPaymentStatusColumn = isset($charterColumns['payment_status']);
+        $hasBopStatusColumn = isset($charterColumns['bop_status']);
+        $canJoinUnits = $hasUnitIdColumn && Schema::hasTable('units');
+        $unitColumns = $canJoinUnits ? array_flip(Schema::getColumnListing('units')) : [];
         $canJoinArmadas = $hasArmadaIdColumn && Schema::hasTable('armadas');
+        $armadaColumns = $canJoinArmadas ? array_flip(Schema::getColumnListing('armadas')) : [];
+        $selectColumn = static fn (array $columns, string $column, string $alias, string $prefix = 'c') => isset($columns[$column])
+            ? "{$prefix}.{$column}"
+            : DB::raw("NULL as {$alias}");
 
-        $query = DB::table('charters as c')
-            ->leftJoin('units as u', 'c.unit_id', '=', 'u.id');
+        $query = DB::table('charters as c');
+
+        if ($canJoinUnits) {
+            $query->leftJoin('units as u', 'c.unit_id', '=', 'u.id');
+        }
 
         if ($canJoinArmadas) {
             $query->leftJoin('armadas as a', 'c.armada_id', '=', 'a.id');
@@ -2171,26 +2201,32 @@ class AdminOpsApiController extends Controller
 
         $select = [
             'c.id',
-            'c.name',
-            'c.company_name',
-            'c.phone',
-            'c.start_date',
-            'c.end_date',
-            'c.departure_time',
-            'c.pickup_point',
-            'c.drop_point',
-            'c.unit_id',
-            'c.driver_name',
-            'c.price',
-            'c.layanan',
-            'c.bop_price',
-            'c.bop_status',
-            'c.down_payment',
-            'c.payment_status',
-            'c.created_at',
-            DB::raw($hasStatusColumn ? 'c.status as status' : "CASE WHEN c.payment_status = 'Canceled' THEN 'canceled' WHEN c.bop_status = 'done' THEN 'done' ELSE 'active' END as status"),
-            DB::raw('u.nopol as unit_nopol'),
-            DB::raw('u.category as unit_category'),
+            $selectColumn($charterColumns, 'name', 'name'),
+            $selectColumn($charterColumns, 'company_name', 'company_name'),
+            $selectColumn($charterColumns, 'phone', 'phone'),
+            $selectColumn($charterColumns, 'start_date', 'start_date'),
+            $selectColumn($charterColumns, 'end_date', 'end_date'),
+            $selectColumn($charterColumns, 'departure_time', 'departure_time'),
+            $selectColumn($charterColumns, 'pickup_point', 'pickup_point'),
+            $selectColumn($charterColumns, 'drop_point', 'drop_point'),
+            $selectColumn($charterColumns, 'unit_id', 'unit_id'),
+            $selectColumn($charterColumns, 'driver_name', 'driver_name'),
+            $selectColumn($charterColumns, 'price', 'price'),
+            $selectColumn($charterColumns, 'layanan', 'layanan'),
+            $selectColumn($charterColumns, 'bop_price', 'bop_price'),
+            $selectColumn($charterColumns, 'bop_status', 'bop_status'),
+            $selectColumn($charterColumns, 'down_payment', 'down_payment'),
+            $selectColumn($charterColumns, 'payment_status', 'payment_status'),
+            $selectColumn($charterColumns, 'created_at', 'created_at'),
+            DB::raw($hasStatusColumn
+                ? 'c.status as status'
+                : (
+                    $hasPaymentStatusColumn && $hasBopStatusColumn
+                        ? "CASE WHEN c.payment_status = 'Canceled' THEN 'canceled' WHEN c.bop_status = 'done' THEN 'done' ELSE 'active' END as status"
+                        : "'active' as status"
+                )),
+            isset($unitColumns['nopol']) ? DB::raw('u.nopol as unit_nopol') : DB::raw('NULL as unit_nopol'),
+            isset($unitColumns['category']) ? DB::raw('u.category as unit_category') : DB::raw('NULL as unit_category'),
         ];
 
         $select[] = $hasPoolIdColumn ? 'c.pool_id' : DB::raw('NULL as pool_id');
@@ -2202,11 +2238,11 @@ class AdminOpsApiController extends Controller
             $select[] = DB::raw('NULL as armada_id');
         }
 
-        if ($hasArmadaNopolColumn && $canJoinArmadas) {
+        if ($hasArmadaNopolColumn && $canJoinArmadas && isset($armadaColumns['nopol'])) {
             $select[] = DB::raw('COALESCE(c.armada_nopol, a.nopol) as armada_nopol');
         } elseif ($hasArmadaNopolColumn) {
             $select[] = 'c.armada_nopol';
-        } elseif ($canJoinArmadas) {
+        } elseif ($canJoinArmadas && isset($armadaColumns['nopol'])) {
             $select[] = DB::raw('a.nopol as armada_nopol');
         } else {
             $select[] = DB::raw('NULL as armada_nopol');
@@ -2214,40 +2250,68 @@ class AdminOpsApiController extends Controller
 
         $query->select($select);
 
-        if ($from !== '' && $to !== '') {
+        if ($from !== '' && $to !== '' && $hasStartDateColumn) {
             $query->whereBetween('c.start_date', [$from, $to]);
         }
         if ($q !== '') {
             $qLike = '%'.$q.'%';
-            $query->where(function ($builder) use ($qLike, $hasArmadaNopolColumn, $canJoinArmadas) {
-                $builder
-                    ->where('c.name', 'like', $qLike)
-                    ->orWhere('c.phone', 'like', $qLike)
-                    ->orWhere('c.driver_name', 'like', $qLike)
-                    ->orWhere('c.pickup_point', 'like', $qLike)
-                    ->orWhere('c.drop_point', 'like', $qLike)
-                    ->orWhere('u.nopol', 'like', $qLike)
-                    ->orWhere('u.category', 'like', $qLike);
+            $query->where(function ($builder) use ($qLike, $charterColumns, $unitColumns, $armadaColumns, $hasArmadaNopolColumn, $canJoinArmadas) {
+                $hasClause = false;
+
+                foreach (['name', 'phone', 'driver_name', 'pickup_point', 'drop_point'] as $column) {
+                    if (! isset($charterColumns[$column])) {
+                        continue;
+                    }
+
+                    $hasClause
+                        ? $builder->orWhere("c.{$column}", 'like', $qLike)
+                        : $builder->where("c.{$column}", 'like', $qLike);
+                    $hasClause = true;
+                }
+
+                foreach (['nopol', 'category'] as $column) {
+                    if (! isset($unitColumns[$column])) {
+                        continue;
+                    }
+
+                    $hasClause
+                        ? $builder->orWhere("u.{$column}", 'like', $qLike)
+                        : $builder->where("u.{$column}", 'like', $qLike);
+                    $hasClause = true;
+                }
 
                 if ($hasArmadaNopolColumn) {
-                    $builder->orWhere('c.armada_nopol', 'like', $qLike);
+                    $hasClause
+                        ? $builder->orWhere('c.armada_nopol', 'like', $qLike)
+                        : $builder->where('c.armada_nopol', 'like', $qLike);
+                    $hasClause = true;
                 }
 
                 if ($canJoinArmadas) {
-                    $builder
-                        ->orWhere('a.nopol', 'like', $qLike)
-                        ->orWhere('a.kategori', 'like', $qLike)
-                        ->orWhere('a.merk', 'like', $qLike);
+                    foreach (['nopol', 'kategori', 'merk'] as $column) {
+                        if (! isset($armadaColumns[$column])) {
+                            continue;
+                        }
+
+                        $hasClause
+                            ? $builder->orWhere("a.{$column}", 'like', $qLike)
+                            : $builder->where("a.{$column}", 'like', $qLike);
+                        $hasClause = true;
+                    }
+                }
+
+                if (! $hasClause) {
+                    $builder->whereRaw('1 = 0');
                 }
             });
         }
-        if ($paymentStatus !== '') {
+        if ($paymentStatus !== '' && $hasPaymentStatusColumn) {
             $query->where('c.payment_status', $paymentStatus);
         }
-        if ($bopStatus !== '') {
+        if ($bopStatus !== '' && $hasBopStatusColumn) {
             $query->where('c.bop_status', $bopStatus);
         }
-        if ($unitId > 0) {
+        if ($unitId > 0 && $hasUnitIdColumn) {
             $query->where('c.unit_id', $unitId);
         }
         if ($armadaId > 0 && $hasArmadaIdColumn) {
@@ -2259,13 +2323,13 @@ class AdminOpsApiController extends Controller
         if ($scope === 'history') {
             if ($hasStatusColumn) {
                 $query->where('c.status', 'done');
-            } else {
+            } elseif ($hasBopStatusColumn) {
                 $query->where('c.bop_status', 'done');
             }
         } elseif ($scope === 'active') {
             if ($hasStatusColumn) {
                 $query->where('c.status', '!=', 'done');
-            } else {
+            } elseif ($hasBopStatusColumn) {
                 $query->where(function (Builder $builder) {
                     $builder->whereNull('c.bop_status')->orWhere('c.bop_status', '!=', 'done');
                 });
@@ -2273,7 +2337,7 @@ class AdminOpsApiController extends Controller
         }
         $this->applyCharterPoolScope($query);
         $this->applyTenantScopeIfExists($query, 'charters', 'c');
-        $this->orderChartersByNearestDeparture($query, $scope);
+        $this->orderChartersByNearestDeparture($query, $scope, $hasStartDateColumn, $hasDepartureTimeColumn);
 
         $result = $this->paginateQuery($query, $page, $perPage);
 
@@ -2283,13 +2347,26 @@ class AdminOpsApiController extends Controller
         ]);
     }
 
-    private function orderChartersByNearestDeparture(Builder $query, string $scope): void
+    private function orderChartersByNearestDeparture(Builder $query, string $scope, bool $hasStartDateColumn = true, bool $hasDepartureTimeColumn = true): void
     {
+        if (! $hasStartDateColumn) {
+            $query->orderByDesc('c.id');
+
+            return;
+        }
+
+        $departureTimeOrdering = $hasDepartureTimeColumn
+            ? 'c.departure_time'
+            : 'c.id';
+        $departureTimeNullOrdering = $hasDepartureTimeColumn
+            ? 'c.departure_time IS NULL'
+            : '0';
+
         if ($scope === 'history') {
             $query
                 ->orderByDesc('c.start_date')
-                ->orderByRaw('c.departure_time IS NULL')
-                ->orderByDesc('c.departure_time')
+                ->orderByRaw($departureTimeNullOrdering)
+                ->orderByDesc($departureTimeOrdering)
                 ->orderByDesc('c.id');
 
             return;
@@ -2310,8 +2387,8 @@ class AdminOpsApiController extends Controller
                 ->orderByRaw($distanceExpression.' ASC', [$today])
                 ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$today])
                 ->orderBy('c.start_date')
-                ->orderByRaw('c.departure_time IS NULL')
-                ->orderBy('c.departure_time')
+                ->orderByRaw($departureTimeNullOrdering)
+                ->orderBy($departureTimeOrdering)
                 ->orderBy('c.id');
 
             return;
@@ -2321,8 +2398,8 @@ class AdminOpsApiController extends Controller
             ->orderByRaw('CASE WHEN c.start_date >= ? THEN 0 ELSE 1 END', [$today])
             ->orderByRaw('CASE WHEN c.start_date >= ? THEN c.start_date ELSE NULL END ASC', [$today])
             ->orderByRaw('CASE WHEN c.start_date < ? THEN c.start_date ELSE NULL END DESC', [$today])
-            ->orderByRaw('c.departure_time IS NULL')
-            ->orderBy('c.departure_time')
+            ->orderByRaw($departureTimeNullOrdering)
+            ->orderBy($departureTimeOrdering)
             ->orderBy('c.id');
     }
 
@@ -3717,6 +3794,13 @@ class AdminOpsApiController extends Controller
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
 
+        if (! Schema::hasTable('customer_bagasi')) {
+            return $this->ok([
+                'customers' => [],
+                'pagination' => $this->paginationMeta(0, $page, $perPage),
+            ]);
+        }
+
         $query = DB::table('customer_bagasi')
             ->select(['id', 'nama', 'no_hp', 'alamat', 'tipe'])
             ->orderBy('nama');
@@ -3818,6 +3902,13 @@ class AdminOpsApiController extends Controller
         $q = trim((string) $request->query('q', ''));
         $qPhone = preg_replace('/\D+/', '', $q) ?? '';
         [$page, $perPage] = $this->paginationParams($request);
+
+        if (! Schema::hasTable('customer_charter')) {
+            return $this->ok([
+                'customers' => [],
+                'pagination' => $this->paginationMeta(0, $page, $perPage),
+            ]);
+        }
 
         $query = DB::table('customer_charter')
             ->select(['id', 'nama', 'no_hp', 'alamat', 'company'])
@@ -3928,6 +4019,13 @@ class AdminOpsApiController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
+
+        if (! Schema::hasTable('master_carter')) {
+            return $this->ok([
+                'routes' => [],
+                'pagination' => $this->paginationMeta(0, $page, $perPage),
+            ]);
+        }
 
         $query = DB::table('master_carter')
             ->select([
@@ -6520,36 +6618,51 @@ class AdminOpsApiController extends Controller
 
         $poolIds = $scope['pool_ids'];
         $labels = $scope['labels'];
-        if (($this->chartersHasPoolIdColumn() && $poolIds !== []) || $labels !== []) {
+        $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
+        $hasPickupPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'pickup_point');
+        $hasDropPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'drop_point');
+        $hasLegacyRouteLabels = $labels !== [] && ($hasPickupPointColumn || $hasDropPointColumn);
+        if (($hasPoolIdColumn && $poolIds !== []) || $hasLegacyRouteLabels) {
             $query->where(function (Builder $builder) use ($poolIds, $labels): void {
                 $hasClause = false;
+                $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
+                $hasPickupPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'pickup_point');
+                $hasDropPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'drop_point');
 
-                if ($this->chartersHasPoolIdColumn() && $poolIds !== []) {
+                if ($hasPoolIdColumn && $poolIds !== []) {
                     $builder->whereIn('c.pool_id', $poolIds);
                     $hasClause = true;
                 }
 
-                if ($labels !== []) {
-                    if ($hasClause && $this->chartersHasPoolIdColumn()) {
-                        $builder->orWhere(function (Builder $legacy) use ($labels): void {
-                            $legacy
-                                ->whereNull('c.pool_id')
-                                ->where(function (Builder $routeBuilder) use ($labels): void {
-                                    $routeBuilder
-                                        ->whereIn('c.pickup_point', $labels)
-                                        ->orWhereIn('c.drop_point', $labels);
-                                });
-                        });
-                    } elseif ($hasClause) {
-                        $builder->orWhere(function (Builder $routeBuilder) use ($labels): void {
+                if ($labels !== [] && ($hasPickupPointColumn || $hasDropPointColumn)) {
+                    $applyLegacyLabelScope = static function (Builder $routeBuilder) use ($labels, $hasPickupPointColumn, $hasDropPointColumn): void {
+                        if ($hasPickupPointColumn && $hasDropPointColumn) {
                             $routeBuilder
                                 ->whereIn('c.pickup_point', $labels)
                                 ->orWhereIn('c.drop_point', $labels);
+
+                            return;
+                        }
+
+                        if ($hasPickupPointColumn) {
+                            $routeBuilder->whereIn('c.pickup_point', $labels);
+
+                            return;
+                        }
+
+                        $routeBuilder->whereIn('c.drop_point', $labels);
+                    };
+
+                    if ($hasClause && $hasPoolIdColumn) {
+                        $builder->orWhere(function (Builder $legacy) use ($applyLegacyLabelScope): void {
+                            $legacy
+                                ->whereNull('c.pool_id')
+                                ->where(fn (Builder $routeBuilder) => $applyLegacyLabelScope($routeBuilder));
                         });
+                    } elseif ($hasClause) {
+                        $builder->orWhere(fn (Builder $routeBuilder) => $applyLegacyLabelScope($routeBuilder));
                     } else {
-                        $builder
-                            ->whereIn('c.pickup_point', $labels)
-                            ->orWhereIn('c.drop_point', $labels);
+                        $applyLegacyLabelScope($builder);
                     }
                 }
             });

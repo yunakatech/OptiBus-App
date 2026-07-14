@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -66,6 +67,39 @@ class AdminOpsMasterPageTest extends TestCase
                     ->where('masterData.tab', 'rute-carter')
                     ->has('masterData.routes')
                     ->has('masterData.pagination')),
+            );
+    }
+
+    public function test_master_pages_deferred_props_tolerate_missing_legacy_tables(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        Schema::dropIfExists('customer_bagasi');
+        Schema::dropIfExists('customer_charter');
+        Schema::dropIfExists('master_carter');
+
+        $this->get(route('admin-ops.master.customer-bagasi'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->loadDeferredProps('master-data', fn (Assert $reload) => $reload
+                    ->where('masterData.tab', 'customer-bagasi')
+                    ->where('masterData.customers', [])
+                    ->where('masterData.pagination.total', 0)),
+            );
+
+        $this->get(route('admin-ops.master.customer-charter'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->loadDeferredProps('master-data', fn (Assert $reload) => $reload
+                    ->where('masterData.tab', 'customer-charter')
+                    ->where('masterData.customers', [])
+                    ->where('masterData.pagination.total', 0)),
+            );
+
+        $this->get(route('admin-ops.master.rute-carter'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->loadDeferredProps('master-data', fn (Assert $reload) => $reload
+                    ->where('masterData.tab', 'rute-carter')
+                    ->where('masterData.routes', [])
+                    ->where('masterData.pagination.total', 0)),
             );
     }
 }

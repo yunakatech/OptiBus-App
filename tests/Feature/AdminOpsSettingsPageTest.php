@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -158,5 +159,26 @@ class AdminOpsSettingsPageTest extends TestCase
         $this->postJson(route('api.admin.segments.save'), [])
             ->assertForbidden()
             ->assertJsonPath('error', 'Anda tidak memiliki akses untuk aksi ini.');
+    }
+
+    public function test_driver_settings_page_deferred_props_tolerate_missing_driver_table(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        Schema::dropIfExists('drivers');
+
+        $this->get(route('admin-ops.drivers'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('PengaturanDriver')
+                ->where('initialTab', 'drivers')
+                ->loadDeferredProps('settings-data', fn (Assert $reload) => $reload
+                    ->where('settingsData.tab', 'drivers')
+                    ->where('settingsData.drivers', [])
+                    ->where('settingsData.pagination.total', 0))
+                ->loadDeferredProps('settings-masters', fn (Assert $reload) => $reload
+                    ->where('settingsMasters.tab', 'drivers')
+                    ->has('settingsMasters.armadas')
+                    ->has('settingsMasters.pools')),
+            );
     }
 }
