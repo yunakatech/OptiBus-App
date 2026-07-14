@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Support\AccessControl;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -54,6 +56,34 @@ class AdminOpsFlowsPageTest extends TestCase
                 ->component('Luggages')
                 ->where('initialTab', 'luggages')
                 ->missingAll(['flowData', 'flowMasters'])
+                ->loadDeferredProps('flow-data', fn (Assert $reload) => $reload
+                    ->where('flowData.tab', 'luggages')
+                    ->has('flowData.luggages')
+                    ->has('flowData.pagination'))
+                ->loadDeferredProps('flow-masters', fn (Assert $reload) => $reload
+                    ->where('flowMasters.tab', 'luggages')
+                    ->has('flowMasters.services')
+                    ->has('flowMasters.pools')
+                    ->has('flowMasters.routes')),
+            );
+    }
+
+    public function test_luggage_page_deferred_props_tolerate_legacy_schema_without_route_id_and_services_table(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        if (Schema::hasColumn('luggages', 'rute_id')) {
+            Schema::table('luggages', function (Blueprint $table): void {
+                $table->dropColumn('rute_id');
+            });
+        }
+
+        Schema::dropIfExists('luggage_services');
+
+        $this->get(route('luggages.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Luggages')
+                ->where('initialTab', 'luggages')
                 ->loadDeferredProps('flow-data', fn (Assert $reload) => $reload
                     ->where('flowData.tab', 'luggages')
                     ->has('flowData.luggages')

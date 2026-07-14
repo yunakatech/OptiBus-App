@@ -2822,21 +2822,36 @@ class AdminOpsApiController extends Controller
     public function luggagesIndex(Request $request): JsonResponse
     {
         [$page, $perPage] = $this->paginationParams($request);
+        if (! Schema::hasTable('luggages')) {
+            return $this->ok([
+                'luggages' => [],
+                'pagination' => $this->paginationMeta(0, $page, $perPage),
+            ]);
+        }
+
         $from = trim((string) $request->query('from', ''));
         $to = trim((string) $request->query('to', ''));
         $status = trim((string) $request->query('status', ''));
         $paymentStatus = trim((string) $request->query('payment_status', ''));
         $q = trim((string) $request->query('q', ''));
+        $serviceForeignKey = Schema::hasColumn('luggages', 'service_id')
+            ? 'service_id'
+            : (Schema::hasColumn('luggages', 'layanan_id') ? 'layanan_id' : null);
+        $hasLuggageServicesTable = Schema::hasTable('luggage_services');
         $hasRoutesTable = Schema::hasTable('routes');
+        $hasRouteIdColumn = Schema::hasColumn('luggages', 'rute_id');
         $hasTripAssignmentLink = Schema::hasColumn('luggages', 'trip_assignment_id') && Schema::hasTable('trip_assignments');
         $canJoinDrivers = $hasTripAssignmentLink && Schema::hasTable('drivers');
         $canJoinArmadas = $hasTripAssignmentLink && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas');
         $hasTripAssignmentArmadaNopol = $hasTripAssignmentLink && $this->tripAssignmentsHasArmadaNopol();
 
-        $query = DB::table('luggages as l')
-            ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id');
+        $query = DB::table('luggages as l');
 
-        if ($hasRoutesTable) {
+        if ($hasLuggageServicesTable && $serviceForeignKey !== null) {
+            $query->leftJoin('luggage_services as s', 'l.'.$serviceForeignKey, '=', 's.id');
+        }
+
+        if ($hasRoutesTable && $hasRouteIdColumn) {
             $query->leftJoin('routes as r', 'l.rute_id', '=', 'r.id');
         }
 
@@ -2862,8 +2877,8 @@ class AdminOpsApiController extends Controller
                 'l.receiver_name',
                 'l.receiver_phone',
                 'l.receiver_address',
-                'l.service_id',
-                'l.rute_id',
+                $serviceForeignKey !== null ? DB::raw('l.'.$serviceForeignKey.' as service_id') : DB::raw('NULL as service_id'),
+                $hasRouteIdColumn ? 'l.rute_id' : DB::raw('NULL as rute_id'),
                 'l.rute',
                 'l.tanggal',
                 'l.unit_id',
@@ -2877,8 +2892,8 @@ class AdminOpsApiController extends Controller
                 'l.payment_status',
                 'l.kode_resi',
                 'l.created_at',
-                DB::raw('s.name as service_name'),
-                $hasRoutesTable ? DB::raw('r.name as route_name') : DB::raw('NULL as route_name'),
+                $hasLuggageServicesTable && $serviceForeignKey !== null ? DB::raw('s.name as service_name') : DB::raw('NULL as service_name'),
+                $hasRoutesTable && $hasRouteIdColumn ? DB::raw('r.name as route_name') : DB::raw('NULL as route_name'),
                 $hasTripAssignmentLink ? DB::raw('t.tanggal as departure_date') : DB::raw('NULL as departure_date'),
                 $hasTripAssignmentLink ? DB::raw('t.jam as departure_time') : DB::raw('NULL as departure_time'),
                 $hasTripAssignmentLink ? DB::raw('t.unit as departure_unit') : DB::raw('NULL as departure_unit'),
@@ -2908,7 +2923,7 @@ class AdminOpsApiController extends Controller
         }
         if ($q !== '') {
             $qLike = '%'.$q.'%';
-            $query->where(function ($builder) use ($qLike, $hasRoutesTable, $canJoinDrivers, $hasTripAssignmentArmadaNopol, $canJoinArmadas) {
+            $query->where(function ($builder) use ($qLike, $hasRoutesTable, $hasRouteIdColumn, $hasLuggageServicesTable, $serviceForeignKey, $canJoinDrivers, $hasTripAssignmentArmadaNopol, $canJoinArmadas) {
                 $builder
                     ->where('l.sender_name', 'like', $qLike)
                     ->orWhere('l.sender_phone', 'like', $qLike)
@@ -2917,10 +2932,13 @@ class AdminOpsApiController extends Controller
                     ->orWhere('l.kode_resi', 'like', $qLike)
                     ->orWhere('l.notes', 'like', $qLike)
                     ->orWhere('l.rute', 'like', $qLike)
-                    ->orWhere('l.tanggal', 'like', $qLike)
-                    ->orWhere('s.name', 'like', $qLike);
+                    ->orWhere('l.tanggal', 'like', $qLike);
 
-                if ($hasRoutesTable) {
+                if ($hasLuggageServicesTable && $serviceForeignKey !== null) {
+                    $builder->orWhere('s.name', 'like', $qLike);
+                }
+
+                if ($hasRoutesTable && $hasRouteIdColumn) {
                     $builder->orWhere('r.name', 'like', $qLike);
                 }
 
@@ -2940,7 +2958,7 @@ class AdminOpsApiController extends Controller
         $this->applyPoolOrRouteScopeToQuery(
             $query,
             $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
-            Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+            $hasRouteIdColumn ? 'l.rute_id' : '',
             'l.rute',
         );
         $this->applyTenantScopeIfExists($query, 'luggages', 'l');
