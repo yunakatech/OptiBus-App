@@ -7,6 +7,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Throwable;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -73,7 +74,11 @@ class AdminOpsMasterController extends Controller
                 'rute-carter' => $this->payload($this->adminOpsApi->charterRoutesMasterIndex($request)),
                 default => $this->payload($this->adminOpsApi->customerBagasiIndex($request)),
             };
-        } catch (QueryException) {
+        } catch (Throwable $exception) {
+            if (! app()->environment('testing') && ! $exception instanceof QueryException) {
+                report($exception);
+            }
+
             return match ($tab) {
                 'rute-carter' => [
                     'tab' => $tab,

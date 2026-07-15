@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -1629,6 +1630,34 @@ class AdminOpsApiTest extends TestCase
         $this->deleteJson(route('api.admin.charters.delete', ['id' => $charterId]))->assertOk();
         $this->deleteJson(route('api.admin.luggages.delete', ['id' => $luggageId]))->assertOk();
         $this->deleteJson(route('api.admin.assignments.delete', ['id' => $assignmentId]))->assertOk();
+    }
+
+    public function test_luggages_index_tolerates_legacy_schema_without_optional_columns(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        if (Schema::hasColumn('luggages', 'sender_address')) {
+            Schema::table('luggages', function (Blueprint $table): void {
+                $table->dropColumn('sender_address');
+            });
+        }
+
+        if (Schema::hasColumn('luggages', 'receiver_address')) {
+            Schema::table('luggages', function (Blueprint $table): void {
+                $table->dropColumn('receiver_address');
+            });
+        }
+
+        if (Schema::hasColumn('luggages', 'notes')) {
+            Schema::table('luggages', function (Blueprint $table): void {
+                $table->dropColumn('notes');
+            });
+        }
+
+        $this->getJson(route('api.admin.luggages.index'))
+            ->assertOk()
+            ->assertJsonCount(0, 'luggages')
+            ->assertJsonPath('pagination.total', 0);
     }
 
     public function test_charter_save_survives_legacy_customer_phone_conflicts_in_other_tenant(): void

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Api\AdminOpsApiController;
 use App\Models\User;
 use App\Support\AccessControl;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
+use Mockery;
 use Tests\TestCase;
 
 class AdminOpsFlowsPageTest extends TestCase
@@ -118,6 +120,27 @@ class AdminOpsFlowsPageTest extends TestCase
                     ->where('flowMasters.drivers', [])
                     ->where('flowMasters.charterRoutes', [])
                     ->where('flowMasters.pools', [])),
+            );
+    }
+
+    public function test_luggage_page_deferred_props_tolerate_runtime_errors_in_flow_data(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $mock = Mockery::mock(AdminOpsApiController::class);
+        $mock->shouldReceive('luggagesIndex')
+            ->once()
+            ->andThrow(new \RuntimeException('Simulated luggage flow failure.'));
+        $this->app->instance(AdminOpsApiController::class, $mock);
+
+        $this->get(route('luggages.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Luggages')
+                ->where('initialTab', 'luggages')
+                ->loadDeferredProps('flow-data', fn (Assert $reload) => $reload
+                    ->where('flowData.tab', 'luggages')
+                    ->where('flowData.luggages', [])
+                    ->where('flowData.pagination.total', 0)),
             );
     }
 
