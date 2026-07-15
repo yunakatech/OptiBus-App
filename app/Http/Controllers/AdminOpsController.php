@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -234,7 +235,11 @@ class AdminOpsController extends Controller
                 ] : []),
                 ...($tab === 'segments' ? ['route_id' => max(0, (int) $listRequest->query('route_id', 0))] : []),
             ];
-        } catch (QueryException) {
+        } catch (Throwable $exception) {
+            if (! app()->environment('testing') && ! $exception instanceof QueryException) {
+                report($exception);
+            }
+
             return match ($tab) {
                 'schedules' => [
                     'tab' => $tab,
@@ -289,7 +294,11 @@ class AdminOpsController extends Controller
                 'users' => $this->poolMasters($masterRequest, $tab, true),
                 default => ['tab' => $tab],
             };
-        } catch (QueryException) {
+        } catch (Throwable $exception) {
+            if (! app()->environment('testing') && ! $exception instanceof QueryException) {
+                report($exception);
+            }
+
             return match ($tab) {
                 'schedules' => ['tab' => $tab, 'routes' => [], 'units' => []],
                 'drivers' => ['tab' => $tab, 'armadas' => [], 'pools' => []],

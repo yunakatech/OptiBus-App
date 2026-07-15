@@ -2911,16 +2911,38 @@ class AdminOpsApiController extends Controller
         $status = trim((string) $request->query('status', ''));
         $paymentStatus = trim((string) $request->query('payment_status', ''));
         $q = trim((string) $request->query('q', ''));
-        $serviceForeignKey = Schema::hasColumn('luggages', 'service_id')
+        $luggageColumns = array_flip(Schema::getColumnListing('luggages'));
+        if (! isset($luggageColumns['id'])) {
+            return $this->ok([
+                'luggages' => [],
+                'pagination' => $this->paginationMeta(0, $page, $perPage),
+            ]);
+        }
+
+        $serviceForeignKey = isset($luggageColumns['service_id'])
             ? 'service_id'
-            : (Schema::hasColumn('luggages', 'layanan_id') ? 'layanan_id' : null);
+            : (isset($luggageColumns['layanan_id']) ? 'layanan_id' : null);
         $hasLuggageServicesTable = Schema::hasTable('luggage_services');
+        $serviceColumns = $hasLuggageServicesTable ? array_flip(Schema::getColumnListing('luggage_services')) : [];
         $hasRoutesTable = Schema::hasTable('routes');
-        $hasRouteIdColumn = Schema::hasColumn('luggages', 'rute_id');
-        $hasTripAssignmentLink = Schema::hasColumn('luggages', 'trip_assignment_id') && Schema::hasTable('trip_assignments');
-        $canJoinDrivers = $hasTripAssignmentLink && Schema::hasTable('drivers');
+        $routeColumns = $hasRoutesTable ? array_flip(Schema::getColumnListing('routes')) : [];
+        $hasRouteIdColumn = isset($luggageColumns['rute_id']);
+        $hasRouteLabelColumn = isset($luggageColumns['rute']);
+        $hasCreatedAtColumn = isset($luggageColumns['created_at']);
+        $hasStatusColumn = isset($luggageColumns['status']);
+        $hasPaymentStatusColumn = isset($luggageColumns['payment_status']);
+        $hasTripAssignmentLink = isset($luggageColumns['trip_assignment_id']) && Schema::hasTable('trip_assignments');
+        $tripAssignmentColumns = $hasTripAssignmentLink ? array_flip(Schema::getColumnListing('trip_assignments')) : [];
+        $canJoinDrivers = $hasTripAssignmentLink
+            && isset($tripAssignmentColumns['driver_id'])
+            && Schema::hasTable('drivers');
+        $driverColumns = $canJoinDrivers ? array_flip(Schema::getColumnListing('drivers')) : [];
         $canJoinArmadas = $hasTripAssignmentLink && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas');
+        $armadaColumns = $canJoinArmadas ? array_flip(Schema::getColumnListing('armadas')) : [];
         $hasTripAssignmentArmadaNopol = $hasTripAssignmentLink && $this->tripAssignmentsHasArmadaNopol();
+        $selectColumn = static fn (array $columns, string $column, string $alias, string $prefix = 'l') => isset($columns[$column])
+            ? "{$prefix}.{$column}"
+            : DB::raw("NULL as {$alias}");
 
         $query = DB::table('luggages as l');
 
@@ -2948,87 +2970,109 @@ class AdminOpsApiController extends Controller
             ->select([
                 'l.id',
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : DB::raw('NULL as pool_id'),
-                'l.sender_name',
-                'l.sender_phone',
-                'l.sender_address',
-                'l.receiver_name',
-                'l.receiver_phone',
-                'l.receiver_address',
+                $selectColumn($luggageColumns, 'sender_name', 'sender_name'),
+                $selectColumn($luggageColumns, 'sender_phone', 'sender_phone'),
+                $selectColumn($luggageColumns, 'sender_address', 'sender_address'),
+                $selectColumn($luggageColumns, 'receiver_name', 'receiver_name'),
+                $selectColumn($luggageColumns, 'receiver_phone', 'receiver_phone'),
+                $selectColumn($luggageColumns, 'receiver_address', 'receiver_address'),
                 $serviceForeignKey !== null ? DB::raw('l.'.$serviceForeignKey.' as service_id') : DB::raw('NULL as service_id'),
                 $hasRouteIdColumn ? 'l.rute_id' : DB::raw('NULL as rute_id'),
-                'l.rute',
-                'l.tanggal',
-                'l.unit_id',
+                $selectColumn($luggageColumns, 'rute', 'rute'),
+                $selectColumn($luggageColumns, 'tanggal', 'tanggal'),
+                $selectColumn($luggageColumns, 'unit_id', 'unit_id'),
                 $hasTripAssignmentLink ? 'l.trip_assignment_id' : DB::raw('NULL as trip_assignment_id'),
-                'l.pengirim_id',
-                'l.penerima_id',
-                'l.quantity',
-                'l.notes',
-                'l.price',
-                'l.status',
-                'l.payment_status',
-                'l.kode_resi',
-                'l.created_at',
-                $hasLuggageServicesTable && $serviceForeignKey !== null ? DB::raw('s.name as service_name') : DB::raw('NULL as service_name'),
-                $hasRoutesTable && $hasRouteIdColumn ? DB::raw('r.name as route_name') : DB::raw('NULL as route_name'),
-                $hasTripAssignmentLink ? DB::raw('t.tanggal as departure_date') : DB::raw('NULL as departure_date'),
-                $hasTripAssignmentLink ? DB::raw('t.jam as departure_time') : DB::raw('NULL as departure_time'),
-                $hasTripAssignmentLink ? DB::raw('t.unit as departure_unit') : DB::raw('NULL as departure_unit'),
-                $canJoinDrivers ? DB::raw('d.nama as departure_driver_name') : DB::raw('NULL as departure_driver_name'),
+                $selectColumn($luggageColumns, 'pengirim_id', 'pengirim_id'),
+                $selectColumn($luggageColumns, 'penerima_id', 'penerima_id'),
+                $selectColumn($luggageColumns, 'quantity', 'quantity'),
+                $selectColumn($luggageColumns, 'notes', 'notes'),
+                $selectColumn($luggageColumns, 'price', 'price'),
+                $selectColumn($luggageColumns, 'status', 'status'),
+                $selectColumn($luggageColumns, 'payment_status', 'payment_status'),
+                $selectColumn($luggageColumns, 'kode_resi', 'kode_resi'),
+                $selectColumn($luggageColumns, 'created_at', 'created_at'),
+                $hasLuggageServicesTable && $serviceForeignKey !== null && isset($serviceColumns['name']) ? DB::raw('s.name as service_name') : DB::raw('NULL as service_name'),
+                $hasRoutesTable && $hasRouteIdColumn && isset($routeColumns['name']) ? DB::raw('r.name as route_name') : DB::raw('NULL as route_name'),
+                $hasTripAssignmentLink && isset($tripAssignmentColumns['tanggal']) ? DB::raw('t.tanggal as departure_date') : DB::raw('NULL as departure_date'),
+                $hasTripAssignmentLink && isset($tripAssignmentColumns['jam']) ? DB::raw('t.jam as departure_time') : DB::raw('NULL as departure_time'),
+                $hasTripAssignmentLink && isset($tripAssignmentColumns['unit']) ? DB::raw('t.unit as departure_unit') : DB::raw('NULL as departure_unit'),
+                $canJoinDrivers && isset($driverColumns['nama']) ? DB::raw('d.nama as departure_driver_name') : DB::raw('NULL as departure_driver_name'),
             ])
             ->orderByDesc('l.id');
 
-        if ($hasTripAssignmentArmadaNopol && $canJoinArmadas) {
+        if ($hasTripAssignmentArmadaNopol && isset($tripAssignmentColumns['armada_nopol']) && $canJoinArmadas && isset($armadaColumns['nopol'])) {
             $query->addSelect(DB::raw('COALESCE(t.armada_nopol, a.nopol) as departure_armada_nopol'));
-        } elseif ($hasTripAssignmentArmadaNopol) {
+        } elseif ($hasTripAssignmentArmadaNopol && isset($tripAssignmentColumns['armada_nopol'])) {
             $query->addSelect(DB::raw('t.armada_nopol as departure_armada_nopol'));
-        } elseif ($canJoinArmadas) {
+        } elseif ($canJoinArmadas && isset($armadaColumns['nopol'])) {
             $query->addSelect(DB::raw('a.nopol as departure_armada_nopol'));
         } else {
             $query->addSelect(DB::raw('NULL as departure_armada_nopol'));
         }
 
-        if ($from !== '' && $to !== '') {
+        if ($from !== '' && $to !== '' && $hasCreatedAtColumn) {
             [$createdFrom, $createdTo] = $this->dateTimeRange($from, $to);
             $query->whereBetween('l.created_at', [$createdFrom, $createdTo]);
         }
-        if ($status !== '') {
+        if ($status !== '' && $hasStatusColumn) {
             $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageStatusAliases($status));
         }
-        if ($paymentStatus !== '') {
+        if ($paymentStatus !== '' && $hasPaymentStatusColumn) {
             $query->where('l.payment_status', $paymentStatus);
         }
         if ($q !== '') {
             $qLike = '%'.$q.'%';
-            $query->where(function ($builder) use ($qLike, $hasRoutesTable, $hasRouteIdColumn, $hasLuggageServicesTable, $serviceForeignKey, $canJoinDrivers, $hasTripAssignmentArmadaNopol, $canJoinArmadas) {
-                $builder
-                    ->where('l.sender_name', 'like', $qLike)
-                    ->orWhere('l.sender_phone', 'like', $qLike)
-                    ->orWhere('l.receiver_name', 'like', $qLike)
-                    ->orWhere('l.receiver_phone', 'like', $qLike)
-                    ->orWhere('l.kode_resi', 'like', $qLike)
-                    ->orWhere('l.notes', 'like', $qLike)
-                    ->orWhere('l.rute', 'like', $qLike)
-                    ->orWhere('l.tanggal', 'like', $qLike);
+            $query->where(function ($builder) use ($qLike, $luggageColumns, $hasRoutesTable, $hasRouteIdColumn, $routeColumns, $hasLuggageServicesTable, $serviceForeignKey, $serviceColumns, $canJoinDrivers, $driverColumns, $hasTripAssignmentArmadaNopol, $hasTripAssignmentLink, $tripAssignmentColumns, $canJoinArmadas, $armadaColumns) {
+                $hasClause = false;
 
-                if ($hasLuggageServicesTable && $serviceForeignKey !== null) {
-                    $builder->orWhere('s.name', 'like', $qLike);
+                foreach (['sender_name', 'sender_phone', 'receiver_name', 'receiver_phone', 'kode_resi', 'notes', 'rute', 'tanggal'] as $column) {
+                    if (! isset($luggageColumns[$column])) {
+                        continue;
+                    }
+
+                    $hasClause
+                        ? $builder->orWhere("l.{$column}", 'like', $qLike)
+                        : $builder->where("l.{$column}", 'like', $qLike);
+                    $hasClause = true;
                 }
 
-                if ($hasRoutesTable && $hasRouteIdColumn) {
-                    $builder->orWhere('r.name', 'like', $qLike);
+                if ($hasLuggageServicesTable && $serviceForeignKey !== null && isset($serviceColumns['name'])) {
+                    $hasClause
+                        ? $builder->orWhere('s.name', 'like', $qLike)
+                        : $builder->where('s.name', 'like', $qLike);
+                    $hasClause = true;
                 }
 
-                if ($canJoinDrivers) {
-                    $builder->orWhere('d.nama', 'like', $qLike);
+                if ($hasRoutesTable && $hasRouteIdColumn && isset($routeColumns['name'])) {
+                    $hasClause
+                        ? $builder->orWhere('r.name', 'like', $qLike)
+                        : $builder->where('r.name', 'like', $qLike);
+                    $hasClause = true;
                 }
 
-                if ($hasTripAssignmentArmadaNopol) {
-                    $builder->orWhere('t.armada_nopol', 'like', $qLike);
+                if ($canJoinDrivers && isset($driverColumns['nama'])) {
+                    $hasClause
+                        ? $builder->orWhere('d.nama', 'like', $qLike)
+                        : $builder->where('d.nama', 'like', $qLike);
+                    $hasClause = true;
                 }
 
-                if ($canJoinArmadas) {
-                    $builder->orWhere('a.nopol', 'like', $qLike);
+                if ($hasTripAssignmentArmadaNopol && $hasTripAssignmentLink && isset($tripAssignmentColumns['armada_nopol'])) {
+                    $hasClause
+                        ? $builder->orWhere('t.armada_nopol', 'like', $qLike)
+                        : $builder->where('t.armada_nopol', 'like', $qLike);
+                    $hasClause = true;
+                }
+
+                if ($canJoinArmadas && isset($armadaColumns['nopol'])) {
+                    $hasClause
+                        ? $builder->orWhere('a.nopol', 'like', $qLike)
+                        : $builder->where('a.nopol', 'like', $qLike);
+                    $hasClause = true;
+                }
+
+                if (! $hasClause) {
+                    $builder->whereRaw('1 = 0');
                 }
             });
         }
@@ -3036,7 +3080,7 @@ class AdminOpsApiController extends Controller
             $query,
             $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
             $hasRouteIdColumn ? 'l.rute_id' : '',
-            'l.rute',
+            $hasRouteLabelColumn ? 'l.rute' : '',
         );
         $this->applyTenantScopeIfExists($query, 'luggages', 'l');
 

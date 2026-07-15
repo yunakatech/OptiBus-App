@@ -8,6 +8,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Throwable;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -73,7 +74,11 @@ class AdminOpsFlowsController extends Controller
                 'luggages' => $this->payload($this->adminOpsApi->luggagesIndex($request)),
                 default => $this->payload($this->adminOpsApi->chartersIndex($request)),
             };
-        } catch (QueryException) {
+        } catch (Throwable $exception) {
+            if (! app()->environment('testing') && ! $exception instanceof QueryException) {
+                report($exception);
+            }
+
             return match ($tab) {
                 'luggages' => [
                     'tab' => $tab,
@@ -121,7 +126,11 @@ class AdminOpsFlowsController extends Controller
                 'charterRoutes' => $charterRoutes['routes'] ?? [],
                 'pools' => $pools['pools'] ?? [],
             ];
-        } catch (QueryException) {
+        } catch (Throwable $exception) {
+            if (! app()->environment('testing') && ! $exception instanceof QueryException) {
+                report($exception);
+            }
+
             return $tab === 'luggages'
                 ? ['tab' => $tab, 'services' => [], 'pools' => [], 'routes' => []]
                 : ['tab' => $tab, 'units' => [], 'drivers' => [], 'charterRoutes' => [], 'pools' => []];
