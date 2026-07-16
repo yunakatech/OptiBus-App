@@ -13,6 +13,41 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request as HttpRequest;
 
+$runningOnVercel = isset($_SERVER['VERCEL_URL'])
+    || isset($_SERVER['VERCEL'])
+    || getenv('VERCEL')
+    || isset($_ENV['VERCEL']);
+$vercelStoragePath = '/tmp/storage';
+
+if ($runningOnVercel) {
+    $deploymentKey = preg_replace(
+        '/[^A-Za-z0-9_.-]/',
+        '_',
+        (string) (getenv('VERCEL_GIT_COMMIT_SHA')
+            ?: getenv('VERCEL_URL')
+            ?: ($_SERVER['VERCEL_URL'] ?? 'vercel')),
+    );
+
+    if (! is_string($deploymentKey) || $deploymentKey === '') {
+        $deploymentKey = 'vercel';
+    }
+
+    $cacheDirectory = $vercelStoragePath.'/bootstrap/cache';
+    $cacheFiles = [
+        'APP_SERVICES_CACHE' => $cacheDirectory."/services-{$deploymentKey}.php",
+        'APP_PACKAGES_CACHE' => $cacheDirectory."/packages-{$deploymentKey}.php",
+        'APP_CONFIG_CACHE' => $cacheDirectory."/config-{$deploymentKey}.php",
+        'APP_ROUTES_CACHE' => $cacheDirectory."/routes-{$deploymentKey}.php",
+        'APP_EVENTS_CACHE' => $cacheDirectory."/events-{$deploymentKey}.php",
+    ];
+
+    foreach ($cacheFiles as $envKey => $envValue) {
+        putenv("{$envKey}={$envValue}");
+        $_ENV[$envKey] = $envValue;
+        $_SERVER[$envKey] = $envValue;
+    }
+}
+
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -71,13 +106,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
         //
     })->create();
 
-if (isset($_SERVER['VERCEL_URL']) || getenv('VERCEL') || env('VERCEL') || isset($_ENV['VERCEL'])) {
-    $storagePath = '/tmp/storage';
-    $app->useStoragePath($storagePath);
-    
-    // Create required directories in /tmp for Vercel
+if ($runningOnVercel) {
+    $app->useStoragePath($vercelStoragePath);
+
+    // Isolate runtime caches per deployment so new routes are visible immediately.
     foreach (['app/public', 'framework/cache/data', 'framework/views', 'framework/sessions', 'logs', 'bootstrap/cache'] as $folder) {
-        $path = $storagePath . '/' . $folder;
+        $path = $vercelStoragePath.'/'.$folder;
         if (!is_dir($path)) {
             @mkdir($path, 0777, true);
         }

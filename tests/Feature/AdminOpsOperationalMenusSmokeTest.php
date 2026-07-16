@@ -27,6 +27,8 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
         $routes = [
             'charters.index',
             'luggages.index',
+            'report.index',
+            'reports.index',
             'admin-ops.customers',
             'admin-ops.master.customer-bagasi',
             'admin-ops.master.customer-charter',
