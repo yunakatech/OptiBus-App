@@ -1120,8 +1120,12 @@
         return true;
     };
 
-    const reloadActiveFlowList = async (page: number) => {
+    const reloadActiveFlowList = async (
+        page: number,
+        preferInertia = true,
+    ) => {
         if (
+            preferInertia &&
             activeMode === 'data' &&
             (activeTab === 'charters' || activeTab === 'luggages') &&
             reloadFlowDataWithInertia(page)
@@ -2762,7 +2766,7 @@
             message = charterForm.id ? 'Charter updated.' : 'Charter created.';
             resetCharterFormState();
             setFormMode('data');
-            await reloadActiveFlowList(charterMeta.page);
+            await reloadActiveFlowList(charterMeta.page, false);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan charter.';
         } finally {
@@ -2816,7 +2820,7 @@
             message = luggageForm.id ? 'Luggage updated.' : 'Luggage created.';
             resetLuggageFormState();
             setFormMode('data');
-            await reloadActiveFlowList(luggageMeta.page);
+            await reloadActiveFlowList(luggageMeta.page, false);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan luggage.';
         } finally {
@@ -2875,7 +2879,7 @@
             };
             assignmentConflicts = [];
             assignmentAllowConflict = false;
-            await reloadActiveFlowList(assignmentMeta.page);
+            await reloadActiveFlowList(assignmentMeta.page, false);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan assignment.';
         } finally {
@@ -2948,6 +2952,7 @@
                     : activeTab === 'luggages'
                       ? luggageMeta.page
                       : assignmentMeta.page,
+                false,
             );
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal menghapus data.';
@@ -2999,7 +3004,7 @@
                 await loadCharterView(row.id);
             }
 
-            await reloadActiveFlowList(charterMeta.page);
+            await reloadActiveFlowList(charterMeta.page, false);
         } catch (e) {
             error =
                 e instanceof Error
@@ -3044,7 +3049,7 @@
                         'POST',
                         `/api/admin/luggages/${row.id}${actionMap[action]}`,
                     );
-                    await reloadActiveFlowList(luggageMeta.page);
+                    await reloadActiveFlowList(luggageMeta.page, false);
                 },
                 {
                     loadingMessage: `Memproses aksi ${action} untuk bagasi #${row.id}...`,
@@ -3164,7 +3169,7 @@
             ids: selectedAssignmentIds,
         });
         message = `Deleted ${selectedAssignmentIds.length} assignment(s).`;
-        await reloadActiveFlowList(assignmentMeta.page);
+        await reloadActiveFlowList(assignmentMeta.page, false);
     };
 
     const jumpPage = async (

@@ -3483,7 +3483,7 @@
                 unitForm.layout = JSON.stringify(seatLayoutDraft);
             }
 
-            await loadUnits();
+            await loadUnits(false);
             message = `Layout ${currentLayoutUnit.nopol} diperbarui.`;
         } catch (e) {
             layoutEditorMessage =
@@ -3805,8 +3805,8 @@
         }
     });
 
-    const loadRoutes = async () => {
-        if (usesHybridSettings('routes')) {
+    const loadRoutes = async (preferInertia = true) => {
+        if (preferInertia && usesHybridSettings('routes')) {
             reloadSettingsWithInertia();
 
             return;
@@ -3835,8 +3835,8 @@
         }
     };
 
-    const loadSchedules = async () => {
-        if (usesHybridSettings('schedules')) {
+    const loadSchedules = async (preferInertia = true) => {
+        if (preferInertia && usesHybridSettings('schedules')) {
             reloadSettingsWithInertia();
 
             return;
@@ -3856,8 +3856,11 @@
         syncScheduleSelection();
     };
 
-    const loadDrivers = async (page = driverMeta.page) => {
-        if (usesHybridSettings('drivers')) {
+    const loadDrivers = async (
+        page = driverMeta.page,
+        preferInertia = true,
+    ) => {
+        if (preferInertia && usesHybridSettings('drivers')) {
             reloadSettingsWithInertia(page);
 
             return;
@@ -3886,8 +3889,8 @@
         armadas = armadaResponse.armadas ?? [];
     };
 
-    const loadServices = async () => {
-        if (usesHybridSettings('services')) {
+    const loadServices = async (preferInertia = true) => {
+        if (preferInertia && usesHybridSettings('services')) {
             reloadSettingsWithInertia();
 
             return;
@@ -3897,12 +3900,15 @@
         services = r.services ?? [];
     };
 
-    const loadSegments = async () => {
-        await loadRoutes();
+    const loadSegments = async (preferInertia = true) => {
+        await loadRoutes(preferInertia);
     };
 
-    const loadCustomers = async (page = customerMeta.page) => {
-        if (usesHybridSettings('customers')) {
+    const loadCustomers = async (
+        page = customerMeta.page,
+        preferInertia = true,
+    ) => {
+        if (preferInertia && usesHybridSettings('customers')) {
             reloadSettingsWithInertia(page, true);
 
             return;
@@ -3987,8 +3993,8 @@
         }
     };
 
-    const loadUsers = async () => {
-        if (usesHybridSettings('users')) {
+    const loadUsers = async (preferInertia = true) => {
+        if (preferInertia && usesHybridSettings('users')) {
             reloadSettingsWithInertia(1);
 
             return;
@@ -4013,8 +4019,8 @@
         }
     };
 
-    const loadUnits = async () => {
-        if (usesHybridSettings('units')) {
+    const loadUnits = async (preferInertia = true) => {
+        if (preferInertia && usesHybridSettings('units')) {
             reloadSettingsWithInertia();
 
             return;
@@ -4028,8 +4034,8 @@
         }
     };
 
-    const loadArmadas = async () => {
-        if (usesHybridSettings('armadas')) {
+    const loadArmadas = async (preferInertia = true) => {
+        if (preferInertia && usesHybridSettings('armadas')) {
             reloadSettingsWithInertia(1);
 
             return;
@@ -4096,8 +4102,8 @@
         }
     };
 
-    const loadPools = async () => {
-        if (usesHybridSettings('pools')) {
+    const loadPools = async (preferInertia = true) => {
+        if (preferInertia && usesHybridSettings('pools')) {
             reloadSettingsWithInertia();
 
             return;
@@ -4127,41 +4133,41 @@
         activityLogs = r.logs ?? [];
     };
 
-    const loadActiveTab = async () => {
+    const loadActiveTab = async (preferInertia = true) => {
         busy = true;
         error = '';
 
         try {
             if (activeTab === 'routes') {
-                await loadRoutes();
+                await loadRoutes(preferInertia);
             }
 
             if (activeTab === 'schedules') {
-                await loadSchedules();
+                await loadSchedules(preferInertia);
             }
 
             if (activeTab === 'drivers') {
-                await loadDrivers(1);
+                await loadDrivers(1, preferInertia);
             }
 
             if (activeTab === 'services') {
-                await loadServices();
+                await loadServices(preferInertia);
             }
 
             if (activeTab === 'segments') {
-                await loadSegments();
+                await loadSegments(preferInertia);
             }
 
             if (activeTab === 'customers') {
-                await loadCustomers(customerMeta.page);
+                await loadCustomers(customerMeta.page, preferInertia);
             }
 
             if (activeTab === 'units') {
-                await loadUnits();
+                await loadUnits(preferInertia);
             }
 
             if (activeTab === 'armadas') {
-                await loadArmadas();
+                await loadArmadas(preferInertia);
             }
 
             if (
@@ -4173,11 +4179,11 @@
             }
 
             if (activeTab === 'pools') {
-                await loadPools();
+                await loadPools(preferInertia);
             }
 
             if (activeTab === 'users') {
-                await loadUsers();
+                await loadUsers(preferInertia);
             }
 
             if (activeTab === 'logs') {
@@ -4615,7 +4621,7 @@
             );
             message = routeForm.id ? 'Route updated.' : 'Route created.';
             resetRouteForm();
-            await loadActiveTab();
+            await loadActiveTab(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan route.';
@@ -4718,7 +4724,7 @@
             selectedScheduleRoute = activeRoute;
             selectedScheduleRouteId = selectedRouteId;
             resetScheduleForm();
-            await loadActiveTab();
+            await loadActiveTab(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan schedule.';
@@ -4889,7 +4895,7 @@
             );
             message = driverForm.id ? 'Driver updated.' : 'Driver created.';
             resetDriverForm();
-            await loadActiveTab();
+            await loadActiveTab(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan driver.';
@@ -4924,7 +4930,7 @@
             );
             message = serviceForm.id ? 'Service updated.' : 'Service created.';
             resetServiceForm();
-            await loadActiveTab();
+            await loadActiveTab(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan layanan.';
@@ -4993,7 +4999,7 @@
             );
             selectedSegmentRouteId = routeId;
             resetSegmentForm(routeId);
-            await loadRoutes();
+            await loadRoutes(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan segment.';
@@ -5034,7 +5040,7 @@
                 ? 'Customer updated.'
                 : 'Customer created.';
             resetCustomerForm();
-            await loadCustomers(customerMeta.page);
+            await loadCustomers(customerMeta.page, false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan customer.';
@@ -5074,7 +5080,7 @@
             );
             message = unitForm.id ? 'Unit updated.' : 'Unit created.';
             resetUnitForm();
-            await loadActiveTab();
+            await loadActiveTab(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan unit.';
@@ -5122,7 +5128,7 @@
             );
             message = armadaForm.id ? 'Armada updated.' : 'Armada created.';
             resetArmadaForm();
-            await loadArmadas();
+            await loadArmadas(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan armada.';
@@ -5183,7 +5189,7 @@
             );
             message = poolForm.id ? 'Pool updated.' : 'Pool created.';
             resetPoolForm();
-            await loadPools();
+            await loadPools(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan pool.';
@@ -5223,7 +5229,7 @@
             );
             message = userForm.id ? 'User updated.' : 'User created.';
             resetUserForm();
-            await loadUsers();
+            await loadUsers(false);
             activeMode = 'data';
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal simpan user.';
@@ -5269,7 +5275,7 @@
                 },
             );
             message = labels.done;
-            await loadUsers();
+            await loadUsers(false);
         } catch (e) {
             error =
                 e instanceof Error
@@ -5311,7 +5317,7 @@
             }
 
             message = successMessage;
-            await loadActiveTab();
+            await loadActiveTab(false);
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal hapus data.';
         } finally {
