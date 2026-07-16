@@ -107,5 +107,9 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
                 'rows',
                 'pagination',
             ]);
+
+        $this->get(route('admin/activity-logs', [], false).'?limit=1', $headers)
+            ->assertOk()
+            ->assertJsonStructure(['logs']);
     }
 }
