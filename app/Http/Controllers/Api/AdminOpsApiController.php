@@ -9312,7 +9312,7 @@ XML;
      */
     private function paginateQuery(Builder $query, int $page, int $perPage): array
     {
-        $total = (clone $query)->count();
+        $total = (clone $query)->getCountForPagination();
         $meta = $this->paginationMeta($total, $page, $perPage);
 
         $data = $query
