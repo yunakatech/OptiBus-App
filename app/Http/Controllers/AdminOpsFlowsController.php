@@ -102,7 +102,7 @@ class AdminOpsFlowsController extends Controller
     private function flowMasters(Request $request, string $tab): array
     {
         try {
-            $pools = $this->payload($this->adminOpsApi->poolsIndex($request));
+            $pools = $this->payload($this->adminOpsApi->poolOptionsIndex($request));
 
             if ($tab === 'luggages') {
                 $services = $this->payload($this->operationsApi->luggageServices());
