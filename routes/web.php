@@ -95,6 +95,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin-ops/flows/assignments', AdminOpsFlowsController::class)->middleware('permission:booking.view')->defaults('tab', 'assignments')->defaults('locked', true)->name('admin-ops.flows.assignments');
     Route::get('admin-ops/flows/export', AdminOpsFlowsController::class)->middleware('permission:report.view')->defaults('tab', 'export')->defaults('locked', true)->name('admin-ops.flows.export');
 
+    Route::get('admin-ops/master', AdminOpsMasterController::class)->middleware('permission:customer.view,master.view')->name('admin-ops.master');
     Route::get('admin-ops/customer-bagasi', AdminOpsMasterController::class)->middleware('permission:customer.view')->defaults('tab', 'customer-bagasi')->defaults('locked', true)->name('admin-ops.master.customer-bagasi');
     Route::get('admin-ops/customer-charter', AdminOpsMasterController::class)->middleware('permission:customer.view')->defaults('tab', 'customer-charter')->defaults('locked', true)->name('admin-ops.master.customer-charter');
     Route::get('admin-ops/rute-carter', AdminOpsMasterController::class)->middleware('permission:master.view')->defaults('tab', 'rute-carter')->defaults('locked', true)->name('admin-ops.master.rute-carter');
