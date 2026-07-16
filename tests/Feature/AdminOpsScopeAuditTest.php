@@ -478,10 +478,10 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('routes.0.id', $routeA)
             ->assertJsonPath('routes.0.name', 'PINRANG - MAKASSAR A');
 
-        $cancellationsA = $this->getJson(route('api.admin.cancellations.index'))
+        $logsA = $this->getJson(route('api.admin.activity-logs.index'))
             ->assertOk()
-            ->json('cancellations', []);
-        $cancellationTitlesA = collect($cancellationsA)
+            ->json('logs', []);
+        $cancellationTitlesA = collect($logsA)
             ->pluck('title')
             ->all();
         $this->assertContains('Tenant A Log', $cancellationTitlesA);
@@ -512,10 +512,10 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('routes.0.id', $routeB)
             ->assertJsonPath('routes.0.name', 'PAREPARE - MAKASSAR B');
 
-        $cancellationsB = $this->getJson(route('api.admin.cancellations.index'))
+        $logsB = $this->getJson(route('api.admin.activity-logs.index'))
             ->assertOk()
-            ->json('cancellations', []);
-        $cancellationTitlesB = collect($cancellationsB)
+            ->json('logs', []);
+        $cancellationTitlesB = collect($logsB)
             ->pluck('title')
             ->all();
         $this->assertContains('Tenant B Log', $cancellationTitlesB);
@@ -550,6 +550,9 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertRedirect(route('platform.dashboard'));
 
         $this->get(route('admin-ops.users'))
+            ->assertRedirect(route('platform.dashboard'));
+
+        $this->get(route('admin-ops.logs'))
             ->assertRedirect(route('platform.dashboard'));
 
         $this->get(route('admin-ops.cancellations'))

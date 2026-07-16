@@ -1288,72 +1288,72 @@ AdminOpsController8eab261f8bde65ee3ec0e60ca635b6c1.head = (options?: RouteQueryO
     /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
- * @route '/admin-ops/cancellations'
+ * @route '/admin-ops/logs'
  */
-const AdminOpsControlleraa10741cd160ac3a322577069cea62bf = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsControlleraa10741cd160ac3a322577069cea62bf.url(options),
+const AdminOpsControlleraed85c6578d97648f2274e87439ec518 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsControlleraed85c6578d97648f2274e87439ec518.url(options),
     method: 'get',
 })
 
-AdminOpsControlleraa10741cd160ac3a322577069cea62bf.definition = {
+AdminOpsControlleraed85c6578d97648f2274e87439ec518.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/cancellations',
+    url: '/admin-ops/logs',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
- * @route '/admin-ops/cancellations'
+ * @route '/admin-ops/logs'
  */
-AdminOpsControlleraa10741cd160ac3a322577069cea62bf.url = (options?: RouteQueryOptions) => {
-    return AdminOpsControlleraa10741cd160ac3a322577069cea62bf.definition.url + queryParams(options)
+AdminOpsControlleraed85c6578d97648f2274e87439ec518.url = (options?: RouteQueryOptions) => {
+    return AdminOpsControlleraed85c6578d97648f2274e87439ec518.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
- * @route '/admin-ops/cancellations'
+ * @route '/admin-ops/logs'
  */
-AdminOpsControlleraa10741cd160ac3a322577069cea62bf.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsControlleraa10741cd160ac3a322577069cea62bf.url(options),
+AdminOpsControlleraed85c6578d97648f2274e87439ec518.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsControlleraed85c6578d97648f2274e87439ec518.url(options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
- * @route '/admin-ops/cancellations'
+ * @route '/admin-ops/logs'
  */
-AdminOpsControlleraa10741cd160ac3a322577069cea62bf.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: AdminOpsControlleraa10741cd160ac3a322577069cea62bf.url(options),
+AdminOpsControlleraed85c6578d97648f2274e87439ec518.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: AdminOpsControlleraed85c6578d97648f2274e87439ec518.url(options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
- * @route '/admin-ops/cancellations'
+ * @route '/admin-ops/logs'
  */
-    const AdminOpsControlleraa10741cd160ac3a322577069cea62bfForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: AdminOpsControlleraa10741cd160ac3a322577069cea62bf.url(options),
+    const AdminOpsControlleraed85c6578d97648f2274e87439ec518Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: AdminOpsControlleraed85c6578d97648f2274e87439ec518.url(options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
- * @route '/admin-ops/cancellations'
+ * @route '/admin-ops/logs'
  */
-        AdminOpsControlleraa10741cd160ac3a322577069cea62bfForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsControlleraa10741cd160ac3a322577069cea62bf.url(options),
+        AdminOpsControlleraed85c6578d97648f2274e87439ec518Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsControlleraed85c6578d97648f2274e87439ec518.url(options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
- * @route '/admin-ops/cancellations'
+ * @route '/admin-ops/logs'
  */
-        AdminOpsControlleraa10741cd160ac3a322577069cea62bfForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsControlleraa10741cd160ac3a322577069cea62bf.url({
+        AdminOpsControlleraed85c6578d97648f2274e87439ec518Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsControlleraed85c6578d97648f2274e87439ec518.url({
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -1362,7 +1362,7 @@ AdminOpsControlleraa10741cd160ac3a322577069cea62bf.head = (options?: RouteQueryO
             method: 'get',
         })
     
-    AdminOpsControlleraa10741cd160ac3a322577069cea62bf.form = AdminOpsControlleraa10741cd160ac3a322577069cea62bfForm
+    AdminOpsControlleraed85c6578d97648f2274e87439ec518.form = AdminOpsControlleraed85c6578d97648f2274e87439ec518Form
     /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
@@ -1464,7 +1464,7 @@ const AdminOpsController = {
     '/admin-ops/pool': AdminOpsController5d7e473708ef78edf9e5a82a1ca3fb53,
     '/admin-ops/users': AdminOpsController52abacc5717cb8f012a885147b59fff1,
     '/admin-ops/roles': AdminOpsController8eab261f8bde65ee3ec0e60ca635b6c1,
-    '/admin-ops/cancellations': AdminOpsControlleraa10741cd160ac3a322577069cea62bf,
+    '/admin-ops/logs': AdminOpsControlleraed85c6578d97648f2274e87439ec518,
     '/admin-ops/reports': AdminOpsController2f5630c46bb9918f2ed309f050c9d3f4,
 }
 

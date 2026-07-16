@@ -80,7 +80,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -158,7 +158,7 @@ routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     routes.form = routesForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -236,7 +236,7 @@ schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     schedules.form = schedulesForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -314,7 +314,7 @@ drivers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     drivers.form = driversForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -392,7 +392,7 @@ services.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     services.form = servicesForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -470,7 +470,7 @@ segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     segments.form = segmentsForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -548,7 +548,7 @@ customers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     customers.form = customersForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -626,7 +626,7 @@ units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     units.form = unitsForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -704,7 +704,7 @@ armadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     armadas.form = armadasForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -782,7 +782,7 @@ pools.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     pools.form = poolsForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -860,7 +860,7 @@ users.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     users.form = usersForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -938,11 +938,89 @@ roles.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     roles.form = rolesForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:31
+ * @route '/admin-ops/logs'
+ */
+export const logs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: logs.url(options),
+    method: 'get',
+})
+
+logs.definition = {
+    methods: ["get","head"],
+    url: '/admin-ops/logs',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\AdminOpsController::__invoke
+ * @see app/Http/Controllers/AdminOpsController.php:31
+ * @route '/admin-ops/logs'
+ */
+logs.url = (options?: RouteQueryOptions) => {
+    return logs.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\AdminOpsController::__invoke
+ * @see app/Http/Controllers/AdminOpsController.php:31
+ * @route '/admin-ops/logs'
+ */
+logs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: logs.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\AdminOpsController::__invoke
+ * @see app/Http/Controllers/AdminOpsController.php:31
+ * @route '/admin-ops/logs'
+ */
+logs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: logs.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\AdminOpsController::__invoke
+ * @see app/Http/Controllers/AdminOpsController.php:31
+ * @route '/admin-ops/logs'
+ */
+    const logsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: logs.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\AdminOpsController::__invoke
+ * @see app/Http/Controllers/AdminOpsController.php:31
+ * @route '/admin-ops/logs'
+ */
+        logsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logs.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\AdminOpsController::__invoke
+ * @see app/Http/Controllers/AdminOpsController.php:31
+ * @route '/admin-ops/logs'
+ */
+        logsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: logs.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    logs.form = logsForm
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
  * @route '/admin-ops/cancellations'
  */
 export const cancellations = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -951,13 +1029,13 @@ export const cancellations = (options?: RouteQueryOptions): RouteDefinition<'get
 })
 
 cancellations.definition = {
-    methods: ["get","head"],
+    methods: ["get","head","post","put","patch","delete","options"],
     url: '/admin-ops/cancellations',
-} satisfies RouteDefinition<["get","head"]>
+} satisfies RouteDefinition<["get","head","post","put","patch","delete","options"]>
 
 /**
-* @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:31
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
  * @route '/admin-ops/cancellations'
  */
 cancellations.url = (options?: RouteQueryOptions) => {
@@ -965,8 +1043,8 @@ cancellations.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:31
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
  * @route '/admin-ops/cancellations'
  */
 cancellations.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -974,18 +1052,63 @@ cancellations.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-* @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:31
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
  * @route '/admin-ops/cancellations'
  */
 cancellations.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: cancellations.url(options),
     method: 'head',
 })
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+cancellations.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: cancellations.url(options),
+    method: 'post',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+cancellations.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: cancellations.url(options),
+    method: 'put',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+cancellations.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+    url: cancellations.url(options),
+    method: 'patch',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+cancellations.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: cancellations.url(options),
+    method: 'delete',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+cancellations.options = (options?: RouteQueryOptions): RouteDefinition<'options'> => ({
+    url: cancellations.url(options),
+    method: 'options',
+})
 
     /**
-* @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:31
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
  * @route '/admin-ops/cancellations'
  */
     const cancellationsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -994,8 +1117,8 @@ cancellations.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     })
 
             /**
-* @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:31
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
  * @route '/admin-ops/cancellations'
  */
         cancellationsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1003,8 +1126,8 @@ cancellations.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
             method: 'get',
         })
             /**
-* @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:31
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
  * @route '/admin-ops/cancellations'
  */
         cancellationsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1016,7 +1139,72 @@ cancellations.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
                     }),
             method: 'get',
         })
-
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+        cancellationsForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cancellations.url(options),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+        cancellationsForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cancellations.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+        cancellationsForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cancellations.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+        cancellationsForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: cancellations.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin-ops/cancellations'
+ */
+        cancellationsForm.options = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: cancellations.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'OPTIONS',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
     cancellations.form = cancellationsForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
@@ -1094,7 +1282,7 @@ reports.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     reports.form = reportsForm
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
@@ -1172,7 +1360,7 @@ flows.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     flows.form = flowsForm
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
@@ -1250,7 +1438,7 @@ master.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     master.form = masterForm
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
@@ -1328,7 +1516,7 @@ saas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     saas.form = saasForm
 const adminOps = {
     index: Object.assign(index, index),
@@ -1343,6 +1531,7 @@ armadas: Object.assign(armadas, armadas172c7e),
 pools: Object.assign(pools, pools),
 users: Object.assign(users, users),
 roles: Object.assign(roles, roles),
+logs: Object.assign(logs, logs),
 cancellations: Object.assign(cancellations, cancellations),
 reports: Object.assign(reports, reports),
 flows: Object.assign(flows, flowsF41fe0),

@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Logs',
-                href: '/admin-ops/cancellations',
+                href: '/admin-ops/logs',
             },
         ],
     };

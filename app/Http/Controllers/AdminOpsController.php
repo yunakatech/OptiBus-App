@@ -45,11 +45,12 @@ class AdminOpsController extends Controller
                 'pools' => 'admin-ops.pools',
                 'users' => 'admin-ops.users',
                 'roles' => 'admin-ops.roles',
-                'cancellations' => 'admin-ops.cancellations',
+                'logs' => 'admin-ops.logs',
+                'cancellations' => 'admin-ops.logs',
                 'reports' => 'report.index',
             ];
 
-            $legacyTab = trim((string) $request->query('tab', ''));
+            $legacyTab = $this->normalizeAdminOpsTab($request->query('tab', ''));
             if ($legacyTab !== '' && isset($legacyRoutes[$legacyTab])) {
                 $query = $request->query();
                 unset($query['tab']);
@@ -58,8 +59,8 @@ class AdminOpsController extends Controller
             }
         }
 
-        $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users', 'roles', 'cancellations', 'reports'];
-        $requestedTab = (string) ($request->route('tab') ?? '');
+        $allowedTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users', 'roles', 'logs', 'reports'];
+        $requestedTab = $this->normalizeAdminOpsTab($request->route('tab') ?? '');
         $initialTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : null;
         $initialMode = trim((string) ($request->route('mode') ?? ''));
         $hybridTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users'];
@@ -83,6 +84,7 @@ class AdminOpsController extends Controller
             'customers' => 0,
             'armadas' => 0,
             'pools' => 0,
+            'logs' => 0,
             'cancellations' => 0,
         ];
 
@@ -104,7 +106,7 @@ class AdminOpsController extends Controller
                 'pools' => 'PengaturanPool',
                 'users' => 'PengaturanUsers',
                 'roles' => 'PengaturanRoles',
-                'cancellations' => 'PengaturanLogs',
+                'logs' => 'PengaturanLogs',
             ];
             if (is_string($initialTab) && isset($componentMap[$initialTab])) {
                 $component = $componentMap[$initialTab];
@@ -436,8 +438,19 @@ class AdminOpsController extends Controller
                         : $query->whereIn('pools.id', $poolIds);
                 }
             }),
+            'logs' => ActivityLog::countForTenant(),
             'cancellations' => ActivityLog::countForTenant(),
         ];
+    }
+
+    private function normalizeAdminOpsTab(mixed $tab): string
+    {
+        $tab = trim((string) $tab);
+
+        return match ($tab) {
+            'cancellations' => 'logs',
+            default => $tab,
+        };
     }
 
     private function countScoped(string $table, callable $scope): int

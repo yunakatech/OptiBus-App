@@ -1355,7 +1355,7 @@ class AdminOpsApiController extends Controller
         ]);
     }
 
-    public function cancellationsIndex(Request $request): JsonResponse
+    public function activityLogsIndex(Request $request): JsonResponse
     {
         $page = max(1, (int) $request->query('page', 1));
         $limit = (int) $request->query('limit', 0);
@@ -1370,6 +1370,7 @@ class AdminOpsApiController extends Controller
         $lastPage = max(1, (int) ceil($total / $perPage));
 
         return $this->ok([
+            'logs' => $items,
             'cancellations' => $items,
             'pagination' => [
                 'page' => min($page, $lastPage),
@@ -1378,6 +1379,11 @@ class AdminOpsApiController extends Controller
                 'last_page' => $lastPage,
             ],
         ]);
+    }
+
+    public function cancellationsIndex(Request $request): JsonResponse
+    {
+        return $this->activityLogsIndex($request);
     }
 
     public function reportsSummary(Request $request): JsonResponse

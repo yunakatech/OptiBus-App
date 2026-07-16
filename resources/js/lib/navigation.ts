@@ -179,7 +179,7 @@ const tenantNavItems: NavItem[] = [
     },
     {
         title: 'Logs',
-        href: '/admin-ops/cancellations',
+        href: '/admin-ops/logs',
         icon: History,
         permission: 'logs.view',
     },
