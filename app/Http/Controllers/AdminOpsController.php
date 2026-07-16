@@ -277,7 +277,7 @@ class AdminOpsController extends Controller
             $routes = fn (): array => $this->routeOptions();
             $units = fn (): array => $this->payload($this->adminOpsApi->unitsIndex())['units'] ?? [];
             $armadas = fn (): array => $this->payload($this->operationsApi->armadas($masterRequest))['armadas'] ?? [];
-            $pools = fn (): array => $this->payload($this->adminOpsApi->poolsIndex($masterRequest))['pools'] ?? [];
+            $pools = fn (): array => $this->payload($this->adminOpsApi->poolOptionsIndex($masterRequest))['pools'] ?? [];
 
             return match ($tab) {
                 'schedules' => ['tab' => $tab, 'routes' => $routes(), 'units' => $units()],
@@ -317,7 +317,7 @@ class AdminOpsController extends Controller
      */
     private function poolMasters(Request $request, string $tab, bool $includePools): array
     {
-        $payload = $this->payload($this->adminOpsApi->poolsIndex($request));
+        $payload = $this->payload($this->adminOpsApi->poolOptionsIndex($request));
 
         if (! $includePools) {
             return ['tab' => $tab, 'routes' => $payload['routes'] ?? []];

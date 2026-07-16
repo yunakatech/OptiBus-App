@@ -5056,6 +5056,11 @@ class AdminOpsApiController extends Controller
         ));
     }
 
+    public function poolOptionsIndex(Request $request): JsonResponse
+    {
+        return $this->ok($this->poolOptionsPayload());
+    }
+
     public function poolsExport(Request $request): StreamedResponse
     {
         if ($response = $this->requirePermission('report.export')) {
@@ -5335,6 +5340,137 @@ class AdminOpsApiController extends Controller
             'pools' => $rows,
             'routes' => $routeQuery->get(['id', 'name', 'origin', 'destination'])->all(),
             'regions' => $regionOptions,
+            'can_manage' => $canManage,
+        ];
+    }
+
+    /**
+     * Lightweight pool + route lookup payload for deferred form masters.
+     *
+     * @return array{pools: array<int, array<string, mixed>>, routes: array<int, mixed>, can_manage: bool}
+     */
+    private function poolOptionsPayload(): array
+    {
+        $canManage = $this->currentUserIsSuperAdmin();
+
+        if (! $this->poolTablesReady()) {
+            $routes = [];
+            if (Schema::hasTable('routes')) {
+                $query = DB::table('routes')->orderBy('name');
+                if (Schema::hasColumn('routes', 'tenant_id')) {
+                    PoolScope::applyTenantScope($query, 'routes.tenant_id');
+                }
+                $routes = $query->get(['id', 'name', 'origin', 'destination'])->all();
+            }
+
+            return [
+                'pools' => [],
+                'routes' => $routes,
+                'can_manage' => $canManage,
+            ];
+        }
+
+        $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
+        $poolQuery = DB::table('pools')
+            ->when(Schema::hasColumn('pools', 'tenant_id'), function (Builder $query): void {
+                PoolScope::applyTenantScope($query, 'pools.tenant_id');
+            })
+            ->select([
+                'id',
+                'name',
+                Schema::hasColumn('pools', 'code') ? 'code' : DB::raw('NULL as code'),
+                Schema::hasColumn('pools', 'status') ? 'status' : DB::raw("'active' as status"),
+                Schema::hasColumn('pools', 'notes') ? 'notes' : DB::raw('NULL as notes'),
+                Schema::hasColumn('pools', 'phone') ? 'phone' : DB::raw('NULL as phone'),
+                Schema::hasColumn('pools', 'address') ? 'address' : DB::raw('NULL as address'),
+            ])
+            ->orderBy('name');
+
+        if (! $canManage) {
+            if ($allowedPoolIds === []) {
+                return [
+                    'pools' => [],
+                    'routes' => [],
+                    'can_manage' => false,
+                ];
+            }
+
+            $poolQuery->whereIn('id', $allowedPoolIds)->where('status', 'active');
+        }
+
+        $pools = $poolQuery->get();
+        $poolIds = $pools->pluck('id')->map(static fn ($id): int => (int) $id)->values()->all();
+        $routesByPool = [];
+
+        if ($poolIds !== [] && Schema::hasTable('pool_route') && Schema::hasTable('routes')) {
+            $routeRows = DB::table('pool_route as pr')
+                ->join('routes as r', 'pr.route_id', '=', 'r.id')
+                ->whereIn('pr.pool_id', $poolIds)
+                ->orderBy('r.name')
+                ->get(['pr.pool_id', 'r.id', 'r.name', 'r.origin', 'r.destination']);
+
+            foreach ($routeRows as $row) {
+                $poolId = (int) ($row->pool_id ?? 0);
+                $routesByPool[$poolId] ??= ['ids' => [], 'names' => []];
+                $routesByPool[$poolId]['ids'][] = (int) ($row->id ?? 0);
+
+                $routeName = trim((string) ($row->name ?? ''));
+                $origin = trim((string) ($row->origin ?? ''));
+                $destination = trim((string) ($row->destination ?? ''));
+                $routesByPool[$poolId]['names'][] = $routeName !== ''
+                    ? $routeName
+                    : trim($origin !== '' && $destination !== '' ? $origin.' - '.$destination : '');
+            }
+        }
+
+        $rows = $pools
+            ->map(function ($pool) use ($routesByPool): array {
+                $poolId = (int) ($pool->id ?? 0);
+                $routes = $routesByPool[$poolId] ?? ['ids' => [], 'names' => []];
+
+                return [
+                    'id' => $poolId,
+                    'name' => (string) ($pool->name ?? ''),
+                    'code' => (string) ($pool->code ?? ''),
+                    'status' => (string) ($pool->status ?? 'active'),
+                    'notes' => (string) ($pool->notes ?? ''),
+                    'phone' => trim((string) ($pool->phone ?? '')),
+                    'address' => trim((string) ($pool->address ?? '')),
+                    'route_ids' => array_values(array_filter($routes['ids'], static fn ($id): bool => (int) $id > 0)),
+                    'route_names' => collect($routes['names'])
+                        ->map(static fn ($name): string => trim((string) $name))
+                        ->filter(static fn ($name): bool => $name !== '')
+                        ->unique()
+                        ->sortBy(static fn (string $name): string => mb_strtolower($name))
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $routeQuery = DB::table('routes')->orderBy('name');
+        if (Schema::hasColumn('routes', 'tenant_id')) {
+            PoolScope::applyTenantScope($routeQuery, 'routes.tenant_id');
+        }
+
+        if (! $canManage) {
+            $routeIds = [];
+            foreach ($rows as $pool) {
+                $routeIds = array_merge($routeIds, $pool['route_ids'] ?? []);
+            }
+            $routeIds = array_values(array_unique(array_map(static fn ($id): int => (int) $id, $routeIds)));
+
+            if ($routeIds === []) {
+                $routeQuery->whereRaw('1 = 0');
+            } else {
+                $routeQuery->whereIn('id', $routeIds);
+            }
+        }
+
+        return [
+            'pools' => $rows,
+            'routes' => $routeQuery->get(['id', 'name', 'origin', 'destination'])->all(),
             'can_manage' => $canManage,
         ];
     }
