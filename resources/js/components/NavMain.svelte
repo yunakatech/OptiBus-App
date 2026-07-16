@@ -59,7 +59,9 @@
         }
 
         const hasRemovedId = Object.keys(prev).some((id) => !validIds.has(id));
-        const hasMissingId = _sections.some((section) => prev[section.id] === undefined);
+        const hasMissingId = _sections.some(
+            (section) => prev[section.id] === undefined,
+        );
         const activeChanged = _sections.some(
             (section) =>
                 section.items.some((item) =>
@@ -75,7 +77,7 @@
         if (!shouldUpdate) {
             const nextKeys = Object.keys(next);
             const prevKeys = Object.keys(prev);
-            
+
             if (nextKeys.length !== prevKeys.length) {
                 shouldUpdate = true;
             } else {
@@ -93,7 +95,6 @@
         }
     });
 
-
     const isItemActive = (href: NavItem['href']): boolean => {
         return urlState.isCurrentOrParentUrl(href, urlState.currentUrl);
     };
@@ -102,7 +103,8 @@
         section.items.some((item) => isItemActive(item.href));
 
     const isSectionOpen = (id: string) => Boolean(openSections[id] ?? false);
-    const isCollapsedDesktop = () => $sidebarState === 'collapsed' && !$isMobile;
+    const isCollapsedDesktop = () =>
+        $sidebarState === 'collapsed' && !$isMobile;
 
     const toggleSection = (id: string) => {
         if (isCollapsedDesktop()) {
@@ -122,31 +124,37 @@
     };
 </script>
 
-<SidebarGroup class="px-2 py-0">
-    <SidebarGroupLabel>{label}</SidebarGroupLabel>
-    <SidebarMenu class="gap-1.5">
+<SidebarGroup class="px-1.5 py-0">
+    <SidebarGroupLabel class="px-2 text-[11px] tracking-[0.12em]"
+        >{label}</SidebarGroupLabel
+    >
+    <SidebarMenu class="gap-1">
         {#each sections as section (section.id)}
             <SidebarMenuItem class="group/section">
                 <div class="relative">
                     <SidebarMenuButton
                         isActive={isSectionActive(section)}
-                        class="rounded-xl border border-transparent hover:border-sidebar-border/70 hover:bg-sidebar-accent/70 data-[active=true]:border-sidebar-border/70 data-[active=true]:bg-sidebar-accent/85"
+                        class="rounded-md border border-transparent hover:border-sidebar-border/70 hover:bg-sidebar-accent/70 data-[active=true]:border-sidebar-border/70 data-[active=true]:bg-sidebar-accent/85"
                         onclick={() => toggleSection(section.id)}
                     >
                         {#if section.icon}
                             <section.icon class="size-4 shrink-0" />
                         {/if}
                         <span>{section.title}</span>
-                        <ChevronDown class={`ml-auto size-3.5 transition-transform group-data-[collapsible=icon]:hidden ${isSectionOpen(section.id) ? 'rotate-180' : ''}`} />
+                        <ChevronDown
+                            class={`ml-auto size-3.5 transition-transform group-data-[collapsible=icon]:hidden ${isSectionOpen(section.id) ? 'rotate-180' : ''}`}
+                        />
                     </SidebarMenuButton>
 
                     {#if isSectionOpen(section.id)}
-                        <div class="mt-1.5 space-y-1 rounded-xl border border-sidebar-border/70 bg-sidebar-accent/35 p-1.5 group-data-[collapsible=icon]:hidden">
+                        <div
+                            class="mt-1 space-y-1 rounded-md border border-sidebar-border/70 bg-sidebar-accent/35 p-1 group-data-[collapsible=icon]:hidden"
+                        >
                             {#each section.items as item (toUrl(item.href))}
                                 <SidebarMenuButton
                                     asChild
                                     isActive={isItemActive(item.href)}
-                                    class="h-7 rounded-lg text-xs"
+                                    class="h-7 rounded-md text-xs"
                                 >
                                     {#snippet children(props)}
                                         <Link
@@ -156,7 +164,9 @@
                                             onclick={handleNavigate}
                                         >
                                             {#if item.icon}
-                                                <item.icon class="size-3 shrink-0" />
+                                                <item.icon
+                                                    class="size-3 shrink-0"
+                                                />
                                             {/if}
                                             <span>{item.title}</span>
                                         </Link>
@@ -167,10 +177,15 @@
                     {/if}
 
                     <div
-                        class="pointer-events-none invisible absolute top-0 left-full z-[90] ml-0 w-64 rounded-xl border border-sidebar-border/80 bg-background/95 p-2 opacity-0 shadow-xl ring-1 ring-black/5 transition-opacity duration-150 group-hover/section:pointer-events-auto group-hover/section:visible group-hover/section:opacity-100 group-focus-within/section:pointer-events-auto group-focus-within/section:visible group-focus-within/section:opacity-100 group-data-[collapsible=icon]:block md:group-data-[collapsible=icon]:block"
-                        class:hidden={$sidebarState !== 'collapsed' || $isMobile}
+                        class="pointer-events-none invisible absolute top-0 left-full z-[90] ml-0 w-64 rounded-lg border border-sidebar-border/80 bg-background/95 p-2 opacity-0 shadow-md ring-1 ring-black/5 transition-opacity duration-150 group-hover/section:pointer-events-auto group-hover/section:visible group-hover/section:opacity-100 group-focus-within/section:pointer-events-auto group-focus-within/section:visible group-focus-within/section:opacity-100 group-data-[collapsible=icon]:block md:group-data-[collapsible=icon]:block"
+                        class:hidden={$sidebarState !== 'collapsed' ||
+                            $isMobile}
                     >
-                        <p class="mb-1 px-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{section.title}</p>
+                        <p
+                            class="mb-1 px-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
+                            {section.title}
+                        </p>
                         <div class="space-y-1">
                             {#each section.items as item (toUrl(item.href))}
                                 <Link

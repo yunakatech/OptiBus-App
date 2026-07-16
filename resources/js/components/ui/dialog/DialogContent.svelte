@@ -21,7 +21,7 @@
         ></button>
         <div
             class={cn(
-                'relative z-10 w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg',
+                'relative z-10 w-full max-w-lg rounded-lg border border-border bg-background p-5 shadow-lg',
                 className,
             )}
             role="dialog"

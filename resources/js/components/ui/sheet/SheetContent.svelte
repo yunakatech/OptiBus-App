@@ -60,7 +60,7 @@
         ></button>
         <div
             class={cn(
-                'fixed relative flex flex-col gap-4 overflow-y-auto border-none bg-background p-6 shadow-lg',
+                'fixed flex flex-col gap-4 overflow-y-auto border-border bg-background p-5 shadow-lg',
                 sideClasses[side] ?? sideClasses.right,
                 sizeClasses[side] ?? sizeClasses.right,
                 className,
@@ -71,7 +71,7 @@
             {#if showCloseButton}
                 <button
                     type="button"
-                    class="ring-offset-background focus-visible:ring-ring absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none"
+                    class="ring-offset-background focus-visible:ring-ring absolute top-4 right-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-hidden disabled:pointer-events-none"
                     aria-label="Close"
                     onclick={close}
                 >

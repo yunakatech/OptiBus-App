@@ -229,7 +229,7 @@
 </div>
 
 <div
-    class="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm"
+    class="overflow-hidden rounded-lg border border-border/70 bg-background shadow-sm"
 >
     <form
         class="grid gap-4 p-4 xl:grid-cols-[minmax(0,1.7fr)_320px]"
@@ -862,7 +862,7 @@
 
         <aside class="space-y-4">
             <section
-                class="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm"
+                class="overflow-hidden rounded-lg border border-border/70 bg-background shadow-sm"
             >
                 <div class="border-b border-border/70 px-4 py-3">
                     <p class="text-sm font-semibold text-foreground">

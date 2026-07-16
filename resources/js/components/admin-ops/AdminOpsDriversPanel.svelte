@@ -358,7 +358,7 @@
         {@const status = driverStatus(driver)}
         {@const detailCards = driverDetailCards(driver)}
         <div
-            class="space-y-4 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-sm"
+            class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm"
         >
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0 space-y-2">

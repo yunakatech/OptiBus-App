@@ -3537,7 +3537,7 @@
                                     />
                                     {#if charterFilterUnitLookupOpen}
                                         <div
-                                            class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
+                                            class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
                                         >
                                             {#if filteredCharterFilterUnits().length === 0}
                                                 <p
@@ -3612,7 +3612,7 @@
                                     />
                                     {#if charterFilterArmadaLookupOpen}
                                         <div
-                                            class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
+                                            class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
                                         >
                                             {#if charterFilterArmadaBusy}
                                                 <p
@@ -3833,7 +3833,7 @@
                         />
                     {:else}
                         <div
-                            class="space-y-2 rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+                            class="space-y-2 rounded-lg border border-border/70 bg-card p-4 shadow-sm"
                         >
                             <div
                                 class="h-7 w-full animate-pulse rounded bg-muted"
@@ -3904,7 +3904,7 @@
                         />
                     {:else}
                         <div
-                            class="space-y-2 rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+                            class="space-y-2 rounded-lg border border-border/70 bg-card p-4 shadow-sm"
                         >
                             <div
                                 class="h-7 w-full animate-pulse rounded bg-muted"
@@ -3919,7 +3919,7 @@
                     {/if}
                 {:else}
                     <div
-                        class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
                     >
                         {#if canCharterCreate}<Button
                                 type="button"
@@ -3957,7 +3957,7 @@
                     </div>
                     <div class="space-y-3">
                         <div
-                            class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
+                            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
                         >
                             <p
                                 class="text-xs font-medium text-muted-foreground"
@@ -3987,7 +3987,7 @@
 
                         {#if charters.length === 0}
                             <div
-                                class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
+                                class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
                             >
                                 Belum ada data carter sesuai filter.
                             </div>
@@ -3997,7 +3997,7 @@
                             >
                                 {#each charters as row (row.id)}
                                     <article
-                                        class="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 svelte-19f8rux"
+                                        class="group relative overflow-hidden rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 svelte-19f8rux"
                                     >
                                         <div
                                             class="mb-2 flex items-start justify-between gap-2"
@@ -4283,7 +4283,7 @@
                         {/if}
                     </div>
                     <div
-                        class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5"
+                        class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2.5"
                     >
                         <p class="text-xs text-muted-foreground">
                             Total data: {charterMeta.total}
@@ -4340,7 +4340,7 @@
                         </Button>
                     </div>
                     <div
-                        class="overflow-hidden rounded-[28px] border border-border/70 bg-card shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm"
                     >
                         <div
                             class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),rgba(16,185,129,0.08))] px-4 py-4 md:px-5"
@@ -4385,7 +4385,7 @@
                         >
                             <div class="space-y-4">
                                 <section
-                                    class="rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                    class="rounded-lg border border-border/70 bg-muted/10 p-4"
                                 >
                                     <div class="mb-3">
                                         <p
@@ -4434,7 +4434,7 @@
                                                 />
                                                 {#if luggageSenderLookupOpen}
                                                     <div
-                                                        class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl"
+                                                        class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-lg border border-border/70 bg-background shadow-md"
                                                     >
                                                         {#if luggageSenderLookupBusy}
                                                             <div
@@ -4526,7 +4526,7 @@
                                 </section>
 
                                 <section
-                                    class="rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                    class="rounded-lg border border-border/70 bg-muted/10 p-4"
                                 >
                                     <div class="mb-3">
                                         <p
@@ -4575,7 +4575,7 @@
                                                 />
                                                 {#if luggageReceiverLookupOpen}
                                                     <div
-                                                        class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-border/70 bg-background shadow-xl"
+                                                        class="absolute left-0 top-full z-30 mt-2 max-h-72 w-full overflow-auto rounded-lg border border-border/70 bg-background shadow-md"
                                                     >
                                                         {#if luggageReceiverLookupBusy}
                                                             <div
@@ -4667,7 +4667,7 @@
                                 </section>
 
                                 <section
-                                    class="rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                    class="rounded-lg border border-border/70 bg-muted/10 p-4"
                                 >
                                     <div class="mb-3">
                                         <p
@@ -4856,7 +4856,7 @@
 
                             <aside class="space-y-4">
                                 <section
-                                    class="rounded-2xl border border-border/70 bg-slate-950 p-4 text-slate-50 shadow-sm"
+                                    class="rounded-lg border border-border/70 bg-slate-950 p-4 text-slate-50 shadow-sm"
                                 >
                                     <p
                                         class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300"
@@ -5042,7 +5042,7 @@
                     </div>
                 {:else}
                     <div
-                        class="flex flex-wrap items-center justify-between gap-2 rounded-[24px] border border-border/70 bg-background px-3 py-3 shadow-sm"
+                        class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-background px-3 py-3 shadow-sm"
                     >
                         <div class="flex flex-wrap items-center gap-2">
                             {#if canLuggageCreate}<Button
@@ -5059,7 +5059,7 @@
                     </div>
                     <!-- Status tabs -->
                     <div
-                        class="flex flex-wrap gap-1.5 rounded-2xl border border-border/60 bg-muted/30 p-1"
+                        class="flex flex-wrap gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-1"
                     >
                         {#each luggageStatusTabs() as tab (tab.key)}
                             <button
@@ -5081,7 +5081,7 @@
                     <div class="grid gap-3 md:hidden">
                         {#if luggages.length === 0}
                             <div
-                                class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
+                                class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
                             >
                                 Belum ada data bagasi yang cocok dengan filter
                                 saat ini.
@@ -5097,7 +5097,7 @@
                                     luggageArrivedStatus,
                                 ].includes(normalizedLuggageStatus)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-sm"
+                                    class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2.5"
@@ -5375,7 +5375,7 @@
                     </div>
 
                     <div
-                        class="hidden overflow-x-auto rounded-2xl border border-border/70 bg-background md:block"
+                        class="hidden overflow-x-auto rounded-lg border border-border/70 bg-background md:block"
                     >
                         <table
                             class="min-w-full table-fixed text-[11px] leading-tight"

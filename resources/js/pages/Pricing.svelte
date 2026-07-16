@@ -341,7 +341,7 @@
             <div class="grid gap-5 lg:grid-cols-3">
                 {#each plans as plan}
                     <article
-                        class={`flex flex-col rounded-lg border bg-white p-5 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-xl shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}
+                        class={`flex flex-col rounded-lg border bg-white p-5 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-md shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div>

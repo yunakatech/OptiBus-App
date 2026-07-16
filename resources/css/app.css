@@ -9,7 +9,7 @@
 
 @theme inline {
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
+        Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -70,7 +70,6 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
     *,
     ::after,
     ::before,
@@ -81,11 +80,10 @@
 }
 
 @layer utilities {
-
     body,
     html {
         --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+            'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
             'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
             'Noto Color Emoji';
     }
@@ -155,45 +153,46 @@
         line-height: 1.25;
     }
 
-    [data-content-density='compact'] :where(button, input, select, textarea, th, td) {
+    [data-content-density='compact']
+        :where(button, input, select, textarea, th, td) {
         font-size: 0.75rem;
     }
 }
 
 :root {
-    --background: hsl(210 33% 98%);
-    --foreground: hsl(218 36% 14%);
-    --card: hsl(210 33% 99%);
-    --card-foreground: hsl(218 36% 14%);
-    --popover: hsl(210 33% 99%);
-    --popover-foreground: hsl(218 36% 14%);
-    --primary: hsl(201 96% 32%);
+    --background: hsl(210 30% 98%);
+    --foreground: hsl(222 38% 12%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(222 38% 12%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(222 38% 12%);
+    --primary: hsl(199 89% 35%);
     --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(210 27% 93%);
-    --secondary-foreground: hsl(218 32% 22%);
-    --muted: hsl(210 25% 95%);
-    --muted-foreground: hsl(217 16% 41%);
-    --accent: hsl(194 92% 95%);
-    --accent-foreground: hsl(201 88% 26%);
+    --secondary: hsl(210 22% 94%);
+    --secondary-foreground: hsl(222 28% 21%);
+    --muted: hsl(210 24% 96%);
+    --muted-foreground: hsl(217 14% 39%);
+    --accent: hsl(199 85% 95%);
+    --accent-foreground: hsl(199 86% 26%);
     --destructive: hsl(0 84.2% 60.2%);
     --destructive-foreground: hsl(0 0% 100%);
-    --border: hsl(214 24% 86%);
-    --input: hsl(214 24% 86%);
-    --ring: hsl(201 96% 40%);
-    --chart-1: hsl(201 96% 36%);
+    --border: hsl(214 22% 86%);
+    --input: hsl(214 22% 84%);
+    --ring: hsl(199 89% 39%);
+    --chart-1: hsl(199 89% 36%);
     --chart-2: hsl(173 84% 32%);
     --chart-3: hsl(31 92% 48%);
     --chart-4: hsl(146 73% 33%);
     --chart-5: hsl(16 82% 53%);
-    --radius: 0.75rem;
+    --radius: 0.5rem;
     --sidebar-background: hsl(210 30% 97%);
-    --sidebar-foreground: hsl(218 30% 20%);
-    --sidebar-primary: hsl(201 96% 32%);
+    --sidebar-foreground: hsl(222 30% 18%);
+    --sidebar-primary: hsl(199 89% 35%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(194 88% 94%);
-    --sidebar-accent-foreground: hsl(201 88% 26%);
-    --sidebar-border: hsl(214 24% 86%);
-    --sidebar-ring: hsl(201 96% 40%);
+    --sidebar-accent: hsl(199 78% 94%);
+    --sidebar-accent-foreground: hsl(199 86% 25%);
+    --sidebar-border: hsl(214 22% 86%);
+    --sidebar-ring: hsl(199 89% 39%);
     --sidebar: hsl(210 30% 97%);
 }
 
@@ -235,75 +234,75 @@
 
 /* Terminal Control Tower theme overrides */
 :root[data-theme='terminal'] {
-    --background: #0B132B;
-    --foreground: #E0E1DD;
-    --card: #1C2541;
-    --card-foreground: #E0E1DD;
-    --popover: #1C2541;
-    --popover-foreground: #E0E1DD;
-    --primary: #48CAE4;
-    --primary-foreground: #0B132B;
-    --secondary: #1C2541;
-    --secondary-foreground: #E0E1DD;
+    --background: #0b132b;
+    --foreground: #e0e1dd;
+    --card: #1c2541;
+    --card-foreground: #e0e1dd;
+    --popover: #1c2541;
+    --popover-foreground: #e0e1dd;
+    --primary: #48cae4;
+    --primary-foreground: #0b132b;
+    --secondary: #1c2541;
+    --secondary-foreground: #e0e1dd;
     --muted: #111827;
-    --muted-foreground: #8D99AE;
-    --accent: #48CAE4;
-    --accent-foreground: #0B132B;
-    --destructive: #FF6B6B;
-    --destructive-foreground: #0B132B;
+    --muted-foreground: #8d99ae;
+    --accent: #48cae4;
+    --accent-foreground: #0b132b;
+    --destructive: #ff6b6b;
+    --destructive-foreground: #0b132b;
     --border: #223447;
     --input: #243447;
-    --ring: #48CAE4;
-    --chart-1: #48CAE4;
-    --chart-2: #20C997;
-    --chart-3: #FFB703;
-    --chart-4: #8DD3C7;
-    --chart-5: #FFD7A8;
+    --ring: #48cae4;
+    --chart-1: #48cae4;
+    --chart-2: #20c997;
+    --chart-3: #ffb703;
+    --chart-4: #8dd3c7;
+    --chart-5: #ffd7a8;
     --radius: 0.5rem;
     --sidebar-background: #091126;
-    --sidebar-foreground: #E0E1DD;
-    --sidebar-primary: #48CAE4;
-    --sidebar-primary-foreground: #0B132B;
-    --sidebar-accent: #48CAE4;
-    --sidebar-accent-foreground: #0B132B;
+    --sidebar-foreground: #e0e1dd;
+    --sidebar-primary: #48cae4;
+    --sidebar-primary-foreground: #0b132b;
+    --sidebar-accent: #48cae4;
+    --sidebar-accent-foreground: #0b132b;
     --sidebar-border: #172233;
-    --sidebar-ring: #48CAE4;
+    --sidebar-ring: #48cae4;
 }
 
 .dark[data-theme='terminal'] {
     --background: #070b18;
-    --foreground: #E0E1DD;
+    --foreground: #e0e1dd;
     --card: #101826;
-    --card-foreground: #E0E1DD;
+    --card-foreground: #e0e1dd;
     --popover: #101826;
-    --popover-foreground: #E0E1DD;
-    --primary: #48CAE4;
-    --primary-foreground: #0B132B;
+    --popover-foreground: #e0e1dd;
+    --primary: #48cae4;
+    --primary-foreground: #0b132b;
     --secondary: #101826;
-    --secondary-foreground: #E0E1DD;
+    --secondary-foreground: #e0e1dd;
     --muted: #0f1720;
-    --muted-foreground: #8D99AE;
-    --accent: #48CAE4;
-    --accent-foreground: #0B132B;
-    --destructive: #FF6B6B;
-    --destructive-foreground: #0B132B;
+    --muted-foreground: #8d99ae;
+    --accent: #48cae4;
+    --accent-foreground: #0b132b;
+    --destructive: #ff6b6b;
+    --destructive-foreground: #0b132b;
     --border: #12202b;
     --input: #12202b;
-    --ring: #48CAE4;
-    --chart-1: #48CAE4;
-    --chart-2: #20C997;
-    --chart-3: #FFB703;
-    --chart-4: #8DD3C7;
-    --chart-5: #FFD7A8;
+    --ring: #48cae4;
+    --chart-1: #48cae4;
+    --chart-2: #20c997;
+    --chart-3: #ffb703;
+    --chart-4: #8dd3c7;
+    --chart-5: #ffd7a8;
     --radius: 0.5rem;
     --sidebar-background: #070b18;
-    --sidebar-foreground: #E0E1DD;
-    --sidebar-primary: #48CAE4;
-    --sidebar-primary-foreground: #0B132B;
-    --sidebar-accent: #48CAE4;
-    --sidebar-accent-foreground: #0B132B;
+    --sidebar-foreground: #e0e1dd;
+    --sidebar-primary: #48cae4;
+    --sidebar-primary-foreground: #0b132b;
+    --sidebar-accent: #48cae4;
+    --sidebar-accent-foreground: #0b132b;
     --sidebar-border: #0d1722;
-    --sidebar-ring: #48CAE4;
+    --sidebar-ring: #48cae4;
 }
 
 @layer base {
@@ -316,7 +315,7 @@
     }
 
     body {
-        @apply bg-background font-sans text-foreground leading-relaxed;
+        @apply bg-background font-sans leading-relaxed text-foreground;
         touch-action: manipulation;
     }
 
@@ -342,7 +341,6 @@
 
 @layer base {
     @media (max-width: 767px) {
-
         input:not([type='checkbox']):not([type='radio']),
         select,
         textarea {
@@ -358,6 +356,59 @@
 }
 
 @layer components {
+    [data-slot='sidebar-inset'] {
+        @apply bg-background;
+    }
+
+    [data-slot='card'] {
+        @apply rounded-lg border-border/80 bg-card shadow-xs;
+    }
+
+    [data-slot='card-header'] {
+        @apply px-5 py-4;
+    }
+
+    [data-slot='card-content'] {
+        @apply px-5;
+    }
+
+    [data-slot='card-title'] {
+        @apply text-sm font-semibold tracking-normal text-foreground;
+    }
+
+    [data-slot='card-description'] {
+        @apply text-sm leading-5 text-muted-foreground;
+    }
+
+    [data-slot='sidebar-inset'] :where(table) {
+        @apply w-full border-collapse text-left text-sm;
+    }
+
+    [data-slot='sidebar-inset'] :where(thead) {
+        @apply border-b border-border/70 bg-muted/60 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase;
+    }
+
+    [data-slot='sidebar-inset'] :where(tbody) {
+        @apply divide-y divide-border/60;
+    }
+
+    [data-slot='sidebar-inset'] :where(tbody tr) {
+        @apply transition-colors odd:bg-background even:bg-muted/20 hover:bg-accent/55;
+    }
+
+    [data-slot='sidebar-inset'] :where(th, td) {
+        @apply px-3 py-2 align-middle;
+    }
+
+    [data-slot='sidebar-inset']
+        :where(
+            input:not([type='checkbox']):not([type='radio']),
+            select,
+            textarea
+        ) {
+        @apply rounded-md border-input bg-card shadow-xs;
+    }
+
     .mobile-safe-header-shell {
         padding-top: env(safe-area-inset-top);
     }
@@ -379,7 +430,6 @@
     }
 
     @media (min-width: 768px) {
-
         html[data-density='compact'] [data-slot='sidebar-inset'] table th,
         html[data-density='compact'] [data-slot='sidebar-inset'] table td {
             @apply px-2.5 py-1.5 text-[13px] leading-tight;
@@ -389,7 +439,9 @@
             @apply text-[13px] leading-tight;
         }
 
-        html[data-density='compact'] [data-slot='sidebar-inset'] input:not([type='checkbox']):not([type='radio']),
+        html[data-density='compact']
+            [data-slot='sidebar-inset']
+            input:not([type='checkbox']):not([type='radio']),
         html[data-density='compact'] [data-slot='sidebar-inset'] select,
         html[data-density='compact'] [data-slot='sidebar-inset'] textarea {
             @apply text-[13px];

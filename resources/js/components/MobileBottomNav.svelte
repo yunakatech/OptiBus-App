@@ -1,71 +1,15 @@
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import Briefcase from 'lucide-svelte/icons/briefcase';
-    import BusFront from 'lucide-svelte/icons/bus-front';
-    import CreditCard from 'lucide-svelte/icons/credit-card';
-    import LayoutGrid from 'lucide-svelte/icons/layout-grid';
-    import Plus from 'lucide-svelte/icons/plus';
-    import Tickets from 'lucide-svelte/icons/tickets';
     import { onMount } from 'svelte';
-    import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
+    import { getVisibleMobileNavItems } from '@/lib/navigation';
     import { toUrl } from '@/lib/utils';
-    import { dashboard } from '@/routes';
     import type { NavItem } from '@/types';
 
     const url = currentUrlState();
     const NAV_PREFETCH_CACHE_MS = 30_000;
-
-    const mainItems: NavItem[] = [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-            icon: LayoutGrid,
-            permission: 'dashboard.view',
-        },
-        {
-            title: 'Keberangkatan',
-            href: '/bookings',
-            icon: Tickets,
-            permission: 'booking.view',
-        },
-        {
-            title: 'Console',
-            href: '/booking-console',
-            icon: Plus,
-            permission: 'booking.view',
-        },
-        {
-            title: 'Bagasi',
-            href: '/luggages',
-            icon: Briefcase,
-            permission: 'luggage.view',
-        },
-        {
-            title: 'Carter',
-            href: '/charters',
-            icon: BusFront,
-            permission: 'charter.view',
-        },
-    ];
-    const billingItems: NavItem[] = [
-        {
-            title: 'Langganan',
-            href: '/subscription',
-            icon: CreditCard,
-        },
-    ];
-
-    const permissions = $derived(page.props.auth?.permissions ?? []);
-    const billingLocked = $derived(
-        Boolean(page.props.auth?.billing_access?.locked),
-    );
     const visibleMainItems = $derived(
-        billingLocked
-            ? billingItems
-            : mainItems.filter((item) =>
-                  hasPermission(permissions, item.permission),
-              ),
+        getVisibleMobileNavItems(page.props.auth),
     );
     const navCount = $derived(Math.max(visibleMainItems.length, 1));
     let isCompact = $state(false);
@@ -234,7 +178,7 @@
     aria-label="Mobile bottom navigation"
 >
     <div
-        class={`mx-auto w-full border border-sidebar-border/70 bg-background/88 ring-1 ring-black/5 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[16rem] rounded-2xl p-1 shadow-[0_12px_24px_-22px_hsl(201_96%_30%_/_0.75)]' : 'max-w-md rounded-2xl p-1.5 shadow-[0_14px_30px_-24px_hsl(201_96%_30%_/_0.7)]'}`}
+        class={`mx-auto w-full border border-sidebar-border/70 bg-background/88 ring-1 ring-black/5 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[16rem] rounded-lg p-1 shadow-[0_12px_24px_-22px_hsl(201_96%_30%_/_0.75)]' : 'max-w-md rounded-lg p-1.5 shadow-[0_14px_30px_-24px_hsl(201_96%_30%_/_0.7)]'}`}
     >
         <div
             class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1rem]' : 'rounded-[1.15rem]'}`}

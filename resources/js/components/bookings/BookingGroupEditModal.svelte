@@ -1,10 +1,7 @@
 <script lang="ts">
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
-    import {
-        formatCurrencyInput,
-        parseCurrencyInput,
-    } from '@/lib/currency';
+    import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currency';
 
     let {
         groupEditSeat = $bindable(''),
@@ -58,10 +55,14 @@
     role="dialog"
     aria-modal="true"
 >
-    <div class="w-full max-w-2xl rounded-2xl border border-border/80 bg-background p-4 shadow-2xl md:p-5">
+    <div
+        class="w-full max-w-2xl rounded-lg border border-border/80 bg-background p-4 shadow-lg md:p-5"
+    >
         <div class="mb-3 flex items-start justify-between gap-3">
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
+                <p
+                    class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300"
+                >
                     Edit Penumpang
                 </p>
                 <h3 class="text-base font-semibold">{groupEditName || '-'}</h3>
@@ -193,7 +194,9 @@
                     }}
                 />
             </div>
-            <div class="md:col-span-2 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2 text-[11px] text-muted-foreground">
+            <div
+                class="md:col-span-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2 text-[11px] text-muted-foreground"
+            >
                 Pilihan seat pada dropdown sudah mengikuti ketersediaan kursi
                 untuk keberangkatan ini.
             </div>

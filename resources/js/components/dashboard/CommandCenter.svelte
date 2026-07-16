@@ -245,7 +245,7 @@
 </script>
 
 <div
-    class="flex w-full flex-col rounded-3xl border border-gray-200 bg-[#FFFFFF] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-5"
+    class="flex w-full flex-col rounded-lg border border-gray-200 bg-[#FFFFFF] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-5"
 >
     <!-- Header dan Legend Horisontal -->
     <div
@@ -288,7 +288,7 @@
         <div class="relative w-full" style="height: 250px;">
             {#if tooltipData.visible}
                 <div
-                    class={`pointer-events-none absolute z-20 w-[min(92vw,260px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition ${tooltipTranslateClass}`}
+                    class={`pointer-events-none absolute z-20 w-[min(92vw,260px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-lg transition ${tooltipTranslateClass}`}
                     style="left: {tooltipData.x}px; top: {tooltipData.y -
                         10}px;"
                 >

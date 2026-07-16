@@ -22,13 +22,24 @@
     const doSearch = () => dispatch('search', { query });
 </script>
 
-<div class={cn('flex items-center gap-3 p-3 bg-card border border-border rounded-md', className)}>
+<div
+    class={cn(
+        'flex items-center gap-3 rounded-lg border border-border/70 bg-card p-2 shadow-xs',
+        className,
+    )}
+>
     <div class="relative flex-1">
-        <Input bind:value={query} placeholder={placeholder} on:keydown={(e) => { if (e.key === 'Enter') doSearch(); }} />
+        <Input
+            bind:value={query}
+            {placeholder}
+            on:keydown={(e) => {
+                if (e.key === 'Enter') doSearch();
+            }}
+        />
     </div>
 
     <div class="flex items-center gap-2">
-        <Button onclick={doSearch} size="sm" class="uppercase tracking-wide">Cari</Button>
+        <Button onclick={doSearch} size="sm">Cari</Button>
         {@render actions?.()}
     </div>
 </div>
