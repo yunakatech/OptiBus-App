@@ -54,4 +54,23 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
         $this->get('/admin/segments')
             ->assertRedirect(route('admin-ops.segments'));
     }
+
+    public function test_legacy_admin_menu_paths_redirect_to_new_operational_routes(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $redirects = [
+            '/admin/charters' => route('charters.index'),
+            '/admin/luggages' => route('luggages.index'),
+            '/admin/customers' => route('admin-ops.customers'),
+            '/admin/customer-bagasi' => route('admin-ops.master.customer-bagasi'),
+            '/admin/customer-charter' => route('admin-ops.master.customer-charter'),
+            '/admin/rute-carter' => route('admin-ops.master.rute-carter'),
+            '/admin/master' => route('admin-ops.master'),
+        ];
+
+        foreach ($redirects as $legacyPath => $target) {
+            $this->get($legacyPath)->assertRedirect($target);
+        }
+    }
 }
