@@ -1371,7 +1371,6 @@ class AdminOpsApiController extends Controller
 
         return $this->ok([
             'logs' => $items,
-            'cancellations' => $items,
             'pagination' => [
                 'page' => min($page, $lastPage),
                 'per_page' => $perPage,
@@ -1379,11 +1378,6 @@ class AdminOpsApiController extends Controller
                 'last_page' => $lastPage,
             ],
         ]);
-    }
-
-    public function cancellationsIndex(Request $request): JsonResponse
-    {
-        return $this->activityLogsIndex($request);
     }
 
     public function reportsSummary(Request $request): JsonResponse

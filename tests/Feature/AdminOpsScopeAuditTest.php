@@ -555,8 +555,8 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->get(route('admin-ops.logs'))
             ->assertRedirect(route('platform.dashboard'));
 
-        $this->get(route('admin-ops.cancellations'))
-            ->assertRedirect(route('platform.dashboard'));
+        $this->get('/admin-ops/cancellations')
+            ->assertNotFound();
 
         $this->getJson(route('api.admin.routes.index'))
             ->assertStatus(409)

@@ -118,7 +118,6 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::redirect('admin/customer-charter', 'admin-ops/customer-charter');
     Route::redirect('admin/rute-carter', 'admin-ops/rute-carter');
     Route::redirect('admin/logs', 'admin-ops/logs');
-    Route::redirect('admin/cancellations', 'admin-ops/logs');
     Route::get('admin-ops/customers', AdminOpsController::class)->middleware('permission:customer.view')->defaults('tab', 'customers')->defaults('locked', true)->name('admin-ops.customers');
     Route::get('admin-ops/kategori-armada', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'units')->defaults('locked', true)->name('admin-ops.units');
     Route::get('admin-ops/kategori-armada/layout/{id}', AdminOpsController::class)->middleware('permission:master.manage')->defaults('tab', 'units')->defaults('mode', 'layout')->defaults('locked', true)->name('admin-ops.units.layout');
@@ -128,7 +127,6 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin-ops/users', AdminOpsController::class)->middleware('permission:user.manage')->defaults('tab', 'users')->defaults('locked', true)->name('admin-ops.users');
     Route::get('admin-ops/roles', AdminOpsController::class)->middleware('permission:role.manage')->defaults('tab', 'roles')->defaults('locked', true)->name('admin-ops.roles');
     Route::get('admin-ops/logs', AdminOpsController::class)->middleware('permission:logs.view')->defaults('tab', 'logs')->defaults('locked', true)->name('admin-ops.logs');
-    Route::redirect('admin-ops/cancellations', 'admin-ops/logs')->middleware('permission:logs.view')->name('admin-ops.cancellations');
     Route::get('admin-ops/reports', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('admin-ops.reports');
 
     Route::get('admin-ops/flows', AdminOpsFlowsController::class)->middleware('permission:booking.view,charter.view,luggage.view,report.view')->name('admin-ops.flows');
@@ -223,7 +221,6 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::delete('customers/{id}', [AdminOpsApiController::class, 'customersDelete'])->middleware('permission:customer.delete')->name('customers.delete');
 
         Route::get('activity-logs', [AdminOpsApiController::class, 'activityLogsIndex'])->middleware('permission:logs.view')->name('activity-logs.index');
-        Route::get('cancellations', [AdminOpsApiController::class, 'cancellationsIndex'])->middleware('permission:logs.view')->name('cancellations.index');
         Route::get('armadas/export', [AdminOpsApiController::class, 'armadasExport'])->middleware('permission:report.export')->name('armadas.export');
         Route::get('drivers/export', [AdminOpsApiController::class, 'driversExport'])->middleware('permission:report.export')->name('drivers.export');
         Route::get('reports/summary', [AdminOpsApiController::class, 'reportsSummary'])->middleware('permission:report.view')->name('reports.summary');

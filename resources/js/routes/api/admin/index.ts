@@ -6,7 +6,6 @@ import luggageServices from './luggage-services'
 import segments from './segments'
 import customers from './customers'
 import activityLogs from './activity-logs'
-import cancellations from './cancellations'
 import armadas from './armadas'
 import reports from './reports'
 import charters from './charters'
@@ -36,7 +35,6 @@ luggageServices: Object.assign(luggageServices, luggageServices),
 segments: Object.assign(segments, segments),
 customers: Object.assign(customers, customers),
 activityLogs: Object.assign(activityLogs, activityLogs),
-cancellations: Object.assign(cancellations, cancellations),
 armadas: Object.assign(armadas, armadas),
 reports: Object.assign(reports, reports),
 charters: Object.assign(charters, charters),
