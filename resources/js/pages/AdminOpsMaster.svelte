@@ -210,7 +210,9 @@
     };
 
     const usesInertiaMasterData = () =>
-        deferredMasterEnabled && lockedMenuView && masterTabs.includes(activeTab);
+        deferredMasterEnabled &&
+        lockedMenuView &&
+        masterTabs.includes(activeTab);
     const masterQueryString = (page: number) => {
         const q = new URLSearchParams();
         const meta =
@@ -697,7 +699,7 @@
 
 <div class="space-y-4 p-4">
     <section
-        class="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm"
+        class="overflow-hidden rounded-lg border border-border/70 bg-background shadow-sm"
     >
         <div
             class="flex flex-wrap items-start justify-between gap-3 border-b border-border/70 px-4 py-3"
@@ -711,7 +713,7 @@
                         <Button
                             type="button"
                             size="sm"
-                            class="h-10 w-full justify-center rounded-2xl px-4 sm:h-9 sm:w-auto sm:rounded-full"
+                            class="h-10 w-full justify-center rounded-lg px-4 sm:h-9 sm:w-auto sm:rounded-full"
                             onclick={openCreateMasterForm}
                         >
                             <Plus class="mr-2 h-4 w-4" />
@@ -722,7 +724,7 @@
                             type="button"
                             size="sm"
                             variant="outline"
-                            class="h-10 w-full justify-center rounded-2xl px-4 sm:h-9 sm:w-auto sm:rounded-full"
+                            class="h-10 w-full justify-center rounded-lg px-4 sm:h-9 sm:w-auto sm:rounded-full"
                             onclick={() => setFormMode('data')}
                         >
                             Kembali ke Data
@@ -838,7 +840,7 @@
                     </div>
                     <div
                         class={masterFiltersExpanded
-                            ? 'mt-2 rounded-2xl border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
+                            ? 'mt-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
                             : 'mt-2 hidden md:block md:max-w-sm'}
                     >
                         <div
@@ -875,7 +877,7 @@
                     <div class="grid gap-3 md:hidden">
                         {#each bagasiCustomers as row (row.id)}
                             <article
-                                class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm"
+                                class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                             >
                                 <div
                                     class="flex items-start justify-between gap-3"
@@ -1145,7 +1147,7 @@
                     </div>
                     <div
                         class={masterFiltersExpanded
-                            ? 'mt-2 rounded-2xl border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
+                            ? 'mt-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
                             : 'mt-2 hidden md:block md:max-w-sm'}
                     >
                         <div
@@ -1182,7 +1184,7 @@
                     <div class="grid gap-3 md:hidden">
                         {#each charterCustomers as row (row.id)}
                             <article
-                                class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm"
+                                class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                             >
                                 <div
                                     class="flex items-start justify-between gap-3"
@@ -1403,7 +1405,7 @@
                         </p>
                     </div>
                     <form
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveCarterRoute}
                     >
                         <div class="border-b border-border/70 px-4 py-3">
@@ -1565,7 +1567,7 @@
                 {:else}
                     <div class="space-y-4">
                         <div
-                            class="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm"
+                            class="overflow-hidden rounded-lg border border-border/70 bg-background shadow-sm"
                         >
                             <div
                                 class="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3"
@@ -1800,7 +1802,7 @@
                                     class="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center"
                                 >
                                     <div
-                                        class="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/30 text-lg"
+                                        class="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-border/70 bg-muted/30 text-lg"
                                     >
                                         *
                                     </div>

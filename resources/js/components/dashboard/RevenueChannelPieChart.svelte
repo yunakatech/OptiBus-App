@@ -218,7 +218,7 @@
 </script>
 
 <div
-    class="flex flex-col rounded-3xl border border-gray-200 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] md:p-5"
+    class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] md:p-5"
 >
     <div class="flex items-start justify-between">
         <div>
@@ -242,7 +242,7 @@
     <div class="relative mt-5 h-[160px] w-full">
         {#if tooltipData.visible}
             <div
-                class={`pointer-events-none absolute z-20 w-[min(92vw,220px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition ${tooltipTranslateClass}`}
+                class={`pointer-events-none absolute z-20 w-[min(92vw,220px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-lg transition ${tooltipTranslateClass}`}
                 style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
             >
                 <div class="flex items-start justify-between gap-2">

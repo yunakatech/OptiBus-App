@@ -277,7 +277,7 @@
 </script>
 
 <div
-    class="overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-[0_18px_60px_-28px_rgba(15,23,42,0.28)]"
+    class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-[0_18px_60px_-28px_rgba(15,23,42,0.28)]"
 >
     <div class="relative border-b border-border/70">
         <div
@@ -326,7 +326,7 @@
                             reportPoolId,
                             reportRouteId,
                         )}
-                        class="inline-flex h-11 items-center justify-center rounded-2xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition hover:bg-muted/25"
+                        class="inline-flex h-11 items-center justify-center rounded-lg border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition hover:bg-muted/25"
                     >
                         {exportLabel(
                             resolvedReportType(reportSummary, reportType),
@@ -352,8 +352,8 @@
             </div>
             <div
                 class={reportFiltersExpanded
-                    ? `grid gap-3 rounded-[24px] border p-3 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`
-                    : `hidden rounded-[24px] border p-3 md:grid md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`}
+                    ? `grid gap-3 rounded-lg border p-3 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`
+                    : `hidden rounded-lg border p-3 md:grid md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`}
             >
                 <label class="flex min-w-0 flex-col gap-1.5">
                     <span
@@ -362,7 +362,7 @@
                         Kategori laporan
                     </span>
                     <select
-                        class="h-10 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        class="h-10 rounded-lg border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                         bind:value={reportType}
                         onchange={() => void loadReport(1)}
                     >
@@ -379,7 +379,7 @@
                         Pool
                     </span>
                     <select
-                        class="h-10 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        class="h-10 rounded-lg border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                         bind:value={reportPoolId}
                         onchange={() => void loadReport(1)}
                     >
@@ -399,7 +399,7 @@
                         Rute Induk
                     </span>
                     <select
-                        class="h-10 rounded-2xl border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        class="h-10 rounded-lg border border-border/70 bg-background/90 px-3 text-sm shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                         bind:value={reportRouteId}
                         onchange={() => void loadReport(1)}
                     >
@@ -427,7 +427,7 @@
                         readonly
                         autocomplete="off"
                         placeholder="Tanggal mulai"
-                        class="flex h-10 w-full rounded-2xl border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-xs placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
+                        class="flex h-10 w-full rounded-lg border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-xs placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
                     />
                 </label>
 
@@ -444,14 +444,14 @@
                         readonly
                         autocomplete="off"
                         placeholder="Tanggal akhir"
-                        class="flex h-10 w-full rounded-2xl border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-xs placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
+                        class="flex h-10 w-full rounded-lg border border-border/70 bg-background/90 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-xs placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none"
                     />
                 </label>
 
                 <div class="flex items-end md:col-span-2 xl:col-span-1">
                     <Button
                         type="button"
-                        class="h-10 w-full rounded-2xl px-5"
+                        class="h-10 w-full rounded-lg px-5"
                         onclick={() => void loadReport(1)}
                         disabled={reportLoading}
                     >
@@ -464,9 +464,9 @@
 
             {#if reportSummary}
                 <div
-                    class="grid gap-3 rounded-[24px] border border-border/70 bg-background/80 p-3 md:grid-cols-2 lg:grid-cols-4"
+                    class="grid gap-3 rounded-lg border border-border/70 bg-background/80 p-3 md:grid-cols-2 lg:grid-cols-4"
                 >
-                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
+                    <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
                             class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
@@ -486,7 +486,7 @@
                         </p>
                     </div>
 
-                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
+                    <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
                             class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
@@ -502,7 +502,7 @@
                         </p>
                     </div>
 
-                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
+                    <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
                             class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
@@ -518,7 +518,7 @@
                         </p>
                     </div>
 
-                    <div class="rounded-2xl bg-muted/20 px-4 py-3">
+                    <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
                             class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
@@ -573,7 +573,7 @@
                         <div class="grid gap-3 p-3 md:hidden">
                             {#each asBookingRows(reportRows) as row (row.id)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -798,7 +798,7 @@
                         <div class="grid gap-3 p-3 md:hidden">
                             {#each asCharterRows(reportRows) as row (row.id)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -1050,7 +1050,7 @@
                         <div class="grid gap-3 p-3 md:hidden">
                             {#each asLuggageRows(reportRows) as row (row.id)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -1321,7 +1321,7 @@
             {:else}
                 <div class="px-5 py-8 md:px-6">
                     <div
-                        class={`rounded-[24px] border border-dashed px-5 py-6 text-sm ${resolvedMeta(reportSummary, reportType).tone}`}
+                        class={`rounded-lg border border-dashed px-5 py-6 text-sm ${resolvedMeta(reportSummary, reportType).tone}`}
                     >
                         Tidak ada data
                         {resolvedMeta(
@@ -1337,7 +1337,7 @@
     {:else}
         <div class="px-5 py-8 md:px-6">
             <div
-                class="rounded-[24px] border border-dashed border-border/80 bg-muted/10 px-5 py-6 text-sm text-muted-foreground"
+                class="rounded-lg border border-dashed border-border/80 bg-muted/10 px-5 py-6 text-sm text-muted-foreground"
             >
                 Pilih kategori dan rentang tanggal, lalu klik `Tampilkan
                 Laporan`.

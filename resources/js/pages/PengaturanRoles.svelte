@@ -542,10 +542,12 @@
 
 <AppHead title="Role & Hak Akses" />
 
-<div class="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.10),transparent_32rem),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted))/0.45)] px-3 py-4 md:px-6 md:py-6">
+<div
+    class="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.10),transparent_32rem),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted))/0.45)] px-3 py-4 md:px-6 md:py-6"
+>
     <div class="mx-auto w-full max-w-7xl space-y-5">
         <section
-            class="overflow-hidden rounded-3xl border border-cyan-200/50 bg-card/95 shadow-sm shadow-cyan-950/5 dark:border-cyan-900/40 dark:bg-card/90"
+            class="overflow-hidden rounded-lg border border-cyan-200/50 bg-card/95 shadow-sm shadow-cyan-950/5 dark:border-cyan-900/40 dark:bg-card/90"
         >
             <div
                 class="grid gap-4 bg-[linear-gradient(135deg,rgba(8,145,178,0.14),rgba(15,23,42,0.02))] p-4 md:grid-cols-[1.2fr_0.8fr] md:p-6"
@@ -571,13 +573,15 @@
                     </div>
                 </div>
                 <div
-                    class="grid grid-cols-3 gap-2 rounded-2xl border border-border/70 bg-background/70 p-3 text-center backdrop-blur"
+                    class="grid grid-cols-3 gap-2 rounded-lg border border-border/70 bg-background/70 p-3 text-center backdrop-blur"
                 >
                     <div>
                         <p class="text-xl font-black text-foreground">
                             {roleMeta.total}
                         </p>
-                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        <p
+                            class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                        >
                             Role
                         </p>
                     </div>
@@ -585,7 +589,9 @@
                         <p class="text-xl font-black text-foreground">
                             {permissions.length}
                         </p>
-                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        <p
+                            class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                        >
                             Permission
                         </p>
                     </div>
@@ -593,7 +599,9 @@
                         <p class="text-xl font-black text-foreground">
                             {permissionGroups.length}
                         </p>
-                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        <p
+                            class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                        >
                             Grup
                         </p>
                     </div>
@@ -618,7 +626,9 @@
                     </div>
                     <Button asChild variant="outline">
                         {#snippet children(props)}
-                            <Link {...props} href={dashboard()}>Kembali ke Dashboard</Link>
+                            <Link {...props} href={dashboard()}
+                                >Kembali ke Dashboard</Link
+                            >
                         {/snippet}
                     </Button>
                 </CardContent>
@@ -626,7 +636,7 @@
         {:else}
             <div class="space-y-5">
                 <div
-                    class="flex flex-col gap-3 rounded-3xl border border-border/70 bg-card/95 p-3 shadow-sm md:flex-row md:items-center md:justify-between md:p-4"
+                    class="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/95 p-3 shadow-sm md:flex-row md:items-center md:justify-between md:p-4"
                 >
                     <div class="space-y-1">
                         <p class="text-sm font-black text-foreground">
@@ -645,7 +655,9 @@
                     <div class="flex flex-wrap gap-2">
                         <Button
                             type="button"
-                            variant={roleView === 'data' ? 'default' : 'outline'}
+                            variant={roleView === 'data'
+                                ? 'default'
+                                : 'outline'}
                             onclick={showRoleData}
                         >
                             Data Role
@@ -664,456 +676,504 @@
                 </div>
 
                 {#if roleView === 'data'}
-                <aside id="role-data" class="space-y-3">
-                    <Card class="overflow-hidden border-border/80 bg-card/95">
-                        <CardHeader class="space-y-3 p-4">
-                            <div class="flex items-center justify-between gap-3">
-                                <CardTitle class="text-base">
-                                    Daftar Role
-                                </CardTitle>
-                                <div class="flex shrink-0 gap-2">
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        onclick={openCreateRole}
-                                    >
-                                        <Plus class="size-4" />
-                                        Tambah Role
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onclick={() =>
-                                            reloadRolesWithInertia(roleMeta.page)}
-                                        disabled={loading}
-                                    >
-                                        <RefreshCw
-                                            class={cn(
-                                                'size-4',
-                                                loading && 'animate-spin',
-                                            )}
-                                        />
-                                    </Button>
-                                </div>
-                            </div>
-                            <form
-                                class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
-                                onsubmit={(event) => {
-                                    event.preventDefault();
-                                    reloadRolesWithInertia(1);
-                                }}
-                            >
-                                <label class="relative block">
-                                    <Search
-                                        class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                                    />
-                                    <Input
-                                        bind:value={search}
-                                        placeholder="Cari role atau permission"
-                                        class="pl-9"
-                                    />
-                                </label>
-                                <Button type="submit" disabled={loading}>
-                                    Cari
-                                </Button>
-                            </form>
-                        </CardHeader>
-                        <CardContent class="space-y-3 p-4 pt-0">
-                            {#if error}
+                    <aside id="role-data" class="space-y-3">
+                        <Card
+                            class="overflow-hidden border-border/80 bg-card/95"
+                        >
+                            <CardHeader class="space-y-3 p-4">
                                 <div
-                                    class="rounded-2xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                                    class="flex items-center justify-between gap-3"
                                 >
-                                    {error}
-                                </div>
-                            {/if}
-                            {#if loading}
-                                <div
-                                    class="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground"
-                                >
-                                    Memuat role...
-                                </div>
-                            {:else if roles.length === 0}
-                                <div
-                                    class="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground"
-                                >
-                                    Role tidak ditemukan.
-                                </div>
-                            {:else}
-                                {#each roles as role (role.id)}
-                                    <article
-                                        class={cn(
-                                            'rounded-2xl border bg-background/80 p-3 transition-all hover:border-cyan-300/70 hover:shadow-sm',
-                                            form.id === role.id &&
-                                                'border-cyan-400 bg-cyan-50/60 dark:bg-cyan-950/25',
-                                        )}
-                                    >
-                                        <div
-                                            class="flex items-start justify-between gap-3"
-                                        >
-                                            <button
-                                                type="button"
-                                                class="min-w-0 flex-1 text-left"
-                                                onclick={() => editRole(role)}
-                                            >
-                                                <div
-                                                    class="flex flex-wrap items-center gap-2"
-                                                >
-                                                    <h3
-                                                        class="truncate text-sm font-black text-foreground"
-                                                    >
-                                                        {role.name}
-                                                    </h3>
-                                                    {#if role.is_system}
-                                                        <Badge
-                                                            variant="secondary"
-                                                            class="text-[10px]"
-                                                        >
-                                                            Sistem
-                                                        </Badge>
-                                                    {/if}
-                                                    {#if role.is_locked}
-                                                        <LockKeyhole
-                                                            class="size-3.5 text-cyan-700 dark:text-cyan-300"
-                                                        />
-                                                    {/if}
-                                                </div>
-                                                <p
-                                                    class="mt-1 truncate text-xs text-muted-foreground"
-                                                >
-                                                    {role.slug}
-                                                </p>
-                                            </button>
-                                            <div class="flex shrink-0 gap-1">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    class="h-8 w-8 p-0"
-                                                    onclick={() => editRole(role)}
-                                                >
-                                                    <Pencil class="size-3.5" />
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    class="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                                    disabled={role.is_system || deletingId === role.id}
-                                                    onclick={() =>
-                                                        void deleteRole(role)}
-                                                >
-                                                    <Trash2 class="size-3.5" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
-                                        >
-                                            <span
-                                                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1"
-                                            >
-                                                <CheckCircle2
-                                                    class="size-3.5 text-cyan-700 dark:text-cyan-300"
-                                                />
-                                                {role.permission_ids.length}
-                                                akses
-                                            </span>
-                                            <span
-                                                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1"
-                                            >
-                                                <Users class="size-3.5" />
-                                                {role.user_count} user
-                                            </span>
-                                        </div>
-                                    </article>
-                                {/each}
-                                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
-                                    <p class="text-xs text-muted-foreground">
-                                        Total {roleMeta.total} role
-                                    </p>
-                                    <div class="flex items-center gap-2">
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            disabled={roleMeta.page <= 1 || loading}
-                                            onclick={() =>
-                                                reloadRolesWithInertia(roleMeta.page - 1)}
-                                        >
-                                            Prev
-                                        </Button>
-                                        <span class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground">
-                                            {roleMeta.page} / {roleMeta.last_page}
-                                        </span>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            disabled={roleMeta.page >= roleMeta.last_page || loading}
-                                            onclick={() =>
-                                                reloadRolesWithInertia(roleMeta.page + 1)}
-                                        >
-                                            Next
-                                        </Button>
-                                    </div>
-                                </div>
-                            {/if}
-                        </CardContent>
-                    </Card>
-                </aside>
-
-                {:else}
-                <section id="role-editor" class="space-y-4">
-                    <Card class="border-border/80 bg-card/95">
-                        <CardHeader class="gap-3 p-4 md:p-5">
-                            <div
-                                class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
-                            >
-                                <div>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        class="-ml-2 mb-2 h-8 px-2 text-muted-foreground"
-                                        onclick={showRoleData}
-                                    >
-                                        <ArrowLeft class="size-4" />
-                                        Kembali ke Data
-                                    </Button>
-                                    <CardTitle class="text-lg">
-                                        {isEditing
-                                            ? 'Edit Role'
-                                            : 'Tambah Role Baru'}
+                                    <CardTitle class="text-base">
+                                        Daftar Role
                                     </CardTitle>
-                                    <p class="mt-1 text-sm text-muted-foreground">
-                                        Pilih permission yang boleh digunakan
-                                        role ini. Permission super-admin dikunci
-                                        penuh.
-                                    </p>
-                                </div>
-                                <div class="flex flex-wrap gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onclick={openCreateRole}
-                                    >
-                                        <Plus class="size-4" />
-                                        Tambah Role
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onclick={selectAll}
-                                        disabled={isSuperAdminRole}
-                                    >
-                                        Pilih Semua
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onclick={clearAll}
-                                        disabled={isSuperAdminRole}
-                                    >
-                                        Kosongkan
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent class="p-4 pt-0 md:p-5 md:pt-0">
-                            <form class="space-y-5" onsubmit={saveRole}>
-                                <div
-                                    class="grid gap-3 rounded-2xl border border-border/80 bg-background/70 p-3 md:grid-cols-2"
-                                >
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                                    <div class="flex shrink-0 gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onclick={openCreateRole}
                                         >
-                                            Nama Role
-                                        </span>
-                                        <Input
-                                            bind:value={form.name}
-                                            required
-                                            maxlength="120"
-                                            placeholder="Contoh: Operator Pool Baru"
-                                        />
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Slug
-                                        </span>
-                                        <Input
-                                            bind:value={form.slug}
-                                            maxlength="80"
-                                            disabled={isEditing}
-                                            placeholder="otomatis dari nama role"
-                                        />
-                                    </label>
-                                    <label class="space-y-1.5 md:col-span-2">
-                                        <span
-                                            class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Deskripsi
-                                        </span>
-                                        <textarea
-                                            bind:value={form.description}
-                                            rows="3"
-                                            maxlength="1000"
-                                            class="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                            placeholder="Ringkas tujuan role ini agar mudah dipahami admin."
-                                        ></textarea>
-                                    </label>
-                                </div>
-
-                                <div
-                                    class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-200/60 bg-cyan-50/60 px-3 py-2 text-sm dark:border-cyan-900/50 dark:bg-cyan-950/20"
-                                >
-                                    <div class="flex items-center gap-2">
-                                        <ShieldCheck
-                                            class="size-4 text-cyan-700 dark:text-cyan-300"
-                                        />
-                                        <span class="font-bold text-foreground">
-                                            {selectedCount} dari
-                                            {permissions.length} permission
-                                        </span>
-                                    </div>
-                                    {#if isSuperAdminRole}
-                                        <Badge
+                                            <Plus class="size-4" />
+                                            Tambah Role
+                                        </Button>
+                                        <Button
+                                            type="button"
                                             variant="outline"
-                                            class="border-cyan-300 text-cyan-800 dark:border-cyan-800 dark:text-cyan-100"
+                                            size="sm"
+                                            onclick={() =>
+                                                reloadRolesWithInertia(
+                                                    roleMeta.page,
+                                                )}
+                                            disabled={loading}
                                         >
-                                            Super Admin selalu akses penuh
-                                        </Badge>
-                                    {/if}
+                                            <RefreshCw
+                                                class={cn(
+                                                    'size-4',
+                                                    loading && 'animate-spin',
+                                                )}
+                                            />
+                                        </Button>
+                                    </div>
                                 </div>
-
-                                <div class="grid gap-3 xl:grid-cols-2">
-                                    {#each permissionGroups as group (group.group)}
-                                        <article
-                                            class="overflow-hidden rounded-2xl border border-border/80 bg-background/75"
-                                        >
-                                            <header
-                                                class="flex items-center justify-between gap-3 border-b border-border/70 bg-muted/40 px-3 py-2"
-                                            >
-                                                <div>
-                                                    <h3
-                                                        class="text-sm font-black text-foreground"
-                                                    >
-                                                        {group.group}
-                                                    </h3>
-                                                    <p
-                                                        class="text-[11px] text-muted-foreground"
-                                                    >
-                                                        {group.permissions.length}
-                                                        permission
-                                                    </p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    class={cn(
-                                                        'rounded-full border px-3 py-1 text-[11px] font-bold transition',
-                                                        groupAllSelected(group)
-                                                            ? 'border-cyan-300 bg-cyan-100 text-cyan-900 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-100'
-                                                            : groupSomeSelected(group)
-                                                              ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100'
-                                                              : 'border-border bg-card text-muted-foreground',
-                                                    )}
-                                                    disabled={isSuperAdminRole}
-                                                    onclick={() =>
-                                                        toggleGroup(
-                                                            group,
-                                                            !groupAllSelected(
-                                                                group,
-                                                            ),
-                                                        )}
-                                                >
-                                                    {groupAllSelected(group)
-                                                        ? 'Semua aktif'
-                                                        : groupSomeSelected(group)
-                                                          ? 'Sebagian'
-                                                          : 'Pilih grup'}
-                                                </button>
-                                            </header>
-                                            <div class="grid gap-2 p-3">
-                                                {#each group.permissions as permission (permission.id)}
-                                                    <label
-                                                        class="flex cursor-pointer items-start gap-3 rounded-xl border border-transparent px-2 py-2 transition hover:border-cyan-200 hover:bg-cyan-50/50 dark:hover:border-cyan-900 dark:hover:bg-cyan-950/20"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={hasPermissionId(
-                                                                permission.id,
-                                                            )}
-                                                            disabled={isSuperAdminRole}
-                                                            onchange={(event) =>
-                                                                togglePermission(
-                                                                    permission.id,
-                                                                    (
-                                                                        event.currentTarget as HTMLInputElement
-                                                                    ).checked,
-                                                                )}
-                                                            class="mt-0.5 size-4 shrink-0 rounded-lg border border-input accent-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                                        />
-                                                        <span class="min-w-0">
-                                                            <span
-                                                                class="block text-sm font-semibold text-foreground"
-                                                            >
-                                                                {permission.name}
-                                                            </span>
-                                                            <span
-                                                                class="block truncate text-[11px] text-muted-foreground"
-                                                            >
-                                                                {permission.slug}
-                                                            </span>
-                                                        </span>
-                                                    </label>
-                                                {/each}
-                                            </div>
-                                        </article>
-                                    {/each}
-                                </div>
-
+                                <form
+                                    class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                                    onsubmit={(event) => {
+                                        event.preventDefault();
+                                        reloadRolesWithInertia(1);
+                                    }}
+                                >
+                                    <label class="relative block">
+                                        <Search
+                                            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                                        />
+                                        <Input
+                                            bind:value={search}
+                                            placeholder="Cari role atau permission"
+                                            class="pl-9"
+                                        />
+                                    </label>
+                                    <Button type="submit" disabled={loading}>
+                                        Cari
+                                    </Button>
+                                </form>
+                            </CardHeader>
+                            <CardContent class="space-y-3 p-4 pt-0">
                                 {#if error}
                                     <div
-                                        class="rounded-2xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                                        class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
                                     >
                                         {error}
                                     </div>
                                 {/if}
-
-                                {#if message}
+                                {#if loading}
                                     <div
-                                        class="rounded-2xl border border-emerald-300/50 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100"
+                                        class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground"
                                     >
-                                        {message}
+                                        Memuat role...
+                                    </div>
+                                {:else if roles.length === 0}
+                                    <div
+                                        class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground"
+                                    >
+                                        Role tidak ditemukan.
+                                    </div>
+                                {:else}
+                                    {#each roles as role (role.id)}
+                                        <article
+                                            class={cn(
+                                                'rounded-lg border bg-background/80 p-3 transition-all hover:border-cyan-300/70 hover:shadow-sm',
+                                                form.id === role.id &&
+                                                    'border-cyan-400 bg-cyan-50/60 dark:bg-cyan-950/25',
+                                            )}
+                                        >
+                                            <div
+                                                class="flex items-start justify-between gap-3"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    class="min-w-0 flex-1 text-left"
+                                                    onclick={() =>
+                                                        editRole(role)}
+                                                >
+                                                    <div
+                                                        class="flex flex-wrap items-center gap-2"
+                                                    >
+                                                        <h3
+                                                            class="truncate text-sm font-black text-foreground"
+                                                        >
+                                                            {role.name}
+                                                        </h3>
+                                                        {#if role.is_system}
+                                                            <Badge
+                                                                variant="secondary"
+                                                                class="text-[10px]"
+                                                            >
+                                                                Sistem
+                                                            </Badge>
+                                                        {/if}
+                                                        {#if role.is_locked}
+                                                            <LockKeyhole
+                                                                class="size-3.5 text-cyan-700 dark:text-cyan-300"
+                                                            />
+                                                        {/if}
+                                                    </div>
+                                                    <p
+                                                        class="mt-1 truncate text-xs text-muted-foreground"
+                                                    >
+                                                        {role.slug}
+                                                    </p>
+                                                </button>
+                                                <div
+                                                    class="flex shrink-0 gap-1"
+                                                >
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        class="h-8 w-8 p-0"
+                                                        onclick={() =>
+                                                            editRole(role)}
+                                                    >
+                                                        <Pencil
+                                                            class="size-3.5"
+                                                        />
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        class="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                                        disabled={role.is_system ||
+                                                            deletingId ===
+                                                                role.id}
+                                                        onclick={() =>
+                                                            void deleteRole(
+                                                                role,
+                                                            )}
+                                                    >
+                                                        <Trash2
+                                                            class="size-3.5"
+                                                        />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
+                                            >
+                                                <span
+                                                    class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+                                                >
+                                                    <CheckCircle2
+                                                        class="size-3.5 text-cyan-700 dark:text-cyan-300"
+                                                    />
+                                                    {role.permission_ids.length}
+                                                    akses
+                                                </span>
+                                                <span
+                                                    class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+                                                >
+                                                    <Users class="size-3.5" />
+                                                    {role.user_count} user
+                                                </span>
+                                            </div>
+                                        </article>
+                                    {/each}
+                                    <div
+                                        class="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3"
+                                    >
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            Total {roleMeta.total} role
+                                        </p>
+                                        <div class="flex items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={roleMeta.page <= 1 ||
+                                                    loading}
+                                                onclick={() =>
+                                                    reloadRolesWithInertia(
+                                                        roleMeta.page - 1,
+                                                    )}
+                                            >
+                                                Prev
+                                            </Button>
+                                            <span
+                                                class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground"
+                                            >
+                                                {roleMeta.page} / {roleMeta.last_page}
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={roleMeta.page >=
+                                                    roleMeta.last_page ||
+                                                    loading}
+                                                onclick={() =>
+                                                    reloadRolesWithInertia(
+                                                        roleMeta.page + 1,
+                                                    )}
+                                            >
+                                                Next
+                                            </Button>
+                                        </div>
                                     </div>
                                 {/if}
-
+                            </CardContent>
+                        </Card>
+                    </aside>
+                {:else}
+                    <section id="role-editor" class="space-y-4">
+                        <Card class="border-border/80 bg-card/95">
+                            <CardHeader class="gap-3 p-4 md:p-5">
                                 <div
-                                    class="flex flex-col-reverse gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-end"
+                                    class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
                                 >
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onclick={showRoleData}
-                                    >
-                                        Kembali ke Data
-                                    </Button>
-                                    <LoadingButton
-                                        type="submit"
-                                        loading={saving}
-                                        loadingText="Menyimpan..."
-                                        disabled={form.name.trim() === ''}
-                                    >
-                                        Simpan Role
-                                    </LoadingButton>
+                                    <div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            class="-ml-2 mb-2 h-8 px-2 text-muted-foreground"
+                                            onclick={showRoleData}
+                                        >
+                                            <ArrowLeft class="size-4" />
+                                            Kembali ke Data
+                                        </Button>
+                                        <CardTitle class="text-lg">
+                                            {isEditing
+                                                ? 'Edit Role'
+                                                : 'Tambah Role Baru'}
+                                        </CardTitle>
+                                        <p
+                                            class="mt-1 text-sm text-muted-foreground"
+                                        >
+                                            Pilih permission yang boleh
+                                            digunakan role ini. Permission
+                                            super-admin dikunci penuh.
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={openCreateRole}
+                                        >
+                                            <Plus class="size-4" />
+                                            Tambah Role
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={selectAll}
+                                            disabled={isSuperAdminRole}
+                                        >
+                                            Pilih Semua
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={clearAll}
+                                            disabled={isSuperAdminRole}
+                                        >
+                                            Kosongkan
+                                        </Button>
+                                    </div>
                                 </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </section>
+                            </CardHeader>
+                            <CardContent class="p-4 pt-0 md:p-5 md:pt-0">
+                                <form class="space-y-5" onsubmit={saveRole}>
+                                    <div
+                                        class="grid gap-3 rounded-lg border border-border/80 bg-background/70 p-3 md:grid-cols-2"
+                                    >
+                                        <label class="space-y-1.5">
+                                            <span
+                                                class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Nama Role
+                                            </span>
+                                            <Input
+                                                bind:value={form.name}
+                                                required
+                                                maxlength="120"
+                                                placeholder="Contoh: Operator Pool Baru"
+                                            />
+                                        </label>
+                                        <label class="space-y-1.5">
+                                            <span
+                                                class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Slug
+                                            </span>
+                                            <Input
+                                                bind:value={form.slug}
+                                                maxlength="80"
+                                                disabled={isEditing}
+                                                placeholder="otomatis dari nama role"
+                                            />
+                                        </label>
+                                        <label
+                                            class="space-y-1.5 md:col-span-2"
+                                        >
+                                            <span
+                                                class="text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Deskripsi
+                                            </span>
+                                            <textarea
+                                                bind:value={form.description}
+                                                rows="3"
+                                                maxlength="1000"
+                                                class="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                                placeholder="Ringkas tujuan role ini agar mudah dipahami admin."
+                                            ></textarea>
+                                        </label>
+                                    </div>
+
+                                    <div
+                                        class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-200/60 bg-cyan-50/60 px-3 py-2 text-sm dark:border-cyan-900/50 dark:bg-cyan-950/20"
+                                    >
+                                        <div class="flex items-center gap-2">
+                                            <ShieldCheck
+                                                class="size-4 text-cyan-700 dark:text-cyan-300"
+                                            />
+                                            <span
+                                                class="font-bold text-foreground"
+                                            >
+                                                {selectedCount} dari
+                                                {permissions.length} permission
+                                            </span>
+                                        </div>
+                                        {#if isSuperAdminRole}
+                                            <Badge
+                                                variant="outline"
+                                                class="border-cyan-300 text-cyan-800 dark:border-cyan-800 dark:text-cyan-100"
+                                            >
+                                                Super Admin selalu akses penuh
+                                            </Badge>
+                                        {/if}
+                                    </div>
+
+                                    <div class="grid gap-3 xl:grid-cols-2">
+                                        {#each permissionGroups as group (group.group)}
+                                            <article
+                                                class="overflow-hidden rounded-lg border border-border/80 bg-background/75"
+                                            >
+                                                <header
+                                                    class="flex items-center justify-between gap-3 border-b border-border/70 bg-muted/40 px-3 py-2"
+                                                >
+                                                    <div>
+                                                        <h3
+                                                            class="text-sm font-black text-foreground"
+                                                        >
+                                                            {group.group}
+                                                        </h3>
+                                                        <p
+                                                            class="text-[11px] text-muted-foreground"
+                                                        >
+                                                            {group.permissions
+                                                                .length}
+                                                            permission
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        class={cn(
+                                                            'rounded-full border px-3 py-1 text-[11px] font-bold transition',
+                                                            groupAllSelected(
+                                                                group,
+                                                            )
+                                                                ? 'border-cyan-300 bg-cyan-100 text-cyan-900 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-100'
+                                                                : groupSomeSelected(
+                                                                        group,
+                                                                    )
+                                                                  ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100'
+                                                                  : 'border-border bg-card text-muted-foreground',
+                                                        )}
+                                                        disabled={isSuperAdminRole}
+                                                        onclick={() =>
+                                                            toggleGroup(
+                                                                group,
+                                                                !groupAllSelected(
+                                                                    group,
+                                                                ),
+                                                            )}
+                                                    >
+                                                        {groupAllSelected(group)
+                                                            ? 'Semua aktif'
+                                                            : groupSomeSelected(
+                                                                    group,
+                                                                )
+                                                              ? 'Sebagian'
+                                                              : 'Pilih grup'}
+                                                    </button>
+                                                </header>
+                                                <div class="grid gap-2 p-3">
+                                                    {#each group.permissions as permission (permission.id)}
+                                                        <label
+                                                            class="flex cursor-pointer items-start gap-3 rounded-xl border border-transparent px-2 py-2 transition hover:border-cyan-200 hover:bg-cyan-50/50 dark:hover:border-cyan-900 dark:hover:bg-cyan-950/20"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={hasPermissionId(
+                                                                    permission.id,
+                                                                )}
+                                                                disabled={isSuperAdminRole}
+                                                                onchange={(
+                                                                    event,
+                                                                ) =>
+                                                                    togglePermission(
+                                                                        permission.id,
+                                                                        (
+                                                                            event.currentTarget as HTMLInputElement
+                                                                        )
+                                                                            .checked,
+                                                                    )}
+                                                                class="mt-0.5 size-4 shrink-0 rounded-lg border border-input accent-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            />
+                                                            <span
+                                                                class="min-w-0"
+                                                            >
+                                                                <span
+                                                                    class="block text-sm font-semibold text-foreground"
+                                                                >
+                                                                    {permission.name}
+                                                                </span>
+                                                                <span
+                                                                    class="block truncate text-[11px] text-muted-foreground"
+                                                                >
+                                                                    {permission.slug}
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    {/each}
+                                                </div>
+                                            </article>
+                                        {/each}
+                                    </div>
+
+                                    {#if error}
+                                        <div
+                                            class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                                        >
+                                            {error}
+                                        </div>
+                                    {/if}
+
+                                    {#if message}
+                                        <div
+                                            class="rounded-lg border border-emerald-300/50 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100"
+                                        >
+                                            {message}
+                                        </div>
+                                    {/if}
+
+                                    <div
+                                        class="flex flex-col-reverse gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-end"
+                                    >
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={showRoleData}
+                                        >
+                                            Kembali ke Data
+                                        </Button>
+                                        <LoadingButton
+                                            type="submit"
+                                            loading={saving}
+                                            loadingText="Menyimpan..."
+                                            disabled={form.name.trim() === ''}
+                                        >
+                                            Simpan Role
+                                        </LoadingButton>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </section>
                 {/if}
             </div>
         {/if}

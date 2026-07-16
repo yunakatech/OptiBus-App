@@ -316,7 +316,7 @@
 </script>
 
 <div
-    class="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
+    class="flex h-full flex-col overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
 >
     <div
         class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4"
@@ -342,7 +342,7 @@
 
         {#if tooltipData.visible}
             <div
-                class={`pointer-events-none absolute z-20 w-[min(92vw,240px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-2xl transition sm:rounded-2xl ${tooltipTranslateClass}`}
+                class={`pointer-events-none absolute z-20 w-[min(92vw,240px)] max-w-[calc(100vw-1rem)] rounded-xl bg-slate-900/96 px-3 py-2.5 text-white shadow-lg transition sm:rounded-lg ${tooltipTranslateClass}`}
                 style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
             >
                 <div class="flex items-start justify-between gap-2">
@@ -393,7 +393,7 @@
         {/if}
 
         <div
-            class="h-[180px] overflow-visible rounded-[22px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-2 shadow-inner sm:h-[220px] sm:p-3 md:h-[260px]"
+            class="h-[180px] overflow-visible rounded-lg border border-slate-200/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))] p-2 shadow-inner sm:h-[220px] sm:p-3 md:h-[260px]"
         >
             <canvas bind:this={chartCanvas} class="relative z-10 cursor-pointer"
             ></canvas>

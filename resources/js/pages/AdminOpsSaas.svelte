@@ -141,11 +141,11 @@
     let payMessage = $state('');
 
     const shellClass =
-        'rounded-[28px] border border-slate-200/70 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/80';
+        'rounded-lg border border-slate-200/70 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/80';
     const panelClass =
-        'rounded-2xl border border-slate-200/70 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
+        'rounded-lg border border-slate-200/70 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
     const tableShellClass =
-        'overflow-hidden rounded-2xl border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
+        'overflow-hidden rounded-lg border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
 
     async function loadPaymentSettings() {
         payBusy = true;
@@ -334,8 +334,7 @@
     function openSubForm(sub?: any) {
         if (sub) {
             editingSub = sub;
-            const hasUnlimited = (value: unknown) =>
-                Number(value ?? -1) === 0;
+            const hasUnlimited = (value: unknown) => Number(value ?? -1) === 0;
             subForm = {
                 tenant_id: sub.tenant_id,
                 plan_id: sub.plan_id,
@@ -343,8 +342,7 @@
                 starts_at: sub.starts_at ?? '',
                 ends_at: sub.ends_at ?? '',
                 notes: sub.notes ?? '',
-                custom_price_monthly:
-                    sub.custom_price_monthly ?? '',
+                custom_price_monthly: sub.custom_price_monthly ?? '',
                 custom_price_yearly: sub.custom_price_yearly ?? '',
                 unlimited_pools: hasUnlimited(sub.custom_max_pools),
                 unlimited_users: hasUnlimited(sub.custom_max_users),
@@ -550,7 +548,9 @@
             sub.custom_max_users,
             sub.custom_max_armadas,
             sub.custom_max_routes,
-        ].some((value) => value !== null && value !== undefined && value !== '');
+        ].some(
+            (value) => value !== null && value !== undefined && value !== '',
+        );
     }
 
     function invoiceBadge(invoice: any): {
@@ -650,7 +650,7 @@
 
             <!-- Header -->
             <section class={shellClass}>
-                <div class="relative isolate overflow-hidden rounded-[28px]">
+                <div class="relative isolate overflow-hidden rounded-lg">
                     <div
                         class="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),transparent_35%,rgba(59,130,246,0.07))] dark:bg-[linear-gradient(135deg,rgba(148,163,184,0.08),transparent_35%,rgba(56,189,248,0.12))]"
                     ></div>
@@ -717,7 +717,7 @@
                         >
                             {#each [{ label: 'Tenants', value: summary?.tenant_count ?? 0, note: 'Registry aktif', icon: Building2, tone: 'border-sky-200 bg-sky-50/80 text-sky-700 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300' }, { label: 'Active Subscriptions', value: summary?.active_subscription_count ?? 0, note: 'Tenant jalan', icon: CreditCard, tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300' }, { label: 'Plans', value: summary?.plan_count ?? 0, note: 'Skema paket', icon: Package, tone: 'border-violet-200 bg-violet-50/80 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300' }, { label: 'Pending Invoice', value: summary?.invoice_pending_count ?? 0, note: 'Antrian bayar', icon: FileText, tone: 'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300' }, { label: 'Overdue', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu follow up', icon: AlertTriangle, tone: 'border-red-200 bg-red-50/80 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300' }, { label: 'Paid This Month', value: summary?.invoice_paid_month_count ?? 0, note: 'Arus sehat', icon: TrendingUp, tone: 'border-rose-200 bg-rose-50/80 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300' }] as item}
                                 <div
-                                    class="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/65"
+                                    class="rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/65"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -740,7 +740,7 @@
                                             </p>
                                         </div>
                                         <div
-                                            class={`rounded-2xl border p-2 ${item.tone}`}
+                                            class={`rounded-lg border p-2 ${item.tone}`}
                                         >
                                             <item.icon class="h-4 w-4" />
                                         </div>
@@ -754,7 +754,7 @@
 
             <nav class="sticky top-4 z-20">
                 <div
-                    class="rounded-[24px] border border-slate-200/70 bg-white/86 p-2 shadow-[0_18px_60px_-40px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/82"
+                    class="rounded-lg border border-slate-200/70 bg-white/86 p-2 shadow-[0_18px_60px_-40px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/82"
                 >
                     <div class="flex gap-2 overflow-x-auto">
                         {#each [{ key: 'tenants', label: 'Tenants', icon: Building2, meta: summary?.tenant_count ?? 0 }, { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard, meta: summary?.active_subscription_count ?? 0 }, { key: 'plans', label: 'Plans', icon: Package, meta: summary?.plan_count ?? 0 }, { key: 'billing', label: 'Billing', icon: FileText, meta: summary?.invoice_pending_count ?? 0 }, { key: 'payment', label: 'Payment Gateway', icon: CreditCard, meta: 'Mayar' }] as tab}
@@ -789,7 +789,7 @@
             {#if activeTab === 'tenants'}
                 <section class="space-y-4">
                     <div
-                        class="flex flex-col gap-4 rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
+                        class="flex flex-col gap-4 rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
                     >
                         <div class="space-y-1">
                             <p
@@ -1114,7 +1114,7 @@
             {#if activeTab === 'subscriptions'}
                 <section class="space-y-4">
                     <div
-                        class="flex flex-col gap-4 rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
+                        class="flex flex-col gap-4 rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
                     >
                         <div class="space-y-1">
                             <p
@@ -1265,13 +1265,15 @@
                                         />
                                     </div>
                                     <div
-                                        class="md:col-span-2 rounded-2xl border border-dashed border-slate-300/80 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/40"
+                                        class="md:col-span-2 rounded-lg border border-dashed border-slate-300/80 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/40"
                                     >
                                         <div
                                             class="flex flex-wrap items-start justify-between gap-3"
                                         >
                                             <div>
-                                                <p class="text-sm font-semibold text-foreground">
+                                                <p
+                                                    class="text-sm font-semibold text-foreground"
+                                                >
                                                     Private pricing
                                                 </p>
                                                 <p
@@ -1286,34 +1288,37 @@
                                                 >Private</Badge
                                             >
                                         </div>
-                                        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                                        <div
+                                            class="mt-4 grid gap-4 lg:grid-cols-2"
+                                        >
                                             <div class="grid gap-2">
                                                 <Label
                                                     for="custom_price_monthly"
-                                                    >Harga Bulanan
-                                                    Private</Label
+                                                    >Harga Bulanan Private</Label
                                                 >
                                                 <Input
                                                     id="custom_price_monthly"
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
-                                                    bind:value={subForm.custom_price_monthly}
+                                                    bind:value={
+                                                        subForm.custom_price_monthly
+                                                    }
                                                     placeholder="Ikuti harga plan jika kosong"
                                                 />
                                             </div>
                                             <div class="grid gap-2">
-                                                <Label
-                                                    for="custom_price_yearly"
-                                                    >Harga Tahunan
-                                                    Private</Label
+                                                <Label for="custom_price_yearly"
+                                                    >Harga Tahunan Private</Label
                                                 >
                                                 <Input
                                                     id="custom_price_yearly"
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
-                                                    bind:value={subForm.custom_price_yearly}
+                                                    bind:value={
+                                                        subForm.custom_price_yearly
+                                                    }
                                                     placeholder="Ikuti harga plan jika kosong"
                                                 />
                                             </div>
@@ -1322,11 +1327,13 @@
                                             class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"
                                         >
                                             <div
-                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
                                             >
                                                 <Checkbox
                                                     id="sub_unlimited_pools"
-                                                    bind:checked={subForm.unlimited_pools}
+                                                    bind:checked={
+                                                        subForm.unlimited_pools
+                                                    }
                                                     class="mt-0.5"
                                                 />
                                                 <div class="space-y-1">
@@ -1345,11 +1352,13 @@
                                                 </div>
                                             </div>
                                             <div
-                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
                                             >
                                                 <Checkbox
                                                     id="sub_unlimited_users"
-                                                    bind:checked={subForm.unlimited_users}
+                                                    bind:checked={
+                                                        subForm.unlimited_users
+                                                    }
                                                     class="mt-0.5"
                                                 />
                                                 <div class="space-y-1">
@@ -1367,11 +1376,13 @@
                                                 </div>
                                             </div>
                                             <div
-                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
                                             >
                                                 <Checkbox
                                                     id="sub_unlimited_armadas"
-                                                    bind:checked={subForm.unlimited_armadas}
+                                                    bind:checked={
+                                                        subForm.unlimited_armadas
+                                                    }
                                                     class="mt-0.5"
                                                 />
                                                 <div class="space-y-1">
@@ -1389,11 +1400,13 @@
                                                 </div>
                                             </div>
                                             <div
-                                                class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
+                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
                                             >
                                                 <Checkbox
                                                     id="sub_unlimited_routes"
-                                                    bind:checked={subForm.unlimited_routes}
+                                                    bind:checked={
+                                                        subForm.unlimited_routes
+                                                    }
                                                     class="mt-0.5"
                                                 />
                                                 <div class="space-y-1">
@@ -1485,7 +1498,8 @@
                                                             >{s.plan_name}</Badge
                                                         >
                                                         {#if hasPrivateSubscriptionOverride(s)}
-                                                            <Badge variant="secondary"
+                                                            <Badge
+                                                                variant="secondary"
                                                                 >Private</Badge
                                                             >
                                                         {/if}
@@ -1633,7 +1647,7 @@
             {#if activeTab === 'plans'}
                 <section class="space-y-4">
                     <div
-                        class="rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                        class="rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                     >
                         <p
                             class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
@@ -1904,7 +1918,7 @@
             {#if activeTab === 'billing'}
                 <section class="space-y-4">
                     <div
-                        class="rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                        class="rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                     >
                         <p
                             class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
@@ -1923,7 +1937,7 @@
                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                         {#each [{ label: 'Pending', value: invoiceSummary.pending ?? 0, meta: 'Menunggu checkout' }, { label: 'Lunas Bulan Ini', value: invoiceSummary.paid_month ?? 0, meta: 'Invoice paid' }, { label: 'Overdue', value: invoiceSummary.overdue ?? 0, meta: 'Lewat jatuh tempo' }, { label: 'Nominal Pending', value: formatRupiah(invoiceSummary.total_amount_pending ?? 0), meta: 'Outstanding' }] as item}
                             <div
-                                class="rounded-2xl border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                                class="rounded-lg border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                             >
                                 <p
                                     class="text-xs font-medium text-muted-foreground"
@@ -1943,7 +1957,7 @@
                     </div>
 
                     <div
-                        class="flex flex-wrap items-center gap-3 rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                        class="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                     >
                         <div class="relative flex-1 max-w-sm">
                             <Search
@@ -2204,7 +2218,7 @@
             {#if activeTab === 'payment'}
                 <section class="space-y-4">
                     <div
-                        class="rounded-[24px] border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                        class="rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                     >
                         <div
                             class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between"
@@ -2276,7 +2290,7 @@
                             <CardContent class="space-y-3 text-sm">
                                 <div class="grid gap-3 md:grid-cols-2">
                                     <div
-                                        class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/50"
+                                        class="rounded-lg border border-slate-200/70 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/50"
                                     >
                                         <p
                                             class="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground"
@@ -2292,7 +2306,7 @@
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/50"
+                                        class="rounded-lg border border-slate-200/70 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/50"
                                     >
                                         <p
                                             class="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground"
@@ -2310,7 +2324,7 @@
                                 </div>
 
                                 <div
-                                    class="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800"
+                                    class="rounded-lg border border-slate-200/70 p-4 dark:border-slate-800"
                                 >
                                     <p
                                         class="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground"
@@ -2325,7 +2339,7 @@
                                 </div>
 
                                 <div
-                                    class="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800"
+                                    class="rounded-lg border border-slate-200/70 p-4 dark:border-slate-800"
                                 >
                                     <p
                                         class="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground"
@@ -2349,7 +2363,7 @@
                                 class="space-y-3 text-sm text-muted-foreground"
                             >
                                 <div
-                                    class="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800"
+                                    class="rounded-lg border border-slate-200/70 p-4 dark:border-slate-800"
                                 >
                                     <p class="font-semibold text-foreground">
                                         Create invoice
@@ -2360,7 +2374,7 @@
                                     </p>
                                 </div>
                                 <div
-                                    class="rounded-2xl border border-slate-200/70 p-4 dark:border-slate-800"
+                                    class="rounded-lg border border-slate-200/70 p-4 dark:border-slate-800"
                                 >
                                     <p class="font-semibold text-foreground">
                                         Webhook paid

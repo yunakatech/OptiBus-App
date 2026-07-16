@@ -127,7 +127,7 @@
 <Form
     {...store.form()}
     resetOnSuccess={['password', 'password_confirmation']}
-    class="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm"
+    class="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm"
 >
     {#snippet children({ errors, processing })}
         <div
@@ -157,7 +157,7 @@
                     </div>
                 </div>
                 <div
-                    class="grid grid-cols-3 gap-1.5 rounded-2xl border border-white/80 bg-white/75 p-1.5 text-[10px] font-medium text-muted-foreground shadow-sm dark:border-white/10 dark:bg-slate-950/35"
+                    class="grid grid-cols-3 gap-1.5 rounded-lg border border-white/80 bg-white/75 p-1.5 text-[10px] font-medium text-muted-foreground shadow-sm dark:border-white/10 dark:bg-slate-950/35"
                 >
                     <div
                         class="rounded-xl bg-emerald-50 px-2 py-2 text-center text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-100"
@@ -191,7 +191,7 @@
                             if (isPaymentFlow)
                                 showPlanSelector = !showPlanSelector;
                         }}
-                        class={`w-full rounded-2xl border px-4 py-3 text-left transition ${isPaymentFlow ? 'hover:border-primary/40 hover:bg-muted/20' : 'cursor-default bg-muted/20'}`}
+                        class={`w-full rounded-lg border px-4 py-3 text-left transition ${isPaymentFlow ? 'hover:border-primary/40 hover:bg-muted/20' : 'cursor-default bg-muted/20'}`}
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
@@ -224,7 +224,7 @@
 
                     {#if showPlanSelector && isPaymentFlow}
                         <div
-                            class="absolute z-10 mt-1 w-full overflow-hidden rounded-2xl border bg-background shadow-lg"
+                            class="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border bg-background shadow-lg"
                         >
                             {#each plans as plan}
                                 <button
@@ -282,7 +282,7 @@
             </div>
 
             <section
-                class="grid gap-4 rounded-2xl border border-border/70 p-3 sm:p-4"
+                class="grid gap-4 rounded-lg border border-border/70 p-3 sm:p-4"
             >
                 <div>
                     <h3 class="text-sm font-semibold text-foreground">
@@ -354,7 +354,7 @@
             </section>
 
             <section
-                class="grid gap-4 rounded-2xl border border-border/70 p-3 sm:p-4"
+                class="grid gap-4 rounded-lg border border-border/70 p-3 sm:p-4"
             >
                 <div>
                     <h3 class="text-sm font-semibold text-foreground">
@@ -431,7 +431,7 @@
 
             <Button
                 type="submit"
-                class="h-11 w-full rounded-2xl"
+                class="h-11 w-full rounded-lg"
                 disabled={processing}
             >
                 {#if processing}<Spinner />{/if}
@@ -444,17 +444,18 @@
                     <span class="w-full border-t"></span>
                 </div>
                 <div class="relative flex justify-center text-xs uppercase">
-                    <span class="bg-card px-2 text-muted-foreground"
-                        >Atau</span
-                    >
+                    <span class="bg-card px-2 text-muted-foreground">Atau</span>
                 </div>
             </div>
 
-            <a href={`/auth/google/redirect?intent=${isPaymentFlow ? 'paid' : 'trial'}&plan=${selectedPlan}`} class="w-full">
+            <a
+                href={`/auth/google/redirect?intent=${isPaymentFlow ? 'paid' : 'trial'}&plan=${selectedPlan}`}
+                class="w-full"
+            >
                 <Button
                     type="button"
                     variant="outline"
-                    class="h-11 w-full rounded-2xl gap-2"
+                    class="h-11 w-full rounded-lg gap-2"
                 >
                     <svg class="h-4 w-4" viewBox="0 0 24 24"
                         ><path

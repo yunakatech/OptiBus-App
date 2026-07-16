@@ -274,7 +274,7 @@
 >
     <div class="mx-auto flex w-full max-w-7xl flex-col gap-5">
         <section
-            class="rounded-3xl border border-border/70 bg-card p-4 shadow-sm sm:p-5"
+            class="rounded-lg border border-border/70 bg-card p-4 shadow-sm sm:p-5"
         >
             <div
                 class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
@@ -310,7 +310,7 @@
         <div class="space-y-5">
             {#each visibleMenuSections as section (section.label)}
                 <section
-                    class="space-y-3 rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-4"
+                    class="space-y-3 rounded-lg border border-border/70 bg-card p-3 shadow-sm sm:p-4"
                 >
                     <div class="flex items-center justify-between gap-3">
                         <h2
@@ -326,7 +326,7 @@
                         {#each section.items as item (item.href)}
                             <Link
                                 href={toUrl(item.href)}
-                                class="flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-2xl border bg-background px-3 py-3 text-center text-xs font-semibold text-foreground transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-0.5 {url.isCurrentOrParentUrl(
+                                class="flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-lg border bg-background px-3 py-3 text-center text-xs font-semibold text-foreground transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-0.5 {url.isCurrentOrParentUrl(
                                     item.href,
                                     url.currentUrl,
                                 )

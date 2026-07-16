@@ -17,16 +17,16 @@
     };
 
     const base =
-        'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 md:[html[data-density=compact]_&]:text-[13px]';
+        'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 md:[html[data-density=compact]_&]:text-[13px]';
 
     const variants: Record<Variant, string> = {
-        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
         secondary:
-            'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
+            'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         destructive:
-            'bg-destructive text-destructive-foreground shadow hover:bg-destructive/90',
-        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+            'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90',
+        outline: 'border border-input bg-card shadow-xs hover:border-primary/30 hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
     };
 

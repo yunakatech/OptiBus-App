@@ -766,7 +766,7 @@
 
             <div class="space-y-2.5 xl:col-span-1">
                 <Card
-                    class="overflow-hidden rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border"
+                    class="overflow-hidden rounded-lg sm:rounded-lg border-gray-200 shadow-sm border"
                 >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <div
@@ -865,7 +865,7 @@
                 </Card>
 
                 <Card
-                    class="rounded-2xl sm:rounded-3xl border-gray-200 shadow-sm border"
+                    class="rounded-lg sm:rounded-lg border-gray-200 shadow-sm border"
                 >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <CardTitle class="text-[13px] sm:text-[14px]"
@@ -947,7 +947,7 @@
                 </Card>
 
                 <Card
-                    class="hidden h-fit xl:block rounded-3xl border-gray-200 shadow-sm border"
+                    class="hidden h-fit xl:block rounded-lg border-gray-200 shadow-sm border"
                 >
                     <CardHeader class="space-y-1 p-4 pb-2 sm:px-5 sm:pt-4">
                         <div class="flex items-start justify-between gap-3">

@@ -39,7 +39,6 @@
     }
 
     const isOpen = $derived(page.props.sidebarOpen);
-    let previousDensity: string | null = null;
 
     const themeHandler = (e: Event) => {
         try {
@@ -58,12 +57,6 @@
 
     onMount(() => {
         if (typeof window !== 'undefined') {
-            previousDensity =
-                document.documentElement.getAttribute('data-density');
-            document.documentElement.setAttribute(
-                'data-density',
-                'comfortable',
-            );
             document.documentElement.setAttribute('data-ui-scale', 'app');
             window.addEventListener('set-theme', themeHandler as EventListener);
         }
@@ -81,14 +74,6 @@
                     ? 'public'
                     : 'app',
             );
-            if (previousDensity === null) {
-                document.documentElement.removeAttribute('data-density');
-            } else {
-                document.documentElement.setAttribute(
-                    'data-density',
-                    previousDensity,
-                );
-            }
         }
     });
 </script>

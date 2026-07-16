@@ -35,7 +35,7 @@
 </script>
 
 <div
-    class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow sm:rounded-3xl sm:p-5"
+    class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow sm:rounded-lg sm:p-5"
 >
     <!-- Header -->
     <div class="mb-3 flex items-start justify-between gap-3 sm:mb-4">

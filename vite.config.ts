@@ -6,7 +6,8 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
 
-const shouldGenerateWayfinder = process.env.SKIP_WAYFINDER_GENERATE !== 'true' && !process.env.VERCEL;
+const shouldGenerateWayfinder =
+    process.env.SKIP_WAYFINDER_GENERATE !== 'true' && !process.env.VERCEL;
 
 export default defineConfig({
     plugins: [
@@ -14,7 +15,7 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
+                bunny('Plus Jakarta Sans', {
                     weights: [400, 500, 600],
                 }),
             ],

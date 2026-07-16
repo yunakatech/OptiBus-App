@@ -1458,7 +1458,8 @@
         }
 
         if (isSelectedTripManifestClosed()) {
-            formError = 'Manifest sudah ditutup. Data penumpang tidak bisa diedit.';
+            formError =
+                'Manifest sudah ditutup. Data penumpang tidak bisa diedit.';
             formSuccess = '';
 
             return;
@@ -1650,7 +1651,8 @@
         }
 
         if (isSelectedTripManifestClosed()) {
-            formError = 'Manifest sudah ditutup. Data penumpang tidak bisa diubah lagi.';
+            formError =
+                'Manifest sudah ditutup. Data penumpang tidak bisa diubah lagi.';
             formSuccess = '';
 
             return;
@@ -1744,7 +1746,8 @@
         }
 
         if (isSelectedTripManifestClosed()) {
-            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formError =
+                'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
             formSuccess = '';
 
             return;
@@ -2285,7 +2288,8 @@
                     normalizeRiturRoute(selectedRoute) &&
                 String(group.tanggal || '').slice(0, 10) ===
                     String(bookingDate || '').slice(0, 10) &&
-                normalizeJamToken(group.jam) === normalizeJamToken(selectedJam) &&
+                normalizeJamToken(group.jam) ===
+                    normalizeJamToken(selectedJam) &&
                 Number(group.unit || 1) === Number(selectedUnit || 1)
             );
         }) ?? null;
@@ -2986,9 +2990,10 @@
             );
             const arrivedLuggageCount =
                 Number(response?.luggage_arrived_count ?? 0) || 0;
-            const nextDepartureStatus = String(response?.status ?? 'closed')
-                .trim()
-                .toLowerCase() || 'closed';
+            const nextDepartureStatus =
+                String(response?.status ?? 'closed')
+                    .trim()
+                    .toLowerCase() || 'closed';
 
             localBookingGroups = localBookingGroups.map((item) =>
                 item.key === group.key
@@ -3252,7 +3257,8 @@
         }
 
         if (isManifestLocked(openGroupDetail)) {
-            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formError =
+                'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
             formSuccess = '';
 
             return;
@@ -3320,7 +3326,8 @@
         }
 
         if (isManifestLocked(openGroupDetail)) {
-            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formError =
+                'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
             formSuccess = '';
 
             return;
@@ -3385,7 +3392,8 @@
         }
 
         if (isManifestLocked(group)) {
-            formError = 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
+            formError =
+                'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.';
             formSuccess = '';
 
             return;
@@ -3477,7 +3485,8 @@
         }
 
         if (isManifestLocked(openGroupDetail)) {
-            formError = 'Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.';
+            formError =
+                'Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.';
             formSuccess = '';
 
             return;
@@ -4016,7 +4025,8 @@
         }
 
         if (isManifestLocked(openGroupDetail)) {
-            formError = 'Manifest sudah ditutup. Data penumpang tidak bisa diubah lagi.';
+            formError =
+                'Manifest sudah ditutup. Data penumpang tidak bisa diubah lagi.';
             formSuccess = '';
 
             return;
@@ -4362,7 +4372,8 @@
         }
 
         if (isManifestLocked(openGroupDetail)) {
-            formError = 'Manifest sudah ditutup. Driver dan armada tidak bisa diubah lagi.';
+            formError =
+                'Manifest sudah ditutup. Driver dan armada tidak bisa diubah lagi.';
             formSuccess = '';
 
             return;
@@ -5480,7 +5491,8 @@
         }
 
         if (isSelectedTripManifestClosed()) {
-            formError = 'Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.';
+            formError =
+                'Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.';
             formSuccess = '';
 
             return;
@@ -5662,7 +5674,7 @@
             <CardContent class="space-y-5 p-4 md:p-5">
                 <div class="space-y-3 md:hidden">
                     <div
-                        class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
+                        class="rounded-lg border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
                     >
                         <div class="grid grid-cols-3 gap-1.5">
                             {#each mobileStepItems as item (item.step)}
@@ -5857,7 +5869,7 @@
 
                 {#if mobileBookingStep === 1}
                     <div
-                        class="sticky bottom-3 z-20 rounded-2xl border border-border/80 bg-background/95 p-3 shadow-lg backdrop-blur md:hidden"
+                        class="sticky bottom-3 z-20 rounded-lg border border-border/80 bg-background/95 p-3 shadow-lg backdrop-blur md:hidden"
                     >
                         <Button
                             type="button"
@@ -5893,7 +5905,7 @@
                     class={`gap-4 xl:grid-cols-[1.3fr_1fr] ${mobileBookingStep === 1 ? 'hidden md:grid' : 'grid'}`}
                 >
                     <div
-                        class={`space-y-3 rounded-2xl border border-border/70 bg-linear-to-b from-background to-cyan-500/[0.03] p-4 shadow-sm ${mobileBookingStep === 2 ? 'block' : 'hidden md:block'}`}
+                        class={`space-y-3 rounded-lg border border-border/70 bg-linear-to-b from-background to-cyan-500/[0.03] p-4 shadow-sm ${mobileBookingStep === 2 ? 'block' : 'hidden md:block'}`}
                     >
                         <div class="flex items-center justify-between">
                             <div>
@@ -5940,7 +5952,7 @@
                             </p>
                         {:else}
                             <div
-                                class="space-y-3 rounded-2xl border border-border/70 bg-background/70 p-3"
+                                class="space-y-3 rounded-lg border border-border/70 bg-background/70 p-3"
                             >
                                 {#if !hasSelectedTrip()}
                                     <p class="text-xs text-muted-foreground">
@@ -6061,7 +6073,7 @@
                         {/if}
 
                         <div
-                            class="rounded-2xl border bg-background/80 p-3 shadow-sm"
+                            class="rounded-lg border bg-background/80 p-3 shadow-sm"
                         >
                             <p
                                 class="mb-2 text-xs font-medium text-muted-foreground"
@@ -6123,7 +6135,7 @@
                         </div>
 
                         <div
-                            class="space-y-3 rounded-2xl border bg-background/90 p-3 shadow-sm md:hidden"
+                            class="space-y-3 rounded-lg border bg-background/90 p-3 shadow-sm md:hidden"
                         >
                             <div
                                 class="flex items-center justify-between gap-2"
@@ -6227,7 +6239,7 @@
                         class={`space-y-3 ${mobileBookingStep === 3 ? 'block' : 'hidden md:block'}`}
                     >
                         <div
-                            class="space-y-3 rounded-2xl border bg-background/80 p-4 shadow-sm"
+                            class="space-y-3 rounded-lg border bg-background/80 p-4 shadow-sm"
                         >
                             <h3 class="text-sm font-semibold">
                                 Tambah Booking Cepat
@@ -6656,7 +6668,7 @@
             aria-modal="true"
         >
             <div
-                class="flex max-h-[calc(100svh-0.75rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-xl sm:max-h-[calc(100svh-2rem)] sm:rounded-2xl"
+                class="flex max-h-[calc(100svh-0.75rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-md sm:max-h-[calc(100svh-2rem)] sm:rounded-lg"
             >
                 <div
                     class="flex shrink-0 items-start justify-between gap-3 border-b bg-background/95 px-3 py-3 backdrop-blur md:px-5"
@@ -6981,10 +6993,12 @@
                                             type="button"
                                             variant="outline"
                                             class="h-10 flex-1 sm:flex-none border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                                            onclick={() => void markDetailAsPaid()}
+                                            onclick={() =>
+                                                void markDetailAsPaid()}
                                             disabled={markingPaidSeatId ===
                                                 detailSeat.id ||
-                                                cancelingSeatId === detailSeat.id}
+                                                cancelingSeatId ===
+                                                    detailSeat.id}
                                         >
                                             <WalletCards
                                                 class="mr-1.5 h-3.5 w-3.5"
@@ -7025,8 +7039,11 @@
                             {/if}
                         </div>
                         {#if isSelectedTripManifestClosed()}
-                            <p class="mt-2 text-xs text-muted-foreground sm:text-right">
-                                Manifest sudah ditutup. Hanya print manifest yang masih aktif.
+                            <p
+                                class="mt-2 text-xs text-muted-foreground sm:text-right"
+                            >
+                                Manifest sudah ditutup. Hanya print manifest
+                                yang masih aktif.
                             </p>
                         {/if}
                     {/if}
@@ -7042,7 +7059,7 @@
             aria-modal="true"
         >
             <div
-                class="w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-200/70 bg-background shadow-2xl dark:border-emerald-500/20"
+                class="w-full max-w-xl overflow-hidden rounded-lg border border-emerald-200/70 bg-background shadow-lg dark:border-emerald-500/20"
             >
                 <div
                     class="h-1 bg-linear-to-r from-emerald-400 via-emerald-500 to-lime-400"
@@ -7050,7 +7067,7 @@
                 <div class="p-4 md:p-5">
                     <div class="flex items-start gap-3">
                         <div
-                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
+                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
                         >
                             <CheckCircle2 class="h-7 w-7" />
                         </div>
@@ -7089,7 +7106,7 @@
                         </Button>
                     </div>
 
-                    <div class="mt-4 rounded-2xl border bg-muted/20 p-4">
+                    <div class="mt-4 rounded-lg border bg-muted/20 p-4">
                         <p
                             class="text-xs uppercase tracking-wide text-muted-foreground"
                         >
@@ -7165,7 +7182,7 @@
             aria-modal="true"
         >
             <div
-                class="w-full max-w-2xl rounded-lg border bg-background p-4 shadow-xl"
+                class="w-full max-w-2xl rounded-lg border bg-background p-4 shadow-md"
             >
                 <div class="mb-3 flex items-start justify-between">
                     <div>
@@ -7255,7 +7272,7 @@
     {#if listOnly && groupDetailPage}
         {#if openGroupDetail}
             <div
-                class="w-full rounded-2xl border border-border/70 bg-background p-4 shadow-sm md:p-5"
+                class="w-full rounded-lg border border-border/70 bg-background p-4 shadow-sm md:p-5"
             >
                 <div
                     class="mb-4 flex flex-wrap items-start justify-between gap-3"
@@ -7351,11 +7368,13 @@
                                 size="sm"
                                 class="rounded-full"
                                 onclick={() =>
-                                    void markBookingGroupAsPaid(openGroupDetail!)}
+                                    void markBookingGroupAsPaid(
+                                        openGroupDetail!,
+                                    )}
                                 disabled={markingPaidSeatId !== null ||
                                     isCanceledDeparture(openGroupDetail) ||
-                                    payableBookingRows(openGroupDetail).length ===
-                                        0}
+                                    payableBookingRows(openGroupDetail)
+                                        .length === 0}
                             >
                                 <WalletCards class="mr-1 h-3.5 w-3.5" />
                                 {markingPaidSeatId !== null &&
@@ -7375,13 +7394,14 @@
                                 Copy Data
                             </Button>
                         {/if}
-                {#if isArrivedDeparture(openGroupDetail) && !isManifestLocked(openGroupDetail)}
+                        {#if isArrivedDeparture(openGroupDetail) && !isManifestLocked(openGroupDetail)}
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 class="rounded-full border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-900/40"
-                                onclick={() => void closeManifest(openGroupDetail!)}
+                                onclick={() =>
+                                    void closeManifest(openGroupDetail!)}
                             >
                                 Close Manifest
                             </Button>
@@ -7397,7 +7417,7 @@
                 </div>
 
                 <div
-                    class="mb-4 rounded-[28px] border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/35 p-4 shadow-sm dark:to-cyan-950/15 md:p-5"
+                    class="mb-4 rounded-lg border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/35 p-4 shadow-sm dark:to-cyan-950/15 md:p-5"
                 >
                     <div
                         class="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]"
@@ -7499,7 +7519,7 @@
                                 </div>
                                 <div class="mt-3 grid gap-2 sm:grid-cols-2">
                                     <div
-                                        class="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                                        class="rounded-lg border border-emerald-200/70 bg-emerald-50/70 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                     >
                                         <p
                                             class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
@@ -7515,7 +7535,7 @@
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-2xl border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-950/20"
+                                        class="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-950/20"
                                     >
                                         <p
                                             class="text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
@@ -7574,7 +7594,7 @@
 
                                         {#if groupDriverLookupOpen}
                                             <div
-                                                class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
+                                                class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
                                             >
                                                 {#if loadingGroupDriver}
                                                     <p
@@ -7663,7 +7683,7 @@
 
                                         {#if groupArmadaLookupOpen}
                                             <div
-                                                class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
+                                                class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
                                             >
                                                 {#if loadingGroupArmada}
                                                     <p
@@ -7746,7 +7766,7 @@
 
                                 {#if canMarkDepartureDeparted(openGroupDetail) || canMarkDepartureArrived(openGroupDetail)}
                                     <div
-                                        class="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-200/70 bg-emerald-50/70 p-3 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                                        class="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200/70 bg-emerald-50/70 p-3 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                     >
                                         {#if canMarkDepartureDeparted(openGroupDetail)}
                                             <Button
@@ -7809,7 +7829,7 @@
                         </div>
 
                         <div
-                            class="rounded-[24px] border border-cyan-200/70 bg-background/90 p-4 dark:border-cyan-500/20"
+                            class="rounded-lg border border-cyan-200/70 bg-background/90 p-4 dark:border-cyan-500/20"
                         >
                             <p
                                 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
@@ -7818,7 +7838,7 @@
                             </p>
                             <div class="mt-3 space-y-2">
                                 <div
-                                    class="rounded-2xl border border-border/70 bg-background/80 px-3 py-3"
+                                    class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                 >
                                     <p
                                         class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
@@ -7832,7 +7852,7 @@
                                     </p>
                                 </div>
                                 <div
-                                    class="rounded-2xl border border-border/70 bg-background/80 px-3 py-3"
+                                    class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                 >
                                     <p
                                         class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
@@ -7849,7 +7869,7 @@
                                 </div>
                                 {#if !consoleOnly}
                                     <div
-                                        class="rounded-2xl border border-border/70 bg-background/80 px-3 py-3"
+                                        class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                     >
                                         <p
                                             class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
@@ -7866,7 +7886,7 @@
                                     </div>
                                 {/if}
                                 <div
-                                    class="rounded-2xl border border-border/70 bg-background/80 px-3 py-3"
+                                    class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                 >
                                     <p
                                         class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
@@ -7919,7 +7939,7 @@
                         class="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
                     >
                         <div
-                            class="rounded-[24px] border border-border/80 bg-card/95 p-4 shadow-sm"
+                            class="rounded-lg border border-border/80 bg-card/95 p-4 shadow-sm"
                         >
                             <div
                                 class="mb-3 flex flex-wrap items-start justify-between gap-3"
@@ -7938,7 +7958,7 @@
                                     </p>
                                 </div>
                                 <div
-                                    class="rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-3 py-2 text-right dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                                    class="rounded-lg border border-emerald-200/70 bg-emerald-50/80 px-3 py-2 text-right dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                 >
                                     <p
                                         class="text-[10px] uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300"
@@ -7957,7 +7977,7 @@
 
                             {#if filteredMappedRiturs().length === 0}
                                 <div
-                                    class="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
+                                    class="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
                                 >
                                     Belum ada bagasi yang terpasang pada
                                     keberangkatan ini.
@@ -7966,7 +7986,7 @@
                                 <div class="space-y-2">
                                     {#each filteredMappedRiturs() as row (row.id)}
                                         <div
-                                            class="rounded-2xl border border-border/70 bg-background/85 p-3"
+                                            class="rounded-lg border border-border/70 bg-background/85 p-3"
                                         >
                                             <div
                                                 class="flex flex-wrap items-start justify-between gap-3"
@@ -8058,7 +8078,7 @@
                         </div>
 
                         <div
-                            class="rounded-[24px] border border-border/80 bg-card/95 p-4 shadow-sm"
+                            class="rounded-lg border border-border/80 bg-card/95 p-4 shadow-sm"
                         >
                             <div
                                 class="mb-3 flex flex-wrap items-center justify-between gap-3"
@@ -8209,7 +8229,7 @@
 
                             {#if filteredAvailableRiturs().length === 0}
                                 <div
-                                    class="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
+                                    class="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
                                 >
                                     {loadingGroupRiturs
                                         ? 'Memuat daftar bagasi...'
@@ -8219,7 +8239,7 @@
                                 <div class="space-y-2">
                                     {#each filteredAvailableRiturs() as row (row.id)}
                                         <div
-                                            class="rounded-2xl border border-border/70 bg-background/85 p-3"
+                                            class="rounded-lg border border-border/70 bg-background/85 p-3"
                                         >
                                             <div
                                                 class="flex flex-wrap items-start justify-between gap-3"
@@ -8311,7 +8331,7 @@
                     <div class="space-y-2 md:hidden">
                         {#if visibleGroupBookings().length === 0}
                             <div
-                                class="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground"
+                                class="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground"
                             >
                                 Belum ada penumpang aktif pada keberangkatan
                                 ini.
@@ -8319,7 +8339,7 @@
                         {/if}
                         {#each visibleGroupBookings() as row (row.id)}
                             <div
-                                class="rounded-2xl border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/25 p-3.5 shadow-xs dark:to-cyan-950/15"
+                                class="rounded-lg border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/25 p-3.5 shadow-xs dark:to-cyan-950/15"
                             >
                                 <div
                                     class="mb-2.5 flex items-start justify-between gap-3"
@@ -8379,7 +8399,7 @@
                                             <DropdownMenuContent
                                                 align="end"
                                                 sideOffset={6}
-                                                class="z-[120] w-44 text-[11px] shadow-2xl"
+                                                class="z-[120] w-44 text-[11px] shadow-lg"
                                             >
                                                 <DropdownMenuItem
                                                     onclick={() =>
@@ -8544,7 +8564,7 @@
                     </div>
 
                     <div
-                        class="hidden overflow-visible rounded-2xl border border-border/80 bg-card/95 md:block"
+                        class="hidden overflow-visible rounded-lg border border-border/80 bg-card/95 md:block"
                     >
                         <table class="w-full min-w-[980px] text-xs">
                             <thead>
@@ -8609,7 +8629,7 @@
                                                         align="start"
                                                         side="right"
                                                         sideOffset={6}
-                                                        class="z-[120] w-44 text-[11px] shadow-2xl"
+                                                        class="z-[120] w-44 text-[11px] shadow-lg"
                                                     >
                                                         <DropdownMenuItem
                                                             onclick={() =>
@@ -8688,7 +8708,7 @@
                                         </td>
                                         <td class="px-3 py-3">
                                             <div
-                                                class="inline-flex min-w-11 items-center justify-center rounded-2xl border border-cyan-200/70 bg-cyan-50/80 px-3 py-2 text-sm font-semibold text-cyan-700 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-200"
+                                                class="inline-flex min-w-11 items-center justify-center rounded-lg border border-cyan-200/70 bg-cyan-50/80 px-3 py-2 text-sm font-semibold text-cyan-700 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-200"
                                             >
                                                 {row.seat}
                                             </div>
@@ -8714,7 +8734,7 @@
                                             class="px-3 py-3 text-[11px] leading-relaxed"
                                         >
                                             <div
-                                                class="grid gap-2 rounded-2xl border border-border/70 bg-background/80 p-3"
+                                                class="grid gap-2 rounded-lg border border-border/70 bg-background/80 p-3"
                                             >
                                                 <div
                                                     class="grid grid-cols-2 gap-2"
@@ -8851,7 +8871,7 @@
             </div>
         {:else}
             <div
-                class="rounded-2xl border border-border/70 bg-background p-4 shadow-sm"
+                class="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
             >
                 <p class="text-sm text-muted-foreground">
                     Detail keberangkatan tidak ditemukan atau sudah berubah.
@@ -8901,7 +8921,7 @@
                 aria-modal="true"
             >
                 <div
-                    class="w-full max-w-md rounded-2xl border border-border/80 bg-background p-6 text-center shadow-2xl"
+                    class="w-full max-w-md rounded-lg border border-border/80 bg-background p-6 text-center shadow-lg"
                 >
                     <p class="text-sm font-medium text-foreground">
                         Memuat editor penumpang...
@@ -8948,7 +8968,7 @@
                 aria-modal="true"
             >
                 <div
-                    class="w-full max-w-md rounded-2xl border border-border/80 bg-background p-6 text-center shadow-2xl"
+                    class="w-full max-w-md rounded-lg border border-border/80 bg-background p-6 text-center shadow-lg"
                 >
                     <p class="text-sm font-medium text-foreground">
                         Memuat form reschedule...
@@ -8996,10 +9016,10 @@
             <CardContent>
                 {#if listOnly}
                     <div
-                        class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/90 md:top-2 md:mx-0 md:rounded-2xl md:border md:border-border/80 md:bg-linear-to-br md:from-background md:via-background md:to-cyan-50/35 md:p-3 md:shadow-sm md:dark:to-cyan-950/15"
+                        class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/90 md:top-2 md:mx-0 md:rounded-lg md:border md:border-border/80 md:bg-linear-to-br md:from-background md:via-background md:to-cyan-50/35 md:p-3 md:shadow-sm md:dark:to-cyan-950/15"
                     >
                         <div
-                            class="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
                         >
                             <Button
                                 type="button"
@@ -9020,7 +9040,7 @@
                             </Button>
                         </div>
                         <div
-                            class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
+                            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
                         >
                             <div class="space-y-1">
                                 <p
@@ -9101,7 +9121,7 @@
                             </div>
                         </div>
                         <div
-                            class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-2xl border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
+                            class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-lg border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
                         >
                             <div
                                 class="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
@@ -9148,7 +9168,7 @@
                         </div>
                         {#if emptyDepartureOpen}
                             <div
-                                class="mt-3 rounded-2xl border border-cyan-200/70 bg-background/95 p-3 shadow-sm dark:border-cyan-500/20"
+                                class="mt-3 rounded-lg border border-cyan-200/70 bg-background/95 p-3 shadow-sm dark:border-cyan-500/20"
                             >
                                 <div
                                     class="mb-2 flex flex-wrap items-center justify-between gap-2"
@@ -9284,7 +9304,7 @@
                         >
                             {#each bookingListSkeletonRows as _row, index (`booking-list-skeleton-${index}`)}
                                 <div
-                                    class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                    class="overflow-hidden rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                     aria-hidden="true"
                                 >
                                     <div
@@ -9341,7 +9361,7 @@
                                 <div class="hidden space-y-4 lg:block">
                                     {#each bookingDateSectionsMemo as section (section.key)}
                                         <section
-                                            class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                                            class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                                         >
                                             <div
                                                 class="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-4 py-3"
@@ -9573,9 +9593,16 @@
                                                                             </span>
                                                                         </div>
                                                                         {#if !consoleOnly}
-                                                                            <div class="text-foreground">
-                                                                                <span class="font-medium text-muted-foreground">BOP:</span>
-                                                                                <span class="ml-1 font-semibold">
+                                                                            <div
+                                                                                class="text-foreground"
+                                                                            >
+                                                                                <span
+                                                                                    class="font-medium text-muted-foreground"
+                                                                                    >BOP:</span
+                                                                                >
+                                                                                <span
+                                                                                    class="ml-1 font-semibold"
+                                                                                >
                                                                                     {formatCurrency(
                                                                                         Number(
                                                                                             group.bop ||
@@ -9739,7 +9766,7 @@
                                                                             <DropdownMenuContent
                                                                                 align="end"
                                                                                 sideOffset={6}
-                                                                                class="z-[120] w-44 text-[11px] shadow-2xl"
+                                                                                class="z-[120] w-44 text-[11px] shadow-lg"
                                                                             >
                                                                                 <DropdownMenuItem
                                                                                     onclick={() =>
@@ -9853,7 +9880,7 @@
                                     {@const unpaidAmount =
                                         bookingGroupUnpaidAmount(group)}
                                     <div
-                                        class={`group relative overflow-hidden rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 hover:border-rose-300/90 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
+                                        class={`group relative overflow-hidden rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 hover:border-rose-300/90 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
                                     >
                                         <div
                                             class="pointer-events-none absolute inset-x-0 top-0 h-14 bg-linear-to-r from-cyan-500/12 via-sky-500/10 to-transparent opacity-85 transition-opacity duration-200 group-hover:opacity-100"
@@ -9933,7 +9960,7 @@
                                                         <DropdownMenuContent
                                                             align="end"
                                                             sideOffset={6}
-                                                            class="z-[120] w-44 text-[11px] shadow-2xl"
+                                                            class="z-[120] w-44 text-[11px] shadow-lg"
                                                         >
                                                             <DropdownMenuItem
                                                                 onclick={() =>
@@ -9994,7 +10021,8 @@
                                                                             group,
                                                                         )}
                                                                 >
-                                                                    Close Manifest
+                                                                    Close
+                                                                    Manifest
                                                                 </DropdownMenuItem>
                                                             {/if}
                                                             {#if !isManifestLocked(group) && !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
@@ -10202,7 +10230,7 @@
                     <div class="space-y-2.5 md:hidden">
                         {#each localLatestBookings as booking (booking.id)}
                             <div
-                                class="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-safe:transition-all hover:shadow-md hover:shadow-cyan-900/10 active:scale-[0.99]"
+                                class="group relative overflow-hidden rounded-lg border border-border/70 bg-card/95 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-safe:transition-all hover:shadow-md hover:shadow-cyan-900/10 active:scale-[0.99]"
                             >
                                 <div
                                     class="pointer-events-none absolute inset-x-0 top-0 h-16 bg-linear-to-r from-cyan-500/10 via-sky-500/8 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-100"

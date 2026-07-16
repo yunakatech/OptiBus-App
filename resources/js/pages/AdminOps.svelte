@@ -5462,7 +5462,7 @@
 <div class="space-y-4 p-4">
     {#if !lockedMenuView}
         <div
-            class="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(8,145,178,0.12))] shadow-sm"
+            class="overflow-hidden rounded-lg border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(8,145,178,0.12))] shadow-sm"
         >
             <div
                 class="grid gap-4 p-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:items-end"
@@ -5497,7 +5497,7 @@
                     class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2"
                 >
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5507,7 +5507,7 @@
                         <p class="mt-1 text-lg font-semibold">{stats.routes}</p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5519,7 +5519,7 @@
                         </p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5531,7 +5531,7 @@
                         </p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5543,7 +5543,7 @@
                         </p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5555,7 +5555,7 @@
                         </p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5567,7 +5567,7 @@
                         </p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5579,7 +5579,7 @@
                         </p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5589,7 +5589,7 @@
                         <p class="mt-1 text-lg font-semibold">{stats.pools}</p>
                     </div>
                     <div
-                        class="rounded-2xl border border-white/10 bg-white/10 p-3 text-slate-50"
+                        class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
                             class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
@@ -5720,7 +5720,7 @@
             {#if activeTab === 'routes'}
                 {#if activeMode === 'form'}
                     <form
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveRoute}
                     >
                         <div
@@ -5801,7 +5801,7 @@
                     </form>
                 {:else}
                     <div
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
                             class="flex items-center justify-between gap-3 border-b border-border/70 bg-muted/20 px-5 py-4"
@@ -5825,7 +5825,7 @@
                         <div class="grid gap-3 p-3 md:hidden">
                             {#if routes.length === 0}
                                 <div
-                                    class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
+                                    class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
                                 >
                                     Belum ada rute induk.
                                 </div>
@@ -5835,7 +5835,7 @@
                                     Number(row.id),
                                 )}
                                 <article
-                                    class="overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-sm"
+                                    class="overflow-hidden rounded-lg border border-border/80 bg-card/95 shadow-sm"
                                 >
                                     <div class="bg-muted/20 p-3">
                                         <div
@@ -5972,7 +5972,7 @@
                                 </article>
                                 {#if selectedSegmentRouteId === row.id}
                                     <div
-                                        class="overflow-hidden rounded-2xl border border-border/80 bg-background/95 shadow-sm"
+                                        class="overflow-hidden rounded-lg border border-border/80 bg-background/95 shadow-sm"
                                     >
                                         <div class="space-y-4 p-3">
                                             <div
@@ -6000,7 +6000,7 @@
 
                                             {#if rowSegments.length === 0}
                                                 <div
-                                                    class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-xs text-muted-foreground"
+                                                    class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-xs text-muted-foreground"
                                                 >
                                                     Belum ada segment pada rute
                                                     ini.
@@ -6009,7 +6009,7 @@
                                                 <div class="space-y-2">
                                                     {#each rowSegments as segment (segment.id)}
                                                         <article
-                                                            class="rounded-2xl border border-border/70 bg-card/95 p-3 shadow-sm"
+                                                            class="rounded-lg border border-border/70 bg-card/95 p-3 shadow-sm"
                                                         >
                                                             <div
                                                                 class="flex items-start justify-between gap-3"
@@ -6115,7 +6115,7 @@
 
                                             {#if canWriteTab('segments')}
                                                 <form
-                                                    class="space-y-3 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-sm"
+                                                    class="space-y-3 rounded-lg border border-border/70 bg-card/95 p-3 shadow-sm"
                                                     onsubmit={saveSegment}
                                                 >
                                                     <div
@@ -6525,7 +6525,7 @@
 
                                         {#if rowSegments.length === 0}
                                             <div
-                                                class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
+                                                class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
                                             >
                                                 Belum ada segment untuk rute
                                                 ini.
@@ -6536,7 +6536,7 @@
                                             >
                                                 {#each rowSegments as segment (segment.id)}
                                                     <article
-                                                        class="rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm"
+                                                        class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
                                                     >
                                                         <div
                                                             class="flex items-start justify-between gap-3"
@@ -6650,7 +6650,7 @@
 
                                         {#if canWriteTab('segments')}
                                             <form
-                                                class="space-y-3 rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                                class="space-y-3 rounded-lg border border-border/70 bg-muted/10 p-4"
                                                 onsubmit={saveSegment}
                                             >
                                                 <div
@@ -6855,7 +6855,7 @@
             {#if activeTab === 'schedules'}
                 <div class="space-y-4">
                     <section
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div class="space-y-5 px-5 py-5">
                             <div
@@ -7037,7 +7037,7 @@
 
                                 {#if scheduleSegmentsForRoute().length > 0}
                                     <div
-                                        class="rounded-2xl border border-sky-200/70 bg-sky-50/40 p-4"
+                                        class="rounded-lg border border-sky-200/70 bg-sky-50/40 p-4"
                                     >
                                         <div
                                             class="mb-3 flex items-start justify-between gap-3"
@@ -7195,7 +7195,7 @@
                                 {/if}
 
                                 <div
-                                    class="rounded-2xl border border-input/70 bg-muted/10 p-4"
+                                    class="rounded-lg border border-input/70 bg-muted/10 p-4"
                                 >
                                     <p
                                         class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
@@ -7307,7 +7307,7 @@
 
                     {#if activeMode === 'data' && !selectedScheduleRoute}
                         <div
-                            class="rounded-2xl border border-dashed border-border/80 bg-muted/10 px-5 py-6"
+                            class="rounded-lg border border-dashed border-border/80 bg-muted/10 px-5 py-6"
                         >
                             <div
                                 class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
@@ -7378,7 +7378,7 @@
                             >
                                 {#each activeScheduleGroup?.days ?? emptyScheduleDayGroups as day (day.dow)}
                                     <div
-                                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                                     >
                                         <div
                                             class="flex items-start justify-between gap-3 border-b border-border/60 bg-muted/10 px-4 py-3"
@@ -7428,7 +7428,7 @@
                                         {#if day.rows.length === 0}
                                             <div class="px-4 py-6">
                                                 <div
-                                                    class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-4 py-5 text-center"
+                                                    class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-5 text-center"
                                                 >
                                                     <p
                                                         class="text-sm font-medium text-foreground"
@@ -7453,7 +7453,7 @@
                                                     {@const rowOptions =
                                                         row.unit_options ?? []}
                                                     <article
-                                                        class="rounded-2xl border border-border/70 bg-card/95 p-3 text-xs shadow-[0_18px_45px_-30px_rgba(15,23,42,0.16)]"
+                                                        class="rounded-lg border border-border/70 bg-card/95 p-3 text-xs shadow-[0_18px_45px_-30px_rgba(15,23,42,0.16)]"
                                                     >
                                                         <div
                                                             class="flex items-start justify-between gap-3"
@@ -7664,7 +7664,7 @@
                             bodyClass="space-y-4"
                         >
                             <div
-                                class="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                                class="rounded-lg border border-border/70 bg-muted/20 p-4"
                             >
                                 {#if isAllPoolMode}
                                     <label class="space-y-1.5">
@@ -7848,7 +7848,7 @@
             {#if activeTab === 'services'}
                 {#if activeMode === 'form'}
                     <form
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveService}
                     >
                         <div
@@ -7907,7 +7907,7 @@
                     </form>
                 {:else}
                     <div
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
                             class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
@@ -7939,14 +7939,14 @@
                         <div class="grid gap-3 p-3 md:hidden">
                             {#if services.length === 0}
                                 <div
-                                    class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
+                                    class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
                                 >
                                     Belum ada layanan bagasi.
                                 </div>
                             {/if}
                             {#each services as row (row.id)}
                                 <article
-                                    class="rounded-[24px] border border-border/80 bg-card/95 p-3 shadow-sm"
+                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -8365,7 +8365,7 @@
                         </form>
                     {:else}
                         <div
-                            class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                            class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         >
                             <div
                                 class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
@@ -8398,14 +8398,14 @@
                             <div class="grid gap-3 p-3 md:hidden">
                                 {#if segments.length === 0}
                                     <div
-                                        class="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
+                                        class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
                                     >
                                         Belum ada segment untuk rute ini.
                                     </div>
                                 {/if}
                                 {#each segments as row (row.id)}
                                     <article
-                                        class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                        class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                     >
                                         <div
                                             class="flex items-start justify-between gap-3"
@@ -8702,7 +8702,7 @@
             {#if activeTab === 'customers'}
                 {#if activeMode === 'form'}
                     <form
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveCustomer}
                     >
                         <div
@@ -8832,7 +8832,7 @@
                     </form>
                 {:else}
                     <div
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
                             class="flex flex-col gap-2.5 border-b border-border/70 bg-muted/20 px-3 py-2.5"
@@ -8947,7 +8947,7 @@
                         <div class="grid gap-2 p-2 md:hidden">
                             {#each customers as row (row.id)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-2 shadow-sm"
+                                    class="rounded-lg border border-border/80 bg-card/95 p-2 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2.5"
@@ -9309,7 +9309,7 @@
             {#if activeTab === 'units'}
                 {#if activeMode === 'form'}
                     <form
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveUnit}
                     >
                         <div
@@ -9439,7 +9439,7 @@
                         <div class="grid gap-3 lg:hidden">
                             {#each units as row (row.id)}
                                 <div
-                                    class="rounded-2xl border border-border/70 bg-background/95 p-3 shadow-sm sm:p-4"
+                                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm sm:p-4"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2.5"
@@ -9570,7 +9570,7 @@
                         </div>
 
                         <div
-                            class="table-container hidden rounded-2xl border border-border/70 bg-background/90 lg:block"
+                            class="table-container hidden rounded-lg border border-border/70 bg-background/90 lg:block"
                         >
                             <table class="w-full table-fixed text-[10px]">
                                 <thead
@@ -9737,7 +9737,7 @@
                             bodyClass="space-y-4"
                         >
                             <div
-                                class="rounded-2xl border border-border/70 bg-background/90 p-4"
+                                class="rounded-lg border border-border/70 bg-background/90 p-4"
                             >
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
@@ -9860,7 +9860,7 @@
                                         />
                                         {#if armadaTemplateLookupOpen}
                                             <div
-                                                class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-border/80 bg-popover p-2 shadow-xl"
+                                                class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
                                             >
                                                 {#if filteredArmadaTemplateOptions.length === 0}
                                                     <p
@@ -9964,7 +9964,7 @@
                             </div>
 
                             <div
-                                class="rounded-2xl border border-border/70 bg-background/90 p-4"
+                                class="rounded-lg border border-border/70 bg-background/90 p-4"
                             >
                                 <p
                                     class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
@@ -10130,7 +10130,7 @@
             {#if activeTab === 'pools'}
                 {#if activeMode === 'form'}
                     <form
-                        class="overflow-hidden rounded-[28px] border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={savePool}
                     >
                         <div
@@ -10205,7 +10205,7 @@
                                 />
                             </label>
                             <div
-                                class="rounded-2xl border border-border/70 bg-muted/20 p-4 md:col-span-2 xl:col-span-4"
+                                class="rounded-lg border border-border/70 bg-muted/20 p-4 md:col-span-2 xl:col-span-4"
                             >
                                 <div
                                     class="flex flex-wrap items-start justify-between gap-3"
@@ -10274,7 +10274,7 @@
                                         />
                                     </label>
                                     <div
-                                        class="rounded-2xl border border-border/70 bg-background/80 p-3"
+                                        class="rounded-lg border border-border/70 bg-background/80 p-3"
                                     >
                                         <p
                                             class="text-xs text-muted-foreground"
@@ -10330,7 +10330,7 @@
                                             poolMonthlyTargetRowHasValue(row)}
                                         <details
                                             id={`pool-month-target-mobile-${monthIndex}`}
-                                            class={`group overflow-hidden rounded-2xl border shadow-sm transition-all duration-200 ${
+                                            class={`group overflow-hidden rounded-lg border shadow-sm transition-all duration-200 ${
                                                 rowHasValue
                                                     ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
                                                     : 'border-border/70 bg-background/90'
@@ -10485,7 +10485,7 @@
                                             poolMonthlyTargetRowHasValue(row)}
                                         <div
                                             id={`pool-month-target-desktop-${monthIndex}`}
-                                            class={`rounded-2xl border p-2.5 shadow-sm transition-all duration-200 ${
+                                            class={`rounded-lg border p-2.5 shadow-sm transition-all duration-200 ${
                                                 rowHasValue
                                                     ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
                                                     : 'border-border/70 bg-background/90'
@@ -10691,7 +10691,7 @@
                                 </Badge>
                             </div>
                             <div
-                                class="grid max-h-[320px] gap-2 overflow-auto rounded-2xl border border-border/70 bg-muted/10 p-3 md:grid-cols-2 xl:grid-cols-3"
+                                class="grid max-h-[320px] gap-2 overflow-auto rounded-lg border border-border/70 bg-muted/10 p-3 md:grid-cols-2 xl:grid-cols-3"
                             >
                                 {#each routes as route (route.id)}
                                     <label
@@ -10782,7 +10782,7 @@
             {#if activeTab === 'users'}
                 {#if activeMode === 'form'}
                     <form
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveUser}
                     >
                         <div
@@ -10845,7 +10845,7 @@
                                 />
                             </label>
                             <label
-                                class="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                class="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/10 p-4"
                             >
                                 <input
                                     type="checkbox"
@@ -10866,7 +10866,7 @@
                                 </span>
                             </label>
                             <div
-                                class="space-y-2 rounded-2xl border border-border/70 bg-muted/10 p-4 md:col-span-2"
+                                class="space-y-2 rounded-lg border border-border/70 bg-muted/10 p-4 md:col-span-2"
                             >
                                 <div
                                     class="flex items-center justify-between gap-2"
@@ -10925,7 +10925,7 @@
                                 </p>
                             </div>
                             <div
-                                class="space-y-2 rounded-2xl border border-border/70 bg-muted/10 p-4 md:col-span-2"
+                                class="space-y-2 rounded-lg border border-border/70 bg-muted/10 p-4 md:col-span-2"
                             >
                                 <div
                                     class="flex items-center justify-between gap-2"
@@ -11006,7 +11006,7 @@
                     </form>
                 {:else}
                     <div
-                        class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                        class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
                             class="flex flex-col gap-4 border-b border-border/70 bg-[linear-gradient(135deg,rgba(168,85,247,0.05),rgba(15,23,42,0.03))] px-5 py-4"
@@ -11080,7 +11080,7 @@
                                 )}
                                 {@const poolPreview = userPoolPreview(row, 2)}
                                 <article
-                                    class="rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-sm"
+                                    class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2.5"
@@ -11547,7 +11547,7 @@
 
             {#if activeTab === 'cancellations'}
                 <div
-                    class="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-sm"
+                    class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                 >
                     <div
                         class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(239,68,68,0.05),rgba(15,23,42,0.03))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
@@ -11579,7 +11579,7 @@
                     <div class="grid gap-3 p-3 md:hidden">
                         {#each cancellations as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
                             <article
-                                class="rounded-2xl border border-border/80 bg-card/95 p-3 shadow-sm"
+                                class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                             >
                                 <div
                                     class="flex items-start justify-between gap-3"
@@ -11757,10 +11757,10 @@
                     />
                 {:else}
                     <div
-                        class="rounded-2xl border border-border/70 bg-background/95 p-5 shadow-sm"
+                        class="rounded-lg border border-border/70 bg-background/95 p-5 shadow-sm"
                     >
                         <div
-                            class="rounded-2xl border border-dashed border-border/80 bg-muted/10 px-4 py-5 text-sm text-muted-foreground"
+                            class="rounded-lg border border-dashed border-border/80 bg-muted/10 px-4 py-5 text-sm text-muted-foreground"
                         >
                             Memuat panel laporan operasional...
                         </div>

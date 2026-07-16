@@ -2,6 +2,8 @@
     import { Link, page } from '@inertiajs/svelte';
     import Plus from 'lucide-svelte/icons/plus';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
+    import GlobalCommandSearch from '@/components/GlobalCommandSearch.svelte';
+    import HeaderThemeControls from '@/components/HeaderThemeControls.svelte';
     import MobileSettingsMenuButton from '@/components/MobileSettingsMenuButton.svelte';
     import ProfileMenu from '@/components/ProfileMenu.svelte';
     import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
@@ -45,7 +47,7 @@
 </script>
 
 <header
-    class="mobile-safe-header grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-sidebar-border/70 bg-background/95 px-4 backdrop-blur transition-[width,height] ease-linear supports-[backdrop-filter]:bg-background/85 md:h-14 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5 md:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:[html[data-density=compact]_&]:h-12 md:[html[data-density=compact]_&]:px-4"
+    class="mobile-safe-header sticky top-0 z-30 grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-sidebar-border/80 bg-background/96 px-4 backdrop-blur transition-[width,height] ease-linear supports-[backdrop-filter]:bg-background/88 md:h-14 md:grid-cols-[minmax(0,1fr)_minmax(24rem,42rem)_minmax(0,1fr)] md:px-5 md:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:[html[data-density=compact]_&]:h-12 md:[html[data-density=compact]_&]:px-4"
 >
     <div class="flex min-w-0 items-center gap-2">
         <SidebarTrigger class="-ml-1 hidden md:inline-flex" />
@@ -70,11 +72,17 @@
         {/if}
     </div>
 
-    {#if !isBookingConsolePage}
-        <div class="hidden min-w-0 items-center justify-center lg:flex">
-            <TenantPoolSwitcher mode="desktop" class="hidden w-64 lg:block" />
+    <div class="hidden min-w-0 items-center justify-center gap-2 md:flex">
+        {#if !isBookingConsolePage}
+            <TenantPoolSwitcher
+                mode="desktop"
+                class="hidden min-w-0 flex-[0_1_16rem] xl:block"
+            />
+        {/if}
+        <div class="min-w-0 flex-1">
+            <GlobalCommandSearch />
         </div>
-    {/if}
+    </div>
 
     <div class="flex min-w-0 items-center justify-end gap-2 md:col-start-3">
         {#if !isBookingConsolePage}
@@ -97,6 +105,7 @@
                 {/snippet}
             </Button>
         {/if}
+        <HeaderThemeControls />
         <ProfileMenu user={auth.user} />
     </div>
 </header>

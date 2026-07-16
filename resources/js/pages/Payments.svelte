@@ -11,7 +11,14 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
-    import { CreditCard, Download, MoreHorizontal, RefreshCw, Search, WalletCards } from 'lucide-svelte';
+    import {
+        CreditCard,
+        Download,
+        MoreHorizontal,
+        RefreshCw,
+        Search,
+        WalletCards,
+    } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
@@ -123,13 +130,21 @@
     let localData = $state<PaymentData | null>(null);
     let loading = $state(false);
     let updatingKey = $state('');
-    let drafts = $state<Record<string, { payment_status: string; down_payment: string }>>({});
+    let drafts = $state<
+        Record<string, { payment_status: string; down_payment: string }>
+    >({});
     let initializedFromProps = $state(false);
 
-    const authPoolScope = $derived((page.props.auth?.pool_scope ?? null) as AuthPoolScope);
-    const poolContextName = $derived(String(authPoolScope?.pool_name ?? 'Semua Pool'));
+    const authPoolScope = $derived(
+        (page.props.auth?.pool_scope ?? null) as AuthPoolScope,
+    );
+    const poolContextName = $derived(
+        String(authPoolScope?.pool_name ?? 'Semua Pool'),
+    );
     const poolRouteCount = $derived(
-        Array.isArray(authPoolScope?.route_ids) ? authPoolScope.route_ids.length : 0,
+        Array.isArray(authPoolScope?.route_ids)
+            ? authPoolScope.route_ids.length
+            : 0,
     );
     const rows = $derived(localData?.rows ?? []);
     const pagination = $derived(
@@ -140,19 +155,25 @@
             last_page: 1,
         },
     );
-    const summary = $derived(localData?.summary ?? {
-        by_status: {
-            unpaid: { count: 0, amount: 0, remaining: 0 },
-            dp: { count: 0, amount: 0, remaining: 0 },
-            paid: { count: 0, amount: 0, remaining: 0 },
+    const summary = $derived(
+        localData?.summary ?? {
+            by_status: {
+                unpaid: { count: 0, amount: 0, remaining: 0 },
+                dp: { count: 0, amount: 0, remaining: 0 },
+                paid: { count: 0, amount: 0, remaining: 0 },
+            },
+            active: { count: 0, amount: 0, remaining: 0 },
         },
-        active: { count: 0, amount: 0, remaining: 0 },
-    });
+    );
     const activeAmount = $derived(Number(summary.active?.amount ?? 0));
     const activeRemaining = $derived(Number(summary.active?.remaining ?? 0));
-    const activePaidEstimate = $derived(Math.max(activeAmount - activeRemaining, 0));
+    const activePaidEstimate = $derived(
+        Math.max(activeAmount - activeRemaining, 0),
+    );
     const activeCollectionRate = $derived(
-        activeAmount > 0 ? Math.round((activePaidEstimate / activeAmount) * 100) : 0,
+        activeAmount > 0
+            ? Math.round((activePaidEstimate / activeAmount) * 100)
+            : 0,
     );
 
     $effect(() => {
@@ -183,7 +204,9 @@
             if (!nextDrafts[row.key]) {
                 nextDrafts[row.key] = {
                     payment_status: displayStatusForDraft(row),
-                    down_payment: formatCurrencyInput(row.down_payment || row.paid_amount || 0),
+                    down_payment: formatCurrencyInput(
+                        row.down_payment || row.paid_amount || 0,
+                    ),
                 };
                 changed = true;
             }
@@ -244,7 +267,9 @@
             [row.key]: {
                 ...(drafts[row.key] ?? {
                     payment_status: displayStatusForDraft(row),
-                    down_payment: formatCurrencyInput(row.down_payment || row.paid_amount || 0),
+                    down_payment: formatCurrencyInput(
+                        row.down_payment || row.paid_amount || 0,
+                    ),
                 }),
                 payment_status: value,
             },
@@ -257,7 +282,9 @@
             [row.key]: {
                 ...(drafts[row.key] ?? {
                     payment_status: displayStatusForDraft(row),
-                    down_payment: formatCurrencyInput(row.down_payment || row.paid_amount || 0),
+                    down_payment: formatCurrencyInput(
+                        row.down_payment || row.paid_amount || 0,
+                    ),
                 }),
                 down_payment: value,
             },
@@ -265,8 +292,11 @@
     };
 
     const csrfToken = () =>
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
-            ?.content ?? '';
+        (
+            document.querySelector(
+                'meta[name="csrf-token"]',
+            ) as HTMLMetaElement | null
+        )?.content ?? '';
 
     const xsrfTokenFromCookie = () => {
         if (typeof document === 'undefined') {
@@ -304,7 +334,11 @@
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok || payload.success === false) {
-            throw new Error(payload.error || payload.message || 'Gagal memproses pembayaran.');
+            throw new Error(
+                payload.error ||
+                    payload.message ||
+                    'Gagal memproses pembayaran.',
+            );
         }
 
         return payload;
@@ -379,21 +413,31 @@
     const updatePayment = async (row: PaymentRow) => {
         const draft = drafts[row.key] ?? {
             payment_status: displayStatusForDraft(row),
-            down_payment: formatCurrencyInput(row.down_payment || row.paid_amount || 0),
+            down_payment: formatCurrencyInput(
+                row.down_payment || row.paid_amount || 0,
+            ),
         };
         updatingKey = row.key;
 
         try {
-            await runWithFeedback(async () => {
-                await apiPost(`/api/admin/payments/${row.source}/${row.id}`, {
-                    payment_status: draft.payment_status,
-                    down_payment: parseCurrencyInput(draft.down_payment),
-                });
-            }, {
-                loadingMessage: 'Memperbarui pembayaran...',
-                successMessage: 'Pembayaran berhasil diperbarui.',
-                errorMessage: 'Gagal memperbarui pembayaran.',
-            });
+            await runWithFeedback(
+                async () => {
+                    await apiPost(
+                        `/api/admin/payments/${row.source}/${row.id}`,
+                        {
+                            payment_status: draft.payment_status,
+                            down_payment: parseCurrencyInput(
+                                draft.down_payment,
+                            ),
+                        },
+                    );
+                },
+                {
+                    loadingMessage: 'Memperbarui pembayaran...',
+                    successMessage: 'Pembayaran berhasil diperbarui.',
+                    errorMessage: 'Gagal memperbarui pembayaran.',
+                },
+            );
             markDataStale(['bookings', 'flows', 'dashboard']);
             reloadData(pagination.page);
         } finally {
@@ -422,7 +466,6 @@
             document.removeEventListener('visibilitychange', checkWhenVisible);
         };
     });
-
 </script>
 
 <AppHead title="Pembayaran" />
@@ -443,19 +486,39 @@
                 </Button>
             {/snippet}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-72 rounded-2xl p-3">
+        <DropdownMenuContent
+            align="end"
+            sideOffset={8}
+            class="z-[120] w-72 rounded-lg p-3"
+        >
             <div class="space-y-3">
                 <div class="rounded-xl bg-muted/40 p-2">
-                    <p class="truncate text-xs font-semibold text-foreground">{row.customer_name || row.code}</p>
-                    <p class="mt-0.5 truncate text-[11px] text-muted-foreground">{row.code} | {formatCurrencyDisplay(row.remaining_amount)} sisa</p>
+                    <p class="truncate text-xs font-semibold text-foreground">
+                        {row.customer_name || row.code}
+                    </p>
+                    <p
+                        class="mt-0.5 truncate text-[11px] text-muted-foreground"
+                    >
+                        {row.code} | {formatCurrencyDisplay(
+                            row.remaining_amount,
+                        )} sisa
+                    </p>
                 </div>
                 <label class="block space-y-1.5">
-                    <span class="text-xs font-semibold text-muted-foreground">Status pembayaran</span>
+                    <span class="text-xs font-semibold text-muted-foreground"
+                        >Status pembayaran</span
+                    >
                     <select
                         class="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                        value={drafts[row.key]?.payment_status ?? displayStatusForDraft(row)}
+                        value={drafts[row.key]?.payment_status ??
+                            displayStatusForDraft(row)}
                         disabled={!row.can_update}
-                        onchange={(event) => updateDraftStatus(row, (event.currentTarget as HTMLSelectElement).value)}
+                        onchange={(event) =>
+                            updateDraftStatus(
+                                row,
+                                (event.currentTarget as HTMLSelectElement)
+                                    .value,
+                            )}
                     >
                         {#each paymentOptions as option (option)}
                             <option value={option}>{option}</option>
@@ -464,11 +527,20 @@
                 </label>
                 {#if row.source === 'charter' && (drafts[row.key]?.payment_status ?? displayStatusForDraft(row)) === 'DP'}
                     <label class="block space-y-1.5">
-                        <span class="text-xs font-semibold text-muted-foreground">Nominal DP</span>
+                        <span
+                            class="text-xs font-semibold text-muted-foreground"
+                            >Nominal DP</span
+                        >
                         <Input
                             class="h-10 rounded-xl text-right"
-                            value={drafts[row.key]?.down_payment ?? formatCurrencyInput(row.down_payment)}
-                            oninput={(event) => updateDraftDownPayment(row, (event.currentTarget as HTMLInputElement).value)}
+                            value={drafts[row.key]?.down_payment ??
+                                formatCurrencyInput(row.down_payment)}
+                            oninput={(event) =>
+                                updateDraftDownPayment(
+                                    row,
+                                    (event.currentTarget as HTMLInputElement)
+                                        .value,
+                                )}
                         />
                     </label>
                 {/if}
@@ -491,22 +563,34 @@
     data-content-density="compact"
     class="min-h-full space-y-4 overflow-x-hidden p-3 pb-28 md:p-4"
 >
-    <Card class="overflow-hidden border-sidebar-border/70 bg-linear-to-br from-background via-background to-cyan-50/30 dark:border-sidebar-border dark:to-cyan-950/15">
+    <Card
+        class="overflow-hidden border-sidebar-border/70 bg-linear-to-br from-background via-background to-cyan-50/30 dark:border-sidebar-border dark:to-cyan-950/15"
+    >
         <CardHeader class="space-y-4 border-b bg-background/80 backdrop-blur">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="space-y-2">
-                    <div class="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800 dark:border-cyan-400/20 dark:bg-cyan-950/30 dark:text-cyan-100">
+                    <div
+                        class="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800 dark:border-cyan-400/20 dark:bg-cyan-950/30 dark:text-cyan-100"
+                    >
                         <WalletCards class="h-3.5 w-3.5" />
                         Pembayaran
                     </div>
                     <div>
-                        <CardTitle class="text-xl md:text-2xl">Pembayaran</CardTitle>
+                        <CardTitle class="text-xl md:text-2xl"
+                            >Pembayaran</CardTitle
+                        >
                     </div>
                 </div>
-                <div class="rounded-2xl border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100">
+                <div
+                    class="rounded-lg border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
+                >
                     <p class="font-semibold">Pool aktif: {poolContextName}</p>
-                    <p class="mt-0.5 text-[11px] text-cyan-800/80 dark:text-cyan-200/75">
-                        {authPoolScope?.all ? 'Semua pool' : `${poolRouteCount} rute mapped ke user ini`}
+                    <p
+                        class="mt-0.5 text-[11px] text-cyan-800/80 dark:text-cyan-200/75"
+                    >
+                        {authPoolScope?.all
+                            ? 'Semua pool'
+                            : `${poolRouteCount} rute mapped ke user ini`}
                     </p>
                 </div>
             </div>
@@ -515,16 +599,22 @@
                 {#each statusTabs as tab (tab.key)}
                     <button
                         type="button"
-                        class={`rounded-2xl border p-3 text-left transition ${activeStatus === tab.key ? 'border-cyan-400 bg-cyan-50 shadow-sm dark:border-cyan-500/40 dark:bg-cyan-950/25' : 'border-border bg-card hover:border-cyan-200 hover:bg-cyan-50/40 dark:hover:bg-cyan-950/10'}`}
+                        class={`rounded-lg border p-3 text-left transition ${activeStatus === tab.key ? 'border-cyan-400 bg-cyan-50 shadow-sm dark:border-cyan-500/40 dark:bg-cyan-950/25' : 'border-border bg-card hover:border-cyan-200 hover:bg-cyan-50/40 dark:hover:bg-cyan-950/10'}`}
                         onclick={() => setStatus(tab.key)}
                     >
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-sm font-semibold">{tab.label}</span>
-                            <span class="rounded-full bg-background px-2 py-0.5 text-xs font-bold text-foreground">
+                            <span class="text-sm font-semibold"
+                                >{tab.label}</span
+                            >
+                            <span
+                                class="rounded-full bg-background px-2 py-0.5 text-xs font-bold text-foreground"
+                            >
                                 {statusCount(tab.key)}
                             </span>
                         </div>
-                        <p class="mt-1 text-xs text-muted-foreground">{tab.hint}</p>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            {tab.hint}
+                        </p>
                         <p class="mt-2 text-sm font-semibold text-foreground">
                             {formatCurrencyDisplay(statusAmount(tab.key))}
                         </p>
@@ -535,30 +625,44 @@
             <div class="grid gap-2 md:grid-cols-4">
                 <div class="rounded-xl border border-border/70 bg-card p-3">
                     <p class="text-xs text-muted-foreground">Data aktif</p>
-                    <p class="mt-1 text-lg font-semibold text-foreground">{summary.active.count}</p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">
+                        {summary.active.count}
+                    </p>
                 </div>
                 <div class="rounded-xl border border-border/70 bg-card p-3">
                     <p class="text-xs text-muted-foreground">Nilai tagihan</p>
-                    <p class="mt-1 text-lg font-semibold text-foreground">{formatCurrencyDisplay(activeAmount)}</p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">
+                        {formatCurrencyDisplay(activeAmount)}
+                    </p>
                 </div>
                 <div class="rounded-xl border border-border/70 bg-card p-3">
                     <p class="text-xs text-muted-foreground">Sisa ditagih</p>
-                    <p class="mt-1 text-lg font-semibold text-foreground">{formatCurrencyDisplay(activeRemaining)}</p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">
+                        {formatCurrencyDisplay(activeRemaining)}
+                    </p>
                 </div>
                 <div class="rounded-xl border border-border/70 bg-card p-3">
-                    <p class="text-xs text-muted-foreground">Estimasi tertagih</p>
-                    <p class="mt-1 text-lg font-semibold text-foreground">{activeCollectionRate}%</p>
+                    <p class="text-xs text-muted-foreground">
+                        Estimasi tertagih
+                    </p>
+                    <p class="mt-1 text-lg font-semibold text-foreground">
+                        {activeCollectionRate}%
+                    </p>
                 </div>
             </div>
         </CardHeader>
 
         <CardContent class="space-y-4 p-4">
-            <div class="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/80 p-3 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div
+                class="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/80 p-3 shadow-sm md:flex-row md:items-center md:justify-between"
+            >
                 <div class="flex flex-wrap gap-2">
                     {#each sourceTabs as tab (tab.key)}
                         <Button
                             type="button"
-                            variant={activeSource === tab.key ? 'default' : 'outline'}
+                            variant={activeSource === tab.key
+                                ? 'default'
+                                : 'outline'}
                             class="h-8 rounded-full px-3 text-xs"
                             onclick={() => setSource(tab.key)}
                         >
@@ -568,12 +672,15 @@
                 </div>
                 <div class="flex flex-col gap-2 md:flex-row md:items-center">
                     <div class="relative min-w-0 md:w-80">
-                        <Search class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                        <Search
+                            class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
+                        />
                         <Input
                             class="h-9 rounded-full pl-9"
                             placeholder="Cari nama, kode, no HP, rute..."
                             bind:value={searchQuery}
-                            onkeydown={(event) => event.key === 'Enter' && reloadData(1)}
+                            onkeydown={(event) =>
+                                event.key === 'Enter' && reloadData(1)}
                         />
                     </div>
                     <select
@@ -585,13 +692,29 @@
                         <option value={20}>20/baris</option>
                         <option value={50}>50/baris</option>
                     </select>
-                    <Button type="button" variant="outline" class="h-9 rounded-full" onclick={() => reloadData(1)}>
-                        <RefreshCw class={`mr-1.5 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="h-9 rounded-full"
+                        onclick={() => reloadData(1)}
+                    >
+                        <RefreshCw
+                            class={`mr-1.5 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+                        />
                         Muat
                     </Button>
-                    <Button asChild variant="outline" class="h-9 rounded-full border-cyan-200 bg-cyan-50/70 text-cyan-800 hover:bg-cyan-100 dark:border-cyan-400/20 dark:bg-cyan-950/20 dark:text-cyan-100">
+                    <Button
+                        asChild
+                        variant="outline"
+                        class="h-9 rounded-full border-cyan-200 bg-cyan-50/70 text-cyan-800 hover:bg-cyan-100 dark:border-cyan-400/20 dark:bg-cyan-950/20 dark:text-cyan-100"
+                    >
                         {#snippet children(props)}
-                            <a {...props} href={exportUrl()} target="_blank" rel="noreferrer">
+                            <a
+                                {...props}
+                                href={exportUrl()}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
                                 <Download class="mr-1.5 h-4 w-4" />
                                 Export CSV
                             </a>
@@ -601,22 +724,43 @@
             </div>
 
             {#if !localData}
-                <div class="space-y-2 rounded-2xl border border-border/70 bg-card p-4">
+                <div
+                    class="space-y-2 rounded-lg border border-border/70 bg-card p-4"
+                >
                     <div class="h-8 w-48 animate-pulse rounded bg-muted"></div>
-                    <div class="h-12 w-full animate-pulse rounded bg-muted"></div>
-                    <div class="h-12 w-full animate-pulse rounded bg-muted"></div>
-                    <div class="h-12 w-full animate-pulse rounded bg-muted"></div>
+                    <div
+                        class="h-12 w-full animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="h-12 w-full animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="h-12 w-full animate-pulse rounded bg-muted"
+                    ></div>
                 </div>
             {:else if rows.length === 0}
-                <div class="rounded-2xl border border-dashed border-border bg-muted/20 p-8 text-center">
-                    <CreditCard class="mx-auto h-10 w-10 text-muted-foreground" />
-                    <p class="mt-3 font-semibold text-foreground">Data pembayaran belum ada.</p>
-                    <p class="mt-1 text-sm text-muted-foreground">Coba pindah tab status, ubah filter sumber data, atau kosongkan pencarian.</p>
+                <div
+                    class="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center"
+                >
+                    <CreditCard
+                        class="mx-auto h-10 w-10 text-muted-foreground"
+                    />
+                    <p class="mt-3 font-semibold text-foreground">
+                        Data pembayaran belum ada.
+                    </p>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Coba pindah tab status, ubah filter sumber data, atau
+                        kosongkan pencarian.
+                    </p>
                 </div>
             {:else}
-                <div class="table-container hidden rounded-2xl border border-border/70 bg-card shadow-sm md:block">
+                <div
+                    class="table-container hidden rounded-lg border border-border/70 bg-card shadow-sm md:block"
+                >
                     <table class="w-full text-sm">
-                        <thead class="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <thead
+                            class="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground"
+                        >
                             <tr>
                                 <th class="px-4 py-3">Transaksi</th>
                                 <th class="px-4 py-3">Customer</th>
@@ -631,27 +775,66 @@
                                 <tr class="align-top">
                                     <td class="px-4 py-3">
                                         <div class="space-y-1">
-                                            <Badge class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}>
+                                            <Badge
+                                                class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}
+                                            >
                                                 {row.source_label}
                                             </Badge>
-                                            <p class="font-semibold text-foreground">{row.code}</p>
-                                            <p class="text-xs text-muted-foreground">{row.date || '-'} {row.time || ''}</p>
+                                            <p
+                                                class="font-semibold text-foreground"
+                                            >
+                                                {row.code}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                {row.date || '-'}
+                                                {row.time || ''}
+                                            </p>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <p class="font-semibold text-foreground">{row.customer_name || '-'}</p>
-                                        <p class="text-xs text-muted-foreground">{row.secondary_name || row.contact || '-'}</p>
+                                        <p
+                                            class="font-semibold text-foreground"
+                                        >
+                                            {row.customer_name || '-'}
+                                        </p>
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            {row.secondary_name ||
+                                                row.contact ||
+                                                '-'}
+                                        </p>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <p class="font-medium text-foreground">{row.pool_name || '-'}</p>
-                                        <p class="text-xs text-muted-foreground">{row.route}</p>
+                                        <p class="font-medium text-foreground">
+                                            {row.pool_name || '-'}
+                                        </p>
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            {row.route}
+                                        </p>
                                     </td>
                                     <td class="px-4 py-3 text-right">
-                                        <p class="font-semibold text-foreground">{formatCurrencyDisplay(row.amount)}</p>
-                                        <p class="text-xs text-muted-foreground">Sisa {formatCurrencyDisplay(row.remaining_amount)}</p>
+                                        <p
+                                            class="font-semibold text-foreground"
+                                        >
+                                            {formatCurrencyDisplay(row.amount)}
+                                        </p>
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            Sisa {formatCurrencyDisplay(
+                                                row.remaining_amount,
+                                            )}
+                                        </p>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <Badge class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}>
+                                        <Badge
+                                            class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}
+                                        >
                                             {row.payment_status}
                                         </Badge>
                                     </td>
@@ -666,34 +849,54 @@
 
                 <div class="space-y-3 md:hidden">
                     {#each rows as row (row.key)}
-                        <div class="rounded-2xl border border-border/70 bg-card p-3 shadow-sm">
+                        <div
+                            class="rounded-lg border border-border/70 bg-card p-3 shadow-sm"
+                        >
                             <div class="flex items-start justify-between gap-2">
                                 <div>
-                                    <Badge class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}>
+                                    <Badge
+                                        class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}
+                                    >
                                         {row.source_label}
                                     </Badge>
-                                    <p class="mt-2 font-semibold text-foreground">{row.customer_name || row.code}</p>
-                                    <p class="text-xs text-muted-foreground">{row.code} | {row.date || '-'}</p>
+                                    <p
+                                        class="mt-2 font-semibold text-foreground"
+                                    >
+                                        {row.customer_name || row.code}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        {row.code} | {row.date || '-'}
+                                    </p>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <Badge class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}>
+                                    <Badge
+                                        class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}
+                                    >
                                         {row.payment_status}
                                     </Badge>
                                     {@render PaymentActionMenu(row)}
                                 </div>
                             </div>
-                            <div class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-muted/30 p-2 text-xs">
+                            <div
+                                class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-muted/30 p-2 text-xs"
+                            >
                                 <div>
                                     <p class="text-muted-foreground">Pool</p>
-                                    <p class="font-semibold text-foreground">{row.pool_name || '-'}</p>
+                                    <p class="font-semibold text-foreground">
+                                        {row.pool_name || '-'}
+                                    </p>
                                 </div>
                                 <div>
                                     <p class="text-muted-foreground">Tagihan</p>
-                                    <p class="font-semibold text-foreground">{formatCurrencyDisplay(row.amount)}</p>
+                                    <p class="font-semibold text-foreground">
+                                        {formatCurrencyDisplay(row.amount)}
+                                    </p>
                                 </div>
                                 <div class="col-span-2">
                                     <p class="text-muted-foreground">Rute</p>
-                                    <p class="font-semibold text-foreground">{row.route}</p>
+                                    <p class="font-semibold text-foreground">
+                                        {row.route}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -701,9 +904,12 @@
                 </div>
             {/if}
 
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+            <div
+                class="flex flex-wrap items-center justify-between gap-3 border-t pt-3"
+            >
                 <p class="text-sm text-muted-foreground">
-                    Total {pagination.total} data, halaman {pagination.page} dari {pagination.last_page}
+                    Total {pagination.total} data, halaman {pagination.page} dari
+                    {pagination.last_page}
                 </p>
                 <div class="flex items-center gap-2">
                     <Button
@@ -719,7 +925,8 @@
                         type="button"
                         variant="outline"
                         class="h-9 rounded-full px-3"
-                        disabled={pagination.page >= pagination.last_page || loading}
+                        disabled={pagination.page >= pagination.last_page ||
+                            loading}
                         onclick={() => reloadData(pagination.page + 1)}
                     >
                         Next

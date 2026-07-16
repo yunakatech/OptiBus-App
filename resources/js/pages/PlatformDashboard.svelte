@@ -218,7 +218,7 @@
 
 <div class="space-y-4 p-2 pb-8 md:p-4">
     <header
-        class="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950 md:flex-row md:items-end md:justify-between"
+        class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950 md:flex-row md:items-end md:justify-between"
     >
         <div>
             <p class="text-xs font-semibold uppercase text-muted-foreground">
@@ -251,7 +251,7 @@
     </header>
 
     <section
-        class="overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 text-white shadow-sm"
+        class="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-sm"
     >
         <div class="grid gap-0 lg:grid-cols-[1.2fr_1fr]">
             <div
@@ -283,7 +283,7 @@
                         class="border-b border-white/10 p-4 odd:border-r last:border-b-0 md:p-5"
                     >
                         <div
-                            class="mb-3 flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 text-slate-100"
+                            class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-slate-100"
                         >
                             <Icon class="h-4 w-4" />
                         </div>
@@ -299,7 +299,7 @@
     <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {#each operationalMetrics as metric (metric.label)}
             <div
-                class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
             >
                 <p class="text-xs font-medium text-muted-foreground">
                     {metric.label}
@@ -314,7 +314,7 @@
 
     {#if mrrTrend.length > 0}
         <section
-            class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
         >
             <div class="mb-4 flex items-center justify-between gap-3">
                 <div>
@@ -353,7 +353,7 @@
 
     <div class="grid gap-4 xl:grid-cols-[1.45fr_0.8fr]">
         <section
-            class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
         >
             <div class="mb-4 flex items-center justify-between gap-3">
                 <div>
@@ -437,7 +437,7 @@
                 </div>
             {:else}
                 <div
-                    class="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground"
+                    class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
                 >
                     Belum ada tenant terdaftar.
                 </div>
@@ -446,7 +446,7 @@
 
         <aside class="space-y-4">
             <section
-                class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
             >
                 <div class="mb-3 flex items-center justify-between">
                     <h2 class="text-sm font-semibold text-foreground">
@@ -461,7 +461,7 @@
                     <div class="space-y-2">
                         {#each paymentWatchlist as invoice (invoice.id)}
                             <div
-                                class="rounded-2xl border border-slate-200 p-3 text-sm dark:border-slate-800"
+                                class="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
                             >
                                 <div
                                     class="flex items-start justify-between gap-3"
@@ -509,7 +509,7 @@
             </section>
 
             <section
-                class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
             >
                 <div class="mb-3 flex items-center gap-2">
                     <CalendarClock class="h-4 w-4 text-muted-foreground" />
@@ -521,7 +521,7 @@
                     <div class="space-y-2">
                         {#each expiringSoon as item (item.id)}
                             <div
-                                class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 p-3 text-sm dark:border-slate-800"
+                                class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
                             >
                                 <div>
                                     <p class="font-semibold text-foreground">
@@ -549,7 +549,7 @@
             </section>
 
             <section
-                class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
             >
                 <div class="mb-3 flex items-center gap-2">
                     <Users class="h-4 w-4 text-muted-foreground" />

@@ -34,18 +34,6 @@
             <div
                 class="border-b border-sidebar-border/70 bg-background/95 px-4 py-3 md:hidden"
             >
-                <div class="mb-2 flex items-center justify-between gap-3">
-                    <div class="min-w-0">
-                        <p
-                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                        >
-                            Konteks aktif
-                        </p>
-                        <p class="truncate text-xs text-muted-foreground">
-                            Tenant dan pool untuk data yang sedang dibuka
-                        </p>
-                    </div>
-                </div>
                 <TenantPoolSwitcher mode="mobile" />
             </div>
         {/if}
