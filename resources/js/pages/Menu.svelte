@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
+    import { onMount } from 'svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import Building2 from 'lucide-svelte/icons/building-2';
     import BusFront from 'lucide-svelte/icons/bus-front';
@@ -228,7 +229,29 @@
         },
     ] as const;
 
-    const hiddenMenuHrefs = $derived(mobileHiddenMenuHrefs(billingLocked));
+    let desktopMenu = $state(false);
+
+    onMount(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const syncDesktopMenu = () => {
+            desktopMenu = mediaQuery.matches;
+        };
+
+        syncDesktopMenu();
+        mediaQuery.addEventListener('change', syncDesktopMenu);
+
+        return () => {
+            mediaQuery.removeEventListener('change', syncDesktopMenu);
+        };
+    });
+
+    const hiddenMenuHrefs = $derived(
+        desktopMenu ? new Set<string>() : mobileHiddenMenuHrefs(billingLocked),
+    );
     const visibleMenuSections = $derived(
         (billingLocked ? billingMenuSections : menuSections)
             .map((section) => ({
@@ -261,7 +284,9 @@
             )
             .filter(
                 (section) =>
-                    showTenantScopedSections || section.label === 'Sistem',
+                    showTenantScopedSections ||
+                    section.label === 'Operasional' ||
+                    section.label === 'Sistem',
             )
             .filter((section) => section.items.length > 0),
     );
