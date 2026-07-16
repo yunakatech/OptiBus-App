@@ -31,7 +31,14 @@
         billingLocked ? '/subscription' : toUrl(dashboard()),
     );
     const canPrefetchHome = $derived(shouldPrefetchNavigationHref(homeHref));
-    const visibleSections = $derived(getVisibleNavSections(page.props.auth));
+    const visibleSections = $derived.by(() =>
+        getVisibleNavSections(page.props.auth)
+            .map((section) => ({
+                ...section,
+                items: section.items.filter((item) => !item.hideInDesktopSidebar),
+            }))
+            .filter((section) => section.items.length > 0),
+    );
 </script>
 
 <Sidebar collapsible="icon" variant="inset">

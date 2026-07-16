@@ -115,6 +115,7 @@ const operasionalNavItems: NavItem[] = [
         href: '/booking-console',
         icon: Plus,
         permission: 'booking.view',
+        hideInDesktopSidebar: true,
     },
     {
         title: 'Carter',
