@@ -2474,7 +2474,7 @@
                 api('GET', '/api/master/units'),
                 api('GET', '/api/master/drivers'),
                 api('GET', '/api/master/charter-routes'),
-                api('GET', '/api/admin/pools'),
+                api('GET', '/api/admin/pools/options'),
             ]);
             units = u.units ?? [];
             drivers = d.drivers ?? [];
@@ -2495,7 +2495,7 @@
 
             const [s, p] = await Promise.all([
                 api('GET', '/api/master/luggage-services'),
-                api('GET', '/api/admin/pools'),
+                api('GET', '/api/admin/pools/options'),
             ]);
             services = s.services ?? [];
             routes = p.routes ?? [];

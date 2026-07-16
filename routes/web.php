@@ -278,6 +278,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::post('armadas', [AdminOpsApiController::class, 'armadasSave'])->middleware('permission:armada.manage')->name('armadas.save');
         Route::delete('armadas/{id}', [AdminOpsApiController::class, 'armadasDelete'])->middleware('permission:armada.manage')->name('armadas.delete');
 
+        Route::get('pools/options', [AdminOpsApiController::class, 'poolOptionsIndex'])->middleware('permission:pool.manage,user.manage,report.view,charter.view,luggage.view')->name('pools.options');
         Route::get('pools', [AdminOpsApiController::class, 'poolsIndex'])->middleware('permission:pool.manage,user.manage,report.view,charter.view,luggage.view')->name('pools.index');
         Route::get('pools/export', [AdminOpsApiController::class, 'poolsExport'])->middleware('permission:report.export')->name('pools.export');
         Route::post('pools', [AdminOpsApiController::class, 'poolsSave'])->middleware('permission:pool.manage')->name('pools.save');

@@ -41,6 +41,20 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        return [
+            ...parent::share($request),
+            'name' => config('app.name'),
+            'auth' => fn (): array => $this->authSharedData($request),
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'server_today' => now()->toDateString(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function authSharedData(Request $request): array
+    {
         $user = $request->user();
         $userId = (int) ($user?->id ?? 0);
         $isSuperAdmin = $userId > 0 && AccessControl::userIsSuperAdmin($userId);
@@ -141,18 +155,17 @@ class HandleInertiaRequests extends Middleware
             $resolvedTenantId = 0;
         }
 
-        // Tenant-filtered pools for the current tenant context (cached 30s)
         $availablePools = [];
         if ($userId > 0 && Schema::hasTable('pools') && $resolvedTenantId > 0) {
             $availablePools = Cache::remember(
                 "inertia:pools:user:{$userId}:tenant:{$resolvedTenantId}:v1",
                 now()->addSeconds(30),
                 function () use ($isSuperAdmin, $resolvedTenantId, $userId): array {
-                    $query = \Illuminate\Support\Facades\DB::table('pools')
+                    $query = DB::table('pools')
                         ->where('status', 'active')
                         ->select(['id', 'name', 'code']);
 
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('pools', 'tenant_id')) {
+                    if (Schema::hasColumn('pools', 'tenant_id')) {
                         $query->where('tenant_id', $resolvedTenantId);
                     }
 
@@ -190,44 +203,38 @@ class HandleInertiaRequests extends Middleware
         $tenantContextRequired = $this->tenantContextRequired($request, $userId, $resolvedTenantId);
 
         return [
-            ...parent::share($request),
-            'name' => config('app.name'),
-            'auth' => [
-                'user' => $user ? [
-                    'id' => (int) $user->id,
-                    'name' => (string) $user->name,
-                    'email' => (string) $user->email,
-                    'avatar' => $user->avatar ?? null,
-                    'email_verified_at' => $user->email_verified_at,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at,
-                    'is_super_admin' => AccessControl::userIsSuperAdmin($userId),
-                    'ui_preferences' => is_array($user->ui_preferences ?? null)
-                        ? $user->ui_preferences
-                        : [],
-                ] : null,
-                'permissions' => $userId > 0 ? AccessControl::userPermissions($userId) : [],
-                'tenants' => $availableTenants,
-                'pools' => $availablePools,
-                'active_tenant' => $activeTenant,
-                'pool_scope' => $poolScope ? [
-                    'all' => (bool) ($poolScope['all'] ?? true),
-                    'pool_ids' => array_values(array_map('intval', $poolScope['pool_ids'] ?? [])),
-                    'pool_name' => (string) ($poolScope['pool_name'] ?? 'Semua Pool'),
-                    'route_ids' => array_values(array_map('intval', $poolScope['route_ids'] ?? [])),
-                    'route_names' => array_values(array_map('strval', $poolScope['route_names'] ?? [])),
-                    'labels' => array_values(array_map('strval', $poolScope['labels'] ?? [])),
-                ] : null,
-                'active_pool' => $activePoolId > 0 ? [
-                    'id' => $activePoolId,
-                    'name' => $activePoolName,
-                ] : null,
-                'tenant_context_required' => $tenantContextRequired,
-                'tenant_subscription' => $tenantSubscription,
-                'billing_access' => $billingAccess,
-            ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'server_today' => now()->toDateString(),
+            'user' => $user ? [
+                'id' => (int) $user->id,
+                'name' => (string) $user->name,
+                'email' => (string) $user->email,
+                'avatar' => $user->avatar ?? null,
+                'email_verified_at' => $user->email_verified_at,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+                'is_super_admin' => $isSuperAdmin,
+                'ui_preferences' => is_array($user->ui_preferences ?? null)
+                    ? $user->ui_preferences
+                    : [],
+            ] : null,
+            'permissions' => $userId > 0 ? AccessControl::userPermissions($userId) : [],
+            'tenants' => $availableTenants,
+            'pools' => $availablePools,
+            'active_tenant' => $activeTenant,
+            'pool_scope' => $poolScope ? [
+                'all' => (bool) ($poolScope['all'] ?? true),
+                'pool_ids' => array_values(array_map('intval', $poolScope['pool_ids'] ?? [])),
+                'pool_name' => (string) ($poolScope['pool_name'] ?? 'Semua Pool'),
+                'route_ids' => array_values(array_map('intval', $poolScope['route_ids'] ?? [])),
+                'route_names' => array_values(array_map('strval', $poolScope['route_names'] ?? [])),
+                'labels' => array_values(array_map('strval', $poolScope['labels'] ?? [])),
+            ] : null,
+            'active_pool' => $activePoolId > 0 ? [
+                'id' => $activePoolId,
+                'name' => $activePoolName,
+            ] : null,
+            'tenant_context_required' => $tenantContextRequired,
+            'tenant_subscription' => $tenantSubscription,
+            'billing_access' => $billingAccess,
         ];
     }
 

@@ -4002,14 +4002,11 @@
                     : `/api/admin/users?q=${encodeURIComponent(query)}`;
             const [userResponse, poolResponse] = await Promise.all([
                 api('GET', url),
-                api('GET', '/api/admin/pools'),
+                api('GET', '/api/admin/pools/options'),
             ]);
             users = userResponse.users ?? [];
             roles = userResponse.roles ?? [];
             pools = poolResponse.pools ?? [];
-            poolRegions = Array.isArray(poolResponse.regions)
-                ? poolResponse.regions
-                : poolRegions;
             setPoolManageAccess(Boolean(poolResponse.can_manage ?? true));
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat users.';
@@ -4118,6 +4115,13 @@
         setPoolManageAccess(Boolean(r.can_manage ?? true));
     };
 
+    const loadPoolOptions = async () => {
+        const r = await api('GET', '/api/admin/pools/options');
+        pools = r.pools ?? [];
+        routes = r.routes ?? routes;
+        setPoolManageAccess(Boolean(r.can_manage ?? true));
+    };
+
     const loadLogs = async () => {
         const r = await api('GET', '/api/admin/activity-logs?limit=50');
         activityLogs = r.logs ?? [];
@@ -4181,7 +4185,7 @@
             }
 
             if (activeTab === 'reports') {
-                await loadPools();
+                await loadPoolOptions();
                 await loadReport();
             }
         } catch (e) {
