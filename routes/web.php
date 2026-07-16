@@ -91,6 +91,15 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::redirect('admin/armadas', 'admin-ops/armada');
     Route::redirect('admin/pools', 'admin-ops/pool');
     Route::redirect('admin/admin-ops/pool', 'admin-ops/pool');
+    Route::get('admin/admin-ops/{path}', static function (string $path) {
+        $normalized = ltrim($path, '/');
+
+        while (str_starts_with($normalized, 'admin-ops/')) {
+            $normalized = substr($normalized, strlen('admin-ops/'));
+        }
+
+        return redirect()->to('/admin-ops/'.$normalized);
+    })->where('path', '.*');
     Route::redirect('admin/users', 'admin-ops/users');
     Route::redirect('admin/reports', 'admin-ops/reports');
     Route::redirect('admin/flows', 'admin-ops/flows');
