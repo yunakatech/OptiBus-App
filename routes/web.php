@@ -117,6 +117,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::redirect('admin/customer-bagasi', 'admin-ops/customer-bagasi');
     Route::redirect('admin/customer-charter', 'admin-ops/customer-charter');
     Route::redirect('admin/rute-carter', 'admin-ops/rute-carter');
+    Route::redirect('admin/cancellations', 'admin-ops/cancellations');
     Route::get('admin-ops/customers', AdminOpsController::class)->middleware('permission:customer.view')->defaults('tab', 'customers')->defaults('locked', true)->name('admin-ops.customers');
     Route::get('admin-ops/kategori-armada', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'units')->defaults('locked', true)->name('admin-ops.units');
     Route::get('admin-ops/kategori-armada/layout/{id}', AdminOpsController::class)->middleware('permission:master.manage')->defaults('tab', 'units')->defaults('mode', 'layout')->defaults('locked', true)->name('admin-ops.units.layout');

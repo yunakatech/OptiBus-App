@@ -42,6 +42,7 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
             'admin-ops.armadas',
             'admin-ops.pools',
             'admin-ops.users',
+            'admin-ops.cancellations',
         ];
 
         foreach ($routes as $routeName) {
@@ -71,6 +72,7 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
             '/admin/customer-bagasi' => route('admin-ops.master.customer-bagasi'),
             '/admin/customer-charter' => route('admin-ops.master.customer-charter'),
             '/admin/rute-carter' => route('admin-ops.master.rute-carter'),
+            '/admin/cancellations' => route('admin-ops.cancellations'),
             '/admin/master' => route('admin-ops.master'),
             '/admin/admin-ops/pool' => route('admin-ops.pools'),
             '/admin/admin-ops/admin-ops/pool' => route('admin-ops.pools'),

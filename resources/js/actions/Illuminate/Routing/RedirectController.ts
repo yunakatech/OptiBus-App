@@ -185,7 +185,7 @@ RedirectController2152ea92a7834749e22b9a3c349cc951.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController2152ea92a7834749e22b9a3c349cc951.form = RedirectController2152ea92a7834749e22b9a3c349cc951Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -373,7 +373,7 @@ RedirectController4d64ae0cc5019c55b1dc223e2d8ced16.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController4d64ae0cc5019c55b1dc223e2d8ced16.form = RedirectController4d64ae0cc5019c55b1dc223e2d8ced16Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -561,7 +561,7 @@ RedirectController03ed0b59e72c52047adde5a9ffc3d0b8.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController03ed0b59e72c52047adde5a9ffc3d0b8.form = RedirectController03ed0b59e72c52047adde5a9ffc3d0b8Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -749,7 +749,7 @@ RedirectController9ae2fb1fbabd60f580d8111d7b296cb5.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController9ae2fb1fbabd60f580d8111d7b296cb5.form = RedirectController9ae2fb1fbabd60f580d8111d7b296cb5Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -937,7 +937,7 @@ RedirectController66596e169063f2e62f0fb04d205fd131.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController66596e169063f2e62f0fb04d205fd131.form = RedirectController66596e169063f2e62f0fb04d205fd131Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -1125,7 +1125,7 @@ RedirectController260709a2994b5885663c3ed896eb49e4.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController260709a2994b5885663c3ed896eb49e4.form = RedirectController260709a2994b5885663c3ed896eb49e4Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -1313,7 +1313,7 @@ RedirectControllerbfe430ac67b7d9113c504c70a6b3abe8.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectControllerbfe430ac67b7d9113c504c70a6b3abe8.form = RedirectControllerbfe430ac67b7d9113c504c70a6b3abe8Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -1501,7 +1501,7 @@ RedirectController781825890405df57051e229f96052fea.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController781825890405df57051e229f96052fea.form = RedirectController781825890405df57051e229f96052feaForm
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -1689,7 +1689,7 @@ RedirectControllerf6c7005edefd2be0ddedddd1aa0300ca.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectControllerf6c7005edefd2be0ddedddd1aa0300ca.form = RedirectControllerf6c7005edefd2be0ddedddd1aa0300caForm
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -1877,7 +1877,7 @@ RedirectController659d9d735bff082ab31103cede9d51ef.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController659d9d735bff082ab31103cede9d51ef.form = RedirectController659d9d735bff082ab31103cede9d51efForm
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -2065,7 +2065,7 @@ RedirectController90949abaf965b6dea7349dc727227047.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController90949abaf965b6dea7349dc727227047.form = RedirectController90949abaf965b6dea7349dc727227047Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -2253,7 +2253,7 @@ RedirectController23f7cc8aa9e139176d67d1f0c86c23d1.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController23f7cc8aa9e139176d67d1f0c86c23d1.form = RedirectController23f7cc8aa9e139176d67d1f0c86c23d1Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -2441,7 +2441,7 @@ RedirectController44802a817abd6dbda07b4f9df9a3b028.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController44802a817abd6dbda07b4f9df9a3b028.form = RedirectController44802a817abd6dbda07b4f9df9a3b028Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -2629,7 +2629,7 @@ RedirectControllerde7b92f5d57ab3be25571f27f05793f8.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectControllerde7b92f5d57ab3be25571f27f05793f8.form = RedirectControllerde7b92f5d57ab3be25571f27f05793f8Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -2817,7 +2817,7 @@ RedirectControllerf32b5bd5940752871d5bf97794f0c32e.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectControllerf32b5bd5940752871d5bf97794f0c32e.form = RedirectControllerf32b5bd5940752871d5bf97794f0c32eForm
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -3005,7 +3005,7 @@ RedirectController36ea9bf0b4b78857b3405fc079a379f7.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController36ea9bf0b4b78857b3405fc079a379f7.form = RedirectController36ea9bf0b4b78857b3405fc079a379f7Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -3193,7 +3193,7 @@ RedirectController8198e40876d6199954ddd262016602f9.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController8198e40876d6199954ddd262016602f9.form = RedirectController8198e40876d6199954ddd262016602f9Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -3381,7 +3381,7 @@ RedirectController03980c8efc571b632a33a0d77e855b85.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController03980c8efc571b632a33a0d77e855b85.form = RedirectController03980c8efc571b632a33a0d77e855b85Form
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -3569,7 +3569,7 @@ RedirectController440dff64d7e51fd66afdae46993f6f7a.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController440dff64d7e51fd66afdae46993f6f7a.form = RedirectController440dff64d7e51fd66afdae46993f6f7aForm
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
@@ -3757,8 +3757,196 @@ RedirectController9421e7328ac4e52ca0b754990c419281.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController9421e7328ac4e52ca0b754990c419281.form = RedirectController9421e7328ac4e52ca0b754990c419281Form
+    /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+const RedirectController9bc4bd1a514cf02675b1b7747de9765c = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'get',
+})
+
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.definition = {
+    methods: ["get","head","post","put","patch","delete","options"],
+    url: '/admin/cancellations',
+} satisfies RouteDefinition<["get","head","post","put","patch","delete","options"]>
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.url = (options?: RouteQueryOptions) => {
+    return RedirectController9bc4bd1a514cf02675b1b7747de9765c.definition.url + queryParams(options)
+}
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'get',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'head',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'post',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'put',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'patch',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'delete',
+})
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+RedirectController9bc4bd1a514cf02675b1b7747de9765c.options = (options?: RouteQueryOptions): RouteDefinition<'options'> => ({
+    url: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+    method: 'options',
+})
+
+    /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+    const RedirectController9bc4bd1a514cf02675b1b7747de9765cForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+        RedirectController9bc4bd1a514cf02675b1b7747de9765cForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+            method: 'get',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+        RedirectController9bc4bd1a514cf02675b1b7747de9765cForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+        RedirectController9bc4bd1a514cf02675b1b7747de9765cForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url(options),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+        RedirectController9bc4bd1a514cf02675b1b7747de9765cForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+        RedirectController9bc4bd1a514cf02675b1b7747de9765cForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+        RedirectController9bc4bd1a514cf02675b1b7747de9765cForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+ * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+ * @route '/admin/cancellations'
+ */
+        RedirectController9bc4bd1a514cf02675b1b7747de9765cForm.options = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: RedirectController9bc4bd1a514cf02675b1b7747de9765c.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'OPTIONS',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    RedirectController9bc4bd1a514cf02675b1b7747de9765c.form = RedirectController9bc4bd1a514cf02675b1b7747de9765cForm
     /**
 * @see \Illuminate\Routing\RedirectController::__invoke
  * @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
@@ -3945,7 +4133,7 @@ RedirectController4b87d2df7e3aa853f6720faea796e36c.options = (options?: RouteQue
                     }),
             method: 'get',
         })
-
+    
     RedirectController4b87d2df7e3aa853f6720faea796e36c.form = RedirectController4b87d2df7e3aa853f6720faea796e36cForm
 
 /**
@@ -3974,6 +4162,7 @@ const RedirectController = {
     '/admin/customer-bagasi': RedirectController03980c8efc571b632a33a0d77e855b85,
     '/admin/customer-charter': RedirectController440dff64d7e51fd66afdae46993f6f7a,
     '/admin/rute-carter': RedirectController9421e7328ac4e52ca0b754990c419281,
+    '/admin/cancellations': RedirectController9bc4bd1a514cf02675b1b7747de9765c,
     '/settings': RedirectController4b87d2df7e3aa853f6720faea796e36c,
 }
 
