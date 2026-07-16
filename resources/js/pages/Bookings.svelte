@@ -62,7 +62,11 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
-    import { consumeDataStale, markDataStale } from '@/lib/data-invalidation';
+    import {
+        clearDataStale,
+        consumeDataStale,
+        markDataStale,
+    } from '@/lib/data-invalidation';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
     import { readUiPreferences, saveUiPreferences } from '@/lib/ui-preferences';
 
@@ -5594,7 +5598,9 @@
                 }
             }
 
-            if (consumeDataStale(['bookings'])) {
+            if (bookingListReady) {
+                clearDataStale(['bookings']);
+            } else if (consumeDataStale(['bookings'])) {
                 reloadBookingListData();
             }
         } else {

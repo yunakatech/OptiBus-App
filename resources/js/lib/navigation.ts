@@ -49,6 +49,54 @@ type AuthLike =
     | null
     | undefined;
 
+const nonPrefetchExactPaths = new Set([
+    '/dashboard',
+    '/bookings',
+    '/booking-console',
+    '/charters',
+    '/luggages',
+    '/payments',
+    '/report',
+]);
+
+const nonPrefetchPathPrefixes = ['/admin-ops', '/platform/dashboard'];
+
+const normalizeNavigationPath = (href: string | null | undefined): string => {
+    if (!href) {
+        return '';
+    }
+
+    const value = toUrl(href).trim();
+    if (value === '') {
+        return '';
+    }
+
+    const path = value
+        .replace(/^https?:\/\/[^/]+/i, '')
+        .split('#')[0]
+        .split('?')[0]
+        .replace(/\/+$/, '');
+
+    return path === '' ? '/' : path;
+};
+
+export function shouldPrefetchNavigationHref(
+    href: string | null | undefined,
+): boolean {
+    const path = normalizeNavigationPath(href);
+    if (path === '' || path === '/') {
+        return false;
+    }
+
+    if (nonPrefetchExactPaths.has(path)) {
+        return false;
+    }
+
+    return !nonPrefetchPathPrefixes.some(
+        (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+    );
+}
+
 const operasionalNavItems: NavItem[] = [
     {
         title: 'Dashboard',

@@ -42,7 +42,11 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
-    import { consumeDataStale, markDataStale } from '@/lib/data-invalidation';
+    import {
+        clearDataStale,
+        consumeDataStale,
+        markDataStale,
+    } from '@/lib/data-invalidation';
 
     type StatusKey = 'unpaid' | 'dp' | 'paid';
     type SourceKey = 'all' | 'booking' | 'charter' | 'luggage';
@@ -191,6 +195,7 @@
 
     $effect(() => {
         if (paymentData) {
+            clearDataStale(['payments']);
             localData = paymentData;
             loading = false;
         }
@@ -369,7 +374,7 @@
     };
 
     const reloadIfPaymentDataStale = () => {
-        if (!initializedFromProps || loading) {
+        if (!initializedFromProps || !localData || loading) {
             return;
         }
 
@@ -455,7 +460,6 @@
             }
         };
 
-        checkSoon();
         window.addEventListener('pageshow', checkSoon);
         window.addEventListener('focus', checkSoon);
         document.addEventListener('visibilitychange', checkWhenVisible);

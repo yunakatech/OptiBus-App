@@ -52,6 +52,21 @@ export const markDataStale = (domains: DataDomain[]) => {
     writeDomains(current);
 };
 
+export const clearDataStale = (domains: DataDomain[]) => {
+    const current = readDomains();
+    let changed = false;
+
+    for (const domain of domains) {
+        if (current.delete(domain)) {
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        writeDomains(current);
+    }
+};
+
 export const consumeDataStale = (domains: DataDomain[]): boolean => {
     const current = readDomains();
     const matched = domains.some((domain) => current.has(domain));

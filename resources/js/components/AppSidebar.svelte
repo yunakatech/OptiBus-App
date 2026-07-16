@@ -11,7 +11,10 @@
         SidebarMenuButton,
         SidebarMenuItem,
     } from '@/components/ui/sidebar';
-    import { getVisibleNavSections } from '@/lib/navigation';
+    import {
+        getVisibleNavSections,
+        shouldPrefetchNavigationHref,
+    } from '@/lib/navigation';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
 
@@ -27,6 +30,7 @@
     const homeHref = $derived(
         billingLocked ? '/subscription' : toUrl(dashboard()),
     );
+    const canPrefetchHome = $derived(shouldPrefetchNavigationHref(homeHref));
     const visibleSections = $derived(getVisibleNavSections(page.props.auth));
 </script>
 
@@ -44,8 +48,8 @@
                             {...props}
                             href={homeHref}
                             class={`${props.class} justify-center`}
-                            prefetch
-                            cacheFor={30000}
+                            prefetch={canPrefetchHome || undefined}
+                            cacheFor={canPrefetchHome ? 30000 : undefined}
                         >
                             <AppLogo />
                         </Link>

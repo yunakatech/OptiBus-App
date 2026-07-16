@@ -24,11 +24,14 @@
     import { Button } from '@/components/ui/button';
     import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
+    import { shouldPrefetchNavigationHref } from '@/lib/navigation';
     import { mobileHiddenMenuHrefs } from '@/lib/mobileNavigation';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
 
     const url = currentUrlState();
+    const dashboardHref = toUrl(dashboard());
+    const canPrefetchDashboard = shouldPrefetchNavigationHref(dashboardHref);
     const permissions = $derived(page.props.auth?.permissions ?? []);
     const isSuperAdmin = $derived(
         Boolean(page.props.auth?.user?.is_super_admin),
@@ -320,9 +323,9 @@
                     {#snippet children(props)}
                         <Link
                             {...props}
-                            href={toUrl(dashboard())}
-                            prefetch
-                            cacheFor={30000}
+                            href={dashboardHref}
+                            prefetch={canPrefetchDashboard || undefined}
+                            cacheFor={canPrefetchDashboard ? 30000 : undefined}
                         >
                             <ChevronLeft class="size-4" />
                             <span>Kembali ke Dashboard</span>

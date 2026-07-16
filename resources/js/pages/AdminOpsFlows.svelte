@@ -35,7 +35,11 @@
         formatCurrencyInput,
         parseCurrencyInput,
     } from '@/lib/currency';
-    import { consumeDataStale, markDataStale } from '@/lib/data-invalidation';
+    import {
+        clearDataStale,
+        consumeDataStale,
+        markDataStale,
+    } from '@/lib/data-invalidation';
     import { hasPermission } from '@/lib/access';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
@@ -3414,8 +3418,12 @@
             }
         }
 
+        if (activeMode === 'data' && flowData) {
+            clearDataStale(['flows']);
+        }
+
         const staleFlowData =
-            activeMode === 'data' && consumeDataStale(['flows']);
+            activeMode === 'data' && !flowData && consumeDataStale(['flows']);
 
         busy =
             staleFlowData ||
