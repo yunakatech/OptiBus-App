@@ -65,11 +65,14 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
             '/admin/luggage-services' => route('admin-ops.services'),
             '/admin/customers' => route('admin-ops.customers'),
             '/admin/admin-ops/customers' => route('admin-ops.customers'),
+            '/admin/admin-ops/admin-ops/customers' => route('admin-ops.customers'),
             '/admin/customer-bagasi' => route('admin-ops.master.customer-bagasi'),
             '/admin/customer-charter' => route('admin-ops.master.customer-charter'),
             '/admin/rute-carter' => route('admin-ops.master.rute-carter'),
             '/admin/master' => route('admin-ops.master'),
             '/admin/admin-ops/pool' => route('admin-ops.pools'),
+            '/admin/admin-ops/admin-ops/pool' => route('admin-ops.pools'),
+            '/admin/admin-ops/admin-ops/reports' => route('admin-ops.reports'),
         ];
 
         foreach ($redirects as $legacyPath => $target) {
