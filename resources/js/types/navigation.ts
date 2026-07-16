@@ -17,4 +17,5 @@ export type NavItem = {
     isActive?: boolean;
     permission?: string | string[];
     superAdminOnly?: boolean;
+    hideInDesktopSidebar?: boolean;
 };

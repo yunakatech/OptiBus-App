@@ -22,6 +22,18 @@ class BookingPageTest extends TestCase
         return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
+    public function test_booking_console_page_renders_the_booking_console_component(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $this->get(route('booking-console.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('BookingConsole')
+                ->where('listOnly', false)
+                ->has('migrationChecklist', 4));
+    }
+
     public function test_canceled_departure_is_rendered_with_empty_assignment_meta(): void
     {
         $this->actingAsSuperAdmin();
