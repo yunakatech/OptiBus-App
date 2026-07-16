@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::add
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3366
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3505
  * @route '/api/admin/luggages/{id}/tracking'
  */
 export const add = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ add.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::add
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3366
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3505
  * @route '/api/admin/luggages/{id}/tracking'
  */
 add.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ add.url = (args: { id: string | number } | [id: string | number ] | string | num
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::add
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3366
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3505
  * @route '/api/admin/luggages/{id}/tracking'
  */
 add.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -54,7 +54,7 @@ add.post = (args: { id: string | number } | [id: string | number ] | string | nu
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::add
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3366
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3505
  * @route '/api/admin/luggages/{id}/tracking'
  */
     const addForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -64,7 +64,7 @@ add.post = (args: { id: string | number } | [id: string | number ] | string | nu
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::add
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3366
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3505
  * @route '/api/admin/luggages/{id}/tracking'
  */
         addForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

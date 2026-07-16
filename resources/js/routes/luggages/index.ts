@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 export const form = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ form.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 form.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ form.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
     const formForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
         formForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
         formForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

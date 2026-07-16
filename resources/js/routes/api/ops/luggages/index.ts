@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages'
  */
 export const submit = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ submit.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages'
  */
 submit.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ submit.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages'
  */
 submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages'
  */
     const submitForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages'
  */
         submitForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -56,7 +56,7 @@ submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     submit.form = submitForm
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submitRaw
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages/raw'
  */
 export const submitRaw = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -71,7 +71,7 @@ submitRaw.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submitRaw
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages/raw'
  */
 submitRaw.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ submitRaw.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submitRaw
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages/raw'
  */
 submitRaw.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -90,7 +90,7 @@ submitRaw.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submitRaw
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages/raw'
  */
     const submitRawForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -100,7 +100,7 @@ submitRaw.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submitRaw
- * @see app/Http/Controllers/Api/OperationsApiController.php:397
+ * @see app/Http/Controllers/Api/OperationsApiController.php:409
  * @route '/api/ops/luggages/raw'
  */
         submitRawForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

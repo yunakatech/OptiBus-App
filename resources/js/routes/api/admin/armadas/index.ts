@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4332
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4492
  * @route '/api/admin/armadas/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4332
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4492
  * @route '/api/admin/armadas/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4332
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4492
  * @route '/api/admin/armadas/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4332
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4492
  * @route '/api/admin/armadas/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4332
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4492
  * @route '/api/admin/armadas/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4332
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4492
  * @route '/api/admin/armadas/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4332
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4492
  * @route '/api/admin/armadas/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     exportMethod.form = exportMethodForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4252
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4412
  * @route '/api/admin/armadas'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4252
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4412
  * @route '/api/admin/armadas'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4252
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4412
  * @route '/api/admin/armadas'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4252
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4412
  * @route '/api/admin/armadas'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4252
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4412
  * @route '/api/admin/armadas'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4252
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4412
  * @route '/api/admin/armadas'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4252
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4412
  * @route '/api/admin/armadas'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4729
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4889
  * @route '/api/admin/armadas/{id}'
  */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4729
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4889
  * @route '/api/admin/armadas/{id}'
  */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -200,7 +200,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4729
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4889
  * @route '/api/admin/armadas/{id}'
  */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -209,7 +209,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4729
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4889
  * @route '/api/admin/armadas/{id}'
  */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -219,7 +219,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4729
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4889
  * @route '/api/admin/armadas/{id}'
  */
     const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -229,7 +229,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4729
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4889
  * @route '/api/admin/armadas/{id}'
  */
         showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -238,7 +238,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4729
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4889
  * @route '/api/admin/armadas/{id}'
  */
         showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -254,7 +254,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4556
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4716
  * @route '/api/admin/armadas'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -269,7 +269,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4556
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4716
  * @route '/api/admin/armadas'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -278,7 +278,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4556
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4716
  * @route '/api/admin/armadas'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -288,7 +288,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4556
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4716
  * @route '/api/admin/armadas'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -298,7 +298,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4556
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4716
  * @route '/api/admin/armadas'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -309,7 +309,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     save.form = saveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4681
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4841
  * @route '/api/admin/armadas/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -324,7 +324,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4681
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4841
  * @route '/api/admin/armadas/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -352,7 +352,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4681
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4841
  * @route '/api/admin/armadas/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -362,7 +362,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4681
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4841
  * @route '/api/admin/armadas/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -377,7 +377,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4681
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4841
  * @route '/api/admin/armadas/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

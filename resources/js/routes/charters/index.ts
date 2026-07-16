@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import invoice from './invoice'
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -64,7 +64,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,7 +80,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 export const form = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -95,7 +95,7 @@ form.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 form.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ form.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ form.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -123,7 +123,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
     const formForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -133,7 +133,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
         formForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
         formForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -158,7 +158,7 @@ form.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     form.form = formForm
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 export const view = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -173,7 +173,7 @@ view.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 view.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -201,7 +201,7 @@ view.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 view.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -210,7 +210,7 @@ view.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 view.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -220,7 +220,7 @@ view.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
     const viewForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -230,7 +230,7 @@ view.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
         viewForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -239,7 +239,7 @@ view.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
         viewForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

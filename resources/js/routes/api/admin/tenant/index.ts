@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::switchMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4818
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4978
  * @route '/api/admin/tenant/switch'
  */
 export const switchMethod = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ switchMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::switchMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4818
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4978
  * @route '/api/admin/tenant/switch'
  */
 switchMethod.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ switchMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::switchMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4818
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4978
  * @route '/api/admin/tenant/switch'
  */
 switchMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ switchMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::switchMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4818
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4978
  * @route '/api/admin/tenant/switch'
  */
     const switchMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ switchMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::switchMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4818
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4978
  * @route '/api/admin/tenant/switch'
  */
         switchMethodForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

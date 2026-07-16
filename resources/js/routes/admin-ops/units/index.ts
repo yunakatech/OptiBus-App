@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/kategori-armada/layout/{id}'
  */
 export const layout = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ layout.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/kategori-armada/layout/{id}'
  */
 layout.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ layout.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/kategori-armada/layout/{id}'
  */
 layout.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ layout.get = (args: { id: string | number } | [id: string | number ] | string | 
 })
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/kategori-armada/layout/{id}'
  */
 layout.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ layout.head = (args: { id: string | number } | [id: string | number ] | string |
 
     /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/kategori-armada/layout/{id}'
  */
     const layoutForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ layout.head = (args: { id: string | number } | [id: string | number ] | string |
 
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/kategori-armada/layout/{id}'
  */
         layoutForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ layout.head = (args: { id: string | number } | [id: string | number ] | string |
         })
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/kategori-armada/layout/{id}'
  */
         layoutForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

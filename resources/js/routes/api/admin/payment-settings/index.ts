@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::get
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10453
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10764
  * @route '/api/admin/payment-settings'
  */
 export const get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ get.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::get
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10453
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10764
  * @route '/api/admin/payment-settings'
  */
 get.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ get.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::get
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10453
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10764
  * @route '/api/admin/payment-settings'
  */
 get.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ get.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::get
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10453
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10764
  * @route '/api/admin/payment-settings'
  */
 get.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ get.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::get
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10453
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10764
  * @route '/api/admin/payment-settings'
  */
     const getForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ get.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::get
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10453
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10764
  * @route '/api/admin/payment-settings'
  */
         getForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ get.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::get
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10453
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10764
  * @route '/api/admin/payment-settings'
  */
         getForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ get.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     get.form = getForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10460
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10771
  * @route '/api/admin/payment-settings'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10460
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10771
  * @route '/api/admin/payment-settings'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10460
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10771
  * @route '/api/admin/payment-settings'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10460
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10771
  * @route '/api/admin/payment-settings'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10460
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10771
  * @route '/api/admin/payment-settings'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

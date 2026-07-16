@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:324
+ * @see app/Http/Controllers/Api/OperationsApiController.php:336
  * @route '/api/ops/charters'
  */
 export const submit = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ submit.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:324
+ * @see app/Http/Controllers/Api/OperationsApiController.php:336
  * @route '/api/ops/charters'
  */
 submit.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ submit.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:324
+ * @see app/Http/Controllers/Api/OperationsApiController.php:336
  * @route '/api/ops/charters'
  */
 submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:324
+ * @see app/Http/Controllers/Api/OperationsApiController.php:336
  * @route '/api/ops/charters'
  */
     const submitForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::submit
- * @see app/Http/Controllers/Api/OperationsApiController.php:324
+ * @see app/Http/Controllers/Api/OperationsApiController.php:336
  * @route '/api/ops/charters'
  */
         submitForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
