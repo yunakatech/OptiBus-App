@@ -80,7 +80,7 @@ charterRoutes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     charterRoutes.form = charterRoutesForm
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segments
- * @see app/Http/Controllers/Api/OperationsApiController.php:34
+ * @see app/Http/Controllers/Api/OperationsApiController.php:38
  * @route '/api/master/segments'
  */
 export const segments = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -95,7 +95,7 @@ segments.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segments
- * @see app/Http/Controllers/Api/OperationsApiController.php:34
+ * @see app/Http/Controllers/Api/OperationsApiController.php:38
  * @route '/api/master/segments'
  */
 segments.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ segments.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segments
- * @see app/Http/Controllers/Api/OperationsApiController.php:34
+ * @see app/Http/Controllers/Api/OperationsApiController.php:38
  * @route '/api/master/segments'
  */
 segments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ segments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segments
- * @see app/Http/Controllers/Api/OperationsApiController.php:34
+ * @see app/Http/Controllers/Api/OperationsApiController.php:38
  * @route '/api/master/segments'
  */
 segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -123,7 +123,7 @@ segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segments
- * @see app/Http/Controllers/Api/OperationsApiController.php:34
+ * @see app/Http/Controllers/Api/OperationsApiController.php:38
  * @route '/api/master/segments'
  */
     const segmentsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -133,7 +133,7 @@ segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segments
- * @see app/Http/Controllers/Api/OperationsApiController.php:34
+ * @see app/Http/Controllers/Api/OperationsApiController.php:38
  * @route '/api/master/segments'
  */
         segmentsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segments
- * @see app/Http/Controllers/Api/OperationsApiController.php:34
+ * @see app/Http/Controllers/Api/OperationsApiController.php:38
  * @route '/api/master/segments'
  */
         segmentsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -158,7 +158,7 @@ segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     segments.form = segmentsForm
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segmentPrice
- * @see app/Http/Controllers/Api/OperationsApiController.php:73
+ * @see app/Http/Controllers/Api/OperationsApiController.php:77
  * @route '/api/master/segment-price'
  */
 export const segmentPrice = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -173,7 +173,7 @@ segmentPrice.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segmentPrice
- * @see app/Http/Controllers/Api/OperationsApiController.php:73
+ * @see app/Http/Controllers/Api/OperationsApiController.php:77
  * @route '/api/master/segment-price'
  */
 segmentPrice.url = (options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ segmentPrice.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segmentPrice
- * @see app/Http/Controllers/Api/OperationsApiController.php:73
+ * @see app/Http/Controllers/Api/OperationsApiController.php:77
  * @route '/api/master/segment-price'
  */
 segmentPrice.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ segmentPrice.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segmentPrice
- * @see app/Http/Controllers/Api/OperationsApiController.php:73
+ * @see app/Http/Controllers/Api/OperationsApiController.php:77
  * @route '/api/master/segment-price'
  */
 segmentPrice.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -201,7 +201,7 @@ segmentPrice.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segmentPrice
- * @see app/Http/Controllers/Api/OperationsApiController.php:73
+ * @see app/Http/Controllers/Api/OperationsApiController.php:77
  * @route '/api/master/segment-price'
  */
     const segmentPriceForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -211,7 +211,7 @@ segmentPrice.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segmentPrice
- * @see app/Http/Controllers/Api/OperationsApiController.php:73
+ * @see app/Http/Controllers/Api/OperationsApiController.php:77
  * @route '/api/master/segment-price'
  */
         segmentPriceForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,7 +220,7 @@ segmentPrice.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::segmentPrice
- * @see app/Http/Controllers/Api/OperationsApiController.php:73
+ * @see app/Http/Controllers/Api/OperationsApiController.php:77
  * @route '/api/master/segment-price'
  */
         segmentPriceForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -236,7 +236,7 @@ segmentPrice.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     segmentPrice.form = segmentPriceForm
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::units
- * @see app/Http/Controllers/Api/OperationsApiController.php:91
+ * @see app/Http/Controllers/Api/OperationsApiController.php:95
  * @route '/api/master/units'
  */
 export const units = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -251,7 +251,7 @@ units.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::units
- * @see app/Http/Controllers/Api/OperationsApiController.php:91
+ * @see app/Http/Controllers/Api/OperationsApiController.php:95
  * @route '/api/master/units'
  */
 units.url = (options?: RouteQueryOptions) => {
@@ -260,7 +260,7 @@ units.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::units
- * @see app/Http/Controllers/Api/OperationsApiController.php:91
+ * @see app/Http/Controllers/Api/OperationsApiController.php:95
  * @route '/api/master/units'
  */
 units.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -269,7 +269,7 @@ units.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::units
- * @see app/Http/Controllers/Api/OperationsApiController.php:91
+ * @see app/Http/Controllers/Api/OperationsApiController.php:95
  * @route '/api/master/units'
  */
 units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -279,7 +279,7 @@ units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::units
- * @see app/Http/Controllers/Api/OperationsApiController.php:91
+ * @see app/Http/Controllers/Api/OperationsApiController.php:95
  * @route '/api/master/units'
  */
     const unitsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -289,7 +289,7 @@ units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::units
- * @see app/Http/Controllers/Api/OperationsApiController.php:91
+ * @see app/Http/Controllers/Api/OperationsApiController.php:95
  * @route '/api/master/units'
  */
         unitsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -298,7 +298,7 @@ units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::units
- * @see app/Http/Controllers/Api/OperationsApiController.php:91
+ * @see app/Http/Controllers/Api/OperationsApiController.php:95
  * @route '/api/master/units'
  */
         unitsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -314,7 +314,7 @@ units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     units.form = unitsForm
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::armadas
- * @see app/Http/Controllers/Api/OperationsApiController.php:128
+ * @see app/Http/Controllers/Api/OperationsApiController.php:132
  * @route '/api/master/armadas'
  */
 export const armadas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -329,7 +329,7 @@ armadas.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::armadas
- * @see app/Http/Controllers/Api/OperationsApiController.php:128
+ * @see app/Http/Controllers/Api/OperationsApiController.php:132
  * @route '/api/master/armadas'
  */
 armadas.url = (options?: RouteQueryOptions) => {
@@ -338,7 +338,7 @@ armadas.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::armadas
- * @see app/Http/Controllers/Api/OperationsApiController.php:128
+ * @see app/Http/Controllers/Api/OperationsApiController.php:132
  * @route '/api/master/armadas'
  */
 armadas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -347,7 +347,7 @@ armadas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::armadas
- * @see app/Http/Controllers/Api/OperationsApiController.php:128
+ * @see app/Http/Controllers/Api/OperationsApiController.php:132
  * @route '/api/master/armadas'
  */
 armadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -357,7 +357,7 @@ armadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::armadas
- * @see app/Http/Controllers/Api/OperationsApiController.php:128
+ * @see app/Http/Controllers/Api/OperationsApiController.php:132
  * @route '/api/master/armadas'
  */
     const armadasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -367,7 +367,7 @@ armadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::armadas
- * @see app/Http/Controllers/Api/OperationsApiController.php:128
+ * @see app/Http/Controllers/Api/OperationsApiController.php:132
  * @route '/api/master/armadas'
  */
         armadasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -376,7 +376,7 @@ armadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::armadas
- * @see app/Http/Controllers/Api/OperationsApiController.php:128
+ * @see app/Http/Controllers/Api/OperationsApiController.php:132
  * @route '/api/master/armadas'
  */
         armadasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -392,7 +392,7 @@ armadas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     armadas.form = armadasForm
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::drivers
- * @see app/Http/Controllers/Api/OperationsApiController.php:187
+ * @see app/Http/Controllers/Api/OperationsApiController.php:191
  * @route '/api/master/drivers'
  */
 export const drivers = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -407,7 +407,7 @@ drivers.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::drivers
- * @see app/Http/Controllers/Api/OperationsApiController.php:187
+ * @see app/Http/Controllers/Api/OperationsApiController.php:191
  * @route '/api/master/drivers'
  */
 drivers.url = (options?: RouteQueryOptions) => {
@@ -416,7 +416,7 @@ drivers.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::drivers
- * @see app/Http/Controllers/Api/OperationsApiController.php:187
+ * @see app/Http/Controllers/Api/OperationsApiController.php:191
  * @route '/api/master/drivers'
  */
 drivers.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -425,7 +425,7 @@ drivers.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::drivers
- * @see app/Http/Controllers/Api/OperationsApiController.php:187
+ * @see app/Http/Controllers/Api/OperationsApiController.php:191
  * @route '/api/master/drivers'
  */
 drivers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -435,7 +435,7 @@ drivers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::drivers
- * @see app/Http/Controllers/Api/OperationsApiController.php:187
+ * @see app/Http/Controllers/Api/OperationsApiController.php:191
  * @route '/api/master/drivers'
  */
     const driversForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -445,7 +445,7 @@ drivers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::drivers
- * @see app/Http/Controllers/Api/OperationsApiController.php:187
+ * @see app/Http/Controllers/Api/OperationsApiController.php:191
  * @route '/api/master/drivers'
  */
         driversForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -454,7 +454,7 @@ drivers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::drivers
- * @see app/Http/Controllers/Api/OperationsApiController.php:187
+ * @see app/Http/Controllers/Api/OperationsApiController.php:191
  * @route '/api/master/drivers'
  */
         driversForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -470,7 +470,7 @@ drivers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     drivers.form = driversForm
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::luggageServices
- * @see app/Http/Controllers/Api/OperationsApiController.php:212
+ * @see app/Http/Controllers/Api/OperationsApiController.php:220
  * @route '/api/master/luggage-services'
  */
 export const luggageServices = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -485,7 +485,7 @@ luggageServices.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::luggageServices
- * @see app/Http/Controllers/Api/OperationsApiController.php:212
+ * @see app/Http/Controllers/Api/OperationsApiController.php:220
  * @route '/api/master/luggage-services'
  */
 luggageServices.url = (options?: RouteQueryOptions) => {
@@ -494,7 +494,7 @@ luggageServices.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::luggageServices
- * @see app/Http/Controllers/Api/OperationsApiController.php:212
+ * @see app/Http/Controllers/Api/OperationsApiController.php:220
  * @route '/api/master/luggage-services'
  */
 luggageServices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -503,7 +503,7 @@ luggageServices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 })
 /**
 * @see \App\Http\Controllers\Api\OperationsApiController::luggageServices
- * @see app/Http/Controllers/Api/OperationsApiController.php:212
+ * @see app/Http/Controllers/Api/OperationsApiController.php:220
  * @route '/api/master/luggage-services'
  */
 luggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -513,7 +513,7 @@ luggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
     /**
 * @see \App\Http\Controllers\Api\OperationsApiController::luggageServices
- * @see app/Http/Controllers/Api/OperationsApiController.php:212
+ * @see app/Http/Controllers/Api/OperationsApiController.php:220
  * @route '/api/master/luggage-services'
  */
     const luggageServicesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -523,7 +523,7 @@ luggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::luggageServices
- * @see app/Http/Controllers/Api/OperationsApiController.php:212
+ * @see app/Http/Controllers/Api/OperationsApiController.php:220
  * @route '/api/master/luggage-services'
  */
         luggageServicesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -532,7 +532,7 @@ luggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
         })
             /**
 * @see \App\Http\Controllers\Api\OperationsApiController::luggageServices
- * @see app/Http/Controllers/Api/OperationsApiController.php:212
+ * @see app/Http/Controllers/Api/OperationsApiController.php:220
  * @route '/api/master/luggage-services'
  */
         luggageServicesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

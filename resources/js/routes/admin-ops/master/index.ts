@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-bagasi'
  */
 export const customerBagasi = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ customerBagasi.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-bagasi'
  */
 customerBagasi.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ customerBagasi.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-bagasi'
  */
 customerBagasi.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ customerBagasi.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-bagasi'
  */
 customerBagasi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ customerBagasi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
     /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-bagasi'
  */
     const customerBagasiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ customerBagasi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
             /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-bagasi'
  */
         customerBagasiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ customerBagasi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
         })
             /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-bagasi'
  */
         customerBagasiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ customerBagasi.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     customerBagasi.form = customerBagasiForm
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-charter'
  */
 export const customerCharter = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ customerCharter.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-charter'
  */
 customerCharter.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ customerCharter.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-charter'
  */
 customerCharter.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ customerCharter.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 })
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-charter'
  */
 customerCharter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ customerCharter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
     /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-charter'
  */
     const customerCharterForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ customerCharter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 
             /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-charter'
  */
         customerCharterForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ customerCharter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
         })
             /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/customer-charter'
  */
         customerCharterForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ customerCharter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     customerCharter.form = customerCharterForm
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/rute-carter'
  */
 export const ruteCarter = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ ruteCarter.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/rute-carter'
  */
 ruteCarter.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ ruteCarter.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/rute-carter'
  */
 ruteCarter.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ ruteCarter.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/rute-carter'
  */
 ruteCarter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ ruteCarter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/rute-carter'
  */
     const ruteCarterForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ ruteCarter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/rute-carter'
  */
         ruteCarterForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ ruteCarter.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
- * @see app/Http/Controllers/AdminOpsMasterController.php:18
+ * @see app/Http/Controllers/AdminOpsMasterController.php:21
  * @route '/admin-ops/rute-carter'
  */
         ruteCarterForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

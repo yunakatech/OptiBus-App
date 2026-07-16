@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 const AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
 AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
     const AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01aForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
         AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01aForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters'
  */
         AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01aForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.head = (options?: RouteQ
     AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01a.form = AdminOpsFlowsControllerd865f12c35ac209a4e3bed238017a01aForm
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 const AdminOpsFlowsControllered85c6be014be94e27e1101d27521353 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
 AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
     const AdminOpsFlowsControllered85c6be014be94e27e1101d27521353Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
         AdminOpsFlowsControllered85c6be014be94e27e1101d27521353Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/form'
  */
         AdminOpsFlowsControllered85c6be014be94e27e1101d27521353Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.head = (options?: RouteQ
     AdminOpsFlowsControllered85c6be014be94e27e1101d27521353.form = AdminOpsFlowsControllered85c6be014be94e27e1101d27521353Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 const AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -200,7 +200,7 @@ AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.url = (args: { id: strin
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -209,7 +209,7 @@ AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.get = (args: { id: strin
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
 AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -219,7 +219,7 @@ AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.head = (args: { id: stri
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
     const AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dcForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -229,7 +229,7 @@ AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.head = (args: { id: stri
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
         AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dcForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -238,7 +238,7 @@ AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.head = (args: { id: stri
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/charters/view/{id}'
  */
         AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dcForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -254,7 +254,7 @@ AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.head = (args: { id: stri
     AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc.form = AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dcForm
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 const AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -269,7 +269,7 @@ AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.url = (options?: RouteQueryOptions) => {
@@ -278,7 +278,7 @@ AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -287,7 +287,7 @@ AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
 AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -297,7 +297,7 @@ AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
     const AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -307,7 +307,7 @@ AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
         AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -316,7 +316,7 @@ AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages'
  */
         AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -332,7 +332,7 @@ AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.head = (options?: RouteQ
     AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79.form = AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 const AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -347,7 +347,7 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.url = (options?: RouteQueryOptions) => {
@@ -356,7 +356,7 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -365,7 +365,7 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
 AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -375,7 +375,7 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
     const AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -385,7 +385,7 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
         AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -394,7 +394,7 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/luggages/form'
  */
         AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -410,7 +410,7 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.head = (options?: RouteQ
     AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.form = AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows'
  */
 const AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -425,7 +425,7 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows'
  */
 AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url = (options?: RouteQueryOptions) => {
@@ -434,7 +434,7 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows'
  */
 AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -443,7 +443,7 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows'
  */
 AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -453,7 +453,7 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows'
  */
     const AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -463,7 +463,7 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows'
  */
         AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -472,7 +472,7 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows'
  */
         AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -488,7 +488,7 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.head = (options?: RouteQ
     AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.form = AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/charters'
  */
 const AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -503,7 +503,7 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/charters'
  */
 AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url = (options?: RouteQueryOptions) => {
@@ -512,7 +512,7 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/charters'
  */
 AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -521,7 +521,7 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/charters'
  */
 AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -531,7 +531,7 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/charters'
  */
     const AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -541,7 +541,7 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/charters'
  */
         AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -550,7 +550,7 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/charters'
  */
         AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -566,7 +566,7 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.head = (options?: RouteQ
     AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.form = AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/luggages'
  */
 const AdminOpsFlowsController1da64293d59593b05138346920a88c58 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -581,7 +581,7 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/luggages'
  */
 AdminOpsFlowsController1da64293d59593b05138346920a88c58.url = (options?: RouteQueryOptions) => {
@@ -590,7 +590,7 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/luggages'
  */
 AdminOpsFlowsController1da64293d59593b05138346920a88c58.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -599,7 +599,7 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/luggages'
  */
 AdminOpsFlowsController1da64293d59593b05138346920a88c58.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -609,7 +609,7 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/luggages'
  */
     const AdminOpsFlowsController1da64293d59593b05138346920a88c58Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -619,7 +619,7 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/luggages'
  */
         AdminOpsFlowsController1da64293d59593b05138346920a88c58Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -628,7 +628,7 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/luggages'
  */
         AdminOpsFlowsController1da64293d59593b05138346920a88c58Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -644,7 +644,7 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.head = (options?: RouteQ
     AdminOpsFlowsController1da64293d59593b05138346920a88c58.form = AdminOpsFlowsController1da64293d59593b05138346920a88c58Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/assignments'
  */
 const AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -659,7 +659,7 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/assignments'
  */
 AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url = (options?: RouteQueryOptions) => {
@@ -668,7 +668,7 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/assignments'
  */
 AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -677,7 +677,7 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/assignments'
  */
 AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -687,7 +687,7 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/assignments'
  */
     const AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -697,7 +697,7 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/assignments'
  */
         AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -706,7 +706,7 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/assignments'
  */
         AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -722,7 +722,7 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.head = (options?: RouteQ
     AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.form = AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/export'
  */
 const AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -737,7 +737,7 @@ AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/export'
  */
 AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url = (options?: RouteQueryOptions) => {
@@ -746,7 +746,7 @@ AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/export'
  */
 AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -755,7 +755,7 @@ AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.get = (options?: RouteQu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/export'
  */
 AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -765,7 +765,7 @@ AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.head = (options?: RouteQ
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/export'
  */
     const AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93bForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -775,7 +775,7 @@ AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.head = (options?: RouteQ
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/export'
  */
         AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93bForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -784,7 +784,7 @@ AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.head = (options?: RouteQ
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
- * @see app/Http/Controllers/AdminOpsFlowsController.php:20
+ * @see app/Http/Controllers/AdminOpsFlowsController.php:23
  * @route '/admin-ops/flows/export'
  */
         AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93bForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

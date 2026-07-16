@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/armada/view/{id}'
  */
 export const view = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ view.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/armada/view/{id}'
  */
 view.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ view.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/armada/view/{id}'
  */
 view.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ view.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/armada/view/{id}'
  */
 view.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ view.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/armada/view/{id}'
  */
     const viewForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ view.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/armada/view/{id}'
  */
         viewForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ view.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
- * @see app/Http/Controllers/AdminOpsController.php:28
+ * @see app/Http/Controllers/AdminOpsController.php:31
  * @route '/admin-ops/armada/view/{id}'
  */
         viewForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
