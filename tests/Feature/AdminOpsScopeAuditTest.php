@@ -738,6 +738,60 @@ class AdminOpsScopeAuditTest extends TestCase
         Notification::assertSentTo($createdUser, VerifyEmail::class);
     }
 
+    public function test_unit_create_without_explicit_pool_uses_accessible_pool_scope(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantId = $this->tenantIdBySlug('audit-unit-scope-tenant');
+        $this->activateTenantBilling($tenantId);
+
+        $poolA = $this->createPool($tenantId, 'POOL A', 'UNIT-A', 100000);
+        $poolB = $this->createPool($tenantId, 'POOL B', 'UNIT-B', 120000);
+
+        $operator = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => false,
+        ]);
+        $this->assignRole($operator, 'admin-pusat');
+        DB::table('pool_user')->insert([
+            'pool_id' => $poolB,
+            'user_id' => $operator->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $created = $this->actingAs($operator)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->postJson(route('api.admin.units.save'), [
+                'nopol' => 'TEMPLATE POOL B',
+                'category' => 'Bigbus',
+                'kapasitas' => 42,
+                'status' => 'Aktif',
+            ])
+            ->assertCreated()
+            ->json();
+
+        $unitId = (int) ($created['id'] ?? 0);
+
+        $this->assertDatabaseHas('units', [
+            'id' => $unitId,
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolB,
+            'nopol' => 'TEMPLATE POOL B',
+        ]);
+        $this->assertDatabaseMissing('units', [
+            'id' => $unitId,
+            'pool_id' => $poolA,
+        ]);
+
+        $this->actingAs($operator)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->getJson(route('api.admin.units.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'units')
+            ->assertJsonPath('units.0.id', $unitId);
+    }
+
     /**
      * @return array{0: int, 1: int}
      */

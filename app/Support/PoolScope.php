@@ -844,27 +844,7 @@ class PoolScope
             return $poolId;
         }
 
-        if (! Schema::hasTable('pools')) {
-            return 0;
-        }
-
-        $tenantId = self::tenantId($userId);
-        if ($tenantId <= 0) {
-            return 0;
-        }
-
-        if (Schema::hasColumn('pools', 'tenant_id')) {
-            $poolId = (int) (DB::table('pools')
-                ->where('tenant_id', $tenantId)
-                ->where('status', 'active')
-                ->orderBy('id')
-                ->value('id') ?? 0);
-            if ($poolId > 0) {
-                return $poolId;
-            }
-        }
-
-        return 0;
+        return (int) (self::accessiblePoolIds($userId, false)[0] ?? 0);
     }
 
     public static function routeIdForName(string $routeName): int
