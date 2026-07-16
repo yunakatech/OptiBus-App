@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AdminOpsApiController;
 use App\Http\Controllers\Api\OperationsApiController;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
+use App\Support\DeferredInertia;
 use App\Support\PoolScope;
 use App\Support\RoleAccessData;
 use Illuminate\Database\Query\Builder;
@@ -63,6 +64,7 @@ class AdminOpsController extends Controller
         $initialMode = trim((string) ($request->route('mode') ?? ''));
         $hybridTabs = ['schedules', 'drivers', 'segments', 'units', 'armadas', 'pools', 'users'];
         $usesHybridInertia = $lockedMenuView
+            && DeferredInertia::opsEnabled()
             && in_array($initialTab, $hybridTabs, true)
             && ! ($initialTab === 'units' && $initialMode === 'layout');
 
@@ -133,6 +135,7 @@ class AdminOpsController extends Controller
                     'period' => trim((string) $request->query('period', '')),
                 ]
                 : null,
+            'deferredSettingsEnabled' => $usesHybridInertia,
             'settingsData' => $usesHybridInertia
                 ? Inertia::defer(fn (): array => $this->settingsData($request, (string) $initialTab), 'settings-data')
                 : null,

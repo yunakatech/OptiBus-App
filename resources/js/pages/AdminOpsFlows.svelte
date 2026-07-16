@@ -206,6 +206,7 @@
         initialMode = null,
         initialCharterId = null,
         lockedMenuView: lockedFromServer = false,
+        deferredFlowEnabled = false,
         flowData = null,
         flowMasters = null,
     }: {
@@ -213,6 +214,7 @@
         initialMode?: ViewMode | null;
         initialCharterId?: number | null;
         lockedMenuView?: boolean;
+        deferredFlowEnabled?: boolean;
         flowData?: FlowDataPayload | null;
         flowMasters?: FlowMastersPayload | null;
     } = $props();
@@ -1076,6 +1078,7 @@
         return q.toString();
     };
     const usesInertiaFlowData = () =>
+        deferredFlowEnabled &&
         lockedMenuView &&
         (activeTab === 'charters' || activeTab === 'luggages');
     const reloadFlowDataWithInertia = (page: number) => {

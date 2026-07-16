@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Api\AdminOpsApiController;
 use App\Http\Controllers\Api\OperationsApiController;
+use App\Support\DeferredInertia;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Throwable;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class AdminOpsFlowsController extends Controller
 {
@@ -46,7 +47,9 @@ class AdminOpsFlowsController extends Controller
         $requestedMode = (string) ($request->route('mode') ?? '');
         $requestedCharterId = (int) ($request->route('id') ?? 0);
         $resolvedTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : 'charters';
-        $usesHybridInertia = in_array($resolvedTab, ['charters', 'luggages'], true);
+        $usesHybridInertia = $lockedMenuView
+            && DeferredInertia::opsEnabled()
+            && in_array($resolvedTab, ['charters', 'luggages'], true);
 
         $component = $requestedTab === 'luggages' ? 'Luggages' : 'AdminOpsFlows';
 
@@ -55,6 +58,7 @@ class AdminOpsFlowsController extends Controller
             'initialMode' => in_array($requestedMode, $allowedModes, true) ? $requestedMode : null,
             'initialCharterId' => $requestedCharterId > 0 ? $requestedCharterId : null,
             'lockedMenuView' => $lockedMenuView,
+            'deferredFlowEnabled' => $usesHybridInertia,
             'flowData' => $usesHybridInertia
                 ? Inertia::defer(fn (): array => $this->flowData($request, $resolvedTab), 'flow-data')
                 : null,
