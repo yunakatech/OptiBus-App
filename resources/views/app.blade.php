@@ -37,7 +37,6 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="format-detection" content="telephone=no">
 
-        <link rel="preload" href="/style.css" as="style">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="manifest" href="/manifest.json?v=3">

@@ -18,6 +18,12 @@ Documentation for all Laravel starter kits can be found on the [Laravel website]
 - Render + Neon: [docs/render-neon-deploy.md](docs/render-neon-deploy.md)
 - Cloudflare migration: [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md)
 
+### Vercel Notes
+
+- Keep Vercel project secrets in the Vercel dashboard, not in `vercel.json`.
+- Use [vercel.env.example](vercel.env.example) as the baseline for required project environment variables.
+- Before removing any existing secret from `vercel.json`, make sure the matching value already exists in Vercel Project Settings -> Environment Variables.
+
 ## Legacy Data Import (Booking Core)
 
 Project ini punya command import untuk menarik data inti booking dari aplikasi legacy (`routes`, `units`, `schedules`, `customers`, `segments`, `bookings`).
