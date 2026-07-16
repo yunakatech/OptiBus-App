@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\BookingCode;
 use App\Support\Code39;
+use App\Support\DeferredInertia;
 use App\Support\HeadlessPdf;
 use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
@@ -35,8 +36,9 @@ class BookingController extends Controller
         $component = $request->routeIs('booking-console.index') ? 'BookingConsole' : 'Bookings';
         $isGroupDetailPage = $request->routeIs('bookings.detail');
         $listOnly = $request->routeIs('bookings.index') || $isGroupDetailPage;
-        $deferBookingList = $request->routeIs('bookings.index');
-        $deferLatestBookings = $request->routeIs('booking-console.index');
+        $usesDeferredInertia = DeferredInertia::opsEnabled();
+        $deferBookingList = $usesDeferredInertia && $request->routeIs('bookings.index');
+        $deferLatestBookings = $usesDeferredInertia && $request->routeIs('booking-console.index');
         $groupDetailKey = $isGroupDetailPage ? (string) $request->route('groupKey', '') : '';
         $bookingGroups = null;
         $resolveBookingGroups = function () use ($listOnly, &$bookingGroups): array {
