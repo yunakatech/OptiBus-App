@@ -64,9 +64,9 @@ class AdminOpsController extends Controller
         $initialMode = trim((string) ($request->route('mode') ?? ''));
         $hybridTabs = ['schedules', 'drivers', 'segments', 'units', 'armadas', 'pools', 'users'];
         $usesHybridInertia = $lockedMenuView
-            && DeferredInertia::opsEnabled()
             && in_array($initialTab, $hybridTabs, true)
             && ! ($initialTab === 'units' && $initialMode === 'layout');
+        $usesDeferredInertia = $usesHybridInertia && DeferredInertia::opsEnabled();
 
         if ($initialTab === 'roles' && ! AccessControl::userIsSuperAdmin((int) ($request->user()?->id ?? 0))) {
             abort(403, 'Hanya Super Admin yang bisa mengakses halaman role.');
@@ -137,10 +137,14 @@ class AdminOpsController extends Controller
                 : null,
             'deferredSettingsEnabled' => $usesHybridInertia,
             'settingsData' => $usesHybridInertia
-                ? Inertia::defer(fn (): array => $this->settingsData($request, (string) $initialTab), 'settings-data')
+                ? ($usesDeferredInertia
+                    ? Inertia::defer(fn (): array => $this->settingsData($request, (string) $initialTab), 'settings-data')
+                    : $this->settingsData($request, (string) $initialTab))
                 : null,
             'settingsMasters' => $usesHybridInertia
-                ? Inertia::defer(fn (): array => $this->settingsMasters($request, (string) $initialTab), 'settings-masters')
+                ? ($usesDeferredInertia
+                    ? Inertia::defer(fn (): array => $this->settingsMasters($request, (string) $initialTab), 'settings-masters')
+                    : $this->settingsMasters($request, (string) $initialTab))
                 : null,
         ]);
     }
