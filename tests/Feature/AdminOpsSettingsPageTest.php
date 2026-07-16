@@ -29,9 +29,12 @@ class AdminOpsSettingsPageTest extends TestCase
         $this->actingAsSuperAdmin();
 
         $pages = [
+            ['admin-ops.routes', 'PengaturanRuteReguler', 'routes', []],
             ['admin-ops.pools', 'PengaturanPool', 'pools', ['routes']],
             ['admin-ops.users', 'PengaturanUsers', 'users', ['pools', 'roles']],
             ['admin-ops.drivers', 'PengaturanDriver', 'drivers', ['armadas']],
+            ['admin-ops.services', 'PengaturanBagasi', 'services', []],
+            ['admin-ops.customers', 'CustomerReguler', 'customers', ['pools']],
             ['admin-ops.armadas', 'PengaturanArmada', 'armadas', ['categories', 'units']],
             ['admin-ops.schedules', 'PengaturanJadwal', 'schedules', ['routes', 'units']],
             ['admin-ops.segments', 'PengaturanSegment', 'segments', ['routes']],

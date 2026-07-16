@@ -62,7 +62,7 @@ class AdminOpsController extends Controller
         $requestedTab = (string) ($request->route('tab') ?? '');
         $initialTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : null;
         $initialMode = trim((string) ($request->route('mode') ?? ''));
-        $hybridTabs = ['schedules', 'drivers', 'segments', 'units', 'armadas', 'pools', 'users'];
+        $hybridTabs = ['routes', 'schedules', 'drivers', 'services', 'segments', 'customers', 'units', 'armadas', 'pools', 'users'];
         $usesHybridInertia = $lockedMenuView
             && in_array($initialTab, $hybridTabs, true)
             && ! ($initialTab === 'units' && $initialMode === 'layout');
@@ -157,6 +157,8 @@ class AdminOpsController extends Controller
         try {
             $listRequest = clone $request;
             $listRequest->query->set('paginate', '1');
+            $unpaginatedRequest = clone $request;
+            $unpaginatedRequest->query->remove('paginate');
             $routeOptions = [];
             $segmentRequest = null;
 
@@ -200,9 +202,15 @@ class AdminOpsController extends Controller
             }
 
             $payload = match ($tab) {
+                'routes' => [
+                    ...$this->payload($this->adminOpsApi->routesIndex()),
+                    'segments' => $this->payload($this->adminOpsApi->segmentsIndex($unpaginatedRequest))['segments'] ?? [],
+                ],
                 'schedules' => $this->payload($this->adminOpsApi->schedulesIndex($listRequest)),
                 'drivers' => $this->payload($this->adminOpsApi->driversIndex($listRequest)),
+                'services' => $this->payload($this->adminOpsApi->luggageServicesIndex()),
                 'segments' => $this->payload($this->adminOpsApi->segmentsIndex($listRequest)),
+                'customers' => $this->payload($this->adminOpsApi->customersIndex($listRequest)),
                 'units' => $this->payload($this->adminOpsApi->unitsIndex()),
                 'armadas' => $this->payload($this->adminOpsApi->armadasIndex($listRequest)),
                 'pools' => $this->payload($this->adminOpsApi->poolsIndex($listRequest)),
@@ -211,9 +219,12 @@ class AdminOpsController extends Controller
             };
 
             $listKey = match ($tab) {
+                'routes' => 'routes',
                 'schedules' => 'schedules',
                 'drivers' => 'drivers',
+                'services' => 'services',
                 'segments' => 'segments',
+                'customers' => 'customers',
                 'units' => 'units',
                 'armadas' => 'armadas',
                 'pools' => 'pools',
@@ -230,10 +241,11 @@ class AdminOpsController extends Controller
                 $listKey => $payload[$listKey] ?? [],
                 'pagination' => $payload['pagination'] ?? [
                     'page' => 1,
-                    'per_page' => 20,
-                    'total' => 0,
+                    'per_page' => max(10, min(100, (int) $request->query('per_page', 20))),
+                    'total' => count($payload[$listKey] ?? []),
                     'last_page' => 1,
                 ],
+                ...($tab === 'routes' ? ['segments' => $payload['segments'] ?? []] : []),
                 ...($tab === 'pools' ? ['can_manage' => (bool) ($payload['can_manage'] ?? true)] : []),
                 ...($tab === 'schedules' ? [
                     'route_id' => max(0, (int) $listRequest->query('route_id', 0)),
@@ -248,6 +260,12 @@ class AdminOpsController extends Controller
             }
 
             return match ($tab) {
+                'routes' => [
+                    'tab' => $tab,
+                    'routes' => [],
+                    'segments' => [],
+                    'pagination' => ['page' => 1, 'per_page' => max(10, min(100, (int) $request->query('per_page', 20))), 'total' => 0, 'last_page' => 1],
+                ],
                 'schedules' => [
                     'tab' => $tab,
                     'schedules' => [],
@@ -263,8 +281,10 @@ class AdminOpsController extends Controller
                     'route_id' => max(0, (int) $request->query('route_id', 0)),
                 ],
                 'drivers' => ['tab' => $tab, 'drivers' => [], 'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1]],
+                'services' => ['tab' => $tab, 'services' => [], 'pagination' => ['page' => 1, 'per_page' => max(10, min(100, (int) $request->query('per_page', 20))), 'total' => 0, 'last_page' => 1]],
                 'units' => ['tab' => $tab, 'units' => [], 'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1]],
                 'armadas' => ['tab' => $tab, 'armadas' => [], 'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1]],
+                'customers' => ['tab' => $tab, 'customers' => [], 'pagination' => ['page' => 1, 'per_page' => max(10, min(100, (int) $request->query('per_page', 20))), 'total' => 0, 'last_page' => 1]],
                 'pools' => ['tab' => $tab, 'pools' => [], 'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1], 'can_manage' => true],
                 'users' => ['tab' => $tab, 'users' => [], 'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1]],
                 default => ['tab' => $tab],
@@ -287,9 +307,12 @@ class AdminOpsController extends Controller
             $pools = fn (): array => $this->payload($this->adminOpsApi->poolOptionsIndex($masterRequest))['pools'] ?? [];
 
             return match ($tab) {
+                'routes' => ['tab' => $tab],
                 'schedules' => ['tab' => $tab, 'routes' => $routes(), 'units' => $units()],
                 'drivers' => ['tab' => $tab, 'armadas' => $armadas(), 'pools' => $pools()],
+                'services' => ['tab' => $tab],
                 'segments' => ['tab' => $tab, 'routes' => $routes()],
+                'customers' => ['tab' => $tab, 'pools' => $pools()],
                 'units' => ['tab' => $tab, 'pools' => $pools()],
                 'armadas' => [
                     'tab' => $tab,
@@ -307,9 +330,12 @@ class AdminOpsController extends Controller
             }
 
             return match ($tab) {
+                'routes' => ['tab' => $tab],
                 'schedules' => ['tab' => $tab, 'routes' => [], 'units' => []],
                 'drivers' => ['tab' => $tab, 'armadas' => [], 'pools' => []],
+                'services' => ['tab' => $tab],
                 'segments' => ['tab' => $tab, 'routes' => []],
+                'customers' => ['tab' => $tab, 'pools' => []],
                 'units' => ['tab' => $tab, 'pools' => []],
                 'armadas' => ['tab' => $tab, 'categories' => [], 'units' => [], 'pools' => []],
                 'pools' => ['tab' => $tab, 'routes' => []],
