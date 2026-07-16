@@ -46,7 +46,6 @@ class AdminOpsController extends Controller
                 'users' => 'admin-ops.users',
                 'roles' => 'admin-ops.roles',
                 'logs' => 'admin-ops.logs',
-                'cancellations' => 'admin-ops.logs',
                 'reports' => 'report.index',
             ];
 
@@ -85,7 +84,6 @@ class AdminOpsController extends Controller
             'armadas' => 0,
             'pools' => 0,
             'logs' => 0,
-            'cancellations' => 0,
         ];
 
         if (! $lockedMenuView) {
@@ -439,7 +437,6 @@ class AdminOpsController extends Controller
                 }
             }),
             'logs' => ActivityLog::countForTenant(),
-            'cancellations' => ActivityLog::countForTenant(),
         ];
     }
 
@@ -447,10 +444,7 @@ class AdminOpsController extends Controller
     {
         $tab = trim((string) $tab);
 
-        return match ($tab) {
-            'cancellations' => 'logs',
-            default => $tab,
-        };
+        return $tab;
     }
 
     private function countScoped(string $table, callable $scope): int

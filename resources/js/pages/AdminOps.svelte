@@ -69,7 +69,6 @@
         armadas: number;
         pools: number;
         logs: number;
-        cancellations?: number;
     };
     type RouteRow = {
         id: number;
@@ -518,7 +517,7 @@
         settingsMasters = null,
     }: {
         stats: Stats;
-        initialTab?: TabName | 'cancellations' | null;
+        initialTab?: TabName | null;
         lockedMenuView?: boolean;
         initialMode?: string | null;
         initialRecordId?: number | null;
@@ -2452,13 +2451,8 @@
     const isTabName = (value: string | null): value is TabName => {
         return value !== null && tabs.includes(value as TabName);
     };
-    const normalizeTabName = (value: string | null): TabName | null => {
-        if (value === 'cancellations') {
-            return 'logs';
-        }
-
-        return isTabName(value) ? value : null;
-    };
+    const normalizeTabName = (value: string | null): TabName | null =>
+        isTabName(value) ? value : null;
 
     const syncTabQuery = (tab: TabName) => {
         if (typeof window === 'undefined') {
@@ -4126,7 +4120,7 @@
 
     const loadLogs = async () => {
         const r = await api('GET', '/api/admin/activity-logs?limit=50');
-        activityLogs = r.logs ?? r.cancellations ?? [];
+        activityLogs = r.logs ?? [];
     };
 
     const loadActiveTab = async () => {
@@ -5607,7 +5601,7 @@
                             Logs
                         </p>
                         <p class="mt-1 text-lg font-semibold">
-                            {stats.logs ?? stats.cancellations ?? 0}
+                            {stats.logs}
                         </p>
                     </div>
                 </div>
