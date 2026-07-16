@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Api\AdminOpsApiController;
+use App\Support\DeferredInertia;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Throwable;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class AdminOpsMasterController extends Controller
 {
@@ -40,7 +41,9 @@ class AdminOpsMasterController extends Controller
         $allowedTabs = ['customer-bagasi', 'customer-charter', 'rute-carter'];
         $requestedTab = (string) ($request->route('tab') ?? '');
         $resolvedTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : 'customer-bagasi';
-        $usesHybridInertia = $lockedMenuView && in_array($resolvedTab, $allowedTabs, true);
+        $usesHybridInertia = $lockedMenuView
+            && DeferredInertia::opsEnabled()
+            && in_array($resolvedTab, $allowedTabs, true);
 
         $component = 'AdminOpsMaster';
         if ($lockedMenuView) {
@@ -57,6 +60,7 @@ class AdminOpsMasterController extends Controller
         return Inertia::render($component, [
             'initialTab' => in_array($requestedTab, $allowedTabs, true) ? $requestedTab : null,
             'lockedMenuView' => $lockedMenuView,
+            'deferredMasterEnabled' => $usesHybridInertia,
             'masterData' => $usesHybridInertia
                 ? Inertia::defer(fn (): array => $this->masterData($request, $resolvedTab), 'master-data')
                 : null,

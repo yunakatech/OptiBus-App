@@ -75,10 +75,12 @@
     let {
         initialTab = null,
         lockedMenuView: lockedFromServer = false,
+        deferredMasterEnabled = false,
         masterData = null,
     }: {
         initialTab?: TabName | null;
         lockedMenuView?: boolean;
+        deferredMasterEnabled?: boolean;
         masterData?: MasterDataPayload | null;
     } = $props();
 
@@ -208,7 +210,7 @@
     };
 
     const usesInertiaMasterData = () =>
-        lockedMenuView && masterTabs.includes(activeTab);
+        deferredMasterEnabled && lockedMenuView && masterTabs.includes(activeTab);
     const masterQueryString = (page: number) => {
         const q = new URLSearchParams();
         const meta =

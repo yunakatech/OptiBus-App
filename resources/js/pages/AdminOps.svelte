@@ -510,6 +510,7 @@
         initialMode = null,
         initialRecordId = null,
         settingsQuery = null,
+        deferredSettingsEnabled = false,
         settingsData = null,
         settingsMasters = null,
     }: {
@@ -519,6 +520,7 @@
         initialMode?: string | null;
         initialRecordId?: number | null;
         settingsQuery?: SettingsQuery | null;
+        deferredSettingsEnabled?: boolean;
         settingsData?: SettingsDataPayload | null;
         settingsMasters?: SettingsMastersPayload | null;
     } = $props();
@@ -3485,6 +3487,7 @@
     };
 
     const usesHybridSettings = (tab = activeTab) =>
+        deferredSettingsEnabled &&
         lockedFromServer &&
         activeTab === tab &&
         initialTab === tab &&
