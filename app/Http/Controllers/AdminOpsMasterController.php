@@ -42,8 +42,8 @@ class AdminOpsMasterController extends Controller
         $requestedTab = (string) ($request->route('tab') ?? '');
         $resolvedTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : 'customer-bagasi';
         $usesHybridInertia = $lockedMenuView
-            && DeferredInertia::opsEnabled()
             && in_array($resolvedTab, $allowedTabs, true);
+        $usesDeferredInertia = $usesHybridInertia && DeferredInertia::opsEnabled();
 
         $component = 'AdminOpsMaster';
         if ($lockedMenuView) {
@@ -62,7 +62,9 @@ class AdminOpsMasterController extends Controller
             'lockedMenuView' => $lockedMenuView,
             'deferredMasterEnabled' => $usesHybridInertia,
             'masterData' => $usesHybridInertia
-                ? Inertia::defer(fn (): array => $this->masterData($request, $resolvedTab), 'master-data')
+                ? ($usesDeferredInertia
+                    ? Inertia::defer(fn (): array => $this->masterData($request, $resolvedTab), 'master-data')
+                    : $this->masterData($request, $resolvedTab))
                 : null,
         ]);
     }

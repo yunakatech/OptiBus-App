@@ -48,8 +48,8 @@ class AdminOpsFlowsController extends Controller
         $requestedCharterId = (int) ($request->route('id') ?? 0);
         $resolvedTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : 'charters';
         $usesHybridInertia = $lockedMenuView
-            && DeferredInertia::opsEnabled()
             && in_array($resolvedTab, ['charters', 'luggages'], true);
+        $usesDeferredInertia = $usesHybridInertia && DeferredInertia::opsEnabled();
 
         $component = $requestedTab === 'luggages' ? 'Luggages' : 'AdminOpsFlows';
 
@@ -60,10 +60,14 @@ class AdminOpsFlowsController extends Controller
             'lockedMenuView' => $lockedMenuView,
             'deferredFlowEnabled' => $usesHybridInertia,
             'flowData' => $usesHybridInertia
-                ? Inertia::defer(fn (): array => $this->flowData($request, $resolvedTab), 'flow-data')
+                ? ($usesDeferredInertia
+                    ? Inertia::defer(fn (): array => $this->flowData($request, $resolvedTab), 'flow-data')
+                    : $this->flowData($request, $resolvedTab))
                 : null,
             'flowMasters' => $usesHybridInertia
-                ? Inertia::defer(fn (): array => $this->flowMasters($request, $resolvedTab), 'flow-masters')
+                ? ($usesDeferredInertia
+                    ? Inertia::defer(fn (): array => $this->flowMasters($request, $resolvedTab), 'flow-masters')
+                    : $this->flowMasters($request, $resolvedTab))
                 : null,
         ]);
     }
