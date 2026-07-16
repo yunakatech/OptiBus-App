@@ -35,6 +35,7 @@ class AdminOpsSettingsPageTest extends TestCase
             ['admin-ops.drivers', 'PengaturanDriver', 'drivers', ['armadas']],
             ['admin-ops.services', 'PengaturanBagasi', 'services', []],
             ['admin-ops.customers', 'CustomerReguler', 'customers', ['pools']],
+            ['admin-ops.units', 'PengaturanKategoriArmada', 'units', ['pools']],
             ['admin-ops.armadas', 'PengaturanArmada', 'armadas', ['categories', 'units']],
             ['admin-ops.schedules', 'PengaturanJadwal', 'schedules', ['routes', 'units']],
             ['admin-ops.segments', 'PengaturanSegment', 'segments', ['routes']],
@@ -95,6 +96,44 @@ class AdminOpsSettingsPageTest extends TestCase
             ->assertOk()
             ->assertJsonCount(10, 'drivers')
             ->assertJsonPath('pagination.total', 25);
+    }
+
+    public function test_unit_settings_page_loads_existing_unit_templates_in_deferred_payload(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $tenantId = $this->defaultTenantId();
+        $poolId = (int) DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL KATEGORI ARMADA',
+            'code' => 'PKA',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('units')->insert([
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolId,
+            'nopol' => 'BIGBUS 40 SEAT',
+            'category' => 'Bigbus',
+            'kapasitas' => 40,
+            'status' => 'Aktif',
+            'created_at' => now(),
+        ]);
+
+        $this->get(route('admin-ops.units'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('PengaturanKategoriArmada')
+                ->where('initialTab', 'units')
+                ->loadDeferredProps('settings-data', fn (Assert $reload) => $reload
+                    ->where('settingsData.tab', 'units')
+                    ->has('settingsData.units', 1)
+                    ->where('settingsData.units.0.nopol', 'BIGBUS 40 SEAT'))
+                ->loadDeferredProps('settings-masters', fn (Assert $reload) => $reload
+                    ->where('settingsMasters.tab', 'units')
+                    ->has('settingsMasters.pools', 1)),
+            );
     }
 
     public function test_read_only_operator_can_open_lists_but_cannot_use_manage_actions(): void
