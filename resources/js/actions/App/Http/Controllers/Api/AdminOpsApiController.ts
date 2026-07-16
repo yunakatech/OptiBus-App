@@ -1936,6 +1936,84 @@ customersDelete.delete = (args: { id: string | number } | [id: string | number ]
 
     customersDelete.form = customersDeleteForm
 /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::activityLogsIndex
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
+ * @route '/api/admin/activity-logs'
+ */
+export const activityLogsIndex = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: activityLogsIndex.url(options),
+    method: 'get',
+})
+
+activityLogsIndex.definition = {
+    methods: ["get","head"],
+    url: '/api/admin/activity-logs',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::activityLogsIndex
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
+ * @route '/api/admin/activity-logs'
+ */
+activityLogsIndex.url = (options?: RouteQueryOptions) => {
+    return activityLogsIndex.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::activityLogsIndex
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
+ * @route '/api/admin/activity-logs'
+ */
+activityLogsIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: activityLogsIndex.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::activityLogsIndex
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
+ * @route '/api/admin/activity-logs'
+ */
+activityLogsIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: activityLogsIndex.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::activityLogsIndex
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
+ * @route '/api/admin/activity-logs'
+ */
+    const activityLogsIndexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: activityLogsIndex.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::activityLogsIndex
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
+ * @route '/api/admin/activity-logs'
+ */
+        activityLogsIndexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: activityLogsIndex.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::activityLogsIndex
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
+ * @route '/api/admin/activity-logs'
+ */
+        activityLogsIndexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: activityLogsIndex.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+
+    activityLogsIndex.form = activityLogsIndexForm
+/**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::cancellationsIndex
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1358
  * @route '/api/admin/cancellations'
@@ -7036,6 +7114,6 @@ paymentSettingsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'
         })
 
     paymentSettingsSave.form = paymentSettingsSaveForm
-const AdminOpsApiController = { reportsSummary, reportsBookingsCsv, reportsRevenueCsv, routesIndex, routesSave, routesDelete, schedulesIndex, schedulesSave, schedulesDelete, driversIndex, driversSave, driversDelete, luggageServicesIndex, luggageServicesSave, luggageServicesDelete, segmentsIndex, segmentsSave, segmentsDelete, customersTemplate, customersImport, customersIndex, customersSave, customersDelete, cancellationsIndex, armadasExport, driversExport, chartersIndex, chartersShow, chartersSave, chartersBulkDelete, chartersMarkBopDone, chartersMarkPaid, chartersMarkDone, chartersDelete, luggagesIndex, luggagesSave, luggagesBulkDelete, luggagesBulkStatus, luggagesMarkPaid, luggagesMarkActive, luggagesMarkDone, luggagesMarkCanceled, luggagesTracking, luggagesTrackingAdd, luggagesDelete, assignmentsIndex, assignmentsConflicts, assignmentsSave, assignmentsBulkDelete, assignmentsDelete, customerBagasiIndex, customerBagasiSave, customerBagasiDelete, customerCharterIndex, customerCharterSave, customerCharterDelete, charterRoutesMasterIndex, charterRoutesMasterSave, charterRoutesMasterDelete, unitsIndex, unitsSave, unitsDelete, armadaCategoriesIndex, armadasIndex, armadasShow, armadasSave, armadasDelete, poolsIndex, poolsExport, poolsSave, poolsDelete, tenantSwitch, poolSwitch, usersIndex, usersSave, usersVerify, usersUnverify, usersSendVerification, usersDelete, rolesIndex, rolesSave, rolesDelete, tenantsIndex, tenantsSave, tenantsDelete, subscriptionsIndex, subscriptionsSave, plansIndex, plansSave, invoicesIndex, invoicesMarkPaid, paymentSettingsGet, paymentSettingsSave }
+const AdminOpsApiController = { reportsSummary, reportsBookingsCsv, reportsRevenueCsv, routesIndex, routesSave, routesDelete, schedulesIndex, schedulesSave, schedulesDelete, driversIndex, driversSave, driversDelete, luggageServicesIndex, luggageServicesSave, luggageServicesDelete, segmentsIndex, segmentsSave, segmentsDelete, customersTemplate, customersImport, customersIndex, customersSave, customersDelete, activityLogsIndex, cancellationsIndex, armadasExport, driversExport, chartersIndex, chartersShow, chartersSave, chartersBulkDelete, chartersMarkBopDone, chartersMarkPaid, chartersMarkDone, chartersDelete, luggagesIndex, luggagesSave, luggagesBulkDelete, luggagesBulkStatus, luggagesMarkPaid, luggagesMarkActive, luggagesMarkDone, luggagesMarkCanceled, luggagesTracking, luggagesTrackingAdd, luggagesDelete, assignmentsIndex, assignmentsConflicts, assignmentsSave, assignmentsBulkDelete, assignmentsDelete, customerBagasiIndex, customerBagasiSave, customerBagasiDelete, customerCharterIndex, customerCharterSave, customerCharterDelete, charterRoutesMasterIndex, charterRoutesMasterSave, charterRoutesMasterDelete, unitsIndex, unitsSave, unitsDelete, armadaCategoriesIndex, armadasIndex, armadasShow, armadasSave, armadasDelete, poolsIndex, poolsExport, poolsSave, poolsDelete, tenantSwitch, poolSwitch, usersIndex, usersSave, usersVerify, usersUnverify, usersSendVerification, usersDelete, rolesIndex, rolesSave, rolesDelete, tenantsIndex, tenantsSave, tenantsDelete, subscriptionsIndex, subscriptionsSave, plansIndex, plansSave, invoicesIndex, invoicesMarkPaid, paymentSettingsGet, paymentSettingsSave }
 
 export default AdminOpsApiController

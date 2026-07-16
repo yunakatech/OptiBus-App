@@ -641,14 +641,20 @@ class AdminOpsApiTest extends TestCase
             'tester@example.com',
         );
 
-        $cancellations = $this->getJson(route('api.admin.cancellations.index'))
-            ->assertOk()
-            ->json('cancellations');
+        $logsResponse = $this->getJson(route('api.admin.activity-logs.index'))
+            ->assertOk();
+        $logs = $logsResponse->json('logs');
+        $this->assertSame($logs, $logsResponse->json('cancellations'));
         $this->assertTrue(
-            collect($cancellations)->contains(
+            collect($logs)->contains(
                 fn (array $row) => str_contains((string) ($row['title'] ?? ''), 'Testing cancellation log'),
             ),
         );
+
+        $legacyLogs = $this->getJson(route('api.admin.cancellations.index'))
+            ->assertOk()
+            ->json('logs');
+        $this->assertSame($logs, $legacyLogs);
 
         DB::table('bookings')->insert([
             'rute' => 'PINRANG - MAKASSAR',

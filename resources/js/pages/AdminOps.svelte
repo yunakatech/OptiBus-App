@@ -68,7 +68,8 @@
         customers: number;
         armadas: number;
         pools: number;
-        cancellations: number;
+        logs: number;
+        cancellations?: number;
     };
     type RouteRow = {
         id: number;
@@ -416,7 +417,7 @@
         armada_count: number;
         driver_count: number;
     };
-    type CancellationRow = {
+    type ActivityLogRow = {
         tag: string;
         title: string;
         meta: string;
@@ -517,7 +518,7 @@
         settingsMasters = null,
     }: {
         stats: Stats;
-        initialTab?: TabName | null;
+        initialTab?: TabName | 'cancellations' | null;
         lockedMenuView?: boolean;
         initialMode?: string | null;
         initialRecordId?: number | null;
@@ -547,7 +548,7 @@
         'armadas',
         'pools',
         'users',
-        'cancellations',
+        'logs',
         'reports',
     ] as const;
     type TabName = (typeof tabs)[number];
@@ -607,7 +608,7 @@
             return 'Users';
         }
 
-        if (tab === 'cancellations') {
+        if (tab === 'logs') {
             return 'Logs';
         }
 
@@ -675,7 +676,7 @@
             tabs: [
                 { tab: 'users', label: 'Users', permission: 'user.manage' },
                 {
-                    tab: 'cancellations',
+                    tab: 'logs',
                     label: 'Logs',
                     permission: 'logs.view',
                 },
@@ -750,7 +751,7 @@
     let canManagePools = $state(true);
     let users = $state<UserRow[]>([]);
     let roles = $state<RoleOption[]>([]);
-    let cancellations = $state<CancellationRow[]>([]);
+    let activityLogs = $state<ActivityLogRow[]>([]);
     let units = $state<UnitRow[]>([]);
     let customerImportInput = $state<HTMLInputElement | null>(null);
     let customerImporting = $state(false);
@@ -2451,6 +2452,13 @@
     const isTabName = (value: string | null): value is TabName => {
         return value !== null && tabs.includes(value as TabName);
     };
+    const normalizeTabName = (value: string | null): TabName | null => {
+        if (value === 'cancellations') {
+            return 'logs';
+        }
+
+        return isTabName(value) ? value : null;
+    };
 
     const syncTabQuery = (tab: TabName) => {
         if (typeof window === 'undefined') {
@@ -2478,7 +2486,7 @@
     };
 
     const hasFormTab = (tab: TabName) =>
-        !['cancellations', 'reports'].includes(tab);
+        !['logs', 'reports'].includes(tab);
     const showHeaderCreateAction = (tab: TabName) =>
         hasFormTab(tab) && canWriteTab(tab) && activeMode === 'data';
     const showHeaderBackAction = (tab: TabName) =>
@@ -2494,7 +2502,7 @@
         armadas: 'armada.manage',
         pools: 'pool.manage',
         users: 'user.manage',
-        cancellations: null,
+        logs: null,
         reports: null,
     };
     const canWriteTab = (tab: TabName) =>
@@ -3495,7 +3503,7 @@
         deferredSettingsEnabled &&
         lockedFromServer &&
         activeTab === tab &&
-        initialTab === tab &&
+        normalizeTabName(initialTab) === tab &&
         isHybridSettingsTab(tab) &&
         !(tab === 'units' && initialMode === 'layout');
 
@@ -4116,9 +4124,9 @@
         setPoolManageAccess(Boolean(r.can_manage ?? true));
     };
 
-    const loadCancellations = async () => {
-        const r = await api('GET', '/api/admin/cancellations?limit=50');
-        cancellations = r.cancellations ?? [];
+    const loadLogs = async () => {
+        const r = await api('GET', '/api/admin/activity-logs?limit=50');
+        activityLogs = r.logs ?? r.cancellations ?? [];
     };
 
     const loadActiveTab = async () => {
@@ -4174,8 +4182,8 @@
                 await loadUsers();
             }
 
-            if (activeTab === 'cancellations') {
-                await loadCancellations();
+            if (activeTab === 'logs') {
+                await loadLogs();
             }
 
             if (activeTab === 'reports') {
@@ -5394,8 +5402,9 @@
             lockedMenuView = true;
         }
 
-        if (isTabName(initialTab)) {
-            activeTab = initialTab;
+        const normalizedInitialTab = normalizeTabName(initialTab);
+        if (normalizedInitialTab) {
+            activeTab = normalizedInitialTab;
             lockedMenuView = true;
         }
 
@@ -5414,12 +5423,13 @@
         }
 
         if (typeof window !== 'undefined') {
-            const initialTab = new URLSearchParams(window.location.search).get(
+            const initialQueryTab = new URLSearchParams(window.location.search).get(
                 'tab',
             );
 
-            if (isTabName(initialTab)) {
-                activeTab = initialTab;
+            const normalizedQueryTab = normalizeTabName(initialQueryTab);
+            if (normalizedQueryTab) {
+                activeTab = normalizedQueryTab;
                 lockedMenuView = true;
             }
         }
@@ -5597,7 +5607,7 @@
                             Logs
                         </p>
                         <p class="mt-1 text-lg font-semibold">
-                            {stats.cancellations}
+                            {stats.logs ?? stats.cancellations ?? 0}
                         </p>
                     </div>
                 </div>
@@ -11545,7 +11555,7 @@
                 {/if}
             {/if}
 
-            {#if activeTab === 'cancellations'}
+            {#if activeTab === 'logs'}
                 <div
                     class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                 >
@@ -11573,11 +11583,11 @@
                             variant="secondary"
                             class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
                         >
-                            {cancellations.length} aktivitas
+                            {activityLogs.length} aktivitas
                         </Badge>
                     </div>
                     <div class="grid gap-3 p-3 md:hidden">
-                        {#each cancellations as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
+                        {#each activityLogs as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
                             <article
                                 class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                             >
@@ -11666,7 +11676,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {#each cancellations as row (`${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
+                                {#each activityLogs as row (`${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
                                     <tr
                                         class="group transition hover:bg-muted/15"
                                     >

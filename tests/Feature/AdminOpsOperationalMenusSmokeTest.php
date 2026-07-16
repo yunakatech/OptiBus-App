@@ -42,7 +42,7 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
             'admin-ops.armadas',
             'admin-ops.pools',
             'admin-ops.users',
-            'admin-ops.cancellations',
+            'admin-ops.logs',
         ];
 
         foreach ($routes as $routeName) {
@@ -72,7 +72,8 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
             '/admin/customer-bagasi' => route('admin-ops.master.customer-bagasi'),
             '/admin/customer-charter' => route('admin-ops.master.customer-charter'),
             '/admin/rute-carter' => route('admin-ops.master.rute-carter'),
-            '/admin/cancellations' => route('admin-ops.cancellations'),
+            '/admin/logs' => route('admin-ops.logs'),
+            '/admin/cancellations' => route('admin-ops.logs'),
             '/admin/master' => route('admin-ops.master'),
             '/admin/admin-ops/pool' => route('admin-ops.pools'),
             '/admin/admin-ops/admin-ops/pool' => route('admin-ops.pools'),
@@ -82,6 +83,9 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
         foreach ($redirects as $legacyPath => $target) {
             $this->get($legacyPath)->assertRedirect($target);
         }
+
+        $this->get(route('admin-ops.cancellations'))
+            ->assertRedirect(route('admin-ops.logs'));
     }
 
     public function test_legacy_admin_report_api_paths_still_work_for_ajax_requests(): void
