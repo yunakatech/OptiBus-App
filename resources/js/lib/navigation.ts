@@ -323,7 +323,10 @@ export function getVisibleNavSections(auth: AuthLike): NavSection[] {
                   },
         )
         .filter(
-            (section) => showTenantScopedSections || section.id === 'sistem',
+            (section) =>
+                showTenantScopedSections ||
+                section.id === 'operasional' ||
+                section.id === 'sistem',
         )
         .filter((section) => section.items.length > 0);
 }
