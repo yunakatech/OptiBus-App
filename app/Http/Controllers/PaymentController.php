@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
+use App\Support\DeferredInertia;
 use App\Support\PoolScope;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -31,21 +32,23 @@ class PaymentController extends Controller
     public function __invoke(Request $request): Response
     {
         $filters = $this->filters($request);
+        $usesDeferredInertia = DeferredInertia::opsEnabled();
 
         return Inertia::render('Payments', [
             'filters' => $filters,
-            'paymentData' => Inertia::defer(fn (): array => $this->paymentData($request), 'payment-data'),
+            'paymentData' => $usesDeferredInertia
+                ? Inertia::defer(fn (): array => $this->paymentData($request), 'payment-data')
+                : $this->paymentData($request),
         ]);
     }
 
     public function export(Request $request): StreamedResponse
     {
         $filters = $this->filters($request);
-        $query = $this->paymentUnionQuery($filters);
-        $rowsQuery = $query === null
+        $rowsQuery = $this->paymentRowsQuery($filters);
+        $rowsQuery = $rowsQuery === null
             ? null
-            : DB::query()
-                ->fromSub($query, 'payment_rows')
+            : $rowsQuery
                 ->orderByDesc('trx_date')
                 ->orderByDesc('trx_time')
                 ->orderByDesc('created_at')
@@ -145,16 +148,14 @@ class PaymentController extends Controller
         $filters = $this->filters($request);
         $page = max(1, (int) $filters['page']);
         $perPage = max(10, min(50, (int) $filters['per_page']));
-        $total = 0;
+        $baseQuery = $this->paymentBaseUnionQuery($filters);
+        $summary = $this->summary($filters, $baseQuery ? clone $baseQuery : null);
+        $total = (int) ($summary['active']['count'] ?? 0);
         $rows = [];
-        $query = $this->paymentUnionQuery($filters);
+        $rowsQuery = $baseQuery ? $this->paymentRowsQuery($filters, $baseQuery) : null;
 
-        if ($query !== null) {
-            $totalQuery = DB::query()->fromSub(clone $query, 'payment_rows');
-            $total = (int) $totalQuery->count();
-
-            $rows = DB::query()
-                ->fromSub($query, 'payment_rows')
+        if ($rowsQuery !== null) {
+            $rows = $rowsQuery
                 ->orderByDesc('trx_date')
                 ->orderByDesc('trx_time')
                 ->orderByDesc('created_at')
@@ -169,7 +170,7 @@ class PaymentController extends Controller
         return [
             'filters' => $filters,
             'rows' => $rows,
-            'summary' => $this->summary($filters),
+            'summary' => $summary,
             'pagination' => [
                 'page' => $page,
                 'per_page' => $perPage,
@@ -204,22 +205,21 @@ class PaymentController extends Controller
     /**
      * @param  array<string, mixed>  $filters
      */
-    private function paymentUnionQuery(array $filters, ?string $statusOverride = null): ?Builder
+    private function paymentBaseUnionQuery(array $filters): ?Builder
     {
-        $status = $statusOverride ?? (string) $filters['status'];
         $source = (string) $filters['source'];
         $queries = [];
 
         if (($source === 'all' || $source === 'booking') && $this->canViewSource('booking')) {
-            $queries[] = $this->bookingPaymentQuery($filters, $status);
+            $queries[] = $this->bookingPaymentQuery($filters);
         }
 
         if (($source === 'all' || $source === 'charter') && $this->canViewSource('charter')) {
-            $queries[] = $this->charterPaymentQuery($filters, $status);
+            $queries[] = $this->charterPaymentQuery($filters);
         }
 
         if (($source === 'all' || $source === 'luggage') && $this->canViewSource('luggage')) {
-            $queries[] = $this->luggagePaymentQuery($filters, $status);
+            $queries[] = $this->luggagePaymentQuery($filters);
         }
 
         $queries = array_values(array_filter($queries));
@@ -238,7 +238,29 @@ class PaymentController extends Controller
     /**
      * @param  array<string, mixed>  $filters
      */
-    private function bookingPaymentQuery(array $filters, string $status): ?Builder
+    private function paymentRowsQuery(array $filters, ?Builder $baseQuery = null): ?Builder
+    {
+        $baseQuery = $baseQuery ? clone $baseQuery : $this->paymentBaseUnionQuery($filters);
+        if ($baseQuery === null) {
+            return null;
+        }
+
+        $query = DB::query()
+            ->fromSub($baseQuery, 'payment_rows')
+            ->whereNotNull('status_bucket');
+
+        $status = (string) ($filters['status'] ?? 'unpaid');
+        if (in_array($status, self::STATUSES, true)) {
+            $query->where('status_bucket', $status);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function bookingPaymentQuery(array $filters): ?Builder
     {
         if (! Schema::hasTable('bookings')) {
             return null;
@@ -249,6 +271,12 @@ class PaymentController extends Controller
         $hasDepartureCode = Schema::hasColumn('bookings', 'departure_code');
         $amountSql = '(COALESCE(b.price, 0) - COALESCE(b.discount, 0))';
         $paymentSql = "LOWER(COALESCE(b.pembayaran, ''))";
+        $statusBucketSql = "CASE
+            WHEN {$paymentSql} IN ('".implode("','", self::PAID_BOOKING_STATUSES)."') THEN 'paid'
+            WHEN {$paymentSql} = 'dp' THEN 'dp'
+            WHEN b.pembayaran IS NULL OR {$paymentSql} IN ('', 'belum lunas', 'belum bayar') THEN 'unpaid'
+            ELSE NULL
+        END";
         $query = DB::table('bookings as b');
 
         if ($hasRouteId && Schema::hasTable('routes')) {
@@ -273,7 +301,7 @@ class PaymentController extends Controller
             DB::raw("CASE WHEN {$paymentSql} IN ('".implode("','", self::PAID_BOOKING_STATUSES)."') THEN 0 ELSE {$amountSql} END as remaining_amount"),
             'b.pembayaran as payment_status',
             'b.status as source_status',
-            DB::raw("'{$status}' as status_bucket"),
+            DB::raw("{$statusBucketSql} as status_bucket"),
             DB::raw('NULL as pool_id'),
             DB::raw('NULL as pool_name'),
             'b.created_at',
@@ -283,7 +311,6 @@ class PaymentController extends Controller
         PoolScope::applyRouteScope($query, $hasRouteId ? 'b.route_id' : '', 'b.rute');
         $this->applyTenantScopeIfExists($query, 'bookings', 'b');
         $query->whereRaw("LOWER(COALESCE(b.status, 'active')) <> 'canceled'");
-        $this->applyBookingStatusFilter($query, $status);
         $this->applySearch($query, (string) $filters['q'], ['b.name', 'b.phone', 'b.rute', 'b.pembayaran']);
 
         return $query;
@@ -292,7 +319,7 @@ class PaymentController extends Controller
     /**
      * @param  array<string, mixed>  $filters
      */
-    private function charterPaymentQuery(array $filters, string $status): ?Builder
+    private function charterPaymentQuery(array $filters): ?Builder
     {
         if (! Schema::hasTable('charters')) {
             return null;
@@ -309,6 +336,12 @@ class PaymentController extends Controller
         $paymentSql = "LOWER(COALESCE(c.payment_status, ''))";
         $amountSql = 'COALESCE(c.price, 0)';
         $downPaymentSql = 'COALESCE(c.down_payment, 0)';
+        $statusBucketSql = "CASE
+            WHEN {$paymentSql} = 'lunas' THEN 'paid'
+            WHEN {$paymentSql} = 'dp' OR ({$downPaymentSql} > 0 AND {$paymentSql} <> 'lunas') THEN 'dp'
+            WHEN {$paymentSql} NOT IN ('lunas', 'dp', 'canceled') AND {$downPaymentSql} <= 0 THEN 'unpaid'
+            ELSE NULL
+        END";
 
         $query->select([
             DB::raw("'charter' as source"),
@@ -328,7 +361,7 @@ class PaymentController extends Controller
             DB::raw("CASE WHEN {$paymentSql} = 'lunas' THEN 0 WHEN ({$amountSql} - {$downPaymentSql}) < 0 THEN 0 ELSE ({$amountSql} - {$downPaymentSql}) END as remaining_amount"),
             'c.payment_status',
             $hasStatus ? 'c.status as source_status' : DB::raw("CASE WHEN {$paymentSql} = 'canceled' THEN 'canceled' ELSE 'active' END as source_status"),
-            DB::raw("'{$status}' as status_bucket"),
+            DB::raw("{$statusBucketSql} as status_bucket"),
             $hasPoolId ? 'c.pool_id' : DB::raw('NULL as pool_id'),
             $hasPoolId && Schema::hasTable('pools') ? 'p.name as pool_name' : DB::raw('NULL as pool_name'),
             'c.created_at',
@@ -340,7 +373,6 @@ class PaymentController extends Controller
         $query
             ->whereRaw("LOWER(COALESCE(c.payment_status, '')) <> 'canceled'")
             ->whereRaw(($hasStatus ? "LOWER(COALESCE(c.status, 'active'))" : "'active'")." <> 'canceled'");
-        $this->applyCharterStatusFilter($query, $status);
         $this->applySearch($query, (string) $filters['q'], ['c.name', 'c.company_name', 'c.phone', 'c.pickup_point', 'c.drop_point', 'c.payment_status']);
 
         return $query;
@@ -349,7 +381,7 @@ class PaymentController extends Controller
     /**
      * @param  array<string, mixed>  $filters
      */
-    private function luggagePaymentQuery(array $filters, string $status): ?Builder
+    private function luggagePaymentQuery(array $filters): ?Builder
     {
         if (! Schema::hasTable('luggages')) {
             return null;
@@ -369,6 +401,12 @@ class PaymentController extends Controller
 
         $paymentSql = "LOWER(COALESCE(l.payment_status, ''))";
         $amountSql = 'COALESCE(l.price, 0)';
+        $statusBucketSql = "CASE
+            WHEN {$paymentSql} = 'lunas' THEN 'paid'
+            WHEN {$paymentSql} = 'dp' THEN 'dp'
+            WHEN {$paymentSql} NOT IN ('lunas', 'dp', 'canceled') THEN 'unpaid'
+            ELSE NULL
+        END";
 
         $query->select([
             DB::raw("'luggage' as source"),
@@ -388,7 +426,7 @@ class PaymentController extends Controller
             DB::raw("CASE WHEN {$paymentSql} = 'lunas' THEN 0 ELSE {$amountSql} END as remaining_amount"),
             'l.payment_status',
             'l.status as source_status',
-            DB::raw("'{$status}' as status_bucket"),
+            DB::raw("{$statusBucketSql} as status_bucket"),
             $hasPoolId ? 'l.pool_id' : DB::raw('NULL as pool_id'),
             $hasPoolId && Schema::hasTable('pools') ? 'p.name as pool_name' : DB::raw('NULL as pool_name'),
             'l.created_at',
@@ -405,82 +443,9 @@ class PaymentController extends Controller
         $query
             ->whereRaw("LOWER(COALESCE(l.payment_status, '')) <> 'canceled'")
             ->whereRaw("LOWER(COALESCE(l.status, '')) <> 'canceled'");
-        $this->applyLuggageStatusFilter($query, $status);
         $this->applySearch($query, (string) $filters['q'], ['l.sender_name', 'l.receiver_name', 'l.sender_phone', 'l.receiver_phone', 'l.kode_resi', 'l.rute', 'l.payment_status']);
 
         return $query;
-    }
-
-    private function applyBookingStatusFilter(Builder $query, string $status): void
-    {
-        $paymentSql = "LOWER(COALESCE(b.pembayaran, ''))";
-
-        if ($status === 'paid') {
-            $query->whereRaw($paymentSql." IN ('".implode("','", self::PAID_BOOKING_STATUSES)."')");
-
-            return;
-        }
-
-        if ($status === 'dp') {
-            $query->whereRaw($paymentSql." = 'dp'");
-
-            return;
-        }
-
-        $query->where(function (Builder $builder) use ($paymentSql): void {
-            $builder
-                ->whereNull('b.pembayaran')
-                ->orWhereRaw($paymentSql." IN ('', 'belum lunas', 'belum bayar')");
-        });
-    }
-
-    private function applyCharterStatusFilter(Builder $query, string $status): void
-    {
-        $paymentSql = "LOWER(COALESCE(c.payment_status, ''))";
-        $downPaymentSql = 'COALESCE(c.down_payment, 0)';
-
-        if ($status === 'paid') {
-            $query->whereRaw($paymentSql." = 'lunas'");
-
-            return;
-        }
-
-        if ($status === 'dp') {
-            $query->where(function (Builder $builder) use ($paymentSql, $downPaymentSql): void {
-                $builder
-                    ->whereRaw($paymentSql." = 'dp'")
-                    ->orWhere(function (Builder $dpBuilder) use ($paymentSql, $downPaymentSql): void {
-                        $dpBuilder
-                            ->whereRaw($downPaymentSql.' > 0')
-                            ->whereRaw($paymentSql." <> 'lunas'");
-                    });
-            });
-
-            return;
-        }
-
-        $query
-            ->whereRaw($paymentSql." NOT IN ('lunas', 'dp', 'canceled')")
-            ->whereRaw($downPaymentSql.' <= 0');
-    }
-
-    private function applyLuggageStatusFilter(Builder $query, string $status): void
-    {
-        $paymentSql = "LOWER(COALESCE(l.payment_status, ''))";
-
-        if ($status === 'paid') {
-            $query->whereRaw($paymentSql." = 'lunas'");
-
-            return;
-        }
-
-        if ($status === 'dp') {
-            $query->whereRaw($paymentSql." = 'dp'");
-
-            return;
-        }
-
-        $query->whereRaw($paymentSql." NOT IN ('lunas', 'dp', 'canceled')");
     }
 
     /**
@@ -506,27 +471,36 @@ class PaymentController extends Controller
      * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
-    private function summary(array $filters): array
+    private function summary(array $filters, ?Builder $baseQuery = null): array
     {
-        $byStatus = [];
-        foreach (self::STATUSES as $status) {
-            $query = $this->paymentUnionQuery([...$filters, 'status' => $status], $status);
-            if ($query === null) {
-                $byStatus[$status] = ['count' => 0, 'amount' => 0.0, 'remaining' => 0.0];
+        $byStatus = array_fill_keys(self::STATUSES, [
+            'count' => 0,
+            'amount' => 0.0,
+            'remaining' => 0.0,
+        ]);
+        $baseQuery = $baseQuery ? clone $baseQuery : $this->paymentBaseUnionQuery($filters);
 
-                continue;
-            }
-
-            $row = DB::query()
-                ->fromSub($query, 'payment_rows')
+        if ($baseQuery !== null) {
+            $rows = DB::query()
+                ->fromSub($baseQuery, 'payment_rows')
+                ->whereNotNull('status_bucket')
+                ->select('status_bucket')
                 ->selectRaw('COUNT(*) as total, COALESCE(SUM(amount), 0) as amount, COALESCE(SUM(remaining_amount), 0) as remaining')
-                ->first();
+                ->groupBy('status_bucket')
+                ->get();
 
-            $byStatus[$status] = [
-                'count' => (int) ($row->total ?? 0),
-                'amount' => (float) ($row->amount ?? 0),
-                'remaining' => (float) ($row->remaining ?? 0),
-            ];
+            foreach ($rows as $row) {
+                $status = (string) ($row->status_bucket ?? '');
+                if (! in_array($status, self::STATUSES, true)) {
+                    continue;
+                }
+
+                $byStatus[$status] = [
+                    'count' => (int) ($row->total ?? 0),
+                    'amount' => (float) ($row->amount ?? 0),
+                    'remaining' => (float) ($row->remaining ?? 0),
+                ];
+            }
         }
 
         return [

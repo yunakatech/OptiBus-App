@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:115
+ * @see app/Http/Controllers/PaymentController.php:118
  * @route '/api/admin/payments/{source}/{id}'
  */
 export const update = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:115
+ * @see app/Http/Controllers/PaymentController.php:118
  * @route '/api/admin/payments/{source}/{id}'
  */
 update.url = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -42,7 +42,7 @@ update.url = (args: { source: string | number, id: string | number } | [source: 
 
 /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:115
+ * @see app/Http/Controllers/PaymentController.php:118
  * @route '/api/admin/payments/{source}/{id}'
  */
 update.post = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -52,7 +52,7 @@ update.post = (args: { source: string | number, id: string | number } | [source:
 
     /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:115
+ * @see app/Http/Controllers/PaymentController.php:118
  * @route '/api/admin/payments/{source}/{id}'
  */
     const updateForm = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -62,7 +62,7 @@ update.post = (args: { source: string | number, id: string | number } | [source:
 
             /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:115
+ * @see app/Http/Controllers/PaymentController.php:118
  * @route '/api/admin/payments/{source}/{id}'
  */
         updateForm.post = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
