@@ -216,15 +216,17 @@
     };
     type SettingsDataPayload = {
         tab?: string;
+        routes?: RouteRow[];
         schedules?: ScheduleRow[];
         drivers?: DriverRow[];
+        services?: ServiceRow[];
         segments?: SegmentRow[];
+        customers?: CustomerRow[];
         armadas?: ArmadaRow[];
         units?: UnitRow[];
         pools?: PoolRow[];
         users?: UserRow[];
         roles?: RoleOption[];
-        routes?: RouteRow[];
         can_manage?: boolean;
         pagination?: Pagination;
         route_id?: number;
@@ -551,9 +553,12 @@
     type TabName = (typeof tabs)[number];
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
     const hybridSettingsTabs: TabName[] = [
+        'routes',
         'schedules',
         'drivers',
+        'services',
         'segments',
+        'customers',
         'units',
         'armadas',
         'pools',
@@ -3542,8 +3547,25 @@
             syncScheduleSelection();
         }
 
+        if (payload.tab === 'routes') {
+            routes = payload.routes ?? [];
+            segments = payload.segments ?? segments;
+
+            const routeExists = routes.some(
+                (row) => row.id === Number(selectedSegmentRouteId),
+            );
+
+            if (!routeExists) {
+                selectedSegmentRouteId = 0;
+            }
+        }
+
         if (payload.tab === 'drivers') {
             drivers = payload.drivers ?? [];
+        }
+
+        if (payload.tab === 'services') {
+            services = payload.services ?? [];
         }
 
         if (payload.tab === 'segments') {
@@ -3551,6 +3573,11 @@
                 payload.route_id ?? selectedSegmentRouteId,
             );
             segments = payload.segments ?? [];
+        }
+
+        if (payload.tab === 'customers') {
+            customers = payload.customers ?? [];
+            customerMeta = payload.pagination ?? customerMeta;
         }
 
         if (payload.tab === 'units') {
@@ -3601,6 +3628,10 @@
             routes = payload.routes ?? [];
         }
 
+        if (payload.tab === 'customers') {
+            pools = payload.pools ?? pools;
+        }
+
         if (payload.tab === 'armadas') {
             armadaCategories = payload.categories ?? [];
             units = payload.units ?? [];
@@ -3645,6 +3676,10 @@
 
         if (activeTab === 'drivers' && driverPeriod.trim() !== '') {
             query.period = driverPeriod.trim();
+        }
+
+        if (activeTab === 'customers' && customerSearch.trim() !== '') {
+            query.q = customerSearch.trim();
         }
 
         if (activeTab === 'armadas' && armadaSearch.trim() !== '') {
@@ -3725,6 +3760,10 @@
             armadaPeriod = String(settingsQuery.period ?? armadaPeriod);
         }
 
+        if (initialTab === 'customers') {
+            customerSearch = settingsQuery.q ?? '';
+        }
+
         if (initialTab === 'pools') {
             poolSearch = settingsQuery.q ?? '';
             poolPerformanceFilter =
@@ -3765,6 +3804,12 @@
     });
 
     const loadRoutes = async () => {
+        if (usesHybridSettings('routes')) {
+            reloadSettingsWithInertia();
+
+            return;
+        }
+
         const [r, s] = await Promise.all([
             api('GET', '/api/admin/routes'),
             api('GET', '/api/admin/segments'),
@@ -3840,6 +3885,12 @@
     };
 
     const loadServices = async () => {
+        if (usesHybridSettings('services')) {
+            reloadSettingsWithInertia();
+
+            return;
+        }
+
         const r = await api('GET', '/api/admin/luggage-services');
         services = r.services ?? [];
     };
@@ -3849,6 +3900,12 @@
     };
 
     const loadCustomers = async (page = customerMeta.page) => {
+        if (usesHybridSettings('customers')) {
+            reloadSettingsWithInertia(page, true);
+
+            return;
+        }
+
         try {
             const query = customerSearch.trim();
             const params = new URLSearchParams();

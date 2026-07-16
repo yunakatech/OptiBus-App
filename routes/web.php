@@ -79,7 +79,9 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin-ops/segments', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'segments')->defaults('locked', true)->name('admin-ops.segments');
     Route::redirect('admin/charters', 'charters');
     Route::redirect('admin/luggages', 'luggages');
+    Route::redirect('admin/luggage-services', 'admin-ops/tarif-bagasi');
     Route::redirect('admin/customers', 'admin-ops/customers');
+    Route::redirect('admin/admin-ops/customers', 'admin-ops/customers');
     Route::redirect('admin/routes', 'admin-ops/rute-induk');
     Route::redirect('admin/schedules', 'admin-ops/jadwal');
     Route::redirect('admin/drivers', 'admin-ops/driver');
@@ -88,6 +90,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::redirect('admin/units', 'admin-ops/kategori-armada');
     Route::redirect('admin/armadas', 'admin-ops/armada');
     Route::redirect('admin/pools', 'admin-ops/pool');
+    Route::redirect('admin/admin-ops/pool', 'admin-ops/pool');
     Route::redirect('admin/users', 'admin-ops/users');
     Route::redirect('admin/reports', 'admin-ops/reports');
     Route::redirect('admin/flows', 'admin-ops/flows');
