@@ -10,6 +10,7 @@
     import { Button } from '@/components/ui/button';
     import { SidebarTrigger } from '@/components/ui/sidebar';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
+    import { shouldPrefetchNavigationHref } from '@/lib/navigation';
     import { toUrl } from '@/lib/utils';
     import type { BreadcrumbItem } from '@/types';
 
@@ -21,11 +22,14 @@
 
     const auth = $derived(page.props.auth);
     const url = currentUrlState();
+    const bookingConsoleHref = toUrl('/booking-console');
+    const canPrefetchBookingConsole =
+        shouldPrefetchNavigationHref(bookingConsoleHref);
     const isDashboardPage = $derived(
         url.isCurrentUrl('/dashboard', url.currentUrl),
     );
     const isBookingConsolePage = $derived(
-        url.isCurrentUrl('/booking-console', url.currentUrl),
+        url.isCurrentUrl(bookingConsoleHref, url.currentUrl),
     );
     const dashboardDateLabel = $derived.by(() => {
         const props = page.props as Record<string, unknown>;
@@ -95,9 +99,9 @@
                 {#snippet children(props)}
                     <Link
                         {...props}
-                        href={toUrl('/booking-console')}
-                        prefetch
-                        cacheFor={30000}
+                        href={bookingConsoleHref}
+                        prefetch={canPrefetchBookingConsole || undefined}
+                        cacheFor={canPrefetchBookingConsole ? 30000 : undefined}
                     >
                         <Plus class="size-4" />
                         <span>Booking Console</span>

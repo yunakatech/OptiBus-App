@@ -17,6 +17,7 @@
         navigationMenuTriggerStyle,
     } from '@/components/ui/navigation-menu';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
+    import { shouldPrefetchNavigationHref } from '@/lib/navigation';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
     import type { BreadcrumbItem, NavItem } from '@/types';
@@ -29,8 +30,13 @@
 
     const auth = $derived(page.props.auth);
     const url = currentUrlState();
+    const dashboardHref = toUrl(dashboard());
+    const canPrefetchDashboard = shouldPrefetchNavigationHref(dashboardHref);
+    const bookingConsoleHref = toUrl('/booking-console');
+    const canPrefetchBookingConsole =
+        shouldPrefetchNavigationHref(bookingConsoleHref);
     const isBookingConsolePage = $derived(
-        url.isCurrentUrl('/booking-console', url.currentUrl),
+        url.isCurrentUrl(bookingConsoleHref, url.currentUrl),
     );
 
     const activeItemStyles =
@@ -57,18 +63,18 @@
 
                 {#if isBookingConsolePage}
                     <Link
-                        href={toUrl(dashboard())}
-                        prefetch
-                        cacheFor={30000}
+                        href={dashboardHref}
+                        prefetch={canPrefetchDashboard || undefined}
+                        cacheFor={canPrefetchDashboard ? 30000 : undefined}
                         class="hidden items-center gap-x-2 md:flex"
                     >
                         <AppLogo />
                     </Link>
                 {:else}
                     <Link
-                        href={toUrl(dashboard())}
-                        prefetch
-                        cacheFor={30000}
+                        href={dashboardHref}
+                        prefetch={canPrefetchDashboard || undefined}
+                        cacheFor={canPrefetchDashboard ? 30000 : undefined}
                         class="flex items-center gap-x-2"
                     >
                         <AppLogo />
@@ -94,8 +100,16 @@
                                         ) ??
                                             ''} h-8 cursor-pointer rounded-md px-3.5 text-sm"
                                         href={toUrl(item.href)}
-                                        prefetch={['hover', 'click']}
-                                        cacheFor={30000}
+                                        prefetch={shouldPrefetchNavigationHref(
+                                            toUrl(item.href),
+                                        )
+                                            ? ['hover', 'click']
+                                            : undefined}
+                                        cacheFor={shouldPrefetchNavigationHref(
+                                            toUrl(item.href),
+                                        )
+                                            ? 30000
+                                            : undefined}
                                     >
                                         {#if item.icon}
                                             <item.icon class="mr-2 h-4 w-4" />
@@ -139,9 +153,11 @@
                         {#snippet children(props)}
                             <Link
                                 {...props}
-                                href={toUrl('/booking-console')}
-                                prefetch
-                                cacheFor={30000}
+                                href={bookingConsoleHref}
+                                prefetch={canPrefetchBookingConsole || undefined}
+                                cacheFor={canPrefetchBookingConsole
+                                    ? 30000
+                                    : undefined}
                             >
                                 <Plus class="size-4" />
                                 <span>Booking Console</span>

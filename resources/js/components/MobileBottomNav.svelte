@@ -2,7 +2,10 @@
     import { page, router } from '@inertiajs/svelte';
     import { onMount } from 'svelte';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
-    import { getVisibleMobileNavItems } from '@/lib/navigation';
+    import {
+        getVisibleMobileNavItems,
+        shouldPrefetchNavigationHref,
+    } from '@/lib/navigation';
     import { toUrl } from '@/lib/utils';
     import type { NavItem } from '@/types';
 
@@ -37,7 +40,8 @@
         if (
             typeof window === 'undefined' ||
             url.isCurrentUrl(href, url.currentUrl) ||
-            prefetchedHrefs.has(href)
+            prefetchedHrefs.has(href) ||
+            !shouldPrefetchNavigationHref(href)
         ) {
             return;
         }
