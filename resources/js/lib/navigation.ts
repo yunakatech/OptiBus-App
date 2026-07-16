@@ -63,6 +63,12 @@ const operasionalNavItems: NavItem[] = [
         permission: 'booking.view',
     },
     {
+        title: 'Booking Console',
+        href: '/booking-console',
+        icon: Plus,
+        permission: 'booking.view',
+    },
+    {
         title: 'Carter',
         href: '/charters',
         icon: BusFront,
