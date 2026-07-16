@@ -79,4 +79,26 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
             $this->get($legacyPath)->assertRedirect($target);
         }
     }
+
+    public function test_legacy_admin_report_api_paths_still_work_for_ajax_requests(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $headers = [
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+
+        $this->get('/admin/pools', $headers)
+            ->assertOk()
+            ->assertJsonStructure(['pools']);
+
+        $this->get('/admin/reports/summary?from='.now()->toDateString().'&to='.now()->toDateString().'&type=booking', $headers)
+            ->assertOk()
+            ->assertJsonStructure([
+                'summary' => ['type', 'total_rows', 'revenue_total'],
+                'rows',
+                'pagination',
+            ]);
+    }
 }

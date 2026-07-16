@@ -16,6 +16,7 @@ use App\Http\Controllers\PlatformDashboardController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\StaticAssetController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Google OAuth
@@ -89,7 +90,13 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::redirect('admin/segments', 'admin-ops/segments');
     Route::redirect('admin/units', 'admin-ops/kategori-armada');
     Route::redirect('admin/armadas', 'admin-ops/armada');
-    Route::redirect('admin/pools', 'admin-ops/pool');
+    Route::get('admin/pools', static function (Request $request, AdminOpsApiController $controller) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return $controller->poolsIndex($request);
+        }
+
+        return redirect()->to(route('admin-ops.pools'));
+    });
     Route::redirect('admin/admin-ops/pool', 'admin-ops/pool');
     Route::get('admin/admin-ops/{path}', static function (string $path) {
         $normalized = ltrim($path, '/');
@@ -102,6 +109,9 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     })->where('path', '.*');
     Route::redirect('admin/users', 'admin-ops/users');
     Route::redirect('admin/reports', 'admin-ops/reports');
+    Route::get('admin/reports/summary', [AdminOpsApiController::class, 'reportsSummary'])->middleware('permission:report.view');
+    Route::get('admin/reports/bookings-csv', [AdminOpsApiController::class, 'reportsBookingsCsv'])->middleware('permission:report.export');
+    Route::get('admin/reports/revenue-csv', [AdminOpsApiController::class, 'reportsRevenueCsv'])->middleware('permission:report.export');
     Route::redirect('admin/flows', 'admin-ops/flows');
     Route::redirect('admin/master', 'admin-ops/master');
     Route::redirect('admin/customer-bagasi', 'admin-ops/customer-bagasi');
