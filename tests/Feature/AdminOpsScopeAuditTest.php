@@ -792,6 +792,86 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('units.0.id', $unitId);
     }
 
+    public function test_unit_create_is_rejected_when_user_has_no_writable_pool_scope(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantId = $this->tenantIdBySlug('audit-unit-no-pool-tenant');
+        $this->activateTenantBilling($tenantId);
+        $this->createPool($tenantId, 'POOL A', 'UNIT-NP-A', 100000);
+
+        $operator = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => false,
+        ]);
+        $this->assignRole($operator, 'admin-pusat');
+
+        $this->actingAs($operator)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->postJson(route('api.admin.units.save'), [
+                'nopol' => 'TEMPLATE TANPA POOL',
+                'category' => 'Bigbus',
+                'kapasitas' => 40,
+                'status' => 'Aktif',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'Belum ada pool yang bisa diakses untuk menyimpan data ini.');
+
+        $this->assertDatabaseMissing('units', [
+            'nopol' => 'TEMPLATE TANPA POOL',
+            'tenant_id' => $tenantId,
+        ]);
+    }
+
+    public function test_pool_scoped_master_create_is_rejected_when_user_has_no_writable_pool_scope(): void
+    {
+        AccessControl::syncDefaults();
+
+        if (! Schema::hasTable('luggage_services') || ! Schema::hasTable('master_carter')) {
+            $this->markTestSkipped('Master lookup tables are not available.');
+        }
+
+        $tenantId = $this->tenantIdBySlug('audit-master-no-pool-tenant');
+        $this->activateTenantBilling($tenantId);
+        $this->createPool($tenantId, 'POOL A', 'MNP-A', 100000);
+
+        $operator = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => false,
+        ]);
+        $this->assignRole($operator, 'admin-pusat');
+
+        $this->actingAs($operator)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->postJson(route('api.admin.luggage-services.save'), [
+                'name' => 'Tarif Tanpa Pool',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'Belum ada pool yang bisa diakses untuk menyimpan data ini.');
+
+        $this->actingAs($operator)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->postJson(route('api.admin.charter-routes.save'), [
+                'name' => 'RUTE TANPA POOL',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'duration' => 'Regular',
+                'rental_price' => 2000000,
+                'bop_price' => 150000,
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'Belum ada pool yang bisa diakses untuk menyimpan data ini.');
+
+        $this->assertDatabaseMissing('luggage_services', [
+            'name' => 'Tarif Tanpa Pool',
+            'tenant_id' => $tenantId,
+        ]);
+        $this->assertDatabaseMissing('master_carter', [
+            'name' => 'RUTE TANPA POOL',
+            'tenant_id' => $tenantId,
+        ]);
+    }
+
     /**
      * @return array{0: int, 1: int}
      */

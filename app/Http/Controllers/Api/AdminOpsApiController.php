@@ -896,7 +896,12 @@ class AdminOpsApiController extends Controller
             return $this->ok(['message' => 'Luggage service updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, $this->tenantPayload('luggage_services'), $this->poolPayload('luggage_services'), [
+        $poolId = $this->resolveWritablePoolIdFromRequest($request, 'luggage_services', 0, true);
+        if ($poolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($poolId), $poolId === -1 ? 403 : 422);
+        }
+
+        $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, $this->tenantPayload('luggage_services'), $this->poolPayload('luggage_services', $poolId > 0 ? $poolId : null), [
             'created_at' => now(),
         ]));
 
@@ -4149,7 +4154,12 @@ class AdminOpsApiController extends Controller
                 return $this->ok(['message' => 'Rute carter updated.', 'id' => $id]);
             }
 
-            $newId = DB::table('master_carter')->insertGetId(array_merge($payload, $this->tenantPayload('master_carter'), $this->poolPayload('master_carter'), ['created_at' => now()]));
+            $poolId = $this->resolveWritablePoolIdFromRequest($request, 'master_carter', 0, true);
+            if ($poolId < 0) {
+                return $this->error($this->poolResolveErrorMessage($poolId), $poolId === -1 ? 403 : 422);
+            }
+
+            $newId = DB::table('master_carter')->insertGetId(array_merge($payload, $this->tenantPayload('master_carter'), $this->poolPayload('master_carter', $poolId > 0 ? $poolId : null), ['created_at' => now()]));
 
             return $this->ok(['message' => 'Rute carter created.', 'id' => $newId], 201);
         } catch (QueryException $e) {
@@ -9738,6 +9748,12 @@ XML;
             return PoolScope::canAccessPool($existingPoolId, auth()->id()) ? $existingPoolId : -1;
         }
 
+        if ($isCreate) {
+            $fallbackPoolId = $this->writablePoolContextId();
+
+            return $fallbackPoolId > 0 ? $fallbackPoolId : -2;
+        }
+
         return 0;
     }
 
@@ -9763,6 +9779,7 @@ XML;
     {
         return match ($code) {
             -1 => 'Pool tidak ditemukan atau Anda tidak memiliki akses.',
+            -2 => 'Belum ada pool yang bisa diakses untuk menyimpan data ini.',
             default => 'Pilih pool terlebih dahulu saat mode Semua Pool.',
         };
     }

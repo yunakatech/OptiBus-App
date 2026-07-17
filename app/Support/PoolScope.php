@@ -755,8 +755,10 @@ class PoolScope
         }
 
         $scope = self::forCurrentUser(0, $userId);
-        if (! $scope['all'] && count($scope['pool_ids']) === 1) {
-            return (int) $scope['pool_ids'][0];
+        if (! $scope['all']) {
+            return count($scope['pool_ids']) === 1
+                ? (int) $scope['pool_ids'][0]
+                : 0;
         }
 
         $activePoolIds = DB::table('pools')
