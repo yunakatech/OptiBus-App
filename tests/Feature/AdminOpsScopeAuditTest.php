@@ -872,7 +872,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->actingAs($admin)
             ->withSession(['active_tenant_id' => $tenantId])
             ->get(route('api.admin.units.index'))
-            ->assertRedirect(route('admin-ops.units'));
+            ->assertRedirect('/admin-ops/kategori-armada');
 
         $this->actingAs($admin)
             ->withSession(['active_tenant_id' => $tenantId])
@@ -885,6 +885,12 @@ class AdminOpsScopeAuditTest extends TestCase
     {
         $this->get('/api/build/assets/app-test.js')
             ->assertRedirect('/build/assets/app-test.js');
+    }
+
+    public function test_api_prefixed_admin_ops_paths_redirect_to_real_admin_ops_paths(): void
+    {
+        $this->get('/api/admin-ops/kategori-armada')
+            ->assertRedirect('/admin-ops/kategori-armada');
     }
 
     public function test_pool_scoped_master_create_is_rejected_when_user_has_no_writable_pool_scope(): void
