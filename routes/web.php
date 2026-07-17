@@ -16,6 +16,7 @@ use App\Http\Controllers\PlatformDashboardController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Controllers\StaticAssetController;
+use App\Http\Middleware\RedirectBrowserApiRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,10 @@ Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
 // Public API — no auth required
 Route::get('api/plans', [\App\Http\Controllers\Api\PublicApiController::class, 'plans'])->name('api.plans');
 Route::post('api/webhooks/mayar', [PaymentWebhookController::class, 'mayar'])->name('api.webhooks.mayar');
+
+Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/build/'.ltrim($path, '/'), 302))
+    ->where('path', '.*')
+    ->name('api.build.redirect');
 
 Route::get('style.css', [StaticAssetController::class, 'style'])->name('style.css');
 
@@ -192,7 +197,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::post('luggages/raw', [OperationsApiController::class, 'submitLuggage'])->middleware('permission:luggage.create')->name('luggages.submit-raw');
     });
 
-    Route::prefix('api/admin')->name('api.admin.')->group(function () {
+    Route::prefix('api/admin')->name('api.admin.')->middleware(RedirectBrowserApiRequests::class)->group(function () {
         Route::post('payments/{source}/{id}', [PaymentController::class, 'update'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.update');
 
         Route::get('routes', [AdminOpsApiController::class, 'routesIndex'])->middleware('permission:master.view')->name('routes.index');

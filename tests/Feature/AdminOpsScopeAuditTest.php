@@ -857,6 +857,36 @@ class AdminOpsScopeAuditTest extends TestCase
         ]);
     }
 
+    public function test_browser_unit_api_requests_redirect_to_category_page_but_json_requests_still_work(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantId = $this->tenantIdBySlug('audit-unit-browser-api-tenant');
+        $this->activateTenantBilling($tenantId);
+        $this->createPool($tenantId, 'POOL BROWSER API', 'UNIT-BROWSER', 100000);
+
+        $admin = User::factory()->create([
+            'is_super_admin' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->get(route('api.admin.units.index'))
+            ->assertRedirect(route('admin-ops.units'));
+
+        $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->getJson(route('api.admin.units.index'))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+    }
+
+    public function test_api_build_asset_paths_redirect_to_public_build_assets(): void
+    {
+        $this->get('/api/build/assets/app-test.js')
+            ->assertRedirect('/build/assets/app-test.js');
+    }
+
     public function test_pool_scoped_master_create_is_rejected_when_user_has_no_writable_pool_scope(): void
     {
         AccessControl::syncDefaults();
