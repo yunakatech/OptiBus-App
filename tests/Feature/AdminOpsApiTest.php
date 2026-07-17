@@ -286,13 +286,25 @@ class AdminOpsApiTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL TEST CRUD',
+            'code' => 'CRUD-POOL',
+            'status' => 'active',
+            'target_revenue' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $authUser = User::factory()->create([
             'name' => 'Root Admin',
             'email' => 'root.admin@example.com',
             'is_super_admin' => true,
         ]);
-        $this->actingAs($authUser)->withSession(['active_tenant_id' => $tenantId]);
+        $this->actingAs($authUser)->withSession([
+            'active_tenant_id' => $tenantId,
+            'active_pool_id' => $poolId,
+        ]);
 
         $unitCreate = $this->postJson(route('api.admin.units.save'), [
             'nopol' => 'DD 9900 AA',
@@ -361,6 +373,16 @@ class AdminOpsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL ARMADA TEST',
+            'code' => 'ARMADA-POOL',
+            'status' => 'active',
+            'target_revenue' => 150000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->withSession(['active_pool_id' => $poolId]);
 
         $unitCreate = $this->postJson(route('api.admin.units.save'), [
             'nopol' => 'TEMPLATE BIGBUS 42',
@@ -561,6 +583,16 @@ class AdminOpsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL REPORT TEST',
+            'code' => 'REPORT-POOL',
+            'status' => 'active',
+            'target_revenue' => 175000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->withSession(['active_pool_id' => $poolId]);
 
         $routeId = DB::table('routes')->insertGetId([
             'tenant_id' => $tenantId,
@@ -568,6 +600,12 @@ class AdminOpsApiTest extends TestCase
             'origin' => 'PINRANG',
             'destination' => 'MAKASSAR',
             'created_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $segmentCreate = $this->postJson(route('api.admin.segments.save'), [
