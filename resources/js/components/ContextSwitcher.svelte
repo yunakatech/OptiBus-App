@@ -8,6 +8,7 @@
     import Search from 'lucide-svelte/icons/search';
     import X from 'lucide-svelte/icons/x';
     import { onMount, tick } from 'svelte';
+    import { extractApiErrorMessage } from '@/lib/api-errors';
     import { cn } from '@/lib/utils';
     import type {
         ActivePool,
@@ -166,16 +167,18 @@
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ [payloadKey]: id }),
             });
 
             if (!response.ok) {
-                const payload = await response.json().catch(() => ({}));
                 throw new Error(
-                    (payload?.message as string | undefined) ??
-                        (payload?.error as string | undefined) ??
+                    await extractApiErrorMessage(
+                        response,
                         'Gagal mengganti konteks.',
+                    ),
                 );
             }
 
