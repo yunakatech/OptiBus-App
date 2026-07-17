@@ -2813,7 +2813,7 @@
             response = await sendApiRequest(method, url, body);
         }
 
-        const json = await response.json().catch(() => ({}));
+        const json = await readApiJson(response);
         const firstValidationError = (() => {
             const errors = json?.errors;
 
@@ -2842,6 +2842,39 @@
         return json;
     };
 
+    const readApiJson = async (response: Response) => {
+        const contentType = String(
+            response.headers.get('content-type') ?? '',
+        ).toLowerCase();
+
+        if (
+            !contentType.includes('application/json') &&
+            !contentType.includes('+json')
+        ) {
+            throw new Error(nonJsonApiMessage(response));
+        }
+
+        return response.json().catch(() => ({}));
+    };
+
+    const nonJsonApiMessage = (response: Response) => {
+        if (!response.ok) {
+            return `Request gagal (${response.status})`;
+        }
+
+        if (response.redirected && response.url) {
+            try {
+                const target = new URL(response.url);
+
+                return `Request API diarahkan ke ${target.pathname}.`;
+            } catch {
+                return 'Request API diarahkan ke halaman lain.';
+            }
+        }
+
+        return 'Request API tidak mengembalikan JSON.';
+    };
+
     const apiForm = async (url: string, formData: FormData) => {
         const send = async () => {
             const token = csrfToken() || xsrfTokenFromCookie();
@@ -2866,10 +2899,7 @@
             response = await send();
         }
 
-        const json = (await response.json().catch(() => ({}))) as Record<
-            string,
-            any
-        >;
+        const json = (await readApiJson(response)) as Record<string, any>;
         const firstValidationError = (() => {
             const errors = json?.errors;
 
