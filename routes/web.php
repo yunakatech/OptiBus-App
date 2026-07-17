@@ -89,14 +89,62 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin-ops/segments', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'segments')->defaults('locked', true)->name('admin-ops.segments');
     Route::redirect('admin/charters', 'charters');
     Route::redirect('admin/luggages', 'luggages');
-    Route::redirect('admin/luggage-services', 'admin-ops/tarif-bagasi');
+    Route::get('admin/luggage-services', static function (Request $request, AdminOpsApiController $controller) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return $controller->luggageServicesIndex();
+        }
+
+        return redirect()->to('/admin-ops/tarif-bagasi');
+    })->middleware('permission:master.view')->name('admin/luggage-services');
+    Route::post('admin/luggage-services', [AdminOpsApiController::class, 'luggageServicesSave'])
+        ->middleware('permission:master.manage')
+        ->name('admin/luggage-services.save');
+    Route::delete('admin/luggage-services/{id}', [AdminOpsApiController::class, 'luggageServicesDelete'])
+        ->middleware('permission:master.manage')
+        ->name('admin/luggage-services.delete');
     Route::redirect('admin/customers', 'admin-ops/customers');
     Route::redirect('admin/admin-ops/customers', 'admin-ops/customers');
-    Route::redirect('admin/routes', 'admin-ops/rute-induk');
-    Route::redirect('admin/schedules', 'admin-ops/jadwal');
+    Route::get('admin/routes', static function (Request $request, AdminOpsApiController $controller) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return $controller->routesIndex();
+        }
+
+        return redirect()->to('/admin-ops/rute-induk');
+    })->middleware('permission:master.view')->name('admin/routes');
+    Route::post('admin/routes', [AdminOpsApiController::class, 'routesSave'])
+        ->middleware('permission:master.manage')
+        ->name('admin/routes.save');
+    Route::delete('admin/routes/{id}', [AdminOpsApiController::class, 'routesDelete'])
+        ->middleware('permission:master.manage')
+        ->name('admin/routes.delete');
+    Route::get('admin/schedules', static function (Request $request, AdminOpsApiController $controller) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return $controller->schedulesIndex($request);
+        }
+
+        return redirect()->to('/admin-ops/jadwal');
+    })->middleware('permission:master.view')->name('admin/schedules');
+    Route::post('admin/schedules', [AdminOpsApiController::class, 'schedulesSave'])
+        ->middleware('permission:master.manage')
+        ->name('admin/schedules.save');
+    Route::delete('admin/schedules/{id}', [AdminOpsApiController::class, 'schedulesDelete'])
+        ->middleware('permission:master.manage')
+        ->name('admin/schedules.delete');
     Route::redirect('admin/drivers', 'admin-ops/driver');
     Route::redirect('admin/services', 'admin-ops/tarif-bagasi');
-    Route::redirect('admin/segments', 'admin-ops/segments');
+    Route::get('admin/segments', static function (Request $request, AdminOpsApiController $controller) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return $controller->segmentsIndex($request);
+        }
+
+        return redirect()->to('/admin-ops/segments');
+    })->middleware('permission:master.view')->name('admin/segments');
+    Route::post('admin/segments', [AdminOpsApiController::class, 'segmentsSave'])
+        ->middleware('permission:master.manage')
+        ->name('admin/segments.save');
+    Route::delete('admin/segments/{id}', [AdminOpsApiController::class, 'segmentsDelete'])
+        ->middleware('permission:master.manage')
+        ->name('admin/segments.delete');
     Route::get('admin/units', static function (Request $request, AdminOpsApiController $controller) {
         if ($request->expectsJson() || $request->ajax()) {
             return $controller->unitsIndex();

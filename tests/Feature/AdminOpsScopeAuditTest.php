@@ -925,6 +925,65 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertOk();
     }
 
+    public function test_legacy_admin_schedule_master_paths_serve_json_for_api_calls(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantId = $this->tenantIdBySlug('audit-legacy-schedule-api-tenant');
+        $this->activateTenantBilling($tenantId);
+        $poolId = $this->createPool($tenantId, 'POOL LEGACY SCHEDULE', 'SCH-LEGACY', 100000);
+        $routeId = $this->createRouteForPool(
+            'audit-legacy-schedule-api-tenant',
+            $poolId,
+            'PINRANG - MAKASSAR',
+            100000,
+        );
+
+        $admin = User::factory()->create([
+            'is_super_admin' => true,
+        ]);
+        $session = ['active_tenant_id' => $tenantId, 'active_pool_id' => $poolId];
+
+        $this->actingAs($admin)
+            ->withSession($session)
+            ->getJson('/admin/routes')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('routes.0.id', $routeId);
+
+        $this->actingAs($admin)
+            ->withSession($session)
+            ->getJson('/admin/segments')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $created = $this->actingAs($admin)
+            ->withSession($session)
+            ->postJson('/admin/schedules', [
+                'route_id' => $routeId,
+                'dow' => 1,
+                'jam' => '08:00',
+                'units' => 1,
+                'unit_label' => 'Unit 1',
+            ])
+            ->assertCreated()
+            ->json();
+
+        $scheduleId = (int) ($created['id'] ?? 0);
+
+        $this->actingAs($admin)
+            ->withSession($session)
+            ->getJson('/admin/schedules')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('schedules.0.id', $scheduleId);
+
+        $this->actingAs($admin)
+            ->withSession($session)
+            ->deleteJson("/admin/schedules/{$scheduleId}")
+            ->assertOk();
+    }
+
     public function test_api_build_asset_paths_redirect_to_public_build_assets(): void
     {
         $this->get('/api/build/assets/app-test.js')
