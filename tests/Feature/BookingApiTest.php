@@ -82,6 +82,80 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('schedules.0.unit_options.0.label', 'Reguler');
     }
 
+    public function test_legacy_booking_console_paths_serve_json_for_api_calls(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $date = '2026-05-15';
+        $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        DB::table('schedules')->insert([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'dow' => $dow,
+            'jam' => '09:00:00',
+            'units' => 1,
+            'unit_label' => 'Reguler',
+            'created_at' => now(),
+        ]);
+
+        DB::table('segments')->insert([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '09:00:00',
+            'harga' => 150000,
+            'created_at' => now(),
+        ]);
+
+        $this->getJson('/bookings/routes-by-date?tanggal='.$date)
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('routes.0', 'PINRANG - MAKASSAR');
+
+        $this->getJson('/bookings/schedules?rute=PINRANG%20-%20MAKASSAR&tanggal='.$date)
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('schedules.0.jam', '09:00');
+
+        $this->getJson('/bookings/seats-detail?rute=PINRANG%20-%20MAKASSAR&tanggal='.$date.'&jam=09:00&unit=1')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->getJson('/master/segments?route_name=PINRANG%20-%20MAKASSAR')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('segments.0.rute', 'PINRANG - MAKASSAR');
+
+        $this->getJson('/master/customers/search?q=RIDWAN')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->getJson('/admin/drivers')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->getJson('/admin/armadas')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->getJson('/admin/assignments?tanggal='.$date)
+            ->assertOk()
+            ->assertJsonPath('success', true);
+    }
+
     public function test_submit_booking_and_detect_conflict(): void
     {
         $this->actingAsSuperAdmin();
