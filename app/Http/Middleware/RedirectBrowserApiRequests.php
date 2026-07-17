@@ -11,7 +11,7 @@ class RedirectBrowserApiRequests
     public function handle(Request $request, Closure $next): Response
     {
         if ($this->shouldRedirect($request)) {
-            return redirect()->to(url($this->targetPath($request)));
+            return redirect()->to($this->targetPath($request));
         }
 
         return $next($request);

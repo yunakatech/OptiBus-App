@@ -881,6 +881,50 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('success', true);
     }
 
+    public function test_legacy_admin_units_paths_serve_json_for_api_calls(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantId = $this->tenantIdBySlug('audit-legacy-unit-api-tenant');
+        $this->activateTenantBilling($tenantId);
+        $poolId = $this->createPool($tenantId, 'POOL LEGACY UNIT', 'UNIT-LEGACY', 100000);
+
+        $admin = User::factory()->create([
+            'is_super_admin' => true,
+        ]);
+
+        $created = $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId, 'active_pool_id' => $poolId])
+            ->postJson('/admin/units', [
+                'nopol' => 'LEGACY UNIT JSON',
+                'category' => 'Bigbus',
+                'kapasitas' => 40,
+                'status' => 'Aktif',
+            ])
+            ->assertCreated()
+            ->json();
+
+        $unitId = (int) ($created['id'] ?? 0);
+
+        $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId, 'active_pool_id' => $poolId])
+            ->getJson('/admin/units')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('units.0.id', $unitId);
+
+        $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId, 'active_pool_id' => $poolId])
+            ->getJson('/admin/armada-categories')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId, 'active_pool_id' => $poolId])
+            ->deleteJson("/admin/units/{$unitId}")
+            ->assertOk();
+    }
+
     public function test_api_build_asset_paths_redirect_to_public_build_assets(): void
     {
         $this->get('/api/build/assets/app-test.js')

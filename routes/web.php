@@ -97,7 +97,22 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::redirect('admin/drivers', 'admin-ops/driver');
     Route::redirect('admin/services', 'admin-ops/tarif-bagasi');
     Route::redirect('admin/segments', 'admin-ops/segments');
-    Route::redirect('admin/units', 'admin-ops/kategori-armada');
+    Route::get('admin/units', static function (Request $request, AdminOpsApiController $controller) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return $controller->unitsIndex();
+        }
+
+        return redirect()->to('/admin-ops/kategori-armada');
+    })->middleware('permission:master.view')->name('admin/units');
+    Route::post('admin/units', [AdminOpsApiController::class, 'unitsSave'])
+        ->middleware('permission:master.manage')
+        ->name('admin/units.save');
+    Route::delete('admin/units/{id}', [AdminOpsApiController::class, 'unitsDelete'])
+        ->middleware('permission:master.manage')
+        ->name('admin/units.delete');
+    Route::get('admin/armada-categories', [AdminOpsApiController::class, 'armadaCategoriesIndex'])
+        ->middleware('permission:armada.view,master.view')
+        ->name('admin/armada-categories');
     Route::redirect('admin/armadas', 'admin-ops/armada');
     Route::get('admin/pools', static function (Request $request, AdminOpsApiController $controller) {
         if ($request->expectsJson() || $request->ajax()) {
