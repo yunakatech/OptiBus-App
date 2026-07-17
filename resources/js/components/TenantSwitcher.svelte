@@ -10,6 +10,7 @@
         DropdownMenuItem,
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
+    import { extractApiErrorMessage } from '@/lib/api-errors';
     import { cn } from '@/lib/utils';
     import type { TenantOption, ActiveTenant } from '@/types/auth';
 
@@ -52,14 +53,19 @@
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ tenant_id: tenantId }),
             });
 
             if (!response.ok) {
-                const payload = await response.json().catch(() => ({}));
-
-                throw new Error((payload?.error as string | undefined) ?? 'Gagal mengganti tenant.');
+                throw new Error(
+                    await extractApiErrorMessage(
+                        response,
+                        'Gagal mengganti tenant.',
+                    ),
+                );
             }
 
             const currentPath = `${window.location.pathname}${window.location.search}`;

@@ -45,7 +45,11 @@ class ActivityLog
             }
         }
 
-        Log::channel('activity')->info('activity_event', $payload);
+        try {
+            Log::channel('activity')->info('activity_event', $payload);
+        } catch (\Throwable) {
+            // Logging must never break the user flow.
+        }
     }
 
     /**
