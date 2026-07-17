@@ -130,19 +130,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::delete('admin/schedules/{id}', [AdminOpsApiController::class, 'schedulesDelete'])
         ->middleware('permission:master.manage')
         ->name('admin/schedules.delete');
-    Route::get('admin/drivers', static function (Request $request, AdminOpsApiController $controller) {
-        if ($request->expectsJson() || $request->ajax()) {
-            return $controller->driversIndex($request);
-        }
-
-        return redirect()->to('/admin-ops/driver');
-    })->middleware('permission:driver.view')->name('admin/drivers');
-    Route::post('admin/drivers', [AdminOpsApiController::class, 'driversSave'])
-        ->middleware('permission:driver.manage')
-        ->name('admin/drivers.save');
-    Route::delete('admin/drivers/{id}', [AdminOpsApiController::class, 'driversDelete'])
-        ->middleware('permission:driver.manage')
-        ->name('admin/drivers.delete');
+    Route::redirect('admin/drivers', 'admin-ops/driver');
     Route::redirect('admin/services', 'admin-ops/tarif-bagasi');
     Route::get('admin/segments', static function (Request $request, AdminOpsApiController $controller) {
         if ($request->expectsJson() || $request->ajax()) {
@@ -173,40 +161,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin/armada-categories', [AdminOpsApiController::class, 'armadaCategoriesIndex'])
         ->middleware('permission:armada.view,master.view')
         ->name('admin/armada-categories');
-    Route::get('admin/armadas/export', [AdminOpsApiController::class, 'armadasExport'])
-        ->middleware('permission:report.export')
-        ->name('admin/armadas.export');
-    Route::get('admin/armadas', static function (Request $request, AdminOpsApiController $controller) {
-        if ($request->expectsJson() || $request->ajax()) {
-            return $controller->armadasIndex($request);
-        }
-
-        return redirect()->to('/admin-ops/armada');
-    })->middleware('permission:armada.view')->name('admin/armadas');
-    Route::get('admin/armadas/{id}', [AdminOpsApiController::class, 'armadasShow'])
-        ->middleware('permission:armada.view')
-        ->name('admin/armadas.show');
-    Route::post('admin/armadas', [AdminOpsApiController::class, 'armadasSave'])
-        ->middleware('permission:armada.manage')
-        ->name('admin/armadas.save');
-    Route::delete('admin/armadas/{id}', [AdminOpsApiController::class, 'armadasDelete'])
-        ->middleware('permission:armada.manage')
-        ->name('admin/armadas.delete');
-    Route::get('admin/assignments', [AdminOpsApiController::class, 'assignmentsIndex'])
-        ->middleware('permission:booking.view')
-        ->name('admin/assignments');
-    Route::post('admin/assignments/conflicts', [AdminOpsApiController::class, 'assignmentsConflicts'])
-        ->middleware('permission:booking.update')
-        ->name('admin/assignments.conflicts');
-    Route::post('admin/assignments', [AdminOpsApiController::class, 'assignmentsSave'])
-        ->middleware('permission:booking.update')
-        ->name('admin/assignments.save');
-    Route::post('admin/assignments/bulk-delete', [AdminOpsApiController::class, 'assignmentsBulkDelete'])
-        ->middleware('permission:booking.delete')
-        ->name('admin/assignments.bulk-delete');
-    Route::delete('admin/assignments/{id}', [AdminOpsApiController::class, 'assignmentsDelete'])
-        ->middleware('permission:booking.delete')
-        ->name('admin/assignments.delete');
+    Route::redirect('admin/armadas', 'admin-ops/armada');
     Route::get('admin/pools', static function (Request $request, AdminOpsApiController $controller) {
         if ($request->expectsJson() || $request->ajax()) {
             return $controller->poolsIndex($request);
@@ -272,30 +227,6 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     // Subscription & Payment (tenant self-service)
     Route::get('subscription', [\App\Http\Controllers\SubscriptionPaymentController::class, 'index'])->name('subscription.index');
     Route::post('subscription/checkout', [\App\Http\Controllers\SubscriptionPaymentController::class, 'checkout'])->name('subscription.checkout');
-
-    Route::prefix('bookings')->name('legacy.bookings.')->group(function () {
-        Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
-        Route::get('schedules', [BookingApiController::class, 'schedules'])->middleware('permission:booking.view')->name('schedules');
-        Route::get('seats-detail', [BookingApiController::class, 'bookedSeatsDetail'])->middleware('permission:booking.view')->name('seats-detail');
-        Route::get('edit-seat-options', [BookingApiController::class, 'editSeatOptions'])->middleware('permission:booking.view')->name('edit-seat-options');
-        Route::get('departure-riturs', [BookingApiController::class, 'departureRiturs'])->middleware('permission:booking.view')->name('departure-riturs');
-        Route::post('empty-departure', [BookingApiController::class, 'emptyDeparture'])->middleware('permission:booking.create')->name('empty-departure');
-        Route::post('cancel-departure', [BookingApiController::class, 'cancelDeparture'])->middleware('permission:booking.delete')->name('cancel-departure');
-        Route::post('depart-departure', [BookingApiController::class, 'departDeparture'])->middleware('permission:booking.update')->name('depart-departure');
-        Route::post('arrive-departure', [BookingApiController::class, 'arriveDeparture'])->middleware('permission:booking.update')->name('arrive-departure');
-        Route::post('close-manifest', [BookingApiController::class, 'closeManifest'])->middleware('permission:booking.update')->name('close-manifest');
-        Route::post('bulk-payment', [BookingApiController::class, 'bulkUpdatePayments'])->middleware('permission:booking.update')->name('bulk-payment');
-        Route::post('departure-riturs/map', [BookingApiController::class, 'mapDepartureRitur'])->middleware('permission:booking.update')->name('departure-riturs.map');
-        Route::post('departure-riturs/unmap', [BookingApiController::class, 'unmapDepartureRitur'])->middleware('permission:booking.update')->name('departure-riturs.unmap');
-        Route::post('submit', [BookingApiController::class, 'submit'])->middleware('permission:booking.create')->name('submit');
-        Route::post('update', [BookingApiController::class, 'update'])->middleware('permission:booking.update')->name('update');
-        Route::post('cancel', [BookingApiController::class, 'cancel'])->middleware('permission:booking.delete')->name('cancel');
-    });
-
-    Route::prefix('master')->name('legacy.master.')->group(function () {
-        Route::get('segments', [OperationsApiController::class, 'segments'])->middleware('permission:booking.view,master.view')->name('segments');
-        Route::get('customers/search', [OperationsApiController::class, 'searchCustomers'])->middleware('permission:customer.view,booking.view,charter.view,luggage.view')->name('customers.search');
-    });
 
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
