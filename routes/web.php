@@ -312,6 +312,14 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::get('payment-settings', [AdminOpsApiController::class, 'paymentSettingsGet'])->middleware('permission:platform.manage')->name('payment-settings.get');
         Route::post('payment-settings', [AdminOpsApiController::class, 'paymentSettingsSave'])->middleware('permission:platform.manage')->name('payment-settings.save');
     });
+
+    Route::prefix('admin')->name('admin/')->group(function () {
+        Route::post('tenant/switch', [AdminOpsApiController::class, 'tenantSwitch'])
+            ->middleware('permission:platform.manage')
+            ->name('tenant/switch');
+        Route::post('pool/switch', [AdminOpsApiController::class, 'poolSwitch'])
+            ->name('pool/switch');
+    });
 });
 
 require __DIR__.'/settings.php';

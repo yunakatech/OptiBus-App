@@ -567,6 +567,40 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('error', 'Pilih tenant dulu.');
     }
 
+    public function test_legacy_admin_context_switch_aliases_continue_to_work(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantId = $this->tenantIdBySlug('audit-alias-tenant');
+        $this->activateTenantBilling($tenantId);
+        $poolId = $this->createPool($tenantId, 'POOL ALIAS', 'ALIAS-POOL', 100000);
+
+        $admin = User::factory()->create([
+            'is_super_admin' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin/tenant/switch'), [
+                'tenant_id' => $tenantId,
+            ])
+            ->assertOk()
+            ->assertJsonPath('tenant_id', $tenantId)
+            ->assertJsonPath('tenant_name', DB::table('tenants')->where('id', $tenantId)->value('name'));
+
+        $this->assertSame($tenantId, (int) session('active_tenant_id', 0));
+
+        $this->actingAs($admin)
+            ->withSession(['active_tenant_id' => $tenantId])
+            ->postJson(route('admin/pool/switch'), [
+                'pool_id' => $poolId,
+            ])
+            ->assertOk()
+            ->assertJsonPath('pool_id', $poolId)
+            ->assertJsonPath('pool_name', 'POOL ALIAS');
+
+        $this->assertSame($poolId, (int) session('active_pool_id', 0));
+    }
+
     public function test_users_are_scoped_to_the_active_tenant_for_super_admins(): void
     {
         AccessControl::syncDefaults();
