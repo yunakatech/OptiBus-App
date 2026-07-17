@@ -44,6 +44,10 @@ Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/buil
     ->where('path', '.*')
     ->name('api.build.redirect');
 
+Route::get('api/admin-ops/{path}', static fn (string $path) => redirect()->to('/admin-ops/'.ltrim($path, '/'), 302))
+    ->where('path', '.*')
+    ->name('api.admin-ops.redirect');
+
 Route::get('style.css', [StaticAssetController::class, 'style'])->name('style.css');
 
 // Platform Admin Dashboard (SaaS metrics — super admin only)

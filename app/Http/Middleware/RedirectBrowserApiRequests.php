@@ -11,7 +11,7 @@ class RedirectBrowserApiRequests
     public function handle(Request $request, Closure $next): Response
     {
         if ($this->shouldRedirect($request)) {
-            return redirect()->to($this->targetPath($request));
+            return redirect()->to(url($this->targetPath($request)));
         }
 
         return $next($request);
@@ -39,26 +39,26 @@ class RedirectBrowserApiRequests
         $segment = explode('/', $path)[0] ?? '';
 
         return match ($segment) {
-            'routes' => route('admin-ops.routes', absolute: false),
-            'schedules' => route('admin-ops.schedules', absolute: false),
-            'drivers' => route('admin-ops.drivers', absolute: false),
-            'luggage-services' => route('admin-ops.services', absolute: false),
-            'segments' => route('admin-ops.segments', absolute: false),
-            'customers' => route('admin-ops.customers', absolute: false),
-            'units' => route('admin-ops.units', absolute: false),
-            'armadas', 'armada-categories' => route('admin-ops.armadas', absolute: false),
-            'pools', 'pool' => route('admin-ops.pools', absolute: false),
-            'users' => route('admin-ops.users', absolute: false),
-            'roles' => route('admin-ops.roles', absolute: false),
-            'activity-logs' => route('admin-ops.logs', absolute: false),
-            'reports' => route('report.index', absolute: false),
-            'charters' => route('charters.index', absolute: false),
-            'luggages' => route('luggages.index', absolute: false),
-            'assignments' => route('admin-ops.flows.assignments', absolute: false),
-            'customer-bagasi' => route('admin-ops.master.customer-bagasi', absolute: false),
-            'customer-charter' => route('admin-ops.master.customer-charter', absolute: false),
-            'charter-routes' => route('admin-ops.master.rute-carter', absolute: false),
-            default => route('admin-ops.index', absolute: false),
+            'routes' => '/admin-ops/rute-induk',
+            'schedules' => '/admin-ops/jadwal',
+            'drivers' => '/admin-ops/driver',
+            'luggage-services' => '/admin-ops/tarif-bagasi',
+            'segments' => '/admin-ops/segments',
+            'customers' => '/admin-ops/customers',
+            'units' => '/admin-ops/kategori-armada',
+            'armadas', 'armada-categories' => '/admin-ops/armada',
+            'pools', 'pool' => '/admin-ops/pool',
+            'users' => '/admin-ops/users',
+            'roles' => '/admin-ops/roles',
+            'activity-logs' => '/admin-ops/logs',
+            'reports' => '/report',
+            'charters' => '/charters',
+            'luggages' => '/luggages',
+            'assignments' => '/admin-ops/flows/assignments',
+            'customer-bagasi' => '/admin-ops/customer-bagasi',
+            'customer-charter' => '/admin-ops/customer-charter',
+            'charter-routes' => '/admin-ops/rute-carter',
+            default => '/admin-ops',
         };
     }
 }
