@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
- * @see routes/web.php:43
+ * @see [serialized-closure]:2
  * @route '/api/build/{path}'
  */
 export const redirect = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ redirect.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:43
+ * @see [serialized-closure]:2
  * @route '/api/build/{path}'
  */
 redirect.url = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ redirect.url = (args: { path: string | number } | [path: string | number ] | str
         args = { path: args }
     }
 
-
+    
     if (Array.isArray(args)) {
         args = {
                     path: args[0],
@@ -41,7 +41,7 @@ redirect.url = (args: { path: string | number } | [path: string | number ] | str
 }
 
 /**
- * @see routes/web.php:43
+ * @see [serialized-closure]:2
  * @route '/api/build/{path}'
  */
 redirect.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -49,7 +49,7 @@ redirect.get = (args: { path: string | number } | [path: string | number ] | str
     method: 'get',
 })
 /**
- * @see routes/web.php:43
+ * @see [serialized-closure]:2
  * @route '/api/build/{path}'
  */
 redirect.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -58,7 +58,7 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
 })
 
     /**
- * @see routes/web.php:43
+ * @see [serialized-closure]:2
  * @route '/api/build/{path}'
  */
     const redirectForm = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -67,7 +67,7 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
     })
 
             /**
- * @see routes/web.php:43
+ * @see [serialized-closure]:2
  * @route '/api/build/{path}'
  */
         redirectForm.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -75,7 +75,7 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
             method: 'get',
         })
             /**
- * @see routes/web.php:43
+ * @see [serialized-closure]:2
  * @route '/api/build/{path}'
  */
         redirectForm.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
                     }),
             method: 'get',
         })
-
+    
     redirect.form = redirectForm
 const build = {
     redirect: Object.assign(redirect, redirect),

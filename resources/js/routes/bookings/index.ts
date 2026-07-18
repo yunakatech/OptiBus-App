@@ -3,7 +3,7 @@ import manifest from './manifest'
 import ticket from './ticket'
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -18,7 +18,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -27,7 +27,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -36,7 +36,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -46,7 +46,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -81,7 +81,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 export const detail = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -96,7 +96,7 @@ detail.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 detail.url = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ detail.url = (args: { groupKey: string | number } | [groupKey: string | number ]
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 detail.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -133,7 +133,7 @@ detail.get = (args: { groupKey: string | number } | [groupKey: string | number ]
 })
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 detail.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -143,7 +143,7 @@ detail.head = (args: { groupKey: string | number } | [groupKey: string | number 
 
     /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
     const detailForm = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -153,7 +153,7 @@ detail.head = (args: { groupKey: string | number } | [groupKey: string | number 
 
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
         detailForm.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -162,7 +162,7 @@ detail.head = (args: { groupKey: string | number } | [groupKey: string | number 
         })
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
         detailForm.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

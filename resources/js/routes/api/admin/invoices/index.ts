@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10593
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10612
  * @route '/api/admin/invoices'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10593
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10612
  * @route '/api/admin/invoices'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10593
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10612
  * @route '/api/admin/invoices'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10593
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10612
  * @route '/api/admin/invoices'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10593
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10612
  * @route '/api/admin/invoices'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10593
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10612
  * @route '/api/admin/invoices'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10593
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10612
  * @route '/api/admin/invoices'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10736
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10755
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
 export const markPaid = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ markPaid.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10736
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10755
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
 markPaid.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -122,7 +122,7 @@ markPaid.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10736
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10755
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
 markPaid.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -132,7 +132,7 @@ markPaid.post = (args: { id: string | number } | [id: string | number ] | string
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10736
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10755
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
     const markPaidForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -142,7 +142,7 @@ markPaid.post = (args: { id: string | number } | [id: string | number ] | string
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:10736
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:10755
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
         markPaidForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

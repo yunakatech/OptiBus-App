@@ -75,7 +75,7 @@ AdminOpsMasterController99dcf4e5114f0157c7949a1666f34177.head = (options?: Route
                     }),
             method: 'get',
         })
-
+    
     AdminOpsMasterController99dcf4e5114f0157c7949a1666f34177.form = AdminOpsMasterController99dcf4e5114f0157c7949a1666f34177Form
     /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
@@ -153,7 +153,7 @@ AdminOpsMasterControllerf6e2fa89769ccc29a63d6e9212720ae0.head = (options?: Route
                     }),
             method: 'get',
         })
-
+    
     AdminOpsMasterControllerf6e2fa89769ccc29a63d6e9212720ae0.form = AdminOpsMasterControllerf6e2fa89769ccc29a63d6e9212720ae0Form
     /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
@@ -231,7 +231,7 @@ AdminOpsMasterControllerbbd34c32bb3de4130a7658155ccf7f73.head = (options?: Route
                     }),
             method: 'get',
         })
-
+    
     AdminOpsMasterControllerbbd34c32bb3de4130a7658155ccf7f73.form = AdminOpsMasterControllerbbd34c32bb3de4130a7658155ccf7f73Form
     /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
@@ -309,7 +309,7 @@ AdminOpsMasterController157c0177bcac9a56ac828d7f2c4f7c3c.head = (options?: Route
                     }),
             method: 'get',
         })
-
+    
     AdminOpsMasterController157c0177bcac9a56ac828d7f2c4f7c3c.form = AdminOpsMasterController157c0177bcac9a56ac828d7f2c4f7c3cForm
 
 /**

@@ -1,6 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 import webhooks from './webhooks'
 import build from './build'
+import adminOps from './admin-ops'
 import bookings from './bookings'
 import master from './master'
 import ops from './ops'
@@ -87,6 +88,7 @@ const api = {
     plans: Object.assign(plans, plans),
 webhooks: Object.assign(webhooks, webhooks),
 build: Object.assign(build, build),
+adminOps: Object.assign(adminOps, adminOps),
 bookings: Object.assign(bookings, bookings),
 master: Object.assign(master, master),
 ops: Object.assign(ops, ops),

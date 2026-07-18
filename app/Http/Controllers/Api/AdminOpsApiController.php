@@ -630,6 +630,10 @@ class AdminOpsApiController extends Controller
 
     public function driversIndex(Request $request): JsonResponse
     {
+        if (! Schema::hasTable('drivers')) {
+            return $this->ok(['drivers' => []]);
+        }
+
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:120'],
             'pool_id' => ['nullable', 'integer', 'min:0'],
@@ -3541,57 +3545,51 @@ class AdminOpsApiController extends Controller
 
     public function assignmentsIndex(Request $request): JsonResponse
     {
+        if (! Schema::hasTable('trip_assignments')) {
+            return $this->ok([
+                'assignments' => [],
+                'pagination' => $this->paginationMeta(0, 1, $this->paginationParams($request)[1]),
+            ]);
+        }
+
         $tanggal = trim((string) $request->query('tanggal', ''));
         $rute = trim((string) $request->query('rute', ''));
         $from = trim((string) $request->query('from', ''));
         $to = trim((string) $request->query('to', ''));
         [$page, $perPage] = $this->paginationParams($request);
 
-        $query = DB::table('trip_assignments as t')
-            ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id');
+        $canJoinDrivers = Schema::hasTable('drivers') && Schema::hasColumn('trip_assignments', 'driver_id');
+        $query = DB::table('trip_assignments as t');
+        if ($canJoinDrivers) {
+            $query->leftJoin('drivers as d', 't.driver_id', '=', 'd.id');
+        }
 
         if ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
             $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
         }
 
-        $select = [
-            't.id',
-            't.rute',
-            't.tanggal',
-            't.jam',
-            't.unit',
-            't.driver_id',
-            'd.nama',
-            'd.phone',
-        ];
-
-        if ($this->tripAssignmentsHasArmadaId()) {
-            $select[] = 't.armada_id';
-        }
-
-        if ($this->tripAssignmentsHasArmadaNopol() && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
-            $select[] = DB::raw('COALESCE(t.armada_nopol, a.nopol) as armada_nopol');
-        } elseif ($this->tripAssignmentsHasArmadaNopol()) {
-            $select[] = 't.armada_nopol';
-        } elseif ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
-            $select[] = DB::raw('a.nopol as armada_nopol');
-        }
-
         $query = $query
-            ->select($select)
-            ->orderByDesc('t.tanggal')
-            ->orderBy('t.jam');
+            ->select($this->assignmentIndexSelectColumns($canJoinDrivers))
+            ->orderByDesc(Schema::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : 't.id');
 
-        if ($tanggal !== '') {
+        if (Schema::hasColumn('trip_assignments', 'jam')) {
+            $query->orderBy('t.jam');
+        }
+
+        if ($tanggal !== '' && Schema::hasColumn('trip_assignments', 'tanggal')) {
             $query->where('t.tanggal', $tanggal);
         }
-        if ($from !== '' && $to !== '') {
+        if ($from !== '' && $to !== '' && Schema::hasColumn('trip_assignments', 'tanggal')) {
             $query->whereBetween('t.tanggal', [$from, $to]);
         }
-        if ($rute !== '') {
+        if ($rute !== '' && Schema::hasColumn('trip_assignments', 'rute')) {
             $query->where('t.rute', $rute);
         }
-        $this->applyRouteScopeToQuery($query, '', 't.rute');
+        $this->applyRouteScopeToQuery(
+            $query,
+            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            Schema::hasColumn('trip_assignments', 'rute') ? 't.rute' : '',
+        );
 
         $result = $this->paginateQuery($query, $page, $perPage);
 
@@ -3599,6 +3597,42 @@ class AdminOpsApiController extends Controller
             'assignments' => $result['data'],
             'pagination' => $result['meta'],
         ]);
+    }
+
+    private function assignmentIndexSelectColumns(bool $canJoinDrivers): array
+    {
+        $select = [
+            't.id',
+            Schema::hasColumn('trip_assignments', 'rute') ? 't.rute' : DB::raw("'' as rute"),
+            Schema::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : DB::raw('NULL as tanggal'),
+            Schema::hasColumn('trip_assignments', 'jam') ? 't.jam' : DB::raw('NULL as jam'),
+            Schema::hasColumn('trip_assignments', 'unit') ? 't.unit' : DB::raw('0 as unit'),
+            Schema::hasColumn('trip_assignments', 'driver_id') ? 't.driver_id' : DB::raw('NULL as driver_id'),
+        ];
+
+        if ($canJoinDrivers) {
+            $select[] = Schema::hasColumn('drivers', 'nama') ? 'd.nama' : DB::raw('NULL as nama');
+            $select[] = Schema::hasColumn('drivers', 'phone') ? 'd.phone' : DB::raw('NULL as phone');
+        } else {
+            $select[] = DB::raw('NULL as nama');
+            $select[] = DB::raw('NULL as phone');
+        }
+
+        $select[] = $this->tripAssignmentsHasArmadaId()
+            ? 't.armada_id'
+            : DB::raw('NULL as armada_id');
+
+        if ($this->tripAssignmentsHasArmadaNopol() && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas') && Schema::hasColumn('armadas', 'nopol')) {
+            $select[] = DB::raw('COALESCE(t.armada_nopol, a.nopol) as armada_nopol');
+        } elseif ($this->tripAssignmentsHasArmadaNopol()) {
+            $select[] = 't.armada_nopol';
+        } elseif ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas') && Schema::hasColumn('armadas', 'nopol')) {
+            $select[] = DB::raw('a.nopol as armada_nopol');
+        } else {
+            $select[] = DB::raw('NULL as armada_nopol');
+        }
+
+        return $select;
     }
 
     public function assignmentsConflicts(Request $request): JsonResponse
@@ -7690,16 +7724,21 @@ class AdminOpsApiController extends Controller
      */
     private function driverRowsForMonth(string $monthStart, string $monthEnd, int $poolId = 0): array
     {
+        if (! Schema::hasTable('drivers')) {
+            return [];
+        }
+
         $hasDriverArmadaId = $this->driversHasArmadaId();
         $hasDriverArmadaNopol = $this->driversHasArmadaNopol();
         $hasDriverKategori = $this->driversHasKategoriColumn();
-        $canJoinArmadas = $hasDriverArmadaId && Schema::hasTable('armadas');
+        $canJoinArmadas = $hasDriverArmadaId && Schema::hasTable('armadas') && Schema::hasColumn('armadas', 'nopol');
+        $canReadArmadaKategori = $canJoinArmadas && Schema::hasColumn('armadas', 'kategori');
 
         $select = [
             'd.id',
-            'd.nama',
-            'd.phone',
-            'd.unit_id',
+            Schema::hasColumn('drivers', 'nama') ? 'd.nama' : DB::raw("'' as nama"),
+            Schema::hasColumn('drivers', 'phone') ? 'd.phone' : DB::raw('NULL as phone'),
+            Schema::hasColumn('drivers', 'unit_id') ? 'd.unit_id' : DB::raw('NULL as unit_id'),
             Schema::hasColumn('drivers', 'pool_id') ? 'd.pool_id' : DB::raw('NULL as pool_id'),
             $this->hasDriversTargetRevenueBulananColumn() ? 'd.target_revenue_bulanan' : DB::raw('0 as target_revenue_bulanan'),
             $this->hasDriversTargetRevenueTahunanColumn() ? 'd.target_revenue_tahunan' : DB::raw('0 as target_revenue_tahunan'),
@@ -7718,11 +7757,11 @@ class AdminOpsApiController extends Controller
         } else {
             $select[] = DB::raw('NULL as nopol');
         }
-        if ($hasDriverKategori && $canJoinArmadas) {
+        if ($hasDriverKategori && $canReadArmadaKategori) {
             $select[] = DB::raw('COALESCE(d.kategori, a.kategori) as category');
         } elseif ($hasDriverKategori) {
             $select[] = DB::raw('d.kategori as category');
-        } elseif ($canJoinArmadas) {
+        } elseif ($canReadArmadaKategori) {
             $select[] = DB::raw('a.kategori as category');
         } else {
             $select[] = DB::raw('NULL as category');
@@ -7744,7 +7783,7 @@ class AdminOpsApiController extends Controller
             ->when(Schema::hasColumn('drivers', 'pool_id'), function (Builder $q) use ($poolId): void {
                 $this->applyPoolScopeIfExists($q, 'drivers', 'd', $poolId > 0 ? $poolId : null);
             })
-            ->orderBy('d.nama')
+            ->orderBy(Schema::hasColumn('drivers', 'nama') ? 'd.nama' : 'd.id')
             ->get($select);
         $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
 
@@ -7754,27 +7793,40 @@ class AdminOpsApiController extends Controller
         $departureRevenueByDriver = [];
         $departureBopByDriver = [];
         $departureCountByDriver = [];
-        $assignmentRows = DB::table('trip_assignments')
-            ->whereNotNull('driver_id')
-            ->whereBetween('tanggal', [$monthStart, $monthEnd])
-            ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
-                PoolScope::applyTenantScope($query, 'trip_assignments.tenant_id');
-            })
-            ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
-                $query->where(function (Builder $statusQuery) {
-                    $statusQuery
-                        ->whereNull('status')
-                        ->orWhere('status', '!=', 'canceled');
+        if (Schema::hasTable('trip_assignments')
+            && Schema::hasColumn('trip_assignments', 'driver_id')
+            && Schema::hasColumn('trip_assignments', 'tanggal')
+        ) {
+            $assignmentRows = DB::table('trip_assignments')
+                ->whereNotNull('driver_id')
+                ->whereBetween('tanggal', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 'trip_assignments.tenant_id');
+                })
+                ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
+                    $query->where(function (Builder $statusQuery) {
+                        $statusQuery
+                            ->whereNull('status')
+                            ->orWhere('status', '!=', 'canceled');
+                    });
                 });
-            });
-        $this->applyPoolOrRouteScopeToQuery(
-            $assignmentRows,
-            Schema::hasColumn('trip_assignments', 'pool_id') ? 'trip_assignments.pool_id' : '',
-            Schema::hasColumn('trip_assignments', 'route_id') ? 'trip_assignments.route_id' : '',
-            'trip_assignments.rute',
-            $poolId,
-        );
-        $assignmentRows = $assignmentRows->get(['driver_id', 'rute', 'tanggal', 'jam', 'unit']);
+            $this->applyPoolOrRouteScopeToQuery(
+                $assignmentRows,
+                Schema::hasColumn('trip_assignments', 'pool_id') ? 'trip_assignments.pool_id' : '',
+                Schema::hasColumn('trip_assignments', 'route_id') ? 'trip_assignments.route_id' : '',
+                Schema::hasColumn('trip_assignments', 'rute') ? 'trip_assignments.rute' : '',
+                $poolId,
+            );
+            $assignmentRows = $assignmentRows->get([
+                'driver_id',
+                Schema::hasColumn('trip_assignments', 'rute') ? 'rute' : DB::raw("'' as rute"),
+                'tanggal',
+                Schema::hasColumn('trip_assignments', 'jam') ? 'jam' : DB::raw('NULL as jam'),
+                Schema::hasColumn('trip_assignments', 'unit') ? 'unit' : DB::raw('0 as unit'),
+            ]);
+        } else {
+            $assignmentRows = collect();
+        }
 
         foreach ($assignmentRows as $assignment) {
             $driverId = (int) ($assignment->driver_id ?? 0);
@@ -7810,18 +7862,28 @@ class AdminOpsApiController extends Controller
         }
 
         $luggageRevenueByDriver = [];
-        if (Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'trip_assignment_id')) {
+        if (Schema::hasTable('luggages')
+            && Schema::hasColumn('luggages', 'trip_assignment_id')
+            && Schema::hasTable('trip_assignments')
+            && Schema::hasColumn('trip_assignments', 'driver_id')
+            && Schema::hasColumn('trip_assignments', 'tanggal')
+        ) {
+            $luggageDateExpr = Schema::hasColumn('luggages', 'tanggal')
+                ? 'l.tanggal'
+                : (Schema::hasColumn('luggages', 'created_at') ? 'DATE(l.created_at)' : 't.tanggal');
             $luggageRows = DB::table('luggages as l')
                 ->join('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id')
-                ->whereBetween(DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal)'), [$monthStart, $monthEnd])
+                ->whereBetween(DB::raw('COALESCE('.$luggageDateExpr.', t.tanggal)'), [$monthStart, $monthEnd])
                 ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'l.tenant_id');
                 })
                 ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 't.tenant_id');
                 })
-                ->where(function (Builder $query) {
-                    $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageRevenueStatuses());
+                ->when(Schema::hasColumn('luggages', 'status'), function (Builder $query): void {
+                    $query->where(function (Builder $statusQuery): void {
+                        $this->applyLuggageStatusFilter($statusQuery, 'l.status', $this->luggageRevenueStatuses());
+                    });
                 })
                 ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
                     $query->where(function (Builder $statusQuery) {
@@ -7832,13 +7894,15 @@ class AdminOpsApiController extends Controller
                 })
                 ->select([
                     't.driver_id',
-                    DB::raw('SUM(COALESCE(l.price, 0)) as total_price'),
+                    Schema::hasColumn('luggages', 'price')
+                        ? DB::raw('SUM(COALESCE(l.price, 0)) as total_price')
+                        : DB::raw('0 as total_price'),
                 ]);
             $this->applyPoolOrRouteScopeToQuery(
                 $luggageRows,
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
                 Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
-                'l.rute',
+                Schema::hasColumn('luggages', 'rute') ? 'l.rute' : '',
                 $poolId,
             );
             $luggageRows = $luggageRows
@@ -7858,20 +7922,24 @@ class AdminOpsApiController extends Controller
         $charterRevenueByDriverName = [];
         $charterBopByDriverName = [];
         $hasCharterStatus = $this->chartersHasStatusColumn();
-        $charterQuery = DB::table('charters as c')
-            ->whereBetween('c.start_date', [$monthStart, $monthEnd])
-            ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
-                PoolScope::applyTenantScope($q, 'c.tenant_id');
-            });
-        $this->applyCharterPoolScope($charterQuery, $poolId);
-        $charterRows = $charterQuery->get([
-            'c.driver_name',
-            'c.price',
-            'c.bop_price',
-            'c.payment_status',
-            'c.bop_status',
-            $hasCharterStatus ? DB::raw('c.status as status') : DB::raw('NULL as status'),
-        ]);
+        if (Schema::hasTable('charters') && Schema::hasColumn('charters', 'start_date') && Schema::hasColumn('charters', 'driver_name')) {
+            $charterQuery = DB::table('charters as c')
+                ->whereBetween('c.start_date', [$monthStart, $monthEnd])
+                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'c.tenant_id');
+                });
+            $this->applyCharterPoolScope($charterQuery, $poolId);
+            $charterRows = $charterQuery->get([
+                'c.driver_name',
+                Schema::hasColumn('charters', 'price') ? 'c.price' : DB::raw('0 as price'),
+                Schema::hasColumn('charters', 'bop_price') ? 'c.bop_price' : DB::raw('0 as bop_price'),
+                Schema::hasColumn('charters', 'payment_status') ? 'c.payment_status' : DB::raw('NULL as payment_status'),
+                Schema::hasColumn('charters', 'bop_status') ? 'c.bop_status' : DB::raw('NULL as bop_status'),
+                $hasCharterStatus ? DB::raw('c.status as status') : DB::raw('NULL as status'),
+            ]);
+        } else {
+            $charterRows = collect();
+        }
 
         foreach ($charterRows as $charter) {
             $driverKey = $this->normalizeDriverName((string) ($charter->driver_name ?? ''));

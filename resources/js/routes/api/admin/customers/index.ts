@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::template
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1234
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1239
  * @route '/api/admin/customers/template'
  */
 export const template = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ template.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::template
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1234
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1239
  * @route '/api/admin/customers/template'
  */
 template.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ template.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::template
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1234
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1239
  * @route '/api/admin/customers/template'
  */
 template.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ template.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::template
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1234
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1239
  * @route '/api/admin/customers/template'
  */
 template.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ template.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::template
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1234
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1239
  * @route '/api/admin/customers/template'
  */
     const templateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ template.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::template
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1234
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1239
  * @route '/api/admin/customers/template'
  */
         templateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ template.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::template
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1234
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1239
  * @route '/api/admin/customers/template'
  */
         templateForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ template.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     template.form = templateForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::importMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1245
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1250
  * @route '/api/admin/customers/import'
  */
 export const importMethod = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ importMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::importMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1245
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1250
  * @route '/api/admin/customers/import'
  */
 importMethod.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ importMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::importMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1245
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1250
  * @route '/api/admin/customers/import'
  */
 importMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ importMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::importMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1245
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1250
  * @route '/api/admin/customers/import'
  */
     const importMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ importMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::importMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1245
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1250
  * @route '/api/admin/customers/import'
  */
         importMethodForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ importMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     importMethod.form = importMethodForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1084
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1089
  * @route '/api/admin/customers'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1084
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1089
  * @route '/api/admin/customers'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -158,7 +158,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1084
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1089
  * @route '/api/admin/customers'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -167,7 +167,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1084
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1089
  * @route '/api/admin/customers'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -177,7 +177,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1084
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1089
  * @route '/api/admin/customers'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -187,7 +187,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1084
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1089
  * @route '/api/admin/customers'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -196,7 +196,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1084
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1089
  * @route '/api/admin/customers'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -212,7 +212,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1143
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1148
  * @route '/api/admin/customers'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -227,7 +227,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1143
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1148
  * @route '/api/admin/customers'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -236,7 +236,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1143
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1148
  * @route '/api/admin/customers'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -246,7 +246,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1143
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1148
  * @route '/api/admin/customers'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -256,7 +256,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1143
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1148
  * @route '/api/admin/customers'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -267,7 +267,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     save.form = saveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1220
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1225
  * @route '/api/admin/customers/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -282,7 +282,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1220
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1225
  * @route '/api/admin/customers/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -310,7 +310,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1220
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1225
  * @route '/api/admin/customers/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -320,7 +320,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1220
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1225
  * @route '/api/admin/customers/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -335,7 +335,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1220
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1225
  * @route '/api/admin/customers/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

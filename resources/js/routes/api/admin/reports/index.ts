@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::summary
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1383
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1388
  * @route '/api/admin/reports/summary'
  */
 export const summary = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ summary.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::summary
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1383
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1388
  * @route '/api/admin/reports/summary'
  */
 summary.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ summary.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::summary
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1383
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1388
  * @route '/api/admin/reports/summary'
  */
 summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::summary
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1383
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1388
  * @route '/api/admin/reports/summary'
  */
 summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::summary
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1383
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1388
  * @route '/api/admin/reports/summary'
  */
     const summaryForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::summary
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1383
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1388
  * @route '/api/admin/reports/summary'
  */
         summaryForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::summary
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1383
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1388
  * @route '/api/admin/reports/summary'
  */
         summaryForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     summary.form = summaryForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bookingsCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1925
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1930
  * @route '/api/admin/reports/bookings-csv'
  */
 export const bookingsCsv = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ bookingsCsv.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bookingsCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1925
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1930
  * @route '/api/admin/reports/bookings-csv'
  */
 bookingsCsv.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ bookingsCsv.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bookingsCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1925
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1930
  * @route '/api/admin/reports/bookings-csv'
  */
 bookingsCsv.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ bookingsCsv.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bookingsCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1925
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1930
  * @route '/api/admin/reports/bookings-csv'
  */
 bookingsCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ bookingsCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bookingsCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1925
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1930
  * @route '/api/admin/reports/bookings-csv'
  */
     const bookingsCsvForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ bookingsCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bookingsCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1925
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1930
  * @route '/api/admin/reports/bookings-csv'
  */
         bookingsCsvForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ bookingsCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bookingsCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1925
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1930
  * @route '/api/admin/reports/bookings-csv'
  */
         bookingsCsvForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ bookingsCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     bookingsCsv.form = bookingsCsvForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::revenueCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1998
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2003
  * @route '/api/admin/reports/revenue-csv'
  */
 export const revenueCsv = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ revenueCsv.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::revenueCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1998
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2003
  * @route '/api/admin/reports/revenue-csv'
  */
 revenueCsv.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ revenueCsv.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::revenueCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1998
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2003
  * @route '/api/admin/reports/revenue-csv'
  */
 revenueCsv.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ revenueCsv.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::revenueCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1998
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2003
  * @route '/api/admin/reports/revenue-csv'
  */
 revenueCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ revenueCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::revenueCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1998
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2003
  * @route '/api/admin/reports/revenue-csv'
  */
     const revenueCsvForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ revenueCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::revenueCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1998
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2003
  * @route '/api/admin/reports/revenue-csv'
  */
         revenueCsvForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ revenueCsv.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::revenueCsv
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1998
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2003
  * @route '/api/admin/reports/revenue-csv'
  */
         revenueCsvForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
