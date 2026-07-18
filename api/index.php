@@ -3,6 +3,10 @@
 if (! function_exists('optibus_vercel_request_expects_api')) {
     function optibus_vercel_request_expects_api(): bool
     {
+        if (isset($_SERVER['HTTP_X_INERTIA'])) {
+            return false;
+        }
+
         $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
         $requestedWith = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
         $contentType = strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
