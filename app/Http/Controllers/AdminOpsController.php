@@ -254,10 +254,8 @@ class AdminOpsController extends Controller
                 ] : []),
                 ...($tab === 'segments' ? ['route_id' => max(0, (int) $listRequest->query('route_id', 0))] : []),
             ];
-        } catch (Throwable $exception) {
-            if (! app()->environment('testing') && ! $exception instanceof QueryException) {
-                report($exception);
-            }
+        } catch (\Throwable $exception) {
+            report($exception);
 
             return match ($tab) {
                 'routes' => [
@@ -301,10 +299,18 @@ class AdminOpsController extends Controller
             $masterRequest = clone $request;
             $masterRequest->query->replace([]);
 
-            $routes = fn (): array => $this->routeOptions();
-            $units = fn (): array => $this->payload($this->adminOpsApi->unitsIndex())['units'] ?? [];
-            $armadas = fn (): array => $this->payload($this->operationsApi->armadas($masterRequest))['armadas'] ?? [];
-            $pools = fn (): array => $this->payload($this->adminOpsApi->poolOptionsIndex($masterRequest))['pools'] ?? [];
+            $safeCall = function (callable $fn, mixed $fallback = []): mixed {
+                try {
+                    return $fn();
+                } catch (\Throwable) {
+                    return $fallback;
+                }
+            };
+
+            $routes = fn (): array => $safeCall(fn () => $this->routeOptions());
+            $units = fn (): array => $safeCall(fn () => $this->payload($this->adminOpsApi->unitsIndex())['units'] ?? []);
+            $armadas = fn (): array => $safeCall(fn () => $this->payload($this->operationsApi->armadas($masterRequest))['armadas'] ?? []);
+            $pools = fn (): array => $safeCall(fn () => $this->payload($this->adminOpsApi->poolOptionsIndex($masterRequest))['pools'] ?? []);
 
             return match ($tab) {
                 'routes' => ['tab' => $tab],
@@ -316,18 +322,16 @@ class AdminOpsController extends Controller
                 'units' => ['tab' => $tab, 'pools' => $pools()],
                 'armadas' => [
                     'tab' => $tab,
-                    'categories' => $this->payload($this->adminOpsApi->armadaCategoriesIndex())['categories'] ?? [],
+                    'categories' => $safeCall(fn () => $this->payload($this->adminOpsApi->armadaCategoriesIndex())['categories'] ?? []),
                     'units' => $units(),
                     'pools' => $pools(),
                 ],
-                'pools' => $this->poolMasters($masterRequest, $tab, false),
-                'users' => $this->poolMasters($masterRequest, $tab, true),
+                'pools' => $safeCall(fn () => $this->poolMasters($masterRequest, $tab, false), ['tab' => $tab, 'routes' => []]),
+                'users' => $safeCall(fn () => $this->poolMasters($masterRequest, $tab, true), ['tab' => $tab, 'pools' => [], 'roles' => [], 'can_manage_pools' => true]),
                 default => ['tab' => $tab],
             };
-        } catch (Throwable $exception) {
-            if (! app()->environment('testing') && ! $exception instanceof QueryException) {
-                report($exception);
-            }
+        } catch (\Throwable $exception) {
+            report($exception);
 
             return match ($tab) {
                 'routes' => ['tab' => $tab],
