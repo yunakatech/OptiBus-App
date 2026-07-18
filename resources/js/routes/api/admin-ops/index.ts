@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
  * @see [serialized-closure]:2
- * @route '/api/build/{path}'
+ * @route '/api/admin-ops/{path}'
  */
 export const redirect = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: redirect.url(args, options),
@@ -10,12 +10,12 @@ export const redirect = (args: { path: string | number } | [path: string | numbe
 
 redirect.definition = {
     methods: ["get","head"],
-    url: '/api/build/{path}',
+    url: '/api/admin-ops/{path}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
  * @see [serialized-closure]:2
- * @route '/api/build/{path}'
+ * @route '/api/admin-ops/{path}'
  */
 redirect.url = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -42,7 +42,7 @@ redirect.url = (args: { path: string | number } | [path: string | number ] | str
 
 /**
  * @see [serialized-closure]:2
- * @route '/api/build/{path}'
+ * @route '/api/admin-ops/{path}'
  */
 redirect.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: redirect.url(args, options),
@@ -50,7 +50,7 @@ redirect.get = (args: { path: string | number } | [path: string | number ] | str
 })
 /**
  * @see [serialized-closure]:2
- * @route '/api/build/{path}'
+ * @route '/api/admin-ops/{path}'
  */
 redirect.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: redirect.url(args, options),
@@ -59,7 +59,7 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
 
     /**
  * @see [serialized-closure]:2
- * @route '/api/build/{path}'
+ * @route '/api/admin-ops/{path}'
  */
     const redirectForm = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: redirect.url(args, options),
@@ -68,7 +68,7 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
 
             /**
  * @see [serialized-closure]:2
- * @route '/api/build/{path}'
+ * @route '/api/admin-ops/{path}'
  */
         redirectForm.get = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: redirect.url(args, options),
@@ -76,7 +76,7 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
         })
             /**
  * @see [serialized-closure]:2
- * @route '/api/build/{path}'
+ * @route '/api/admin-ops/{path}'
  */
         redirectForm.head = (args: { path: string | number } | [path: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: redirect.url(args, {
@@ -89,8 +89,8 @@ redirect.head = (args: { path: string | number } | [path: string | number ] | st
         })
     
     redirect.form = redirectForm
-const build = {
+const adminOps = {
     redirect: Object.assign(redirect, redirect),
 }
 
-export default build
+export default adminOps

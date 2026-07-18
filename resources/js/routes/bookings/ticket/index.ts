@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 export const print = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ print.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 print.url = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ print.url = (args: { bookingId: string | number } | [bookingId: string | number 
 
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 print.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ print.get = (args: { bookingId: string | number } | [bookingId: string | number 
 })
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 print.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ print.head = (args: { bookingId: string | number } | [bookingId: string | number
 
     /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
     const printForm = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ print.head = (args: { bookingId: string | number } | [bookingId: string | number
 
             /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
         printForm.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ print.head = (args: { bookingId: string | number } | [bookingId: string | number
         })
             /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
         printForm.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -98,7 +98,7 @@ print.head = (args: { bookingId: string | number } | [bookingId: string | number
     print.form = printForm
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 export const pdf = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ pdf.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 pdf.url = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -141,7 +141,7 @@ pdf.url = (args: { bookingId: string | number } | [bookingId: string | number ] 
 
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 pdf.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -150,7 +150,7 @@ pdf.get = (args: { bookingId: string | number } | [bookingId: string | number ] 
 })
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 pdf.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -160,7 +160,7 @@ pdf.head = (args: { bookingId: string | number } | [bookingId: string | number ]
 
     /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
     const pdfForm = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -170,7 +170,7 @@ pdf.head = (args: { bookingId: string | number } | [bookingId: string | number ]
 
             /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
         pdfForm.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -179,7 +179,7 @@ pdf.head = (args: { bookingId: string | number } | [bookingId: string | number ]
         })
             /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
         pdfForm.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

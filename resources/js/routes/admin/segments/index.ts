@@ -1,86 +1,8 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:921
- * @route '/api/admin/segments'
- */
-export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-
-index.definition = {
-    methods: ["get","head"],
-    url: '/api/admin/segments',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:921
- * @route '/api/admin/segments'
- */
-index.url = (options?: RouteQueryOptions) => {
-    return index.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:921
- * @route '/api/admin/segments'
- */
-index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:921
- * @route '/api/admin/segments'
- */
-index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: index.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:921
- * @route '/api/admin/segments'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:921
- * @route '/api/admin/segments'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:921
- * @route '/api/admin/segments'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1001
- * @route '/api/admin/segments'
+ * @route '/admin/segments'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: save.url(options),
@@ -89,13 +11,13 @@ export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 save.definition = {
     methods: ["post"],
-    url: '/api/admin/segments',
+    url: '/admin/segments',
 } satisfies RouteDefinition<["post"]>
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1001
- * @route '/api/admin/segments'
+ * @route '/admin/segments'
  */
 save.url = (options?: RouteQueryOptions) => {
     return save.definition.url + queryParams(options)
@@ -104,7 +26,7 @@ save.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1001
- * @route '/api/admin/segments'
+ * @route '/admin/segments'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: save.url(options),
@@ -114,7 +36,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1001
- * @route '/api/admin/segments'
+ * @route '/admin/segments'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: save.url(options),
@@ -124,7 +46,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1001
- * @route '/api/admin/segments'
+ * @route '/admin/segments'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: save.url(options),
@@ -135,7 +57,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1076
- * @route '/api/admin/segments/{id}'
+ * @route '/admin/segments/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: deleteMethod.url(args, options),
@@ -144,13 +66,13 @@ export const deleteMethod = (args: { id: string | number } | [id: string | numbe
 
 deleteMethod.definition = {
     methods: ["delete"],
-    url: '/api/admin/segments/{id}',
+    url: '/admin/segments/{id}',
 } satisfies RouteDefinition<["delete"]>
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1076
- * @route '/api/admin/segments/{id}'
+ * @route '/admin/segments/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -178,7 +100,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1076
- * @route '/api/admin/segments/{id}'
+ * @route '/admin/segments/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: deleteMethod.url(args, options),
@@ -188,7 +110,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1076
- * @route '/api/admin/segments/{id}'
+ * @route '/admin/segments/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: deleteMethod.url(args, {
@@ -203,7 +125,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:1076
- * @route '/api/admin/segments/{id}'
+ * @route '/admin/segments/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: deleteMethod.url(args, {
@@ -216,10 +138,9 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
         })
     
     deleteMethod.form = deleteMethodForm
-const segments = {
-    index: Object.assign(index, index),
-save: Object.assign(save, save),
+const admin_segments = {
+    save: Object.assign(save, save),
 delete: Object.assign(deleteMethod, deleteMethod),
 }
 
-export default segments
+export default admin_segments

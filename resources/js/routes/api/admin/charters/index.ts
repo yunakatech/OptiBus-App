@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2146
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2151
  * @route '/api/admin/charters'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2146
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2151
  * @route '/api/admin/charters'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2146
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2151
  * @route '/api/admin/charters'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2146
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2151
  * @route '/api/admin/charters'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2146
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2151
  * @route '/api/admin/charters'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2146
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2151
  * @route '/api/admin/charters'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2146
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2151
  * @route '/api/admin/charters'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2406
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2411
  * @route '/api/admin/charters/{id}'
  */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2406
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2411
  * @route '/api/admin/charters/{id}'
  */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -122,7 +122,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2406
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2411
  * @route '/api/admin/charters/{id}'
  */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -131,7 +131,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2406
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2411
  * @route '/api/admin/charters/{id}'
  */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -141,7 +141,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2406
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2411
  * @route '/api/admin/charters/{id}'
  */
     const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -151,7 +151,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2406
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2411
  * @route '/api/admin/charters/{id}'
  */
         showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -160,7 +160,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::show
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2406
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2411
  * @route '/api/admin/charters/{id}'
  */
         showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -176,7 +176,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2477
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2482
  * @route '/api/admin/charters'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -191,7 +191,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2477
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2482
  * @route '/api/admin/charters'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -200,7 +200,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2477
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2482
  * @route '/api/admin/charters'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -210,7 +210,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2477
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2482
  * @route '/api/admin/charters'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -220,7 +220,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2477
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2482
  * @route '/api/admin/charters'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -231,7 +231,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     save.form = saveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bulkDelete
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2768
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2773
  * @route '/api/admin/charters/bulk-delete'
  */
 export const bulkDelete = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -246,7 +246,7 @@ bulkDelete.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bulkDelete
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2768
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2773
  * @route '/api/admin/charters/bulk-delete'
  */
 bulkDelete.url = (options?: RouteQueryOptions) => {
@@ -255,7 +255,7 @@ bulkDelete.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bulkDelete
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2768
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2773
  * @route '/api/admin/charters/bulk-delete'
  */
 bulkDelete.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -265,7 +265,7 @@ bulkDelete.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bulkDelete
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2768
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2773
  * @route '/api/admin/charters/bulk-delete'
  */
     const bulkDeleteForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -275,7 +275,7 @@ bulkDelete.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::bulkDelete
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2768
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2773
  * @route '/api/admin/charters/bulk-delete'
  */
         bulkDeleteForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -286,7 +286,7 @@ bulkDelete.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     bulkDelete.form = bulkDeleteForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markBopDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2795
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2800
  * @route '/api/admin/charters/{id}/mark-bop-done'
  */
 export const markBopDone = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -301,7 +301,7 @@ markBopDone.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markBopDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2795
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2800
  * @route '/api/admin/charters/{id}/mark-bop-done'
  */
 markBopDone.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -329,7 +329,7 @@ markBopDone.url = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markBopDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2795
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2800
  * @route '/api/admin/charters/{id}/mark-bop-done'
  */
 markBopDone.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -339,7 +339,7 @@ markBopDone.post = (args: { id: string | number } | [id: string | number ] | str
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markBopDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2795
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2800
  * @route '/api/admin/charters/{id}/mark-bop-done'
  */
     const markBopDoneForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -349,7 +349,7 @@ markBopDone.post = (args: { id: string | number } | [id: string | number ] | str
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markBopDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2795
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2800
  * @route '/api/admin/charters/{id}/mark-bop-done'
  */
         markBopDoneForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -360,7 +360,7 @@ markBopDone.post = (args: { id: string | number } | [id: string | number ] | str
     markBopDone.form = markBopDoneForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2828
  * @route '/api/admin/charters/{id}/mark-paid'
  */
 export const markPaid = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -375,7 +375,7 @@ markPaid.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2828
  * @route '/api/admin/charters/{id}/mark-paid'
  */
 markPaid.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -403,7 +403,7 @@ markPaid.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2828
  * @route '/api/admin/charters/{id}/mark-paid'
  */
 markPaid.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -413,7 +413,7 @@ markPaid.post = (args: { id: string | number } | [id: string | number ] | string
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2828
  * @route '/api/admin/charters/{id}/mark-paid'
  */
     const markPaidForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -423,7 +423,7 @@ markPaid.post = (args: { id: string | number } | [id: string | number ] | string
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2828
  * @route '/api/admin/charters/{id}/mark-paid'
  */
         markPaidForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -434,7 +434,7 @@ markPaid.post = (args: { id: string | number } | [id: string | number ] | string
     markPaid.form = markPaidForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2851
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2856
  * @route '/api/admin/charters/{id}/mark-done'
  */
 export const markDone = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -449,7 +449,7 @@ markDone.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2851
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2856
  * @route '/api/admin/charters/{id}/mark-done'
  */
 markDone.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -477,7 +477,7 @@ markDone.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2851
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2856
  * @route '/api/admin/charters/{id}/mark-done'
  */
 markDone.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -487,7 +487,7 @@ markDone.post = (args: { id: string | number } | [id: string | number ] | string
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2851
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2856
  * @route '/api/admin/charters/{id}/mark-done'
  */
     const markDoneForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -497,7 +497,7 @@ markDone.post = (args: { id: string | number } | [id: string | number ] | string
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::markDone
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2851
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2856
  * @route '/api/admin/charters/{id}/mark-done'
  */
         markDoneForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -508,7 +508,7 @@ markDone.post = (args: { id: string | number } | [id: string | number ] | string
     markDone.form = markDoneForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2712
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2717
  * @route '/api/admin/charters/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -523,7 +523,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2712
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2717
  * @route '/api/admin/charters/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -551,7 +551,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2712
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2717
  * @route '/api/admin/charters/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -561,7 +561,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2712
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2717
  * @route '/api/admin/charters/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -576,7 +576,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:2712
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:2717
  * @route '/api/admin/charters/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

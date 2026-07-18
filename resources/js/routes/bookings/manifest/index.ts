@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 export const print = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ print.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 print.url = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ print.url = (args: { groupKey: string | number } | [groupKey: string | number ] 
 
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 print.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ print.get = (args: { groupKey: string | number } | [groupKey: string | number ] 
 })
 /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 print.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ print.head = (args: { groupKey: string | number } | [groupKey: string | number ]
 
     /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
     const printForm = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ print.head = (args: { groupKey: string | number } | [groupKey: string | number ]
 
             /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
         printForm.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ print.head = (args: { groupKey: string | number } | [groupKey: string | number ]
         })
             /**
 * @see \App\Http\Controllers\BookingController::print
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
         printForm.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -98,7 +98,7 @@ print.head = (args: { groupKey: string | number } | [groupKey: string | number ]
     print.form = printForm
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 export const pdf = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ pdf.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 pdf.url = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -141,7 +141,7 @@ pdf.url = (args: { groupKey: string | number } | [groupKey: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 pdf.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -150,7 +150,7 @@ pdf.get = (args: { groupKey: string | number } | [groupKey: string | number ] | 
 })
 /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 pdf.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -160,7 +160,7 @@ pdf.head = (args: { groupKey: string | number } | [groupKey: string | number ] |
 
     /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
     const pdfForm = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -170,7 +170,7 @@ pdf.head = (args: { groupKey: string | number } | [groupKey: string | number ] |
 
             /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
         pdfForm.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -179,7 +179,7 @@ pdf.head = (args: { groupKey: string | number } | [groupKey: string | number ] |
         })
             /**
 * @see \App\Http\Controllers\BookingController::pdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
         pdfForm.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

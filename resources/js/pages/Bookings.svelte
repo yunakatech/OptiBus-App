@@ -2661,6 +2661,10 @@
         persistUiPreferences({ defaultDateRange: safeDate });
     };
     const reloadBookingListData = () => {
+        if (!listOnly) {
+            return;
+        }
+
         if (bookingListReloadTimer) {
             clearTimeout(bookingListReloadTimer);
             bookingListReloadTimer = null;
@@ -5092,8 +5096,9 @@
         }
 
         if (
-            path.startsWith('/api/bookings/') ||
-            path.startsWith('/api/admin/assignments')
+            listOnly &&
+            (path.startsWith('/api/bookings/') ||
+                path.startsWith('/api/admin/assignments'))
         ) {
             scheduleBookingListReload();
         }

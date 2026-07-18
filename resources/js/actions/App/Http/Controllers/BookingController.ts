@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 const BookingControllerc788df35b14daebdc29d781f7cbb0fba = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ BookingControllerc788df35b14daebdc29d781f7cbb0fba.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 BookingControllerc788df35b14daebdc29d781f7cbb0fba.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ BookingControllerc788df35b14daebdc29d781f7cbb0fba.url = (options?: RouteQueryOpt
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 BookingControllerc788df35b14daebdc29d781f7cbb0fba.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ BookingControllerc788df35b14daebdc29d781f7cbb0fba.get = (options?: RouteQueryOpt
 })
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
 BookingControllerc788df35b14daebdc29d781f7cbb0fba.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ BookingControllerc788df35b14daebdc29d781f7cbb0fba.head = (options?: RouteQueryOp
 
     /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
     const BookingControllerc788df35b14daebdc29d781f7cbb0fbaForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ BookingControllerc788df35b14daebdc29d781f7cbb0fba.head = (options?: RouteQueryOp
 
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
         BookingControllerc788df35b14daebdc29d781f7cbb0fbaForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ BookingControllerc788df35b14daebdc29d781f7cbb0fba.head = (options?: RouteQueryOp
         })
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings'
  */
         BookingControllerc788df35b14daebdc29d781f7cbb0fbaForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ BookingControllerc788df35b14daebdc29d781f7cbb0fba.head = (options?: RouteQueryOp
     BookingControllerc788df35b14daebdc29d781f7cbb0fba.form = BookingControllerc788df35b14daebdc29d781f7cbb0fbaForm
     /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 const BookingControllerba242e6e83ed2b3b86349f97fd392c37 = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ BookingControllerba242e6e83ed2b3b86349f97fd392c37.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 BookingControllerba242e6e83ed2b3b86349f97fd392c37.url = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -122,7 +122,7 @@ BookingControllerba242e6e83ed2b3b86349f97fd392c37.url = (args: { groupKey: strin
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 BookingControllerba242e6e83ed2b3b86349f97fd392c37.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -131,7 +131,7 @@ BookingControllerba242e6e83ed2b3b86349f97fd392c37.get = (args: { groupKey: strin
 })
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
 BookingControllerba242e6e83ed2b3b86349f97fd392c37.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -141,7 +141,7 @@ BookingControllerba242e6e83ed2b3b86349f97fd392c37.head = (args: { groupKey: stri
 
     /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
     const BookingControllerba242e6e83ed2b3b86349f97fd392c37Form = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -151,7 +151,7 @@ BookingControllerba242e6e83ed2b3b86349f97fd392c37.head = (args: { groupKey: stri
 
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
         BookingControllerba242e6e83ed2b3b86349f97fd392c37Form.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -160,7 +160,7 @@ BookingControllerba242e6e83ed2b3b86349f97fd392c37.head = (args: { groupKey: stri
         })
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/bookings/detail/{groupKey}'
  */
         BookingControllerba242e6e83ed2b3b86349f97fd392c37Form.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -176,7 +176,7 @@ BookingControllerba242e6e83ed2b3b86349f97fd392c37.head = (args: { groupKey: stri
     BookingControllerba242e6e83ed2b3b86349f97fd392c37.form = BookingControllerba242e6e83ed2b3b86349f97fd392c37Form
     /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/booking-console'
  */
 const BookingController4d32bcb4c56627ff469b28780ef98d94 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ BookingController4d32bcb4c56627ff469b28780ef98d94.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/booking-console'
  */
 BookingController4d32bcb4c56627ff469b28780ef98d94.url = (options?: RouteQueryOptions) => {
@@ -200,7 +200,7 @@ BookingController4d32bcb4c56627ff469b28780ef98d94.url = (options?: RouteQueryOpt
 
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/booking-console'
  */
 BookingController4d32bcb4c56627ff469b28780ef98d94.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -209,7 +209,7 @@ BookingController4d32bcb4c56627ff469b28780ef98d94.get = (options?: RouteQueryOpt
 })
 /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/booking-console'
  */
 BookingController4d32bcb4c56627ff469b28780ef98d94.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -219,7 +219,7 @@ BookingController4d32bcb4c56627ff469b28780ef98d94.head = (options?: RouteQueryOp
 
     /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/booking-console'
  */
     const BookingController4d32bcb4c56627ff469b28780ef98d94Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -229,7 +229,7 @@ BookingController4d32bcb4c56627ff469b28780ef98d94.head = (options?: RouteQueryOp
 
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/booking-console'
  */
         BookingController4d32bcb4c56627ff469b28780ef98d94Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -238,7 +238,7 @@ BookingController4d32bcb4c56627ff469b28780ef98d94.head = (options?: RouteQueryOp
         })
             /**
 * @see \App\Http\Controllers\BookingController::__invoke
- * @see app/Http/Controllers/BookingController.php:33
+ * @see app/Http/Controllers/BookingController.php:34
  * @route '/booking-console'
  */
         BookingController4d32bcb4c56627ff469b28780ef98d94Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -271,7 +271,7 @@ const BookingController: Record<string, unknown> & {
 
 /**
 * @see \App\Http\Controllers\BookingController::printManifest
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 export const printManifest = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -286,7 +286,7 @@ printManifest.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::printManifest
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 printManifest.url = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -314,7 +314,7 @@ printManifest.url = (args: { groupKey: string | number } | [groupKey: string | n
 
 /**
 * @see \App\Http\Controllers\BookingController::printManifest
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 printManifest.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -323,7 +323,7 @@ printManifest.get = (args: { groupKey: string | number } | [groupKey: string | n
 })
 /**
 * @see \App\Http\Controllers\BookingController::printManifest
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
 printManifest.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -333,7 +333,7 @@ printManifest.head = (args: { groupKey: string | number } | [groupKey: string | 
 
     /**
 * @see \App\Http\Controllers\BookingController::printManifest
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
     const printManifestForm = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -343,7 +343,7 @@ printManifest.head = (args: { groupKey: string | number } | [groupKey: string | 
 
             /**
 * @see \App\Http\Controllers\BookingController::printManifest
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
         printManifestForm.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -352,7 +352,7 @@ printManifest.head = (args: { groupKey: string | number } | [groupKey: string | 
         })
             /**
 * @see \App\Http\Controllers\BookingController::printManifest
- * @see app/Http/Controllers/BookingController.php:85
+ * @see app/Http/Controllers/BookingController.php:87
  * @route '/bookings/manifest/{groupKey}/print'
  */
         printManifestForm.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -368,7 +368,7 @@ printManifest.head = (args: { groupKey: string | number } | [groupKey: string | 
     printManifest.form = printManifestForm
 /**
 * @see \App\Http\Controllers\BookingController::downloadManifestPdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 export const downloadManifestPdf = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -383,7 +383,7 @@ downloadManifestPdf.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::downloadManifestPdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 downloadManifestPdf.url = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -411,7 +411,7 @@ downloadManifestPdf.url = (args: { groupKey: string | number } | [groupKey: stri
 
 /**
 * @see \App\Http\Controllers\BookingController::downloadManifestPdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 downloadManifestPdf.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -420,7 +420,7 @@ downloadManifestPdf.get = (args: { groupKey: string | number } | [groupKey: stri
 })
 /**
 * @see \App\Http\Controllers\BookingController::downloadManifestPdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
 downloadManifestPdf.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -430,7 +430,7 @@ downloadManifestPdf.head = (args: { groupKey: string | number } | [groupKey: str
 
     /**
 * @see \App\Http\Controllers\BookingController::downloadManifestPdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
     const downloadManifestPdfForm = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -440,7 +440,7 @@ downloadManifestPdf.head = (args: { groupKey: string | number } | [groupKey: str
 
             /**
 * @see \App\Http\Controllers\BookingController::downloadManifestPdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
         downloadManifestPdfForm.get = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -449,7 +449,7 @@ downloadManifestPdf.head = (args: { groupKey: string | number } | [groupKey: str
         })
             /**
 * @see \App\Http\Controllers\BookingController::downloadManifestPdf
- * @see app/Http/Controllers/BookingController.php:104
+ * @see app/Http/Controllers/BookingController.php:106
  * @route '/bookings/manifest/{groupKey}/pdf'
  */
         downloadManifestPdfForm.head = (args: { groupKey: string | number } | [groupKey: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -465,7 +465,7 @@ downloadManifestPdf.head = (args: { groupKey: string | number } | [groupKey: str
     downloadManifestPdf.form = downloadManifestPdfForm
 /**
 * @see \App\Http\Controllers\BookingController::printTicket
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 export const printTicket = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -480,7 +480,7 @@ printTicket.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::printTicket
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 printTicket.url = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -508,7 +508,7 @@ printTicket.url = (args: { bookingId: string | number } | [bookingId: string | n
 
 /**
 * @see \App\Http\Controllers\BookingController::printTicket
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 printTicket.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -517,7 +517,7 @@ printTicket.get = (args: { bookingId: string | number } | [bookingId: string | n
 })
 /**
 * @see \App\Http\Controllers\BookingController::printTicket
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
 printTicket.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -527,7 +527,7 @@ printTicket.head = (args: { bookingId: string | number } | [bookingId: string | 
 
     /**
 * @see \App\Http\Controllers\BookingController::printTicket
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
     const printTicketForm = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -537,7 +537,7 @@ printTicket.head = (args: { bookingId: string | number } | [bookingId: string | 
 
             /**
 * @see \App\Http\Controllers\BookingController::printTicket
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
         printTicketForm.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -546,7 +546,7 @@ printTicket.head = (args: { bookingId: string | number } | [bookingId: string | 
         })
             /**
 * @see \App\Http\Controllers\BookingController::printTicket
- * @see app/Http/Controllers/BookingController.php:165
+ * @see app/Http/Controllers/BookingController.php:167
  * @route '/bookings/ticket/{bookingId}/print'
  */
         printTicketForm.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -562,7 +562,7 @@ printTicket.head = (args: { bookingId: string | number } | [bookingId: string | 
     printTicket.form = printTicketForm
 /**
 * @see \App\Http\Controllers\BookingController::downloadTicketPdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 export const downloadTicketPdf = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -577,7 +577,7 @@ downloadTicketPdf.definition = {
 
 /**
 * @see \App\Http\Controllers\BookingController::downloadTicketPdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 downloadTicketPdf.url = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -605,7 +605,7 @@ downloadTicketPdf.url = (args: { bookingId: string | number } | [bookingId: stri
 
 /**
 * @see \App\Http\Controllers\BookingController::downloadTicketPdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 downloadTicketPdf.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -614,7 +614,7 @@ downloadTicketPdf.get = (args: { bookingId: string | number } | [bookingId: stri
 })
 /**
 * @see \App\Http\Controllers\BookingController::downloadTicketPdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
 downloadTicketPdf.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -624,7 +624,7 @@ downloadTicketPdf.head = (args: { bookingId: string | number } | [bookingId: str
 
     /**
 * @see \App\Http\Controllers\BookingController::downloadTicketPdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
     const downloadTicketPdfForm = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -634,7 +634,7 @@ downloadTicketPdf.head = (args: { bookingId: string | number } | [bookingId: str
 
             /**
 * @see \App\Http\Controllers\BookingController::downloadTicketPdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
         downloadTicketPdfForm.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -643,7 +643,7 @@ downloadTicketPdf.head = (args: { bookingId: string | number } | [bookingId: str
         })
             /**
 * @see \App\Http\Controllers\BookingController::downloadTicketPdf
- * @see app/Http/Controllers/BookingController.php:140
+ * @see app/Http/Controllers/BookingController.php:142
  * @route '/bookings/ticket/{bookingId}/pdf'
  */
         downloadTicketPdfForm.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
