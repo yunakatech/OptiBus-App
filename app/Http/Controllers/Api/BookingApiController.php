@@ -7,6 +7,7 @@ use App\Support\ActivityLog;
 use App\Support\BookingCode;
 use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
+use App\Support\SchemaCache;
 use App\Support\SegmentName;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
@@ -1205,6 +1206,14 @@ class BookingApiController extends Controller
 
     public function departureRiturs(Request $request): JsonResponse
     {
+        // Pre-warm schema cache to batch information_schema lookups
+        SchemaCache::warm([
+            'luggages'         => ['trip_assignment_id', 'status', 'pool_id', 'tenant_id',
+                                   'kode_resi', 'sender_name', 'receiver_name', 'rute', 'notes',
+                                   'sender_phone', 'receiver_phone', 'quantity', 'price', 'payment_status', 'tanggal'],
+            'trip_assignments' => ['id', 'rute', 'tanggal', 'jam', 'unit', 'status', 'pool_id', 'tenant_id', 'route_id'],
+        ]);
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
