@@ -40,6 +40,33 @@ Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
 Route::get('api/plans', [\App\Http\Controllers\Api\PublicApiController::class, 'plans'])->name('api.plans');
 Route::post('api/webhooks/mayar', [PaymentWebhookController::class, 'mayar'])->name('api.webhooks.mayar');
 
+// TEMPORARY: DB diagnostics — remove after root cause found
+Route::get('api/debug-db', static function (Request $request): \Illuminate\Http\JsonResponse {
+    if ($request->query('t') !== 'optibus-debug-2026') {
+        return response()->json(['error' => 'forbidden'], 403);
+    }
+    $out = [
+        'php'       => PHP_VERSION,
+        'db_driver' => config('database.default'),
+        'db_host'   => config('database.connections.pgsql.host'),
+        'db_port'   => config('database.connections.pgsql.port'),
+        'db_name'   => config('database.connections.pgsql.database'),
+        'db_user'   => config('database.connections.pgsql.username'),
+        'db_pass'   => config('database.connections.pgsql.password') !== '' ? '***SET***' : '(empty!)',
+        'app_key'   => config('app.key') !== '' ? '***SET***' : '(empty!)',
+        'app_env'   => config('app.env'),
+    ];
+    try {
+        \Illuminate\Support\Facades\DB::select('SELECT 1 as ok');
+        $out['db_connect'] = 'OK';
+        $out['has_drivers_table'] = \Illuminate\Support\Facades\Schema::hasTable('drivers') ? 'yes' : 'no';
+    } catch (\Throwable $e) {
+        $out['db_connect'] = 'FAILED';
+        $out['db_error']   = $e->getMessage();
+    }
+    return response()->json($out);
+});
+
 Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/build/'.ltrim($path, '/'), 302))
     ->where('path', '.*')
     ->name('api.build.redirect');
