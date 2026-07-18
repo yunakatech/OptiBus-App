@@ -41,7 +41,6 @@
         "DB_DATABASE": "postgres",
         "DB_USERNAME": "postgres.gpjusyvigwldclzlnsrm",
         "DB_SSLMODE": "require",
-        "DB_PERSISTENT": "false",
         "APP_SERVICES_CACHE": "/tmp/storage/bootstrap/cache/services.php",
         "APP_PACKAGES_CACHE": "/tmp/storage/bootstrap/cache/packages.php",
         "APP_CONFIG_CACHE": "/tmp/storage/bootstrap/cache/config.php",
@@ -49,4 +48,5 @@
         "APP_EVENTS_CACHE": "/tmp/storage/bootstrap/cache/events.php"
     }
 }
+
 
