@@ -3,9 +3,11 @@
     "framework": null,
     "functions": {
         "api/index.php": {
-            "runtime": "vercel-php@0.9.0"
+            "runtime": "vercel-php@0.9.0",
+            "maxDuration": 60
         }
     },
+
     "routes": [
         {
             "src": "/(branding|landing|build)/(.*)",
@@ -32,12 +34,14 @@
         "CACHE_STORE": "database",
         "SESSION_DRIVER": "cookie",
         "QUEUE_CONNECTION": "sync",
+        "VERCEL": "1",
         "DB_CONNECTION": "pgsql",
         "DB_HOST": "aws-0-ap-southeast-1.pooler.supabase.com",
         "DB_PORT": "6543",
         "DB_DATABASE": "postgres",
         "DB_USERNAME": "postgres.gpjusyvigwldclzlnsrm",
         "DB_SSLMODE": "require",
+        "DB_PERSISTENT": "false",
         "APP_SERVICES_CACHE": "/tmp/storage/bootstrap/cache/services.php",
         "APP_PACKAGES_CACHE": "/tmp/storage/bootstrap/cache/packages.php",
         "APP_CONFIG_CACHE": "/tmp/storage/bootstrap/cache/config.php",
@@ -45,3 +49,4 @@
         "APP_EVENTS_CACHE": "/tmp/storage/bootstrap/cache/events.php"
     }
 }
+

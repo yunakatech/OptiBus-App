@@ -12,6 +12,7 @@ use App\Support\FeatureGate;
 use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
 use App\Support\RoleAccessData;
+use App\Support\SchemaCache;
 use App\Support\SegmentName;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Verified;
@@ -3545,6 +3546,13 @@ class AdminOpsApiController extends Controller
 
     public function assignmentsIndex(Request $request): JsonResponse
     {
+        // Pre-warm schema cache to avoid N roundtrips to information_schema on Supabase/Vercel
+        SchemaCache::warm([
+            'trip_assignments' => ['rute', 'tanggal', 'jam', 'unit', 'driver_id', 'route_id', 'pool_id', 'tenant_id', 'status'],
+            'drivers'          => ['id', 'nama', 'phone', 'pool_id', 'tenant_id'],
+            'armadas'          => ['id', 'nopol', 'pool_id', 'tenant_id'],
+        ]);
+
         if (! Schema::hasTable('trip_assignments')) {
             return $this->ok([
                 'assignments' => [],
@@ -7724,6 +7732,16 @@ class AdminOpsApiController extends Controller
      */
     private function driverRowsForMonth(string $monthStart, string $monthEnd, int $poolId = 0): array
     {
+        // Pre-warm schema cache to batch information_schema lookups
+        SchemaCache::warm([
+            'drivers'          => ['id', 'nama', 'phone', 'unit_id', 'pool_id', 'tenant_id', 'armada_id', 'armada_nopol', 'kategori',
+                                   'target_revenue_bulanan', 'target_revenue_tahunan', 'revenue', 'bop', 'fixed_cost'],
+            'armadas'          => ['id', 'nopol', 'kategori', 'pool_id', 'tenant_id'],
+            'trip_assignments' => ['driver_id', 'tanggal', 'pool_id', 'route_id', 'rute', 'jam', 'unit', 'tenant_id', 'status'],
+            'charters'         => ['start_date', 'driver_name', 'price', 'bop_price', 'payment_status', 'bop_status', 'status', 'tenant_id', 'pool_id'],
+            'luggages'         => ['driver_id', 'tanggal', 'price', 'pool_id', 'tenant_id', 'status', 'payment_status'],
+        ]);
+
         if (! Schema::hasTable('drivers')) {
             return [];
         }
