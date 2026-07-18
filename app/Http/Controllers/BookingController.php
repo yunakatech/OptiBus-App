@@ -1111,8 +1111,8 @@ class BookingController extends Controller
     private function normalizeTripRoute(string $rute): string
     {
         $normalized = strtoupper(trim(preg_replace('/\s+/', ' ', $rute) ?? ''));
-        $normalized = str_replace([' => ', ' -> ', ' - '], ' TO ', $normalized);
-        $normalized = str_replace(['=>', '->'], ' TO ', $normalized);
+        $normalized = str_replace([' => ', ' -> ', ' → ', ' – ', ' — ', ' - '], ' TO ', $normalized);
+        $normalized = str_replace(['=>', '->', '→', '–', '—'], ' TO ', $normalized);
         $normalized = preg_replace('/\s*-\s*/', ' TO ', $normalized) ?? $normalized;
 
         return trim(preg_replace('/\s+/', ' ', $normalized) ?? $normalized);
