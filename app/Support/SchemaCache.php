@@ -44,11 +44,34 @@ final class SchemaCache
      * Pre-warm the cache for a set of tables and their columns in a single
      * information_schema query instead of N individual lookups.
      *
+     * Fails silently — if the bulk query throws (e.g. PgBouncer restrictions or
+     * SQLite which has no information_schema), we simply skip and let the
+     * individual hasTable / hasColumn calls populate the cache on demand.
+     *
      * @param  array<string, list<string>>  $tableColumns  e.g. ['trips' => ['driver_id', 'pool_id']]
      */
     public static function warm(array $tableColumns): void
     {
-        // Mark uncached tables as pending
+        try {
+            self::doBulkWarm($tableColumns);
+        } catch (\Throwable) {
+            // Bulk warm failed — individual Schema::hasTable/hasColumn calls
+            // will populate the cache lazily. Never let a warm() failure
+            // propagate and turn into a 500 response.
+        }
+    }
+
+    /**
+     * @param  array<string, list<string>>  $tableColumns
+     */
+    private static function doBulkWarm(array $tableColumns): void
+    {
+        // Only worth doing on PostgreSQL; SQLite has no information_schema
+        if (config('database.default') !== 'pgsql') {
+            return;
+        }
+
+        // Find tables not yet cached
         $uncachedTables = array_filter(
             array_keys($tableColumns),
             static fn (string $t): bool => ! array_key_exists($t, self::$tables),
@@ -58,10 +81,12 @@ final class SchemaCache
             return;
         }
 
+        $schema = (string) config('database.connections.pgsql.search_path', 'public');
+
         // Bulk-check table existence
         $existingTables = \Illuminate\Support\Facades\DB::table('information_schema.tables')
             ->whereIn('table_name', $uncachedTables)
-            ->where('table_schema', config('database.connections.pgsql.search_path', 'public'))
+            ->where('table_schema', $schema)
             ->pluck('table_name')
             ->map(static fn ($t): string => (string) $t)
             ->all();
@@ -70,16 +95,17 @@ final class SchemaCache
             self::$tables[$table] = in_array($table, $existingTables, true);
         }
 
-        // Bulk-check columns for tables that exist
+        // Collect columns to check for existing tables only
         $columnsToCheck = [];
         foreach ($tableColumns as $table => $columns) {
             if (! self::$tables[$table]) {
-                // Mark all columns false for non-existent tables
                 foreach ($columns as $column) {
                     self::$columns[$table.'.'.$column] = false;
                 }
+
                 continue;
             }
+
             foreach ($columns as $column) {
                 $key = $table.'.'.$column;
                 if (! array_key_exists($key, self::$columns)) {
@@ -92,27 +118,21 @@ final class SchemaCache
             return;
         }
 
-        // Flatten for a single IN query
-        $pairs = [];
-        foreach ($columnsToCheck as $table => $cols) {
-            foreach ($cols as $col) {
-                $pairs[] = ['table' => $table, 'column' => $col];
-            }
-        }
-
-        $tableNames = array_unique(array_column($pairs, 'table'));
-        $columnNames = array_unique(array_column($pairs, 'column'));
+        $tableNames  = array_unique(array_keys($columnsToCheck));
+        $columnNames = array_unique(array_merge(...array_values($columnsToCheck)));
 
         $found = \Illuminate\Support\Facades\DB::table('information_schema.columns')
             ->whereIn('table_name', $tableNames)
             ->whereIn('column_name', $columnNames)
-            ->where('table_schema', config('database.connections.pgsql.search_path', 'public'))
+            ->where('table_schema', $schema)
             ->get(['table_name', 'column_name'])
             ->map(static fn ($row): string => $row->table_name.'.'.$row->column_name)
             ->all();
 
-        foreach ($pairs as ['table' => $table, 'column' => $col]) {
-            self::$columns[$table.'.'.$col] = in_array($table.'.'.$col, $found, true);
+        foreach ($columnsToCheck as $table => $cols) {
+            foreach ($cols as $col) {
+                self::$columns[$table.'.'.$col] = in_array($table.'.'.$col, $found, true);
+            }
         }
     }
 
