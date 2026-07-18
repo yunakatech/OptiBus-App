@@ -2472,7 +2472,17 @@ class BookingApiController extends Controller
             ->where('tanggal', $tanggal)
             ->where('t.jam', $this->normalizeTime($jam))
             ->where('t.unit', $unit);
-        PoolScope::applyRouteScope($query, '', 't.rute');
+        PoolScope::applyRouteIdentity(
+            $query,
+            $rute,
+            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            't.rute',
+        );
+        PoolScope::applyRouteScope(
+            $query,
+            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            't.rute',
+        );
 
         $rows = $query->get($select);
 
@@ -2492,7 +2502,17 @@ class BookingApiController extends Controller
             ->where('tanggal', $tanggal)
             ->where('jam', $this->normalizeTime($jam))
             ->where('unit', $unit);
-        PoolScope::applyRouteScope($query, '', 'rute');
+        PoolScope::applyRouteIdentity(
+            $query,
+            $rute,
+            Schema::hasColumn('trip_assignments', 'route_id') ? 'route_id' : '',
+            'rute',
+        );
+        PoolScope::applyRouteScope(
+            $query,
+            Schema::hasColumn('trip_assignments', 'route_id') ? 'route_id' : '',
+            'rute',
+        );
 
         $rows = $query->get(['id', 'rute']);
 

@@ -7609,8 +7609,8 @@ class AdminOpsApiController extends Controller
     private function normalizeRouteName(string $value): string
     {
         $normalized = strtoupper(trim(preg_replace('/\s+/', ' ', $value) ?? ''));
-        $normalized = str_replace([' => ', ' -> ', ' - '], ' TO ', $normalized);
-        $normalized = str_replace(['=>', '->'], ' TO ', $normalized);
+        $normalized = str_replace([' => ', ' -> ', ' → ', ' – ', ' — ', ' - '], ' TO ', $normalized);
+        $normalized = str_replace(['=>', '->', '→', '–', '—'], ' TO ', $normalized);
         $normalized = preg_replace('/\s*-\s*/', ' TO ', $normalized) ?? $normalized;
 
         return trim(preg_replace('/\s+/', ' ', $normalized) ?? $normalized);
