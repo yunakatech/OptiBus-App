@@ -930,7 +930,11 @@ class PoolScope
 
             $legacyNameClause = function (Builder $legacy) use ($hasRouteIdClause, $routeIdColumn, $routeNameColumn, $normalizedRouteName): void {
                 if ($hasRouteIdClause) {
-                    $legacy->whereNull($routeIdColumn);
+                    $legacy->where(function (Builder $routeIdFallback) use ($routeIdColumn): void {
+                        $routeIdFallback
+                            ->whereNull($routeIdColumn)
+                            ->orWhere($routeIdColumn, 0);
+                    });
                 }
 
                 $legacy->whereRaw(self::normalizedRouteSql($routeNameColumn).' = ?', [$normalizedRouteName]);
@@ -973,7 +977,11 @@ class PoolScope
                     ->all();
                 $nameClause = function (Builder $nameBuilder) use ($hasClause, $routeIdColumn, $routeNameColumn, $routeNames, $normalizedRouteNames): void {
                     if ($hasClause) {
-                        $nameBuilder->whereNull($routeIdColumn);
+                        $nameBuilder->where(function (Builder $routeIdFallback) use ($routeIdColumn): void {
+                            $routeIdFallback
+                                ->whereNull($routeIdColumn)
+                                ->orWhere($routeIdColumn, 0);
+                        });
                     }
 
                     $nameBuilder->where(function (Builder $legacyName) use ($routeNameColumn, $routeNames, $normalizedRouteNames): void {

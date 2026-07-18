@@ -102,12 +102,17 @@ class BookingApiController extends Controller
             }
 
             $query = DB::table('schedules as s')
-                ->where('s.rute', $rute)
                 ->where('s.dow', $dow)
                 ->orderBy('s.jam');
             if (Schema::hasColumn('schedules', 'tenant_id')) {
                 PoolScope::applyTenantScope($query, 's.tenant_id');
             }
+            PoolScope::applyRouteIdentity(
+                $query,
+                $rute,
+                Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+                's.rute',
+            );
             PoolScope::applyRouteScope(
                 $query,
                 Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
@@ -129,12 +134,17 @@ class BookingApiController extends Controller
                 : DB::raw('NULL as jam_pickups');
 
             $segmentQuery = DB::table('segments as s')
-                ->where('s.rute', $rute)
                 ->orderBy('s.rute')
                 ->orderBy('s.jam');
             if (Schema::hasColumn('segments', 'tenant_id')) {
                 PoolScope::applyTenantScope($segmentQuery, 's.tenant_id');
             }
+            PoolScope::applyRouteIdentity(
+                $segmentQuery,
+                $rute,
+                Schema::hasColumn('segments', 'route_id') ? 's.route_id' : '',
+                's.rute',
+            );
             PoolScope::applyRouteScope($segmentQuery, 's.route_id', 's.rute');
 
             $segments = $segmentQuery->get($segmentSelect)->map(function ($row) {
@@ -456,11 +466,23 @@ class BookingApiController extends Controller
         // Apply explicit schedule-segment override if available
         if (Schema::hasTable('schedule_segment') && !empty($details)) {
             $dow = Carbon::createFromFormat('Y-m-d', $validated['tanggal'])->dayOfWeek;
-            $scheduleQuery = DB::table('schedules')->where('rute', $validated['rute'])->where('dow', $dow)->where('jam', $jamSql);
+            $scheduleQuery = DB::table('schedules')
+                ->where('dow', $dow)
+                ->where('jam', $jamSql);
             if (Schema::hasColumn('schedules', 'tenant_id')) {
                 PoolScope::applyTenantScope($scheduleQuery, 'tenant_id');
             }
-            // Cannot cleanly apply route_id scope to schedules without more context, but rute+dow+jam+tenant_id is usually unique enough
+            PoolScope::applyRouteIdentity(
+                $scheduleQuery,
+                (string) $validated['rute'],
+                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+                'rute',
+            );
+            PoolScope::applyRouteScope(
+                $scheduleQuery,
+                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+                'rute',
+            );
             $schedule = $scheduleQuery->first(['id']);
             if ($schedule) {
                 $pivots = DB::table('schedule_segment')->where('schedule_id', $schedule->id)->get(['segment_id', 'jam_pickup']);
@@ -504,13 +526,18 @@ class BookingApiController extends Controller
         }
 
         $scheduleQuery = DB::table('schedules as s')
-            ->where('s.rute', $rute)
             ->where('s.dow', $dow)
             ->where('s.jam', $jamSql)
             ->orderBy('s.id');
         if (Schema::hasColumn('schedules', 'tenant_id')) {
             PoolScope::applyTenantScope($scheduleQuery, 's.tenant_id');
         }
+        PoolScope::applyRouteIdentity(
+            $scheduleQuery,
+            $rute,
+            Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+            's.rute',
+        );
         PoolScope::applyRouteScope(
             $scheduleQuery,
             Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
@@ -2876,8 +2903,8 @@ class BookingApiController extends Controller
     private function normalizeRouteName(string $value): string
     {
         $normalized = strtoupper(trim(preg_replace('/\s+/', ' ', $value) ?? ''));
-        $normalized = str_replace([' => ', ' -> ', ' - '], ' TO ', $normalized);
-        $normalized = str_replace(['=>', '->'], ' TO ', $normalized);
+        $normalized = str_replace([' => ', ' -> ', ' → ', ' – ', ' — ', ' - '], ' TO ', $normalized);
+        $normalized = str_replace(['=>', '->', '→', '–', '—'], ' TO ', $normalized);
         $normalized = preg_replace('/\s*-\s*/', ' TO ', $normalized) ?? $normalized;
 
         return trim(preg_replace('/\s+/', ' ', $normalized) ?? $normalized);

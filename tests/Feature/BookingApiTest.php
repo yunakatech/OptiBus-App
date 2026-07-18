@@ -11,6 +11,20 @@ class BookingApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Carbon::setTestNow(Carbon::parse('2026-05-01 08:00:00'));
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
     private function actingAsSuperAdmin(): void
     {
         $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
@@ -280,6 +294,103 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('details.A1.segment_jam', '07:30')
             ->assertJsonPath('details.A1.segment_jam_pickups.0', '07:30')
             ->assertJsonPath('details.A1.segment_jam_pickups.1', '08:45');
+    }
+
+    public function test_booking_schedule_and_seats_detail_match_arrow_route_variants(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $date = '2026-08-15';
+        $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
+
+        $unitId = DB::table('units')->insertGetId([
+            'nopol' => 'DD 7777 XX',
+            'merek' => 'Isuzu',
+            'type' => 'Elf',
+            'kapasitas' => 12,
+            'status' => 'Aktif',
+            'created_at' => now(),
+        ]);
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG → MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $scheduleId = DB::table('schedules')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => 0,
+            'rute' => 'PINRANG → MAKASSAR',
+            'dow' => $dow,
+            'jam' => '08:00:00',
+            'units' => 1,
+            'unit_label' => 'Reguler',
+            'unit_id' => $unitId,
+            'created_at' => now(),
+        ]);
+
+        $segmentId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => 0,
+            'rute' => 'PINRANG → MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '08:00:00',
+            'jam_pickups' => json_encode(['08:00']),
+            'harga' => 150000,
+            'created_at' => now(),
+        ]);
+
+        DB::table('schedule_segment')->insert([
+            'schedule_id' => $scheduleId,
+            'segment_id' => $segmentId,
+            'jam_pickup' => '08:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('bookings')->insert([
+            'tenant_id' => $tenantId,
+            'route_id' => 0,
+            'rute' => 'PINRANG → MAKASSAR',
+            'tanggal' => $date,
+            'jam' => '08:00:00',
+            'unit' => 1,
+            'seat' => 'A1',
+            'name' => 'RIDWAN',
+            'phone' => '081234567890',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'segment_id' => $segmentId,
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+        ]);
+
+        $this->getJson(route('api.bookings.schedules', [
+            'rute' => 'PINRANG -> MAKASSAR',
+            'tanggal' => $date,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'schedules')
+            ->assertJsonPath('schedules.0.jam', '08:00')
+            ->assertJsonPath('schedules.0.segment_matches.0.id', $segmentId);
+
+        $this->getJson(route('api.bookings.seats-detail', [
+            'rute' => 'PINRANG -> MAKASSAR',
+            'tanggal' => $date,
+            'jam' => '08:00',
+            'unit' => 1,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('details.A1.name', 'RIDWAN')
+            ->assertJsonPath('details.A1.segment_jam_pickups.0', '08:00');
     }
 
     public function test_schedules_only_return_matched_segments_no_route_fallback(): void
