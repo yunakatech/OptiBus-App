@@ -177,13 +177,13 @@ class BookingApiController extends Controller
         $pivotSegmentMap = [];   // id => segment array for segments linked via pivot
         if (Schema::hasTable('schedule_segment')) {
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
-            if (!empty($scheduleIds)) {
+            if (! empty($scheduleIds)) {
                 $pivots = DB::table('schedule_segment')
                     ->whereIn('schedule_id', $scheduleIds)
                     ->get(['schedule_id', 'segment_id', 'jam_pickup']);
                 foreach ($pivots as $pivot) {
                     $sId = (int) $pivot->schedule_id;
-                    if (!isset($scheduleSegmentsPivot[$sId])) {
+                    if (! isset($scheduleSegmentsPivot[$sId])) {
                         $scheduleSegmentsPivot[$sId] = [];
                     }
                     $scheduleSegmentsPivot[$sId][(int) $pivot->segment_id] = substr((string) $pivot->jam_pickup, 0, 5);
@@ -197,7 +197,7 @@ class BookingApiController extends Controller
                     ->values()
                     ->all();
 
-                if (!empty($allPivotSegmentIds)) {
+                if (! empty($allPivotSegmentIds)) {
                     $hasJamPickupsCol = Schema::hasColumn('segments', 'jam_pickups');
                     $segSelect = ['id', 'rute', 'origin', 'destination', 'jam', 'harga'];
                     if ($hasJamPickupsCol) {
@@ -209,24 +209,23 @@ class BookingApiController extends Controller
                     foreach ($pivotSegs as $seg) {
                         $segId = (int) $seg->id;
                         $pivotSegmentMap[$segId] = [
-                            'id'          => $segId,
-                            'rute'        => \App\Support\SegmentName::display(
+                            'id' => $segId,
+                            'rute' => SegmentName::display(
                                 $seg->origin ?? null,
                                 $seg->destination ?? null,
                                 $seg->rute ?? '',
                             ),
-                            'jam'         => \App\Support\SegmentName::jam($seg->jam ?? null),
-                            'jam_pickups' => \App\Support\SegmentName::jamList(
+                            'jam' => SegmentName::jam($seg->jam ?? null),
+                            'jam_pickups' => SegmentName::jamList(
                                 $hasJamPickupsCol ? ($seg->jam_pickups ?? null) : null,
                                 $seg->jam ?? null,
                             ),
-                            'harga'       => (float) ($seg->harga ?? 0),
+                            'harga' => (float) ($seg->harga ?? 0),
                         ];
                     }
                 }
             }
         }
-
 
         $optionsBySchedule = [];
         $unitIds = $rows
@@ -280,7 +279,7 @@ class BookingApiController extends Controller
                 ->all();
         }
 
-        $schedules = $rows->map(function ($row) use ($optionsBySchedule, $unitMap, $segments, $rute, $scheduleSegmentsPivot, $pivotSegmentMap) {
+        $schedules = $rows->map(function ($row) use ($optionsBySchedule, $unitMap, $segments, $scheduleSegmentsPivot, $pivotSegmentMap) {
             $scheduleId = (int) ($row->id ?? 0);
             $baseUnitId = (int) ($row->unit_id ?? 0);
             $baseUnit = $baseUnitId > 0 ? ($unitMap[$baseUnitId] ?? null) : null;
@@ -357,7 +356,7 @@ class BookingApiController extends Controller
 
             // When explicit mappings exist, build segment_matches from pivotSegmentMap
             // (segments fetched by ID directly, so rute mismatch is no problem)
-            if (!empty($explicitMappings)) {
+            if (! empty($explicitMappings)) {
                 $segmentMatches = [];
                 foreach ($explicitMappings as $segId => $jam_pickup) {
                     if (isset($pivotSegmentMap[$segId])) {
@@ -464,7 +463,7 @@ class BookingApiController extends Controller
         }
 
         // Apply explicit schedule-segment override if available
-        if (Schema::hasTable('schedule_segment') && !empty($details)) {
+        if (Schema::hasTable('schedule_segment') && ! empty($details)) {
             $dow = Carbon::createFromFormat('Y-m-d', $validated['tanggal'])->dayOfWeek;
             $scheduleQuery = DB::table('schedules')
                 ->where('dow', $dow)
@@ -488,7 +487,7 @@ class BookingApiController extends Controller
                 $pivots = DB::table('schedule_segment')->where('schedule_id', $schedule->id)->get(['segment_id', 'jam_pickup']);
                 $pivotMap = [];
                 foreach ($pivots as $p) {
-                    $pivotMap[(int)$p->segment_id] = substr((string)$p->jam_pickup, 0, 5);
+                    $pivotMap[(int) $p->segment_id] = substr((string) $p->jam_pickup, 0, 5);
                 }
                 foreach ($details as $seat => $detail) {
                     $segId = (int) $detail['segment_id'];
@@ -545,15 +544,15 @@ class BookingApiController extends Controller
         );
 
         $scheduleRows = $scheduleQuery->get([
-                's.id',
-                's.rute',
-                's.dow',
-                's.jam',
-                's.units',
-                's.unit_label',
-                's.layout',
-                's.unit_id',
-            ]);
+            's.id',
+            's.rute',
+            's.dow',
+            's.jam',
+            's.units',
+            's.unit_label',
+            's.layout',
+            's.unit_id',
+        ]);
 
         $optionsBySchedule = [];
         $unitIds = $scheduleRows
@@ -677,10 +676,10 @@ class BookingApiController extends Controller
             PoolScope::applyRouteIdentity($assignmentQuery, $rute, '', 't.rute');
             PoolScope::applyRouteScope($assignmentQuery, '', 't.rute');
             $assignment = $assignmentQuery->first([
-                    't.armada_id',
-                    DB::raw('a.nopol as armada_nopol'),
-                    DB::raw('a.kategori as armada_kategori'),
-                ]);
+                't.armada_id',
+                DB::raw('a.nopol as armada_nopol'),
+                DB::raw('a.kategori as armada_kategori'),
+            ]);
 
             $armadaCategory = trim((string) ($assignment->armada_kategori ?? ''));
             if ($armadaCategory !== '') {
@@ -1255,20 +1254,7 @@ class BookingApiController extends Controller
                 ->orderByDesc('id');
             $this->applyLuggagePoolScope($mappedQuery);
 
-            $mappedRows = $mappedQuery->get([
-                    'id',
-                    'kode_resi',
-                    'sender_name',
-                    'receiver_name',
-                    'rute',
-                    'tanggal',
-                    'quantity',
-                    'price',
-                    'status',
-                    'payment_status',
-                    'notes',
-                    'trip_assignment_id',
-                ]);
+            $mappedRows = $mappedQuery->get($this->luggageRiturSelectColumns());
 
             $mappedRows = $mappedRows
                 ->map(function ($row) {
@@ -1280,44 +1266,35 @@ class BookingApiController extends Controller
         }
 
         $availableQuery = DB::table('luggages')
-            ->where(function ($builder) {
-                $this->applyLuggageStatusFilter($builder, 'status', $this->luggageReceivedStatuses());
-            })
             ->whereNull('trip_assignment_id');
+        if (Schema::hasColumn('luggages', 'status')) {
+            $availableQuery->where(function ($builder) {
+                $this->applyLuggageStatusFilter($builder, 'status', $this->luggageReceivedStatuses());
+            });
+        }
         $this->applyLuggagePoolScope($availableQuery);
 
         if ($query !== '') {
             $like = '%'.$query.'%';
-            $availableQuery->where(function ($builder) use ($like) {
-                $builder
-                    ->where('kode_resi', 'like', $like)
-                    ->orWhere('sender_name', 'like', $like)
-                    ->orWhere('sender_phone', 'like', $like)
-                    ->orWhere('receiver_name', 'like', $like)
-                    ->orWhere('receiver_phone', 'like', $like)
-                    ->orWhere('rute', 'like', $like)
-                    ->orWhere('notes', 'like', $like);
-            });
+            $searchColumns = array_values(array_filter(
+                ['kode_resi', 'sender_name', 'sender_phone', 'receiver_name', 'receiver_phone', 'rute', 'notes'],
+                static fn (string $column): bool => Schema::hasColumn('luggages', $column),
+            ));
+            if ($searchColumns !== []) {
+                $availableQuery->where(function ($builder) use ($like, $searchColumns) {
+                    foreach ($searchColumns as $index => $column) {
+                        $method = $index === 0 ? 'where' : 'orWhere';
+                        $builder->{$method}($column, 'like', $like);
+                    }
+                });
+            }
         }
 
         $targetRoute = $this->normalizeRouteName($routeName);
         $availableRows = $availableQuery
             ->orderByDesc('id')
             ->limit($query !== '' ? 200 : 48)
-            ->get([
-                'id',
-                'kode_resi',
-                'sender_name',
-                'receiver_name',
-                'rute',
-                'tanggal',
-                'quantity',
-                'price',
-                'status',
-                'payment_status',
-                'notes',
-                'trip_assignment_id',
-            ])
+            ->get($this->luggageRiturSelectColumns())
             ->filter(function ($row) use ($targetRoute) {
                 return $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute;
             })
@@ -1333,6 +1310,31 @@ class BookingApiController extends Controller
             'mapped_luggages' => $mappedRows->values()->all(),
             'available_luggages' => $availableRows->values()->all(),
         ]);
+    }
+
+    private function luggageRiturSelectColumns(): array
+    {
+        $columnDefaults = [
+            'id' => '0',
+            'kode_resi' => "''",
+            'sender_name' => "''",
+            'receiver_name' => "''",
+            'rute' => "''",
+            'tanggal' => 'NULL',
+            'quantity' => '0',
+            'price' => '0',
+            'status' => 'NULL',
+            'payment_status' => 'NULL',
+            'notes' => 'NULL',
+            'trip_assignment_id' => 'NULL',
+        ];
+
+        return collect($columnDefaults)
+            ->map(static fn (string $default, string $column): mixed => Schema::hasColumn('luggages', $column)
+                ? $column
+                : DB::raw($default.' as '.$column))
+            ->values()
+            ->all();
     }
 
     public function mapDepartureRitur(Request $request): JsonResponse
@@ -2115,23 +2117,23 @@ class BookingApiController extends Controller
             PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
             $row = $query->first([
-                    'b.id',
-                    $this->bookingsHasRouteId() ? 'b.route_id' : DB::raw('NULL as route_id'),
-                    'b.seat',
-                    'b.rute',
-                    'b.tanggal',
-                    'b.jam',
-                    'b.unit',
-                    'b.status',
-                    'b.name',
-                    'b.phone',
-                    'b.pickup_point',
-                    'b.pembayaran',
-                    'b.segment_id',
-                    'b.price',
-                    'b.discount',
-                    DB::raw('c.gmaps as address'),
-                ]);
+                'b.id',
+                $this->bookingsHasRouteId() ? 'b.route_id' : DB::raw('NULL as route_id'),
+                'b.seat',
+                'b.rute',
+                'b.tanggal',
+                'b.jam',
+                'b.unit',
+                'b.status',
+                'b.name',
+                'b.phone',
+                'b.pickup_point',
+                'b.pembayaran',
+                'b.segment_id',
+                'b.price',
+                'b.discount',
+                DB::raw('c.gmaps as address'),
+            ]);
 
             return $row ? (array) $row : null;
         }
@@ -2157,23 +2159,23 @@ class BookingApiController extends Controller
         PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
         $row = $query->first([
-                'b.id',
-                $this->bookingsHasRouteId() ? 'b.route_id' : DB::raw('NULL as route_id'),
-                'b.seat',
-                'b.rute',
-                'b.tanggal',
-                'b.jam',
-                'b.unit',
-                'b.status',
-                'b.name',
-                'b.phone',
-                'b.pickup_point',
-                'b.pembayaran',
-                'b.segment_id',
-                'b.price',
-                'b.discount',
-                DB::raw('c.gmaps as address'),
-            ]);
+            'b.id',
+            $this->bookingsHasRouteId() ? 'b.route_id' : DB::raw('NULL as route_id'),
+            'b.seat',
+            'b.rute',
+            'b.tanggal',
+            'b.jam',
+            'b.unit',
+            'b.status',
+            'b.name',
+            'b.phone',
+            'b.pickup_point',
+            'b.pembayaran',
+            'b.segment_id',
+            'b.price',
+            'b.discount',
+            DB::raw('c.gmaps as address'),
+        ]);
 
         return $row ? (array) $row : null;
     }
@@ -2403,7 +2405,7 @@ class BookingApiController extends Controller
             $query,
             Schema::hasColumn('luggages', 'pool_id') ? 'pool_id' : '',
             Schema::hasColumn('luggages', 'rute_id') ? 'rute_id' : '',
-            'rute',
+            Schema::hasColumn('luggages', 'rute') ? 'rute' : '',
         );
     }
 

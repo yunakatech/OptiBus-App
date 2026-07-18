@@ -4185,23 +4185,14 @@ class AdminOpsApiController extends Controller
 
     public function unitsIndex(): JsonResponse
     {
+        if (! Schema::hasTable('units')) {
+            return $this->ok(['units' => []]);
+        }
+
         $status = trim((string) request()->query('status', ''));
 
         $query = DB::table('units')
-            ->orderBy('nopol')
-            ->select([
-                'id',
-                'nopol',
-                'merek',
-                'type',
-                'category',
-                'tahun',
-                'warna',
-                'kapasitas',
-                'status',
-                'layout',
-                Schema::hasColumn('units', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
-            ])
+            ->select($this->unitSelectColumns())
             ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q) {
                 $tenantId = PoolScope::tenantId();
                 if ($tenantId > 0) {
@@ -4210,11 +4201,11 @@ class AdminOpsApiController extends Controller
             });
         $this->applyPoolScopeIfExists($query, 'units');
 
-        if ($status !== '') {
+        if ($status !== '' && Schema::hasColumn('units', 'status')) {
             $query->where('status', $status);
         }
 
-        $rawRows = $query->get();
+        $rawRows = $query->orderBy(Schema::hasColumn('units', 'nopol') ? 'nopol' : 'id')->get();
         $poolNames = $this->poolNameMap($rawRows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $rows = $rawRows
             ->map(function ($row) use ($poolNames) {
@@ -4229,8 +4220,36 @@ class AdminOpsApiController extends Controller
         return $this->ok(['units' => $rows]);
     }
 
+    private function unitSelectColumns(): array
+    {
+        $columnDefaults = [
+            'id' => '0',
+            'nopol' => "''",
+            'merek' => 'NULL',
+            'type' => 'NULL',
+            'category' => "'Minibus'",
+            'tahun' => '0',
+            'warna' => 'NULL',
+            'kapasitas' => '0',
+            'status' => "'Aktif'",
+            'layout' => 'NULL',
+            'pool_id' => 'NULL',
+        ];
+
+        return collect($columnDefaults)
+            ->map(static fn (string $default, string $column): mixed => Schema::hasColumn('units', $column)
+                ? $column
+                : DB::raw($default.' as '.$column))
+            ->values()
+            ->all();
+    }
+
     public function unitsSave(Request $request): JsonResponse
     {
+        if (! Schema::hasTable('units')) {
+            return $this->error('Tabel unit belum tersedia. Jalankan migration terlebih dahulu.', 500);
+        }
+
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
             'nopol' => ['required', 'string', 'max:50'],
@@ -4252,7 +4271,7 @@ class AdminOpsApiController extends Controller
             $existingQuery = DB::table('units')->where('id', $id);
             $this->applyWriteTenantScopeIfExists($existingQuery, 'units');
             $this->applyPoolScopeIfExists($existingQuery, 'units');
-            $existing = $existingQuery->first();
+            $existing = $existingQuery->first($this->unitSelectColumns());
 
             if (! $existing) {
                 return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
@@ -4269,14 +4288,15 @@ class AdminOpsApiController extends Controller
             return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
         }
 
-        $duplicate = DB::table('units')
-            ->whereRaw('UPPER(nopol) = ?', [$nopol])
-            ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
-                PoolScope::applyTenantScope($q, 'tenant_id');
-            })
-            ->when(Schema::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
-            ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
-            ->exists();
+        $duplicate = Schema::hasColumn('units', 'nopol')
+            && DB::table('units')
+                ->whereRaw('UPPER(nopol) = ?', [$nopol])
+                ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
+                    PoolScope::applyTenantScope($q, 'tenant_id');
+                })
+                ->when(Schema::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
+                ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
+                ->exists();
 
         if ($duplicate) {
             return $this->error('Nopol sudah terdaftar.', 409);
@@ -4294,12 +4314,14 @@ class AdminOpsApiController extends Controller
             'status' => $this->nullable($data['status'] ?? null) ?? 'Aktif',
             'layout' => $this->nullable($data['layout'] ?? null),
         ];
+        $payload = $this->filterPayloadColumns('units', $payload);
+        $payload = array_merge($payload, $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null));
 
         if ($id > 0) {
             $query = DB::table('units')->where('id', $id);
             $this->applyWriteTenantScopeIfExists($query, 'units');
             $this->applyPoolScopeIfExists($query, 'units');
-            $updated = $query->update(array_merge($payload, $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null)));
+            $updated = $query->update($payload);
 
             if ($updated === 0) {
                 return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
@@ -4308,7 +4330,7 @@ class AdminOpsApiController extends Controller
             return $this->ok(['message' => 'Unit updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null), [
+        $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), [
             'created_at' => now(),
         ]));
 
@@ -4395,7 +4417,7 @@ class AdminOpsApiController extends Controller
 
     public function armadaCategoriesIndex(): JsonResponse
     {
-        if (! Schema::hasTable('units')) {
+        if (! Schema::hasTable('units') || ! Schema::hasColumn('units', 'category')) {
             return $this->ok(['categories' => []]);
         }
 
@@ -4755,7 +4777,10 @@ class AdminOpsApiController extends Controller
             $existingQuery = DB::table('armadas')->where('id', $id);
             $this->applyWriteTenantScopeIfExists($existingQuery, 'armadas');
             $this->applyPoolScopeIfExists($existingQuery, 'armadas');
-            $existing = $existingQuery->first(['id', 'pool_id']);
+            $existing = $existingQuery->first([
+                'id',
+                Schema::hasColumn('armadas', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+            ]);
 
             if (! $existing) {
                 return $this->error('Armada tidak ditemukan untuk pool aktif.', 404);
