@@ -49,12 +49,12 @@ class BookingApiController extends Controller
 
             $query = DB::table('schedules')
                 ->where('dow', $dow);
-            if (Schema::hasColumn('schedules', 'tenant_id')) {
+            if (SchemaCache::hasColumn('schedules', 'tenant_id')) {
                 PoolScope::applyTenantScope($query, 'tenant_id');
             }
             PoolScope::applyRouteScope(
                 $query,
-                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+                SchemaCache::hasColumn('schedules', 'route_id') ? 'route_id' : '',
                 'rute',
             );
 
@@ -105,18 +105,18 @@ class BookingApiController extends Controller
             $query = DB::table('schedules as s')
                 ->where('s.dow', $dow)
                 ->orderBy('s.jam');
-            if (Schema::hasColumn('schedules', 'tenant_id')) {
+            if (SchemaCache::hasColumn('schedules', 'tenant_id')) {
                 PoolScope::applyTenantScope($query, 's.tenant_id');
             }
             PoolScope::applyRouteIdentity(
                 $query,
                 $rute,
-                Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+                SchemaCache::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
                 's.rute',
             );
             PoolScope::applyRouteScope(
                 $query,
-                Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+                SchemaCache::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
                 's.rute',
             );
 
@@ -130,20 +130,20 @@ class BookingApiController extends Controller
                 's.jam',
                 's.harga',
             ];
-            $segmentSelect[] = Schema::hasColumn('segments', 'jam_pickups')
+            $segmentSelect[] = SchemaCache::hasColumn('segments', 'jam_pickups')
                 ? 's.jam_pickups'
                 : DB::raw('NULL as jam_pickups');
 
             $segmentQuery = DB::table('segments as s')
                 ->orderBy('s.rute')
                 ->orderBy('s.jam');
-            if (Schema::hasColumn('segments', 'tenant_id')) {
+            if (SchemaCache::hasColumn('segments', 'tenant_id')) {
                 PoolScope::applyTenantScope($segmentQuery, 's.tenant_id');
             }
             PoolScope::applyRouteIdentity(
                 $segmentQuery,
                 $rute,
-                Schema::hasColumn('segments', 'route_id') ? 's.route_id' : '',
+                SchemaCache::hasColumn('segments', 'route_id') ? 's.route_id' : '',
                 's.rute',
             );
             PoolScope::applyRouteScope($segmentQuery, 's.route_id', 's.rute');
@@ -176,7 +176,7 @@ class BookingApiController extends Controller
 
         $scheduleSegmentsPivot = [];
         $pivotSegmentMap = [];   // id => segment array for segments linked via pivot
-        if (Schema::hasTable('schedule_segment')) {
+        if (SchemaCache::hasTable('schedule_segment')) {
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
             if (! empty($scheduleIds)) {
                 $pivots = DB::table('schedule_segment')
@@ -199,7 +199,7 @@ class BookingApiController extends Controller
                     ->all();
 
                 if (! empty($allPivotSegmentIds)) {
-                    $hasJamPickupsCol = Schema::hasColumn('segments', 'jam_pickups');
+                    $hasJamPickupsCol = SchemaCache::hasColumn('segments', 'jam_pickups');
                     $segSelect = ['id', 'rute', 'origin', 'destination', 'jam', 'harga'];
                     if ($hasJamPickupsCol) {
                         $segSelect[] = 'jam_pickups';
@@ -237,12 +237,12 @@ class BookingApiController extends Controller
             ->values()
             ->all();
 
-        if (Schema::hasTable('schedule_units')) {
+        if (SchemaCache::hasTable('schedule_units')) {
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
             if (! empty($scheduleIds)) {
                 $items = DB::table('schedule_units')
                     ->whereIn('schedule_id', $scheduleIds)
-                    ->when(Schema::hasColumn('schedule_units', 'tenant_id'), function (Builder $query): void {
+                    ->when(SchemaCache::hasColumn('schedule_units', 'tenant_id'), function (Builder $query): void {
                         PoolScope::applyTenantScope($query, 'tenant_id');
                     })
                     ->orderBy('schedule_id')
@@ -432,7 +432,7 @@ class BookingApiController extends Controller
             's.jam as segment_jam',
             DB::raw('s.rute as segment_name'),
         ];
-        $select[] = Schema::hasColumn('segments', 'jam_pickups')
+        $select[] = SchemaCache::hasColumn('segments', 'jam_pickups')
             ? 's.jam_pickups'
             : DB::raw('NULL as jam_pickups');
 
@@ -464,23 +464,23 @@ class BookingApiController extends Controller
         }
 
         // Apply explicit schedule-segment override if available
-        if (Schema::hasTable('schedule_segment') && ! empty($details)) {
+        if (SchemaCache::hasTable('schedule_segment') && ! empty($details)) {
             $dow = Carbon::createFromFormat('Y-m-d', $validated['tanggal'])->dayOfWeek;
             $scheduleQuery = DB::table('schedules')
                 ->where('dow', $dow)
                 ->where('jam', $jamSql);
-            if (Schema::hasColumn('schedules', 'tenant_id')) {
+            if (SchemaCache::hasColumn('schedules', 'tenant_id')) {
                 PoolScope::applyTenantScope($scheduleQuery, 'tenant_id');
             }
             PoolScope::applyRouteIdentity(
                 $scheduleQuery,
                 (string) $validated['rute'],
-                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+                SchemaCache::hasColumn('schedules', 'route_id') ? 'route_id' : '',
                 'rute',
             );
             PoolScope::applyRouteScope(
                 $scheduleQuery,
-                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+                SchemaCache::hasColumn('schedules', 'route_id') ? 'route_id' : '',
                 'rute',
             );
             $schedule = $scheduleQuery->first(['id']);
@@ -529,18 +529,18 @@ class BookingApiController extends Controller
             ->where('s.dow', $dow)
             ->where('s.jam', $jamSql)
             ->orderBy('s.id');
-        if (Schema::hasColumn('schedules', 'tenant_id')) {
+        if (SchemaCache::hasColumn('schedules', 'tenant_id')) {
             PoolScope::applyTenantScope($scheduleQuery, 's.tenant_id');
         }
         PoolScope::applyRouteIdentity(
             $scheduleQuery,
             $rute,
-            Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+            SchemaCache::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
             's.rute',
         );
         PoolScope::applyRouteScope(
             $scheduleQuery,
-            Schema::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
+            SchemaCache::hasColumn('schedules', 'route_id') ? 's.route_id' : '',
             's.rute',
         );
 
@@ -564,7 +564,7 @@ class BookingApiController extends Controller
             ->values()
             ->all();
 
-        if (Schema::hasTable('schedule_units')) {
+        if (SchemaCache::hasTable('schedule_units')) {
             $scheduleIds = $scheduleRows
                 ->pluck('id')
                 ->map(static fn ($id) => (int) $id)
@@ -575,7 +575,7 @@ class BookingApiController extends Controller
             if (! empty($scheduleIds)) {
                 $optionRows = DB::table('schedule_units')
                     ->whereIn('schedule_id', $scheduleIds)
-                    ->when(Schema::hasColumn('schedule_units', 'tenant_id'), function (Builder $query): void {
+                    ->when(SchemaCache::hasColumn('schedule_units', 'tenant_id'), function (Builder $query): void {
                         PoolScope::applyTenantScope($query, 'tenant_id');
                     })
                     ->orderBy('schedule_id')
@@ -668,7 +668,7 @@ class BookingApiController extends Controller
             $seatCount = max(0, (int) ($resolvedUnit->kapasitas ?? 0));
         }
 
-        if (($resolvedUnitId <= 0 || empty($layout)) && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('trip_assignments') && Schema::hasTable('armadas')) {
+        if (($resolvedUnitId <= 0 || empty($layout)) && $this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('trip_assignments') && SchemaCache::hasTable('armadas')) {
             $assignmentQuery = DB::table('trip_assignments as t')
                 ->leftJoin('armadas as a', 't.armada_id', '=', 'a.id')
                 ->where('t.tanggal', $tanggal)
@@ -790,7 +790,7 @@ class BookingApiController extends Controller
             'unit' => ['required', 'integer', 'min:1'],
         ]);
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $this->error('Tabel keberangkatan belum tersedia.', 422);
         }
 
@@ -879,7 +879,7 @@ class BookingApiController extends Controller
             'unit' => ['required', 'integer', 'min:1'],
         ]);
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $this->error('Tabel keberangkatan belum tersedia.', 422);
         }
 
@@ -906,7 +906,7 @@ class BookingApiController extends Controller
         }
 
         $assignmentMetaReset = [];
-        if (Schema::hasColumn('trip_assignments', 'driver_id')) {
+        if (SchemaCache::hasColumn('trip_assignments', 'driver_id')) {
             $assignmentMetaReset['driver_id'] = null;
         }
         if ($this->tripAssignmentsHasArmadaId()) {
@@ -967,7 +967,7 @@ class BookingApiController extends Controller
             'unit' => ['required', 'integer', 'min:1'],
         ]);
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $this->error('Tabel keberangkatan belum tersedia.', 422);
         }
 
@@ -1053,7 +1053,7 @@ class BookingApiController extends Controller
             'unit' => ['required', 'integer', 'min:1'],
         ]);
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $this->error('Tabel keberangkatan belum tersedia.', 422);
         }
 
@@ -1159,7 +1159,7 @@ class BookingApiController extends Controller
             'unit' => ['required', 'integer', 'min:1'],
         ]);
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $this->error('Tabel keberangkatan belum tersedia.', 422);
         }
 
@@ -1222,7 +1222,7 @@ class BookingApiController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
         ]);
 
-        if (! Schema::hasTable('luggages') || ! Schema::hasColumn('luggages', 'trip_assignment_id')) {
+        if (! SchemaCache::hasTable('luggages') || ! SchemaCache::hasColumn('luggages', 'trip_assignment_id')) {
             return $this->ok([
                 'mapped_luggages' => [],
                 'available_luggages' => [],
@@ -1238,7 +1238,7 @@ class BookingApiController extends Controller
         if (! PoolScope::canAccessRouteName($routeName)) {
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
-        $assignment = Schema::hasTable('trip_assignments')
+        $assignment = SchemaCache::hasTable('trip_assignments')
             ? $this->findTripAssignment($routeName, $tanggal, $jam, $unit)
             : null;
         $assignmentId = (int) ($assignment->id ?? 0);
@@ -1276,7 +1276,7 @@ class BookingApiController extends Controller
 
         $availableQuery = DB::table('luggages')
             ->whereNull('trip_assignment_id');
-        if (Schema::hasColumn('luggages', 'status')) {
+        if (SchemaCache::hasColumn('luggages', 'status')) {
             $availableQuery->where(function ($builder) {
                 $this->applyLuggageStatusFilter($builder, 'status', $this->luggageReceivedStatuses());
             });
@@ -1287,7 +1287,7 @@ class BookingApiController extends Controller
             $like = '%'.$query.'%';
             $searchColumns = array_values(array_filter(
                 ['kode_resi', 'sender_name', 'sender_phone', 'receiver_name', 'receiver_phone', 'rute', 'notes'],
-                static fn (string $column): bool => Schema::hasColumn('luggages', $column),
+                static fn (string $column): bool => SchemaCache::hasColumn('luggages', $column),
             ));
             if ($searchColumns !== []) {
                 $availableQuery->where(function ($builder) use ($like, $searchColumns) {
@@ -1339,7 +1339,7 @@ class BookingApiController extends Controller
         ];
 
         return collect($columnDefaults)
-            ->map(static fn (string $default, string $column): mixed => Schema::hasColumn('luggages', $column)
+            ->map(static fn (string $default, string $column): mixed => SchemaCache::hasColumn('luggages', $column)
                 ? $column
                 : DB::raw($default.' as '.$column))
             ->values()
@@ -1356,7 +1356,7 @@ class BookingApiController extends Controller
             'luggage_id' => ['required', 'integer', 'min:1'],
         ]);
 
-        if (! Schema::hasTable('luggages') || ! Schema::hasColumn('luggages', 'trip_assignment_id')) {
+        if (! SchemaCache::hasTable('luggages') || ! SchemaCache::hasColumn('luggages', 'trip_assignment_id')) {
             return $this->error('Fitur mapping bagasi belum siap. Jalankan migrasi terlebih dahulu.', 422);
         }
 
@@ -1447,7 +1447,7 @@ class BookingApiController extends Controller
             'luggage_id' => ['required', 'integer', 'min:1'],
         ]);
 
-        if (! Schema::hasTable('luggages') || ! Schema::hasColumn('luggages', 'trip_assignment_id')) {
+        if (! SchemaCache::hasTable('luggages') || ! SchemaCache::hasColumn('luggages', 'trip_assignment_id')) {
             return $this->error('Fitur mapping bagasi belum siap. Jalankan migrasi terlebih dahulu.', 422);
         }
 
@@ -1455,7 +1455,7 @@ class BookingApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
-        $assignment = Schema::hasTable('trip_assignments')
+        $assignment = SchemaCache::hasTable('trip_assignments')
             ? $this->findTripAssignment((string) $data['rute'], (string) $data['tanggal'], (string) $data['jam'], (int) $data['unit'])
             : null;
         $assignmentId = (int) ($assignment->id ?? 0);
@@ -1553,7 +1553,7 @@ class BookingApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
         $routeId = PoolScope::routeIdForName($rute);
-        $targetAssignment = Schema::hasTable('trip_assignments')
+        $targetAssignment = SchemaCache::hasTable('trip_assignments')
             ? $this->findTripAssignment($rute, $tanggal, substr($jamSql, 0, 5), $unit)
             : null;
         if (
@@ -1766,7 +1766,7 @@ class BookingApiController extends Controller
         $segmentId = array_key_exists('segment_id', $payload) ? (int) ($payload['segment_id'] ?? 0) : (int) ($current['segment_id'] ?? 0);
         $discount = array_key_exists('discount', $payload) ? max(0, (float) ($payload['discount'] ?? 0)) : (float) ($current['discount'] ?? 0);
         $payment = $this->normalizePayment((string) ($payload['pembayaran'] ?? ($current['pembayaran'] ?? 'Belum Lunas')));
-        $currentAssignment = Schema::hasTable('trip_assignments')
+        $currentAssignment = SchemaCache::hasTable('trip_assignments')
             ? $this->findTripAssignment(
                 (string) ($current['rute'] ?? ''),
                 (string) ($current['tanggal'] ?? ''),
@@ -1969,7 +1969,7 @@ class BookingApiController extends Controller
                 continue;
             }
 
-            $assignment = Schema::hasTable('trip_assignments')
+            $assignment = SchemaCache::hasTable('trip_assignments')
                 ? $this->findTripAssignment(
                     $routeName,
                     (string) ($row->tanggal ?? ''),
@@ -2050,7 +2050,7 @@ class BookingApiController extends Controller
             return $this->error('booking_not_found', 404);
         }
 
-        $currentAssignment = Schema::hasTable('trip_assignments')
+        $currentAssignment = SchemaCache::hasTable('trip_assignments')
             ? $this->findTripAssignment(
                 (string) ($current['rute'] ?? ''),
                 (string) ($current['tanggal'] ?? ''),
@@ -2323,7 +2323,7 @@ class BookingApiController extends Controller
     private function bookingsHasDepartureCode(): bool
     {
         if ($this->bookingsHasDepartureCode === null) {
-            $this->bookingsHasDepartureCode = Schema::hasColumn('bookings', 'departure_code');
+            $this->bookingsHasDepartureCode = SchemaCache::hasColumn('bookings', 'departure_code');
         }
 
         return $this->bookingsHasDepartureCode;
@@ -2334,7 +2334,7 @@ class BookingApiController extends Controller
      */
     private function tenantPayload(string $table): array
     {
-        if (! Schema::hasColumn($table, 'tenant_id')) {
+        if (! SchemaCache::hasColumn($table, 'tenant_id')) {
             return [];
         }
 
@@ -2348,7 +2348,7 @@ class BookingApiController extends Controller
 
     private function defaultTenantId(): int
     {
-        if (! Schema::hasTable('tenants')) {
+        if (! SchemaCache::hasTable('tenants')) {
             return 0;
         }
 
@@ -2363,7 +2363,7 @@ class BookingApiController extends Controller
     private function bookingsHasTicketCode(): bool
     {
         if ($this->bookingsHasTicketCode === null) {
-            $this->bookingsHasTicketCode = Schema::hasColumn('bookings', 'ticket_code');
+            $this->bookingsHasTicketCode = SchemaCache::hasColumn('bookings', 'ticket_code');
         }
 
         return $this->bookingsHasTicketCode;
@@ -2372,7 +2372,7 @@ class BookingApiController extends Controller
     private function bookingsHasRouteId(): bool
     {
         if ($this->bookingsHasRouteId === null) {
-            $this->bookingsHasRouteId = Schema::hasColumn('bookings', 'route_id');
+            $this->bookingsHasRouteId = SchemaCache::hasColumn('bookings', 'route_id');
         }
 
         return $this->bookingsHasRouteId;
@@ -2381,8 +2381,8 @@ class BookingApiController extends Controller
     private function tripAssignmentsHasArmadaId(): bool
     {
         if ($this->tripAssignmentsHasArmadaId === null) {
-            $this->tripAssignmentsHasArmadaId = Schema::hasTable('trip_assignments')
-                && Schema::hasColumn('trip_assignments', 'armada_id');
+            $this->tripAssignmentsHasArmadaId = SchemaCache::hasTable('trip_assignments')
+                && SchemaCache::hasColumn('trip_assignments', 'armada_id');
         }
 
         return $this->tripAssignmentsHasArmadaId;
@@ -2391,8 +2391,8 @@ class BookingApiController extends Controller
     private function tripAssignmentsHasArmadaNopol(): bool
     {
         if ($this->tripAssignmentsHasArmadaNopol === null) {
-            $this->tripAssignmentsHasArmadaNopol = Schema::hasTable('trip_assignments')
-                && Schema::hasColumn('trip_assignments', 'armada_nopol');
+            $this->tripAssignmentsHasArmadaNopol = SchemaCache::hasTable('trip_assignments')
+                && SchemaCache::hasColumn('trip_assignments', 'armada_nopol');
         }
 
         return $this->tripAssignmentsHasArmadaNopol;
@@ -2401,8 +2401,8 @@ class BookingApiController extends Controller
     private function tripAssignmentsHasStatus(): bool
     {
         if ($this->tripAssignmentsHasStatus === null) {
-            $this->tripAssignmentsHasStatus = Schema::hasTable('trip_assignments')
-                && Schema::hasColumn('trip_assignments', 'status');
+            $this->tripAssignmentsHasStatus = SchemaCache::hasTable('trip_assignments')
+                && SchemaCache::hasColumn('trip_assignments', 'status');
         }
 
         return $this->tripAssignmentsHasStatus;
@@ -2412,15 +2412,15 @@ class BookingApiController extends Controller
     {
         PoolScope::applyPoolOrRouteScope(
             $query,
-            Schema::hasColumn('luggages', 'pool_id') ? 'pool_id' : '',
-            Schema::hasColumn('luggages', 'rute_id') ? 'rute_id' : '',
-            Schema::hasColumn('luggages', 'rute') ? 'rute' : '',
+            SchemaCache::hasColumn('luggages', 'pool_id') ? 'pool_id' : '',
+            SchemaCache::hasColumn('luggages', 'rute_id') ? 'rute_id' : '',
+            SchemaCache::hasColumn('luggages', 'rute') ? 'rute' : '',
         );
     }
 
     private function findScheduleForDeparture(string $rute, string $tanggal, string $jam): ?object
     {
-        if (! Schema::hasTable('schedules')) {
+        if (! SchemaCache::hasTable('schedules')) {
             return null;
         }
 
@@ -2433,12 +2433,12 @@ class BookingApiController extends Controller
             ->where('dow', $dow)
             ->where('jam', $this->normalizeTime($jam))
             ->orderBy('id');
-        if (Schema::hasColumn('schedules', 'tenant_id')) {
+        if (SchemaCache::hasColumn('schedules', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
         PoolScope::applyRouteScope(
             $query,
-            Schema::hasColumn('schedules', 'route_id') ? 'route_id' : '',
+            SchemaCache::hasColumn('schedules', 'route_id') ? 'route_id' : '',
             'rute',
         );
 
@@ -2468,14 +2468,14 @@ class BookingApiController extends Controller
             $select[] = 't.armada_nopol';
         }
 
-        if ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
+        if ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas')) {
             $select[] = DB::raw('a.nopol as armada_nopol_fallback');
         }
 
         $query = DB::table('trip_assignments as t')
             ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id')
             ->when(
-                $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas'),
+                $this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas'),
                 static function ($query) {
                     $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
                 },
@@ -2486,12 +2486,12 @@ class BookingApiController extends Controller
         PoolScope::applyRouteIdentity(
             $query,
             $rute,
-            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
             't.rute',
         );
         PoolScope::applyRouteScope(
             $query,
-            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
             't.rute',
         );
 
@@ -2504,7 +2504,7 @@ class BookingApiController extends Controller
     {
         $ids = $preferredId > 0 ? [$preferredId] : [];
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $ids;
         }
 
@@ -2516,12 +2516,12 @@ class BookingApiController extends Controller
         PoolScope::applyRouteIdentity(
             $query,
             $rute,
-            Schema::hasColumn('trip_assignments', 'route_id') ? 'route_id' : '',
+            SchemaCache::hasColumn('trip_assignments', 'route_id') ? 'route_id' : '',
             'rute',
         );
         PoolScope::applyRouteScope(
             $query,
-            Schema::hasColumn('trip_assignments', 'route_id') ? 'route_id' : '',
+            SchemaCache::hasColumn('trip_assignments', 'route_id') ? 'route_id' : '',
             'rute',
         );
 
@@ -2538,7 +2538,7 @@ class BookingApiController extends Controller
 
     private function hasActiveBookingForDeparture(string $rute, string $tanggal, string $jam, int $unit): bool
     {
-        if (! Schema::hasTable('bookings')) {
+        if (! SchemaCache::hasTable('bookings')) {
             return false;
         }
 
@@ -2547,7 +2547,7 @@ class BookingApiController extends Controller
             ->where('b.jam', $this->normalizeTime($jam))
             ->where('b.unit', $unit);
 
-        if (Schema::hasColumn('bookings', 'status')) {
+        if (SchemaCache::hasColumn('bookings', 'status')) {
             $query->where(function (Builder $statusQuery): void {
                 $statusQuery
                     ->whereNull('b.status')
@@ -2563,7 +2563,7 @@ class BookingApiController extends Controller
 
     private function ensureTripAssignmentForDeparture(string $rute, string $tanggal, string $jam, int $unit): object
     {
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             throw ValidationException::withMessages([
                 'rute' => 'Tabel keberangkatan belum tersedia.',
             ]);
@@ -2688,7 +2688,7 @@ class BookingApiController extends Controller
         int $unit,
         string $actor,
     ): void {
-        if ($assignmentId <= 0 || ! Schema::hasTable('trip_assignments') || ! $this->tripAssignmentsHasStatus()) {
+        if ($assignmentId <= 0 || ! SchemaCache::hasTable('trip_assignments') || ! $this->tripAssignmentsHasStatus()) {
             return;
         }
 
@@ -2828,7 +2828,7 @@ class BookingApiController extends Controller
 
     private function appendLuggageTrackingLog(string $resi, string $status, string $notes, string $actor): void
     {
-        if ($resi === '' || ! Schema::hasTable('bagasi_logs')) {
+        if ($resi === '' || ! SchemaCache::hasTable('bagasi_logs')) {
             return;
         }
 
@@ -2849,7 +2849,7 @@ class BookingApiController extends Controller
         int $unit,
         string $actor,
     ): int {
-        if ($assignmentId <= 0 || ! Schema::hasTable('luggages') || ! Schema::hasColumn('luggages', 'trip_assignment_id')) {
+        if ($assignmentId <= 0 || ! SchemaCache::hasTable('luggages') || ! SchemaCache::hasColumn('luggages', 'trip_assignment_id')) {
             return 0;
         }
 
@@ -2944,7 +2944,7 @@ class BookingApiController extends Controller
     private function schedulesHasSeatsColumn(): bool
     {
         if ($this->schedulesHasSeatsColumn === null) {
-            $this->schedulesHasSeatsColumn = Schema::hasColumn('schedules', 'seats');
+            $this->schedulesHasSeatsColumn = SchemaCache::hasColumn('schedules', 'seats');
         }
 
         return $this->schedulesHasSeatsColumn;
@@ -2953,7 +2953,7 @@ class BookingApiController extends Controller
     private function schedulesHasBopColumn(): bool
     {
         if ($this->schedulesHasBopColumn === null) {
-            $this->schedulesHasBopColumn = Schema::hasColumn('schedules', 'bop');
+            $this->schedulesHasBopColumn = SchemaCache::hasColumn('schedules', 'bop');
         }
 
         return $this->schedulesHasBopColumn;
@@ -2970,13 +2970,13 @@ class BookingApiController extends Controller
         ] + $this->tenantPayload('customers');
         $poolId = 0;
 
-        if (Schema::hasColumn('customers', 'pool_id')) {
+        if (SchemaCache::hasColumn('customers', 'pool_id')) {
             $poolId = PoolScope::customerPoolId($routeId);
             $customer['pool_id'] = $poolId > 0 ? $poolId : null;
         }
 
         $existingQuery = DB::table('customers')->where('phone', $phone);
-        if (Schema::hasColumn('customers', 'tenant_id')) {
+        if (SchemaCache::hasColumn('customers', 'tenant_id')) {
             $tenantId = (int) ($customer['tenant_id'] ?? 0);
             if ($tenantId > 0) {
                 $existingQuery->where('tenant_id', $tenantId);
@@ -3000,7 +3000,7 @@ class BookingApiController extends Controller
             $poolQuery = DB::table('customers')
                 ->where('phone', $phone)
                 ->whereNull('pool_id');
-            if (Schema::hasColumn('customers', 'tenant_id') && (int) ($customer['tenant_id'] ?? 0) > 0) {
+            if (SchemaCache::hasColumn('customers', 'tenant_id') && (int) ($customer['tenant_id'] ?? 0) > 0) {
                 $poolQuery->where('tenant_id', (int) $customer['tenant_id']);
             }
             $poolQuery->update(['pool_id' => $poolId]);
@@ -3057,7 +3057,7 @@ class BookingApiController extends Controller
         }
 
         $query = DB::table('segments')->where('id', $segmentId);
-        if (Schema::hasColumn('segments', 'tenant_id')) {
+        if (SchemaCache::hasColumn('segments', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
         $price = $query->value('harga');

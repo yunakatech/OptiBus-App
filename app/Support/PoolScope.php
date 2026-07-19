@@ -22,10 +22,10 @@ class PoolScope
 
     public static function tablesReady(): bool
     {
-        return Schema::hasTable('pools')
-            && Schema::hasTable('pool_route')
-            && Schema::hasTable('pool_user')
-            && Schema::hasTable('routes');
+        return SchemaCache::hasTable('pools')
+            && SchemaCache::hasTable('pool_route')
+            && SchemaCache::hasTable('pool_user')
+            && SchemaCache::hasTable('routes');
     }
 
     public static function flushRequestCache(): void
@@ -55,7 +55,7 @@ class PoolScope
         // Super admins only resolve tenant scope when a tenant is actively selected.
         if (AccessControl::userIsSuperAdmin($userId)) {
             $activeTenantId = (int) (session('active_tenant_id', 0));
-            if ($activeTenantId > 0 && Schema::hasTable('tenants')) {
+            if ($activeTenantId > 0 && SchemaCache::hasTable('tenants')) {
                 $isActiveTenant = DB::table('tenants')
                     ->where('id', $activeTenantId)
                     ->where('status', '!=', 'canceled')
@@ -76,7 +76,7 @@ class PoolScope
         }
 
         // Fallback: derive tenant_id from user's assigned pools
-        if (self::tablesReady() && Schema::hasColumn('pools', 'tenant_id')) {
+        if (self::tablesReady() && SchemaCache::hasColumn('pools', 'tenant_id')) {
             $poolIds = self::userPoolIds($userId);
             if ($poolIds !== []) {
                 return self::$tenantIdCache[$cacheKey] = (int) (DB::table('pools')->whereIn('id', $poolIds)->value('tenant_id') ?? 0);
@@ -115,7 +115,7 @@ class PoolScope
     public static function tenantSubscription(?int $userId = null): ?array
     {
         $tenantId = self::tenantId($userId);
-        if ($tenantId <= 0 || ! Schema::hasTable('subscriptions') || ! Schema::hasTable('plans')) {
+        if ($tenantId <= 0 || ! SchemaCache::hasTable('subscriptions') || ! SchemaCache::hasTable('plans')) {
             return null;
         }
 
@@ -206,7 +206,7 @@ class PoolScope
             ->orderBy('name');
 
         // Tenant scoping: non-super-admin users only see pools within their tenant
-        if ($tenantId > 0 && Schema::hasColumn('pools', 'tenant_id')) {
+        if ($tenantId > 0 && SchemaCache::hasColumn('pools', 'tenant_id')) {
             $poolQuery->where(function (Builder $builder) use ($tenantId): void {
                 $builder->where('tenant_id', $tenantId);
 
@@ -240,7 +240,7 @@ class PoolScope
             ->join('routes as r', 'pr.route_id', '=', 'r.id')
             ->whereIn('pr.pool_id', $poolIds);
 
-        if ($tenantId > 0 && Schema::hasColumn('routes', 'tenant_id')) {
+        if ($tenantId > 0 && SchemaCache::hasColumn('routes', 'tenant_id')) {
             $routes->where(function (Builder $builder) use ($tenantId): void {
                 $builder->where('r.tenant_id', $tenantId);
 
@@ -403,7 +403,7 @@ class PoolScope
         $poolColumn = $prefix.'pool_id';
         $pickupColumn = $prefix.'pickup_point';
         $dropColumn = $prefix.'drop_point';
-        $hasPoolColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'pool_id');
+        $hasPoolColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'pool_id');
         $poolIds = $scope['pool_ids'];
         $labels = $scope['labels'];
 
@@ -454,16 +454,16 @@ class PoolScope
             return;
         }
 
-        if (Schema::hasTable('customers') && Schema::hasColumn('customers', 'tenant_id')) {
+        if (SchemaCache::hasTable('customers') && SchemaCache::hasColumn('customers', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
         }
 
         $poolIds = $scope['pool_ids'];
         $routeIds = $scope['route_ids'];
         $routeNames = $scope['route_names'];
-        $hasCustomerPoolId = Schema::hasTable('customers') && Schema::hasColumn('customers', 'pool_id');
+        $hasCustomerPoolId = SchemaCache::hasTable('customers') && SchemaCache::hasColumn('customers', 'pool_id');
         $canUseCustomerPool = $hasCustomerPoolId && $poolIds !== [];
-        $canUseBookings = Schema::hasTable('bookings') && ($routeIds !== [] || $routeNames !== []);
+        $canUseBookings = SchemaCache::hasTable('bookings') && ($routeIds !== [] || $routeNames !== []);
 
         if (! $canUseCustomerPool && ! $canUseBookings) {
             $query->whereRaw('1 = 0');
@@ -507,13 +507,13 @@ class PoolScope
                         ->from('bookings as scoped_bookings')
                         ->whereColumn('scoped_bookings.phone', $customerPhoneColumn);
 
-                    if (Schema::hasColumn('bookings', 'tenant_id')) {
+                    if (SchemaCache::hasColumn('bookings', 'tenant_id')) {
                         self::applyTenantScope($exists, 'scoped_bookings.tenant_id');
                     }
 
                     self::appendRouteClauses(
                         $exists,
-                        Schema::hasColumn('bookings', 'route_id') ? 'scoped_bookings.route_id' : '',
+                        SchemaCache::hasColumn('bookings', 'route_id') ? 'scoped_bookings.route_id' : '',
                         $routeIds,
                         'scoped_bookings.rute',
                         $routeNames,
@@ -534,14 +534,14 @@ class PoolScope
             return;
         }
 
-        if (Schema::hasTable('customer_bagasi') && Schema::hasColumn('customer_bagasi', 'tenant_id')) {
+        if (SchemaCache::hasTable('customer_bagasi') && SchemaCache::hasColumn('customer_bagasi', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
         }
 
         $poolIds = $scope['pool_ids'];
-        $hasCustomerPoolId = Schema::hasTable('customer_bagasi') && Schema::hasColumn('customer_bagasi', 'pool_id');
+        $hasCustomerPoolId = SchemaCache::hasTable('customer_bagasi') && SchemaCache::hasColumn('customer_bagasi', 'pool_id');
         $canUseCustomerPool = $hasCustomerPoolId && $poolIds !== [];
-        $canUseLuggages = Schema::hasTable('luggages');
+        $canUseLuggages = SchemaCache::hasTable('luggages');
 
         if (! $canUseCustomerPool && ! $canUseLuggages) {
             $query->whereRaw('1 = 0');
@@ -589,14 +589,14 @@ class PoolScope
                                 ->orWhereColumn('scoped_luggages.receiver_phone', $customerPhoneColumn);
                         });
 
-                    if (Schema::hasColumn('luggages', 'tenant_id')) {
+                    if (SchemaCache::hasColumn('luggages', 'tenant_id')) {
                         self::applyTenantScope($exists, 'scoped_luggages.tenant_id', $userId);
                     }
 
                     self::applyPoolOrRouteScope(
                         $exists,
-                        Schema::hasColumn('luggages', 'pool_id') ? 'scoped_luggages.pool_id' : '',
-                        Schema::hasColumn('luggages', 'rute_id') ? 'scoped_luggages.rute_id' : '',
+                        SchemaCache::hasColumn('luggages', 'pool_id') ? 'scoped_luggages.pool_id' : '',
+                        SchemaCache::hasColumn('luggages', 'rute_id') ? 'scoped_luggages.rute_id' : '',
                         'scoped_luggages.rute',
                         $poolId,
                         $userId,
@@ -617,14 +617,14 @@ class PoolScope
             return;
         }
 
-        if (Schema::hasTable('customer_charter') && Schema::hasColumn('customer_charter', 'tenant_id')) {
+        if (SchemaCache::hasTable('customer_charter') && SchemaCache::hasColumn('customer_charter', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
         }
 
         $poolIds = $scope['pool_ids'];
-        $hasCustomerPoolId = Schema::hasTable('customer_charter') && Schema::hasColumn('customer_charter', 'pool_id');
+        $hasCustomerPoolId = SchemaCache::hasTable('customer_charter') && SchemaCache::hasColumn('customer_charter', 'pool_id');
         $canUseCustomerPool = $hasCustomerPoolId && $poolIds !== [];
-        $canUseCharters = Schema::hasTable('charters');
+        $canUseCharters = SchemaCache::hasTable('charters');
 
         if (! $canUseCustomerPool && ! $canUseCharters) {
             $query->whereRaw('1 = 0');
@@ -668,7 +668,7 @@ class PoolScope
                         ->from('charters as scoped_charters')
                         ->whereColumn('scoped_charters.phone', $customerPhoneColumn);
 
-                    if (Schema::hasColumn('charters', 'tenant_id')) {
+                    if (SchemaCache::hasColumn('charters', 'tenant_id')) {
                         self::applyTenantScope($exists, 'scoped_charters.tenant_id', $userId);
                     }
 
@@ -710,7 +710,7 @@ class PoolScope
             ->where('p.status', 'active')
             ->when(
                 ! $isSuperAdmin
-                && Schema::hasColumn('pools', 'tenant_id')
+                && SchemaCache::hasColumn('pools', 'tenant_id')
                 && $userTenantId > 0,
                 function (Builder $query) use ($userTenantId): void {
                     $query->where('p.tenant_id', $userTenantId);
@@ -738,7 +738,7 @@ class PoolScope
                 ->join('pools as p', 'pr.pool_id', '=', 'p.id')
                 ->where('pr.route_id', $routeId)
                 ->where('p.status', 'active')
-                ->when(Schema::hasColumn('pools', 'tenant_id') && $tenantId > 0, function (Builder $query) use ($tenantId): void {
+                ->when(SchemaCache::hasColumn('pools', 'tenant_id') && $tenantId > 0, function (Builder $query) use ($tenantId): void {
                     $query->where(function (Builder $builder) use ($tenantId): void {
                         $builder->where('p.tenant_id', $tenantId);
 
@@ -782,7 +782,7 @@ class PoolScope
      */
     public static function accessiblePoolIds(?int $userId = null, bool $useSessionPool = true): array
     {
-        if (! Schema::hasTable('pools')) {
+        if (! SchemaCache::hasTable('pools')) {
             return [];
         }
 
@@ -797,7 +797,7 @@ class PoolScope
         }
 
         $query = DB::table('pools')->where('status', 'active')->orderBy('id');
-        if (Schema::hasColumn('pools', 'tenant_id')) {
+        if (SchemaCache::hasColumn('pools', 'tenant_id')) {
             $query->where('tenant_id', $tenantId);
         }
 
@@ -810,7 +810,7 @@ class PoolScope
 
     public static function canAccessPool(int $poolId, ?int $userId = null): bool
     {
-        if ($poolId <= 0 || ! Schema::hasTable('pools')) {
+        if ($poolId <= 0 || ! SchemaCache::hasTable('pools')) {
             return false;
         }
 
@@ -823,7 +823,7 @@ class PoolScope
             ->where('id', $poolId)
             ->where('status', 'active');
 
-        if (Schema::hasColumn('pools', 'tenant_id')) {
+        if (SchemaCache::hasColumn('pools', 'tenant_id')) {
             $query->where('tenant_id', $tenantId);
         }
 
@@ -852,7 +852,7 @@ class PoolScope
     public static function routeIdForName(string $routeName): int
     {
         $target = self::normalizeRouteName($routeName);
-        if ($target === '' || ! Schema::hasTable('routes')) {
+        if ($target === '' || ! SchemaCache::hasTable('routes')) {
             return 0;
         }
 
@@ -861,7 +861,7 @@ class PoolScope
 
         $tenantId = self::tenantId();
         $query = DB::table('routes');
-        if ($tenantId > 0 && Schema::hasColumn('routes', 'tenant_id')) {
+        if ($tenantId > 0 && SchemaCache::hasColumn('routes', 'tenant_id')) {
             $query->where(function (Builder $builder) use ($tenantId): void {
                 $builder->where('tenant_id', $tenantId);
 
@@ -1030,7 +1030,7 @@ class PoolScope
             return self::$userTenantColumnCache[$cacheKey];
         }
 
-        if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'tenant_id')) {
+        if (! SchemaCache::hasTable('users') || ! SchemaCache::hasColumn('users', 'tenant_id')) {
             return self::$userTenantColumnCache[$cacheKey] = 0;
         }
 
