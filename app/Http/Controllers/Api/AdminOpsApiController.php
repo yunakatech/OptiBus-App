@@ -631,46 +631,55 @@ class AdminOpsApiController extends Controller
 
     public function driversIndex(Request $request): JsonResponse
     {
-        if (! SchemaCache::hasTable('drivers')) {
-            return $this->ok(['drivers' => []]);
+        try {
+            if (! SchemaCache::hasTable('drivers')) {
+                return $this->ok(['drivers' => []]);
+            }
+
+            $validated = $request->validate([
+                'q' => ['nullable', 'string', 'max:120'],
+                'pool_id' => ['nullable', 'integer', 'min:0'],
+                'period' => ['nullable', 'date_format:Y-m'],
+            ]);
+
+            $q = trim((string) ($validated['q'] ?? ''));
+            $poolId = (int) ($validated['pool_id'] ?? 0);
+            [$monthStart, $monthEnd] = $this->driverPeriodBounds($validated['period'] ?? null);
+            $rows = collect($this->driverRowsForMonth($monthStart, $monthEnd, $poolId));
+
+            if ($q !== '') {
+                $needle = mb_strtolower($q);
+                $rows = $rows
+                    ->filter(static fn (array $row): bool => str_contains(mb_strtolower(implode(' ', [
+                        (string) ($row['nama'] ?? ''),
+                        (string) ($row['phone'] ?? ''),
+                        (string) ($row['category'] ?? ''),
+                        (string) ($row['pool_name'] ?? ''),
+                    ])), $needle))
+                    ->values();
+            }
+
+            if (! $request->boolean('paginate')) {
+                return $this->ok(['drivers' => $rows]);
+            }
+
+            [$page, $perPage] = $this->paginationParams($request);
+            $pagination = $this->paginationMeta($rows->count(), $page, $perPage);
+
+            return $this->ok([
+                'drivers' => $rows
+                    ->slice(($pagination['page'] - 1) * $pagination['per_page'], $pagination['per_page'])
+                    ->values(),
+                'pagination' => $pagination,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'file' => basename($e->getFile()).':'.$e->getLine(),
+                'trace' => collect(explode("\n", $e->getTraceAsString()))->take(10)->all(),
+            ], 500);
         }
-
-        $validated = $request->validate([
-            'q' => ['nullable', 'string', 'max:120'],
-            'pool_id' => ['nullable', 'integer', 'min:0'],
-            'period' => ['nullable', 'date_format:Y-m'],
-        ]);
-
-        $q = trim((string) ($validated['q'] ?? ''));
-        $poolId = (int) ($validated['pool_id'] ?? 0);
-        [$monthStart, $monthEnd] = $this->driverPeriodBounds($validated['period'] ?? null);
-        $rows = collect($this->driverRowsForMonth($monthStart, $monthEnd, $poolId));
-
-        if ($q !== '') {
-            $needle = mb_strtolower($q);
-            $rows = $rows
-                ->filter(static fn (array $row): bool => str_contains(mb_strtolower(implode(' ', [
-                    (string) ($row['nama'] ?? ''),
-                    (string) ($row['phone'] ?? ''),
-                    (string) ($row['category'] ?? ''),
-                    (string) ($row['pool_name'] ?? ''),
-                ])), $needle))
-                ->values();
-        }
-
-        if (! $request->boolean('paginate')) {
-            return $this->ok(['drivers' => $rows]);
-        }
-
-        [$page, $perPage] = $this->paginationParams($request);
-        $pagination = $this->paginationMeta($rows->count(), $page, $perPage);
-
-        return $this->ok([
-            'drivers' => $rows
-                ->slice(($pagination['page'] - 1) * $pagination['per_page'], $pagination['per_page'])
-                ->values(),
-            'pagination' => $pagination,
-        ]);
     }
 
     public function driversExport(Request $request): StreamedResponse
@@ -3546,65 +3555,74 @@ class AdminOpsApiController extends Controller
 
     public function assignmentsIndex(Request $request): JsonResponse
     {
-        // Pre-warm schema cache to avoid N roundtrips to information_schema on Supabase/Vercel
-        SchemaCache::warm([
-            'trip_assignments' => ['rute', 'tanggal', 'jam', 'unit', 'driver_id', 'route_id', 'pool_id', 'tenant_id', 'status'],
-            'drivers'          => ['id', 'nama', 'phone', 'pool_id', 'tenant_id'],
-            'armadas'          => ['id', 'nopol', 'pool_id', 'tenant_id'],
-        ]);
-
-        if (! SchemaCache::hasTable('trip_assignments')) {
-            return $this->ok([
-                'assignments' => [],
-                'pagination' => $this->paginationMeta(0, 1, $this->paginationParams($request)[1]),
+        try {
+            // Pre-warm schema cache to avoid N roundtrips to information_schema on Supabase/Vercel
+            SchemaCache::warm([
+                'trip_assignments' => ['rute', 'tanggal', 'jam', 'unit', 'driver_id', 'route_id', 'pool_id', 'tenant_id', 'status'],
+                'drivers'          => ['id', 'nama', 'phone', 'pool_id', 'tenant_id'],
+                'armadas'          => ['id', 'nopol', 'pool_id', 'tenant_id'],
             ]);
+
+            if (! SchemaCache::hasTable('trip_assignments')) {
+                return $this->ok([
+                    'assignments' => [],
+                    'pagination' => $this->paginationMeta(0, 1, $this->paginationParams($request)[1]),
+                ]);
+            }
+
+            $tanggal = trim((string) $request->query('tanggal', ''));
+            $rute = trim((string) $request->query('rute', ''));
+            $from = trim((string) $request->query('from', ''));
+            $to = trim((string) $request->query('to', ''));
+            [$page, $perPage] = $this->paginationParams($request);
+
+            $canJoinDrivers = SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('trip_assignments', 'driver_id');
+            $query = DB::table('trip_assignments as t');
+            if ($canJoinDrivers) {
+                $query->leftJoin('drivers as d', 't.driver_id', '=', 'd.id');
+            }
+
+            if ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas')) {
+                $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
+            }
+
+            $query = $query
+                ->select($this->assignmentIndexSelectColumns($canJoinDrivers))
+                ->orderByDesc(SchemaCache::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : 't.id');
+
+            if (SchemaCache::hasColumn('trip_assignments', 'jam')) {
+                $query->orderBy('t.jam');
+            }
+
+            if ($tanggal !== '' && SchemaCache::hasColumn('trip_assignments', 'tanggal')) {
+                $query->where('t.tanggal', $tanggal);
+            }
+            if ($from !== '' && $to !== '' && SchemaCache::hasColumn('trip_assignments', 'tanggal')) {
+                $query->whereBetween('t.tanggal', [$from, $to]);
+            }
+            if ($rute !== '' && SchemaCache::hasColumn('trip_assignments', 'rute')) {
+                $query->where('t.rute', $rute);
+            }
+            $this->applyRouteScopeToQuery(
+                $query,
+                SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'rute') ? 't.rute' : '',
+            );
+
+            $result = $this->paginateQuery($query, $page, $perPage);
+
+            return $this->ok([
+                'assignments' => $result['data'],
+                'pagination' => $result['meta'],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'file' => basename($e->getFile()).':'.$e->getLine(),
+                'trace' => collect(explode("\n", $e->getTraceAsString()))->take(10)->all(),
+            ], 500);
         }
-
-        $tanggal = trim((string) $request->query('tanggal', ''));
-        $rute = trim((string) $request->query('rute', ''));
-        $from = trim((string) $request->query('from', ''));
-        $to = trim((string) $request->query('to', ''));
-        [$page, $perPage] = $this->paginationParams($request);
-
-        $canJoinDrivers = SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('trip_assignments', 'driver_id');
-        $query = DB::table('trip_assignments as t');
-        if ($canJoinDrivers) {
-            $query->leftJoin('drivers as d', 't.driver_id', '=', 'd.id');
-        }
-
-        if ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas')) {
-            $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
-        }
-
-        $query = $query
-            ->select($this->assignmentIndexSelectColumns($canJoinDrivers))
-            ->orderByDesc(SchemaCache::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : 't.id');
-
-        if (SchemaCache::hasColumn('trip_assignments', 'jam')) {
-            $query->orderBy('t.jam');
-        }
-
-        if ($tanggal !== '' && SchemaCache::hasColumn('trip_assignments', 'tanggal')) {
-            $query->where('t.tanggal', $tanggal);
-        }
-        if ($from !== '' && $to !== '' && SchemaCache::hasColumn('trip_assignments', 'tanggal')) {
-            $query->whereBetween('t.tanggal', [$from, $to]);
-        }
-        if ($rute !== '' && SchemaCache::hasColumn('trip_assignments', 'rute')) {
-            $query->where('t.rute', $rute);
-        }
-        $this->applyRouteScopeToQuery(
-            $query,
-            SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
-            SchemaCache::hasColumn('trip_assignments', 'rute') ? 't.rute' : '',
-        );
-
-        $result = $this->paginateQuery($query, $page, $perPage);
-
-        return $this->ok([
-            'assignments' => $result['data'],
-            'pagination' => $result['meta'],
-        ]);
     }
 
     private function assignmentIndexSelectColumns(bool $canJoinDrivers): array
