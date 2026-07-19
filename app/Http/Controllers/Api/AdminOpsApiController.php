@@ -126,7 +126,7 @@ class AdminOpsApiController extends Controller
         $id = (int) ($data['id'] ?? 0);
 
         // Plan limit enforcement: only check when creating NEW routes
-        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('routes', 'tenant_id')) {
+        if ($id <= 0 && FeatureGate::enabled() && SchemaCache::hasColumn('routes', 'tenant_id')) {
             if (! FeatureGate::canCreate('master.routes', 'routes', 'tenant_id')) {
                 return $this->error(FeatureGate::limitMessage('master.routes') ?? 'Batas rute paket Anda sudah tercapai.', 403);
             }
@@ -262,7 +262,7 @@ class AdminOpsApiController extends Controller
         })->values();
 
         $scheduleSegmentsPivot = [];
-        if (Schema::hasTable('schedule_segment')) {
+        if (SchemaCache::hasTable('schedule_segment')) {
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
             if (! empty($scheduleIds)) {
                 $pivots = DB::table('schedule_segment')
@@ -565,7 +565,7 @@ class AdminOpsApiController extends Controller
                     }
                 }
 
-                if (Schema::hasTable('schedule_segment')) {
+                if (SchemaCache::hasTable('schedule_segment')) {
                     DB::table('schedule_segment')->where('schedule_id', $scheduleId)->delete();
                     $pivotRows = [];
                     $savedSegments = [];
@@ -619,7 +619,7 @@ class AdminOpsApiController extends Controller
             $scheduleUnitsDelete->delete();
         }
 
-        if (Schema::hasTable('schedule_segment')) {
+        if (SchemaCache::hasTable('schedule_segment')) {
             DB::table('schedule_segment')->where('schedule_id', $id)->delete();
         }
         $scheduleDelete = DB::table('schedules')->where('id', $id);
@@ -631,7 +631,7 @@ class AdminOpsApiController extends Controller
 
     public function driversIndex(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('drivers')) {
+        if (! SchemaCache::hasTable('drivers')) {
             return $this->ok(['drivers' => []]);
         }
 
@@ -761,7 +761,7 @@ class AdminOpsApiController extends Controller
             $existingQuery = DB::table('drivers')->where('id', $id);
             $this->applyWriteTenantScopeIfExists($existingQuery, 'drivers');
             $this->applyPoolScopeIfExists($existingQuery, 'drivers');
-            $existing = $existingQuery->first(['id', Schema::hasColumn('drivers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id')]);
+            $existing = $existingQuery->first(['id', SchemaCache::hasColumn('drivers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id')]);
 
             if (! $existing) {
                 return $this->error('Driver tidak ditemukan untuk pool aktif.', 404);
@@ -778,7 +778,7 @@ class AdminOpsApiController extends Controller
             return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
         }
 
-        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('drivers', 'tenant_id')) {
+        if ($id <= 0 && FeatureGate::enabled() && SchemaCache::hasColumn('drivers', 'tenant_id')) {
             if (! FeatureGate::canCreate('master.drivers', 'drivers', 'tenant_id')) {
                 return $this->error(FeatureGate::limitMessage('master.drivers') ?? 'Batas driver paket Anda sudah tercapai.', 403);
             }
@@ -802,7 +802,7 @@ class AdminOpsApiController extends Controller
             $payload['target_revenue_tahunan'] = (float) ($data['target_revenue_tahunan'] ?? 0);
         }
 
-        if (Schema::hasColumn('drivers', 'unit_id')) {
+        if (SchemaCache::hasColumn('drivers', 'unit_id')) {
             $payload['unit_id'] = null;
         }
 
@@ -869,10 +869,10 @@ class AdminOpsApiController extends Controller
     {
         $rows = DB::table('luggage_services')
             ->orderBy('name')
-            ->when(Schema::hasColumn('luggage_services', 'tenant_id'), function (Builder $q) {
+            ->when(SchemaCache::hasColumn('luggage_services', 'tenant_id'), function (Builder $q) {
                 PoolScope::applyTenantScope($q, 'luggage_services.tenant_id');
             })
-            ->when(Schema::hasColumn('luggage_services', 'pool_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('luggage_services', 'pool_id'), function (Builder $q): void {
                 $this->applyPoolScopeIfExists($q, 'luggage_services');
             })
             ->get(['id', 'name']);
@@ -937,7 +937,7 @@ class AdminOpsApiController extends Controller
                 's.origin',
                 's.destination',
                 's.jam',
-                Schema::hasColumn('segments', 'jam_pickups')
+                SchemaCache::hasColumn('segments', 'jam_pickups')
                     ? 's.jam_pickups'
                     : DB::raw('NULL as jam_pickups'),
                 's.harga',
@@ -1054,7 +1054,7 @@ class AdminOpsApiController extends Controller
             'harga' => (float) $data['harga'],
         ];
 
-        if (Schema::hasColumn('segments', 'jam_pickups')) {
+        if (SchemaCache::hasColumn('segments', 'jam_pickups')) {
             $payload['jam_pickups'] = json_encode($jamPickups);
         }
 
@@ -1103,7 +1103,7 @@ class AdminOpsApiController extends Controller
                 'phone',
                 'pickup_point',
                 'gmaps',
-                Schema::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+                SchemaCache::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
             ])
             ->orderBy('name');
         PoolScope::applyCustomerScope($query, 'customers');
@@ -1177,7 +1177,7 @@ class AdminOpsApiController extends Controller
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
             $existing = $customerUpdate->first([
                 'id',
-                Schema::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+                SchemaCache::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
             ]);
             if (! $existing) {
                 return $this->error('Customer not found.', 404);
@@ -1198,7 +1198,7 @@ class AdminOpsApiController extends Controller
         $this->applyWriteTenantScopeIfExists($existingQuery, 'customers');
         $existing = $existingQuery->first([
             'id',
-            Schema::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+            SchemaCache::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
         ]);
         if ($existing) {
             $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', (int) ($existing->pool_id ?? 0), false);
@@ -1456,7 +1456,7 @@ class AdminOpsApiController extends Controller
         $this->applyResolvedRouteFilter(
             $baseQuery,
             $routeFilter,
-            Schema::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
+            SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
             'b.rute',
         );
 
@@ -1530,7 +1530,7 @@ class AdminOpsApiController extends Controller
      */
     private function estimateReportBookingBop(string $from, string $to, int $poolId = 0, array $routeFilter = []): float
     {
-        if (! Schema::hasTable('bookings')) {
+        if (! SchemaCache::hasTable('bookings')) {
             return 0.0;
         }
 
@@ -1557,14 +1557,14 @@ class AdminOpsApiController extends Controller
         $this->applyResolvedRouteFilter(
             $query,
             $routeFilter,
-            Schema::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
+            SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
             'b.rute',
         );
 
         return $query
             ->distinct()
             ->get([
-                Schema::hasColumn('bookings', 'route_id') ? 'b.route_id' : DB::raw('NULL as route_id'),
+                SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : DB::raw('NULL as route_id'),
                 'b.rute',
                 'b.tanggal',
                 'b.jam',
@@ -1597,7 +1597,7 @@ class AdminOpsApiController extends Controller
             ->values()
             ->all();
 
-        if (Schema::hasTable('routes') && Schema::hasColumn('routes', 'bop')) {
+        if (SchemaCache::hasTable('routes') && SchemaCache::hasColumn('routes', 'bop')) {
             $routeQuery = DB::table('routes');
             $this->applyTenantScopeIfExists($routeQuery, 'routes');
             $this->applyRouteScopeToQuery($routeQuery, 'routes.id', 'routes.name', $poolId);
@@ -1608,8 +1608,8 @@ class AdminOpsApiController extends Controller
             $routeSelect = [
                 'id',
                 'name',
-                Schema::hasColumn('routes', 'origin') ? 'origin' : DB::raw('NULL as origin'),
-                Schema::hasColumn('routes', 'destination') ? 'destination' : DB::raw('NULL as destination'),
+                SchemaCache::hasColumn('routes', 'origin') ? 'origin' : DB::raw('NULL as origin'),
+                SchemaCache::hasColumn('routes', 'destination') ? 'destination' : DB::raw('NULL as destination'),
                 'bop',
             ];
 
@@ -1629,18 +1629,18 @@ class AdminOpsApiController extends Controller
             }
         }
 
-        if (Schema::hasTable('schedules') && Schema::hasColumn('schedules', 'bop')) {
+        if (SchemaCache::hasTable('schedules') && SchemaCache::hasColumn('schedules', 'bop')) {
             $scheduleQuery = DB::table('schedules')->where('bop', '>', 0);
             $this->applyTenantScopeIfExists($scheduleQuery, 'schedules');
             $this->applyRouteScopeToQuery(
                 $scheduleQuery,
-                Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '',
+                SchemaCache::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '',
                 'schedules.rute',
                 $poolId,
             );
 
             $scheduleSelect = [
-                Schema::hasColumn('schedules', 'route_id') ? 'route_id' : DB::raw('NULL as route_id'),
+                SchemaCache::hasColumn('schedules', 'route_id') ? 'route_id' : DB::raw('NULL as route_id'),
                 'rute',
                 'dow',
                 'jam',
@@ -1841,14 +1841,14 @@ class AdminOpsApiController extends Controller
         $this->applyPoolOrRouteScopeToQuery(
             $baseQuery,
             $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
-            Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+            SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
             'l.rute',
             $poolId,
         );
         $this->applyResolvedRouteFilter(
             $baseQuery,
             $routeFilter,
-            Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+            SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
             'l.rute',
         );
 
@@ -1959,7 +1959,7 @@ class AdminOpsApiController extends Controller
         $this->applyResolvedRouteFilter(
             $query,
             $routeFilter,
-            Schema::hasColumn('bookings', 'route_id') ? 'route_id' : '',
+            SchemaCache::hasColumn('bookings', 'route_id') ? 'route_id' : '',
             'rute',
         );
 
@@ -2035,14 +2035,14 @@ class AdminOpsApiController extends Controller
             $this->applyPoolOrRouteScopeToQuery(
                 $query,
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
-                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
                 'l.rute',
                 $poolId,
             );
             $this->applyResolvedRouteFilter(
                 $query,
                 $routeFilter,
-                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
                 'l.rute',
             );
 
@@ -2123,7 +2123,7 @@ class AdminOpsApiController extends Controller
         $this->applyResolvedRouteFilter(
             $query,
             $routeFilter,
-            Schema::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
+            SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
             'b.rute',
         );
 
@@ -2166,7 +2166,7 @@ class AdminOpsApiController extends Controller
         $armadaId = (int) $request->query('armada_id', 0);
         [$page, $perPage] = $this->paginationParams($request);
 
-        if (! Schema::hasTable('charters')) {
+        if (! SchemaCache::hasTable('charters')) {
             return $this->ok([
                 'charters' => [],
                 'pagination' => $this->paginationMeta(0, $page, $perPage),
@@ -2191,9 +2191,9 @@ class AdminOpsApiController extends Controller
         $hasDepartureTimeColumn = isset($charterColumns['departure_time']);
         $hasPaymentStatusColumn = isset($charterColumns['payment_status']);
         $hasBopStatusColumn = isset($charterColumns['bop_status']);
-        $canJoinUnits = $hasUnitIdColumn && Schema::hasTable('units');
+        $canJoinUnits = $hasUnitIdColumn && SchemaCache::hasTable('units');
         $unitColumns = $canJoinUnits ? array_flip(Schema::getColumnListing('units')) : [];
-        $canJoinArmadas = $hasArmadaIdColumn && Schema::hasTable('armadas');
+        $canJoinArmadas = $hasArmadaIdColumn && SchemaCache::hasTable('armadas');
         $armadaColumns = $canJoinArmadas ? array_flip(Schema::getColumnListing('armadas')) : [];
         $selectColumn = static fn (array $columns, string $column, string $alias, string $prefix = 'c') => isset($columns[$column])
             ? "{$prefix}.{$column}"
@@ -2420,7 +2420,7 @@ class AdminOpsApiController extends Controller
         $hasArmadaNopolColumn = $this->chartersHasArmadaNopolColumn();
         $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
         $hasMasterCarterIdColumn = $this->chartersHasMasterCarterIdColumn();
-        $canJoinArmadas = $hasArmadaIdColumn && Schema::hasTable('armadas');
+        $canJoinArmadas = $hasArmadaIdColumn && SchemaCache::hasTable('armadas');
 
         $query = DB::table('charters as c')
             ->leftJoin('units as u', 'c.unit_id', '=', 'u.id')
@@ -2575,7 +2575,7 @@ class AdminOpsApiController extends Controller
         $requestedArmadaNopol = strtoupper(trim((string) ($data['armada_nopol'] ?? '')));
         $armadaNopol = $requestedArmadaNopol !== '' ? $requestedArmadaNopol : null;
 
-        if (Schema::hasTable('armadas')) {
+        if (SchemaCache::hasTable('armadas')) {
             $matchedArmada = null;
 
             if ($armadaId > 0) {
@@ -2649,7 +2649,7 @@ class AdminOpsApiController extends Controller
 
         $masterCarterId = (int) ($data['master_carter_id'] ?? 0);
         if ($masterCarterId > 0) {
-            if (! Schema::hasTable('master_carter')) {
+            if (! SchemaCache::hasTable('master_carter')) {
                 return $this->error('Master Carter tidak ditemukan.', 422);
             }
 
@@ -2909,7 +2909,7 @@ class AdminOpsApiController extends Controller
     public function luggagesIndex(Request $request): JsonResponse
     {
         [$page, $perPage] = $this->paginationParams($request);
-        if (! Schema::hasTable('luggages')) {
+        if (! SchemaCache::hasTable('luggages')) {
             return $this->ok([
                 'luggages' => [],
                 'pagination' => $this->paginationMeta(0, $page, $perPage),
@@ -2932,22 +2932,22 @@ class AdminOpsApiController extends Controller
         $serviceForeignKey = isset($luggageColumns['service_id'])
             ? 'service_id'
             : (isset($luggageColumns['layanan_id']) ? 'layanan_id' : null);
-        $hasLuggageServicesTable = Schema::hasTable('luggage_services');
+        $hasLuggageServicesTable = SchemaCache::hasTable('luggage_services');
         $serviceColumns = $hasLuggageServicesTable ? array_flip(Schema::getColumnListing('luggage_services')) : [];
-        $hasRoutesTable = Schema::hasTable('routes');
+        $hasRoutesTable = SchemaCache::hasTable('routes');
         $routeColumns = $hasRoutesTable ? array_flip(Schema::getColumnListing('routes')) : [];
         $hasRouteIdColumn = isset($luggageColumns['rute_id']);
         $hasRouteLabelColumn = isset($luggageColumns['rute']);
         $hasCreatedAtColumn = isset($luggageColumns['created_at']);
         $hasStatusColumn = isset($luggageColumns['status']);
         $hasPaymentStatusColumn = isset($luggageColumns['payment_status']);
-        $hasTripAssignmentLink = isset($luggageColumns['trip_assignment_id']) && Schema::hasTable('trip_assignments');
+        $hasTripAssignmentLink = isset($luggageColumns['trip_assignment_id']) && SchemaCache::hasTable('trip_assignments');
         $tripAssignmentColumns = $hasTripAssignmentLink ? array_flip(Schema::getColumnListing('trip_assignments')) : [];
         $canJoinDrivers = $hasTripAssignmentLink
             && isset($tripAssignmentColumns['driver_id'])
-            && Schema::hasTable('drivers');
+            && SchemaCache::hasTable('drivers');
         $driverColumns = $canJoinDrivers ? array_flip(Schema::getColumnListing('drivers')) : [];
-        $canJoinArmadas = $hasTripAssignmentLink && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas');
+        $canJoinArmadas = $hasTripAssignmentLink && $this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas');
         $armadaColumns = $canJoinArmadas ? array_flip(Schema::getColumnListing('armadas')) : [];
         $hasTripAssignmentArmadaNopol = $hasTripAssignmentLink && $this->tripAssignmentsHasArmadaNopol();
         $selectColumn = static fn (array $columns, string $column, string $alias, string $prefix = 'l') => isset($columns[$column])
@@ -3189,7 +3189,7 @@ class AdminOpsApiController extends Controller
         }
 
         $unitId = (int) ($data['unit_id'] ?? 0);
-        if ($unitId > 0 && Schema::hasTable('units')) {
+        if ($unitId > 0 && SchemaCache::hasTable('units')) {
             $unitQuery = DB::table('units')->where('id', $unitId);
             $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
             $this->applyPoolScopeIfExists($unitQuery, 'units', '', $poolId > 0 ? $poolId : null);
@@ -3463,7 +3463,7 @@ class AdminOpsApiController extends Controller
         $luggage = $luggageQuery->first([
             'id',
             $this->luggagesHasPoolIdColumn() ? 'pool_id' : DB::raw('NULL as pool_id'),
-            Schema::hasColumn('luggages', 'tenant_id') ? 'tenant_id' : DB::raw('NULL as tenant_id'),
+            SchemaCache::hasColumn('luggages', 'tenant_id') ? 'tenant_id' : DB::raw('NULL as tenant_id'),
             'rute',
             'kode_resi',
             'sender_name',
@@ -3483,7 +3483,7 @@ class AdminOpsApiController extends Controller
         $resi = $luggage->kode_resi ?: $this->ensureLuggageResi($id);
         $logs = DB::table('bagasi_logs')
             ->where('kode_resi', $resi);
-        if (Schema::hasColumn('bagasi_logs', 'tenant_id') && (int) ($luggage->tenant_id ?? 0) > 0) {
+        if (SchemaCache::hasColumn('bagasi_logs', 'tenant_id') && (int) ($luggage->tenant_id ?? 0) > 0) {
             $logs->where('tenant_id', (int) $luggage->tenant_id);
         } else {
             $this->applyTenantScopeIfExists($logs, 'bagasi_logs');
@@ -3553,7 +3553,7 @@ class AdminOpsApiController extends Controller
             'armadas'          => ['id', 'nopol', 'pool_id', 'tenant_id'],
         ]);
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $this->ok([
                 'assignments' => [],
                 'pagination' => $this->paginationMeta(0, 1, $this->paginationParams($request)[1]),
@@ -3566,37 +3566,37 @@ class AdminOpsApiController extends Controller
         $to = trim((string) $request->query('to', ''));
         [$page, $perPage] = $this->paginationParams($request);
 
-        $canJoinDrivers = Schema::hasTable('drivers') && Schema::hasColumn('trip_assignments', 'driver_id');
+        $canJoinDrivers = SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('trip_assignments', 'driver_id');
         $query = DB::table('trip_assignments as t');
         if ($canJoinDrivers) {
             $query->leftJoin('drivers as d', 't.driver_id', '=', 'd.id');
         }
 
-        if ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
+        if ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas')) {
             $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
         }
 
         $query = $query
             ->select($this->assignmentIndexSelectColumns($canJoinDrivers))
-            ->orderByDesc(Schema::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : 't.id');
+            ->orderByDesc(SchemaCache::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : 't.id');
 
-        if (Schema::hasColumn('trip_assignments', 'jam')) {
+        if (SchemaCache::hasColumn('trip_assignments', 'jam')) {
             $query->orderBy('t.jam');
         }
 
-        if ($tanggal !== '' && Schema::hasColumn('trip_assignments', 'tanggal')) {
+        if ($tanggal !== '' && SchemaCache::hasColumn('trip_assignments', 'tanggal')) {
             $query->where('t.tanggal', $tanggal);
         }
-        if ($from !== '' && $to !== '' && Schema::hasColumn('trip_assignments', 'tanggal')) {
+        if ($from !== '' && $to !== '' && SchemaCache::hasColumn('trip_assignments', 'tanggal')) {
             $query->whereBetween('t.tanggal', [$from, $to]);
         }
-        if ($rute !== '' && Schema::hasColumn('trip_assignments', 'rute')) {
+        if ($rute !== '' && SchemaCache::hasColumn('trip_assignments', 'rute')) {
             $query->where('t.rute', $rute);
         }
         $this->applyRouteScopeToQuery(
             $query,
-            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
-            Schema::hasColumn('trip_assignments', 'rute') ? 't.rute' : '',
+            SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            SchemaCache::hasColumn('trip_assignments', 'rute') ? 't.rute' : '',
         );
 
         $result = $this->paginateQuery($query, $page, $perPage);
@@ -3611,16 +3611,16 @@ class AdminOpsApiController extends Controller
     {
         $select = [
             't.id',
-            Schema::hasColumn('trip_assignments', 'rute') ? 't.rute' : DB::raw("'' as rute"),
-            Schema::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : DB::raw('NULL as tanggal'),
-            Schema::hasColumn('trip_assignments', 'jam') ? 't.jam' : DB::raw('NULL as jam'),
-            Schema::hasColumn('trip_assignments', 'unit') ? 't.unit' : DB::raw('0 as unit'),
-            Schema::hasColumn('trip_assignments', 'driver_id') ? 't.driver_id' : DB::raw('NULL as driver_id'),
+            SchemaCache::hasColumn('trip_assignments', 'rute') ? 't.rute' : DB::raw("'' as rute"),
+            SchemaCache::hasColumn('trip_assignments', 'tanggal') ? 't.tanggal' : DB::raw('NULL as tanggal'),
+            SchemaCache::hasColumn('trip_assignments', 'jam') ? 't.jam' : DB::raw('NULL as jam'),
+            SchemaCache::hasColumn('trip_assignments', 'unit') ? 't.unit' : DB::raw('0 as unit'),
+            SchemaCache::hasColumn('trip_assignments', 'driver_id') ? 't.driver_id' : DB::raw('NULL as driver_id'),
         ];
 
         if ($canJoinDrivers) {
-            $select[] = Schema::hasColumn('drivers', 'nama') ? 'd.nama' : DB::raw('NULL as nama');
-            $select[] = Schema::hasColumn('drivers', 'phone') ? 'd.phone' : DB::raw('NULL as phone');
+            $select[] = SchemaCache::hasColumn('drivers', 'nama') ? 'd.nama' : DB::raw('NULL as nama');
+            $select[] = SchemaCache::hasColumn('drivers', 'phone') ? 'd.phone' : DB::raw('NULL as phone');
         } else {
             $select[] = DB::raw('NULL as nama');
             $select[] = DB::raw('NULL as phone');
@@ -3630,11 +3630,11 @@ class AdminOpsApiController extends Controller
             ? 't.armada_id'
             : DB::raw('NULL as armada_id');
 
-        if ($this->tripAssignmentsHasArmadaNopol() && $this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas') && Schema::hasColumn('armadas', 'nopol')) {
+        if ($this->tripAssignmentsHasArmadaNopol() && $this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas') && SchemaCache::hasColumn('armadas', 'nopol')) {
             $select[] = DB::raw('COALESCE(t.armada_nopol, a.nopol) as armada_nopol');
         } elseif ($this->tripAssignmentsHasArmadaNopol()) {
             $select[] = 't.armada_nopol';
-        } elseif ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas') && Schema::hasColumn('armadas', 'nopol')) {
+        } elseif ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas') && SchemaCache::hasColumn('armadas', 'nopol')) {
             $select[] = DB::raw('a.nopol as armada_nopol');
         } else {
             $select[] = DB::raw('NULL as armada_nopol');
@@ -3700,7 +3700,7 @@ class AdminOpsApiController extends Controller
             }
         }
 
-        if (Schema::hasTable('armadas')) {
+        if (SchemaCache::hasTable('armadas')) {
             if ($armadaId <= 0 && $requestedArmadaNopol !== '') {
                 $matchedArmada = DB::table('armadas')
                     ->select('id', 'nopol')
@@ -3885,7 +3885,7 @@ class AdminOpsApiController extends Controller
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
 
-        if (! Schema::hasTable('customer_bagasi')) {
+        if (! SchemaCache::hasTable('customer_bagasi')) {
             return $this->ok([
                 'customers' => [],
                 'pagination' => $this->paginationMeta(0, $page, $perPage),
@@ -3994,7 +3994,7 @@ class AdminOpsApiController extends Controller
         $qPhone = preg_replace('/\D+/', '', $q) ?? '';
         [$page, $perPage] = $this->paginationParams($request);
 
-        if (! Schema::hasTable('customer_charter')) {
+        if (! SchemaCache::hasTable('customer_charter')) {
             return $this->ok([
                 'customers' => [],
                 'pagination' => $this->paginationMeta(0, $page, $perPage),
@@ -4111,7 +4111,7 @@ class AdminOpsApiController extends Controller
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
 
-        if (! Schema::hasTable('master_carter')) {
+        if (! SchemaCache::hasTable('master_carter')) {
             return $this->ok([
                 'routes' => [],
                 'pagination' => $this->paginationMeta(0, $page, $perPage),
@@ -4133,7 +4133,7 @@ class AdminOpsApiController extends Controller
             ->orderBy('name')
             ->orderBy('origin')
             ->orderBy('destination')
-            ->when(Schema::hasColumn('master_carter', 'tenant_id'), function (Builder $q) {
+            ->when(SchemaCache::hasColumn('master_carter', 'tenant_id'), function (Builder $q) {
                 PoolScope::applyTenantScope($q, 'master_carter.tenant_id');
             });
         $this->applyPoolScopeIfExists($query, 'master_carter');
@@ -4227,7 +4227,7 @@ class AdminOpsApiController extends Controller
 
     public function unitsIndex(): JsonResponse
     {
-        if (! Schema::hasTable('units')) {
+        if (! SchemaCache::hasTable('units')) {
             return $this->ok(['units' => []]);
         }
 
@@ -4235,7 +4235,7 @@ class AdminOpsApiController extends Controller
 
         $query = DB::table('units')
             ->select($this->unitSelectColumns())
-            ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q) {
+            ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q) {
                 $tenantId = PoolScope::tenantId();
                 if ($tenantId > 0) {
                     $q->where('units.tenant_id', $tenantId);
@@ -4243,11 +4243,11 @@ class AdminOpsApiController extends Controller
             });
         $this->applyPoolScopeIfExists($query, 'units');
 
-        if ($status !== '' && Schema::hasColumn('units', 'status')) {
+        if ($status !== '' && SchemaCache::hasColumn('units', 'status')) {
             $query->where('status', $status);
         }
 
-        $rawRows = $query->orderBy(Schema::hasColumn('units', 'nopol') ? 'nopol' : 'id')->get();
+        $rawRows = $query->orderBy(SchemaCache::hasColumn('units', 'nopol') ? 'nopol' : 'id')->get();
         $poolNames = $this->poolNameMap($rawRows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $rows = $rawRows
             ->map(function ($row) use ($poolNames) {
@@ -4279,7 +4279,7 @@ class AdminOpsApiController extends Controller
         ];
 
         return collect($columnDefaults)
-            ->map(static fn (string $default, string $column): mixed => Schema::hasColumn('units', $column)
+            ->map(static fn (string $default, string $column): mixed => SchemaCache::hasColumn('units', $column)
                 ? $column
                 : DB::raw($default.' as '.$column))
             ->values()
@@ -4288,7 +4288,7 @@ class AdminOpsApiController extends Controller
 
     public function unitsSave(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('units')) {
+        if (! SchemaCache::hasTable('units')) {
             return $this->error('Tabel unit belum tersedia. Jalankan migration terlebih dahulu.', 500);
         }
 
@@ -4330,13 +4330,13 @@ class AdminOpsApiController extends Controller
             return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
         }
 
-        $duplicate = Schema::hasColumn('units', 'nopol')
+        $duplicate = SchemaCache::hasColumn('units', 'nopol')
             && DB::table('units')
                 ->whereRaw('UPPER(nopol) = ?', [$nopol])
-                ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'tenant_id');
                 })
-                ->when(Schema::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
+                ->when(SchemaCache::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
                 ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
                 ->exists();
 
@@ -4393,47 +4393,47 @@ class AdminOpsApiController extends Controller
 
     private function hasRoutesBopColumn(): bool
     {
-        return $this->routesHasBopColumn ??= Schema::hasTable('routes') && Schema::hasColumn('routes', 'bop');
+        return $this->routesHasBopColumn ??= SchemaCache::hasTable('routes') && SchemaCache::hasColumn('routes', 'bop');
     }
 
     private function hasRoutesTargetRevenueColumn(): bool
     {
-        return $this->routesHasTargetRevenueColumn ??= Schema::hasTable('routes') && Schema::hasColumn('routes', 'target_revenue');
+        return $this->routesHasTargetRevenueColumn ??= SchemaCache::hasTable('routes') && SchemaCache::hasColumn('routes', 'target_revenue');
     }
 
     private function hasRoutesFixedCostColumn(): bool
     {
-        return $this->routesHasFixedCostColumn ??= Schema::hasTable('routes') && Schema::hasColumn('routes', 'fixed_cost');
+        return $this->routesHasFixedCostColumn ??= SchemaCache::hasTable('routes') && SchemaCache::hasColumn('routes', 'fixed_cost');
     }
 
     private function hasPoolsFixedCostColumn(): bool
     {
-        return $this->poolsHasFixedCostColumn ??= Schema::hasTable('pools') && Schema::hasColumn('pools', 'fixed_cost');
+        return $this->poolsHasFixedCostColumn ??= SchemaCache::hasTable('pools') && SchemaCache::hasColumn('pools', 'fixed_cost');
     }
 
     private function hasDriversRevenueColumn(): bool
     {
-        return $this->driversHasRevenueColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'revenue');
+        return $this->driversHasRevenueColumn ??= SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'revenue');
     }
 
     private function hasDriversBopColumn(): bool
     {
-        return $this->driversHasBopColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'bop');
+        return $this->driversHasBopColumn ??= SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'bop');
     }
 
     private function hasDriversFixedCostColumn(): bool
     {
-        return $this->driversHasFixedCostColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'fixed_cost');
+        return $this->driversHasFixedCostColumn ??= SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'fixed_cost');
     }
 
     private function hasDriversTargetRevenueBulananColumn(): bool
     {
-        return $this->driversHasTargetRevenueBulananColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'target_revenue_bulanan');
+        return $this->driversHasTargetRevenueBulananColumn ??= SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'target_revenue_bulanan');
     }
 
     private function hasDriversTargetRevenueTahunanColumn(): bool
     {
-        return $this->driversHasTargetRevenueTahunanColumn ??= Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'target_revenue_tahunan');
+        return $this->driversHasTargetRevenueTahunanColumn ??= SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'target_revenue_tahunan');
     }
 
     public function unitsDelete(int $id): JsonResponse
@@ -4459,16 +4459,16 @@ class AdminOpsApiController extends Controller
 
     public function armadaCategoriesIndex(): JsonResponse
     {
-        if (! Schema::hasTable('units') || ! Schema::hasColumn('units', 'category')) {
+        if (! SchemaCache::hasTable('units') || ! SchemaCache::hasColumn('units', 'category')) {
             return $this->ok(['categories' => []]);
         }
 
         $rows = DB::table('units')
             ->select('category')
-            ->when(Schema::hasColumn('units', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'units.tenant_id');
             })
-            ->when(Schema::hasColumn('units', 'pool_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('units', 'pool_id'), function (Builder $q): void {
                 $this->applyPoolScopeIfExists($q, 'units');
             })
             ->whereNotNull('category')
@@ -4485,7 +4485,7 @@ class AdminOpsApiController extends Controller
 
     public function armadasIndex(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('armadas')) {
+        if (! SchemaCache::hasTable('armadas')) {
             return $this->ok(['armadas' => []]);
         }
 
@@ -4504,7 +4504,7 @@ class AdminOpsApiController extends Controller
         [$monthStart, $monthEnd] = $this->armadaPeriodBounds($validated['period'] ?? null);
 
         $query = DB::table('armadas')
-            ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'armadas.tenant_id');
             })
             ->select($this->armadaSelectColumns())
@@ -4517,18 +4517,18 @@ class AdminOpsApiController extends Controller
                 $builder->where('nopol', 'like', $qLike);
 
                 foreach (['nomor_rangka', 'merk', 'kategori', 'platform_gps'] as $column) {
-                    if (Schema::hasColumn('armadas', $column)) {
+                    if (SchemaCache::hasColumn('armadas', $column)) {
                         $builder->orWhere($column, 'like', $qLike);
                     }
                 }
             });
         }
 
-        if ($kategori !== '' && Schema::hasColumn('armadas', 'kategori')) {
+        if ($kategori !== '' && SchemaCache::hasColumn('armadas', 'kategori')) {
             $query->where('kategori', $kategori);
         }
 
-        if (in_array($acType, ['AC', 'Non-AC'], true) && Schema::hasColumn('armadas', 'ac_type')) {
+        if (in_array($acType, ['AC', 'Non-AC'], true) && SchemaCache::hasColumn('armadas', 'ac_type')) {
             $query->where('ac_type', $acType);
         }
 
@@ -4565,7 +4565,7 @@ class AdminOpsApiController extends Controller
 
     public function armadasExport(Request $request): StreamedResponse
     {
-        if (! Schema::hasTable('armadas')) {
+        if (! SchemaCache::hasTable('armadas')) {
             return response()->streamDownload(static function (): void {}, 'armadas.csv', ['Content-Type' => 'text/csv']);
         }
 
@@ -4585,7 +4585,7 @@ class AdminOpsApiController extends Controller
         $filename = 'armadas-'.str_replace('-', '', $period).'.csv';
 
         $query = DB::table('armadas')
-            ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'armadas.tenant_id');
             })
             ->select($this->armadaSelectColumns())
@@ -4598,18 +4598,18 @@ class AdminOpsApiController extends Controller
                 $builder->where('nopol', 'like', $qLike);
 
                 foreach (['nomor_rangka', 'merk', 'kategori', 'platform_gps'] as $column) {
-                    if (Schema::hasColumn('armadas', $column)) {
+                    if (SchemaCache::hasColumn('armadas', $column)) {
                         $builder->orWhere($column, 'like', $qLike);
                     }
                 }
             });
         }
 
-        if ($kategori !== '' && Schema::hasColumn('armadas', 'kategori')) {
+        if ($kategori !== '' && SchemaCache::hasColumn('armadas', 'kategori')) {
             $query->where('kategori', $kategori);
         }
 
-        if (in_array($acType, ['AC', 'Non-AC'], true) && Schema::hasColumn('armadas', 'ac_type')) {
+        if (in_array($acType, ['AC', 'Non-AC'], true) && SchemaCache::hasColumn('armadas', 'ac_type')) {
             $query->where('ac_type', $acType);
         }
 
@@ -4703,7 +4703,7 @@ class AdminOpsApiController extends Controller
         ];
 
         return collect($columnDefaults)
-            ->map(static fn (string $default, string $column): mixed => Schema::hasColumn('armadas', $column)
+            ->map(static fn (string $default, string $column): mixed => SchemaCache::hasColumn('armadas', $column)
                 ? $column
                 : DB::raw($default.' as '.$column))
             ->values()
@@ -4744,17 +4744,17 @@ class AdminOpsApiController extends Controller
             'by_nopol' => [],
         ];
 
-        if (! Schema::hasTable('drivers')) {
+        if (! SchemaCache::hasTable('drivers')) {
             return $result;
         }
 
         $select = ['id', 'nama'];
-        if (Schema::hasColumn('drivers', 'armada_id')) {
+        if (SchemaCache::hasColumn('drivers', 'armada_id')) {
             $select[] = 'armada_id';
         } else {
             $select[] = DB::raw('NULL as armada_id');
         }
-        if (Schema::hasColumn('drivers', 'armada_nopol')) {
+        if (SchemaCache::hasColumn('drivers', 'armada_nopol')) {
             $select[] = 'armada_nopol';
         } else {
             $select[] = DB::raw('NULL as armada_nopol');
@@ -4762,7 +4762,7 @@ class AdminOpsApiController extends Controller
 
         $query = DB::table('drivers')
             ->select($select)
-            ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'drivers.tenant_id');
             });
         $this->applyPoolScopeIfExists($query, 'drivers', '', $poolId > 0 ? $poolId : 0);
@@ -4789,7 +4789,7 @@ class AdminOpsApiController extends Controller
 
     public function armadasSave(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('armadas')) {
+        if (! SchemaCache::hasTable('armadas')) {
             return $this->error('Tabel armada belum tersedia. Jalankan migration terlebih dahulu.', 500);
         }
 
@@ -4821,7 +4821,7 @@ class AdminOpsApiController extends Controller
             $this->applyPoolScopeIfExists($existingQuery, 'armadas');
             $existing = $existingQuery->first([
                 'id',
-                Schema::hasColumn('armadas', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+                SchemaCache::hasColumn('armadas', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
             ]);
 
             if (! $existing) {
@@ -4839,7 +4839,7 @@ class AdminOpsApiController extends Controller
             return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
         }
 
-        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('armadas', 'tenant_id')) {
+        if ($id <= 0 && FeatureGate::enabled() && SchemaCache::hasColumn('armadas', 'tenant_id')) {
             if (! FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id')) {
                 return $this->error(FeatureGate::limitMessage('master.armadas') ?? 'Batas armada paket Anda sudah tercapai.', 403);
             }
@@ -4849,7 +4849,7 @@ class AdminOpsApiController extends Controller
 
         $duplicate = DB::table('armadas')
             ->whereRaw('UPPER(nopol) = ?', [$nopol])
-            ->when(Schema::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('armadas', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'tenant_id');
             })
             ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
@@ -4911,13 +4911,13 @@ class AdminOpsApiController extends Controller
     private function filterPayloadColumns(string $table, array $payload): array
     {
         return collect($payload)
-            ->filter(static fn (mixed $_value, string $column): bool => Schema::hasColumn($table, $column))
+            ->filter(static fn (mixed $_value, string $column): bool => SchemaCache::hasColumn($table, $column))
             ->all();
     }
 
     public function armadasDelete(int $id): JsonResponse
     {
-        if (! Schema::hasTable('armadas')) {
+        if (! SchemaCache::hasTable('armadas')) {
             return $this->ok(['message' => 'Armada deleted.']);
         }
 
@@ -4965,7 +4965,7 @@ class AdminOpsApiController extends Controller
 
     public function armadasShow(Request $request, int $id): JsonResponse
     {
-        if (! Schema::hasTable('armadas')) {
+        if (! SchemaCache::hasTable('armadas')) {
             return $this->error('Data armada tidak tersedia.', 404);
         }
 
@@ -4978,7 +4978,7 @@ class AdminOpsApiController extends Controller
         [$monthStart, $monthEnd] = $this->armadaPeriodBounds($validated['period'] ?? null);
 
         $query = DB::table('armadas')->where('id', $id);
-        if (Schema::hasColumn('armadas', 'tenant_id')) {
+        if (SchemaCache::hasColumn('armadas', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
         if ($poolId > 0) {
@@ -5023,7 +5023,7 @@ class AdminOpsApiController extends Controller
                 ->where('id', $poolId)
                 ->where('status', 'active');
 
-            if (Schema::hasColumn('pools', 'tenant_id')) {
+            if (SchemaCache::hasColumn('pools', 'tenant_id')) {
                 $poolQuery->where('tenant_id', $tenantId);
             }
 
@@ -5064,7 +5064,7 @@ class AdminOpsApiController extends Controller
         $previousPoolId = (int) session('active_pool_id', 0);
 
         if ($tenantId > 0) {
-            if (! Schema::hasTable('tenants')) {
+            if (! SchemaCache::hasTable('tenants')) {
                 return $this->error('Tabel tenants belum tersedia.', 409);
             }
 
@@ -5175,9 +5175,9 @@ class AdminOpsApiController extends Controller
     {
         if (! $this->poolTablesReady()) {
             $routes = [];
-            if (Schema::hasTable('routes')) {
+            if (SchemaCache::hasTable('routes')) {
                 $q = DB::table('routes')->orderBy('name');
-                if (Schema::hasColumn('routes', 'tenant_id')) {
+                if (SchemaCache::hasColumn('routes', 'tenant_id')) {
                     PoolScope::applyTenantScope($q, 'routes.tenant_id');
                 }
                 $routes = $q->get(['id', 'name', 'origin', 'destination'])->all();
@@ -5195,7 +5195,7 @@ class AdminOpsApiController extends Controller
         $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
 
         $poolQuery = DB::table('pools')
-            ->when(Schema::hasColumn('pools', 'tenant_id'), function (Builder $query): void {
+            ->when(SchemaCache::hasColumn('pools', 'tenant_id'), function (Builder $query): void {
                 PoolScope::applyTenantScope($query, 'pools.tenant_id');
             })
             ->select([
@@ -5206,8 +5206,8 @@ class AdminOpsApiController extends Controller
                 $this->hasPoolsFixedCostColumn() ? 'fixed_cost' : DB::raw('0 as fixed_cost'),
                 'status',
                 'notes',
-                Schema::hasColumn('pools', 'phone') ? 'phone' : DB::raw('NULL as phone'),
-                Schema::hasColumn('pools', 'address') ? 'address' : DB::raw('NULL as address'),
+                SchemaCache::hasColumn('pools', 'phone') ? 'phone' : DB::raw('NULL as phone'),
+                SchemaCache::hasColumn('pools', 'address') ? 'address' : DB::raw('NULL as address'),
                 'created_at',
             ])
             ->orderBy('name');
@@ -5229,7 +5229,7 @@ class AdminOpsApiController extends Controller
         $poolIds = $pools->pluck('id')->map(static fn ($id): int => (int) $id)->values()->all();
         $routesByPool = [];
 
-        if ($poolIds !== [] && Schema::hasTable('pool_route') && Schema::hasTable('routes')) {
+        if ($poolIds !== [] && SchemaCache::hasTable('pool_route') && SchemaCache::hasTable('routes')) {
             $routeRows = DB::table('pool_route as pr')
                 ->join('routes as r', 'pr.route_id', '=', 'r.id')
                 ->whereIn('pr.pool_id', $poolIds)
@@ -5395,7 +5395,7 @@ class AdminOpsApiController extends Controller
         });
 
         $routeQuery = DB::table('routes')->orderBy('name');
-        if (Schema::hasColumn('routes', 'tenant_id')) {
+        if (SchemaCache::hasColumn('routes', 'tenant_id')) {
             PoolScope::applyTenantScope($routeQuery, 'routes.tenant_id');
         }
 
@@ -5432,9 +5432,9 @@ class AdminOpsApiController extends Controller
 
         if (! $this->poolTablesReady()) {
             $routes = [];
-            if (Schema::hasTable('routes')) {
+            if (SchemaCache::hasTable('routes')) {
                 $query = DB::table('routes')->orderBy('name');
-                if (Schema::hasColumn('routes', 'tenant_id')) {
+                if (SchemaCache::hasColumn('routes', 'tenant_id')) {
                     PoolScope::applyTenantScope($query, 'routes.tenant_id');
                 }
                 $routes = $query->get(['id', 'name', 'origin', 'destination'])->all();
@@ -5449,18 +5449,18 @@ class AdminOpsApiController extends Controller
 
         $allowedPoolIds = $canManage ? [] : $this->currentUserPoolIds();
         $poolQuery = DB::table('pools')
-            ->when(Schema::hasColumn('pools', 'tenant_id'), function (Builder $query): void {
+            ->when(SchemaCache::hasColumn('pools', 'tenant_id'), function (Builder $query): void {
                 PoolScope::applyTenantScope($query, 'pools.tenant_id');
             })
             ->select([
                 'id',
                 'name',
-                Schema::hasColumn('pools', 'code') ? 'code' : DB::raw('NULL as code'),
-                Schema::hasColumn('pools', 'target_revenue') ? 'target_revenue' : DB::raw('0 as target_revenue'),
-                Schema::hasColumn('pools', 'status') ? 'status' : DB::raw("'active' as status"),
-                Schema::hasColumn('pools', 'notes') ? 'notes' : DB::raw('NULL as notes'),
-                Schema::hasColumn('pools', 'phone') ? 'phone' : DB::raw('NULL as phone'),
-                Schema::hasColumn('pools', 'address') ? 'address' : DB::raw('NULL as address'),
+                SchemaCache::hasColumn('pools', 'code') ? 'code' : DB::raw('NULL as code'),
+                SchemaCache::hasColumn('pools', 'target_revenue') ? 'target_revenue' : DB::raw('0 as target_revenue'),
+                SchemaCache::hasColumn('pools', 'status') ? 'status' : DB::raw("'active' as status"),
+                SchemaCache::hasColumn('pools', 'notes') ? 'notes' : DB::raw('NULL as notes'),
+                SchemaCache::hasColumn('pools', 'phone') ? 'phone' : DB::raw('NULL as phone'),
+                SchemaCache::hasColumn('pools', 'address') ? 'address' : DB::raw('NULL as address'),
             ])
             ->orderBy('name');
 
@@ -5480,7 +5480,7 @@ class AdminOpsApiController extends Controller
         $poolIds = $pools->pluck('id')->map(static fn ($id): int => (int) $id)->values()->all();
         $routesByPool = [];
 
-        if ($poolIds !== [] && Schema::hasTable('pool_route') && Schema::hasTable('routes')) {
+        if ($poolIds !== [] && SchemaCache::hasTable('pool_route') && SchemaCache::hasTable('routes')) {
             $routeRows = DB::table('pool_route as pr')
                 ->join('routes as r', 'pr.route_id', '=', 'r.id')
                 ->whereIn('pr.pool_id', $poolIds)
@@ -5529,7 +5529,7 @@ class AdminOpsApiController extends Controller
             ->all();
 
         $routeQuery = DB::table('routes')->orderBy('name');
-        if (Schema::hasColumn('routes', 'tenant_id')) {
+        if (SchemaCache::hasColumn('routes', 'tenant_id')) {
             PoolScope::applyTenantScope($routeQuery, 'routes.tenant_id');
         }
 
@@ -5559,7 +5559,7 @@ class AdminOpsApiController extends Controller
      */
     private function poolArmadaCounts(): array
     {
-        if (! Schema::hasTable('armadas') || ! Schema::hasColumn('armadas', 'pool_id')) {
+        if (! SchemaCache::hasTable('armadas') || ! SchemaCache::hasColumn('armadas', 'pool_id')) {
             return [];
         }
 
@@ -5569,7 +5569,7 @@ class AdminOpsApiController extends Controller
             ->selectRaw('SUM(CASE WHEN COALESCE(revenue, 0) > 0 OR COALESCE(bop, 0) > 0 OR COALESCE(fixed_cost, 0) > 0 THEN 1 ELSE 0 END) as ready')
             ->groupBy('pool_id');
 
-        if (Schema::hasColumn('armadas', 'tenant_id')) {
+        if (SchemaCache::hasColumn('armadas', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'armadas.tenant_id');
         }
 
@@ -5594,7 +5594,7 @@ class AdminOpsApiController extends Controller
      */
     private function poolDriverCounts(): array
     {
-        if (! Schema::hasTable('drivers') || ! Schema::hasColumn('drivers', 'pool_id')) {
+        if (! SchemaCache::hasTable('drivers') || ! SchemaCache::hasColumn('drivers', 'pool_id')) {
             return [];
         }
 
@@ -5603,7 +5603,7 @@ class AdminOpsApiController extends Controller
             ->selectRaw('COUNT(*) as total')
             ->groupBy('pool_id');
 
-        if (Schema::hasColumn('drivers', 'tenant_id')) {
+        if (SchemaCache::hasColumn('drivers', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'drivers.tenant_id');
         }
 
@@ -5677,7 +5677,7 @@ class AdminOpsApiController extends Controller
 
         $id = (int) $request->input('id', 0);
 
-        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('pools', 'tenant_id')) {
+        if ($id <= 0 && FeatureGate::enabled() && SchemaCache::hasColumn('pools', 'tenant_id')) {
             if (! FeatureGate::canCreate('tenant.multiple_pools', 'pools', 'tenant_id')) {
                 return $this->error(FeatureGate::limitMessage('tenant.multiple_pools') ?? 'Batas pool/cabang paket Anda sudah tercapai.', 403);
             }
@@ -5747,7 +5747,7 @@ class AdminOpsApiController extends Controller
             : [];
         $normalizedTargetMonth = null;
         if (! $monthlyTargetsProvided && $saveMonthlyTarget) {
-            if (! Schema::hasTable('pool_monthly_targets')) {
+            if (! SchemaCache::hasTable('pool_monthly_targets')) {
                 return $this->error('Tabel target bulanan belum tersedia. Jalankan migration terlebih dahulu.', 409);
             }
 
@@ -5760,7 +5760,7 @@ class AdminOpsApiController extends Controller
         return DB::transaction(function () use ($id, $payload, $routeIds, $data, $saveMonthlyTarget, $normalizedTargetMonth, $normalizedMonthlyTargets, $monthlyTargetsProvided): JsonResponse {
             if ($id > 0) {
                 $query = DB::table('pools')->where('id', $id);
-                if (Schema::hasColumn('pools', 'tenant_id')) {
+                if (SchemaCache::hasColumn('pools', 'tenant_id')) {
                     PoolScope::applyTenantScope($query, 'tenant_id');
                 }
                 $query->update(array_merge($payload, ['updated_at' => now()]));
@@ -6018,17 +6018,17 @@ class AdminOpsApiController extends Controller
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
         $select = ['id', 'name', 'email', 'email_verified_at', 'created_at'];
-        if (Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasColumn('users', 'is_super_admin')) {
             $select[] = 'is_super_admin';
         } else {
             $select[] = DB::raw('0 as is_super_admin');
         }
 
         $query = DB::table('users')
-            ->when(Schema::hasColumn('users', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('users', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'users.tenant_id');
             })
-            ->when(Schema::hasColumn('users', 'is_super_admin'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('users', 'is_super_admin'), function (Builder $q): void {
                 $q->where(function (Builder $superAdminFilter): void {
                     $superAdminFilter
                         ->whereNull('is_super_admin')
@@ -6147,7 +6147,7 @@ class AdminOpsApiController extends Controller
 
         $id = (int) ($data['id'] ?? 0);
 
-        if ($id <= 0 && FeatureGate::enabled() && Schema::hasColumn('users', 'tenant_id')) {
+        if ($id <= 0 && FeatureGate::enabled() && SchemaCache::hasColumn('users', 'tenant_id')) {
             if (! FeatureGate::canCreate('user.management', 'users', 'tenant_id')) {
                 return $this->error(FeatureGate::limitMessage('user.management') ?? 'Batas user paket Anda sudah tercapai.', 403);
             }
@@ -6178,7 +6178,7 @@ class AdminOpsApiController extends Controller
             return $this->error('Role Super Admin hanya dikelola dari menu role.', 403);
         }
 
-        if (Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasColumn('users', 'is_super_admin')) {
             $wantsSuperAdmin = (bool) ($data['is_super_admin'] ?? false);
             if ($wantsSuperAdmin) {
                 return $this->error('Role Super Admin hanya dikelola dari menu role.', 403);
@@ -6212,10 +6212,10 @@ class AdminOpsApiController extends Controller
 
         if ($id > 0) {
             $query = DB::table('users')->where('id', $id);
-            if (Schema::hasColumn('users', 'tenant_id')) {
+            if (SchemaCache::hasColumn('users', 'tenant_id')) {
                 PoolScope::applyTenantScope($query, 'tenant_id');
             }
-            if (Schema::hasColumn('users', 'is_super_admin')) {
+            if (SchemaCache::hasColumn('users', 'is_super_admin')) {
                 $query->where(function (Builder $superAdminFilter): void {
                     $superAdminFilter
                         ->whereNull('is_super_admin')
@@ -6282,10 +6282,10 @@ class AdminOpsApiController extends Controller
         }
 
         $query = DB::table('users')->where('id', $id);
-        if (Schema::hasColumn('users', 'tenant_id')) {
+        if (SchemaCache::hasColumn('users', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
-        if (Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasColumn('users', 'is_super_admin')) {
             $query->where(function (Builder $superAdminFilter): void {
                 $superAdminFilter
                     ->whereNull('is_super_admin')
@@ -6297,10 +6297,10 @@ class AdminOpsApiController extends Controller
         }
 
         $tenantUserQuery = DB::table('users');
-        if (Schema::hasColumn('users', 'tenant_id')) {
+        if (SchemaCache::hasColumn('users', 'tenant_id')) {
             PoolScope::applyTenantScope($tenantUserQuery, 'tenant_id');
         }
-        if (Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasColumn('users', 'is_super_admin')) {
             $tenantUserQuery->where(function (Builder $superAdminFilter): void {
                 $superAdminFilter
                     ->whereNull('is_super_admin')
@@ -6407,7 +6407,7 @@ class AdminOpsApiController extends Controller
 
     private function userForAdminAction(int $id): ?User
     {
-        if ($id <= 0 || ! Schema::hasTable('users')) {
+        if ($id <= 0 || ! SchemaCache::hasTable('users')) {
             return null;
         }
 
@@ -6416,10 +6416,10 @@ class AdminOpsApiController extends Controller
         }
 
         $query = DB::table('users')->where('id', $id);
-        if (Schema::hasColumn('users', 'tenant_id')) {
+        if (SchemaCache::hasColumn('users', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'users.tenant_id');
         }
-        if (Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasColumn('users', 'is_super_admin')) {
             $query->where(function (Builder $superAdminFilter): void {
                 $superAdminFilter
                     ->whereNull('is_super_admin')
@@ -6436,10 +6436,10 @@ class AdminOpsApiController extends Controller
 
     private function poolTablesReady(): bool
     {
-        return Schema::hasTable('pools')
-            && Schema::hasTable('pool_route')
-            && Schema::hasTable('pool_user')
-            && Schema::hasTable('routes');
+        return SchemaCache::hasTable('pools')
+            && SchemaCache::hasTable('pool_route')
+            && SchemaCache::hasTable('pool_user')
+            && SchemaCache::hasTable('routes');
     }
 
     private function normalizeTargetMonth(?string $month): ?string
@@ -6467,7 +6467,7 @@ class AdminOpsApiController extends Controller
     private function poolMonthlyTargetsByPoolIds(array $poolIds): array
     {
         $poolIds = array_values(array_unique(array_filter(array_map('intval', $poolIds), static fn (int $id): bool => $id > 0)));
-        if ($poolIds === [] || ! Schema::hasTable('pool_monthly_targets')) {
+        if ($poolIds === [] || ! SchemaCache::hasTable('pool_monthly_targets')) {
             return [];
         }
 
@@ -6539,7 +6539,7 @@ class AdminOpsApiController extends Controller
      */
     private function syncPoolMonthlyTargets(int $poolId, array $monthlyTargets): void
     {
-        if ($poolId <= 0 || ! Schema::hasTable('pool_monthly_targets')) {
+        if ($poolId <= 0 || ! SchemaCache::hasTable('pool_monthly_targets')) {
             return;
         }
 
@@ -6580,7 +6580,7 @@ class AdminOpsApiController extends Controller
 
     private function defaultCustomerPoolId(string $table = 'customers'): int
     {
-        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'pool_id')) {
+        if (! SchemaCache::hasTable($table) || ! SchemaCache::hasColumn($table, 'pool_id')) {
             return 0;
         }
 
@@ -6589,7 +6589,7 @@ class AdminOpsApiController extends Controller
 
     private function assignCustomerPoolIfMissing(int $customerId, int $poolId, string $table = 'customers'): void
     {
-        if ($customerId <= 0 || $poolId <= 0 || ! Schema::hasTable($table) || ! Schema::hasColumn($table, 'pool_id')) {
+        if ($customerId <= 0 || $poolId <= 0 || ! SchemaCache::hasTable($table) || ! SchemaCache::hasColumn($table, 'pool_id')) {
             return;
         }
 
@@ -6633,17 +6633,17 @@ class AdminOpsApiController extends Controller
 
     private function superAdminCount(): int
     {
-        if (! Schema::hasTable('users')) {
+        if (! SchemaCache::hasTable('users')) {
             return 0;
         }
 
-        if (! AccessControl::tablesReady() && ! Schema::hasColumn('users', 'is_super_admin')) {
+        if (! AccessControl::tablesReady() && ! SchemaCache::hasColumn('users', 'is_super_admin')) {
             return (int) DB::table('users')->count();
         }
 
         $query = DB::table('users')->select('users.id');
 
-        if (Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasColumn('users', 'is_super_admin')) {
             $query->where('users.is_super_admin', true);
         } else {
             $query->whereRaw('1 = 0');
@@ -6878,15 +6878,15 @@ class AdminOpsApiController extends Controller
         $poolIds = $scope['pool_ids'];
         $labels = $scope['labels'];
         $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
-        $hasPickupPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'pickup_point');
-        $hasDropPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'drop_point');
+        $hasPickupPointColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'pickup_point');
+        $hasDropPointColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'drop_point');
         $hasLegacyRouteLabels = $labels !== [] && ($hasPickupPointColumn || $hasDropPointColumn);
         if (($hasPoolIdColumn && $poolIds !== []) || $hasLegacyRouteLabels) {
             $query->where(function (Builder $builder) use ($poolIds, $labels): void {
                 $hasClause = false;
                 $hasPoolIdColumn = $this->chartersHasPoolIdColumn();
-                $hasPickupPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'pickup_point');
-                $hasDropPointColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'drop_point');
+                $hasPickupPointColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'pickup_point');
+                $hasDropPointColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'drop_point');
 
                 if ($hasPoolIdColumn && $poolIds !== []) {
                     $builder->whereIn('c.pool_id', $poolIds);
@@ -7064,7 +7064,7 @@ class AdminOpsApiController extends Controller
         $this->applyPoolOrRouteScopeToQuery(
             $query,
             $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
-            Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+            SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
             'l.rute',
         );
         $this->applyTenantScopeIfExists($query, 'luggages', 'l');
@@ -7099,7 +7099,7 @@ class AdminOpsApiController extends Controller
 
         $routes = DB::table('pool_route as pr')
             ->join('routes as r', 'pr.route_id', '=', 'r.id')
-            ->when(Schema::hasColumn('routes', 'tenant_id'), function (Builder $query): void {
+            ->when(SchemaCache::hasColumn('routes', 'tenant_id'), function (Builder $query): void {
                 PoolScope::applyTenantScope($query, 'r.tenant_id');
             })
             ->get(['pr.pool_id', 'r.name', 'r.origin', 'r.destination']);
@@ -7139,7 +7139,7 @@ class AdminOpsApiController extends Controller
      */
     private function resolveAccessibleRouteFilter(int $routeId = 0, int $poolId = 0): array
     {
-        if ($routeId <= 0 || ! Schema::hasTable('routes')) {
+        if ($routeId <= 0 || ! SchemaCache::hasTable('routes')) {
             return ['requested' => false, 'id' => 0, 'name' => ''];
         }
 
@@ -7325,7 +7325,7 @@ class AdminOpsApiController extends Controller
             'alamat' => $alamat,
             'tipe' => $tipe,
             'created_at' => now(),
-        ], $poolId > 0 && Schema::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : [], $this->tenantPayload('customer_bagasi')));
+        ], $poolId > 0 && SchemaCache::hasColumn('customer_bagasi', 'pool_id') ? ['pool_id' => $poolId] : [], $this->tenantPayload('customer_bagasi')));
     }
 
     private function resolveMappedLuggagePrice(int $routeId, int $serviceId): float
@@ -7742,22 +7742,22 @@ class AdminOpsApiController extends Controller
             'luggages'         => ['driver_id', 'tanggal', 'price', 'pool_id', 'tenant_id', 'status', 'payment_status'],
         ]);
 
-        if (! Schema::hasTable('drivers')) {
+        if (! SchemaCache::hasTable('drivers')) {
             return [];
         }
 
         $hasDriverArmadaId = $this->driversHasArmadaId();
         $hasDriverArmadaNopol = $this->driversHasArmadaNopol();
         $hasDriverKategori = $this->driversHasKategoriColumn();
-        $canJoinArmadas = $hasDriverArmadaId && Schema::hasTable('armadas') && Schema::hasColumn('armadas', 'nopol');
-        $canReadArmadaKategori = $canJoinArmadas && Schema::hasColumn('armadas', 'kategori');
+        $canJoinArmadas = $hasDriverArmadaId && SchemaCache::hasTable('armadas') && SchemaCache::hasColumn('armadas', 'nopol');
+        $canReadArmadaKategori = $canJoinArmadas && SchemaCache::hasColumn('armadas', 'kategori');
 
         $select = [
             'd.id',
-            Schema::hasColumn('drivers', 'nama') ? 'd.nama' : DB::raw("'' as nama"),
-            Schema::hasColumn('drivers', 'phone') ? 'd.phone' : DB::raw('NULL as phone'),
-            Schema::hasColumn('drivers', 'unit_id') ? 'd.unit_id' : DB::raw('NULL as unit_id'),
-            Schema::hasColumn('drivers', 'pool_id') ? 'd.pool_id' : DB::raw('NULL as pool_id'),
+            SchemaCache::hasColumn('drivers', 'nama') ? 'd.nama' : DB::raw("'' as nama"),
+            SchemaCache::hasColumn('drivers', 'phone') ? 'd.phone' : DB::raw('NULL as phone'),
+            SchemaCache::hasColumn('drivers', 'unit_id') ? 'd.unit_id' : DB::raw('NULL as unit_id'),
+            SchemaCache::hasColumn('drivers', 'pool_id') ? 'd.pool_id' : DB::raw('NULL as pool_id'),
             $this->hasDriversTargetRevenueBulananColumn() ? 'd.target_revenue_bulanan' : DB::raw('0 as target_revenue_bulanan'),
             $this->hasDriversTargetRevenueTahunanColumn() ? 'd.target_revenue_tahunan' : DB::raw('0 as target_revenue_tahunan'),
             $this->hasDriversRevenueColumn() ? 'd.revenue' : DB::raw('0 as revenue'),
@@ -7789,19 +7789,19 @@ class AdminOpsApiController extends Controller
             ->when($canJoinArmadas, static function (Builder $query) {
                 $query->leftJoin('armadas as a', 'd.armada_id', '=', 'a.id');
             })
-            ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $query) {
+            ->when(SchemaCache::hasColumn('drivers', 'tenant_id'), function (Builder $query) {
                 $tenantId = PoolScope::tenantId();
                 if ($tenantId > 0) {
                     $query->where('d.tenant_id', $tenantId);
                 }
             })
-            ->when(Schema::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'd.tenant_id');
             })
-            ->when(Schema::hasColumn('drivers', 'pool_id'), function (Builder $q) use ($poolId): void {
+            ->when(SchemaCache::hasColumn('drivers', 'pool_id'), function (Builder $q) use ($poolId): void {
                 $this->applyPoolScopeIfExists($q, 'drivers', 'd', $poolId > 0 ? $poolId : null);
             })
-            ->orderBy(Schema::hasColumn('drivers', 'nama') ? 'd.nama' : 'd.id')
+            ->orderBy(SchemaCache::hasColumn('drivers', 'nama') ? 'd.nama' : 'd.id')
             ->get($select);
         $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
 
@@ -7811,14 +7811,14 @@ class AdminOpsApiController extends Controller
         $departureRevenueByDriver = [];
         $departureBopByDriver = [];
         $departureCountByDriver = [];
-        if (Schema::hasTable('trip_assignments')
-            && Schema::hasColumn('trip_assignments', 'driver_id')
-            && Schema::hasColumn('trip_assignments', 'tanggal')
+        if (SchemaCache::hasTable('trip_assignments')
+            && SchemaCache::hasColumn('trip_assignments', 'driver_id')
+            && SchemaCache::hasColumn('trip_assignments', 'tanggal')
         ) {
             $assignmentRows = DB::table('trip_assignments')
                 ->whereNotNull('driver_id')
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
                     PoolScope::applyTenantScope($query, 'trip_assignments.tenant_id');
                 })
                 ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
@@ -7830,17 +7830,17 @@ class AdminOpsApiController extends Controller
                 });
             $this->applyPoolOrRouteScopeToQuery(
                 $assignmentRows,
-                Schema::hasColumn('trip_assignments', 'pool_id') ? 'trip_assignments.pool_id' : '',
-                Schema::hasColumn('trip_assignments', 'route_id') ? 'trip_assignments.route_id' : '',
-                Schema::hasColumn('trip_assignments', 'rute') ? 'trip_assignments.rute' : '',
+                SchemaCache::hasColumn('trip_assignments', 'pool_id') ? 'trip_assignments.pool_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'route_id') ? 'trip_assignments.route_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'rute') ? 'trip_assignments.rute' : '',
                 $poolId,
             );
             $assignmentRows = $assignmentRows->get([
                 'driver_id',
-                Schema::hasColumn('trip_assignments', 'rute') ? 'rute' : DB::raw("'' as rute"),
+                SchemaCache::hasColumn('trip_assignments', 'rute') ? 'rute' : DB::raw("'' as rute"),
                 'tanggal',
-                Schema::hasColumn('trip_assignments', 'jam') ? 'jam' : DB::raw('NULL as jam'),
-                Schema::hasColumn('trip_assignments', 'unit') ? 'unit' : DB::raw('0 as unit'),
+                SchemaCache::hasColumn('trip_assignments', 'jam') ? 'jam' : DB::raw('NULL as jam'),
+                SchemaCache::hasColumn('trip_assignments', 'unit') ? 'unit' : DB::raw('0 as unit'),
             ]);
         } else {
             $assignmentRows = collect();
@@ -7880,25 +7880,25 @@ class AdminOpsApiController extends Controller
         }
 
         $luggageRevenueByDriver = [];
-        if (Schema::hasTable('luggages')
-            && Schema::hasColumn('luggages', 'trip_assignment_id')
-            && Schema::hasTable('trip_assignments')
-            && Schema::hasColumn('trip_assignments', 'driver_id')
-            && Schema::hasColumn('trip_assignments', 'tanggal')
+        if (SchemaCache::hasTable('luggages')
+            && SchemaCache::hasColumn('luggages', 'trip_assignment_id')
+            && SchemaCache::hasTable('trip_assignments')
+            && SchemaCache::hasColumn('trip_assignments', 'driver_id')
+            && SchemaCache::hasColumn('trip_assignments', 'tanggal')
         ) {
-            $luggageDateExpr = Schema::hasColumn('luggages', 'tanggal')
+            $luggageDateExpr = SchemaCache::hasColumn('luggages', 'tanggal')
                 ? 'l.tanggal'
-                : (Schema::hasColumn('luggages', 'created_at') ? 'DATE(l.created_at)' : 't.tanggal');
+                : (SchemaCache::hasColumn('luggages', 'created_at') ? 'DATE(l.created_at)' : 't.tanggal');
             $luggageRows = DB::table('luggages as l')
                 ->join('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id')
                 ->whereBetween(DB::raw('COALESCE('.$luggageDateExpr.', t.tanggal)'), [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'l.tenant_id');
                 })
-                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 't.tenant_id');
                 })
-                ->when(Schema::hasColumn('luggages', 'status'), function (Builder $query): void {
+                ->when(SchemaCache::hasColumn('luggages', 'status'), function (Builder $query): void {
                     $query->where(function (Builder $statusQuery): void {
                         $this->applyLuggageStatusFilter($statusQuery, 'l.status', $this->luggageRevenueStatuses());
                     });
@@ -7912,15 +7912,15 @@ class AdminOpsApiController extends Controller
                 })
                 ->select([
                     't.driver_id',
-                    Schema::hasColumn('luggages', 'price')
+                    SchemaCache::hasColumn('luggages', 'price')
                         ? DB::raw('SUM(COALESCE(l.price, 0)) as total_price')
                         : DB::raw('0 as total_price'),
                 ]);
             $this->applyPoolOrRouteScopeToQuery(
                 $luggageRows,
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
-                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
-                Schema::hasColumn('luggages', 'rute') ? 'l.rute' : '',
+                SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                SchemaCache::hasColumn('luggages', 'rute') ? 'l.rute' : '',
                 $poolId,
             );
             $luggageRows = $luggageRows
@@ -7940,19 +7940,19 @@ class AdminOpsApiController extends Controller
         $charterRevenueByDriverName = [];
         $charterBopByDriverName = [];
         $hasCharterStatus = $this->chartersHasStatusColumn();
-        if (Schema::hasTable('charters') && Schema::hasColumn('charters', 'start_date') && Schema::hasColumn('charters', 'driver_name')) {
+        if (SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'start_date') && SchemaCache::hasColumn('charters', 'driver_name')) {
             $charterQuery = DB::table('charters as c')
                 ->whereBetween('c.start_date', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'c.tenant_id');
                 });
             $this->applyCharterPoolScope($charterQuery, $poolId);
             $charterRows = $charterQuery->get([
                 'c.driver_name',
-                Schema::hasColumn('charters', 'price') ? 'c.price' : DB::raw('0 as price'),
-                Schema::hasColumn('charters', 'bop_price') ? 'c.bop_price' : DB::raw('0 as bop_price'),
-                Schema::hasColumn('charters', 'payment_status') ? 'c.payment_status' : DB::raw('NULL as payment_status'),
-                Schema::hasColumn('charters', 'bop_status') ? 'c.bop_status' : DB::raw('NULL as bop_status'),
+                SchemaCache::hasColumn('charters', 'price') ? 'c.price' : DB::raw('0 as price'),
+                SchemaCache::hasColumn('charters', 'bop_price') ? 'c.bop_price' : DB::raw('0 as bop_price'),
+                SchemaCache::hasColumn('charters', 'payment_status') ? 'c.payment_status' : DB::raw('NULL as payment_status'),
+                SchemaCache::hasColumn('charters', 'bop_status') ? 'c.bop_status' : DB::raw('NULL as bop_status'),
                 $hasCharterStatus ? DB::raw('c.status as status') : DB::raw('NULL as status'),
             ]);
         } else {
@@ -8424,7 +8424,7 @@ XML;
      */
     private function scheduleBopMap(int $poolId = 0): array
     {
-        if (! Schema::hasTable('schedules') || ! $this->hasSchedulesBopColumn()) {
+        if (! SchemaCache::hasTable('schedules') || ! $this->hasSchedulesBopColumn()) {
             return [];
         }
 
@@ -8438,10 +8438,10 @@ XML;
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($poolId): array {
             $map = [];
             $rows = DB::table('schedules')
-                ->when(Schema::hasColumn('schedules', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('schedules', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'schedules.tenant_id');
                 });
-            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '', 'schedules.rute', $poolId);
+            $this->applyRouteScopeToQuery($rows, SchemaCache::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '', 'schedules.rute', $poolId);
             $rows = $rows->get(['rute', 'dow', 'jam', 'bop']);
 
             foreach ($rows as $row) {
@@ -8467,7 +8467,7 @@ XML;
      */
     private function bookingRevenueByTripForDateRange(string $monthStart, string $monthEnd, int $poolId = 0): array
     {
-        if (! Schema::hasTable('bookings')) {
+        if (! SchemaCache::hasTable('bookings')) {
             return [];
         }
 
@@ -8487,10 +8487,10 @@ XML;
                 ->selectRaw('SUM(CASE WHEN COALESCE(price, 0) - COALESCE(discount, 0) > 0 THEN COALESCE(price, 0) - COALESCE(discount, 0) ELSE 0 END) as net_revenue')
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'bookings.tenant_id');
                 });
-            $this->applyRouteScopeToQuery($rows, Schema::hasColumn('bookings', 'route_id') ? 'bookings.route_id' : '', 'bookings.rute', $poolId);
+            $this->applyRouteScopeToQuery($rows, SchemaCache::hasColumn('bookings', 'route_id') ? 'bookings.route_id' : '', 'bookings.rute', $poolId);
             $rows = $rows
                 ->groupBy('rute', 'tanggal', 'jam', 'unit')
                 ->get();
@@ -8535,12 +8535,12 @@ XML;
      */
     private function routeFinancialsForMonth(string $monthStart, string $monthEnd): array
     {
-        if (! Schema::hasTable('routes')) {
+        if (! SchemaCache::hasTable('routes')) {
             return [];
         }
 
         $routes = DB::table('routes')
-            ->when(Schema::hasColumn('routes', 'tenant_id'), function (Builder $q): void {
+            ->when(SchemaCache::hasColumn('routes', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'routes.tenant_id');
             })
             ->get(['id', 'name', 'origin', 'destination']);
@@ -8574,13 +8574,13 @@ XML;
 
         $routeIdsForName = static fn (string $name) => $nameMap[$name] ?? [];
 
-        if (Schema::hasTable('bookings')) {
+        if (SchemaCache::hasTable('bookings')) {
             $bookingRows = DB::table('bookings')
                 ->select(['rute'])
                 ->selectRaw('SUM(CASE WHEN COALESCE(price, 0) - COALESCE(discount, 0) > 0 THEN COALESCE(price, 0) - COALESCE(discount, 0) ELSE 0 END) as net_revenue')
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('bookings', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'bookings.tenant_id');
                 })
                 ->groupBy('rute')
@@ -8593,11 +8593,11 @@ XML;
             }
         }
 
-        if (Schema::hasTable('trip_assignments')) {
+        if (SchemaCache::hasTable('trip_assignments')) {
             $scheduleBopMap = $this->scheduleBopMap();
             $assignmentRows = DB::table('trip_assignments')
                 ->whereBetween('tanggal', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'trip_assignments.tenant_id');
                 })
                 ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
@@ -8633,14 +8633,14 @@ XML;
             }
         }
 
-        if (Schema::hasTable('luggages')) {
+        if (SchemaCache::hasTable('luggages')) {
             $luggageRows = DB::table('luggages')
                 ->select([
-                    Schema::hasColumn('luggages', 'rute_id') ? 'rute_id' : DB::raw('NULL as rute_id'),
+                    SchemaCache::hasColumn('luggages', 'rute_id') ? 'rute_id' : DB::raw('NULL as rute_id'),
                     'rute',
                     'price',
                 ])
-                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'luggages.tenant_id');
                 })
                 ->whereBetween(DB::raw('COALESCE(tanggal, DATE(created_at))'), [$monthStart, $monthEnd])
@@ -8666,11 +8666,11 @@ XML;
             }
         }
 
-        if (Schema::hasTable('charters')) {
+        if (SchemaCache::hasTable('charters')) {
             $hasStatus = $this->chartersHasStatusColumn();
             $charterRows = DB::table('charters')
                 ->whereBetween('start_date', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'charters.tenant_id');
                 })
                 ->get([
@@ -8827,10 +8827,10 @@ XML;
         $bookingRevenueMap = $this->bookingRevenueByTripForDateRange($monthStart, $monthEnd);
         $financials = [];
 
-        if (Schema::hasTable('trip_assignments')) {
+        if (SchemaCache::hasTable('trip_assignments')) {
             $hasArmadaId = $this->tripAssignmentsHasArmadaId();
             $hasArmadaNopol = $this->tripAssignmentsHasArmadaNopol();
-            $canJoinArmadas = $hasArmadaId && Schema::hasTable('armadas');
+            $canJoinArmadas = $hasArmadaId && SchemaCache::hasTable('armadas');
 
             $assignmentQuery = DB::table('trip_assignments as t');
             if ($canJoinArmadas) {
@@ -8856,7 +8856,7 @@ XML;
 
             $assignmentRows = $assignmentQuery
                 ->whereBetween('t.tanggal', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 't.tenant_id');
                 })
                 ->when($this->tripAssignmentsHasStatus(), static function (Builder $query) {
@@ -8868,8 +8868,8 @@ XML;
                 });
             $this->applyPoolOrRouteScopeToQuery(
                 $assignmentRows,
-                Schema::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
-                Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
                 't.rute',
             );
             $assignmentRows = $assignmentRows->get($assignmentSelect);
@@ -8906,10 +8906,10 @@ XML;
             }
         }
 
-        if (Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'trip_assignment_id') && Schema::hasTable('trip_assignments')) {
+        if (SchemaCache::hasTable('luggages') && SchemaCache::hasColumn('luggages', 'trip_assignment_id') && SchemaCache::hasTable('trip_assignments')) {
             $hasArmadaId = $this->tripAssignmentsHasArmadaId();
             $hasArmadaNopol = $this->tripAssignmentsHasArmadaNopol();
-            $canJoinArmadas = $hasArmadaId && Schema::hasTable('armadas');
+            $canJoinArmadas = $hasArmadaId && SchemaCache::hasTable('armadas');
 
             $luggageQuery = DB::table('luggages as l')
                 ->join('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id');
@@ -8934,10 +8934,10 @@ XML;
 
             $luggageRows = $luggageQuery
                 ->whereBetween(DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal)'), [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('luggages', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'l.tenant_id');
                 })
-                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 't.tenant_id');
                 })
                 ->where(function (Builder $query) {
@@ -8953,7 +8953,7 @@ XML;
             $this->applyPoolOrRouteScopeToQuery(
                 $luggageRows,
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
-                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
                 'l.rute',
             );
             $luggageRows = $luggageRows->get($luggageSelect);
@@ -8970,10 +8970,10 @@ XML;
             }
         }
 
-        if (Schema::hasTable('charters')) {
+        if (SchemaCache::hasTable('charters')) {
             $hasArmadaId = $this->chartersHasArmadaIdColumn();
             $hasArmadaNopol = $this->chartersHasArmadaNopolColumn();
-            $canJoinArmadas = $hasArmadaId && Schema::hasTable('armadas');
+            $canJoinArmadas = $hasArmadaId && SchemaCache::hasTable('armadas');
             $hasStatus = $this->chartersHasStatusColumn();
 
             $charterQuery = DB::table('charters as c');
@@ -9001,7 +9001,7 @@ XML;
 
             $charterRows = $charterQuery
                 ->whereBetween('c.start_date', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
+                ->when(SchemaCache::hasColumn('charters', 'tenant_id'), function (Builder $q): void {
                     PoolScope::applyTenantScope($q, 'c.tenant_id');
                 });
             $this->applyCharterPoolScope($charterRows);
@@ -9102,7 +9102,7 @@ XML;
         $achievement = $targetRevenue > 0 ? ($totalRevenue / $targetRevenue) * 100 : 0.0;
 
         $bookings = [];
-        if (Schema::hasTable('bookings') && Schema::hasTable('trip_assignments')) {
+        if (SchemaCache::hasTable('bookings') && SchemaCache::hasTable('trip_assignments')) {
             $bookingQuery = DB::table('bookings as b')
                 ->join('trip_assignments as t', function ($join): void {
                     $join->on('b.rute', '=', 't.rute')
@@ -9111,16 +9111,16 @@ XML;
                         ->on('b.unit', '=', 't.unit');
                 })
                 ->whereBetween('b.tanggal', [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('bookings', 'tenant_id'), function (Builder $query): void {
+                ->when(SchemaCache::hasColumn('bookings', 'tenant_id'), function (Builder $query): void {
                     PoolScope::applyTenantScope($query, 'b.tenant_id');
                 })
-                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
                     PoolScope::applyTenantScope($query, 't.tenant_id');
                 });
             $this->applyPoolOrRouteScopeToQuery(
                 $bookingQuery,
-                Schema::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
-                Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
                 't.rute',
                 $poolId,
             );
@@ -9168,9 +9168,9 @@ XML;
         }
 
         $charters = [];
-        if (Schema::hasTable('charters')) {
+        if (SchemaCache::hasTable('charters')) {
             $charterQuery = DB::table('charters as c')
-                ->when(Schema::hasColumn('charters', 'tenant_id'), function (Builder $query): void {
+                ->when(SchemaCache::hasColumn('charters', 'tenant_id'), function (Builder $query): void {
                     PoolScope::applyTenantScope($query, 'c.tenant_id');
                 })
                 ->whereBetween('c.start_date', [$monthStart, $monthEnd]);
@@ -9179,7 +9179,7 @@ XML;
             $this->applyActiveCharterReportFilter($charterQuery, 'c');
 
             $hasArmadaNopol = $this->chartersHasArmadaNopolColumn();
-            $canJoinArmadas = $this->chartersHasArmadaIdColumn() && Schema::hasTable('armadas');
+            $canJoinArmadas = $this->chartersHasArmadaIdColumn() && SchemaCache::hasTable('armadas');
 
             $charterSelect = [
                 'c.id',
@@ -9242,21 +9242,21 @@ XML;
         }
 
         $bagasi = [];
-        if (Schema::hasTable('luggages') && Schema::hasTable('trip_assignments')) {
+        if (SchemaCache::hasTable('luggages') && SchemaCache::hasTable('trip_assignments')) {
             $luggageQuery = DB::table('luggages as l')
                 ->join('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id')
                 ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id')
                 ->whereBetween(DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal)'), [$monthStart, $monthEnd])
-                ->when(Schema::hasColumn('luggages', 'tenant_id'), function (Builder $query): void {
+                ->when(SchemaCache::hasColumn('luggages', 'tenant_id'), function (Builder $query): void {
                     PoolScope::applyTenantScope($query, 'l.tenant_id');
                 })
-                ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
                     PoolScope::applyTenantScope($query, 't.tenant_id');
                 });
             $this->applyPoolOrRouteScopeToQuery(
                 $luggageQuery,
                 $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
-                Schema::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
                 'l.rute',
                 $poolId,
             );
@@ -9338,8 +9338,8 @@ XML;
 
     private function applyArmadaMatchFilter(Builder $query, string $table, string $alias, int $armadaId, string $armadaNopol): void
     {
-        $hasArmadaId = Schema::hasColumn($table, 'armada_id');
-        $hasArmadaNopol = Schema::hasColumn($table, 'armada_nopol');
+        $hasArmadaId = SchemaCache::hasColumn($table, 'armada_id');
+        $hasArmadaNopol = SchemaCache::hasColumn($table, 'armada_nopol');
 
         if (! $hasArmadaId && ! $hasArmadaNopol) {
             $query->whereRaw('1 = 0');
@@ -9533,17 +9533,17 @@ XML;
 
     private function buildTableMutationSignature(string $table): string
     {
-        if (! Schema::hasTable($table)) {
+        if (! SchemaCache::hasTable($table)) {
             return 'na';
         }
 
         $selects = ['COUNT(*) as total_rows'];
-        if (Schema::hasColumn($table, 'id')) {
+        if (SchemaCache::hasColumn($table, 'id')) {
             $selects[] = 'COALESCE(MAX(id), 0) as max_id';
         }
 
         foreach (['updated_at', 'created_at'] as $column) {
-            if (Schema::hasColumn($table, $column)) {
+            if (SchemaCache::hasColumn($table, $column)) {
                 $selects[] = "MAX({$column}) as max_{$column}";
             }
         }
@@ -9566,7 +9566,7 @@ XML;
      */
     private function scheduleSegmentsForRoute(int $routeId, string $routeName): array
     {
-        if (! Schema::hasTable('segments')) {
+        if (! SchemaCache::hasTable('segments')) {
             return [];
         }
 
@@ -9578,7 +9578,7 @@ XML;
                 's.destination',
                 's.jam',
                 's.harga',
-                Schema::hasColumn('segments', 'jam_pickups')
+                SchemaCache::hasColumn('segments', 'jam_pickups')
                     ? 's.jam_pickups'
                     : DB::raw('NULL as jam_pickups'),
             ]);
@@ -9648,7 +9648,7 @@ XML;
     private function hasSchedulesRouteId(): bool
     {
         if ($this->schedulesHasRouteId === null) {
-            $this->schedulesHasRouteId = Schema::hasColumn('schedules', 'route_id');
+            $this->schedulesHasRouteId = SchemaCache::hasColumn('schedules', 'route_id');
         }
 
         return $this->schedulesHasRouteId;
@@ -9657,7 +9657,7 @@ XML;
     private function hasSchedulesSeatsColumn(): bool
     {
         if ($this->schedulesHasSeatsColumn === null) {
-            $this->schedulesHasSeatsColumn = Schema::hasColumn('schedules', 'seats');
+            $this->schedulesHasSeatsColumn = SchemaCache::hasColumn('schedules', 'seats');
         }
 
         return $this->schedulesHasSeatsColumn;
@@ -9666,7 +9666,7 @@ XML;
     private function hasSchedulesBopColumn(): bool
     {
         if ($this->schedulesHasBopColumn === null) {
-            $this->schedulesHasBopColumn = Schema::hasColumn('schedules', 'bop');
+            $this->schedulesHasBopColumn = SchemaCache::hasColumn('schedules', 'bop');
         }
 
         return $this->schedulesHasBopColumn;
@@ -9675,7 +9675,7 @@ XML;
     private function hasScheduleUnitsTable(): bool
     {
         if ($this->scheduleUnitsTableExists === null) {
-            $this->scheduleUnitsTableExists = Schema::hasTable('schedule_units');
+            $this->scheduleUnitsTableExists = SchemaCache::hasTable('schedule_units');
         }
 
         return $this->scheduleUnitsTableExists;
@@ -9684,7 +9684,7 @@ XML;
     private function chartersHasStatusColumn(): bool
     {
         if ($this->chartersHasStatusColumn === null) {
-            $this->chartersHasStatusColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'status');
+            $this->chartersHasStatusColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'status');
         }
 
         return $this->chartersHasStatusColumn;
@@ -9693,7 +9693,7 @@ XML;
     private function chartersHasArmadaIdColumn(): bool
     {
         if ($this->chartersHasArmadaIdColumn === null) {
-            $this->chartersHasArmadaIdColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'armada_id');
+            $this->chartersHasArmadaIdColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'armada_id');
         }
 
         return $this->chartersHasArmadaIdColumn;
@@ -9702,7 +9702,7 @@ XML;
     private function chartersHasArmadaNopolColumn(): bool
     {
         if ($this->chartersHasArmadaNopolColumn === null) {
-            $this->chartersHasArmadaNopolColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'armada_nopol');
+            $this->chartersHasArmadaNopolColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'armada_nopol');
         }
 
         return $this->chartersHasArmadaNopolColumn;
@@ -9711,7 +9711,7 @@ XML;
     private function chartersHasPoolIdColumn(): bool
     {
         if ($this->chartersHasPoolIdColumn === null) {
-            $this->chartersHasPoolIdColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'pool_id');
+            $this->chartersHasPoolIdColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'pool_id');
         }
 
         return $this->chartersHasPoolIdColumn;
@@ -9720,7 +9720,7 @@ XML;
     private function chartersHasMasterCarterIdColumn(): bool
     {
         if ($this->chartersHasMasterCarterIdColumn === null) {
-            $this->chartersHasMasterCarterIdColumn = Schema::hasTable('charters') && Schema::hasColumn('charters', 'master_carter_id');
+            $this->chartersHasMasterCarterIdColumn = SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'master_carter_id');
         }
 
         return $this->chartersHasMasterCarterIdColumn;
@@ -9729,7 +9729,7 @@ XML;
     private function luggagesHasPoolIdColumn(): bool
     {
         if ($this->luggagesHasPoolIdColumn === null) {
-            $this->luggagesHasPoolIdColumn = Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'pool_id');
+            $this->luggagesHasPoolIdColumn = SchemaCache::hasTable('luggages') && SchemaCache::hasColumn('luggages', 'pool_id');
         }
 
         return $this->luggagesHasPoolIdColumn;
@@ -9750,7 +9750,7 @@ XML;
         [$baseTable, $tableAlias] = $this->parseTableAlias($table);
         $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
         $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
-        if (Schema::hasColumn($baseTable, 'tenant_id')) {
+        if (SchemaCache::hasColumn($baseTable, 'tenant_id')) {
             PoolScope::applyTenantScope($query, $prefix.'tenant_id');
         }
     }
@@ -9760,7 +9760,7 @@ XML;
         [$baseTable, $tableAlias] = $this->parseTableAlias($table);
         $effectiveAlias = $alias !== '' ? $alias : $tableAlias;
         $prefix = $effectiveAlias !== '' ? $effectiveAlias.'.' : '';
-        if (! Schema::hasColumn($baseTable, 'pool_id')) {
+        if (! SchemaCache::hasColumn($baseTable, 'pool_id')) {
             return;
         }
 
@@ -9811,7 +9811,7 @@ XML;
 
     private function writeTenantId(string $table): int
     {
-        if (! Schema::hasColumn($table, 'tenant_id')) {
+        if (! SchemaCache::hasColumn($table, 'tenant_id')) {
             return 0;
         }
 
@@ -9829,7 +9829,7 @@ XML;
 
     private function poolPayload(string $table, ?int $poolId = null): array
     {
-        if (! Schema::hasColumn($table, 'pool_id')) {
+        if (! SchemaCache::hasColumn($table, 'pool_id')) {
             return [];
         }
 
@@ -9840,7 +9840,7 @@ XML;
 
     private function resolveWritablePoolIdFromRequest(Request $request, string $table, int $existingPoolId = 0, bool $isCreate = false): int
     {
-        if (! Schema::hasColumn($table, 'pool_id')) {
+        if (! SchemaCache::hasColumn($table, 'pool_id')) {
             return 0;
         }
 
@@ -9875,7 +9875,7 @@ XML;
     private function poolNameMap(array $poolIds): array
     {
         $poolIds = array_values(array_unique(array_filter(array_map('intval', $poolIds), static fn (int $id): bool => $id > 0)));
-        if ($poolIds === [] || ! Schema::hasTable('pools')) {
+        if ($poolIds === [] || ! SchemaCache::hasTable('pools')) {
             return [];
         }
 
@@ -9897,7 +9897,7 @@ XML;
 
     private function defaultTenantId(): int
     {
-        if (! Schema::hasTable('tenants')) {
+        if (! SchemaCache::hasTable('tenants')) {
             return 0;
         }
 
@@ -9925,7 +9925,7 @@ XML;
     private function tripAssignmentsHasArmadaId(): bool
     {
         if ($this->tripAssignmentsHasArmadaId === null) {
-            $this->tripAssignmentsHasArmadaId = Schema::hasTable('trip_assignments') && Schema::hasColumn('trip_assignments', 'armada_id');
+            $this->tripAssignmentsHasArmadaId = SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'armada_id');
         }
 
         return $this->tripAssignmentsHasArmadaId;
@@ -9934,7 +9934,7 @@ XML;
     private function tripAssignmentsHasArmadaNopol(): bool
     {
         if ($this->tripAssignmentsHasArmadaNopol === null) {
-            $this->tripAssignmentsHasArmadaNopol = Schema::hasTable('trip_assignments') && Schema::hasColumn('trip_assignments', 'armada_nopol');
+            $this->tripAssignmentsHasArmadaNopol = SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'armada_nopol');
         }
 
         return $this->tripAssignmentsHasArmadaNopol;
@@ -9943,7 +9943,7 @@ XML;
     private function tripAssignmentsHasStatus(): bool
     {
         if ($this->tripAssignmentsHasStatus === null) {
-            $this->tripAssignmentsHasStatus = Schema::hasTable('trip_assignments') && Schema::hasColumn('trip_assignments', 'status');
+            $this->tripAssignmentsHasStatus = SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'status');
         }
 
         return $this->tripAssignmentsHasStatus;
@@ -9963,7 +9963,7 @@ XML;
     private function driversHasArmadaId(): bool
     {
         if ($this->driversHasArmadaId === null) {
-            $this->driversHasArmadaId = Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'armada_id');
+            $this->driversHasArmadaId = SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'armada_id');
         }
 
         return $this->driversHasArmadaId;
@@ -9972,7 +9972,7 @@ XML;
     private function driversHasArmadaNopol(): bool
     {
         if ($this->driversHasArmadaNopol === null) {
-            $this->driversHasArmadaNopol = Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'armada_nopol');
+            $this->driversHasArmadaNopol = SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'armada_nopol');
         }
 
         return $this->driversHasArmadaNopol;
@@ -9981,7 +9981,7 @@ XML;
     private function driversHasKategoriColumn(): bool
     {
         if ($this->driversHasKategoriColumn === null) {
-            $this->driversHasKategoriColumn = Schema::hasTable('drivers') && Schema::hasColumn('drivers', 'kategori');
+            $this->driversHasKategoriColumn = SchemaCache::hasTable('drivers') && SchemaCache::hasColumn('drivers', 'kategori');
         }
 
         return $this->driversHasKategoriColumn;
@@ -9994,7 +9994,7 @@ XML;
      */
     private function syncCustomerCharterFromCharterPayload(array $payload): void
     {
-        if (! Schema::hasTable('customer_charter')) {
+        if (! SchemaCache::hasTable('customer_charter')) {
             return;
         }
 
@@ -10011,7 +10011,7 @@ XML;
             'alamat' => $this->nullable($payload['pickup_point'] ?? null),
             'company' => $this->nullable($payload['company_name'] ?? null),
         ];
-        $poolId = Schema::hasColumn('customer_charter', 'pool_id')
+        $poolId = SchemaCache::hasColumn('customer_charter', 'pool_id')
             ? (int) ($payload['pool_id'] ?? PoolScope::customerPoolId())
             : 0;
 
@@ -10072,7 +10072,7 @@ XML;
      */
     private function syncMasterCarterFromCharterPayload(array $payload): void
     {
-        if (! Schema::hasTable('master_carter')) {
+        if (! SchemaCache::hasTable('master_carter')) {
             return;
         }
 
@@ -10110,7 +10110,7 @@ XML;
                 return;
             }
 
-            if (Schema::hasColumn('master_carter', 'created_at')) {
+            if (SchemaCache::hasColumn('master_carter', 'created_at')) {
                 $routePayload['created_at'] = now();
             }
 
@@ -10126,7 +10126,7 @@ XML;
 
     public function tenantsIndex(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('tenants')) {
+        if (! SchemaCache::hasTable('tenants')) {
             return $this->ok(['tenants' => [], 'plans' => [], 'pagination' => $this->paginationMeta(0, 1, 20)]);
         }
 
@@ -10139,8 +10139,8 @@ XML;
             ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->orderBy('tenants.created_at', 'desc');
 
-        $hasUsersTenant = Schema::hasColumn('users', 'tenant_id');
-        $hasPoolsTenant = Schema::hasColumn('pools', 'tenant_id');
+        $hasUsersTenant = SchemaCache::hasColumn('users', 'tenant_id');
+        $hasPoolsTenant = SchemaCache::hasColumn('pools', 'tenant_id');
 
         if ($hasUsersTenant) {
             $query->leftJoinSub(
@@ -10218,7 +10218,7 @@ XML;
             ];
         })->all();
 
-        $plans = Schema::hasTable('plans') ? DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'slug', 'price_monthly']) : [];
+        $plans = SchemaCache::hasTable('plans') ? DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'slug', 'price_monthly']) : [];
 
         return $this->ok([
             'tenants' => $tenants,
@@ -10233,7 +10233,7 @@ XML;
             return $response;
         }
 
-        if (! Schema::hasTable('tenants')) {
+        if (! SchemaCache::hasTable('tenants')) {
             return $this->error('Tabel tenants belum tersedia.', 409);
         }
 
@@ -10308,7 +10308,7 @@ XML;
             return $response;
         }
 
-        if (! Schema::hasTable('tenants')) {
+        if (! SchemaCache::hasTable('tenants')) {
             return $this->error('Tabel tenants belum tersedia.', 409);
         }
 
@@ -10325,7 +10325,7 @@ XML;
             ]);
 
             // Cancel the subscription
-            if (Schema::hasTable('subscriptions')) {
+            if (SchemaCache::hasTable('subscriptions')) {
                 DB::table('subscriptions')
                     ->where('tenant_id', $id)
                     ->whereIn('status', ['pending_payment', 'trial', 'active', 'past_due'])
@@ -10346,7 +10346,7 @@ XML;
 
     public function subscriptionsIndex(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('subscriptions') || ! Schema::hasTable('tenants') || ! Schema::hasTable('plans')) {
+        if (! SchemaCache::hasTable('subscriptions') || ! SchemaCache::hasTable('tenants') || ! SchemaCache::hasTable('plans')) {
             return $this->ok(['subscriptions' => [], 'tenants' => [], 'plans' => [], 'pagination' => $this->paginationMeta(0, 1, 20)]);
         }
 
@@ -10431,7 +10431,7 @@ XML;
             return $response;
         }
 
-        if (! Schema::hasTable('subscriptions')) {
+        if (! SchemaCache::hasTable('subscriptions')) {
             return $this->error('Tabel subscriptions belum tersedia.', 409);
         }
 
@@ -10561,7 +10561,7 @@ XML;
 
     public function plansIndex(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('plans')) {
+        if (! SchemaCache::hasTable('plans')) {
             return $this->ok(['plans' => []]);
         }
 
@@ -10570,7 +10570,7 @@ XML;
             ->get();
 
         $featuresByPlan = collect();
-        if ($plans->isNotEmpty() && Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
+        if ($plans->isNotEmpty() && SchemaCache::hasTable('plan_feature') && SchemaCache::hasTable('feature_gates')) {
             $featuresByPlan = DB::table('plan_feature')
                 ->join('feature_gates', 'plan_feature.feature_gate_id', '=', 'feature_gates.id')
                 ->whereIn('plan_feature.plan_id', $plans->pluck('id')->all())
@@ -10641,7 +10641,7 @@ XML;
             return $response;
         }
 
-        if (! Schema::hasTable('plans')) {
+        if (! SchemaCache::hasTable('plans')) {
             return $this->error('Tabel plans belum tersedia.', 409);
         }
 
@@ -10700,7 +10700,7 @@ XML;
             }
 
             // Update feature mappings
-            if (isset($data['features']) && Schema::hasTable('plan_feature') && Schema::hasTable('feature_gates')) {
+            if (isset($data['features']) && SchemaCache::hasTable('plan_feature') && SchemaCache::hasTable('feature_gates')) {
                 foreach ($data['features'] as $featureOverride) {
                     $gateId = DB::table('feature_gates')->where('feature_key', $featureOverride['feature_key'])->value('id');
                     if ($gateId) {
@@ -10722,7 +10722,7 @@ XML;
 
     public function invoicesIndex(Request $request): JsonResponse
     {
-        if (! Schema::hasTable('invoice_subscriptions')) {
+        if (! SchemaCache::hasTable('invoice_subscriptions')) {
             return $this->ok([
                 'invoices' => [],
                 'summary' => $this->emptyInvoiceSummary(),
@@ -10733,8 +10733,8 @@ XML;
         $status = trim((string) $request->query('status', ''));
         $tenantId = (int) $request->query('tenant_id', 0);
         $q = trim((string) $request->query('q', ''));
-        $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
-        $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
+        $hasDueDateColumn = SchemaCache::hasColumn('invoice_subscriptions', 'due_date');
+        $hasPaidAtColumn = SchemaCache::hasColumn('invoice_subscriptions', 'paid_at');
 
         $query = DB::table('invoice_subscriptions')
             ->join('tenants', 'invoice_subscriptions.tenant_id', '=', 'tenants.id')
@@ -10869,7 +10869,7 @@ XML;
             return $response;
         }
 
-        if (! Schema::hasTable('invoice_subscriptions')) {
+        if (! SchemaCache::hasTable('invoice_subscriptions')) {
             return $this->error('Tabel invoice belum tersedia.', 409);
         }
 

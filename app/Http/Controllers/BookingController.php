@@ -217,7 +217,7 @@ class BookingController extends Controller
      */
     private function manifestLuggages(array $group): array
     {
-        if (! Schema::hasTable('luggages') || ! Schema::hasColumn('luggages', 'trip_assignment_id')) {
+        if (! SchemaCache::hasTable('luggages') || ! SchemaCache::hasColumn('luggages', 'trip_assignment_id')) {
             return [];
         }
 
@@ -286,7 +286,7 @@ class BookingController extends Controller
             $historyPassengers,
         )));
 
-        if ($bookingIds === [] || ! Schema::hasTable('cancellations')) {
+        if ($bookingIds === [] || ! SchemaCache::hasTable('cancellations')) {
             return array_map(
                 static fn (array $row): array => array_merge($row, $fallbackMeta),
                 $historyPassengers,
@@ -337,7 +337,7 @@ class BookingController extends Controller
      */
     private function ticketPayload(int $bookingId): array
     {
-        abort_unless(Schema::hasTable('bookings'), 404);
+        abort_unless(SchemaCache::hasTable('bookings'), 404);
         $select = [
             'b.id',
             'b.name',
@@ -427,10 +427,10 @@ class BookingController extends Controller
     {
         return Cache::remember('bookings:totals:'.PoolScope::cacheKey(), now()->addSeconds(30), function (): array {
             return [
-                'bookings' => Schema::hasTable('bookings') ? $this->scopedBookingQuery()->count() : 0,
-                'customers' => Schema::hasTable('customers') ? $this->scopedCustomersCount() : 0,
-                'routes' => Schema::hasTable('routes') ? $this->scopedRoutesQuery()->count() : 0,
-                'schedules' => Schema::hasTable('schedules') ? $this->scopedScheduleQuery()->count() : 0,
+                'bookings' => SchemaCache::hasTable('bookings') ? $this->scopedBookingQuery()->count() : 0,
+                'customers' => SchemaCache::hasTable('customers') ? $this->scopedCustomersCount() : 0,
+                'routes' => SchemaCache::hasTable('routes') ? $this->scopedRoutesQuery()->count() : 0,
+                'schedules' => SchemaCache::hasTable('schedules') ? $this->scopedScheduleQuery()->count() : 0,
             ];
         });
     }
@@ -446,7 +446,7 @@ class BookingController extends Controller
 
     private function bookingRouteIdColumn(string $table): string
     {
-        if (! Schema::hasColumn('bookings', 'route_id')) {
+        if (! SchemaCache::hasColumn('bookings', 'route_id')) {
             return '';
         }
 
@@ -460,7 +460,7 @@ class BookingController extends Controller
     private function applyTenantScopeIfExists(Builder $query, string $table, string $alias = ''): void
     {
         [$baseTable, $tableAlias] = $this->parseTableAlias($table);
-        if (! Schema::hasColumn($baseTable, 'tenant_id')) {
+        if (! SchemaCache::hasColumn($baseTable, 'tenant_id')) {
             return;
         }
 
@@ -498,7 +498,7 @@ class BookingController extends Controller
 
         PoolScope::applyRouteScope(
             $query,
-            Schema::hasColumn('schedules', 'route_id') ? $prefix.'route_id' : '',
+            SchemaCache::hasColumn('schedules', 'route_id') ? $prefix.'route_id' : '',
             $prefix.'rute',
         );
         $this->applyTenantScopeIfExists($query, $table, $alias);
@@ -520,7 +520,7 @@ class BookingController extends Controller
      */
     private function latestBookings(): array
     {
-        if (! Schema::hasTable('bookings')) {
+        if (! SchemaCache::hasTable('bookings')) {
             return [];
         }
 
@@ -571,7 +571,7 @@ class BookingController extends Controller
      */
     private function buildBookingGroups(): array
     {
-        if (! Schema::hasTable('bookings')) {
+        if (! SchemaCache::hasTable('bookings')) {
             return [];
         }
 
@@ -702,7 +702,7 @@ class BookingController extends Controller
                 ];
             }
 
-            if (Schema::hasTable('trip_assignments')) {
+            if (SchemaCache::hasTable('trip_assignments')) {
                 $assignmentSelect = [
                     't.id',
                     't.rute',
@@ -719,7 +719,7 @@ class BookingController extends Controller
                 if ($this->tripAssignmentsHasArmadaId()) {
                     $assignmentSelect[] = 't.armada_id';
 
-                    if (Schema::hasTable('armadas')) {
+                    if (SchemaCache::hasTable('armadas')) {
                         $assignmentSelect[] = DB::raw('a.nopol as nopol');
                     }
                 }
@@ -730,7 +730,7 @@ class BookingController extends Controller
 
                 $assignmentRows = $this->scopedBookingQuery('trip_assignments as t', 't.rute')
                     ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id')
-                    ->when($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas'), static function ($query) {
+                    ->when($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas'), static function ($query) {
                         $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
                     })
                     ->select($assignmentSelect)
@@ -799,7 +799,7 @@ class BookingController extends Controller
                 }
             }
 
-            if (! empty($grouped) && Schema::hasTable('schedules') && Schema::hasColumn('schedules', 'bop')) {
+            if (! empty($grouped) && SchemaCache::hasTable('schedules') && SchemaCache::hasColumn('schedules', 'bop')) {
                 $routeKeys = [];
                 $dows = [];
                 $jams = [];
@@ -904,7 +904,7 @@ class BookingController extends Controller
             return [];
         }
 
-        if (! Schema::hasTable('routes')) {
+        if (! SchemaCache::hasTable('routes')) {
             return $this->sortBookingRouteLabels(array_values($groupRoutes));
         }
 
@@ -1032,7 +1032,7 @@ class BookingController extends Controller
      */
     private function resolveAssignmentMeta(string $rute, string $tanggal, string $jam, int $unit): array
     {
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return [
                 'driver_name' => '-',
                 'armada_nopol' => '-',
@@ -1052,13 +1052,13 @@ class BookingController extends Controller
             $select[] = 't.armada_nopol';
         }
 
-        if ($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas')) {
+        if ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas')) {
             $select[] = DB::raw('a.nopol as nopol');
         }
 
         $rows = DB::table('trip_assignments as t')
             ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id')
-            ->when($this->tripAssignmentsHasArmadaId() && Schema::hasTable('armadas'), static function ($query) {
+            ->when($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas'), static function ($query) {
                 $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
             })
             ->select($select)
@@ -1125,7 +1125,7 @@ class BookingController extends Controller
     {
         $ids = $preferredId > 0 ? [$preferredId] : [];
 
-        if (! Schema::hasTable('trip_assignments')) {
+        if (! SchemaCache::hasTable('trip_assignments')) {
             return $ids;
         }
 
@@ -1186,17 +1186,17 @@ class BookingController extends Controller
 
     private function buildTableMutationSignature(string $table): string
     {
-        if (! Schema::hasTable($table)) {
+        if (! SchemaCache::hasTable($table)) {
             return 'na';
         }
 
         $selects = ['COUNT(*) as total_rows'];
-        if (Schema::hasColumn($table, 'id')) {
+        if (SchemaCache::hasColumn($table, 'id')) {
             $selects[] = 'COALESCE(MAX(id), 0) as max_id';
         }
 
         foreach (['updated_at', 'created_at'] as $column) {
-            if (Schema::hasColumn($table, $column)) {
+            if (SchemaCache::hasColumn($table, $column)) {
                 $selects[] = "MAX({$column}) as max_{$column}";
             }
         }
@@ -1209,7 +1209,7 @@ class BookingController extends Controller
     private function tripAssignmentsHasArmadaId(): bool
     {
         if ($this->tripAssignmentsHasArmadaId === null) {
-            $this->tripAssignmentsHasArmadaId = Schema::hasColumn('trip_assignments', 'armada_id');
+            $this->tripAssignmentsHasArmadaId = SchemaCache::hasColumn('trip_assignments', 'armada_id');
         }
 
         return $this->tripAssignmentsHasArmadaId;
@@ -1218,7 +1218,7 @@ class BookingController extends Controller
     private function bookingsHasDepartureCode(): bool
     {
         if ($this->bookingsHasDepartureCode === null) {
-            $this->bookingsHasDepartureCode = Schema::hasColumn('bookings', 'departure_code');
+            $this->bookingsHasDepartureCode = SchemaCache::hasColumn('bookings', 'departure_code');
         }
 
         return $this->bookingsHasDepartureCode;
@@ -1227,7 +1227,7 @@ class BookingController extends Controller
     private function bookingsHasTicketCode(): bool
     {
         if ($this->bookingsHasTicketCode === null) {
-            $this->bookingsHasTicketCode = Schema::hasColumn('bookings', 'ticket_code');
+            $this->bookingsHasTicketCode = SchemaCache::hasColumn('bookings', 'ticket_code');
         }
 
         return $this->bookingsHasTicketCode;
@@ -1236,7 +1236,7 @@ class BookingController extends Controller
     private function tripAssignmentsHasArmadaNopol(): bool
     {
         if ($this->tripAssignmentsHasArmadaNopol === null) {
-            $this->tripAssignmentsHasArmadaNopol = Schema::hasColumn('trip_assignments', 'armada_nopol');
+            $this->tripAssignmentsHasArmadaNopol = SchemaCache::hasColumn('trip_assignments', 'armada_nopol');
         }
 
         return $this->tripAssignmentsHasArmadaNopol;
@@ -1245,8 +1245,8 @@ class BookingController extends Controller
     private function tripAssignmentsHasStatus(): bool
     {
         if ($this->tripAssignmentsHasStatus === null) {
-            $this->tripAssignmentsHasStatus = Schema::hasTable('trip_assignments')
-                && Schema::hasColumn('trip_assignments', 'status');
+            $this->tripAssignmentsHasStatus = SchemaCache::hasTable('trip_assignments')
+                && SchemaCache::hasColumn('trip_assignments', 'status');
         }
 
         return $this->tripAssignmentsHasStatus;

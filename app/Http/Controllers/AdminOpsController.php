@@ -373,7 +373,7 @@ class AdminOpsController extends Controller
      */
     private function routeOptions(): array
     {
-        if (! Schema::hasTable('routes')) {
+        if (! SchemaCache::hasTable('routes')) {
             return [];
         }
 
@@ -406,7 +406,7 @@ class AdminOpsController extends Controller
             'schedules' => $this->countScoped('schedules', function (Builder $query): void {
                 PoolScope::applyRouteScope(
                     $query,
-                    Schema::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '',
+                    SchemaCache::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '',
                     'schedules.rute',
                 );
                 $this->applyTenantScopeIfExists($query, 'schedules');
@@ -453,7 +453,7 @@ class AdminOpsController extends Controller
 
     private function countScoped(string $table, callable $scope): int
     {
-        if (! Schema::hasTable($table)) {
+        if (! SchemaCache::hasTable($table)) {
             return 0;
         }
 
@@ -465,7 +465,7 @@ class AdminOpsController extends Controller
 
     private function applyTenantScopeIfExists(Builder $query, string $table): void
     {
-        if (! Schema::hasColumn($table, 'tenant_id')) {
+        if (! SchemaCache::hasColumn($table, 'tenant_id')) {
             return;
         }
 
@@ -474,7 +474,7 @@ class AdminOpsController extends Controller
 
     private function applyPoolScopeIfExists(Builder $query, string $table): void
     {
-        if (! Schema::hasColumn($table, 'pool_id')) {
+        if (! SchemaCache::hasColumn($table, 'pool_id')) {
             return;
         }
 
