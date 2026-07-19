@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Support\SchemaCache;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -32,7 +33,7 @@ class ActivityLog
                     'created_at' => $payload['created_at'],
                 ];
 
-                if (Schema::hasColumn('activity_logs', 'tenant_id')) {
+                if (SchemaCache::hasColumn('activity_logs', 'tenant_id')) {
                     $tenantId = self::tenantIdFromExtra($payload['extra']);
                     $insert['tenant_id'] = $tenantId > 0 ? $tenantId : null;
                 }
@@ -231,7 +232,7 @@ class ActivityLog
     private static function usesDatabase(): bool
     {
         try {
-            return Schema::hasTable('activity_logs');
+            return SchemaCache::hasTable('activity_logs');
         } catch (\Throwable) {
             return false;
         }
@@ -389,10 +390,10 @@ class ActivityLog
     private static function activitySelectColumns(): array
     {
         $columns = ['tag', 'title', 'meta', 'actor', 'created_at'];
-        if (Schema::hasColumn('activity_logs', 'extra')) {
+        if (SchemaCache::hasColumn('activity_logs', 'extra')) {
             $columns[] = 'extra';
         }
-        if (Schema::hasColumn('activity_logs', 'tenant_id')) {
+        if (SchemaCache::hasColumn('activity_logs', 'tenant_id')) {
             $columns[] = 'tenant_id';
         }
 
@@ -409,7 +410,7 @@ class ActivityLog
 
         if (
             $tenantId > 0
-            && Schema::hasColumn('activity_logs', 'tenant_id')
+            && SchemaCache::hasColumn('activity_logs', 'tenant_id')
         ) {
             $query->where('tenant_id', $tenantId);
         }
@@ -614,42 +615,42 @@ class ActivityLog
         }
 
         $userId = self::firstInteger($extra['user_id'] ?? null);
-        if ($userId > 0 && Schema::hasTable('users') && Schema::hasColumn('users', 'tenant_id')) {
+        if ($userId > 0 && SchemaCache::hasTable('users') && SchemaCache::hasColumn('users', 'tenant_id')) {
             return (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0);
         }
 
         $poolId = self::firstInteger($extra['pool_id'] ?? ($extra['pool_ids'] ?? null));
-        if ($poolId > 0 && Schema::hasTable('pools') && Schema::hasColumn('pools', 'tenant_id')) {
+        if ($poolId > 0 && SchemaCache::hasTable('pools') && SchemaCache::hasColumn('pools', 'tenant_id')) {
             return (int) (DB::table('pools')->where('id', $poolId)->value('tenant_id') ?? 0);
         }
 
         $routeId = self::firstInteger($extra['route_id'] ?? ($extra['rute_id'] ?? null));
-        if ($routeId > 0 && Schema::hasTable('routes') && Schema::hasColumn('routes', 'tenant_id')) {
+        if ($routeId > 0 && SchemaCache::hasTable('routes') && SchemaCache::hasColumn('routes', 'tenant_id')) {
             return (int) (DB::table('routes')->where('id', $routeId)->value('tenant_id') ?? 0);
         }
 
         $bookingId = self::firstInteger($extra['booking_id'] ?? ($extra['booking_ids'] ?? null));
-        if ($bookingId > 0 && Schema::hasTable('bookings') && Schema::hasColumn('bookings', 'tenant_id')) {
+        if ($bookingId > 0 && SchemaCache::hasTable('bookings') && SchemaCache::hasColumn('bookings', 'tenant_id')) {
             return (int) (DB::table('bookings')->where('id', $bookingId)->value('tenant_id') ?? 0);
         }
 
         $tripAssignmentId = self::firstInteger($extra['trip_assignment_id'] ?? ($extra['trip_assignment_ids'] ?? null));
-        if ($tripAssignmentId > 0 && Schema::hasTable('trip_assignments') && Schema::hasColumn('trip_assignments', 'tenant_id')) {
+        if ($tripAssignmentId > 0 && SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'tenant_id')) {
             return (int) (DB::table('trip_assignments')->where('id', $tripAssignmentId)->value('tenant_id') ?? 0);
         }
 
         $charterId = self::firstInteger($extra['charter_id'] ?? ($extra['charter_ids'] ?? null));
-        if ($charterId > 0 && Schema::hasTable('charters') && Schema::hasColumn('charters', 'tenant_id')) {
+        if ($charterId > 0 && SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'tenant_id')) {
             return (int) (DB::table('charters')->where('id', $charterId)->value('tenant_id') ?? 0);
         }
 
         $luggageId = self::firstInteger($extra['luggage_id'] ?? ($extra['luggage_ids'] ?? null));
-        if ($luggageId > 0 && Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'tenant_id')) {
+        if ($luggageId > 0 && SchemaCache::hasTable('luggages') && SchemaCache::hasColumn('luggages', 'tenant_id')) {
             return (int) (DB::table('luggages')->where('id', $luggageId)->value('tenant_id') ?? 0);
         }
 
         $resi = self::stringList($extra['kode_resi'] ?? []);
-        if ($resi !== [] && Schema::hasTable('luggages') && Schema::hasColumn('luggages', 'tenant_id')) {
+        if ($resi !== [] && SchemaCache::hasTable('luggages') && SchemaCache::hasColumn('luggages', 'tenant_id')) {
             return (int) (DB::table('luggages')->whereIn('kode_resi', $resi)->value('tenant_id') ?? 0);
         }
 
@@ -721,13 +722,13 @@ class ActivityLog
      */
     private static function bookingIdsMatchScope(array $ids, array $routeNames): bool
     {
-        if ($ids === [] || $routeNames === [] || ! Schema::hasTable('bookings')) {
+        if ($ids === [] || $routeNames === [] || ! SchemaCache::hasTable('bookings')) {
             return false;
         }
 
         return DB::table('bookings')
             ->whereIn('id', $ids)
-            ->when(Schema::hasColumn('bookings', 'tenant_id'), function ($query): void {
+            ->when(SchemaCache::hasColumn('bookings', 'tenant_id'), function ($query): void {
                 PoolScope::applyTenantScope($query, 'tenant_id');
             })
             ->whereIn('rute', $routeNames)
@@ -740,13 +741,13 @@ class ActivityLog
      */
     private static function tripAssignmentIdsMatchScope(array $ids, array $routeNames): bool
     {
-        if ($ids === [] || $routeNames === [] || ! Schema::hasTable('trip_assignments')) {
+        if ($ids === [] || $routeNames === [] || ! SchemaCache::hasTable('trip_assignments')) {
             return false;
         }
 
         return DB::table('trip_assignments')
             ->whereIn('id', $ids)
-            ->when(Schema::hasColumn('trip_assignments', 'tenant_id'), function ($query): void {
+            ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function ($query): void {
                 PoolScope::applyTenantScope($query, 'tenant_id');
             })
             ->whereIn('rute', $routeNames)
@@ -760,17 +761,17 @@ class ActivityLog
      */
     private static function charterIdsMatchScope(array $ids, array $poolIds, array $labels): bool
     {
-        if ($ids === [] || ! Schema::hasTable('charters')) {
+        if ($ids === [] || ! SchemaCache::hasTable('charters')) {
             return false;
         }
 
-        $canUsePool = $poolIds !== [] && Schema::hasColumn('charters', 'pool_id');
+        $canUsePool = $poolIds !== [] && SchemaCache::hasColumn('charters', 'pool_id');
         if (! $canUsePool && $labels === []) {
             return false;
         }
 
         $query = DB::table('charters')->whereIn('id', $ids);
-        if (Schema::hasColumn('charters', 'tenant_id')) {
+        if (SchemaCache::hasColumn('charters', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
 
@@ -802,12 +803,12 @@ class ActivityLog
      */
     private static function luggageIdsMatchScope(array $ids, array $poolIds, array $routeIds, array $routeNames): bool
     {
-        if ($ids === [] || ! Schema::hasTable('luggages')) {
+        if ($ids === [] || ! SchemaCache::hasTable('luggages')) {
             return false;
         }
 
         $query = DB::table('luggages')->whereIn('id', $ids);
-        if (Schema::hasColumn('luggages', 'tenant_id')) {
+        if (SchemaCache::hasColumn('luggages', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
         self::appendLuggageScope($query, $poolIds, $routeIds, $routeNames);
@@ -823,12 +824,12 @@ class ActivityLog
      */
     private static function luggageResiMatchScope(array $codes, array $poolIds, array $routeIds, array $routeNames): bool
     {
-        if ($codes === [] || ! Schema::hasTable('luggages')) {
+        if ($codes === [] || ! SchemaCache::hasTable('luggages')) {
             return false;
         }
 
         $query = DB::table('luggages')->whereIn('kode_resi', $codes);
-        if (Schema::hasColumn('luggages', 'tenant_id')) {
+        if (SchemaCache::hasColumn('luggages', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
         self::appendLuggageScope($query, $poolIds, $routeIds, $routeNames);
