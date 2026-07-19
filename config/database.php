@@ -101,7 +101,6 @@ return [
             'application_name' => env('DB_APPLICATION_NAME', Str::slug((string) env('APP_NAME', 'OptiBus'), '_').'-'.env('APP_ENV', 'production')),
             'options' => extension_loaded('pdo_pgsql') ? array_filter([
                 PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
-                PDO::ATTR_EMULATE_PREPARES => true,
             ], static fn ($value): bool => $value !== null) : [],
         ],
 
