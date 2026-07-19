@@ -24,6 +24,13 @@ class PoolScope
 
     public static function tablesReady(): bool
     {
+        SchemaCache::warm([
+            'pools' => [],
+            'pool_route' => [],
+            'pool_user' => [],
+            'routes' => [],
+        ]);
+
         return SchemaCache::hasTable('pools')
             && SchemaCache::hasTable('pool_route')
             && SchemaCache::hasTable('pool_user')
