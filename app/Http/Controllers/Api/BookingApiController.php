@@ -1206,119 +1206,129 @@ class BookingApiController extends Controller
 
     public function departureRiturs(Request $request): JsonResponse
     {
-        // Pre-warm schema cache to batch information_schema lookups
-        SchemaCache::warm([
-            'luggages'         => ['trip_assignment_id', 'status', 'pool_id', 'tenant_id',
-                                   'kode_resi', 'sender_name', 'receiver_name', 'rute', 'notes',
-                                   'sender_phone', 'receiver_phone', 'quantity', 'price', 'payment_status', 'tanggal'],
-            'trip_assignments' => ['id', 'rute', 'tanggal', 'jam', 'unit', 'status', 'pool_id', 'tenant_id', 'route_id'],
-        ]);
-
-        $data = $request->validate([
-            'rute' => ['required', 'string', 'max:120'],
-            'tanggal' => ['required', 'date_format:Y-m-d'],
-            'jam' => ['required', 'regex:/^\d{2}:\d{2}$/'],
-            'unit' => ['required', 'integer', 'min:1'],
-            'q' => ['nullable', 'string', 'max:120'],
-        ]);
-
-        if (! SchemaCache::hasTable('luggages') || ! SchemaCache::hasColumn('luggages', 'trip_assignment_id')) {
-            return $this->ok([
-                'mapped_luggages' => [],
-                'available_luggages' => [],
-                'trip_assignment_id' => null,
+        try {
+            // Pre-warm schema cache to batch information_schema lookups
+            SchemaCache::warm([
+                'luggages'         => ['trip_assignment_id', 'status', 'pool_id', 'tenant_id',
+                                    'kode_resi', 'sender_name', 'receiver_name', 'rute', 'notes',
+                                    'sender_phone', 'receiver_phone', 'quantity', 'price', 'payment_status', 'tanggal'],
+                'trip_assignments' => ['id', 'rute', 'tanggal', 'jam', 'unit', 'status', 'pool_id', 'tenant_id', 'route_id'],
             ]);
-        }
 
-        $routeName = (string) $data['rute'];
-        $tanggal = (string) $data['tanggal'];
-        $jam = (string) $data['jam'];
-        $unit = (int) $data['unit'];
-        $query = trim((string) ($data['q'] ?? ''));
-        if (! PoolScope::canAccessRouteName($routeName)) {
-            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
-        }
-        $assignment = SchemaCache::hasTable('trip_assignments')
-            ? $this->findTripAssignment($routeName, $tanggal, $jam, $unit)
-            : null;
-        $assignmentId = (int) ($assignment->id ?? 0);
-        $assignmentIds = $this->matchingTripAssignmentIds($routeName, $tanggal, $jam, $unit, $assignmentId);
-        $assignmentStatus = strtolower(trim((string) ($assignment->status ?? 'active')));
+            $data = $request->validate([
+                'rute' => ['required', 'string', 'max:120'],
+                'tanggal' => ['required', 'date_format:Y-m-d'],
+                'jam' => ['required', 'regex:/^\d{2}:\d{2}$/'],
+                'unit' => ['required', 'integer', 'min:1'],
+                'q' => ['nullable', 'string', 'max:120'],
+            ]);
 
-        if ($assignmentId > 0 && $assignmentStatus === 'arrived') {
-            $this->markMappedLuggagesArrived(
-                $assignmentId,
-                $routeName,
-                $tanggal,
-                $jam,
-                $unit,
-                (string) ($request->user()?->email ?? $request->user()?->name ?? 'system'),
-            );
-        }
+            if (! SchemaCache::hasTable('luggages') || ! SchemaCache::hasColumn('luggages', 'trip_assignment_id')) {
+                return $this->ok([
+                    'mapped_luggages' => [],
+                    'available_luggages' => [],
+                    'trip_assignment_id' => null,
+                ]);
+            }
 
-        $mappedRows = collect();
-        if ($assignmentIds !== []) {
-            $mappedQuery = DB::table('luggages')
-                ->whereIn('trip_assignment_id', $assignmentIds)
-                ->orderByDesc('id');
-            $this->applyLuggagePoolScope($mappedQuery);
+            $routeName = (string) $data['rute'];
+            $tanggal = (string) $data['tanggal'];
+            $jam = (string) $data['jam'];
+            $unit = (int) $data['unit'];
+            $query = trim((string) ($data['q'] ?? ''));
+            if (! PoolScope::canAccessRouteName($routeName)) {
+                return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+            }
+            $assignment = SchemaCache::hasTable('trip_assignments')
+                ? $this->findTripAssignment($routeName, $tanggal, $jam, $unit)
+                : null;
+            $assignmentId = (int) ($assignment->id ?? 0);
+            $assignmentIds = $this->matchingTripAssignmentIds($routeName, $tanggal, $jam, $unit, $assignmentId);
+            $assignmentStatus = strtolower(trim((string) ($assignment->status ?? 'active')));
 
-            $mappedRows = $mappedQuery->get($this->luggageRiturSelectColumns());
+            if ($assignmentId > 0 && $assignmentStatus === 'arrived') {
+                $this->markMappedLuggagesArrived(
+                    $assignmentId,
+                    $routeName,
+                    $tanggal,
+                    $jam,
+                    $unit,
+                    (string) ($request->user()?->email ?? $request->user()?->name ?? 'system'),
+                );
+            }
 
-            $mappedRows = $mappedRows
+            $mappedRows = collect();
+            if ($assignmentIds !== []) {
+                $mappedQuery = DB::table('luggages')
+                    ->whereIn('trip_assignment_id', $assignmentIds)
+                    ->orderByDesc('id');
+                $this->applyLuggagePoolScope($mappedQuery);
+
+                $mappedRows = $mappedQuery->get($this->luggageRiturSelectColumns());
+
+                $mappedRows = $mappedRows
+                    ->map(function ($row) {
+                        $row->status = $this->normalizeLuggageStatus($row->status ?? null);
+
+                        return $row;
+                    })
+                    ->values();
+            }
+
+            $availableQuery = DB::table('luggages')
+                ->whereNull('trip_assignment_id');
+            if (SchemaCache::hasColumn('luggages', 'status')) {
+                $availableQuery->where(function ($builder) {
+                    $this->applyLuggageStatusFilter($builder, 'status', $this->luggageReceivedStatuses());
+                });
+            }
+            $this->applyLuggagePoolScope($availableQuery);
+
+            if ($query !== '') {
+                $like = '%'.$query.'%';
+                $searchColumns = array_values(array_filter(
+                    ['kode_resi', 'sender_name', 'sender_phone', 'receiver_name', 'receiver_phone', 'rute', 'notes'],
+                    static fn (string $column): bool => SchemaCache::hasColumn('luggages', $column),
+                ));
+                if ($searchColumns !== []) {
+                    $availableQuery->where(function ($builder) use ($like, $searchColumns) {
+                        foreach ($searchColumns as $index => $column) {
+                            $method = $index === 0 ? 'where' : 'orWhere';
+                            $builder->{$method}($column, 'like', $like);
+                        }
+                    });
+                }
+            }
+
+            $targetRoute = $this->normalizeRouteName($routeName);
+            $availableRows = $availableQuery
+                ->orderByDesc('id')
+                ->limit($query !== '' ? 200 : 48)
+                ->get($this->luggageRiturSelectColumns())
+                ->filter(function ($row) use ($targetRoute) {
+                    return $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute;
+                })
                 ->map(function ($row) {
                     $row->status = $this->normalizeLuggageStatus($row->status ?? null);
 
                     return $row;
                 })
                 ->values();
+
+            return $this->ok([
+                'trip_assignment_id' => $assignmentId > 0 ? $assignmentId : null,
+                'mapped_luggages' => $mappedRows->values()->all(),
+                'available_luggages' => $availableRows->values()->all(),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => explode("\n", $e->getTraceAsString()),
+            ], 500);
         }
-
-        $availableQuery = DB::table('luggages')
-            ->whereNull('trip_assignment_id');
-        if (SchemaCache::hasColumn('luggages', 'status')) {
-            $availableQuery->where(function ($builder) {
-                $this->applyLuggageStatusFilter($builder, 'status', $this->luggageReceivedStatuses());
-            });
-        }
-        $this->applyLuggagePoolScope($availableQuery);
-
-        if ($query !== '') {
-            $like = '%'.$query.'%';
-            $searchColumns = array_values(array_filter(
-                ['kode_resi', 'sender_name', 'sender_phone', 'receiver_name', 'receiver_phone', 'rute', 'notes'],
-                static fn (string $column): bool => SchemaCache::hasColumn('luggages', $column),
-            ));
-            if ($searchColumns !== []) {
-                $availableQuery->where(function ($builder) use ($like, $searchColumns) {
-                    foreach ($searchColumns as $index => $column) {
-                        $method = $index === 0 ? 'where' : 'orWhere';
-                        $builder->{$method}($column, 'like', $like);
-                    }
-                });
-            }
-        }
-
-        $targetRoute = $this->normalizeRouteName($routeName);
-        $availableRows = $availableQuery
-            ->orderByDesc('id')
-            ->limit($query !== '' ? 200 : 48)
-            ->get($this->luggageRiturSelectColumns())
-            ->filter(function ($row) use ($targetRoute) {
-                return $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute;
-            })
-            ->map(function ($row) {
-                $row->status = $this->normalizeLuggageStatus($row->status ?? null);
-
-                return $row;
-            })
-            ->values();
-
-        return $this->ok([
-            'trip_assignment_id' => $assignmentId > 0 ? $assignmentId : null,
-            'mapped_luggages' => $mappedRows->values()->all(),
-            'available_luggages' => $availableRows->values()->all(),
-        ]);
     }
 
     private function luggageRiturSelectColumns(): array
