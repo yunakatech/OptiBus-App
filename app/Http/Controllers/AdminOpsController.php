@@ -297,6 +297,19 @@ class AdminOpsController extends Controller
     private function settingsMasters(Request $request, string $tab): array
     {
         try {
+            SchemaCache::warm([
+                'routes' => ['tenant_id'],
+                'schedules' => ['route_id', 'tenant_id'],
+                'drivers' => ['unit_id', 'pool_id', 'tenant_id', 'armada_id', 'armada_nopol', 'kategori',
+                              'target_revenue_bulanan', 'target_revenue_tahunan', 'revenue', 'bop', 'fixed_cost'],
+                'armadas' => ['pool_id', 'tenant_id', 'kategori'],
+                'pools' => ['tenant_id'],
+                'segments' => ['route_id', 'tenant_id'],
+                'customers' => ['tenant_id'],
+                'units' => ['pool_id', 'tenant_id'],
+                'users' => ['tenant_id'],
+            ]);
+
             $masterRequest = clone $request;
             $masterRequest->query->replace([]);
 

@@ -34,6 +34,15 @@ class BookingController extends Controller
 
     public function __invoke(Request $request): Response
     {
+        SchemaCache::warm([
+            'bookings' => ['rute', 'departure_code', 'ticket_code', 'route_id', 'tenant_id'],
+            'customers' => ['tenant_id'],
+            'routes' => ['tenant_id'],
+            'schedules' => ['route_id', 'tenant_id'],
+            'trip_assignments' => ['status', 'armada_id', 'armada_nopol', 'tenant_id'],
+            'cancellations' => [],
+        ]);
+
         $component = $request->routeIs('booking-console.index') ? 'BookingConsole' : 'Bookings';
         $isGroupDetailPage = $request->routeIs('bookings.detail');
         $listOnly = $request->routeIs('bookings.index') || $isGroupDetailPage;
