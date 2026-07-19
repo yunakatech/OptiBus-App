@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Support\SchemaCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -36,10 +37,17 @@ class FeatureGate
      */
     public static function ready(): bool
     {
-        return Schema::hasTable('feature_gates')
-            && Schema::hasTable('plan_feature')
-            && Schema::hasTable('subscriptions')
-            && Schema::hasTable('plans');
+        SchemaCache::warm([
+            'feature_gates'  => [],
+            'plan_feature'   => [],
+            'subscriptions'  => [],
+            'plans'          => [],
+        ]);
+
+        return SchemaCache::hasTable('feature_gates')
+            && SchemaCache::hasTable('plan_feature')
+            && SchemaCache::hasTable('subscriptions')
+            && SchemaCache::hasTable('plans');
     }
 
     public static function flushRequestCache(): void
@@ -270,7 +278,7 @@ class FeatureGate
             return true;
         }
 
-        if (! self::ready() || ! Schema::hasTable($tableName)) {
+        if (! self::ready() || ! SchemaCache::hasTable($tableName)) {
             return true;
         }
 
@@ -304,7 +312,7 @@ class FeatureGate
             return true;
         }
 
-        if (Schema::hasColumn($tableName, $tenantColumn)) {
+        if (SchemaCache::hasColumn($tableName, $tenantColumn)) {
             $currentCount = self::resourceCount($tableName, $tenantColumn, $tenantId);
 
             return ($currentCount + $increment) <= (int) $maxValue;
@@ -374,7 +382,7 @@ class FeatureGate
         foreach ($countMap as $featureKey => $info) {
             $current = 0;
 
-            if (Schema::hasTable($info['table']) && Schema::hasColumn($info['table'], $info['column'])) {
+            if (SchemaCache::hasTable($info['table']) && SchemaCache::hasColumn($info['table'], $info['column'])) {
                 $current = self::resourceCount($info['table'], $info['column'], $tenantId);
             }
 
@@ -583,7 +591,7 @@ class FeatureGate
             'user.management' => 'max_users',
         ][$featureKey] ?? null;
 
-        if ($column === null || ! Schema::hasColumn('plans', $column)) {
+        if ($column === null || ! SchemaCache::hasColumn('plans', $column)) {
             return null;
         }
 

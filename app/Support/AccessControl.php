@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Support\SchemaCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -128,10 +129,18 @@ class AccessControl
 
     public static function tablesReady(): bool
     {
-        return Schema::hasTable('roles')
-            && Schema::hasTable('permissions')
-            && Schema::hasTable('role_permission')
-            && Schema::hasTable('user_role');
+        SchemaCache::warm([
+            'roles'           => [],
+            'permissions'     => [],
+            'role_permission' => [],
+            'user_role'       => [],
+            'users'           => ['is_super_admin'],
+        ]);
+
+        return SchemaCache::hasTable('roles')
+            && SchemaCache::hasTable('permissions')
+            && SchemaCache::hasTable('role_permission')
+            && SchemaCache::hasTable('user_role');
     }
 
     public static function syncDefaults(): void
@@ -243,7 +252,7 @@ class AccessControl
             return;
         }
 
-        if (Schema::hasTable('users') && Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasTable('users') && SchemaCache::hasColumn('users', 'is_super_admin')) {
             $hasSuperAdmin = DB::table('users')->where('is_super_admin', true)->exists();
             if (! $hasSuperAdmin) {
                 DB::table('users')->where('id', $firstUserId)->update(['is_super_admin' => true]);
@@ -272,7 +281,7 @@ class AccessControl
             return false;
         }
 
-        if (Schema::hasTable('users') && Schema::hasColumn('users', 'is_super_admin')) {
+        if (SchemaCache::hasTable('users') && SchemaCache::hasColumn('users', 'is_super_admin')) {
             $isSuperAdmin = DB::table('users')
                 ->where('id', $userId)
                 ->where('is_super_admin', true)
