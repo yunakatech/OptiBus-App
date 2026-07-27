@@ -647,7 +647,7 @@
                                                     <p
                                                         class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                     >
-                                                        Unit / Seat
+                                                        Slot / Seat
                                                     </p>
                                                     <p
                                                         class="mt-1 font-medium text-foreground"
@@ -699,7 +699,7 @@
                                     >
                                     <th
                                         class="px-4 py-3 text-left font-semibold"
-                                        >Seat / Unit</th
+                                        >Seat / Slot</th
                                     >
                                     <th
                                         class="px-4 py-3 text-left font-semibold"
