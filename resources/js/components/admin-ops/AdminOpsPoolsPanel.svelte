@@ -755,7 +755,7 @@
                                         class="flex shrink-0 flex-col items-end gap-0.5"
                                     >
                                         <span
-                                            class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
+                                            class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300'}`}
                                         >
                                             {row.status === 'active'
                                                 ? 'Aktif'
@@ -905,7 +905,7 @@
                         </div>
 
                         <div
-                            class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100"
+                            class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900/60"
                         >
                             <div
                                 class={`h-full rounded-full transition-[width] duration-300 ${barClass}`}
@@ -942,7 +942,7 @@
                                 {row.code || 'Tanpa kode'}
                             </div>
                             <span
-                                class={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
+                                class={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300'}`}
                                 >{row.status === 'active'
                                     ? 'Aktif'
                                     : 'Nonaktif'}</span
