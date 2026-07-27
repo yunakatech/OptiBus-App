@@ -336,8 +336,7 @@
             <button
                 type="button"
                 class={cn(
-                    'flex min-h-11 w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    'dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:active:bg-slate-900/70 dark:focus-visible:bg-slate-900/60',
+                    'flex min-h-11 w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:active:bg-slate-900/70 dark:focus-visible:bg-slate-900/60',
                     open ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60' : '',
                 )}
                 aria-haspopup="listbox"
@@ -470,9 +469,9 @@
                             <button
                                 type="button"
                                 class={cn(
-                                    'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 active:bg-slate-100 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                    'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 active:bg-slate-100 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-slate-900/60 dark:active:bg-slate-900/70 dark:focus-visible:bg-slate-900/60',
                                     activeId === item.id
-                                        ? 'bg-slate-50 font-semibold text-foreground'
+                                        ? 'bg-slate-50 font-semibold text-foreground dark:bg-slate-900/60'
                                         : 'text-foreground',
                                 )}
                                 role="option"
@@ -530,8 +529,8 @@
             <button
                 type="button"
                 class={cn(
-                    'flex min-h-[44px] w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:outline-none',
-                    open ? 'border-primary/35 bg-slate-50' : '',
+                    'flex min-h-[44px] w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:outline-none dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:focus-visible:bg-slate-900/60',
+                    open ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60' : '',
                 )}
                 aria-haspopup="dialog"
                 aria-expanded={open}
