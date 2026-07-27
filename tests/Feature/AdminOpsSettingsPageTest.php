@@ -115,7 +115,7 @@ class AdminOpsSettingsPageTest extends TestCase
         DB::table('units')->insert([
             'tenant_id' => $tenantId,
             'pool_id' => $poolId,
-            'nopol' => 'BIGBUS 40 SEAT',
+            'nama_kategori' => 'BIGBUS 40 SEAT',
             'category' => 'Bigbus',
             'kapasitas' => 40,
             'status' => 'Aktif',

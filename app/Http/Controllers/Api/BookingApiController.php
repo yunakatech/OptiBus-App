@@ -279,7 +279,7 @@ class BookingApiController extends Controller
         if (! empty($unitIds)) {
             $unitMap = DB::table('units')
                 ->whereIn('id', $unitIds)
-                ->get(['id', 'kapasitas', 'layout', 'nopol'])
+                ->get(['id', 'kapasitas', 'layout', 'nama_kategori'])
                 ->keyBy(static fn ($row) => (int) ($row->id ?? 0))
                 ->all();
         }
@@ -324,7 +324,7 @@ class BookingApiController extends Controller
                     'unit_id' => $optionUnitId > 0 ? $optionUnitId : null,
                     'layout' => $optionLayout,
                     'seats' => $optionSeats,
-                    'nopol' => strtoupper(trim((string) ($optionUnit->nopol ?? ($baseUnit->nopol ?? '')))),
+                    'nopol' => strtoupper(trim((string) ($optionUnit->nama_kategori ?? ($baseUnit->nama_kategori ?? '')))),
                 ];
             }
 
@@ -339,7 +339,7 @@ class BookingApiController extends Controller
                         'unit_id' => $baseUnitId > 0 ? $baseUnitId : null,
                         'layout' => $baseLayoutData,
                         'seats' => $baseSeatCount,
-                        'nopol' => strtoupper(trim((string) ($baseUnit->nopol ?? ''))),
+                        'nopol' => strtoupper(trim((string) ($baseUnit->nama_kategori ?? ''))),
                     ];
                 }
             }
@@ -352,7 +352,7 @@ class BookingApiController extends Controller
             $defaultSeats = max(is_array($defaultOption) ? (int) ($defaultOption['seats'] ?? 0) : 0, $baseSeatCount);
             $defaultNopol = strtoupper(trim((string) (is_array($defaultOption) ? ($defaultOption['nopol'] ?? '') : '')));
             if ($defaultNopol === '') {
-                $defaultNopol = strtoupper(trim((string) ($baseUnit->nopol ?? '')));
+                $defaultNopol = strtoupper(trim((string) ($baseUnit->nama_kategori ?? '')));
             }
 
             $scheduleJam = substr((string) ($row->jam ?? ''), 0, 5);
@@ -615,7 +615,7 @@ class BookingApiController extends Controller
         if (! empty($unitIds)) {
             $unitMap = DB::table('units')
                 ->whereIn('id', $unitIds)
-                ->get(['id', 'kapasitas', 'layout', 'nopol'])
+                ->get(['id', 'kapasitas', 'layout', 'nama_kategori'])
                 ->keyBy(static fn ($row) => (int) ($row->id ?? 0))
                 ->all();
         }
@@ -697,7 +697,7 @@ class BookingApiController extends Controller
                 } elseif ($candidateCount === 1) {
                     $fallbackUnit = DB::table('units')
                         ->whereRaw('UPPER(category) = ?', [strtoupper($armadaCategory)])
-                        ->first(['id', 'layout', 'kapasitas', 'nopol']);
+                        ->first(['id', 'layout', 'kapasitas', 'nama_kategori']);
 
                     if ($fallbackUnit) {
                         $fallbackLayout = $this->decodeLayout($fallbackUnit->layout ?? null);
@@ -780,7 +780,7 @@ class BookingApiController extends Controller
                 'unit' => $unit,
                 'unit_id' => $resolvedUnitId > 0 ? $resolvedUnitId : null,
                 'unit_label' => trim((string) ($matchedOption['label'] ?? ($matchedSchedule->unit_label ?? ''))),
-                'nopol' => strtoupper(trim((string) ($resolvedUnit->nopol ?? ''))),
+                'nopol' => strtoupper(trim((string) ($resolvedUnit->nama_kategori ?? ''))),
             ],
         ]);
     }

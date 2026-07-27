@@ -233,11 +233,11 @@ class OnboardingSetupTest extends TestCase
             ->value('tenant_id');
         $secondUnitName = (string) DB::table('units')
             ->where('tenant_id', $secondTenantId)
-            ->value('nopol');
+            ->value('nama_kategori');
 
         $this->assertSame('MINIBUS 8 SEAT', (string) DB::table('units')
             ->where('tenant_id', (int) DB::table('users')->where('id', $firstUser->id)->value('tenant_id'))
-            ->value('nopol'));
+            ->value('nama_kategori'));
         $this->assertNotSame('MINIBUS 8 SEAT', $secondUnitName);
         $this->assertStringStartsWith('MINIBUS 8 SEAT-T', $secondUnitName);
     }
@@ -260,7 +260,7 @@ class OnboardingSetupTest extends TestCase
         $poolId = (int) DB::table('pools')->where('tenant_id', $tenantId)->value('id');
 
         DB::table('units')->insert([
-            'nopol' => 'LEGACY UNIT',
+            'nama_kategori' => 'LEGACY UNIT',
             'merek' => null,
             'type' => null,
             'category' => 'Minibus',

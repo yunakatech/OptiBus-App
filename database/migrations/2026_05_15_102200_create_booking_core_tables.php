@@ -37,7 +37,7 @@ return new class extends Migration
         if (! Schema::hasTable('units')) {
             Schema::create('units', function (Blueprint $table) {
                 $table->id();
-                $table->string('nopol')->unique();
+                $table->string('nama_kategori')->unique();
                 $table->string('merek')->nullable();
                 $table->string('type')->nullable();
                 $table->string('category')->default('Big Bus');
@@ -143,7 +143,7 @@ return new class extends Migration
         DB::statement('CREATE INDEX IF NOT EXISTS idx_bookings_trip_date ON bookings (tanggal, jam, rute, unit)');
         DB::statement('CREATE INDEX IF NOT EXISTS idx_customers_phone_name ON customers (phone, name)');
         DB::statement('CREATE INDEX IF NOT EXISTS idx_segments_route_price ON segments (route_id, harga)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_units_status_nopol ON units (status, nopol)');
+        DB::statement('CREATE INDEX IF NOT EXISTS idx_units_status_nama_kategori ON units (status, nama_kategori)');
 
         if (Schema::getConnection()->getDriverName() === 'pgsql') {
             DB::statement("CREATE INDEX IF NOT EXISTS idx_bookings_active_trip ON bookings (rute, tanggal, jam, unit, seat) WHERE status <> 'canceled'");
