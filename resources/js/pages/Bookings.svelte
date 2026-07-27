@@ -2991,17 +2991,16 @@
                 },
                 {
                     loadingMessage: `Menandai armada tiba untuk ${group.rute} ${formatGroupTimeLabel(group.jam)}...`,
-                    successMessage:
-                        'Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup.',
+                    successMessage: 'Armada berhasil ditandai sudah tiba.',
                     errorMessage: 'Gagal menandai armada sudah tiba.',
                 },
             );
             const arrivedLuggageCount =
                 Number(response?.luggage_arrived_count ?? 0) || 0;
             const nextDepartureStatus =
-                String(response?.status ?? 'closed')
+                String(response?.status ?? 'arrived')
                     .trim()
-                    .toLowerCase() || 'closed';
+                    .toLowerCase() || 'arrived';
 
             localBookingGroups = localBookingGroups.map((item) =>
                 item.key === group.key
@@ -3032,8 +3031,8 @@
 
             formSuccess =
                 arrivedLuggageCount > 0
-                    ? `Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup. ${arrivedLuggageCount} bagasi ikut ditandai ${luggageArrivedStatus}.`
-                    : 'Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup.';
+                    ? `Armada berhasil ditandai sudah tiba. ${arrivedLuggageCount} bagasi ikut ditandai ${luggageArrivedStatus}.`
+                    : 'Armada berhasil ditandai sudah tiba.';
         } catch (error) {
             formError =
                 error instanceof Error
@@ -5644,7 +5643,7 @@
 
 <div
     data-content-density="compact"
-    class="flex h-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-4 pb-32"
+    class={`flex h-full w-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-3 pb-32 md:p-4 ${listOnly && !groupDetailPage ? 'mx-auto max-w-[1500px]' : ''}`}
 >
     {#if !listOnly}
         <Card
@@ -7408,9 +7407,8 @@
                         {#if isArrivedDeparture(openGroupDetail) && !isManifestLocked(openGroupDetail)}
                             <Button
                                 type="button"
-                                variant="outline"
                                 size="sm"
-                                class="rounded-full border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-900/40"
+                                class="rounded-full bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-500 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-600"
                                 onclick={() =>
                                     void closeManifest(openGroupDetail!)}
                             >
@@ -9835,6 +9833,7 @@
                                                                                 {/if}
                                                                                 {#if isArrivedDeparture(group) && !isManifestLocked(group)}
                                                                                     <DropdownMenuItem
+                                                                                        class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
                                                                                         onclick={() =>
                                                                                             void closeManifest(
                                                                                                 group,
@@ -10025,11 +10024,12 @@
                                                                         : 'Armada Sudah Tiba'}
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if isArrivedDeparture(group) && !isManifestLocked(group)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void closeManifest(
-                                                                            group,
+                                                                {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                                    <DropdownMenuItem
+                                                                        class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
+                                                                        onclick={() =>
+                                                                            void closeManifest(
+                                                                                group,
                                                                         )}
                                                                 >
                                                                     Close

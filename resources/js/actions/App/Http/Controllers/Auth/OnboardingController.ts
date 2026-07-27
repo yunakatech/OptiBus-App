@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::show
- * @see app/Http/Controllers/Auth/OnboardingController.php:23
+ * @see app/Http/Controllers/Auth/OnboardingController.php:24
  * @route '/onboarding'
  */
 export const show = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::show
- * @see app/Http/Controllers/Auth/OnboardingController.php:23
+ * @see app/Http/Controllers/Auth/OnboardingController.php:24
  * @route '/onboarding'
  */
 show.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ show.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::show
- * @see app/Http/Controllers/Auth/OnboardingController.php:23
+ * @see app/Http/Controllers/Auth/OnboardingController.php:24
  * @route '/onboarding'
  */
 show.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ show.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::show
- * @see app/Http/Controllers/Auth/OnboardingController.php:23
+ * @see app/Http/Controllers/Auth/OnboardingController.php:24
  * @route '/onboarding'
  */
 show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Auth\OnboardingController::show
- * @see app/Http/Controllers/Auth/OnboardingController.php:23
+ * @see app/Http/Controllers/Auth/OnboardingController.php:24
  * @route '/onboarding'
  */
     const showForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Auth\OnboardingController::show
- * @see app/Http/Controllers/Auth/OnboardingController.php:23
+ * @see app/Http/Controllers/Auth/OnboardingController.php:24
  * @route '/onboarding'
  */
         showForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Auth\OnboardingController::show
- * @see app/Http/Controllers/Auth/OnboardingController.php:23
+ * @see app/Http/Controllers/Auth/OnboardingController.php:24
  * @route '/onboarding'
  */
         showForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::store
- * @see app/Http/Controllers/Auth/OnboardingController.php:35
+ * @see app/Http/Controllers/Auth/OnboardingController.php:55
  * @route '/onboarding'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::store
- * @see app/Http/Controllers/Auth/OnboardingController.php:35
+ * @see app/Http/Controllers/Auth/OnboardingController.php:55
  * @route '/onboarding'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::store
- * @see app/Http/Controllers/Auth/OnboardingController.php:35
+ * @see app/Http/Controllers/Auth/OnboardingController.php:55
  * @route '/onboarding'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Auth\OnboardingController::store
- * @see app/Http/Controllers/Auth/OnboardingController.php:35
+ * @see app/Http/Controllers/Auth/OnboardingController.php:55
  * @route '/onboarding'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Auth\OnboardingController::store
- * @see app/Http/Controllers/Auth/OnboardingController.php:35
+ * @see app/Http/Controllers/Auth/OnboardingController.php:55
  * @route '/onboarding'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

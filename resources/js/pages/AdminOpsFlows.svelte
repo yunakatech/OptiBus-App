@@ -1763,8 +1763,17 @@
                 String(row.status ?? 'active').toLowerCase() === 'canceled',
         ).length;
 
+    const charterDoneCount = () =>
+        charters.filter(
+            (row) => String(row.status ?? 'active').toLowerCase() === 'done',
+        ).length;
+
     const charterActiveCount = () =>
-        Math.max(charters.length - charterCanceledCount(), 0);
+        charters.filter((row) => {
+            const status = String(row.status ?? 'active').toLowerCase();
+
+            return status !== 'canceled' && status !== 'done';
+        }).length;
 
     const charterIsDone = (status: string | null | undefined) =>
         String(status ?? 'active').toLowerCase() === 'done';
@@ -3976,7 +3985,7 @@
                                 class="text-xs font-medium text-muted-foreground"
                             >
                                 {charterScope === 'history'
-                                    ? 'Mode history: data carter selesai'
+                                    ? 'Mode history: data carter selesai atau dibatalkan'
                                     : 'Mode aktif: data carter berjalan'}
                             </p>
                             <div class="flex flex-wrap items-center gap-1.5">
@@ -3985,11 +3994,19 @@
                                 >
                                     Total {charters.length}
                                 </span>
-                                <span
-                                    class="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
-                                >
-                                    Aktif {charterActiveCount()}
-                                </span>
+                                {#if charterScope === 'history'}
+                                    <span
+                                        class="rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-700"
+                                    >
+                                        Selesai {charterDoneCount()}
+                                    </span>
+                                {:else}
+                                    <span
+                                        class="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
+                                    >
+                                        Aktif {charterActiveCount()}
+                                    </span>
+                                {/if}
                                 <span
                                     class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700"
                                 >

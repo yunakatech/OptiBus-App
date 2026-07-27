@@ -117,13 +117,7 @@
     );
 
     function formatRupiah(value: number): string {
-        const amount = Number(value || 0);
-        if (Math.abs(amount) >= 1_000_000) {
-            return `Rp ${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
-        }
-        if (Math.abs(amount) >= 1_000) {
-            return `Rp ${(amount / 1_000).toFixed(0)}K`;
-        }
+        const amount = Math.round(Number(value || 0));
         return `Rp ${amount.toLocaleString('id-ID')}`;
     }
 
@@ -136,6 +130,38 @@
         const prefix = delta > 0 ? '+' : '';
 
         return `${prefix}${delta.toFixed(1).replace('.0', '')}%`;
+    }
+
+    function statusLabel(status: string): string {
+        const normalized = String(status || '').toLowerCase();
+
+        const labels: Record<string, string> = {
+            active: 'Aktif',
+            trial: 'Uji Coba',
+            pending: 'Menunggu',
+            pending_payment: 'Menunggu Bayar',
+            paid: 'Lunas',
+            overdue: 'Terlambat',
+            past_due: 'Terlambat',
+            suspended: 'Ditahan',
+            canceled: 'Batal',
+            inactive: 'Tidak Aktif',
+        };
+
+        return labels[normalized] ?? (status || '-');
+    }
+
+    function formatDate(value: string | null | undefined): string {
+        if (!value) return '-';
+
+        const date = new Date(`${value}`.slice(0, 10) + 'T00:00:00');
+        if (Number.isNaN(date.getTime())) return value;
+
+        return new Intl.DateTimeFormat('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        }).format(date);
     }
 
     function statusVariant(
@@ -165,131 +191,180 @@
 
     const headlineMetrics = $derived([
         {
-            label: 'MRR',
+            label: 'Pendapatan Bulanan',
             value: formatRupiah(metrics.mrr),
-            meta: `${percentDelta(metrics.mrr, metrics.previous_mrr)} vs ${metrics.previous_month_label ?? 'bulan lalu'}`,
+            meta: `${percentDelta(metrics.mrr, metrics.previous_mrr)} dari bulan lalu.`,
             icon: CreditCard,
         },
         {
-            label: 'ARR',
+            label: 'Perkiraan Setahun',
             value: formatRupiah(metrics.arr),
-            meta: `ARPU ${formatRupiah(metrics.arpu)}`,
+            meta: `Rata-rata per tenant ${formatRupiah(metrics.arpu)}.`,
             icon: TrendingUp,
         },
         {
-            label: 'Active Tenants',
+            label: 'Tenant Aktif',
             value: `${Number(metrics.active_tenants || 0).toLocaleString('id-ID')}`,
-            meta: `${percentDelta(metrics.active_tenants, metrics.previous_active_tenants)} vs periode lalu`,
+            meta: `${percentDelta(metrics.active_tenants, metrics.previous_active_tenants)} dari periode lalu.`,
             icon: Building2,
         },
         {
-            label: 'Billing Attention',
+            label: 'Tagihan Perlu Dicek',
             value: `${Number(paymentMetrics.pending_count || 0) + Number(paymentMetrics.overdue_count || 0)}`,
-            meta: `${paymentMetrics.pending_count || 0} pending, ${paymentMetrics.overdue_count || 0} overdue`,
+            meta: `${paymentMetrics.pending_count || 0} menunggu bayar, ${paymentMetrics.overdue_count || 0} terlambat.`,
             icon: ShieldAlert,
         },
     ]);
 
     const operationalMetrics = $derived([
         {
-            label: 'TPV Bulan Ini',
+            label: 'Transaksi Travel Bulan Ini',
             value: formatRupiah(metrics.tpv_month),
-            meta: percentDelta(metrics.tpv_month, metrics.tpv_previous_month),
+            meta: `${percentDelta(metrics.tpv_month, metrics.tpv_previous_month)} dari bulan lalu.`,
         },
         {
-            label: 'Paid Bulan Ini',
+            label: 'Pembayaran Masuk',
             value: formatRupiah(paymentMetrics.paid_month_amount),
-            meta: `${paymentMetrics.paid_month_count || 0} invoice`,
+            meta: `${paymentMetrics.paid_month_count || 0} invoice lunas bulan ini.`,
         },
         {
-            label: 'Pending Amount',
+            label: 'Tagihan Belum Dibayar',
             value: formatRupiah(paymentMetrics.pending_amount),
-            meta: `${paymentMetrics.pending_count || 0} menunggu checkout`,
+            meta: `${paymentMetrics.pending_count || 0} invoice menunggu.`,
         },
         {
-            label: 'Trial Conversion',
+            label: 'Trial Jadi Pelanggan',
             value: `${metrics.trial_conversion_rate || 0}%`,
-            meta: `Churn ${metrics.churn_rate || 0}%`,
+            meta: `Pelanggan berhenti bulan ini ${metrics.churn_rate || 0}%.`,
         },
     ]);
 </script>
 
 <AppHead title="Platform Dashboard" />
 
-<div class="space-y-4 p-2 pb-8 md:p-4">
+<div
+    class="mx-auto min-w-0 max-w-[1500px] space-y-3 overflow-x-hidden p-2 pb-8 sm:space-y-4 sm:p-3 md:space-y-5 md:p-5"
+>
     <header
-        class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950 md:flex-row md:items-end md:justify-between"
+        class="relative min-w-0 overflow-hidden rounded-2xl border border-emerald-900/10 bg-[linear-gradient(135deg,#103d3a,#0d7066_54%,#f7f0dc)] p-4 text-white shadow-[0_22px_70px_-40px_rgba(16,61,58,0.85)] sm:p-5 md:p-6"
     >
-        <div>
-            <p class="text-xs font-semibold uppercase text-muted-foreground">
-                Platform Overview
-            </p>
-            <h1 class="mt-1 text-2xl font-semibold text-foreground md:text-3xl">
-                SaaS Command Center
-            </h1>
-            <p class="mt-1 text-sm text-muted-foreground">
-                MRR, tenant risk, renewal, dan pembayaran subscription.
-            </p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="/admin-ops/saas/invoices">
-                <Button size="sm"
-                    ><Receipt class="mr-1 h-4 w-4" /> Billing</Button
+        <div
+            class="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full border border-white/15 sm:-right-16 sm:-top-20 sm:h-64 sm:w-64"
+        ></div>
+        <div
+            class="pointer-events-none absolute bottom-0 right-0 h-16 w-44 rounded-t-full bg-white/10 blur-2xl sm:right-10 sm:h-20 sm:w-72"
+        ></div>
+        <div
+            class="relative flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between"
+        >
+            <div class="min-w-0 max-w-3xl">
+                <p
+                    class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-50/75"
                 >
-            </a>
-            <a href="/admin-ops/saas/subscriptions">
-                <Button variant="outline" size="sm"
-                    ><CreditCard class="mr-1 h-4 w-4" /> Subscription</Button
+                    Ringkasan Platform
+                </p>
+                <h1
+                    class="mt-2 text-xl font-semibold leading-tight tracking-[-0.04em] sm:text-2xl md:text-4xl"
                 >
-            </a>
-            <a href="/admin-ops/saas/tenants">
-                <Button variant="outline" size="sm"
-                    ><Building2 class="mr-1 h-4 w-4" /> Tenants</Button
+                    Pantau kesehatan bisnis OptiBus.
+                </h1>
+                <p
+                    class="mt-2 hidden text-sm leading-6 text-emerald-50/86 sm:block"
                 >
-            </a>
+                    Pendapatan, tenant aktif, tagihan, dan paket hampir
+                    berakhir.
+                </p>
+            </div>
+            <div class="grid gap-2 sm:flex sm:flex-wrap">
+                <a class="w-full sm:w-auto" href="/admin-ops/saas/invoices">
+                    <Button
+                        size="sm"
+                        class="w-full justify-center rounded-full bg-white text-[#103d3a] hover:bg-emerald-50 sm:w-auto"
+                        ><Receipt class="mr-1 h-4 w-4" /> Tagihan</Button
+                    >
+                </a>
+                <a
+                    class="w-full sm:w-auto"
+                    href="/admin-ops/saas/subscriptions"
+                >
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:w-auto"
+                        ><CreditCard class="mr-1 h-4 w-4" /> Langganan</Button
+                    >
+                </a>
+                <a class="w-full sm:w-auto" href="/admin-ops/saas/tenants">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:w-auto"
+                        ><Building2 class="mr-1 h-4 w-4" /> Tenant</Button
+                    >
+                </a>
+            </div>
         </div>
     </header>
 
     <section
-        class="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-sm"
+        class="min-w-0 overflow-hidden rounded-2xl border border-[#d7dfd5] bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950"
     >
-        <div class="grid gap-0 lg:grid-cols-[1.2fr_1fr]">
+        <div class="grid gap-0 xl:grid-cols-[1.05fr_1.25fr]">
             <div
-                class="border-b border-white/10 p-4 md:p-5 lg:border-b-0 lg:border-r"
+                class="min-w-0 border-b border-[#d7dfd5] bg-[#f8faf4] p-4 dark:border-slate-800 dark:bg-slate-900/40 sm:p-5 xl:border-b-0 xl:border-r"
             >
-                <p class="text-xs font-semibold uppercase text-slate-400">
+                <p
+                    class="text-xs font-semibold uppercase tracking-[0.18em] text-[#697570]"
+                >
                     {metrics.month_label}
                 </p>
-                <div class="mt-2 flex flex-wrap items-end gap-x-4 gap-y-2">
-                    <h2 class="text-3xl font-semibold md:text-4xl">
-                        {formatRupiah(metrics.mrr)}
-                    </h2>
+                <h2
+                    class="mt-3 break-words text-2xl font-bold leading-tight tracking-[-0.05em] text-[#103d3a] sm:text-3xl md:text-4xl"
+                >
+                    {formatRupiah(metrics.mrr)}
+                </h2>
+                <div class="mt-3 flex flex-wrap items-center gap-2">
                     <span
-                        class="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200"
+                        class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
                     >
                         {percentDelta(metrics.mrr, metrics.previous_mrr)}
                     </span>
+                    <span class="text-xs text-muted-foreground">
+                        dibanding {metrics.previous_month_label ?? 'bulan lalu'}
+                    </span>
                 </div>
-                <p class="mt-2 text-sm text-slate-300">
-                    Recurring revenue aktif dengan ARR {formatRupiah(
-                        metrics.arr,
-                    )}.
+                <p
+                    class="mt-4 hidden text-sm leading-6 text-[#53615d] sm:block"
+                >
+                    Ini adalah estimasi pendapatan berulang dari tenant yang
+                    masih aktif atau sedang uji coba. Jika semua tetap aktif,
+                    perkiraan setahun menjadi {formatRupiah(metrics.arr)}.
                 </p>
             </div>
-            <div class="grid grid-cols-2 gap-0">
+            <div class="grid md:grid-cols-2">
                 {#each headlineMetrics as metric (metric.label)}
                     {@const Icon = metric.icon}
                     <div
-                        class="border-b border-white/10 p-4 odd:border-r last:border-b-0 md:p-5"
+                        class="min-w-0 border-b border-[#d7dfd5] p-3 last:border-b-0 sm:p-4 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 dark:border-slate-800"
                     >
                         <div
-                            class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-slate-100"
+                            class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef7ef] text-[#103d3a]"
                         >
                             <Icon class="h-4 w-4" />
                         </div>
-                        <p class="text-xs text-slate-400">{metric.label}</p>
-                        <p class="mt-1 text-lg font-semibold">{metric.value}</p>
-                        <p class="mt-1 text-xs text-slate-400">{metric.meta}</p>
+                        <p class="text-xs font-semibold text-[#697570]">
+                            {metric.label}
+                        </p>
+                        <p
+                            class="mt-1 break-words text-lg font-bold leading-tight tracking-[-0.03em] text-foreground sm:text-xl"
+                        >
+                            {metric.value}
+                        </p>
+                        <p
+                            class="mt-2 hidden text-xs leading-5 text-muted-foreground sm:block"
+                        >
+                            {metric.meta}
+                        </p>
                     </div>
                 {/each}
             </div>
@@ -299,102 +374,202 @@
     <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {#each operationalMetrics as metric (metric.label)}
             <div
-                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-950 sm:p-4"
             >
-                <p class="text-xs font-medium text-muted-foreground">
+                <p class="text-xs font-semibold text-[#697570]">
                     {metric.label}
                 </p>
-                <p class="mt-2 text-xl font-semibold text-foreground">
+                <p
+                    class="mt-2 break-words text-lg font-bold leading-tight tracking-[-0.03em] text-[#103d3a] dark:text-emerald-100 sm:text-xl"
+                >
                     {metric.value}
                 </p>
-                <p class="mt-1 text-xs text-muted-foreground">{metric.meta}</p>
+                <p
+                    class="mt-2 hidden text-xs leading-5 text-muted-foreground sm:block"
+                >
+                    {metric.meta}
+                </p>
             </div>
         {/each}
     </section>
 
     {#if mrrTrend.length > 0}
         <section
-            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4 md:p-5"
         >
-            <div class="mb-4 flex items-center justify-between gap-3">
-                <div>
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0">
                     <h2 class="text-base font-semibold text-foreground">
-                        MRR Trend
+                        Pendapatan Bulanan
                     </h2>
-                    <p class="text-xs text-muted-foreground">
-                        12 bulan terakhir
+                    <p
+                        class="hidden text-xs leading-5 text-muted-foreground sm:block"
+                    >
+                        Tren 12 bulan terakhir.
                     </p>
                 </div>
-                <Badge variant="outline">{formatRupiah(metrics.mrr)}</Badge>
+                <Badge variant="outline" class="shrink-0 rounded-full">
+                    Bulan ini {formatRupiah(metrics.mrr)}
+                </Badge>
             </div>
-            <div class="grid h-36 grid-cols-12 items-end gap-1.5">
-                {#each mrrTrend as item (item.name)}
-                    {@const height = Math.max(
-                        6,
-                        Math.round(
-                            (Number(item.value || 0) / maxMrrTrend) * 100,
-                        ),
-                    )}
-                    <div class="flex h-full flex-col justify-end gap-1">
+            <div class="min-w-0 overflow-hidden pb-1">
+                <div
+                    class="grid h-32 grid-cols-12 items-end gap-1 sm:h-40 sm:gap-1.5"
+                >
+                    {#each mrrTrend as item (item.name)}
+                        {@const height = Math.max(
+                            6,
+                            Math.round(
+                                (Number(item.value || 0) / maxMrrTrend) * 100,
+                            ),
+                        )}
                         <div
-                            class="rounded-t bg-primary/75"
-                            style={`height:${height}%`}
-                            title={`${item.name}: ${formatRupiah(item.value)}`}
-                        ></div>
-                        <span
-                            class="text-center text-[10px] text-muted-foreground"
-                            >{item.label}</span
+                            class="flex h-full min-w-0 flex-col justify-end gap-1"
                         >
-                    </div>
-                {/each}
+                            <div
+                                class="rounded-t-lg bg-[linear-gradient(180deg,#0d7066,#b96c20)] shadow-sm"
+                                style={`height:${height}%`}
+                                title={`${item.name}: ${formatRupiah(item.value)}`}
+                            ></div>
+                            <span
+                                class="truncate text-center text-[10px] text-muted-foreground"
+                                >{item.label}</span
+                            >
+                        </div>
+                    {/each}
+                </div>
             </div>
         </section>
     {/if}
 
-    <div class="grid gap-4 xl:grid-cols-[1.45fr_0.8fr]">
+    <div class="grid gap-4 xl:grid-cols-[1.45fr_0.85fr]">
         <section
-            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4 md:p-5"
         >
-            <div class="mb-4 flex items-center justify-between gap-3">
-                <div>
+            <div
+                class="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
+            >
+                <div class="min-w-0">
                     <h2 class="text-base font-semibold text-foreground">
-                        Tenant Portfolio
+                        Tenant Terbaru
                     </h2>
-                    <p class="text-xs text-muted-foreground">
-                        {tenants.length} tenant terbaru
+                    <p
+                        class="hidden text-xs leading-5 text-muted-foreground sm:block"
+                    >
+                        {tenants.length} tenant terakhir.
                     </p>
                 </div>
                 <a
                     href="/admin-ops/saas/tenants"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                    class="inline-flex w-full items-center justify-center gap-1 rounded-full border border-[#d7dfd5] px-3 py-1.5 text-xs font-semibold text-[#103d3a] transition hover:bg-[#eef7ef] sm:w-auto"
                 >
                     Kelola <ArrowRight class="h-3.5 w-3.5" />
                 </a>
             </div>
             {#if tenants.length > 0}
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[720px] text-sm">
+                <div class="space-y-3 md:hidden">
+                    {#each tenants as tenant (tenant.id)}
+                        <article
+                            class="rounded-xl border border-[#d7dfd5] bg-[#fbfcf8] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/45"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <a
+                                        href="/admin-ops/saas/tenants"
+                                        class="block truncate font-semibold text-foreground hover:text-primary"
+                                    >
+                                        {tenant.name}
+                                    </a>
+                                    <p
+                                        class="mt-0.5 truncate text-xs text-muted-foreground"
+                                    >
+                                        {tenant.slug}
+                                    </p>
+                                </div>
+                                <Badge
+                                    variant={statusVariant(
+                                        tenant.subscription_status,
+                                    )}
+                                    class="shrink-0 rounded-full"
+                                >
+                                    {statusLabel(tenant.subscription_status)}
+                                </Badge>
+                            </div>
+
+                            <div
+                                class="mt-3 grid min-w-0 grid-cols-2 gap-2 text-xs"
+                            >
+                                <div
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                >
+                                    <p class="text-muted-foreground">Paket</p>
+                                    <p
+                                        class="mt-1 truncate font-semibold text-[#103d3a] dark:text-emerald-100"
+                                    >
+                                        {tenant.plan_name}
+                                    </p>
+                                </div>
+                                <div
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                >
+                                    <p class="text-muted-foreground">
+                                        Berakhir
+                                    </p>
+                                    <p
+                                        class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                    >
+                                        {formatDate(tenant.ends_at)}
+                                    </p>
+                                </div>
+                                <div
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                >
+                                    <p class="text-muted-foreground">User</p>
+                                    <p
+                                        class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                    >
+                                        {tenant.user_count}
+                                    </p>
+                                </div>
+                                <div
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                >
+                                    <p class="text-muted-foreground">Pool</p>
+                                    <p
+                                        class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                    >
+                                        {tenant.pool_count}
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    {/each}
+                </div>
+
+                <div class="hidden overflow-x-auto md:block">
+                    <table class="w-full min-w-[760px] text-sm">
                         <thead>
                             <tr
                                 class="border-b text-left text-xs text-muted-foreground"
                             >
                                 <th class="pb-2 font-medium">Tenant</th>
                                 <th class="pb-2 font-medium">Paket</th>
-                                <th class="pb-2 font-medium">Subscription</th>
-                                <th class="pb-2 text-right font-medium"
-                                    >Users</th
+                                <th class="pb-2 font-medium">Status Bayar</th>
+                                <th class="pb-2 text-right font-medium">User</th
                                 >
-                                <th class="pb-2 text-right font-medium"
-                                    >Pools</th
+                                <th class="pb-2 text-right font-medium">Pool</th
                                 >
-                                <th class="pb-2 text-right font-medium">Ends</th
-                                >
+                                <th class="pb-2 text-right font-medium">
+                                    Berakhir
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {#each tenants as tenant (tenant.id)}
-                                <tr class="border-b last:border-0">
-                                    <td class="py-3">
+                                <tr
+                                    class="border-b last:border-0 hover:bg-[#f8faf4]"
+                                >
+                                    <td class="py-3 pr-3">
                                         <a
                                             href="/admin-ops/saas/tenants"
                                             class="font-semibold text-foreground hover:text-primary"
@@ -406,30 +581,36 @@
                                             {tenant.slug}
                                         </div>
                                     </td>
-                                    <td class="py-3">
-                                        <Badge variant="outline"
+                                    <td class="py-3 pr-3">
+                                        <Badge
+                                            variant="outline"
+                                            class="rounded-full"
                                             >{tenant.plan_name}</Badge
                                         >
                                     </td>
-                                    <td class="py-3">
+                                    <td class="py-3 pr-3">
                                         <Badge
                                             variant={statusVariant(
                                                 tenant.subscription_status,
                                             )}
+                                            class="rounded-full"
                                         >
-                                            {tenant.subscription_status}
+                                            {statusLabel(
+                                                tenant.subscription_status,
+                                            )}
                                         </Badge>
                                     </td>
-                                    <td class="py-3 text-right"
-                                        >{tenant.user_count}</td
-                                    >
-                                    <td class="py-3 text-right"
-                                        >{tenant.pool_count}</td
-                                    >
+                                    <td class="py-3 text-right">
+                                        {tenant.user_count}
+                                    </td>
+                                    <td class="py-3 text-right">
+                                        {tenant.pool_count}
+                                    </td>
                                     <td
                                         class="py-3 text-right text-xs text-muted-foreground"
-                                        >{tenant.ends_at ?? '-'}</td
                                     >
+                                        {formatDate(tenant.ends_at)}
+                                    </td>
                                 </tr>
                             {/each}
                         </tbody>
@@ -437,7 +618,7 @@
                 </div>
             {:else}
                 <div
-                    class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
+                    class="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"
                 >
                     Belum ada tenant terdaftar.
                 </div>
@@ -446,12 +627,20 @@
 
         <aside class="space-y-4">
             <section
-                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4"
             >
-                <div class="mb-3 flex items-center justify-between">
-                    <h2 class="text-sm font-semibold text-foreground">
-                        Payment Watchlist
-                    </h2>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <h2 class="text-sm font-semibold text-foreground">
+                            Tagihan Perlu Aksi
+                        </h2>
+                        <p
+                            class="hidden text-xs leading-5 text-muted-foreground sm:block"
+                        >
+                            Invoice yang belum dibayar atau sudah lewat jatuh
+                            tempo.
+                        </p>
+                    </div>
                     <a
                         href="/admin-ops/saas/invoices"
                         class="text-xs font-semibold text-primary">Buka</a
@@ -461,77 +650,94 @@
                     <div class="space-y-2">
                         {#each paymentWatchlist as invoice (invoice.id)}
                             <div
-                                class="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
+                                class="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800"
                             >
                                 <div
-                                    class="flex items-start justify-between gap-3"
+                                    class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
                                 >
-                                    <div>
+                                    <div class="min-w-0">
                                         <p
-                                            class="font-semibold text-foreground"
+                                            class="truncate font-semibold text-foreground"
                                         >
                                             {invoice.tenant_name}
                                         </p>
                                         <p
-                                            class="text-xs text-muted-foreground"
+                                            class="truncate text-xs text-muted-foreground"
                                         >
                                             {invoice.invoice_number} - {invoice.plan_name}
                                         </p>
                                     </div>
                                     <Badge
+                                        class="shrink-0 rounded-full"
                                         variant={invoice.status === 'overdue' ||
                                         invoice.days_overdue > 0
                                             ? 'destructive'
                                             : 'outline'}
                                     >
-                                        {invoice.gateway_status ||
-                                            invoice.status}
+                                        {statusLabel(
+                                            invoice.gateway_status ||
+                                                invoice.status,
+                                        )}
                                     </Badge>
                                 </div>
                                 <div
-                                    class="mt-2 flex items-center justify-between text-xs"
+                                    class="mt-3 flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                                 >
-                                    <span class="text-muted-foreground"
-                                        >{invoice.due_date ?? '-'}</span
+                                    <span class="text-muted-foreground">
+                                        Jatuh tempo {formatDate(
+                                            invoice.due_date,
+                                        )}
+                                    </span>
+                                    <span
+                                        class="text-right font-semibold text-[#103d3a] dark:text-emerald-100"
                                     >
-                                    <span class="font-semibold"
-                                        >{formatRupiah(invoice.amount)}</span
-                                    >
+                                        {formatRupiah(invoice.amount)}
+                                    </span>
                                 </div>
                             </div>
                         {/each}
                     </div>
                 {:else}
                     <p class="text-sm text-muted-foreground">
-                        Tidak ada invoice yang perlu ditindaklanjuti.
+                        Tidak ada tagihan yang perlu ditindaklanjuti.
                     </p>
                 {/if}
             </section>
 
             <section
-                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4"
             >
-                <div class="mb-3 flex items-center gap-2">
-                    <CalendarClock class="h-4 w-4 text-muted-foreground" />
-                    <h2 class="text-sm font-semibold text-foreground">
-                        Expiring 7 Hari
-                    </h2>
+                <div class="mb-3 flex items-start gap-2">
+                    <CalendarClock class="mt-0.5 h-4 w-4 text-[#0d7066]" />
+                    <div class="min-w-0">
+                        <h2 class="text-sm font-semibold text-foreground">
+                            Paket Akan Berakhir
+                        </h2>
+                        <p
+                            class="hidden text-xs leading-5 text-muted-foreground sm:block"
+                        >
+                            Tenant yang masa aktifnya selesai dalam 7 hari.
+                        </p>
+                    </div>
                 </div>
                 {#if expiringSoon.length > 0}
                     <div class="space-y-2">
                         {#each expiringSoon as item (item.id)}
                             <div
-                                class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
+                                class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800"
                             >
-                                <div>
+                                <div class="min-w-0">
                                     <p class="font-semibold text-foreground">
                                         {item.tenant_name}
                                     </p>
                                     <p class="text-xs text-muted-foreground">
-                                        {item.plan_name} - {item.status}
+                                        {item.plan_name} - {statusLabel(
+                                            item.status,
+                                        )}
                                     </p>
                                 </div>
                                 <Badge
+                                    class="shrink-0 rounded-full"
                                     variant={item.days_left <= 2
                                         ? 'destructive'
                                         : 'outline'}
@@ -543,19 +749,26 @@
                     </div>
                 {:else}
                     <p class="text-sm text-muted-foreground">
-                        Tidak ada subscription yang expiring.
+                        Tidak ada paket yang hampir berakhir.
                     </p>
                 {/if}
             </section>
 
             <section
-                class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4"
             >
-                <div class="mb-3 flex items-center gap-2">
-                    <Users class="h-4 w-4 text-muted-foreground" />
-                    <h2 class="text-sm font-semibold text-foreground">
-                        Signup Bulan Ini
-                    </h2>
+                <div class="mb-3 flex items-start gap-2">
+                    <Users class="mt-0.5 h-4 w-4 text-[#0d7066]" />
+                    <div class="min-w-0">
+                        <h2 class="text-sm font-semibold text-foreground">
+                            Tenant Baru
+                        </h2>
+                        <p
+                            class="hidden text-xs leading-5 text-muted-foreground sm:block"
+                        >
+                            Tenant yang baru mendaftar di bulan berjalan.
+                        </p>
+                    </div>
                 </div>
                 {#if recentSignups.length > 0}
                     <div class="space-y-2">
@@ -563,15 +776,20 @@
                             <div
                                 class="flex items-center justify-between gap-3 text-sm"
                             >
-                                <div>
-                                    <p class="font-semibold text-foreground">
+                                <div class="min-w-0">
+                                    <p
+                                        class="truncate font-semibold text-foreground"
+                                    >
                                         {item.name}
                                     </p>
-                                    <p class="text-xs text-muted-foreground">
+                                    <p
+                                        class="truncate text-xs text-muted-foreground"
+                                    >
                                         {item.slug}
                                     </p>
                                 </div>
-                                <span class="text-xs text-muted-foreground"
+                                <span
+                                    class="shrink-0 text-xs text-muted-foreground"
                                     >{daysAgo(item.created_at)}</span
                                 >
                             </div>
@@ -579,7 +797,7 @@
                     </div>
                 {:else}
                     <p class="text-sm text-muted-foreground">
-                        Belum ada signup baru.
+                        Belum ada tenant baru bulan ini.
                     </p>
                 {/if}
             </section>

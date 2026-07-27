@@ -41,7 +41,7 @@
             name: 'Starter',
             slug: 'starter',
             description:
-                'Untuk driver individu dan travel yang baru merapikan operasional.',
+                'Untuk pengemudi individu dan travel yang baru merapikan operasional.',
             price_monthly: 49000,
             price_yearly: 490000,
             max_armadas: 1,
@@ -56,7 +56,7 @@
             name: 'Pro',
             slug: 'pro',
             description:
-                'Untuk travel kecil yang butuh seat map, laporan, dan booking online.',
+                'Untuk travel kecil yang butuh peta kursi, laporan, dan pemesanan online.',
             price_monthly: 99000,
             price_yearly: 990000,
             max_armadas: 3,
@@ -71,7 +71,7 @@
             name: 'Fleet',
             slug: 'fleet',
             description:
-                'Untuk pemilik armada dengan multi-pool dan kontrol role tim.',
+                'Untuk pemilik armada dengan multi-pool dan kontrol peran tim.',
             price_monthly: 199000,
             price_yearly: 1990000,
             max_armadas: 10,
@@ -94,7 +94,11 @@
     const subscriptionHref = '/subscription';
 
     const workflow = [
-        { label: 'Booking', value: 'Seat, pelanggan, pickup', icon: Ticket },
+        {
+            label: 'Pemesanan',
+            value: 'Kursi, pelanggan, titik jemput',
+            icon: Ticket,
+        },
         {
             label: 'Keberangkatan',
             value: 'Manifest dan unit aktif',
@@ -107,20 +111,20 @@
         },
         {
             label: 'Keuangan',
-            value: 'DP, lunas, target revenue',
+            value: 'DP, lunas, target pendapatan',
             icon: WalletCards,
         },
     ];
 
     const capabilities = [
         {
-            title: 'Booking reguler',
-            body: 'Seat, jadwal, manifest, dan data pelanggan tersimpan per rute.',
+            title: 'Pemesanan reguler',
+            body: 'Kursi, jadwal, manifest, dan data pelanggan tersimpan per rute.',
             icon: Ticket,
         },
         {
             title: 'Carter dan bagasi',
-            body: 'Transaksi non-seat tetap masuk laporan operasional harian.',
+            body: 'Transaksi non-kursi tetap masuk laporan operasional harian.',
             icon: PackageCheck,
         },
         {
@@ -130,7 +134,7 @@
         },
         {
             title: 'Kontrol tenant',
-            body: 'Pool, rute, user, dan log aktivitas dipisahkan untuk tiap perusahaan.',
+            body: 'Pool, rute, pengguna, dan log aktivitas dipisahkan untuk tiap perusahaan.',
             icon: ShieldCheck,
         },
     ];
@@ -142,7 +146,7 @@
     }
 
     function limitLabel(value: number, suffix: string): string {
-        return value > 0 ? `${value} ${suffix}` : `Unlimited ${suffix}`;
+        return value > 0 ? `${value} ${suffix}` : `${suffix} tanpa batas`;
     }
 </script>
 
@@ -150,18 +154,20 @@
     <title>OptiBus - Sistem Operasional Travel</title>
     <meta
         name="description"
-        content="OptiBus membantu travel mengelola booking seat, carter, bagasi, pembayaran, pool, dan laporan revenue dalam satu sistem."
+        content="OptiBus membantu travel mengelola pemesanan kursi, carter, bagasi, pembayaran, pool, dan laporan pendapatan dalam satu sistem."
     />
 </svelte:head>
 
-<div class="min-h-screen bg-[#f7f8f4] text-[#17201f]">
-    <nav class="sticky top-0 z-40 bg-[#f7f8f4]/78 py-3 backdrop-blur-xl">
+<div class="min-h-screen overflow-x-hidden bg-[#f7f8f4] text-[#17201f]">
+    <nav
+        class="sticky top-0 z-40 bg-[#f7f8f4]/86 py-2 backdrop-blur-xl sm:py-3"
+    >
         <div
-            class="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8"
+            class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-2.5 sm:px-6 lg:px-8"
         >
             <a
                 href="/"
-                class="flex h-12 items-center rounded-full border border-[#d9ded4]/80 bg-white/80 px-3 shadow-[0_10px_28px_-24px_rgba(23,32,31,0.9)] transition hover:border-[#b9c5bd] hover:bg-white"
+                class="flex h-10 max-w-[44vw] items-center overflow-hidden rounded-full border border-[#d9ded4]/80 bg-white/86 px-2 shadow-[0_10px_28px_-24px_rgba(23,32,31,0.9)] transition hover:border-[#b9c5bd] hover:bg-white sm:h-12 sm:max-w-none sm:px-3"
                 aria-label="OptiBus"
             >
                 <AppLogo />
@@ -172,7 +178,7 @@
                 <a
                     href="#workflow"
                     class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
-                    >Workflow</a
+                    >Alur Kerja</a
                 >
                 <a
                     href="#fitur"
@@ -182,26 +188,26 @@
                 <a
                     href="/pricing"
                     class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
-                    >Pricing</a
+                    >Harga</a
                 >
             </div>
             <div
-                class="flex items-center gap-1.5 rounded-full border border-[#d9ded4]/90 bg-white/74 p-1 shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70"
+                class="flex shrink-0 items-center gap-1 rounded-full border border-[#d9ded4]/90 bg-white/80 p-1 shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70"
             >
                 {#if !isAuthenticated}
                     <a
                         href="/login"
-                        class="inline-flex h-10 items-center justify-center rounded-full px-3 text-sm font-semibold text-[#4b5a56] transition hover:bg-[#eef2eb] hover:text-[#17201f] sm:px-4"
-                        >Login</a
+                        class="inline-flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-semibold text-[#4b5a56] transition hover:bg-[#eef2eb] hover:text-[#17201f] sm:h-10 sm:px-4 sm:text-sm"
+                        >Masuk</a
                     >
                 {/if}
                 <a
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-10 items-center justify-center rounded-full bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-[0_12px_26px_-18px_rgba(16,61,58,0.9)] transition hover:-translate-y-0.5 hover:bg-[#0b2f2c] sm:px-5"
+                    class="inline-flex h-9 items-center justify-center rounded-full bg-[#103d3a] px-3 text-xs font-semibold text-white shadow-[0_12px_26px_-18px_rgba(16,61,58,0.9)] transition hover:-translate-y-0.5 hover:bg-[#0b2f2c] sm:h-10 sm:px-5 sm:text-sm"
                 >
-                    {isAuthenticated ? 'Dashboard' : 'Mulai trial'}
+                    {isAuthenticated ? 'Dasbor' : 'Mulai'}
                 </a>
             </div>
         </div>
@@ -214,49 +220,49 @@
                 style="background-image: linear-gradient(#cad4ca 1px, transparent 1px), linear-gradient(90deg, #cad4ca 1px, transparent 1px); background-size: 44px 44px;"
             ></div>
             <div
-                class="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(520px,1fr)] lg:px-8 lg:py-20"
+                class="relative mx-auto grid max-w-7xl gap-7 px-4 py-9 sm:px-6 md:py-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(520px,1fr)] lg:px-8 lg:py-20"
             >
                 <div class="flex flex-col justify-center">
                     <div
-                        class="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-[#cfd8cf] bg-white px-3 py-1 text-xs font-semibold uppercase text-[#53615d]"
+                        class="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-[#cfd8cf] bg-white px-3 py-1 text-[11px] font-semibold uppercase text-[#53615d] sm:mb-5 sm:text-xs"
                     >
                         <Clock3 class="h-3.5 w-3.5 text-[#b96c20]" />
-                        Trial 14 hari - setup cepat
+                        Uji coba 14 hari - pengaturan cepat
                     </div>
                     <h1
-                        class="max-w-3xl text-4xl font-semibold leading-[1.03] tracking-normal text-[#152321] sm:text-5xl lg:text-6xl"
+                        class="max-w-3xl text-[2.15rem] font-semibold leading-[1.03] tracking-normal text-[#152321] sm:text-5xl lg:text-6xl"
                     >
-                        Operasional travel yang rapi dari booking sampai
+                        Operasional travel yang rapi dari pemesanan sampai
                         laporan.
                     </h1>
                     <p
-                        class="mt-5 max-w-2xl text-base leading-8 text-[#4b5a56] sm:text-lg"
+                        class="mt-4 max-w-2xl text-[15px] leading-7 text-[#4b5a56] sm:mt-5 sm:text-lg sm:leading-8"
                     >
-                        OptiBus menyatukan booking seat, carter, bagasi,
-                        pembayaran, pool, rute, dan target revenue dalam
-                        dashboard yang siap dipakai tim lapangan.
+                        OptiBus menyatukan pemesanan kursi, carter, bagasi,
+                        pembayaran, pool, rute, dan target pendapatan dalam
+                        dasbor yang siap dipakai tim lapangan.
                     </p>
-                    <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <div class="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
                         <a
                             href={isAuthenticated
                                 ? appHref
                                 : '/register?plan=starter&intent=trial'}
-                            class="inline-flex h-11 items-center justify-center rounded-md bg-[#103d3a] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c]"
+                            class="inline-flex h-12 items-center justify-center rounded-2xl bg-[#103d3a] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c] sm:h-11 sm:rounded-md"
                         >
                             {isAuthenticated
-                                ? 'Buka dashboard'
-                                : 'Mulai trial gratis'}
+                                ? 'Buka dasbor'
+                                : 'Mulai uji coba gratis'}
                             <ArrowRight class="ml-2 h-4 w-4" />
                         </a>
                         <a
                             href="/pricing"
-                            class="inline-flex h-11 items-center justify-center rounded-md border border-[#bac5bd] bg-white px-5 text-sm font-semibold text-[#17201f] hover:bg-[#eef2eb]"
+                            class="inline-flex h-12 items-center justify-center rounded-2xl border border-[#bac5bd] bg-white px-5 text-sm font-semibold text-[#17201f] hover:bg-[#eef2eb] sm:h-11 sm:rounded-md"
                         >
                             Bandingkan paket
                         </a>
                     </div>
                     <dl
-                        class="mt-10 grid max-w-xl grid-cols-3 gap-3 border-y border-[#d9ded4] py-5"
+                        class="mt-7 grid max-w-xl grid-cols-1 gap-3 border-y border-[#d9ded4] py-4 min-[390px]:grid-cols-3 sm:mt-10 sm:py-5"
                     >
                         <div>
                             <dt
@@ -265,7 +271,7 @@
                                 Transaksi
                             </dt>
                             <dd
-                                class="mt-1 text-xl font-semibold text-[#17201f]"
+                                class="mt-1 text-lg font-semibold text-[#17201f] sm:text-xl"
                             >
                                 3 jalur
                             </dd>
@@ -274,10 +280,10 @@
                             <dt
                                 class="text-xs font-medium uppercase text-[#687470]"
                             >
-                                Scope
+                                Cakupan
                             </dt>
                             <dd
-                                class="mt-1 text-xl font-semibold text-[#17201f]"
+                                class="mt-1 text-lg font-semibold text-[#17201f] sm:text-xl"
                             >
                                 Multi-pool
                             </dd>
@@ -289,7 +295,7 @@
                                 Audit
                             </dt>
                             <dd
-                                class="mt-1 text-xl font-semibold text-[#17201f]"
+                                class="mt-1 text-lg font-semibold text-[#17201f] sm:text-xl"
                             >
                                 Per tenant
                             </dd>
@@ -297,9 +303,11 @@
                     </dl>
                 </div>
 
-                <div class="relative flex items-center justify-center">
+                <div
+                    class="relative -mt-2 flex items-center justify-center sm:mt-0"
+                >
                     <div
-                        class="relative mx-auto w-full max-w-[520px] sm:max-w-[560px] lg:max-w-[520px] xl:max-w-[560px]"
+                        class="relative mx-auto w-full max-w-[330px] sm:max-w-[560px] lg:max-w-[520px] xl:max-w-[560px]"
                     >
                         <img
                             src="/landing/iPhone 12 Pro (Wooden Hands).webp"
@@ -318,28 +326,28 @@
 
         <section
             id="workflow"
-            class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8"
+            class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8"
         >
             <div class="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
                 <div>
                     <p class="text-sm font-semibold uppercase text-[#b96c20]">
-                        Workflow harian
+                        Alur kerja harian
                     </p>
                     <h2
-                        class="mt-2 text-3xl font-semibold tracking-normal text-[#17201f]"
+                        class="mt-2 text-2xl font-semibold tracking-normal text-[#17201f] sm:text-3xl"
                     >
                         Satu alur untuk transaksi lapangan.
                     </h2>
                     <p class="mt-4 text-[#53615d]">
-                        Tim booking, admin pool, driver, dan owner membaca data
-                        yang sama tanpa spreadsheet terpisah.
+                        Tim pemesanan, admin pool, pengemudi, dan pemilik
+                        membaca data yang sama tanpa lembar kerja terpisah.
                     </p>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-2">
                     {#each workflow as item}
                         {@const Icon = item.icon}
                         <div
-                            class="rounded-lg border border-[#d9ded4] bg-white p-5"
+                            class="rounded-2xl border border-[#d9ded4] bg-white p-4 shadow-[0_16px_40px_-32px_rgba(23,32,31,0.9)] sm:rounded-lg sm:p-5"
                         >
                             <Icon class="h-6 w-6 text-[#0d7066]" />
                             <h3 class="mt-4 text-base font-semibold">
@@ -355,7 +363,7 @@
         </section>
 
         <section id="fitur" class="border-y border-[#d9ded4] bg-white">
-            <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
                 <div
                     class="mb-9 flex flex-col justify-between gap-4 md:flex-row md:items-end"
                 >
@@ -365,7 +373,9 @@
                         >
                             Fitur inti
                         </p>
-                        <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+                        <h2
+                            class="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl"
+                        >
                             Didesain untuk travel, bukan POS umum.
                         </h2>
                     </div>
@@ -377,11 +387,13 @@
                     </a>
                 </div>
                 <div
-                    class="grid gap-px overflow-hidden rounded-lg border border-[#d9ded4] bg-[#d9ded4] md:grid-cols-2 lg:grid-cols-4"
+                    class="grid gap-3 overflow-hidden rounded-2xl md:gap-px md:border md:border-[#d9ded4] md:bg-[#d9ded4] md:grid-cols-2 lg:grid-cols-4"
                 >
                     {#each capabilities as item}
                         {@const Icon = item.icon}
-                        <div class="bg-[#fbfcf8] p-5">
+                        <div
+                            class="rounded-2xl border border-[#d9ded4] bg-[#fbfcf8] p-4 md:rounded-none md:border-0 md:p-5"
+                        >
                             <Icon class="h-6 w-6 text-[#0d7066]" />
                             <h3 class="mt-4 text-base font-semibold">
                                 {item.title}
@@ -395,7 +407,7 @@
             </div>
         </section>
 
-        <section class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
             <div
                 class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end"
             >
@@ -403,21 +415,23 @@
                     <p class="text-sm font-semibold uppercase text-[#b96c20]">
                         Paket
                     </p>
-                    <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+                    <h2
+                        class="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl"
+                    >
                         Mulai kecil, naik saat armada bertambah.
                     </h2>
                 </div>
                 <a
                     href="/pricing"
-                    class="inline-flex h-10 items-center justify-center rounded-md border border-[#bac5bd] bg-white px-4 text-sm font-semibold text-[#17201f] hover:bg-[#eef2eb]"
+                    class="inline-flex h-11 items-center justify-center rounded-2xl border border-[#bac5bd] bg-white px-4 text-sm font-semibold text-[#17201f] hover:bg-[#eef2eb] sm:h-10 sm:rounded-md"
                 >
-                    Buka pricing lengkap
+                    Buka harga lengkap
                 </a>
             </div>
             <div class="grid gap-4 md:grid-cols-3">
                 {#each featuredPlans as plan}
                     <article
-                        class={`rounded-lg border bg-white p-5 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-lg shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}
+                        class={`rounded-2xl border bg-white p-4 shadow-[0_18px_44px_-36px_rgba(23,32,31,0.95)] sm:p-5 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
@@ -454,14 +468,14 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <UsersRound class="h-4 w-4 text-[#0d7066]" />
-                                {limitLabel(plan.max_users, 'user')}
+                                {limitLabel(plan.max_users, 'pengguna')}
                             </div>
                         </div>
                         <a
                             href={isAuthenticated
                                 ? subscriptionHref
                                 : `/register?plan=${plan.slug}&intent=paid`}
-                            class={`mt-6 inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}
+                            class={`mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl text-sm font-semibold sm:h-10 sm:rounded-md ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}
                         >
                             {isAuthenticated
                                 ? 'Kelola paket'
@@ -474,25 +488,25 @@
 
         <section class="border-t border-[#d9ded4] bg-[#103d3a]">
             <div
-                class="mx-auto grid max-w-7xl gap-8 px-4 py-12 text-white sm:px-6 md:grid-cols-[1fr_auto] md:items-center lg:px-8"
+                class="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-white sm:px-6 sm:py-12 md:grid-cols-[1fr_auto] md:items-center lg:px-8"
             >
                 <div>
                     <p class="text-sm font-semibold uppercase text-[#a8dccd]">
                         Siap dipakai tim operasional
                     </p>
                     <h2
-                        class="mt-2 text-3xl font-semibold tracking-normal text-white"
+                        class="mt-2 text-2xl font-semibold tracking-normal text-white sm:text-3xl"
                     >
-                        Rapikan booking, pembayaran, dan laporan minggu ini.
+                        Rapikan pemesanan, pembayaran, dan laporan minggu ini.
                     </h2>
                 </div>
                 <a
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-11 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb]"
+                    class="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb] sm:h-11 sm:rounded-md"
                 >
-                    {isAuthenticated ? 'Buka dashboard' : 'Mulai trial'}
+                    {isAuthenticated ? 'Buka dasbor' : 'Mulai uji coba'}
                     <ArrowRight class="ml-2 h-4 w-4" />
                 </a>
             </div>
@@ -504,15 +518,15 @@
             class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-[#53615d] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8"
         >
             <span>OptiBus - Sistem operasional travel.</span>
-            <div class="flex gap-5">
-                <a href="/pricing" class="hover:text-[#17201f]">Pricing</a>
+            <div class="flex flex-wrap gap-x-5 gap-y-2">
+                <a href="/pricing" class="hover:text-[#17201f]">Harga</a>
                 {#if isAuthenticated}
-                    <a href={appHref} class="hover:text-[#17201f]">Dashboard</a>
+                    <a href={appHref} class="hover:text-[#17201f]">Dasbor</a>
                     <a href={subscriptionHref} class="hover:text-[#17201f]"
-                        >Subscription</a
+                        >Langganan</a
                     >
                 {:else}
-                    <a href="/login" class="hover:text-[#17201f]">Login</a>
+                    <a href="/login" class="hover:text-[#17201f]">Masuk</a>
                     <a
                         href="/register?plan=starter&intent=trial"
                         class="hover:text-[#17201f]">Daftar</a

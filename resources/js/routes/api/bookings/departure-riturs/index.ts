@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::map
- * @see app/Http/Controllers/Api/BookingApiController.php:1311
+ * @see app/Http/Controllers/Api/BookingApiController.php:1358
  * @route '/api/bookings/departure-riturs/map'
  */
 export const map = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ map.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::map
- * @see app/Http/Controllers/Api/BookingApiController.php:1311
+ * @see app/Http/Controllers/Api/BookingApiController.php:1358
  * @route '/api/bookings/departure-riturs/map'
  */
 map.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ map.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::map
- * @see app/Http/Controllers/Api/BookingApiController.php:1311
+ * @see app/Http/Controllers/Api/BookingApiController.php:1358
  * @route '/api/bookings/departure-riturs/map'
  */
 map.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ map.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\BookingApiController::map
- * @see app/Http/Controllers/Api/BookingApiController.php:1311
+ * @see app/Http/Controllers/Api/BookingApiController.php:1358
  * @route '/api/bookings/departure-riturs/map'
  */
     const mapForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ map.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\BookingApiController::map
- * @see app/Http/Controllers/Api/BookingApiController.php:1311
+ * @see app/Http/Controllers/Api/BookingApiController.php:1358
  * @route '/api/bookings/departure-riturs/map'
  */
         mapForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -56,7 +56,7 @@ map.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     map.form = mapForm
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::unmap
- * @see app/Http/Controllers/Api/BookingApiController.php:1402
+ * @see app/Http/Controllers/Api/BookingApiController.php:1449
  * @route '/api/bookings/departure-riturs/unmap'
  */
 export const unmap = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -71,7 +71,7 @@ unmap.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::unmap
- * @see app/Http/Controllers/Api/BookingApiController.php:1402
+ * @see app/Http/Controllers/Api/BookingApiController.php:1449
  * @route '/api/bookings/departure-riturs/unmap'
  */
 unmap.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ unmap.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::unmap
- * @see app/Http/Controllers/Api/BookingApiController.php:1402
+ * @see app/Http/Controllers/Api/BookingApiController.php:1449
  * @route '/api/bookings/departure-riturs/unmap'
  */
 unmap.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -90,7 +90,7 @@ unmap.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\BookingApiController::unmap
- * @see app/Http/Controllers/Api/BookingApiController.php:1402
+ * @see app/Http/Controllers/Api/BookingApiController.php:1449
  * @route '/api/bookings/departure-riturs/unmap'
  */
     const unmapForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -100,7 +100,7 @@ unmap.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\BookingApiController::unmap
- * @see app/Http/Controllers/Api/BookingApiController.php:1402
+ * @see app/Http/Controllers/Api/BookingApiController.php:1449
  * @route '/api/bookings/departure-riturs/unmap'
  */
         unmapForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

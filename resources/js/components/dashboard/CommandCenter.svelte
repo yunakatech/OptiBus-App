@@ -2,6 +2,7 @@
     import { X } from 'lucide-svelte';
     import { onDestroy } from 'svelte';
     import { Chart, type ChartConfiguration } from 'chart.js/auto';
+    import { themeState } from '@/lib/theme.svelte';
 
     let {
         monthlyTrend = [],
@@ -32,9 +33,71 @@
     });
     let dismissedTooltipKey = $state('');
     let activeTooltipSignature = $state('');
+    const { resolvedAppearance } = themeState();
+    const isDark = $derived(resolvedAppearance() === 'dark');
+
+    const chartTheme = () =>
+        isDark
+            ? {
+                  targetBorder: '#94a3b8',
+                  targetFillStart: 'rgba(148, 163, 184, 0.24)',
+                  targetFillEnd: 'rgba(148, 163, 184, 0.02)',
+                  revenueBorder: '#38bdf8',
+                  revenueFillStart: 'rgba(56, 189, 248, 0.36)',
+                  revenueFillEnd: 'rgba(56, 189, 248, 0.02)',
+                  targetPointFill: '#020617',
+                  revenuePointFill: '#38bdf8',
+                  targetPointBorder: '#94a3b8',
+                  revenuePointBorder: '#020617',
+                  tickColor: '#94a3b8',
+                  gridColor: 'rgba(148, 163, 184, 0.18)',
+                  panelClass:
+                      'border-border/80 bg-gradient-to-br from-slate-950 via-slate-950 to-sky-950/10 shadow-inner shadow-slate-950/40',
+                  titleClass: 'text-foreground',
+                  subtitleClass: 'text-muted-foreground',
+                  legendTextClass: 'text-muted-foreground',
+                  chartTitleClass: 'text-sky-300',
+                  chartBodyClass: 'text-slate-200/80',
+                  totalLabelClass: 'text-muted-foreground',
+                  totalValueClass: 'text-foreground',
+                  footerLabelClass: 'text-muted-foreground',
+                  footerValueClass: 'text-foreground',
+              }
+            : {
+                  targetBorder: '#cbd5e1',
+                  targetFillStart: 'rgba(203, 213, 225, 0.3)',
+                  targetFillEnd: 'rgba(203, 213, 225, 0.0)',
+                  revenueBorder: '#0ea5e9',
+                  revenueFillStart: 'rgba(14, 165, 233, 0.4)',
+                  revenueFillEnd: 'rgba(14, 165, 233, 0.01)',
+                  targetPointFill: '#ffffff',
+                  revenuePointFill: '#0ea5e9',
+                  targetPointBorder: '#cbd5e1',
+                  revenuePointBorder: '#ffffff',
+                  tickColor: '#64748b',
+                  gridColor: '#f1f5f9',
+                  panelClass:
+                      'border-border/80 bg-gradient-to-br from-background via-card to-sky-50/20 shadow-xs',
+                  titleClass: 'text-foreground',
+                  subtitleClass: 'text-muted-foreground',
+                  legendTextClass: 'text-muted-foreground',
+                  chartTitleClass: 'text-cyan-400',
+                  chartBodyClass: 'text-white/70',
+                  totalLabelClass: 'text-muted-foreground',
+                  totalValueClass: 'text-foreground',
+                  footerLabelClass: 'text-muted-foreground',
+                  footerValueClass: 'text-foreground',
+              };
 
     $effect(() => {
-        if (!chartCanvas || monthlyTrend.length === 0) return;
+        if (!chartCanvas) return;
+
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+
+        if (monthlyTrend.length === 0) return;
 
         const labels = monthlyTrend.map((t) => t.label || t.month_key);
         const dataTarget = monthlyTrend.map((t) =>
@@ -43,176 +106,164 @@
         const dataRevenue = monthlyTrend.map((t) => Number(t.revenue || 0));
 
         const ctx = chartCanvas.getContext('2d');
-        let gradientTarget: CanvasGradient | string =
-            'rgba(203, 213, 225, 0.2)'; // slate-300
-        let gradientRevenue: CanvasGradient | string =
-            'rgba(14, 165, 233, 0.4)'; // sky-500
+        const theme = chartTheme();
+        let gradientTarget: CanvasGradient | string = theme.targetFillStart;
+        let gradientRevenue: CanvasGradient | string = theme.revenueFillStart;
 
         if (ctx) {
             gradientTarget = ctx.createLinearGradient(0, 0, 0, 300);
-            gradientTarget.addColorStop(0, 'rgba(203, 213, 225, 0.3)');
-            gradientTarget.addColorStop(1, 'rgba(203, 213, 225, 0.0)');
+            gradientTarget.addColorStop(0, theme.targetFillStart);
+            gradientTarget.addColorStop(1, theme.targetFillEnd);
 
             gradientRevenue = ctx.createLinearGradient(0, 0, 0, 300);
-            gradientRevenue.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
-            gradientRevenue.addColorStop(1, 'rgba(14, 165, 233, 0.01)');
+            gradientRevenue.addColorStop(0, theme.revenueFillStart);
+            gradientRevenue.addColorStop(1, theme.revenueFillEnd);
         }
 
-        if (chartInstance) {
-            chartInstance.data.labels = labels;
-            chartInstance.data.datasets[0].data = dataTarget;
-            chartInstance.data.datasets[1].data = dataRevenue;
-            chartInstance.update();
-        } else {
-            chartInstance = new Chart(chartCanvas, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: 'Target Revenue',
-                            data: dataTarget,
-                            borderColor: '#cbd5e1', // slate-300
-                            backgroundColor: gradientTarget,
-                            borderWidth: 2,
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#cbd5e1',
-                            pointBorderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 6,
-                            pointHitRadius: 14,
-                            fill: true,
-                            tension: 0.4,
-                            borderDash: [5, 5],
-                        },
-                        {
-                            label: 'Total Revenue',
-                            data: dataRevenue,
-                            borderColor: '#0ea5e9', // sky-500
-                            backgroundColor: gradientRevenue,
-                            borderWidth: 2.5,
-                            pointBackgroundColor: '#0ea5e9',
-                            pointBorderColor: '#ffffff',
-                            pointRadius: 3,
-                            pointHoverRadius: 6,
-                            pointHitRadius: 14,
-                            fill: true,
-                            tension: 0.4,
-                        },
-                    ],
+        chartInstance = new Chart(chartCanvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Target Revenue',
+                        data: dataTarget,
+                        borderColor: theme.targetBorder,
+                        backgroundColor: gradientTarget,
+                        borderWidth: 2,
+                        pointBackgroundColor: theme.targetPointFill,
+                        pointBorderColor: theme.targetPointBorder,
+                        pointBorderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointHitRadius: 14,
+                        fill: true,
+                        tension: 0.4,
+                        borderDash: [5, 5],
+                    },
+                    {
+                        label: 'Total Revenue',
+                        data: dataRevenue,
+                        borderColor: theme.revenueBorder,
+                        backgroundColor: gradientRevenue,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: theme.revenuePointFill,
+                        pointBorderColor: theme.revenuePointBorder,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointHitRadius: 14,
+                        fill: true,
+                        tension: 0.4,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: {
-                                font: {
-                                    size: 10,
-                                    family: 'ui-sans-serif, system-ui',
-                                },
-                                color: '#64748b',
-                                maxRotation: 45,
-                                autoSkip: true,
-                                maxTicksLimit: 12,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: {
+                                size: 10,
+                                family: 'ui-sans-serif, system-ui',
                             },
-                            border: { display: false },
+                            color: theme.tickColor,
+                            maxRotation: 45,
+                            autoSkip: true,
+                            maxTicksLimit: 12,
                         },
-                        y: {
-                            grid: {
-                                color: '#f1f5f9',
-                                tickBorderDash: [4, 4],
-                            },
-                            ticks: { display: false },
-                            border: { display: false },
-                            beginAtZero: true,
-                        },
+                        border: { display: false },
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            enabled: false,
-                            external: (context) => {
-                                const { chart, tooltip } = context;
+                    y: {
+                        grid: {
+                            color: theme.gridColor,
+                            tickBorderDash: [4, 4],
+                        },
+                        ticks: { display: false },
+                        border: { display: false },
+                        beginAtZero: true,
+                    },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: false,
+                        external: (context) => {
+                            const { chart, tooltip } = context;
 
-                                if (tooltip.opacity === 0) {
-                                    tooltipData.visible = false;
-                                    dismissedTooltipKey = '';
-                                    activeTooltipSignature = '';
-                                    return;
-                                }
+                            if (tooltip.opacity === 0) {
+                                tooltipData.visible = false;
+                                dismissedTooltipKey = '';
+                                activeTooltipSignature = '';
+                                return;
+                            }
 
-                                if (!tooltip.dataPoints?.length) {
-                                    tooltipData.visible = false;
-                                    return;
-                                }
+                            if (!tooltip.dataPoints?.length) {
+                                tooltipData.visible = false;
+                                return;
+                            }
 
-                                const dataIndex =
-                                    tooltip.dataPoints[0].dataIndex;
-                                const label = String(labels[dataIndex] ?? '');
-                                const key = label || String(dataIndex);
+                            const dataIndex = tooltip.dataPoints[0].dataIndex;
+                            const label = String(labels[dataIndex] ?? '');
+                            const key = label || String(dataIndex);
 
-                                if (dismissedTooltipKey === key) {
-                                    tooltipData.visible = false;
-                                    return;
-                                }
+                            if (dismissedTooltipKey === key) {
+                                tooltipData.visible = false;
+                                return;
+                            }
 
-                                const left = tooltip.caretX;
-                                const width = chart.width;
-                                let align: 'left' | 'right' | 'center' =
-                                    'center';
+                            const left = tooltip.caretX;
+                            const width = chart.width;
+                            let align: 'left' | 'right' | 'center' = 'center';
 
-                                if (left < width * 0.2) align = 'left';
-                                else if (left > width * 0.8) align = 'right';
+                            if (left < width * 0.2) align = 'left';
+                            else if (left > width * 0.8) align = 'right';
 
-                                const nextSignature = [
-                                    key,
-                                    align,
-                                    ...tooltip.dataPoints.flatMap((point) => [
-                                        String(point.dataset.label ?? ''),
-                                        String(point.dataIndex ?? 0),
-                                        Number(point.raw ?? 0).toString(),
-                                    ]),
-                                ].join('|');
+                            const nextSignature = [
+                                key,
+                                align,
+                                ...tooltip.dataPoints.flatMap((point) => [
+                                    String(point.dataset.label ?? ''),
+                                    String(point.dataIndex ?? 0),
+                                    Number(point.raw ?? 0).toString(),
+                                ]),
+                            ].join('|');
 
-                                if (
-                                    activeTooltipSignature === nextSignature &&
-                                    tooltipData.visible
-                                ) {
-                                    return;
-                                }
+                            if (
+                                activeTooltipSignature === nextSignature &&
+                                tooltipData.visible
+                            ) {
+                                return;
+                            }
 
-                                activeTooltipSignature = nextSignature;
+                            activeTooltipSignature = nextSignature;
 
-                                tooltipData = {
-                                    visible: true,
-                                    x: tooltip.caretX,
-                                    y: tooltip.caretY,
-                                    title: label,
-                                    key,
-                                    align,
-                                    items: tooltip.dataPoints.map((point) => ({
-                                        label: String(
-                                            point.dataset.label ?? '',
-                                        ),
-                                        value: Number(point.raw ?? 0),
-                                        color: String(
-                                            point.dataset.borderColor ??
-                                                '#0ea5e9',
-                                        ),
-                                    })),
-                                };
-                            },
+                            tooltipData = {
+                                visible: true,
+                                x: tooltip.caretX,
+                                y: tooltip.caretY,
+                                title: label,
+                                key,
+                                align,
+                                items: tooltip.dataPoints.map((point) => ({
+                                    label: String(point.dataset.label ?? ''),
+                                    value: Number(point.raw ?? 0),
+                                    color: String(
+                                        point.dataset.borderColor ??
+                                            theme.revenueBorder,
+                                    ),
+                                })),
+                            };
                         },
                     },
                 },
-            });
-        }
+            },
+        });
     });
 
     onDestroy(() => {
@@ -245,19 +296,19 @@
 </script>
 
 <div
-    class="flex w-full flex-col rounded-lg border border-gray-200 bg-[#FFFFFF] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:p-5"
+    class={`flex w-full flex-col rounded-lg border p-4 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm sm:p-5 ${chartTheme().panelClass}`}
 >
     <!-- Header dan Legend Horisontal -->
     <div
         class="mb-4 flex flex-wrap items-start justify-between gap-y-3 gap-x-4"
     >
         <div class="min-w-0">
-            <p class="text-[13px] font-semibold text-slate-700">
-                Perbandingan <span class="font-bold text-slate-900"
+            <p class="text-[13px] font-semibold text-muted-foreground">
+                Perbandingan <span class={`font-bold ${chartTheme().titleClass}`}
                     >Target vs Revenue</span
                 >
             </p>
-            <p class="mt-0.5 text-[11px] text-slate-500">
+            <p class={`mt-0.5 text-[11px] ${chartTheme().subtitleClass}`}>
                 Pemantauan target omset bulanan terhadap pencapaian aktual
             </p>
         </div>
@@ -266,17 +317,17 @@
         <div class="flex shrink-0 items-center gap-3 pt-0.5">
             <div class="flex items-center gap-1.5">
                 <div
-                    class="h-2 w-2 rounded-sm border border-slate-300 bg-slate-100"
+                    class={`h-2 w-2 rounded-sm border ${isDark ? 'border-slate-500 bg-slate-700' : 'border-slate-300 bg-slate-100'}`}
                 ></div>
                 <span
-                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-[11px]"
+                    class={`text-[10px] font-bold uppercase tracking-wider sm:text-[11px] ${chartTheme().legendTextClass}`}
                     >Target</span
                 >
             </div>
             <div class="flex items-center gap-1.5">
                 <div class="h-2 w-2 rounded-sm bg-sky-500"></div>
                 <span
-                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-[11px]"
+                    class={`text-[10px] font-bold uppercase tracking-wider sm:text-[11px] ${chartTheme().legendTextClass}`}
                     >Revenue</span
                 >
             </div>
@@ -293,7 +344,7 @@
                         10}px;"
                 >
                     <div class="flex items-start justify-between gap-2">
-                        <p class="text-sm font-semibold text-cyan-400">
+                        <p class={`text-sm font-semibold ${chartTheme().chartTitleClass}`}>
                             {tooltipData.title}
                         </p>
                         <button
@@ -310,9 +361,7 @@
                             <div
                                 class="flex items-center justify-between gap-3"
                             >
-                                <span
-                                    class="flex items-center gap-1.5 text-white/68"
-                                >
+                                <span class={`flex items-center gap-1.5 ${chartTheme().chartBodyClass}`}>
                                     <span
                                         class="h-1.5 w-1.5 rounded-full"
                                         style={`background-color:${item.color}`}
