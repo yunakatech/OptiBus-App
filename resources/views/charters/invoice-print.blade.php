@@ -298,7 +298,7 @@
             </div>
             <div class="card">
                 <div class="label">Nopol</div>
-                <div class="value">{{ $invoice['armada_nopol'] ?? $invoice['unit_nopol'] ?? '-' }}</div>
+                <div class="value">{{ $invoice['armada_nopol'] ?? $invoice['unit_nama_kategori'] ?? '-' }}</div>
                 <div class="sub-value">Status {{ strtoupper((string) ($invoice['status'] ?? 'active')) }}</div>
             </div>
         </section>

@@ -12,7 +12,7 @@
         departure_time: string | null;
         pickup_point: string | null;
         drop_point: string | null;
-        unit_nopol: string | null;
+        unit_nama_kategori: string | null;
         unit_category: string | null;
         armada_nopol: string | null;
         driver_name: string | null;
@@ -235,7 +235,7 @@
                     </p>
                     <p class="text-sm text-muted-foreground">
                         {charterViewData.armada_nopol ??
-                            charterViewData.unit_nopol ??
+                            charterViewData.unit_nama_kategori ??
                             '-'}
                     </p>
                 </div>
@@ -366,7 +366,7 @@
                             <span
                                 class="text-right font-semibold text-foreground"
                                 >{charterViewData.armada_nopol ??
-                                    charterViewData.unit_nopol ??
+                                    charterViewData.unit_nama_kategori ??
                                     '-'}</span
                             >
                         </div>

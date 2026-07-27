@@ -169,7 +169,7 @@
         seats: number;
         layout: unknown[];
         unit_id: number;
-        nopol: string;
+        nama_kategori: string;
         unit_label: string;
         bop: number;
         segment_matches?: SegmentItem[];
@@ -179,7 +179,7 @@
             unit_id: number | null;
             layout?: unknown[];
             seats?: number;
-            nopol?: string;
+            nama_kategori?: string;
         }>;
     };
 
@@ -781,8 +781,8 @@
             return options.map((option, idx) => {
                 const value = Math.max(1, Number(option.unit_no || idx + 1));
                 const label = String(option.label ?? '').trim();
-                const nopol = String(option.nopol ?? '').trim();
-                const suffix = [label, nopol]
+                const namaKategori = String(option.nama_kategori ?? '').trim();
+                const suffix = [label, namaKategori]
                     .filter((item) => item !== '')
                     .join(' • ');
 
@@ -830,8 +830,8 @@
             return options.map((option, idx) => {
                 const value = Math.max(1, Number(option.unit_no || idx + 1));
                 const label = String(option.label ?? '').trim();
-                const nopol = String(option.nopol ?? '').trim();
-                const suffix = [label, nopol]
+                const namaKategori = String(option.nama_kategori ?? '').trim();
+                const suffix = [label, namaKategori]
                     .filter((item) => item !== '')
                     .join(' • ');
 
@@ -5981,8 +5981,8 @@
                                             <option value={schedule.jam}>
                                                 {schedule.jam}{schedule.unit_label
                                                     ? ` | ${schedule.unit_label}`
-                                                    : ''}{schedule.nopol
-                                                    ? ` | ${schedule.nopol}`
+                                                    : ''}{schedule.nama_kategori
+                                                    ? ` | ${schedule.nama_kategori}`
                                                     : ''}{scheduleSegmentCount(
                                                     schedule,
                                                 ) > 0

@@ -87,7 +87,7 @@
     };
     type UnitRow = {
         id: number;
-        nopol: string;
+        nama_kategori: string;
         merek: string | null;
         type: string | null;
         category: string | null;
@@ -110,14 +110,14 @@
         bop: number;
         unit_label: string | null;
         unit_id: number | null;
-        nopol: string | null;
+        unit_nama_kategori: string | null;
         segment_matches?: SegmentRow[];
         segment_jam_pickups?: string[];
         unit_options?: Array<{
             unit_no: number;
             label: string;
             unit_id: number | null;
-            nopol?: string | null;
+            nama_kategori?: string | null;
         }>;
     };
     type ScheduleDayGroup = {
@@ -463,7 +463,7 @@
         payment_status: string;
         bop_status: string;
         status: string;
-        unit_nopol: string;
+        unit_nama_kategori: string;
         armada_nopol: string;
         total: number;
     };
@@ -2102,14 +2102,14 @@
                     : true,
             )
             .filter((unit) => {
-                const nopol = String(unit.nopol ?? '').toLowerCase();
+                const namaKategori = String(unit.nama_kategori ?? '').toLowerCase();
                 const category = String(unit.category ?? '').toLowerCase();
                 const merek = String(unit.merek ?? '').toLowerCase();
                 const type = String(unit.type ?? '').toLowerCase();
 
                 return keyword === ''
                     ? true
-                    : nopol.includes(keyword) ||
+                    : namaKategori.includes(keyword) ||
                           category.includes(keyword) ||
                           merek.includes(keyword) ||
                           type.includes(keyword);
@@ -2128,13 +2128,13 @@
 
         return rows
             .filter((unit) => {
-                const nopol = String(unit.nopol ?? '').toLowerCase();
+                const namaKategori = String(unit.nama_kategori ?? '').toLowerCase();
                 const category = String(unit.category ?? '').toLowerCase();
                 const merek = String(unit.merek ?? '').toLowerCase();
                 const type = String(unit.type ?? '').toLowerCase();
 
                 return (
-                    nopol.includes(keyword) ||
+                    namaKategori.includes(keyword) ||
                     category.includes(keyword) ||
                     merek.includes(keyword) ||
                     type.includes(keyword)
@@ -3233,7 +3233,7 @@
     const openUnitEditor = (row: UnitRow) => {
         unitForm = {
             id: row.id,
-            nama_kategori: row.nopol,
+            nama_kategori: row.nama_kategori,
             pool_id: Number(row.pool_id ?? defaultPoolId()),
             category: normalizeUnitCategory(row.category),
             kapasitas: Number(row.kapasitas ?? 0),
@@ -3336,7 +3336,7 @@
         seatLayoutDraft = parseUnitLayout(template.layout);
         renumberSeats();
         layoutTemplateChoice = String(templateId);
-        layoutEditorMessage = `Layout disalin dari kategori ${template.nopol}.`;
+        layoutEditorMessage = `Layout disalin dari kategori ${template.nama_kategori}.`;
     };
 
     const addLayoutItem = (rowIdx: number, colIdx: number) => {
@@ -3492,7 +3492,7 @@
                 async () => {
                     await api('POST', '/api/admin/units', {
                         id: currentLayoutUnit.id,
-                        nopol: currentLayoutUnit.nopol,
+                        nama_kategori: currentLayoutUnit.nama_kategori,
                         category: normalizeUnitCategory(
                             currentLayoutUnit.category,
                         ),
@@ -3502,8 +3502,8 @@
                     });
                 },
                 {
-                    loadingMessage: `Menyimpan layout kategori ${currentLayoutUnit.nopol}...`,
-                    successMessage: `Layout kategori ${currentLayoutUnit.nopol} berhasil disimpan.`,
+                    loadingMessage: `Menyimpan layout kategori ${currentLayoutUnit.nama_kategori}...`,
+                    successMessage: `Layout kategori ${currentLayoutUnit.nama_kategori} berhasil disimpan.`,
                     errorMessage: 'Gagal menyimpan layout unit.',
                 },
             );
@@ -3514,7 +3514,7 @@
             }
 
             await loadUnits(false);
-            message = `Layout kategori ${currentLayoutUnit.nopol} diperbarui.`;
+            message = `Layout kategori ${currentLayoutUnit.nama_kategori} diperbarui.`;
         } catch (e) {
             layoutEditorMessage =
                 e instanceof Error ? e.message : 'Gagal menyimpan layout unit.';
@@ -4568,7 +4568,7 @@
         const selected = normalizeUnitCategory(unit.category);
 
         armadaForm.kategori = selected;
-        armadaTemplateSearch = unit.nopol ?? selected;
+        armadaTemplateSearch = unit.nama_kategori ?? selected;
         armadaTemplateLookupOpen = false;
     };
 
@@ -7309,7 +7309,7 @@
                                                         {#each units as unit (unit.id)}
                                                             <option
                                                                 value={unit.id}
-                                                                >{unit.nopol}{unit.category
+                                                                >{unit.nama_kategori}{unit.category
                                                                     ? ` • ${normalizeUnitCategory(unit.category)}`
                                                                     : ''}</option
                                                             >
@@ -7634,8 +7634,8 @@
                                                                 <span
                                                                     class="text-[11px] text-muted-foreground"
                                                                 >
-                                                                    {row.unit_label ||
-                                                                        row.nopol ||
+                                                    {row.unit_label ||
+                                                                        row.unit_nama_kategori ||
                                                                         'Belum ada label'}
                                                                 </span>
                                                             </div>
@@ -7666,7 +7666,7 @@
                                                                             <div
                                                                                 class="text-right text-[11px] text-muted-foreground"
                                                                             >
-                                                                                {item.nopol ||
+                                                                                {item.nama_kategori ||
                                                                                     'Layout belum dipilih'}
                                                                             </div>
                                                                         </div>
@@ -9497,7 +9497,7 @@
                                             <p
                                                 class="text-[13px] font-semibold"
                                             >
-                                                {row.nopol}
+                                                {row.nama_kategori}
                                             </p>
                                             <div
                                                 class="mt-1.5 flex flex-wrap gap-1.5"
@@ -9657,7 +9657,7 @@
                                                 <div
                                                     class="text-[11px] font-medium"
                                                 >
-                                                    {row.nopol}
+                                                    {row.nama_kategori}
                                                 </div>
                                             </td>
                                             <td class="px-3 py-2.5">
@@ -9936,7 +9936,7 @@
                                                                 <span>
                                                                     <span
                                                                         class="block text-sm font-semibold text-foreground"
-                                                                        >{unit.nopol}</span
+                                                                        >{unit.nama_kategori}</span
                                                                     >
                                                                     <span
                                                                         class="block text-[11px] text-muted-foreground"

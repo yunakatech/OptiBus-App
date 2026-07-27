@@ -127,9 +127,9 @@ class AdminOpsSettingsPageTest extends TestCase
                 ->component('PengaturanKategoriArmada')
                 ->where('initialTab', 'units')
                 ->loadDeferredProps('settings-data', fn (Assert $reload) => $reload
-                    ->where('settingsData.tab', 'units')
-                    ->has('settingsData.units', 1)
-                    ->where('settingsData.units.0.nopol', 'BIGBUS 40 SEAT'))
+                ->where('settingsData.tab', 'units')
+                ->has('settingsData.units', 1)
+                    ->where('settingsData.units.0.nama_kategori', 'BIGBUS 40 SEAT'))
                 ->loadDeferredProps('settings-masters', fn (Assert $reload) => $reload
                     ->where('settingsMasters.tab', 'units')
                     ->has('settingsMasters.pools', 1)),

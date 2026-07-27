@@ -280,7 +280,7 @@
                     </div>
                     <div class="kv-row">
                         <div class="kv-label">Armada</div>
-                        <div class="kv-value">{{ $document['unit_nopol'] ?: '-' }}</div>
+                        <div class="kv-value">{{ $document['unit_nama_kategori'] ?: '-' }}</div>
                     </div>
                 </div>
             </section>

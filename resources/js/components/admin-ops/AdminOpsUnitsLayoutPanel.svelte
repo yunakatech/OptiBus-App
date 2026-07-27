@@ -26,7 +26,7 @@
     type LayoutGrid = LayoutCell[][];
     type UnitRow = {
         id: number;
-        nopol: string;
+        nama_kategori: string;
         category: string | null;
         kapasitas: number | null;
         layout: string | null;
@@ -113,7 +113,7 @@
                             Nama Kategori Armada
                         </p>
                         <h3 class="text-xl font-semibold">
-                            {layoutUnit.nopol}
+                            {layoutUnit.nama_kategori}
                         </h3>
                         <p class="text-sm text-muted-foreground">
                             {normalizeUnitCategory(layoutUnit.category)} · Kapasitas
@@ -364,7 +364,7 @@
                                 >
                                 {#each layoutTemplateOptions as unit (unit.id)}
                                     <option value={unit.id}>
-                                        {unit.nopol} · {normalizeUnitCategory(
+                                        {unit.nama_kategori} · {normalizeUnitCategory(
                                             unit.category,
                                         )} · {unitSeatCount(unit.layout)} kursi
                                     </option>

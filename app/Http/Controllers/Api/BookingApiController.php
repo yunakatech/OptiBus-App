@@ -324,7 +324,7 @@ class BookingApiController extends Controller
                     'unit_id' => $optionUnitId > 0 ? $optionUnitId : null,
                     'layout' => $optionLayout,
                     'seats' => $optionSeats,
-                    'nopol' => strtoupper(trim((string) ($optionUnit->nama_kategori ?? ($baseUnit->nama_kategori ?? '')))),
+                    'nama_kategori' => strtoupper(trim((string) ($optionUnit->nama_kategori ?? ($baseUnit->nama_kategori ?? '')))),
                 ];
             }
 
@@ -339,7 +339,7 @@ class BookingApiController extends Controller
                         'unit_id' => $baseUnitId > 0 ? $baseUnitId : null,
                         'layout' => $baseLayoutData,
                         'seats' => $baseSeatCount,
-                        'nopol' => strtoupper(trim((string) ($baseUnit->nama_kategori ?? ''))),
+                        'nama_kategori' => strtoupper(trim((string) ($baseUnit->nama_kategori ?? ''))),
                     ];
                 }
             }
@@ -350,9 +350,9 @@ class BookingApiController extends Controller
                 ? $defaultOption['layout']
                 : $baseLayoutData;
             $defaultSeats = max(is_array($defaultOption) ? (int) ($defaultOption['seats'] ?? 0) : 0, $baseSeatCount);
-            $defaultNopol = strtoupper(trim((string) (is_array($defaultOption) ? ($defaultOption['nopol'] ?? '') : '')));
-            if ($defaultNopol === '') {
-                $defaultNopol = strtoupper(trim((string) ($baseUnit->nama_kategori ?? '')));
+            $defaultNamaKategori = strtoupper(trim((string) (is_array($defaultOption) ? ($defaultOption['nama_kategori'] ?? '') : '')));
+            if ($defaultNamaKategori === '') {
+                $defaultNamaKategori = strtoupper(trim((string) ($baseUnit->nama_kategori ?? '')));
             }
 
             $scheduleJam = substr((string) ($row->jam ?? ''), 0, 5);
@@ -385,7 +385,7 @@ class BookingApiController extends Controller
                 'seats' => $defaultSeats,
                 'layout' => $defaultLayout,
                 'unit_id' => $baseUnitId,
-                'nopol' => $defaultNopol,
+                'nama_kategori' => $defaultNamaKategori,
                 'unit_label' => (string) ($row->unit_label ?? ''),
                 'bop' => (float) ($row->bop ?? 0),
                 'unit_options' => $unitOptions,
@@ -773,16 +773,16 @@ class BookingApiController extends Controller
             'total_seats' => max($seatCount, count($layoutSeatTokens)),
             'layout_source' => $layoutSource,
             'layout_warning' => $layoutWarning,
-            'trip' => [
-                'rute' => $rute,
-                'tanggal' => $tanggal,
-                'jam' => $jam,
-                'unit' => $unit,
-                'unit_id' => $resolvedUnitId > 0 ? $resolvedUnitId : null,
-                'unit_label' => trim((string) ($matchedOption['label'] ?? ($matchedSchedule->unit_label ?? ''))),
-                'nopol' => strtoupper(trim((string) ($resolvedUnit->nama_kategori ?? ''))),
-            ],
-        ]);
+                'trip' => [
+                    'rute' => $rute,
+                    'tanggal' => $tanggal,
+                    'jam' => $jam,
+                    'unit' => $unit,
+                    'unit_id' => $resolvedUnitId > 0 ? $resolvedUnitId : null,
+                    'unit_label' => trim((string) ($matchedOption['label'] ?? ($matchedSchedule->unit_label ?? ''))),
+                    'nama_kategori' => strtoupper(trim((string) ($resolvedUnit->nama_kategori ?? ''))),
+                ],
+            ]);
     }
 
     public function emptyDeparture(Request $request): JsonResponse

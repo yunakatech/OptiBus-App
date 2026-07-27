@@ -215,7 +215,7 @@ class AdminOpsApiController extends Controller
             $query->leftJoin('routes as r', 's.route_id', '=', 'r.id');
         }
 
-        $select = ['s.id', 's.rute', 's.dow', 's.jam', 's.units', 's.unit_label', 's.unit_id', DB::raw('u.nama_kategori as unit_nopol')];
+        $select = ['s.id', 's.rute', 's.dow', 's.jam', 's.units', 's.unit_label', 's.unit_id', DB::raw('u.nama_kategori as unit_nama_kategori')];
         $select[] = $this->hasSchedulesBopColumn() ? 's.bop' : DB::raw('0 as bop');
         if ($hasRouteId) {
             $select[] = 's.route_id';
@@ -352,7 +352,7 @@ class AdminOpsApiController extends Controller
                     'su.unit_no',
                     'su.label',
                     'su.unit_id',
-                    DB::raw('u.nopol as unit_nopol'),
+                    DB::raw('u.nama_kategori as unit_nama_kategori'),
                 ]);
 
                 foreach ($optionRows as $item) {
@@ -367,7 +367,7 @@ class AdminOpsApiController extends Controller
                         'unit_no' => (int) ($item->unit_no ?? 0),
                         'label' => (string) ($item->label ?? ''),
                         'unit_id' => $item->unit_id !== null ? (int) $item->unit_id : null,
-                        'nopol' => (string) ($item->unit_nopol ?? ''),
+                        'nama_kategori' => (string) ($item->unit_nama_kategori ?? ''),
                     ];
                 }
             }
@@ -1764,7 +1764,7 @@ class AdminOpsApiController extends Controller
             'c.bop_status',
             'c.price',
             DB::raw($hasStatusColumn ? 'c.status as status' : "CASE WHEN c.payment_status = 'Canceled' THEN 'canceled' WHEN c.bop_status = 'done' THEN 'done' ELSE 'active' END as status"),
-            DB::raw('u.nopol as unit_nopol'),
+            DB::raw('u.nama_kategori as unit_nama_kategori'),
         ];
 
         if ($hasArmadaNopolColumn) {
@@ -1815,7 +1815,7 @@ class AdminOpsApiController extends Controller
                 'payment_status' => (string) ($row->payment_status ?? ''),
                 'bop_status' => (string) ($row->bop_status ?? ''),
                 'status' => (string) ($row->status ?? ''),
-                'unit_nopol' => (string) ($row->unit_nopol ?? ''),
+                'unit_nama_kategori' => (string) ($row->unit_nama_kategori ?? ''),
                 'armada_nopol' => (string) ($row->armada_nopol ?? ''),
                 'total' => (float) ($row->price ?? 0),
             ])
@@ -2251,7 +2251,7 @@ class AdminOpsApiController extends Controller
                         ? "CASE WHEN c.payment_status = 'Canceled' THEN 'canceled' WHEN c.bop_status = 'done' THEN 'done' ELSE 'active' END as status"
                         : "'active' as status"
                 )),
-            isset($unitColumns['nopol']) ? DB::raw('u.nopol as unit_nopol') : DB::raw('NULL as unit_nopol'),
+            isset($unitColumns['nama_kategori']) ? DB::raw('u.nama_kategori as unit_nama_kategori') : DB::raw('NULL as unit_nama_kategori'),
             isset($unitColumns['category']) ? DB::raw('u.category as unit_category') : DB::raw('NULL as unit_category'),
         ];
 
@@ -2486,7 +2486,7 @@ class AdminOpsApiController extends Controller
             'c.payment_status',
             'c.created_at',
             DB::raw($hasStatusColumn ? 'c.status as status' : "CASE WHEN c.payment_status = 'Canceled' THEN 'canceled' WHEN c.bop_status = 'done' THEN 'done' ELSE 'active' END as status"),
-            DB::raw('u.nopol as unit_nopol'),
+            DB::raw('u.nama_kategori as unit_nama_kategori'),
             DB::raw('u.category as unit_category'),
         ];
 
@@ -4296,7 +4296,6 @@ class AdminOpsApiController extends Controller
         $rows = $rawRows
             ->map(function ($row) use ($poolNames) {
                 $row->nama_kategori = trim((string) ($row->nama_kategori ?? ''));
-                $row->nopol = $row->nama_kategori;
                 $row->category = $this->normalizeUnitCategory($row->category ?? null);
                 $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
                 $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
