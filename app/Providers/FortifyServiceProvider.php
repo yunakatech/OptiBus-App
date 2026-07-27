@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Fortify;
 
@@ -25,6 +26,20 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(LogoutResponseContract::class, function () {
+            return new class implements LogoutResponseContract
+            {
+                public function toResponse($request)
+                {
+                    if ($request->wantsJson()) {
+                        return new JsonResponse('', 204);
+                    }
+
+                    return redirect()->route('login');
+                }
+            };
+        });
+
         $this->app->singleton(RegisterResponseContract::class, function () {
             return new class implements RegisterResponseContract
             {
