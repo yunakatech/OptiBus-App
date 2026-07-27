@@ -109,6 +109,9 @@
                         Layout Designer
                     </p>
                     <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                            Nama Kategori Armada
+                        </p>
                         <h3 class="text-xl font-semibold">
                             {layoutUnit.nopol}
                         </h3>
@@ -310,7 +313,7 @@
                             Duplikasi Dari Kategori Lain
                         </h4>
                         <p class="text-xs text-muted-foreground">
-                            Pilih kategori/model lain jika ingin menjadikannya
+                            Pilih kategori armada lain jika ingin menjadikannya
                             template awal tanpa membuka popup terpisah.
                         </p>
                     </div>
@@ -339,10 +342,10 @@
                             <span
                                 class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                             >
-                                Cari template
+                                Cari kategori
                             </span>
                             <Input
-                                placeholder="Cari kategori/model referensi"
+                                placeholder="Cari kategori referensi"
                                 bind:value={layoutTemplateSearch}
                             />
                         </label>
@@ -350,14 +353,14 @@
                             <span
                                 class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                             >
-                                Template referensi
+                                Kategori referensi
                             </span>
                             <select
                                 class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                                 bind:value={layoutTemplateChoice}
                             >
                                 <option value=""
-                                    >Pilih template layout referensi</option
+                                    >Pilih kategori layout referensi</option
                                 >
                                 {#each layoutTemplateOptions as unit (unit.id)}
                                     <option value={unit.id}>

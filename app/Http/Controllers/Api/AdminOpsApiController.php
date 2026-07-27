@@ -4338,7 +4338,8 @@ class AdminOpsApiController extends Controller
 
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
-            'nopol' => ['required', 'string', 'max:50'],
+            'nopol' => ['nullable', 'string', 'max:50'],
+            'nama_kategori' => ['nullable', 'string', 'max:50'],
             'pool_id' => ['nullable', 'integer', 'min:1'],
             'merek' => ['nullable', 'string', 'max:120'],
             'type' => ['nullable', 'string', 'max:120'],
@@ -4352,7 +4353,6 @@ class AdminOpsApiController extends Controller
 
         try {
             $id = (int) ($data['id'] ?? 0);
-            $nopol = strtoupper(trim((string) $data['nopol']));
             $existing = null;
             if ($id > 0) {
                 $existingQuery = DB::table('units')->where('id', $id);
@@ -4375,9 +4375,14 @@ class AdminOpsApiController extends Controller
                 return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
             }
 
+            $templateName = strtoupper(trim((string) ($data['nama_kategori'] ?? $data['nopol'] ?? '')));
+            if ($templateName === '') {
+                return $this->error('Nama kategori armada wajib diisi.', 422);
+            }
+
             $duplicate = SchemaCache::hasColumn('units', 'nopol')
                 && DB::table('units')
-                    ->whereRaw('UPPER(nopol) = ?', [$nopol])
+                    ->whereRaw('UPPER(nopol) = ?', [$templateName])
                     ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
                         PoolScope::applyTenantScope($q, 'tenant_id');
                     })
@@ -4385,11 +4390,11 @@ class AdminOpsApiController extends Controller
                     ->exists();
 
             if ($duplicate) {
-                return $this->error('Nama template kategori armada sudah terdaftar.', 409);
+                return $this->error('Nama kategori armada sudah terdaftar di tenant ini.', 409);
             }
 
             $payload = [
-                'nopol' => $nopol,
+                'nopol' => $templateName,
                 // Preserve legacy fields that are no longer shown in the simplified UI.
                 'merek' => $this->nullable($data['merek'] ?? ($existing->merek ?? null)),
                 'type' => $this->nullable($data['type'] ?? ($existing->type ?? null)),
@@ -4424,7 +4429,7 @@ class AdminOpsApiController extends Controller
 
             $sqlState = (string) ($e->errorInfo[0] ?? $e->getCode());
             if (in_array($sqlState, ['23000', '23505'], true)) {
-                return $this->error('Nama template kategori armada sudah terdaftar.', 409);
+                return $this->error('Nama kategori armada sudah terdaftar di tenant ini.', 409);
             }
 
             return $this->error('Gagal menyimpan kategori armada. Periksa data lalu coba lagi.', 500);

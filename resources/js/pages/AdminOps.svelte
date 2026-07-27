@@ -841,7 +841,7 @@
     type UnitCategory = (typeof unitCategoryOptions)[number];
     type UnitForm = {
         id: number;
-        nama_model: string;
+        nama_kategori: string;
         pool_id: number;
         category: UnitCategory;
         kapasitas: number;
@@ -873,7 +873,7 @@
     };
     let unitForm = $state<UnitForm>({
         id: 0,
-        nama_model: '',
+        nama_kategori: '',
         pool_id: 0,
         category: defaultUnitCategory,
         kapasitas: 0,
@@ -3233,7 +3233,7 @@
     const openUnitEditor = (row: UnitRow) => {
         unitForm = {
             id: row.id,
-            nama_model: row.nopol,
+            nama_kategori: row.nopol,
             pool_id: Number(row.pool_id ?? defaultPoolId()),
             category: normalizeUnitCategory(row.category),
             kapasitas: Number(row.kapasitas ?? 0),
@@ -3336,7 +3336,7 @@
         seatLayoutDraft = parseUnitLayout(template.layout);
         renumberSeats();
         layoutTemplateChoice = String(templateId);
-        layoutEditorMessage = `Layout disalin dari ${template.nopol}.`;
+        layoutEditorMessage = `Layout disalin dari kategori ${template.nopol}.`;
     };
 
     const addLayoutItem = (rowIdx: number, colIdx: number) => {
@@ -3502,19 +3502,19 @@
                     });
                 },
                 {
-                    loadingMessage: `Menyimpan layout ${currentLayoutUnit.nopol}...`,
-                    successMessage: `Layout ${currentLayoutUnit.nopol} berhasil disimpan.`,
+                    loadingMessage: `Menyimpan layout kategori ${currentLayoutUnit.nopol}...`,
+                    successMessage: `Layout kategori ${currentLayoutUnit.nopol} berhasil disimpan.`,
                     errorMessage: 'Gagal menyimpan layout unit.',
                 },
             );
-            layoutEditorMessage = 'Layout unit berhasil disimpan.';
+            layoutEditorMessage = 'Layout kategori armada berhasil disimpan.';
 
             if (unitForm.id === currentLayoutUnit.id) {
                 unitForm.layout = JSON.stringify(seatLayoutDraft);
             }
 
             await loadUnits(false);
-            message = `Layout ${currentLayoutUnit.nopol} diperbarui.`;
+            message = `Layout kategori ${currentLayoutUnit.nopol} diperbarui.`;
         } catch (e) {
             layoutEditorMessage =
                 e instanceof Error ? e.message : 'Gagal menyimpan layout unit.';
@@ -4499,7 +4499,7 @@
     const resetUnitForm = () =>
         (unitForm = {
             id: 0,
-            nama_model: '',
+            nama_kategori: '',
             pool_id: defaultPoolId(),
             category: defaultUnitCategory,
             kapasitas: 0,
@@ -5090,7 +5090,7 @@
                 async () => {
                     const unitPayload: Record<string, unknown> = {
                         id: unitForm.id || undefined,
-                        nopol: unitForm.nama_model,
+                        nama_kategori: unitForm.nama_kategori,
                         pool_id: poolPayloadValue(unitForm.pool_id),
                         category: normalizeUnitCategory(unitForm.category),
                         kapasitas: Number(unitForm.kapasitas || 0),
@@ -9375,11 +9375,11 @@
                             <label class="space-y-1.5">
                                 <span
                                     class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >Nama Template</span
+                                    >Nama Kategori</span
                                 >
                                 <Input
-                                    placeholder="Contoh: Unit 1 / Bigbus 40 Seat"
-                                    bind:value={unitForm.nama_model}
+                                    placeholder="Contoh: Bigbus 40 Seat"
+                                    bind:value={unitForm.nama_kategori}
                                     required
                                 />
                             </label>
