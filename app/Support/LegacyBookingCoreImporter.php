@@ -117,7 +117,7 @@ class LegacyBookingCoreImporter
     {
         return [
             'routes' => [
-                'id', 'name', 'origin', 'destination', 'distance_km', 'duration_minutes', 'created_at',
+                'id', 'name', 'origin', 'destination', 'created_at',
             ],
             'units' => [
                 'id', 'nopol', 'merek', 'type', 'category', 'tahun', 'warna', 'kapasitas', 'status', 'layout', 'created_at',

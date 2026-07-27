@@ -572,34 +572,34 @@ class TenantProvisioningService
 
         $category = $this->normalizeUnitCategory($input['unit_category'] ?? 'Minibus');
         $capacity = max(0, (int) ($input['seat_capacity'] ?? 0));
-        $templateName = trim((string) ($input['unit_template_name'] ?? ''));
-        if ($templateName === '' && (trim((string) ($input['unit_category'] ?? '')) !== '' || $capacity > 0)) {
-            $templateName = trim($category.' '.($capacity > 0 ? $capacity.' Seat' : ''));
+        $namaKategori = trim((string) ($input['unit_template_name'] ?? ''));
+        if ($namaKategori === '' && (trim((string) ($input['unit_category'] ?? '')) !== '' || $capacity > 0)) {
+            $namaKategori = trim($category.' '.($capacity > 0 ? $capacity.' Seat' : ''));
         }
-        if ($templateName === '') {
-            $templateName = trim((string) ($input['unit_nopol'] ?? ''));
+        if ($namaKategori === '') {
+            $namaKategori = trim((string) ($input['unit_nopol'] ?? ''));
         }
 
-        $nopol = strtoupper($templateName);
-        if ($nopol === '' && trim((string) ($input['unit_category'] ?? '')) === '' && $capacity <= 0) {
+        $namaKategori = strtoupper($namaKategori);
+        if ($namaKategori === '' && trim((string) ($input['unit_category'] ?? '')) === '' && $capacity <= 0) {
             return 0;
         }
-        if ($nopol === '') {
-            $nopol = 'SETUP-'.$tenantId;
+        if ($namaKategori === '') {
+            $namaKategori = 'SETUP-'.$tenantId;
         }
 
         $existing = DB::table('units')
             ->when(Schema::hasColumn('units', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
-            ->whereRaw('UPPER(nama_kategori) = ?', [$nopol])
+            ->whereRaw('UPPER(nama_kategori) = ?', [$namaKategori])
             ->value('id');
         if ($existing) {
             return (int) $existing;
         }
 
-        $nopol = $this->uniqueOnboardingUnitTemplateName($tenantId, $nopol);
+        $namaKategori = $this->uniqueOnboardingUnitTemplateName($tenantId, $namaKategori);
 
         $payload = [
-            'nama_kategori' => $nopol,
+            'nama_kategori' => $namaKategori,
             'merek' => null,
             'type' => null,
             'category' => $category,
@@ -634,21 +634,21 @@ class TenantProvisioningService
             return 0;
         }
 
-        $nopol = strtoupper(trim((string) ($input['unit_nopol'] ?? '')));
-        if ($nopol === '') {
+        $armadaNopol = strtoupper(trim((string) ($input['unit_nopol'] ?? '')));
+        if ($armadaNopol === '') {
             return 0;
         }
 
         $existing = DB::table('armadas')
             ->when(Schema::hasColumn('armadas', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
-            ->whereRaw('UPPER(nopol) = ?', [$nopol])
+            ->whereRaw('UPPER(nopol) = ?', [$armadaNopol])
             ->value('id');
         if ($existing) {
             return (int) $existing;
         }
 
         $payload = [
-            'nopol' => $nopol,
+            'nopol' => $armadaNopol,
             'merk' => $this->nullableString($input['armada_merk'] ?? null),
             'tahun' => 0,
             'warna' => null,
