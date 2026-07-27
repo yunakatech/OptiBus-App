@@ -83,6 +83,7 @@
     let ticketPrice = $state('');
     let scheduleDays = $state<number[]>([]);
     let departureTime = $state('');
+    let unitTemplateName = $state('');
     let unitCategory = $state('');
     let seatCapacity = $state('');
     let unitNopol = $state('');
@@ -163,6 +164,11 @@
         />
         <input type="hidden" name="ticket_price" value={ticketPrice} />
         <input type="hidden" name="departure_time" value={departureTime} />
+        <input
+            type="hidden"
+            name="unit_template_name"
+            value={unitTemplateName}
+        />
         <input type="hidden" name="unit_category" value={unitCategory} />
         <input type="hidden" name="seat_capacity" value={seatCapacity} />
         <input type="hidden" name="unit_nopol" value={unitNopol} />
@@ -422,6 +428,17 @@
                     </div>
                 {:else if currentStep === 3}
                     <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="unit_template_name_view"
+                                >Nama kategori</Label
+                            >
+                            <Input
+                                id="unit_template_name_view"
+                                bind:value={unitTemplateName}
+                                placeholder="Minibus 8 Seat"
+                            />
+                            <InputError message={errors.unit_template_name} />
+                        </div>
                         <div class="grid gap-2">
                             <Label for="unit_category_view">Kategori</Label>
                             <select

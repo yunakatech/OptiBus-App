@@ -76,6 +76,7 @@ class OnboardingController extends Controller
             'schedule_days' => ['nullable', 'array'],
             'schedule_days.*' => ['nullable', 'integer', 'min:0', 'max:6'],
             'departure_time' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'unit_template_name' => ['nullable', 'string', 'max:50'],
             'unit_category' => ['nullable', 'string', 'max:120'],
             'seat_capacity' => ['nullable', 'integer', 'min:0', 'max:200'],
             'unit_nopol' => ['nullable', 'string', 'max:50'],

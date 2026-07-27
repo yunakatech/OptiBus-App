@@ -570,9 +570,17 @@ class TenantProvisioningService
             return 0;
         }
 
-        $nopol = strtoupper(trim((string) ($input['unit_nopol'] ?? '')));
         $category = $this->normalizeUnitCategory($input['unit_category'] ?? 'Minibus');
         $capacity = max(0, (int) ($input['seat_capacity'] ?? 0));
+        $templateName = trim((string) ($input['unit_template_name'] ?? ''));
+        if ($templateName === '' && (trim((string) ($input['unit_category'] ?? '')) !== '' || $capacity > 0)) {
+            $templateName = trim($category.' '.($capacity > 0 ? $capacity.' Seat' : ''));
+        }
+        if ($templateName === '') {
+            $templateName = trim((string) ($input['unit_nopol'] ?? ''));
+        }
+
+        $nopol = strtoupper($templateName);
         if ($nopol === '' && trim((string) ($input['unit_category'] ?? '')) === '' && $capacity <= 0) {
             return 0;
         }
@@ -587,6 +595,8 @@ class TenantProvisioningService
         if ($existing) {
             return (int) $existing;
         }
+
+        $nopol = $this->uniqueOnboardingUnitTemplateName($tenantId, $nopol);
 
         $payload = [
             'nopol' => $nopol,
@@ -879,6 +889,36 @@ class TenantProvisioningService
             'microbus' => 'Microbus',
             default => 'Minibus',
         };
+    }
+
+    private function uniqueOnboardingUnitTemplateName(int $tenantId, string $name): string
+    {
+        $base = trim($name);
+        if ($base === '') {
+            $base = 'SETUP-'.$tenantId;
+        }
+
+        $base = strtoupper(substr($base, 0, 50));
+        if (! Schema::hasTable('units') || ! Schema::hasColumn('units', 'nopol')) {
+            return $base;
+        }
+
+        if (! DB::table('units')->whereRaw('UPPER(nopol) = ?', [$base])->exists()) {
+            return $base;
+        }
+
+        $suffix = '-T'.$tenantId;
+        $candidateBase = substr($base, 0, max(1, 50 - strlen($suffix)));
+        $candidate = $candidateBase.$suffix;
+        $counter = 2;
+
+        while (DB::table('units')->whereRaw('UPPER(nopol) = ?', [$candidate])->exists()) {
+            $suffix = '-T'.$tenantId.'-'.$counter;
+            $candidate = substr($base, 0, max(1, 50 - strlen($suffix))).$suffix;
+            $counter++;
+        }
+
+        return $candidate;
     }
 
     private function normalizeTime(mixed $value): string
