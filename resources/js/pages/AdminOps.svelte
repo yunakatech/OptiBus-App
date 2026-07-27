@@ -5110,15 +5110,17 @@
                     successMessage: unitForm.id
                         ? 'Kategori armada berhasil diperbarui.'
                         : 'Kategori armada berhasil dibuat.',
-                    errorMessage: 'Gagal simpan unit.',
+                    errorMessage: 'Gagal simpan kategori armada.',
                 },
             );
-            message = unitForm.id ? 'Unit updated.' : 'Unit created.';
+            message = unitForm.id
+                ? 'Kategori armada berhasil diperbarui.'
+                : 'Kategori armada berhasil dibuat.';
             resetUnitForm();
             await loadActiveTab(false);
             activeMode = 'data';
         } catch (e) {
-            error = e instanceof Error ? e.message : 'Gagal simpan unit.';
+            error = e instanceof Error ? e.message : 'Gagal simpan kategori armada.';
         } finally {
             clearSubmitKey('unit');
         }
@@ -7249,7 +7251,7 @@
                                     <p
                                         class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                     >
-                                        Konfigurasi Unit Keberangkatan
+                                        Konfigurasi Keberangkatan
                                     </p>
                                     <p
                                         class="mt-1 text-xs text-muted-foreground"
@@ -9571,7 +9573,7 @@
                                                     onclick={() =>
                                                         void removeItem(
                                                             `/api/admin/units/${row.id}`,
-                                                            'Unit deleted.',
+                                                            'Kategori armada dihapus.',
                                                         )}
                                                 >
                                                     <Trash2
@@ -9752,7 +9754,7 @@
                                                                 onclick={() =>
                                                                     void removeItem(
                                                                         `/api/admin/units/${row.id}`,
-                                                                        'Unit deleted.',
+                                                                        'Kategori armada dihapus.',
                                                                     )}
                                                             >
                                                                 <Trash2

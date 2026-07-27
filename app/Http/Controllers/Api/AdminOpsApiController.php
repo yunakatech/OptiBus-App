@@ -4486,7 +4486,7 @@ class AdminOpsApiController extends Controller
         $this->applyWriteTenantScopeIfExists($unitQuery, 'category_armada');
         $this->applyPoolScopeIfExists($unitQuery, 'category_armada');
         if (! $unitQuery->exists()) {
-            return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
+            return $this->error('Kategori armada tidak ditemukan untuk pool aktif.', 404);
         }
 
         DB::table('schedules')->where('unit_id', $id)->update(['unit_id' => null]);
@@ -4498,7 +4498,7 @@ class AdminOpsApiController extends Controller
         $this->applyPoolScopeIfExists($delete, 'category_armada');
         $delete->delete();
 
-        return $this->ok(['message' => 'Unit deleted.']);
+        return $this->ok(['message' => 'Kategori armada dihapus.']);
     }
 
     public function armadaCategoriesIndex(): JsonResponse
