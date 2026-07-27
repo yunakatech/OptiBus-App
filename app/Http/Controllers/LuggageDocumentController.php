@@ -56,7 +56,7 @@ class LuggageDocumentController extends Controller
 
         $row = DB::table('luggages as l')
             ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id')
-            ->leftJoin('units as u', 'l.unit_id', '=', 'u.id')
+            ->leftJoin('category_armada as u', 'l.unit_id', '=', 'u.id')
             ->leftJoin('routes as r', 'l.rute_id', '=', 'r.id')
             ->where('l.id', $id)
             ->select([

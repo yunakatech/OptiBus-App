@@ -39,7 +39,7 @@ class OnboardingSetupTest extends TestCase
         ]);
         $this->assertSame(0, DB::table('segments')->where('tenant_id', $tenantId)->count());
         $this->assertSame(0, DB::table('schedules')->where('tenant_id', $tenantId)->count());
-        $this->assertSame(0, DB::table('units')->where('tenant_id', $tenantId)->count());
+        $this->assertSame(0, DB::table('category_armada')->where('tenant_id', $tenantId)->count());
         $this->assertSame(0, DB::table('armadas')->where('tenant_id', $tenantId)->count());
         $this->assertSame(0, DB::table('drivers')->where('tenant_id', $tenantId)->count());
     }
@@ -231,11 +231,11 @@ class OnboardingSetupTest extends TestCase
         $secondTenantId = (int) DB::table('users')
             ->where('id', $secondUser->id)
             ->value('tenant_id');
-        $secondUnitName = (string) DB::table('units')
+        $secondUnitName = (string) DB::table('category_armada')
             ->where('tenant_id', $secondTenantId)
             ->value('nama_kategori');
 
-        $this->assertSame('MINIBUS 8 SEAT', (string) DB::table('units')
+        $this->assertSame('MINIBUS 8 SEAT', (string) DB::table('category_armada')
             ->where('tenant_id', (int) DB::table('users')->where('id', $firstUser->id)->value('tenant_id'))
             ->value('nama_kategori'));
         $this->assertNotSame('MINIBUS 8 SEAT', $secondUnitName);
@@ -259,7 +259,7 @@ class OnboardingSetupTest extends TestCase
         $tenantId = (int) DB::table('users')->where('id', $user->id)->value('tenant_id');
         $poolId = (int) DB::table('pools')->where('tenant_id', $tenantId)->value('id');
 
-        DB::table('units')->insert([
+        DB::table('category_armada')->insert([
             'nama_kategori' => 'LEGACY UNIT',
             'category' => 'Minibus',
             'kapasitas' => 8,

@@ -42,7 +42,7 @@ class BookingApiTest extends TestCase
         $date = '2026-05-15';
         $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
 
-        $unitId = DB::table('units')->insertGetId([
+        $unitId = DB::table('category_armada')->insertGetId([
             'nama_kategori' => 'DD 1234 XX',
             'kapasitas' => 12,
             'status' => 'Aktif',
@@ -301,7 +301,7 @@ class BookingApiTest extends TestCase
         $date = '2026-08-15';
         $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
 
-        $unitId = DB::table('units')->insertGetId([
+        $unitId = DB::table('category_armada')->insertGetId([
             'nama_kategori' => 'DD 7777 XX',
             'kapasitas' => 12,
             'status' => 'Aktif',

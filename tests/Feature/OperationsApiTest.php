@@ -43,7 +43,7 @@ class OperationsApiTest extends TestCase
             'created_at' => now(),
         ]);
 
-        DB::table('units')->insert([
+        DB::table('category_armada')->insert([
             'nama_kategori' => 'DD 1122 ZZ',
             'kapasitas' => 12,
             'status' => 'Aktif',
@@ -503,7 +503,7 @@ class OperationsApiTest extends TestCase
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
 
-        $unitId = DB::table('units')->insertGetId([
+        $unitId = DB::table('category_armada')->insertGetId([
             'nama_kategori' => 'DD 4400 PP',
             'kapasitas' => 14,
             'status' => 'Aktif',
@@ -564,7 +564,7 @@ class OperationsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $unitId = DB::table('units')->insertGetId([
+        $unitId = DB::table('category_armada')->insertGetId([
             'nama_kategori' => 'DD 5566 QQ',
             'kapasitas' => 14,
             'status' => 'Aktif',

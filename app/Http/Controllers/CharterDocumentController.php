@@ -60,7 +60,7 @@ class CharterDocumentController extends Controller
         $hasStatusColumn = Schema::hasColumn('charters', 'status');
 
         $query = DB::table('charters as c')
-            ->leftJoin('units as u', 'c.unit_id', '=', 'u.id')
+            ->leftJoin('category_armada as u', 'c.unit_id', '=', 'u.id')
             ->where('c.id', $id);
 
         if ($canJoinArmadas) {

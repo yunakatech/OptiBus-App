@@ -277,7 +277,7 @@ class BookingApiController extends Controller
         $unitMap = [];
         $unitIds = array_values(array_unique(array_filter($unitIds, static fn ($id) => (int) $id > 0)));
         if (! empty($unitIds)) {
-            $unitMap = DB::table('units')
+            $unitMap = DB::table('category_armada')
                 ->whereIn('id', $unitIds)
                 ->get(['id', 'kapasitas', 'layout', 'nama_kategori'])
                 ->keyBy(static fn ($row) => (int) ($row->id ?? 0))
@@ -613,7 +613,7 @@ class BookingApiController extends Controller
         $unitMap = [];
         $unitIds = array_values(array_unique(array_filter($unitIds, static fn ($id) => (int) $id > 0)));
         if (! empty($unitIds)) {
-            $unitMap = DB::table('units')
+            $unitMap = DB::table('category_armada')
                 ->whereIn('id', $unitIds)
                 ->get(['id', 'kapasitas', 'layout', 'nama_kategori'])
                 ->keyBy(static fn ($row) => (int) ($row->id ?? 0))
@@ -688,14 +688,14 @@ class BookingApiController extends Controller
 
             $armadaCategory = trim((string) ($assignment->armada_kategori ?? ''));
             if ($armadaCategory !== '') {
-                $candidateCount = (int) DB::table('units')
+                $candidateCount = (int) DB::table('category_armada')
                     ->whereRaw('UPPER(category) = ?', [strtoupper($armadaCategory)])
                     ->count();
 
                 if ($candidateCount > 1) {
                     $layoutWarning = 'Layout keberangkatan belum bisa dipastikan otomatis karena jadwal untuk jam ini belum dikonfigurasi dan kategori armada memiliki lebih dari satu template kursi.';
                 } elseif ($candidateCount === 1) {
-                    $fallbackUnit = DB::table('units')
+                    $fallbackUnit = DB::table('category_armada')
                         ->whereRaw('UPPER(category) = ?', [strtoupper($armadaCategory)])
                         ->first(['id', 'layout', 'kapasitas', 'nama_kategori']);
 
