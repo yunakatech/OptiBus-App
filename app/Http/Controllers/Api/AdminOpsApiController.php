@@ -208,7 +208,7 @@ class AdminOpsApiController extends Controller
         $dow = $request->query('dow');
 
         $query = DB::table('schedules as s')
-            ->leftJoin('units as u', 's.unit_id', '=', 'u.id');
+            ->leftJoin('category_armada as u', 's.unit_id', '=', 'u.id');
         $this->applyTenantScopeIfExists($query, 'schedules', 's');
 
         if ($hasRouteId) {
@@ -342,7 +342,7 @@ class AdminOpsApiController extends Controller
             $scheduleIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->filter(fn ($id) => $id > 0)->values()->all();
             if (! empty($scheduleIds)) {
                 $optionRows = DB::table('schedule_units as su')
-                    ->leftJoin('units as u', 'su.unit_id', '=', 'u.id')
+                    ->leftJoin('category_armada as u', 'su.unit_id', '=', 'u.id')
                     ->whereIn('schedule_id', $scheduleIds)
                     ->orderBy('su.schedule_id')
                     ->orderBy('su.unit_no');
@@ -485,10 +485,10 @@ class AdminOpsApiController extends Controller
         )));
         $unitsById = [];
         if (! empty($lookupUnitIds)) {
-            $unitsQuery = DB::table('units')
+            $unitsQuery = DB::table('category_armada')
                 ->whereIn('id', $lookupUnitIds);
-            $this->applyWriteTenantScopeIfExists($unitsQuery, 'units');
-            $this->applyPoolScopeIfExists($unitsQuery, 'units');
+            $this->applyWriteTenantScopeIfExists($unitsQuery, 'category_armada');
+            $this->applyPoolScopeIfExists($unitsQuery, 'category_armada');
             $unitsById = $unitsQuery->get(['id', 'kapasitas', 'layout'])
                 ->keyBy(static fn ($row) => (int) ($row->id ?? 0))
                 ->all();
@@ -1796,7 +1796,7 @@ class AdminOpsApiController extends Controller
         $pagination = $this->paginationMeta((int) ($summaryRow->total_rows ?? 0), $page, $perPage);
 
         $rows = (clone $baseQuery)
-            ->leftJoin('units as u', 'c.unit_id', '=', 'u.id')
+            ->leftJoin('category_armada as u', 'c.unit_id', '=', 'u.id')
             ->orderByDesc('c.start_date')
             ->orderByDesc('c.id')
             ->forPage($pagination['page'], $pagination['per_page'])
@@ -2207,8 +2207,8 @@ class AdminOpsApiController extends Controller
         $hasDepartureTimeColumn = isset($charterColumns['departure_time']);
         $hasPaymentStatusColumn = isset($charterColumns['payment_status']);
         $hasBopStatusColumn = isset($charterColumns['bop_status']);
-        $canJoinUnits = $hasUnitIdColumn && SchemaCache::hasTable('units');
-        $unitColumns = $canJoinUnits ? array_flip(Schema::getColumnListing('units')) : [];
+        $canJoinUnits = $hasUnitIdColumn && SchemaCache::hasTable('category_armada');
+        $unitColumns = $canJoinUnits ? array_flip(Schema::getColumnListing('category_armada')) : [];
         $canJoinArmadas = $hasArmadaIdColumn && SchemaCache::hasTable('armadas');
         $armadaColumns = $canJoinArmadas ? array_flip(Schema::getColumnListing('armadas')) : [];
         $selectColumn = static fn (array $columns, string $column, string $alias, string $prefix = 'c') => isset($columns[$column])
@@ -2218,7 +2218,7 @@ class AdminOpsApiController extends Controller
         $query = DB::table('charters as c');
 
         if ($canJoinUnits) {
-            $query->leftJoin('units as u', 'c.unit_id', '=', 'u.id');
+            $query->leftJoin('category_armada as u', 'c.unit_id', '=', 'u.id');
         }
 
         if ($canJoinArmadas) {
@@ -2457,7 +2457,7 @@ class AdminOpsApiController extends Controller
         $canJoinArmadas = $hasArmadaIdColumn && SchemaCache::hasTable('armadas');
 
         $query = DB::table('charters as c')
-            ->leftJoin('units as u', 'c.unit_id', '=', 'u.id')
+            ->leftJoin('category_armada as u', 'c.unit_id', '=', 'u.id')
             ->where('c.id', $id);
 
         if ($canJoinArmadas) {
@@ -2591,11 +2591,11 @@ class AdminOpsApiController extends Controller
         $selectedUnit = null;
         $selectedUnitCategory = '';
         if ($unitId > 0) {
-            $unitQuery = DB::table('units')
+            $unitQuery = DB::table('category_armada')
                 ->select(['id', 'nama_kategori', 'category'])
                 ->where('id', $unitId);
-            $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
-            $this->applyPoolScopeIfExists($unitQuery, 'units');
+            $this->applyWriteTenantScopeIfExists($unitQuery, 'category_armada');
+            $this->applyPoolScopeIfExists($unitQuery, 'category_armada');
             $selectedUnit = $unitQuery->first();
 
             if (! $selectedUnit) {
@@ -3223,10 +3223,10 @@ class AdminOpsApiController extends Controller
         }
 
         $unitId = (int) ($data['unit_id'] ?? 0);
-        if ($unitId > 0 && SchemaCache::hasTable('units')) {
-            $unitQuery = DB::table('units')->where('id', $unitId);
-            $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
-            $this->applyPoolScopeIfExists($unitQuery, 'units', '', $poolId > 0 ? $poolId : null);
+        if ($unitId > 0 && SchemaCache::hasTable('category_armada')) {
+            $unitQuery = DB::table('category_armada')->where('id', $unitId);
+            $this->applyWriteTenantScopeIfExists($unitQuery, 'category_armada');
+            $this->applyPoolScopeIfExists($unitQuery, 'category_armada', '', $poolId > 0 ? $poolId : null);
             if (! $unitQuery->exists()) {
                 return $this->error('Kategori armada tidak ditemukan untuk pool aktif.', 422);
             }
@@ -4271,27 +4271,27 @@ class AdminOpsApiController extends Controller
 
     public function unitsIndex(): JsonResponse
     {
-        if (! SchemaCache::hasTable('units')) {
+        if (! SchemaCache::hasTable('category_armada')) {
             return $this->ok(['units' => []]);
         }
 
         $status = trim((string) request()->query('status', ''));
 
-        $query = DB::table('units')
+        $query = DB::table('category_armada')
             ->select($this->unitSelectColumns())
-            ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q) {
+            ->when(SchemaCache::hasColumn('category_armada', 'tenant_id'), function (Builder $q) {
                 $tenantId = PoolScope::tenantId();
                 if ($tenantId > 0) {
-                    $q->where('units.tenant_id', $tenantId);
+                    $q->where('category_armada.tenant_id', $tenantId);
                 }
             });
-        $this->applyPoolScopeIfExists($query, 'units');
+        $this->applyPoolScopeIfExists($query, 'category_armada');
 
-        if ($status !== '' && SchemaCache::hasColumn('units', 'status')) {
+        if ($status !== '' && SchemaCache::hasColumn('category_armada', 'status')) {
             $query->where('status', $status);
         }
 
-        $rawRows = $query->orderBy(SchemaCache::hasColumn('units', 'nama_kategori') ? 'nama_kategori' : 'id')->get();
+        $rawRows = $query->orderBy(SchemaCache::hasColumn('category_armada', 'nama_kategori') ? 'nama_kategori' : 'id')->get();
         $poolNames = $this->poolNameMap($rawRows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $rows = $rawRows
             ->map(function ($row) use ($poolNames) {
@@ -4320,7 +4320,7 @@ class AdminOpsApiController extends Controller
         ];
 
         return collect($columnDefaults)
-            ->map(static fn (string $default, string $column): mixed => SchemaCache::hasColumn('units', $column)
+            ->map(static fn (string $default, string $column): mixed => SchemaCache::hasColumn('category_armada', $column)
                 ? $column
                 : DB::raw($default.' as '.$column))
             ->values()
@@ -4329,8 +4329,8 @@ class AdminOpsApiController extends Controller
 
     public function unitsSave(Request $request): JsonResponse
     {
-        if (! SchemaCache::hasTable('units')) {
-            return $this->error('Tabel unit belum tersedia. Jalankan migration terlebih dahulu.', 500);
+        if (! SchemaCache::hasTable('category_armada')) {
+            return $this->error('Tabel kategori armada belum tersedia. Jalankan migration terlebih dahulu.', 500);
         }
 
         $data = $request->validate([
@@ -4347,9 +4347,9 @@ class AdminOpsApiController extends Controller
             $id = (int) ($data['id'] ?? 0);
             $existing = null;
             if ($id > 0) {
-                $existingQuery = DB::table('units')->where('id', $id);
-                $this->applyWriteTenantScopeIfExists($existingQuery, 'units');
-                $this->applyPoolScopeIfExists($existingQuery, 'units');
+                $existingQuery = DB::table('category_armada')->where('id', $id);
+                $this->applyWriteTenantScopeIfExists($existingQuery, 'category_armada');
+                $this->applyPoolScopeIfExists($existingQuery, 'category_armada');
                 $existing = $existingQuery->first($this->unitSelectColumns());
 
                 if (! $existing) {
@@ -4359,7 +4359,7 @@ class AdminOpsApiController extends Controller
 
             $targetPoolId = $this->resolveWritablePoolIdFromRequest(
                 $request,
-                'units',
+                'category_armada',
                 (int) ($existing->pool_id ?? 0),
                 $id <= 0,
             );
@@ -4372,10 +4372,10 @@ class AdminOpsApiController extends Controller
                 return $this->error('Nama kategori armada wajib diisi.', 422);
             }
 
-            $duplicate = SchemaCache::hasColumn('units', 'nama_kategori')
-                && DB::table('units')
+            $duplicate = SchemaCache::hasColumn('category_armada', 'nama_kategori')
+                && DB::table('category_armada')
                     ->whereRaw('UPPER(nama_kategori) = ?', [$templateName])
-                    ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
+                    ->when(SchemaCache::hasColumn('category_armada', 'tenant_id'), function (Builder $q): void {
                         PoolScope::applyTenantScope($q, 'tenant_id');
                     })
                     ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
@@ -4394,19 +4394,19 @@ class AdminOpsApiController extends Controller
                     ? $this->nullable($data['layout'] ?? null)
                     : $this->nullable($existing->layout ?? null),
             ];
-            $payload = $this->filterPayloadColumns('units', $payload);
-            $payload = array_merge($payload, $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null));
+            $payload = $this->filterPayloadColumns('category_armada', $payload);
+            $payload = array_merge($payload, $this->poolPayload('category_armada', $targetPoolId > 0 ? $targetPoolId : null));
 
             if ($id > 0) {
-                $query = DB::table('units')->where('id', $id);
-                $this->applyWriteTenantScopeIfExists($query, 'units');
-                $this->applyPoolScopeIfExists($query, 'units');
+                $query = DB::table('category_armada')->where('id', $id);
+                $this->applyWriteTenantScopeIfExists($query, 'category_armada');
+                $this->applyPoolScopeIfExists($query, 'category_armada');
                 $query->update($payload);
 
                 return $this->ok(['message' => 'Kategori armada updated.', 'id' => $id]);
             }
 
-            $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), [
+            $newId = DB::table('category_armada')->insertGetId(array_merge($payload, $this->tenantPayload('category_armada'), [
                 'created_at' => now(),
             ]));
 
@@ -4482,9 +4482,9 @@ class AdminOpsApiController extends Controller
 
     public function unitsDelete(int $id): JsonResponse
     {
-        $unitQuery = DB::table('units')->where('id', $id);
-        $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
-        $this->applyPoolScopeIfExists($unitQuery, 'units');
+        $unitQuery = DB::table('category_armada')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($unitQuery, 'category_armada');
+        $this->applyPoolScopeIfExists($unitQuery, 'category_armada');
         if (! $unitQuery->exists()) {
             return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
         }
@@ -4493,9 +4493,9 @@ class AdminOpsApiController extends Controller
         DB::table('drivers')->where('unit_id', $id)->update(['unit_id' => null]);
         DB::table('charters')->where('unit_id', $id)->update(['unit_id' => null]);
         DB::table('luggages')->where('unit_id', $id)->update(['unit_id' => null]);
-        $delete = DB::table('units')->where('id', $id);
-        $this->applyWriteTenantScopeIfExists($delete, 'units');
-        $this->applyPoolScopeIfExists($delete, 'units');
+        $delete = DB::table('category_armada')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($delete, 'category_armada');
+        $this->applyPoolScopeIfExists($delete, 'category_armada');
         $delete->delete();
 
         return $this->ok(['message' => 'Unit deleted.']);
@@ -4503,17 +4503,17 @@ class AdminOpsApiController extends Controller
 
     public function armadaCategoriesIndex(): JsonResponse
     {
-        if (! SchemaCache::hasTable('units') || ! SchemaCache::hasColumn('units', 'category')) {
+        if (! SchemaCache::hasTable('category_armada') || ! SchemaCache::hasColumn('category_armada', 'category')) {
             return $this->ok(['categories' => []]);
         }
 
-        $rows = DB::table('units')
+        $rows = DB::table('category_armada')
             ->select('category')
-            ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
-                PoolScope::applyTenantScope($q, 'units.tenant_id');
+            ->when(SchemaCache::hasColumn('category_armada', 'tenant_id'), function (Builder $q): void {
+                PoolScope::applyTenantScope($q, 'category_armada.tenant_id');
             })
-            ->when(SchemaCache::hasColumn('units', 'pool_id'), function (Builder $q): void {
-                $this->applyPoolScopeIfExists($q, 'units');
+            ->when(SchemaCache::hasColumn('category_armada', 'pool_id'), function (Builder $q): void {
+                $this->applyPoolScopeIfExists($q, 'category_armada');
             })
             ->whereNotNull('category')
             ->whereRaw('TRIM(category) <> ?', [''])

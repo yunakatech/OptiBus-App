@@ -339,7 +339,7 @@ class TenantProvisioningService
             ['key' => 'route', 'label' => 'Rute sudah dibuat', 'done' => $this->tenantRowExists('routes', $tenantId)],
             ['key' => 'segment', 'label' => 'Harga sudah dibuat', 'done' => $this->tenantRowExists('segments', $tenantId)],
             ['key' => 'schedule', 'label' => 'Jadwal sudah dibuat', 'done' => $this->tenantRowExists('schedules', $tenantId)],
-            ['key' => 'unit', 'label' => 'Kategori armada sudah dibuat', 'done' => $this->tenantRowExists('units', $tenantId)],
+            ['key' => 'unit', 'label' => 'Kategori armada sudah dibuat', 'done' => $this->tenantRowExists('category_armada', $tenantId)],
             ['key' => 'armada', 'label' => 'Armada sudah dibuat', 'done' => $this->tenantRowExists('armadas', $tenantId)],
             ['key' => 'driver', 'label' => 'Driver sudah dibuat', 'done' => $this->tenantRowExists('drivers', $tenantId)],
         ];
@@ -566,7 +566,7 @@ class TenantProvisioningService
      */
     private function createOnboardingUnit(int $tenantId, int $poolId, array $input): int
     {
-        if ($tenantId <= 0 || ! Schema::hasTable('units')) {
+        if ($tenantId <= 0 || ! Schema::hasTable('category_armada')) {
             return 0;
         }
 
@@ -588,8 +588,8 @@ class TenantProvisioningService
             $namaKategori = 'SETUP-'.$tenantId;
         }
 
-        $existing = DB::table('units')
-            ->when(Schema::hasColumn('units', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
+        $existing = DB::table('category_armada')
+            ->when(Schema::hasColumn('category_armada', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
             ->whereRaw('UPPER(nama_kategori) = ?', [$namaKategori])
             ->value('id');
         if ($existing) {
@@ -605,15 +605,15 @@ class TenantProvisioningService
             'status' => 'Aktif',
             'created_at' => now(),
         ];
-        if (Schema::hasColumn('units', 'tenant_id')) {
+        if (Schema::hasColumn('category_armada', 'tenant_id')) {
             $payload['tenant_id'] = $tenantId;
         }
-        if (Schema::hasColumn('units', 'pool_id')) {
+        if (Schema::hasColumn('category_armada', 'pool_id')) {
             $payload['pool_id'] = $poolId > 0 ? $poolId : null;
         }
 
         try {
-            return (int) DB::table('units')->insertGetId($this->filterPayloadForTable('units', $payload));
+            return (int) DB::table('category_armada')->insertGetId($this->filterPayloadForTable('category_armada', $payload));
         } catch (QueryException $e) {
             Log::warning('onboarding.unit_skipped', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);
 
@@ -955,11 +955,11 @@ class TenantProvisioningService
         }
 
         $base = strtoupper(substr($base, 0, 50));
-        if (! Schema::hasTable('units') || ! Schema::hasColumn('units', 'nama_kategori')) {
+        if (! Schema::hasTable('category_armada') || ! Schema::hasColumn('category_armada', 'nama_kategori')) {
             return $base;
         }
 
-        if (! DB::table('units')->whereRaw('UPPER(nama_kategori) = ?', [$base])->exists()) {
+        if (! DB::table('category_armada')->whereRaw('UPPER(nama_kategori) = ?', [$base])->exists()) {
             return $base;
         }
 
@@ -968,7 +968,7 @@ class TenantProvisioningService
         $candidate = $candidateBase.$suffix;
         $counter = 2;
 
-        while (DB::table('units')->whereRaw('UPPER(nama_kategori) = ?', [$candidate])->exists()) {
+        while (DB::table('category_armada')->whereRaw('UPPER(nama_kategori) = ?', [$candidate])->exists()) {
             $suffix = '-T'.$tenantId.'-'.$counter;
             $candidate = substr($base, 0, max(1, 50 - strlen($suffix))).$suffix;
             $counter++;
@@ -1004,11 +1004,11 @@ class TenantProvisioningService
 
     private function unitSeatCount(int $unitId): int
     {
-        if ($unitId <= 0 || ! Schema::hasTable('units')) {
+        if ($unitId <= 0 || ! Schema::hasTable('category_armada')) {
             return 0;
         }
 
-        return max(0, (int) (DB::table('units')->where('id', $unitId)->value('kapasitas') ?? 0));
+        return max(0, (int) (DB::table('category_armada')->where('id', $unitId)->value('kapasitas') ?? 0));
     }
 
     private function upsertScheduleUnitRow(int $tenantId, int $scheduleId, int $unitId): void

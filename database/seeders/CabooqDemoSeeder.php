@@ -43,17 +43,17 @@ class CabooqDemoSeeder extends Seeder
             ['origin' => 'MAKASSAR', 'destination' => 'PINRANG', 'created_at' => now()]
         );
 
-        DB::table('units')->updateOrInsert(
+        DB::table('category_armada')->updateOrInsert(
             ['nama_kategori' => 'DD 1234 XX'],
             ['kapasitas' => 12, 'status' => 'Aktif', 'created_at' => now()]
         );
-        DB::table('units')->updateOrInsert(
+        DB::table('category_armada')->updateOrInsert(
             ['nama_kategori' => 'DD 5678 YY'],
             ['kapasitas' => 14, 'status' => 'Aktif', 'created_at' => now()]
         );
 
         $resolvedRouteId = (int) (DB::table('routes')->where('name', 'PINRANG - MAKASSAR')->value('id') ?? 0);
-        $unitId = (int) (DB::table('units')->where('nama_kategori', 'DD 1234 XX')->value('id') ?? 0);
+        $unitId = (int) (DB::table('category_armada')->where('nama_kategori', 'DD 1234 XX')->value('id') ?? 0);
         $dow = now()->dayOfWeek;
 
         DB::table('schedules')->updateOrInsert(

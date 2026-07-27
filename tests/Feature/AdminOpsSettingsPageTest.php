@@ -112,7 +112,7 @@ class AdminOpsSettingsPageTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        DB::table('units')->insert([
+        DB::table('category_armada')->insert([
             'tenant_id' => $tenantId,
             'pool_id' => $poolId,
             'nama_kategori' => 'BIGBUS 40 SEAT',

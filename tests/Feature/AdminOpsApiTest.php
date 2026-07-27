@@ -334,7 +334,7 @@ class AdminOpsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $unitId = DB::table('units')->insertGetId([
+        $unitId = DB::table('category_armada')->insertGetId([
             'nama_kategori' => 'DD 7788 XX',
             'kapasitas' => 12,
             'status' => 'Aktif',
@@ -1648,7 +1648,7 @@ class AdminOpsApiTest extends TestCase
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
 
-        $unitId = DB::table('units')->insertGetId([
+        $unitId = DB::table('category_armada')->insertGetId([
             'tenant_id' => $tenantId,
             'nama_kategori' => 'DD 8899 ZZ',
             'kapasitas' => 12,

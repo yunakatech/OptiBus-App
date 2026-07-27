@@ -18,14 +18,14 @@ class BookingScheduleBackfill
      */
     public function run(bool $write = false, ?string $routeFilter = null, ?string $jamFilter = null): array
     {
-        if (! Schema::hasTable('bookings') || ! Schema::hasTable('schedules') || ! Schema::hasTable('units')) {
+        if (! Schema::hasTable('bookings') || ! Schema::hasTable('schedules') || ! Schema::hasTable('category_armada')) {
             return [
                 'write' => $write,
                 'created' => 0,
                 'skipped' => 0,
                 'unresolved' => 0,
                 'items' => [],
-                'message' => 'Tabel inti booking/schedules/units belum lengkap.',
+                'message' => 'Tabel inti booking/schedules/category_armada belum lengkap.',
             ];
         }
 
@@ -386,7 +386,7 @@ class BookingScheduleBackfill
      */
     private function loadUnitTemplates(): array
     {
-        return DB::table('units')
+        return DB::table('category_armada')
             ->orderBy('id')
             ->get(['id', 'nama_kategori', 'category', 'kapasitas', 'layout'])
             ->map(function ($row) {
