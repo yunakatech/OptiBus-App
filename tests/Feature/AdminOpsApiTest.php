@@ -390,7 +390,7 @@ class AdminOpsApiTest extends TestCase
         ]);
 
         $unitCreate = $this->postJson(route('api.admin.units.save'), [
-            'nopol' => 'DD 9900 AA',
+            'nama_kategori' => 'DD 9900 AA',
             'merek' => 'Toyota',
             'type' => 'Hiace',
             'category' => 'Micro Bus',
@@ -405,7 +405,7 @@ class AdminOpsApiTest extends TestCase
 
         $this->postJson(route('api.admin.units.save'), [
             'id' => $unitId,
-            'nopol' => 'DD 9900 AB',
+            'nama_kategori' => 'DD 9900 AB',
             'merek' => 'Toyota',
             'type' => 'Hiace Premio',
             'category' => 'Micro Bus',
@@ -452,6 +452,72 @@ class AdminOpsApiTest extends TestCase
         $this->deleteJson(route('api.admin.units.delete', ['id' => $unitId]))->assertOk();
     }
 
+    public function test_unit_category_names_are_scoped_per_tenant(): void
+    {
+        $tenantA = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Units A',
+            'slug' => 'tenant-units-a',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $tenantB = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Units B',
+            'slug' => 'tenant-units-b',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $poolA = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantA,
+            'name' => 'POOL A',
+            'code' => 'UNIT-SCOPE-A',
+            'status' => 'active',
+            'target_revenue' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $poolB = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantB,
+            'name' => 'POOL B',
+            'code' => 'UNIT-SCOPE-B',
+            'status' => 'active',
+            'target_revenue' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $admin = User::factory()->create([
+            'name' => 'Root Admin',
+            'email' => 'root.units.scope@example.com',
+            'is_super_admin' => true,
+        ]);
+
+        $payload = [
+            'nama_kategori' => 'Bigbus 40 Seat',
+            'category' => 'Bigbus',
+            'kapasitas' => 40,
+            'status' => 'Aktif',
+        ];
+
+        $this->actingAs($admin)->withSession([
+            'active_tenant_id' => $tenantA,
+            'active_pool_id' => $poolA,
+        ])->postJson(route('api.admin.units.save'), $payload)->assertCreated();
+
+        $this->actingAs($admin)->withSession([
+            'active_tenant_id' => $tenantB,
+            'active_pool_id' => $poolB,
+        ])->postJson(route('api.admin.units.save'), $payload)->assertCreated();
+
+        $this->actingAs($admin)->withSession([
+            'active_tenant_id' => $tenantA,
+            'active_pool_id' => $poolA,
+        ])->postJson(route('api.admin.units.save'), $payload)
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'Nama kategori armada sudah terdaftar di tenant ini.');
+    }
+
     public function test_armada_category_and_armada_create_use_default_tenant(): void
     {
         $this->actingAsSuperAdmin();
@@ -468,7 +534,7 @@ class AdminOpsApiTest extends TestCase
         $this->withSession(['active_pool_id' => $poolId]);
 
         $unitCreate = $this->postJson(route('api.admin.units.save'), [
-            'nopol' => 'TEMPLATE BIGBUS 42',
+            'nama_kategori' => 'TEMPLATE BIGBUS 42',
             'category' => 'Bigbus',
             'kapasitas' => 42,
             'status' => 'Aktif',
