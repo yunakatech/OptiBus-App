@@ -49,7 +49,7 @@ return new class extends Migration
         $this->addIndex('customer_charter', 'idx_customer_charter_company', ['company'], 'company');
         $this->addIndex('master_carter', 'idx_master_carter_name', ['name'], 'name');
         $this->addIndex('armadas', 'idx_armadas_kategori_ac_nopol', ['kategori', 'ac_type', 'nopol'], 'kategori, ac_type, nopol');
-        $this->addIndex('units', 'idx_units_category_status_nopol', ['category', 'status', 'nopol'], 'category, status, nopol');
+        $this->addIndex('units', 'idx_units_category_status_nama_kategori', ['category', 'status', 'nama_kategori'], 'category, status, nama_kategori');
     }
 
     public function down(): void

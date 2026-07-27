@@ -44,16 +44,16 @@ class CabooqDemoSeeder extends Seeder
         );
 
         DB::table('units')->updateOrInsert(
-            ['nopol' => 'DD 1234 XX'],
+            ['nama_kategori' => 'DD 1234 XX'],
             ['merek' => 'Isuzu', 'type' => 'Elf', 'kapasitas' => 12, 'status' => 'Aktif', 'created_at' => now()]
         );
         DB::table('units')->updateOrInsert(
-            ['nopol' => 'DD 5678 YY'],
+            ['nama_kategori' => 'DD 5678 YY'],
             ['merek' => 'Toyota', 'type' => 'Hiace', 'kapasitas' => 14, 'status' => 'Aktif', 'created_at' => now()]
         );
 
         $resolvedRouteId = (int) (DB::table('routes')->where('name', 'PINRANG - MAKASSAR')->value('id') ?? 0);
-        $unitId = (int) (DB::table('units')->where('nopol', 'DD 1234 XX')->value('id') ?? 0);
+        $unitId = (int) (DB::table('units')->where('nama_kategori', 'DD 1234 XX')->value('id') ?? 0);
         $dow = now()->dayOfWeek;
 
         DB::table('schedules')->updateOrInsert(

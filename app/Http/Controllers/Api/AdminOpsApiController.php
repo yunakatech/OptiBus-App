@@ -215,7 +215,7 @@ class AdminOpsApiController extends Controller
             $query->leftJoin('routes as r', 's.route_id', '=', 'r.id');
         }
 
-        $select = ['s.id', 's.rute', 's.dow', 's.jam', 's.units', 's.unit_label', 's.unit_id', 'u.nopol'];
+        $select = ['s.id', 's.rute', 's.dow', 's.jam', 's.units', 's.unit_label', 's.unit_id', DB::raw('u.nama_kategori as unit_nopol')];
         $select[] = $this->hasSchedulesBopColumn() ? 's.bop' : DB::raw('0 as bop');
         if ($hasRouteId) {
             $select[] = 's.route_id';
@@ -2592,7 +2592,7 @@ class AdminOpsApiController extends Controller
         $selectedUnitCategory = '';
         if ($unitId > 0) {
             $unitQuery = DB::table('units')
-                ->select(['id', 'nopol', 'category'])
+                ->select(['id', 'nama_kategori', 'category'])
                 ->where('id', $unitId);
             $this->applyWriteTenantScopeIfExists($unitQuery, 'units');
             $this->applyPoolScopeIfExists($unitQuery, 'units');
@@ -4291,10 +4291,12 @@ class AdminOpsApiController extends Controller
             $query->where('status', $status);
         }
 
-        $rawRows = $query->orderBy(SchemaCache::hasColumn('units', 'nopol') ? 'nopol' : 'id')->get();
+        $rawRows = $query->orderBy(SchemaCache::hasColumn('units', 'nama_kategori') ? 'nama_kategori' : 'id')->get();
         $poolNames = $this->poolNameMap($rawRows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $rows = $rawRows
             ->map(function ($row) use ($poolNames) {
+                $row->nama_kategori = trim((string) ($row->nama_kategori ?? ''));
+                $row->nopol = $row->nama_kategori;
                 $row->category = $this->normalizeUnitCategory($row->category ?? null);
                 $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
                 $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
@@ -4310,7 +4312,7 @@ class AdminOpsApiController extends Controller
     {
         $columnDefaults = [
             'id' => '0',
-            'nopol' => "''",
+            'nama_kategori' => "''",
             'merek' => 'NULL',
             'type' => 'NULL',
             'category' => "'Minibus'",
@@ -4338,7 +4340,6 @@ class AdminOpsApiController extends Controller
 
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
-            'nopol' => ['nullable', 'string', 'max:50'],
             'nama_kategori' => ['nullable', 'string', 'max:50'],
             'pool_id' => ['nullable', 'integer', 'min:1'],
             'merek' => ['nullable', 'string', 'max:120'],
@@ -4375,14 +4376,14 @@ class AdminOpsApiController extends Controller
                 return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
             }
 
-            $templateName = strtoupper(trim((string) ($data['nama_kategori'] ?? $data['nopol'] ?? '')));
+            $templateName = strtoupper(trim((string) ($data['nama_kategori'] ?? '')));
             if ($templateName === '') {
                 return $this->error('Nama kategori armada wajib diisi.', 422);
             }
 
-            $duplicate = SchemaCache::hasColumn('units', 'nopol')
+            $duplicate = SchemaCache::hasColumn('units', 'nama_kategori')
                 && DB::table('units')
-                    ->whereRaw('UPPER(nopol) = ?', [$templateName])
+                    ->whereRaw('UPPER(nama_kategori) = ?', [$templateName])
                     ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
                         PoolScope::applyTenantScope($q, 'tenant_id');
                     })
@@ -4394,7 +4395,7 @@ class AdminOpsApiController extends Controller
             }
 
             $payload = [
-                'nopol' => $templateName,
+                'nama_kategori' => $templateName,
                 // Preserve legacy fields that are no longer shown in the simplified UI.
                 'merek' => $this->nullable($data['merek'] ?? ($existing->merek ?? null)),
                 'type' => $this->nullable($data['type'] ?? ($existing->type ?? null)),

@@ -590,7 +590,7 @@ class TenantProvisioningService
 
         $existing = DB::table('units')
             ->when(Schema::hasColumn('units', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
-            ->whereRaw('UPPER(nopol) = ?', [$nopol])
+            ->whereRaw('UPPER(nama_kategori) = ?', [$nopol])
             ->value('id');
         if ($existing) {
             return (int) $existing;
@@ -599,7 +599,7 @@ class TenantProvisioningService
         $nopol = $this->uniqueOnboardingUnitTemplateName($tenantId, $nopol);
 
         $payload = [
-            'nopol' => $nopol,
+            'nama_kategori' => $nopol,
             'merek' => null,
             'type' => null,
             'category' => $category,
@@ -959,11 +959,11 @@ class TenantProvisioningService
         }
 
         $base = strtoupper(substr($base, 0, 50));
-        if (! Schema::hasTable('units') || ! Schema::hasColumn('units', 'nopol')) {
+        if (! Schema::hasTable('units') || ! Schema::hasColumn('units', 'nama_kategori')) {
             return $base;
         }
 
-        if (! DB::table('units')->whereRaw('UPPER(nopol) = ?', [$base])->exists()) {
+        if (! DB::table('units')->whereRaw('UPPER(nama_kategori) = ?', [$base])->exists()) {
             return $base;
         }
 
@@ -972,7 +972,7 @@ class TenantProvisioningService
         $candidate = $candidateBase.$suffix;
         $counter = 2;
 
-        while (DB::table('units')->whereRaw('UPPER(nopol) = ?', [$candidate])->exists()) {
+        while (DB::table('units')->whereRaw('UPPER(nama_kategori) = ?', [$candidate])->exists()) {
             $suffix = '-T'.$tenantId.'-'.$counter;
             $candidate = substr($base, 0, max(1, 50 - strlen($suffix))).$suffix;
             $counter++;

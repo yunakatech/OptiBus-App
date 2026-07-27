@@ -44,7 +44,7 @@ class OperationsApiTest extends TestCase
         ]);
 
         DB::table('units')->insert([
-            'nopol' => 'DD 1122 ZZ',
+            'nama_kategori' => 'DD 1122 ZZ',
             'merek' => 'Isuzu',
             'type' => 'Elf',
             'kapasitas' => 12,
@@ -506,7 +506,7 @@ class OperationsApiTest extends TestCase
         $tenantId = $this->defaultTenantId();
 
         $unitId = DB::table('units')->insertGetId([
-            'nopol' => 'DD 4400 PP',
+            'nama_kategori' => 'DD 4400 PP',
             'merek' => 'Toyota',
             'type' => 'Hiace',
             'kapasitas' => 14,
@@ -569,7 +569,7 @@ class OperationsApiTest extends TestCase
         $this->actingAsSuperAdmin();
 
         $unitId = DB::table('units')->insertGetId([
-            'nopol' => 'DD 5566 QQ',
+            'nama_kategori' => 'DD 5566 QQ',
             'merek' => 'Toyota',
             'type' => 'Hiace',
             'kapasitas' => 14,

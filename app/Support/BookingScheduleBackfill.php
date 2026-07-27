@@ -388,7 +388,7 @@ class BookingScheduleBackfill
     {
         return DB::table('units')
             ->orderBy('id')
-            ->get(['id', 'nopol', 'category', 'kapasitas', 'layout'])
+            ->get(['id', 'nama_kategori', 'category', 'kapasitas', 'layout'])
             ->map(function ($row) {
                 $layoutJson = trim((string) ($row->layout ?? ''));
                 $decoded = $layoutJson !== '' ? json_decode($layoutJson, true) : [];
@@ -399,7 +399,8 @@ class BookingScheduleBackfill
 
                 return [
                     'id' => (int) ($row->id ?? 0),
-                    'nopol' => (string) ($row->nopol ?? ''),
+                    'nama_kategori' => (string) ($row->nama_kategori ?? ''),
+                    'nopol' => (string) ($row->nama_kategori ?? ''),
                     'category' => trim((string) ($row->category ?? '')),
                     'kapasitas' => (int) ($row->kapasitas ?? 0),
                     'seats' => $seatCount,

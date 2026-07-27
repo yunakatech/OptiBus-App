@@ -99,7 +99,7 @@ class OperationsApiController extends Controller
             return $this->ok(['units' => []]);
         }
 
-        $columns = ['id', 'nopol'];
+        $columns = ['id', 'nama_kategori'];
         foreach (['merek', 'type', 'kapasitas', 'category', 'status', 'layout'] as $column) {
             if (SchemaCache::hasColumn('units', $column)) {
                 $columns[] = $column;
@@ -109,7 +109,7 @@ class OperationsApiController extends Controller
             $columns[] = 'pool_id';
         }
 
-        $query = DB::table('units')->orderBy('nopol');
+        $query = DB::table('units')->orderBy('nama_kategori');
         if (SchemaCache::hasColumn('units', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
@@ -121,6 +121,7 @@ class OperationsApiController extends Controller
         $units = $query->get($columns);
         $poolNames = $this->poolNameMap($units->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $units = $units->map(function ($row) use ($poolNames) {
+            $row->nopol = (string) ($row->nama_kategori ?? '');
             $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
             $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
 
