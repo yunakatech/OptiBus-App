@@ -21,6 +21,7 @@
         CheckCircle2,
         LayoutGrid,
         ListFilter,
+        MessageCircle,
         MoreHorizontal,
         MoreVertical,
         Pencil,
@@ -262,6 +263,13 @@
         items: BookingSuccessItem[];
     };
 
+    type BookingSuccessWhatsappChoice = {
+        phone: string;
+        display_phone: string;
+        names: string[];
+        seats: string[];
+    };
+
     type DriverItem = {
         id: number;
         nama: string;
@@ -474,6 +482,10 @@
     let bookingSuccessModalOpen = $state(false);
     let bookingSuccessFeedback = $state('');
     let bookingSuccessSnapshot = $state<BookingSuccessSnapshot | null>(null);
+    let bookingSuccessWhatsappPickerOpen = $state(false);
+    let bookingSuccessWhatsappChoices = $state<
+        BookingSuccessWhatsappChoice[]
+    >([]);
 
     let formName = $state('');
     let formPhone = $state('');
@@ -1938,14 +1950,134 @@
         try {
             await copyText(buildBookingSuccessCopyText(bookingSuccessSnapshot));
             bookingSuccessFeedback = 'Detail booking berhasil disalin.';
+            bookingSuccessWhatsappPickerOpen = false;
         } catch {
             bookingSuccessFeedback = 'Gagal menyalin detail booking.';
         }
     };
 
+    const normalizeWhatsappPhone = (phone: string) => {
+        const digits = String(phone || '').replace(/\D/g, '');
+
+        if (digits === '') {
+            return '';
+        }
+
+        if (digits.startsWith('0')) {
+            return `62${digits.slice(1)}`;
+        }
+
+        if (digits.startsWith('8')) {
+            return `62${digits}`;
+        }
+
+        return digits;
+    };
+
+    const bookingSuccessWhatsappOptions = (
+        snapshot: BookingSuccessSnapshot,
+    ): BookingSuccessWhatsappChoice[] => {
+        const choices = new Map<string, BookingSuccessWhatsappChoice>();
+
+        for (const item of snapshot.items) {
+            const phone = normalizeWhatsappPhone(item.phone);
+
+            if (phone === '') {
+                continue;
+            }
+
+            const existing = choices.get(phone);
+
+            if (existing) {
+                if (item.name && !existing.names.includes(item.name)) {
+                    existing.names.push(item.name);
+                }
+
+                if (item.seat && !existing.seats.includes(item.seat)) {
+                    existing.seats.push(item.seat);
+                }
+
+                continue;
+            }
+
+            choices.set(phone, {
+                phone,
+                display_phone: item.phone || phone,
+                names: item.name ? [item.name] : [],
+                seats: item.seat ? [item.seat] : [],
+            });
+        }
+
+        return Array.from(choices.values());
+    };
+
+    const openBookingSuccessWhatsapp = (
+        snapshot: BookingSuccessSnapshot,
+        phone = '',
+    ) => {
+        const text = buildBookingSuccessCopyText(snapshot);
+
+        if (text === '') {
+            bookingSuccessFeedback = 'Detail booking belum tersedia.';
+            return;
+        }
+
+        const encodedText = encodeURIComponent(text);
+        const url =
+            phone !== ''
+                ? `https://wa.me/${phone}?text=${encodedText}`
+                : `https://wa.me/?text=${encodedText}`;
+        const opened = window.open(url, '_blank');
+
+        bookingSuccessWhatsappPickerOpen = false;
+        if (opened) {
+            opened.opener = null;
+            bookingSuccessFeedback = 'WhatsApp dibuka dengan detail booking.';
+
+            return;
+        }
+
+        bookingSuccessFeedback =
+            'Gagal membuka WhatsApp. Izinkan popup browser lalu coba lagi.';
+    };
+
+    const sendBookingSuccessToWhatsapp = () => {
+        if (!bookingSuccessSnapshot) {
+            return;
+        }
+
+        const choices = bookingSuccessWhatsappOptions(bookingSuccessSnapshot);
+
+        if (choices.length === 0) {
+            openBookingSuccessWhatsapp(bookingSuccessSnapshot);
+            return;
+        }
+
+        if (choices.length === 1) {
+            openBookingSuccessWhatsapp(bookingSuccessSnapshot, choices[0].phone);
+            return;
+        }
+
+        bookingSuccessWhatsappChoices = choices;
+        bookingSuccessWhatsappPickerOpen = true;
+        bookingSuccessFeedback = 'Pilih nomor tujuan WhatsApp.';
+    };
+
+    const sendBookingSuccessToWhatsappChoice = (
+        choice: BookingSuccessWhatsappChoice,
+    ) => {
+        if (!bookingSuccessSnapshot) {
+            return;
+        }
+
+        openBookingSuccessWhatsapp(bookingSuccessSnapshot, choice.phone);
+    };
+
     const closeBookingSuccessModal = () => {
         bookingSuccessModalOpen = false;
         bookingSuccessFeedback = '';
+        bookingSuccessWhatsappPickerOpen = false;
+        bookingSuccessWhatsappChoices = [];
     };
 
     const syncSelectedSeatsFromInput = () => {
@@ -7189,6 +7321,17 @@
                                 ? 'Salin Rekap'
                                 : 'Salin Detail'}
                         </Button>
+                        {#if consoleOnly}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="w-full sm:w-auto"
+                                onclick={sendBookingSuccessToWhatsapp}
+                            >
+                                <MessageCircle class="mr-1.5 h-3.5 w-3.5" />
+                                Kirim WhatsApp
+                            </Button>
+                        {/if}
                         <Button
                             type="button"
                             variant="outline"
@@ -7198,6 +7341,66 @@
                             Tutup
                         </Button>
                     </div>
+
+                    {#if consoleOnly && bookingSuccessWhatsappPickerOpen}
+                        <div
+                            class="mt-3 rounded-lg border border-border/70 bg-background p-3"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-semibold">
+                                        Pilih nomor WhatsApp
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        Rekap berisi beberapa nomor berbeda.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    class="h-8 px-2"
+                                    onclick={() => {
+                                        bookingSuccessWhatsappPickerOpen = false;
+                                        bookingSuccessFeedback = '';
+                                    }}
+                                >
+                                    Batal
+                                </Button>
+                            </div>
+                            <div class="mt-3 space-y-2">
+                                {#each bookingSuccessWhatsappChoices as choice (choice.phone)}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-auto w-full justify-start rounded-lg px-3 py-2 text-left"
+                                        onclick={() =>
+                                            sendBookingSuccessToWhatsappChoice(
+                                                choice,
+                                            )}
+                                    >
+                                        <MessageCircle
+                                            class="mr-2 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300"
+                                        />
+                                        <span class="min-w-0">
+                                            <span
+                                                class="block truncate text-sm font-semibold"
+                                            >
+                                                {choice.names.join(', ') ||
+                                                    'Tanpa nama'}
+                                            </span>
+                                            <span
+                                                class="block truncate text-xs text-muted-foreground"
+                                            >
+                                                {choice.display_phone} · Kursi
+                                                {choice.seats.join(', ') || '-'}
+                                            </span>
+                                        </span>
+                                    </Button>
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
 
                     {#if bookingSuccessFeedback}
                         <p
