@@ -4381,7 +4381,6 @@ class AdminOpsApiController extends Controller
                     ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
                         PoolScope::applyTenantScope($q, 'tenant_id');
                     })
-                    ->when(SchemaCache::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
                     ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
                     ->exists();
 
@@ -4423,7 +4422,8 @@ class AdminOpsApiController extends Controller
         } catch (QueryException $e) {
             report($e);
 
-            if (($e->errorInfo[0] ?? $e->getCode()) === '23000') {
+            $sqlState = (string) ($e->errorInfo[0] ?? $e->getCode());
+            if (in_array($sqlState, ['23000', '23505'], true)) {
                 return $this->error('Nama template kategori armada sudah terdaftar.', 409);
             }
 
