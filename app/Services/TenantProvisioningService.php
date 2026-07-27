@@ -600,11 +600,7 @@ class TenantProvisioningService
 
         $payload = [
             'nama_kategori' => $namaKategori,
-            'merek' => null,
-            'type' => null,
             'category' => $category,
-            'tahun' => 0,
-            'warna' => null,
             'kapasitas' => $capacity,
             'status' => 'Aktif',
             'created_at' => now(),

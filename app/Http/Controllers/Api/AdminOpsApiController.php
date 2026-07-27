@@ -4312,11 +4312,7 @@ class AdminOpsApiController extends Controller
         $columnDefaults = [
             'id' => '0',
             'nama_kategori' => "''",
-            'merek' => 'NULL',
-            'type' => 'NULL',
             'category' => "'Minibus'",
-            'tahun' => '0',
-            'warna' => 'NULL',
             'kapasitas' => '0',
             'status' => "'Aktif'",
             'layout' => 'NULL',
@@ -4341,11 +4337,7 @@ class AdminOpsApiController extends Controller
             'id' => ['nullable', 'integer', 'min:1'],
             'nama_kategori' => ['nullable', 'string', 'max:50'],
             'pool_id' => ['nullable', 'integer', 'min:1'],
-            'merek' => ['nullable', 'string', 'max:120'],
-            'type' => ['nullable', 'string', 'max:120'],
             'category' => ['required', 'string', Rule::in(['Minibus', 'Mediumbus', 'Bigbus', 'Bigbun', 'Micro Bus', 'Microbus'])],
-            'tahun' => ['nullable', 'integer', 'min:0', 'max:2100'],
-            'warna' => ['nullable', 'string', 'max:120'],
             'kapasitas' => ['nullable', 'integer', 'min:0', 'max:200'],
             'status' => ['nullable', 'string', 'max:20'],
             'layout' => ['nullable', 'string'],
@@ -4395,12 +4387,7 @@ class AdminOpsApiController extends Controller
 
             $payload = [
                 'nama_kategori' => $templateName,
-                // Preserve legacy fields that are no longer shown in the simplified UI.
-                'merek' => $this->nullable($data['merek'] ?? ($existing->merek ?? null)),
-                'type' => $this->nullable($data['type'] ?? ($existing->type ?? null)),
                 'category' => $this->normalizeUnitCategory($data['category'] ?? null),
-                'tahun' => max(0, (int) ($data['tahun'] ?? ($existing->tahun ?? 0))),
-                'warna' => $this->nullable($data['warna'] ?? ($existing->warna ?? null)),
                 'kapasitas' => (int) ($data['kapasitas'] ?? 0),
                 'status' => $this->nullable($data['status'] ?? null) ?? 'Aktif',
                 'layout' => array_key_exists('layout', $data)

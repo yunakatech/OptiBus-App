@@ -44,8 +44,6 @@ class BookingApiTest extends TestCase
 
         $unitId = DB::table('units')->insertGetId([
             'nama_kategori' => 'DD 1234 XX',
-            'merek' => 'Isuzu',
-            'type' => 'Elf',
             'kapasitas' => 12,
             'status' => 'Aktif',
             'created_at' => now(),
@@ -305,8 +303,6 @@ class BookingApiTest extends TestCase
 
         $unitId = DB::table('units')->insertGetId([
             'nama_kategori' => 'DD 7777 XX',
-            'merek' => 'Isuzu',
-            'type' => 'Elf',
             'kapasitas' => 12,
             'status' => 'Aktif',
             'created_at' => now(),

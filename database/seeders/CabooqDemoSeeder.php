@@ -45,11 +45,11 @@ class CabooqDemoSeeder extends Seeder
 
         DB::table('units')->updateOrInsert(
             ['nama_kategori' => 'DD 1234 XX'],
-            ['merek' => 'Isuzu', 'type' => 'Elf', 'kapasitas' => 12, 'status' => 'Aktif', 'created_at' => now()]
+            ['kapasitas' => 12, 'status' => 'Aktif', 'created_at' => now()]
         );
         DB::table('units')->updateOrInsert(
             ['nama_kategori' => 'DD 5678 YY'],
-            ['merek' => 'Toyota', 'type' => 'Hiace', 'kapasitas' => 14, 'status' => 'Aktif', 'created_at' => now()]
+            ['kapasitas' => 14, 'status' => 'Aktif', 'created_at' => now()]
         );
 
         $resolvedRouteId = (int) (DB::table('routes')->where('name', 'PINRANG - MAKASSAR')->value('id') ?? 0);

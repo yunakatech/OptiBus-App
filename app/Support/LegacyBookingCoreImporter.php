@@ -59,6 +59,14 @@ class LegacyBookingCoreImporter
                     ->map(static function ($row) use ($table) {
                         $data = (array) $row;
 
+                        if ($table === 'units') {
+                            if (! array_key_exists('nama_kategori', $data) || trim((string) ($data['nama_kategori'] ?? '')) === '') {
+                                $data['nama_kategori'] = $data['nopol'] ?? null;
+                            }
+
+                            unset($data['nopol']);
+                        }
+
                         if ($table === 'customers') {
                             if (! array_key_exists('gmaps', $data) || trim((string) ($data['gmaps'] ?? '')) === '') {
                                 $data['gmaps'] = $data['address'] ?? null;
@@ -120,7 +128,7 @@ class LegacyBookingCoreImporter
                 'id', 'name', 'origin', 'destination', 'created_at',
             ],
             'units' => [
-                'id', 'nopol', 'merek', 'type', 'category', 'tahun', 'warna', 'kapasitas', 'status', 'layout', 'created_at',
+                'id', 'nopol', 'category', 'kapasitas', 'status', 'layout', 'created_at',
             ],
             'schedules' => [
                 'id', 'rute', 'dow', 'jam', 'units', 'seats', 'unit_id', 'layout', 'created_at',

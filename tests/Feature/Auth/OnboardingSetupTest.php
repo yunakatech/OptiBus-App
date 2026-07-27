@@ -261,11 +261,7 @@ class OnboardingSetupTest extends TestCase
 
         DB::table('units')->insert([
             'nama_kategori' => 'LEGACY UNIT',
-            'merek' => null,
-            'type' => null,
             'category' => 'Minibus',
-            'tahun' => 0,
-            'warna' => null,
             'kapasitas' => 8,
             'status' => 'Aktif',
             'pool_id' => $poolId,
