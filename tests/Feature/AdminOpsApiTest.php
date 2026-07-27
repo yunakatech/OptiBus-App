@@ -50,6 +50,89 @@ class AdminOpsApiTest extends TestCase
         $this->assertDatabaseMissing('routes', ['id' => $id]);
     }
 
+    public function test_routes_index_repairs_unmapped_routes_for_active_pool(): void
+    {
+        $tenantId = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Rute Orphan',
+            'slug' => 'tenant-rute-orphan',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL RUTE ORPHAN',
+            'code' => 'ROUTE-ORPHAN',
+            'status' => 'active',
+            'target_revenue' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->withSession(['active_pool_id' => $poolId]);
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PAREPARE - MAKASSAR',
+            'origin' => 'PAREPARE',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $this->assertDatabaseMissing('pool_route', ['route_id' => $routeId]);
+
+        $routes = $this->getJson(route('api.admin.routes.index'))
+            ->assertOk()
+            ->json('routes');
+
+        $this->assertNotNull(collect($routes)->firstWhere('id', $routeId));
+        $this->assertDatabaseHas('pool_route', [
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+        ]);
+    }
+
+    public function test_routes_create_maps_new_route_to_active_pool(): void
+    {
+        $tenantId = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Rute Baru',
+            'slug' => 'tenant-rute-baru',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL RUTE BARU',
+            'code' => 'ROUTE-BARU',
+            'status' => 'active',
+            'target_revenue' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->withSession(['active_pool_id' => $poolId]);
+
+        $created = $this->postJson(route('api.admin.routes.save'), [
+            'name' => 'SIDRAP - MAKASSAR',
+            'origin' => 'SIDRAP',
+            'destination' => 'MAKASSAR',
+        ])->assertCreated()->json();
+
+        $routeId = (int) ($created['id'] ?? 0);
+        $this->assertGreaterThan(0, $routeId);
+        $this->assertDatabaseHas('pool_route', [
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+        ]);
+
+        $routes = $this->getJson(route('api.admin.routes.index'))
+            ->assertOk()
+            ->json('routes');
+
+        $this->assertNotNull(collect($routes)->firstWhere('id', $routeId));
+    }
+
     public function test_schedule_duplicate_is_rejected(): void
     {
         $this->actingAsSuperAdmin();
@@ -1697,6 +1780,46 @@ class AdminOpsApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(0, 'luggages')
             ->assertJsonPath('pagination.total', 0);
+    }
+
+    public function test_charters_index_moves_canceled_rows_to_history_scope(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        foreach ([
+            ['name' => 'CARTER AKTIF', 'status' => 'active', 'payment_status' => 'DP'],
+            ['name' => 'CARTER SELESAI', 'status' => 'done', 'payment_status' => 'Lunas'],
+            ['name' => 'CARTER CANCEL', 'status' => 'canceled', 'payment_status' => 'DP'],
+        ] as $row) {
+            DB::table('charters')->insert([
+                'tenant_id' => $tenantId,
+                'name' => $row['name'],
+                'start_date' => '2026-05-20',
+                'end_date' => '2026-05-20',
+                'departure_time' => '09:00:00',
+                'pickup_point' => 'PINRANG',
+                'drop_point' => 'MAKASSAR',
+                'price' => 1000000,
+                'bop_status' => 'pending',
+                'payment_status' => $row['payment_status'],
+                'status' => $row['status'],
+                'created_at' => now(),
+            ]);
+        }
+
+        $active = $this->getJson(route('api.admin.charters.index', ['scope' => 'active']))
+            ->assertOk()
+            ->json('charters');
+        $history = $this->getJson(route('api.admin.charters.index', ['scope' => 'history']))
+            ->assertOk()
+            ->json('charters');
+
+        $this->assertSame(['CARTER AKTIF'], array_column($active, 'name'));
+        $this->assertEqualsCanonicalizing(
+            ['CARTER SELESAI', 'CARTER CANCEL'],
+            array_column($history, 'name'),
+        );
     }
 
     public function test_charter_save_survives_legacy_customer_phone_conflicts_in_other_tenant(): void

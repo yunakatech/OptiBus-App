@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Support\AccessControl;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -179,6 +180,7 @@ class TenantProvisioningService
             $amount,
             $isTrial,
             $requiresPayment,
+            $input,
         ): array {
             $tenantId = (int) DB::table('tenants')->insertGetId([
                 'name' => $travelName,
@@ -223,8 +225,19 @@ class TenantProvisioningService
             }
 
             $poolId = $this->createDefaultPool($tenantId, $tenantSlug, $travelName);
+            $routeId = 0;
             if ($poolId > 0) {
-                $this->createDefaultRoute($tenantId, $poolId, $origin, $destination);
+                $routeId = $this->createDefaultRoute($tenantId, $poolId, $origin, $destination);
+                $routeName = $this->routeNameForId($routeId) ?: strtoupper($origin.' -> '.$destination);
+                $segmentId = $this->createOnboardingSegment($tenantId, $routeId, $routeName, [
+                    ...$input,
+                    'origin' => $origin,
+                    'destination' => $destination,
+                ]);
+                $unitId = $this->createOnboardingUnit($tenantId, $poolId, $input);
+                $armadaId = $this->createOnboardingArmada($tenantId, $poolId, $input);
+                $this->createOnboardingDriver($tenantId, $poolId, $armadaId, $input);
+                $this->createOnboardingSchedules($tenantId, $routeId, $routeName, $unitId, $segmentId, $input);
                 $this->assignUserToPool($userId, $poolId);
             }
 
@@ -248,9 +261,129 @@ class TenantProvisioningService
                 'invoice_id' => $invoiceId,
                 'subscription_status' => $isTrial ? 'trial' : ($requiresPayment ? 'pending_payment' : 'active'),
                 'tenant_status' => $requiresPayment ? 'pending_payment' : 'active',
+                'pool_id' => $poolId,
+                'route_id' => $routeId,
+                'setup_progress' => $this->setupProgressForTenant($tenantId),
                 'redirect_route' => $requiresPayment ? route('subscription.index') : route('dashboard'),
             ];
         });
+    }
+
+    /**
+     * Add or repair first-run operational data for a user that already owns a tenant.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    public function completeSetupForUser(User $user, array $input = []): array
+    {
+        $userId = (int) $user->id;
+        $tenantId = $this->tenantIdForUser($userId);
+        if ($userId <= 0 || $tenantId <= 0) {
+            return ['provisioned' => false, 'reason' => 'tenant_missing'];
+        }
+
+        return DB::transaction(function () use ($user, $input, $tenantId): array {
+            $travelName = trim((string) ($input['travel_name'] ?? ''));
+            $phone = trim((string) ($input['phone'] ?? ''));
+            if ($travelName !== '' && Schema::hasTable('tenants')) {
+                $tenantPayload = ['name' => $travelName, 'updated_at' => now()];
+                if ($phone !== '' && Schema::hasColumn('tenants', 'phone')) {
+                    $tenantPayload['phone'] = $phone;
+                }
+                DB::table('tenants')->where('id', $tenantId)->update($tenantPayload);
+            }
+
+            $poolId = $this->defaultPoolForTenant($tenantId);
+            if ($poolId <= 0) {
+                $tenantSlug = (string) (DB::table('tenants')->where('id', $tenantId)->value('slug') ?? 'travel-'.$tenantId);
+                $tenantName = trim((string) (DB::table('tenants')->where('id', $tenantId)->value('name') ?? ''));
+                if ($tenantName === '') {
+                    $tenantName = $travelName !== '' ? $travelName : (string) $user->name;
+                }
+                $poolId = $this->createDefaultPool($tenantId, $tenantSlug, $tenantName);
+            }
+
+            if ($poolId > 0) {
+                $this->assignUserToPool((int) $user->id, $poolId);
+            }
+
+            $origin = trim((string) ($input['origin'] ?? ''));
+            $destination = trim((string) ($input['destination'] ?? ''));
+            $routeId = $this->createDefaultRoute($tenantId, $poolId, $origin, $destination);
+            $routeName = $this->routeNameForId($routeId) ?: strtoupper($origin.' -> '.$destination);
+
+            $segmentId = $this->createOnboardingSegment($tenantId, $routeId, $routeName, $input);
+            $unitId = $this->createOnboardingUnit($tenantId, $poolId, $input);
+            $armadaId = $this->createOnboardingArmada($tenantId, $poolId, $input);
+            $this->createOnboardingDriver($tenantId, $poolId, $armadaId, $input);
+            $this->createOnboardingSchedules($tenantId, $routeId, $routeName, $unitId, $segmentId, $input);
+
+            return [
+                'provisioned' => true,
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolId,
+                'route_id' => $routeId,
+                'redirect_route' => route('dashboard'),
+                'setup_progress' => $this->setupProgressForTenant($tenantId),
+            ];
+        });
+    }
+
+    /**
+     * @return array{route: bool, segment: bool, schedule: bool, unit: bool, armada: bool, driver: bool, completed: bool, completed_count: int, total_count: int, percent: int, items: array<int, array{key: string, label: string, done: bool}>}
+     */
+    public function setupProgressForTenant(int $tenantId): array
+    {
+        $items = [
+            ['key' => 'route', 'label' => 'Rute sudah dibuat', 'done' => $this->tenantRowExists('routes', $tenantId)],
+            ['key' => 'segment', 'label' => 'Harga sudah dibuat', 'done' => $this->tenantRowExists('segments', $tenantId)],
+            ['key' => 'schedule', 'label' => 'Jadwal sudah dibuat', 'done' => $this->tenantRowExists('schedules', $tenantId)],
+            ['key' => 'unit', 'label' => 'Kategori armada sudah dibuat', 'done' => $this->tenantRowExists('units', $tenantId)],
+            ['key' => 'armada', 'label' => 'Armada sudah dibuat', 'done' => $this->tenantRowExists('armadas', $tenantId)],
+            ['key' => 'driver', 'label' => 'Driver sudah dibuat', 'done' => $this->tenantRowExists('drivers', $tenantId)],
+        ];
+
+        $completedCount = collect($items)->filter(fn (array $item): bool => (bool) $item['done'])->count();
+        $totalCount = count($items);
+
+        return [
+            'route' => (bool) $items[0]['done'],
+            'segment' => (bool) $items[1]['done'],
+            'schedule' => (bool) $items[2]['done'],
+            'unit' => (bool) $items[3]['done'],
+            'armada' => (bool) $items[4]['done'],
+            'driver' => (bool) $items[5]['done'],
+            'completed' => $completedCount === $totalCount,
+            'completed_count' => $completedCount,
+            'total_count' => $totalCount,
+            'percent' => $totalCount > 0 ? (int) round(($completedCount / $totalCount) * 100) : 0,
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function onboardingDefaultsForUser(User $user): array
+    {
+        $tenantId = $this->tenantIdForUser((int) $user->id);
+        $tenant = $tenantId > 0 && Schema::hasTable('tenants')
+            ? DB::table('tenants')->where('id', $tenantId)->first(['name', 'phone'])
+            : null;
+        $route = $tenantId > 0 && Schema::hasTable('routes') && Schema::hasColumn('routes', 'tenant_id')
+            ? DB::table('routes')
+                ->where('tenant_id', $tenantId)
+                ->orderBy('id')
+                ->first(['origin', 'destination'])
+            : null;
+
+        return [
+            'travel_name' => (string) ($tenant->name ?? ''),
+            'phone' => (string) ($tenant->phone ?? ''),
+            'origin' => (string) ($route->origin ?? ''),
+            'destination' => (string) ($route->destination ?? ''),
+        ];
     }
 
     private function saasReady(): bool
@@ -340,10 +473,10 @@ class TenantProvisioningService
         ]);
     }
 
-    private function createDefaultRoute(int $tenantId, int $poolId, string $origin, string $destination): void
+    private function createDefaultRoute(int $tenantId, int $poolId, string $origin, string $destination): int
     {
         if ($origin === '' || $destination === '' || ! Schema::hasTable('routes') || ! Schema::hasTable('pool_route')) {
-            return;
+            return 0;
         }
 
         $routeName = strtoupper($origin.' -> '.$destination);
@@ -364,6 +497,266 @@ class TenantProvisioningService
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+        }
+
+        return $routeId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function createOnboardingSegment(int $tenantId, int $routeId, string $routeName, array $input): int
+    {
+        if ($tenantId <= 0 || $routeId <= 0 || ! Schema::hasTable('segments')) {
+            return 0;
+        }
+
+        $pickupTimes = $this->timeList($input['pickup_times'] ?? []);
+        $price = (float) ($input['ticket_price'] ?? 0);
+        if ($pickupTimes === [] && $price <= 0) {
+            return 0;
+        }
+
+        $origin = trim((string) ($input['segment_origin'] ?? ''));
+        $destination = trim((string) ($input['segment_destination'] ?? ''));
+        if ($origin === '') {
+            $origin = trim((string) ($input['origin'] ?? ''));
+        }
+        if ($destination === '') {
+            $destination = trim((string) ($input['destination'] ?? ''));
+        }
+
+        $segmentName = strtoupper(trim($origin.' -> '.$destination));
+        if ($segmentName === '->') {
+            $segmentName = $routeName;
+        }
+
+        $existingQuery = DB::table('segments')
+            ->where('route_id', $routeId)
+            ->where('rute', $segmentName);
+        if (Schema::hasColumn('segments', 'tenant_id')) {
+            $existingQuery->where('tenant_id', $tenantId);
+        }
+        $existing = $existingQuery->value('id');
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $payload = [
+            'route_id' => $routeId,
+            'rute' => $segmentName,
+            'origin' => $origin !== '' ? $origin : null,
+            'destination' => $destination !== '' ? $destination : null,
+            'jam' => ($pickupTimes[0] ?? '08:00').':00',
+            'harga' => $price,
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('segments', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+        if (Schema::hasColumn('segments', 'jam_pickups')) {
+            $payload['jam_pickups'] = json_encode($pickupTimes !== [] ? $pickupTimes : ['08:00']);
+        }
+
+        return (int) DB::table('segments')->insertGetId($this->filterPayloadForTable('segments', $payload));
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function createOnboardingUnit(int $tenantId, int $poolId, array $input): int
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable('units')) {
+            return 0;
+        }
+
+        $nopol = strtoupper(trim((string) ($input['unit_nopol'] ?? '')));
+        $category = $this->normalizeUnitCategory($input['unit_category'] ?? 'Minibus');
+        $capacity = max(0, (int) ($input['seat_capacity'] ?? 0));
+        if ($nopol === '' && trim((string) ($input['unit_category'] ?? '')) === '' && $capacity <= 0) {
+            return 0;
+        }
+        if ($nopol === '') {
+            $nopol = 'SETUP-'.$tenantId;
+        }
+
+        $existing = DB::table('units')
+            ->when(Schema::hasColumn('units', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
+            ->whereRaw('UPPER(nopol) = ?', [$nopol])
+            ->value('id');
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $payload = [
+            'nopol' => $nopol,
+            'merek' => null,
+            'type' => null,
+            'category' => $category,
+            'tahun' => 0,
+            'warna' => null,
+            'kapasitas' => $capacity,
+            'status' => 'Aktif',
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('units', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+        if (Schema::hasColumn('units', 'pool_id')) {
+            $payload['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
+        try {
+            return (int) DB::table('units')->insertGetId($this->filterPayloadForTable('units', $payload));
+        } catch (QueryException $e) {
+            Log::warning('onboarding.unit_skipped', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);
+
+            return 0;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function createOnboardingArmada(int $tenantId, int $poolId, array $input): int
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable('armadas')) {
+            return 0;
+        }
+
+        $nopol = strtoupper(trim((string) ($input['unit_nopol'] ?? '')));
+        if ($nopol === '') {
+            return 0;
+        }
+
+        $existing = DB::table('armadas')
+            ->when(Schema::hasColumn('armadas', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
+            ->whereRaw('UPPER(nopol) = ?', [$nopol])
+            ->value('id');
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $payload = [
+            'nopol' => $nopol,
+            'merk' => $this->nullableString($input['armada_merk'] ?? null),
+            'tahun' => 0,
+            'warna' => null,
+            'kategori' => $this->normalizeUnitCategory($input['unit_category'] ?? 'Minibus'),
+            'ac_type' => 'AC',
+            'target_bulanan' => 0,
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('armadas', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+        if (Schema::hasColumn('armadas', 'pool_id')) {
+            $payload['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
+        try {
+            return (int) DB::table('armadas')->insertGetId($this->filterPayloadForTable('armadas', $payload));
+        } catch (QueryException $e) {
+            Log::warning('onboarding.armada_skipped', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);
+
+            return 0;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function createOnboardingDriver(int $tenantId, int $poolId, int $armadaId, array $input): int
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable('drivers')) {
+            return 0;
+        }
+
+        $name = strtoupper(trim((string) ($input['driver_name'] ?? '')));
+        if ($name === '') {
+            return 0;
+        }
+
+        $existing = DB::table('drivers')
+            ->when(Schema::hasColumn('drivers', 'tenant_id'), fn ($q) => $q->where('tenant_id', $tenantId))
+            ->where('nama', $name)
+            ->value('id');
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $payload = [
+            'nama' => $name,
+            'phone' => $this->nullableString($input['driver_phone'] ?? null),
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('drivers', 'kategori')) {
+            $payload['kategori'] = $this->normalizeUnitCategory($input['unit_category'] ?? 'Minibus');
+        }
+        if (Schema::hasColumn('drivers', 'armada_id') && $armadaId > 0) {
+            $payload['armada_id'] = $armadaId;
+        }
+        if (Schema::hasColumn('drivers', 'armada_nopol')) {
+            $payload['armada_nopol'] = strtoupper(trim((string) ($input['unit_nopol'] ?? ''))) ?: null;
+        }
+        if (Schema::hasColumn('drivers', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+        if (Schema::hasColumn('drivers', 'pool_id')) {
+            $payload['pool_id'] = $poolId > 0 ? $poolId : null;
+        }
+
+        return (int) DB::table('drivers')->insertGetId($this->filterPayloadForTable('drivers', $payload));
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function createOnboardingSchedules(int $tenantId, int $routeId, string $routeName, int $unitId, int $segmentId, array $input): void
+    {
+        if ($tenantId <= 0 || $routeId <= 0 || $routeName === '' || ! Schema::hasTable('schedules')) {
+            return;
+        }
+
+        $days = array_values(array_unique(array_filter(array_map('intval', (array) ($input['schedule_days'] ?? [])), static fn (int $day): bool => $day >= 0 && $day <= 6)));
+        $departureTime = $this->normalizeTime($input['departure_time'] ?? null);
+        if ($days === [] || $departureTime === '') {
+            return;
+        }
+
+        foreach ($days as $day) {
+            $payload = [
+                'rute' => $routeName,
+                'dow' => $day,
+                'jam' => $departureTime,
+                'units' => 1,
+                'unit_label' => 'Unit 1',
+                'unit_id' => $unitId > 0 ? $unitId : null,
+                'created_at' => now(),
+            ];
+            if (Schema::hasColumn('schedules', 'tenant_id')) {
+                $payload['tenant_id'] = $tenantId;
+            }
+            if (Schema::hasColumn('schedules', 'route_id')) {
+                $payload['route_id'] = $routeId;
+            }
+            if (Schema::hasColumn('schedules', 'seats')) {
+                $payload['seats'] = $unitId > 0 ? $this->unitSeatCount($unitId) : 0;
+            }
+
+            try {
+                $scheduleId = (int) DB::table('schedules')->insertGetId($this->filterPayloadForTable('schedules', $payload));
+                $this->createScheduleUnitRow($tenantId, $scheduleId, $unitId);
+                $this->createScheduleSegmentRow($scheduleId, $segmentId, $input);
+            } catch (QueryException $e) {
+                Log::warning('onboarding.schedule_skipped', [
+                    'tenant_id' => $tenantId,
+                    'route' => $routeName,
+                    'day' => $day,
+                    'jam' => $departureTime,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
@@ -389,6 +782,175 @@ class TenantProvisioningService
         }
 
         return $payload;
+    }
+
+    private function tenantIdForUser(int $userId): int
+    {
+        if ($userId <= 0 || ! Schema::hasTable('users') || ! Schema::hasColumn('users', 'tenant_id')) {
+            return 0;
+        }
+
+        return (int) (DB::table('users')->where('id', $userId)->value('tenant_id') ?? 0);
+    }
+
+    private function defaultPoolForTenant(int $tenantId): int
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable('pools') || ! Schema::hasColumn('pools', 'tenant_id')) {
+            return 0;
+        }
+
+        return (int) (DB::table('pools')
+            ->where('tenant_id', $tenantId)
+            ->orderBy('id')
+            ->value('id') ?? 0);
+    }
+
+    private function routeNameForId(int $routeId): string
+    {
+        if ($routeId <= 0 || ! Schema::hasTable('routes')) {
+            return '';
+        }
+
+        return trim((string) (DB::table('routes')->where('id', $routeId)->value('name') ?? ''));
+    }
+
+    private function tenantRowExists(string $table, int $tenantId): bool
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable($table)) {
+            return false;
+        }
+
+        $query = DB::table($table);
+        if (Schema::hasColumn($table, 'tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        } elseif (Schema::hasColumn($table, 'pool_id')) {
+            $poolIds = $this->tenantPoolIds($tenantId);
+            if ($poolIds === []) {
+                return false;
+            }
+            $query->whereIn('pool_id', $poolIds);
+        } else {
+            return false;
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function tenantPoolIds(int $tenantId): array
+    {
+        if ($tenantId <= 0 || ! Schema::hasTable('pools') || ! Schema::hasColumn('pools', 'tenant_id')) {
+            return [];
+        }
+
+        return DB::table('pools')
+            ->where('tenant_id', $tenantId)
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->filter(static fn (int $id): bool => $id > 0)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function filterPayloadForTable(string $table, array $payload): array
+    {
+        if (! Schema::hasTable($table)) {
+            return [];
+        }
+
+        return collect($payload)
+            ->filter(static fn (mixed $value, string $column): bool => Schema::hasColumn($table, $column))
+            ->all();
+    }
+
+    private function normalizeUnitCategory(mixed $value): string
+    {
+        $normalized = strtolower(preg_replace('/\s+/', '', trim((string) $value)) ?? '');
+
+        return match ($normalized) {
+            'mediumbus' => 'Mediumbus',
+            'bigbus', 'bigbun' => 'Bigbus',
+            'microbus' => 'Microbus',
+            default => 'Minibus',
+        };
+    }
+
+    private function normalizeTime(mixed $value): string
+    {
+        $time = trim((string) $value);
+        if (preg_match('/^\d{2}:\d{2}/', $time) !== 1) {
+            return '';
+        }
+
+        return substr($time, 0, 5);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function timeList(mixed $value): array
+    {
+        $items = is_array($value) ? $value : [$value];
+
+        return collect($items)
+            ->map(fn (mixed $item): string => $this->normalizeTime($item))
+            ->filter(static fn (string $item): bool => $item !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function unitSeatCount(int $unitId): int
+    {
+        if ($unitId <= 0 || ! Schema::hasTable('units')) {
+            return 0;
+        }
+
+        return max(0, (int) (DB::table('units')->where('id', $unitId)->value('kapasitas') ?? 0));
+    }
+
+    private function createScheduleUnitRow(int $tenantId, int $scheduleId, int $unitId): void
+    {
+        if ($scheduleId <= 0 || ! Schema::hasTable('schedule_units')) {
+            return;
+        }
+
+        $payload = [
+            'schedule_id' => $scheduleId,
+            'unit_no' => 1,
+            'label' => 'Unit 1',
+            'unit_id' => $unitId > 0 ? $unitId : null,
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('schedule_units', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+
+        DB::table('schedule_units')->insert($this->filterPayloadForTable('schedule_units', $payload));
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function createScheduleSegmentRow(int $scheduleId, int $segmentId, array $input): void
+    {
+        if ($scheduleId <= 0 || $segmentId <= 0 || ! Schema::hasTable('schedule_segment')) {
+            return;
+        }
+
+        $pickupTimes = $this->timeList($input['pickup_times'] ?? []);
+        DB::table('schedule_segment')->insert($this->filterPayloadForTable('schedule_segment', [
+            'schedule_id' => $scheduleId,
+            'segment_id' => $segmentId,
+            'jam_pickup' => $pickupTimes[0] ?? ($this->normalizeTime($input['departure_time'] ?? null) ?: '08:00'),
+            'created_at' => now(),
+        ]));
     }
 
     private function assignUserToPool(int $userId, int $poolId): void

@@ -22,7 +22,7 @@
 {:else}
     <main
         class={cn(
-            'mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-3 px-4 py-4 md:px-6 md:py-5 md:[html[data-density=compact]_&]:gap-2.5',
+            'mx-auto flex h-full min-w-0 w-full max-w-6xl flex-1 flex-col gap-3 overflow-x-hidden px-3 py-4 sm:px-4 md:px-6 md:py-5 md:[html[data-density=compact]_&]:gap-2.5',
             className,
         )}
     >

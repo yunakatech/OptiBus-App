@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TenantProvisioningService;
 use App\Support\ActivityLog;
 use App\Support\PoolScope;
 use Carbon\Carbon;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -16,7 +20,11 @@ class DashboardController extends Controller
 {
     private int $activePoolId = 0;
 
-    public function __invoke(\Illuminate\Http\Request $request): Response
+    public function __construct(
+        private readonly TenantProvisioningService $provisioning,
+    ) {}
+
+    public function __invoke(Request $request): Response
     {
         $today = Carbon::today();
         $monthStart = $today->copy()->startOfMonth();
@@ -46,6 +54,7 @@ class DashboardController extends Controller
             'pools' => $pools->values(),
             'selectedPoolId' => $this->activePoolId,
             'selectedPoolName' => $selectedPoolName,
+            'setupProgress' => $this->provisioning->setupProgressForTenant(PoolScope::tenantId()),
             'stats' => fn (): array => $resolveDashboardSummary()['stats'],
             'statsComparison' => fn (): array => $resolveDashboardSummary()['statsComparison'],
             'statsPeriod' => [
@@ -73,42 +82,52 @@ class DashboardController extends Controller
             ],
             'dailyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $this->dailyTrend($today);
             }, 'dashboard-data'),
             'monthlyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $this->monthlyTrend($today);
             }, 'dashboard-data'),
             'yearlyHeatmap' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $this->yearlyHeatmap($today);
             }, 'dashboard-data'),
             'recentActivity' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $resolveRecentActivity()['items'];
             }, 'dashboard-data'),
             'recentActivityTotal' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): int {
                 $this->activePoolId = $deferredPoolId;
+
                 return (int) $resolveRecentActivity()['total'];
             }, 'dashboard-data'),
             'recentActivityVisibleCount' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): int {
                 $this->activePoolId = $deferredPoolId;
+
                 return (int) $resolveRecentActivity()['visible_count'];
             }, 'dashboard-data'),
             'departuresToday' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $this->departuresToday($today);
             }, 'dashboard-data'),
             'upcomingCharterReminder' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $this->upcomingCharterReminder($today);
             }, 'dashboard-data'),
             'topDrivers' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $this->topDriversByRevenue($today);
             }, 'dashboard-data'),
             'topArmadas' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
+
                 return $this->topArmadasByRevenue($today);
             }, 'dashboard-data'),
         ]);
@@ -1347,6 +1366,7 @@ class DashboardController extends Controller
         }
 
         usort($dates, fn (Carbon $a, Carbon $b) => $a->timestamp <=> $b->timestamp);
+
         return end($dates) ?: null;
     }
 
@@ -1387,7 +1407,7 @@ class DashboardController extends Controller
     /**
      * Load pools available for the dashboard switcher.
      */
-    private function loadPoolsForSwitcher(): \Illuminate\Support\Collection
+    private function loadPoolsForSwitcher(): Collection
     {
         if (! Schema::hasTable('pools')) {
             return collect([]);
@@ -1418,7 +1438,7 @@ class DashboardController extends Controller
         return (float) $departures->sum(fn ($departure): float => $this->bookingDepartureBop($departure, $lookup));
     }
 
-    private function bookingDeparturesForBop(string $dateStart, string $dateEnd): \Illuminate\Support\Collection
+    private function bookingDeparturesForBop(string $dateStart, string $dateEnd): Collection
     {
         if (! Schema::hasTable('bookings')) {
             return collect();
@@ -1440,7 +1460,7 @@ class DashboardController extends Controller
     /**
      * @return array{schedule_route: array<string, float>, schedule_name: array<string, float>, route_id: array<int, float>, route_name: array<string, float>}
      */
-    private function bookingBopLookup(\Illuminate\Support\Collection $departures): array
+    private function bookingBopLookup(Collection $departures): array
     {
         $lookup = [
             'schedule_route' => [],
@@ -1549,7 +1569,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * @param array{schedule_route: array<string, float>, schedule_name: array<string, float>, route_id: array<int, float>, route_name: array<string, float>} $lookup
+     * @param  array{schedule_route: array<string, float>, schedule_name: array<string, float>, route_id: array<int, float>, route_name: array<string, float>}  $lookup
      */
     private function bookingDepartureBop(object $departure, array $lookup): float
     {
@@ -2233,7 +2253,7 @@ class DashboardController extends Controller
         return $revenue;
     }
 
-    private function tripAssignmentsArmadaNopolExpression(): \Illuminate\Contracts\Database\Query\Expression
+    private function tripAssignmentsArmadaNopolExpression(): Expression
     {
         if (Schema::hasColumn('trip_assignments', 'armada_nopol') && Schema::hasTable('armadas') && Schema::hasColumn('trip_assignments', 'armada_id')) {
             return DB::raw('COALESCE(t.armada_nopol, a.nopol) as armada_nopol');
@@ -2250,7 +2270,7 @@ class DashboardController extends Controller
         return DB::raw('NULL as armada_nopol');
     }
 
-    private function chartersArmadaNopolExpression(): \Illuminate\Contracts\Database\Query\Expression
+    private function chartersArmadaNopolExpression(): Expression
     {
         if (Schema::hasColumn('charters', 'armada_nopol') && Schema::hasTable('armadas') && Schema::hasColumn('charters', 'armada_id')) {
             return DB::raw('COALESCE(c.armada_nopol, a.nopol) as armada_nopol');

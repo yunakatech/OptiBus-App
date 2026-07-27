@@ -1,0 +1,10 @@
+public/hot
+public/build
+node_modules
+vendor
+.env
+.env.*
+storage/logs
+.agents
+skills-lock.json
+test_*.php

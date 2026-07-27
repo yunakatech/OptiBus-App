@@ -146,7 +146,11 @@ class BookingApiController extends Controller
                 SchemaCache::hasColumn('segments', 'route_id') ? 's.route_id' : '',
                 's.rute',
             );
-            PoolScope::applyRouteScope($segmentQuery, 's.route_id', 's.rute');
+            PoolScope::applyRouteScope(
+                $segmentQuery,
+                SchemaCache::hasColumn('segments', 'route_id') ? 's.route_id' : '',
+                's.rute',
+            );
 
             $segments = $segmentQuery->get($segmentSelect)->map(function ($row) {
                 return [
@@ -807,17 +811,13 @@ class BookingApiController extends Controller
             return $this->error('Unit tidak tersedia untuk jadwal ini.', 422);
         }
 
-        $payload = [
-            'rute' => (string) ($schedule->rute ?? $data['rute']),
-            'tanggal' => (string) $data['tanggal'],
-            'jam' => $data['jam'].':00',
-            'unit' => $unit,
-        ];
-        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
-        if (ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
-            return $this->error('Manifest sudah ditutup. Keberangkatan baru tidak bisa dibuat lagi.', 409);
-        }
-
+        $payload = $this->tripAssignmentPayload(
+            (string) ($schedule->rute ?? $data['rute']),
+            (string) $data['tanggal'],
+            (string) $data['jam'],
+            $unit,
+            (int) ($schedule->route_id ?? 0),
+        );
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'active';
         }
@@ -832,16 +832,23 @@ class BookingApiController extends Controller
             return $this->error('Keberangkatan untuk rute, tanggal, jam, dan unit ini sudah memiliki data penumpang.', 409);
         }
 
-        if ($existing) {
-            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, [
-                'updated_at' => now(),
-            ]));
-            $id = (int) $existing->id;
-        } else {
-            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+        try {
+            if ($existing) {
+                DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge(
+                    $payload,
+                    $this->tripAssignmentTimestamps(),
+                ));
+                $id = (int) $existing->id;
+            } else {
+                $id = (int) DB::table('trip_assignments')->insertGetId(array_merge(
+                    $payload,
+                    $this->tripAssignmentTimestamps(true),
+                ));
+            }
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->error('Jadwal manual gagal dibuat karena data assignment belum lengkap untuk skema database saat ini.', 422);
         }
 
         ActivityLog::write(
@@ -890,17 +897,13 @@ class BookingApiController extends Controller
         }
         $unit = (int) $data['unit'];
 
-        $payload = [
-            'rute' => $routeName,
-            'tanggal' => (string) $data['tanggal'],
-            'jam' => $data['jam'].':00',
-            'unit' => $unit,
-        ];
-        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
-        if (ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
-            return $this->error('Manifest sudah ditutup. Jadwal tidak bisa dibatalkan lagi.', 409);
-        }
-
+        $payload = $this->tripAssignmentPayload(
+            $routeName,
+            (string) $data['tanggal'],
+            (string) $data['jam'],
+            $unit,
+            (int) ($schedule->route_id ?? 0),
+        );
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'canceled';
         }
@@ -923,15 +926,18 @@ class BookingApiController extends Controller
         }
 
         if ($existing) {
-            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, $assignmentMetaReset, [
-                'updated_at' => now(),
-            ]));
+            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge(
+                $payload,
+                $assignmentMetaReset,
+                $this->tripAssignmentTimestamps(),
+            ));
             $id = (int) $existing->id;
         } else {
-            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, $assignmentMetaReset, [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge(
+                $payload,
+                $assignmentMetaReset,
+                $this->tripAssignmentTimestamps(true),
+            ));
         }
 
         ActivityLog::write(
@@ -978,13 +984,13 @@ class BookingApiController extends Controller
         }
         $unit = (int) $data['unit'];
 
-        $payload = [
-            'rute' => $routeName,
-            'tanggal' => (string) $data['tanggal'],
-            'jam' => $data['jam'].':00',
-            'unit' => $unit,
-        ];
-        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
+        $payload = $this->tripAssignmentPayload(
+            $routeName,
+            (string) $data['tanggal'],
+            (string) $data['jam'],
+            $unit,
+            (int) ($schedule->route_id ?? 0),
+        );
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'departed';
@@ -993,7 +999,7 @@ class BookingApiController extends Controller
         $existing = $this->findTripAssignment($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
         $existingStatus = $this->manifestAssignmentStatus($existing);
 
-        if ($existingStatus === 'canceled' || $existingStatus === 'closed' || ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
+        if ($existingStatus === 'canceled' || $existingStatus === 'closed') {
             return $this->error('Manifest sudah ditutup. Jadwal tidak bisa ditandai berangkat lagi.', 409);
         }
 
@@ -1010,15 +1016,16 @@ class BookingApiController extends Controller
         }
 
         if ($existing) {
-            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, [
-                'updated_at' => now(),
-            ]));
+            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge(
+                $payload,
+                $this->tripAssignmentTimestamps(),
+            ));
             $id = (int) $existing->id;
         } else {
-            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge(
+                $payload,
+                $this->tripAssignmentTimestamps(true),
+            ));
         }
 
         $actor = (string) ($request->user()?->email ?? $request->user()?->name ?? 'system');
@@ -1064,13 +1071,13 @@ class BookingApiController extends Controller
         }
         $unit = (int) $data['unit'];
 
-        $payload = [
-            'rute' => $routeName,
-            'tanggal' => (string) $data['tanggal'],
-            'jam' => $data['jam'].':00',
-            'unit' => $unit,
-        ];
-        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
+        $payload = $this->tripAssignmentPayload(
+            $routeName,
+            (string) $data['tanggal'],
+            (string) $data['jam'],
+            $unit,
+            (int) ($schedule->route_id ?? 0),
+        );
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'arrived';
@@ -1079,7 +1086,7 @@ class BookingApiController extends Controller
         $existing = $this->findTripAssignment($routeName, $payload['tanggal'], substr((string) $payload['jam'], 0, 5), $unit);
         $existingStatus = $this->manifestAssignmentStatus($existing);
 
-        if ($existingStatus === 'canceled' || $existingStatus === 'closed' || ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
+        if ($existingStatus === 'canceled' || $existingStatus === 'closed') {
             return $this->error('Manifest sudah ditutup. Jadwal tidak bisa ditandai tiba lagi.', 409);
         }
 
@@ -1096,15 +1103,16 @@ class BookingApiController extends Controller
         }
 
         if ($existing) {
-            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge($payload, [
-                'updated_at' => now(),
-            ]));
+            DB::table('trip_assignments')->where('id', (int) $existing->id)->update(array_merge(
+                $payload,
+                $this->tripAssignmentTimestamps(),
+            ));
             $id = (int) $existing->id;
         } else {
-            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+            $id = (int) DB::table('trip_assignments')->insertGetId(array_merge(
+                $payload,
+                $this->tripAssignmentTimestamps(true),
+            ));
         }
 
         $actor = (string) ($request->user()?->email ?? $request->user()?->name ?? 'system');
@@ -1132,19 +1140,10 @@ class BookingApiController extends Controller
             ],
         );
 
-        $this->closeManifestAssignment(
-            $id,
-            $routeName,
-            $payload['tanggal'],
-            substr((string) $payload['jam'], 0, 5),
-            $unit,
-            $actor,
-        );
-
         return $this->ok([
-            'message' => 'Armada berhasil ditandai sudah tiba dan manifest otomatis ditutup.',
+            'message' => 'Armada berhasil ditandai sudah tiba.',
             'id' => $id,
-            'status' => 'closed',
+            'status' => 'arrived',
             'bop' => (float) ($schedule->bop ?? 0),
             'luggage_arrived_count' => $arrivedLuggageCount,
         ]);
@@ -2340,6 +2339,57 @@ class BookingApiController extends Controller
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function tripAssignmentPayload(string $rute, string $tanggal, string $jam, int $unit, int $routeId = 0): array
+    {
+        $routeName = trim($rute);
+        $routeId = $routeId > 0 ? $routeId : PoolScope::routeIdForName($routeName);
+        $payload = [
+            'rute' => $routeName,
+            'tanggal' => $tanggal,
+            'jam' => $this->normalizeTime($jam),
+            'unit' => max(1, $unit),
+        ];
+
+        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
+
+        if (SchemaCache::hasColumn('trip_assignments', 'route_id') && $routeId > 0) {
+            $payload['route_id'] = $routeId;
+        }
+
+        if (SchemaCache::hasColumn('trip_assignments', 'pool_id')) {
+            $poolId = PoolScope::customerPoolId($routeId, auth()->id());
+            if ($poolId <= 0) {
+                $poolId = PoolScope::defaultWritablePoolId(auth()->id());
+            }
+            if ($poolId > 0) {
+                $payload['pool_id'] = $poolId;
+            }
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function tripAssignmentTimestamps(bool $includeCreated = false): array
+    {
+        $payload = [];
+
+        if ($includeCreated && SchemaCache::hasColumn('trip_assignments', 'created_at')) {
+            $payload['created_at'] = now();
+        }
+
+        if (SchemaCache::hasColumn('trip_assignments', 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
+
+        return $payload;
+    }
+
+    /**
      * @return array<string, int>
      */
     private function tenantPayload(string $table): array
@@ -2437,6 +2487,9 @@ class BookingApiController extends Controller
         $dow = Carbon::createFromFormat('Y-m-d', $tanggal)->dayOfWeek;
         $targetRoute = $this->normalizeRouteName($rute);
         $select = ['id', 'rute', 'dow', 'jam', 'units'];
+        if (SchemaCache::hasColumn('schedules', 'route_id')) {
+            $select[] = 'route_id';
+        }
         $select[] = $this->schedulesHasBopColumn() ? 'bop' : DB::raw('0 as bop');
 
         $query = DB::table('schedules')
@@ -2480,6 +2533,10 @@ class BookingApiController extends Controller
 
         if ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas')) {
             $select[] = DB::raw('a.nopol as armada_nopol_fallback');
+        }
+
+        if (SchemaCache::hasColumn('trip_assignments', 'tenant_id')) {
+            $select[] = 't.tenant_id';
         }
 
         $query = DB::table('trip_assignments as t')
@@ -2591,7 +2648,6 @@ class BookingApiController extends Controller
         if (
             $existingStatus === 'canceled'
             || $existingStatus === 'closed'
-            || ManifestLifecycle::isAutoCloseDue($tanggal, $jam)
         ) {
             throw ValidationException::withMessages([
                 'rute' => 'Manifest sudah ditutup. Keberangkatan ini tidak bisa dipakai untuk mapping bagasi.',
@@ -2602,22 +2658,22 @@ class BookingApiController extends Controller
             return $existing;
         }
 
-        $payload = [
-            'rute' => $routeName,
-            'tanggal' => $tanggal,
-            'jam' => $this->normalizeTime($jam),
-            'unit' => max(1, $unit),
-        ];
-        $payload = array_merge($payload, $this->tenantPayload('trip_assignments'));
+        $payload = $this->tripAssignmentPayload(
+            $routeName,
+            $tanggal,
+            $jam,
+            $unit,
+            (int) ($schedule->route_id ?? 0),
+        );
 
         if ($this->tripAssignmentsHasStatus()) {
             $payload['status'] = 'active';
         }
 
-        $id = (int) DB::table('trip_assignments')->insertGetId(array_merge($payload, [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]));
+        $id = (int) DB::table('trip_assignments')->insertGetId(array_merge(
+            $payload,
+            $this->tripAssignmentTimestamps(true),
+        ));
 
         return (object) array_merge($payload, [
             'id' => $id,
@@ -2670,13 +2726,12 @@ class BookingApiController extends Controller
     private function manifestTripIsLocked(?object $assignment, string $tanggal, string $jam): bool
     {
         if (! $assignment) {
-            return ManifestLifecycle::isAutoCloseDue($tanggal, $jam);
+            return false;
         }
 
         $status = $this->manifestAssignmentStatus($assignment);
 
-        return in_array($status, ['canceled', 'closed'], true)
-            || ManifestLifecycle::isAutoCloseDue($tanggal, $jam);
+        return in_array($status, ['canceled', 'closed'], true);
     }
 
     private function manifestCanBeClosed(?object $assignment): bool
@@ -2704,10 +2759,10 @@ class BookingApiController extends Controller
 
         DB::table('trip_assignments')
             ->where('id', $assignmentId)
-            ->update([
-                'status' => 'closed',
-                'updated_at' => now(),
-            ]);
+            ->update(array_merge(
+                ['status' => 'closed'],
+                $this->tripAssignmentTimestamps(),
+            ));
 
         ActivityLog::write(
             'BOOKING',

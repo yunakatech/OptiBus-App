@@ -610,9 +610,11 @@
 <AppHead title="SaaS Management" />
 
 <div
-    class="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(248,250,252,0.94)_0%,rgba(255,255,255,1)_34%,rgba(248,250,252,0.96)_100%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_24%),linear-gradient(180deg,#020617_0%,#0f172a_45%,#020617_100%)]"
+    class="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(248,250,252,0.94)_0%,rgba(255,255,255,1)_34%,rgba(248,250,252,0.96)_100%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_24%),linear-gradient(180deg,#020617_0%,#0f172a_45%,#020617_100%)]"
 >
-    <div class="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div
+        class="mx-auto w-full max-w-[1600px] space-y-4 px-3 py-4 sm:space-y-6 sm:px-6 sm:py-6 lg:px-8"
+    >
         {#if !saasTablesReady}
             <Card class={panelClass}>
                 <CardContent class="py-14 text-center">
@@ -655,7 +657,7 @@
                         class="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),transparent_35%,rgba(59,130,246,0.07))] dark:bg-[linear-gradient(135deg,rgba(148,163,184,0.08),transparent_35%,rgba(56,189,248,0.12))]"
                     ></div>
                     <div
-                        class="relative grid gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-end"
+                        class="relative grid gap-5 p-4 sm:gap-6 sm:p-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-end"
                     >
                         <div class="space-y-4">
                             <div
@@ -666,7 +668,7 @@
                             </div>
                             <div class="space-y-2">
                                 <h1
-                                    class="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+                                    class="text-2xl font-semibold tracking-tight text-foreground sm:text-4xl"
                                 >
                                     SaaS Management
                                 </h1>
@@ -713,11 +715,11 @@
                         </div>
 
                         <div
-                            class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3"
+                            class="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3"
                         >
                             {#each [{ label: 'Tenants', value: summary?.tenant_count ?? 0, note: 'Registry aktif', icon: Building2, tone: 'border-sky-200 bg-sky-50/80 text-sky-700 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300' }, { label: 'Active Subscriptions', value: summary?.active_subscription_count ?? 0, note: 'Tenant jalan', icon: CreditCard, tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300' }, { label: 'Plans', value: summary?.plan_count ?? 0, note: 'Skema paket', icon: Package, tone: 'border-violet-200 bg-violet-50/80 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300' }, { label: 'Pending Invoice', value: summary?.invoice_pending_count ?? 0, note: 'Antrian bayar', icon: FileText, tone: 'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300' }, { label: 'Overdue', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu follow up', icon: AlertTriangle, tone: 'border-red-200 bg-red-50/80 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300' }, { label: 'Paid This Month', value: summary?.invoice_paid_month_count ?? 0, note: 'Arus sehat', icon: TrendingUp, tone: 'border-rose-200 bg-rose-50/80 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300' }] as item}
                                 <div
-                                    class="rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/65"
+                                    class="rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/65 sm:rounded-lg sm:p-4"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -752,18 +754,20 @@
                 </div>
             </section>
 
-            <nav class="sticky top-4 z-20">
+            <nav class="z-20 md:sticky md:top-4">
                 <div
                     class="rounded-lg border border-slate-200/70 bg-white/86 p-2 shadow-[0_18px_60px_-40px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/82"
                 >
-                    <div class="flex gap-2 overflow-x-auto">
+                    <div
+                        class="flex gap-2 overflow-x-auto overscroll-x-contain pb-1"
+                    >
                         {#each [{ key: 'tenants', label: 'Tenants', icon: Building2, meta: summary?.tenant_count ?? 0 }, { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard, meta: summary?.active_subscription_count ?? 0 }, { key: 'plans', label: 'Plans', icon: Package, meta: summary?.plan_count ?? 0 }, { key: 'billing', label: 'Billing', icon: FileText, meta: summary?.invoice_pending_count ?? 0 }, { key: 'payment', label: 'Payment Gateway', icon: CreditCard, meta: 'Mayar' }] as tab}
                             <button
                                 onclick={() => switchTab(tab.key as TabName)}
                                 aria-current={activeTab === tab.key
                                     ? 'page'
                                     : undefined}
-                                class={`group flex min-w-[150px] items-center gap-3 rounded-full border px-4 py-3 text-sm font-medium transition
+                                class={`group flex min-w-[7.75rem] items-center gap-2 rounded-full border px-3 py-2.5 text-xs font-medium transition sm:min-w-[150px] sm:gap-3 sm:px-4 sm:py-3 sm:text-sm
                                 ${
                                     activeTab === tab.key
                                         ? 'border-slate-900 bg-slate-900 text-white shadow-[0_12px_30px_-16px_rgba(15,23,42,0.7)] dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950'
@@ -771,11 +775,11 @@
                                 }`}
                             >
                                 <tab.icon
-                                    class={`h-4 w-4 ${activeTab === tab.key ? 'text-white dark:text-slate-950' : 'text-sky-500'}`}
+                                    class={`h-4 w-4 shrink-0 ${activeTab === tab.key ? 'text-white dark:text-slate-950' : 'text-sky-500'}`}
                                 />
-                                <span>{tab.label}</span>
+                                <span class="truncate">{tab.label}</span>
                                 <span
-                                    class={`ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${activeTab === tab.key ? 'bg-white/15 text-white dark:bg-slate-900/10 dark:text-slate-950' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}
+                                    class={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold sm:px-2.5 sm:text-[11px] ${activeTab === tab.key ? 'bg-white/15 text-white dark:bg-slate-900/10 dark:text-slate-950' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}
                                 >
                                     {tab.meta}
                                 </span>
@@ -789,7 +793,7 @@
             {#if activeTab === 'tenants'}
                 <section class="space-y-4">
                     <div
-                        class="flex flex-col gap-4 rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
+                        class="flex flex-col gap-4 rounded-xl border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
                     >
                         <div class="space-y-1">
                             <p
@@ -805,13 +809,15 @@
                                 dari satu panel.
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <div class="relative w-full max-w-sm">
+                        <div
+                            class="flex w-full flex-wrap items-center gap-3 lg:w-auto"
+                        >
+                            <div class="relative w-full lg:max-w-sm">
                                 <Search
                                     class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                                 />
                                 <Input
-                                    class="pl-9"
+                                    class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
                                     placeholder="Cari tenant..."
                                     bind:value={searchQuery}
                                     onchange={() => loadTenants()}
@@ -820,12 +826,15 @@
                             <Button
                                 variant="outline"
                                 size="icon"
+                                class="h-11 w-11 rounded-xl sm:h-9 sm:w-9 sm:rounded-md"
                                 onclick={() => {
                                     searchQuery = '';
                                     loadTenants();
                                 }}><RefreshCw class="h-4 w-4" /></Button
                             >
-                            <Button onclick={() => openTenantForm()}
+                            <Button
+                                onclick={() => openTenantForm()}
+                                class="h-11 w-full rounded-xl sm:h-9 sm:w-auto sm:rounded-md"
                                 ><Plus class="h-4 w-4 mr-1" /> Tambah Tenant</Button
                             >
                         </div>
@@ -931,7 +940,150 @@
                     <!-- Tenant Table -->
                     <Card class={tableShellClass}>
                         <CardContent class="p-0">
-                            <div class="overflow-x-auto">
+                            <div class="grid gap-3 p-3 md:hidden">
+                                {#each tenants as t}
+                                    <article
+                                        class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                                    >
+                                        <div
+                                            class="flex items-start justify-between gap-3"
+                                        >
+                                            <div class="min-w-0">
+                                                <h3
+                                                    class="truncate font-semibold text-foreground"
+                                                >
+                                                    {t.name}
+                                                </h3>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
+                                                >
+                                                    {t.slug}
+                                                </p>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-9 w-9 rounded-xl"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-4 w-4"
+                                                        />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            openTenantForm(t)}
+                                                    >
+                                                        <Edit3
+                                                            class="h-4 w-4 mr-2"
+                                                        />Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            toggleTenantStatus(
+                                                                t,
+                                                            )}
+                                                    >
+                                                        {#if t.status === 'active'}<Ban
+                                                                class="h-4 w-4 mr-2"
+                                                            />Suspend{:else}<RotateCcw
+                                                                class="h-4 w-4 mr-2"
+                                                            />Re-activate{/if}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            deleteTenant(t.id)}
+                                                        class="text-destructive"
+                                                    >
+                                                        <XCircle
+                                                            class="h-4 w-4 mr-2"
+                                                        />Cancel
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <div
+                                            class="mt-4 grid grid-cols-2 gap-2"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Paket
+                                                </p>
+                                                <div class="mt-1">
+                                                    <Badge variant="outline"
+                                                        >{t.plan_name}</Badge
+                                                    >
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Status
+                                                </p>
+                                                <div class="mt-1">
+                                                    <Badge
+                                                        variant={statusBadge(
+                                                            t.subscription_status,
+                                                        ).variant}
+                                                    >
+                                                        {statusBadge(
+                                                            t.subscription_status,
+                                                        ).label}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Users
+                                                </p>
+                                                <p class="mt-1 font-semibold">
+                                                    {t.user_count}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Pools
+                                                </p>
+                                                <p class="mt-1 font-semibold">
+                                                    {t.pool_count}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p
+                                            class="mt-3 text-xs text-muted-foreground"
+                                        >
+                                            Berakhir: {t.ends_at
+                                                ? formatDate(t.ends_at)
+                                                : '-'}
+                                        </p>
+                                    </article>
+                                {:else}
+                                    <div
+                                        class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
+                                    >
+                                        Belum ada tenant.
+                                    </div>
+                                {/each}
+                            </div>
+                            <div class="hidden overflow-x-auto md:block">
                                 <table class="w-full text-sm">
                                     <thead
                                         class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
@@ -1114,7 +1266,7 @@
             {#if activeTab === 'subscriptions'}
                 <section class="space-y-4">
                     <div
-                        class="flex flex-col gap-4 rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
+                        class="flex flex-col gap-4 rounded-xl border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 lg:flex-row lg:items-end lg:justify-between"
                     >
                         <div class="space-y-1">
                             <p
@@ -1130,13 +1282,15 @@
                                 dari satu daftar.
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <div class="relative w-full max-w-sm">
+                        <div
+                            class="flex w-full flex-wrap items-center gap-3 lg:w-auto"
+                        >
+                            <div class="relative w-full lg:max-w-sm">
                                 <Search
                                     class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                                 />
                                 <Input
-                                    class="pl-9"
+                                    class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
                                     placeholder="Cari tenant..."
                                     bind:value={searchQuery}
                                     onchange={() => loadSubscriptions()}
@@ -1145,7 +1299,7 @@
                             <select
                                 bind:value={statusFilter}
                                 onchange={() => loadSubscriptions()}
-                                class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:h-9 sm:w-auto sm:rounded-full"
                             >
                                 <option value="">Semua Status</option>
                                 <option value="pending_payment"
@@ -1160,13 +1314,16 @@
                             <Button
                                 variant="outline"
                                 size="icon"
+                                class="h-11 w-11 rounded-xl sm:h-9 sm:w-9 sm:rounded-md"
                                 onclick={() => {
                                     searchQuery = '';
                                     statusFilter = '';
                                     loadSubscriptions();
                                 }}><RefreshCw class="h-4 w-4" /></Button
                             >
-                            <Button onclick={() => openSubForm()}
+                            <Button
+                                onclick={() => openSubForm()}
+                                class="h-11 w-full rounded-xl sm:h-9 sm:w-auto sm:rounded-md"
                                 ><Plus class="h-4 w-4 mr-1" /> Tambah Subscription</Button
                             >
                         </div>
@@ -1446,7 +1603,175 @@
 
                     <Card class={tableShellClass}>
                         <CardContent class="p-0">
-                            <div class="overflow-x-auto">
+                            <div class="grid gap-3 p-3 md:hidden">
+                                {#each subscriptions as s}
+                                    <article
+                                        class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                                    >
+                                        <div
+                                            class="flex items-start justify-between gap-3"
+                                        >
+                                            <div class="min-w-0">
+                                                <h3
+                                                    class="truncate font-semibold text-foreground"
+                                                >
+                                                    {s.tenant_name}
+                                                </h3>
+                                                <div
+                                                    class="mt-2 flex flex-wrap items-center gap-2"
+                                                >
+                                                    <Badge variant="outline"
+                                                        >{s.plan_name}</Badge
+                                                    >
+                                                    {#if hasPrivateSubscriptionOverride(s)}
+                                                        <Badge
+                                                            variant="secondary"
+                                                            >Private</Badge
+                                                        >
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-9 w-9 rounded-xl"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-4 w-4"
+                                                        />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            openSubForm(s)}
+                                                    >
+                                                        <Edit3
+                                                            class="h-4 w-4 mr-2"
+                                                        />Edit
+                                                    </DropdownMenuItem>
+                                                    {#if s.status === 'active' || s.status === 'trial'}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                quickUpdateSub(
+                                                                    s.id,
+                                                                    {
+                                                                        status: 'suspended',
+                                                                    },
+                                                                )}
+                                                        >
+                                                            <Ban
+                                                                class="h-4 w-4 mr-2"
+                                                            />Suspend
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if s.status === 'suspended'}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                quickUpdateSub(
+                                                                    s.id,
+                                                                    {
+                                                                        status: 'active',
+                                                                    },
+                                                                )}
+                                                        >
+                                                            <CheckCircle2
+                                                                class="h-4 w-4 mr-2"
+                                                            />Activate
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if s.status !== 'canceled'}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                quickUpdateSub(
+                                                                    s.id,
+                                                                    {
+                                                                        status: 'canceled',
+                                                                    },
+                                                                )}
+                                                            class="text-destructive"
+                                                        >
+                                                            <XCircle
+                                                                class="h-4 w-4 mr-2"
+                                                            />Cancel
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <div
+                                            class="mt-4 grid grid-cols-2 gap-2"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Status
+                                                </p>
+                                                <div class="mt-1">
+                                                    <Badge
+                                                        variant={statusBadge(
+                                                            s.status,
+                                                        ).variant}
+                                                    >
+                                                        {statusBadge(s.status)
+                                                            .label}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Harga
+                                                </p>
+                                                <p class="mt-1 font-semibold">
+                                                    {formatRupiah(
+                                                        s.price_monthly,
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Mulai
+                                                </p>
+                                                <p class="mt-1 text-sm">
+                                                    {formatDate(s.starts_at)}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Berakhir
+                                                </p>
+                                                <p class="mt-1 text-sm">
+                                                    {formatDate(s.ends_at)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </article>
+                                {:else}
+                                    <div
+                                        class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
+                                    >
+                                        Belum ada subscription.
+                                    </div>
+                                {/each}
+                            </div>
+                            <div class="hidden overflow-x-auto md:block">
                                 <table class="w-full text-sm">
                                     <thead
                                         class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
@@ -1957,14 +2282,14 @@
                     </div>
 
                     <div
-                        class="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                        class="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                     >
-                        <div class="relative flex-1 max-w-sm">
+                        <div class="relative w-full lg:max-w-sm">
                             <Search
                                 class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                             />
                             <Input
-                                class="pl-9"
+                                class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
                                 placeholder="Cari invoice atau tenant..."
                                 bind:value={searchQuery}
                                 onchange={() => loadInvoices()}
@@ -1973,7 +2298,7 @@
                         <select
                             bind:value={statusFilter}
                             onchange={() => loadInvoices()}
-                            class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                            class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:h-9 sm:w-auto sm:rounded-full"
                         >
                             <option value="">Semua Status</option>
                             <option value="pending">Pending</option>
@@ -1985,6 +2310,7 @@
                         <Button
                             variant="outline"
                             size="icon"
+                            class="h-11 w-11 rounded-xl sm:h-9 sm:w-9 sm:rounded-md"
                             onclick={() => {
                                 searchQuery = '';
                                 statusFilter = '';
@@ -1995,7 +2321,143 @@
 
                     <Card class={tableShellClass}>
                         <CardContent class="p-0">
-                            <div class="overflow-x-auto">
+                            <div class="grid gap-3 p-3 md:hidden">
+                                {#each invoices as inv}
+                                    <article
+                                        class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
+                                    >
+                                        <div
+                                            class="flex items-start justify-between gap-3"
+                                        >
+                                            <div class="min-w-0">
+                                                <h3
+                                                    class="truncate font-semibold text-foreground"
+                                                >
+                                                    {inv.invoice_number}
+                                                </h3>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
+                                                >
+                                                    {inv.tenant_name}
+                                                </p>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-9 w-9 rounded-xl"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-4 w-4"
+                                                        />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    {#if inv.gateway_checkout_url}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                window.open(
+                                                                    inv.gateway_checkout_url,
+                                                                    '_blank',
+                                                                )}
+                                                        >
+                                                            <ExternalLink
+                                                                class="h-4 w-4 mr-2"
+                                                            />Open Checkout
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if inv.status !== 'paid'}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                markInvoicePaid(
+                                                                    inv,
+                                                                )}
+                                                        >
+                                                            <CheckCircle2
+                                                                class="h-4 w-4 mr-2"
+                                                            />Mark Paid
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <div
+                                            class="mt-4 grid grid-cols-2 gap-2"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Nominal
+                                                </p>
+                                                <p class="mt-1 font-semibold">
+                                                    {formatRupiah(inv.amount)}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Status
+                                                </p>
+                                                <div class="mt-1">
+                                                    <Badge
+                                                        variant={invoiceBadge(
+                                                            inv,
+                                                        ).variant}
+                                                    >
+                                                        {invoiceBadge(inv)
+                                                            .label}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Paket
+                                                </p>
+                                                <p
+                                                    class="mt-1 truncate text-sm"
+                                                >
+                                                    {inv.plan_name || '-'}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            >
+                                                <p
+                                                    class="text-[11px] text-muted-foreground"
+                                                >
+                                                    Due
+                                                </p>
+                                                <p class="mt-1 text-sm">
+                                                    {formatDate(inv.due_date)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p
+                                            class="mt-3 text-xs text-muted-foreground"
+                                        >
+                                            Gateway: {gatewayStatus(inv)}
+                                        </p>
+                                    </article>
+                                {:else}
+                                    <div
+                                        class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
+                                    >
+                                        Belum ada invoice subscription.
+                                    </div>
+                                {/each}
+                            </div>
+                            <div class="hidden overflow-x-auto md:block">
                                 <table class="w-full min-w-[1080px] text-sm">
                                     <thead
                                         class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"

@@ -13,7 +13,7 @@
 
 <script lang="ts">
     import { Deferred, router } from '@inertiajs/svelte';
-    import { Copy } from 'lucide-svelte';
+    import { ArrowRight, CheckCircle2, Circle, Copy } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import ArmadaPerformanceCard from '@/components/dashboard/ArmadaPerformanceCard.svelte';
     import CommandCenter from '@/components/dashboard/CommandCenter.svelte';
@@ -156,11 +156,20 @@
         code: string | null;
     };
 
+    type SetupProgress = {
+        completed: boolean;
+        completed_count: number;
+        total_count: number;
+        percent: number;
+        items: Array<{ key: string; label: string; done: boolean }>;
+    };
+
     let {
         stats,
         pools = [] as PoolOption[],
         selectedPoolId = 0,
         selectedPoolName = 'Semua Pool',
+        setupProgress = null as SetupProgress | null,
         dailyTrend = [],
         monthlyTrend = [],
         recentActivity = [],
@@ -281,6 +290,7 @@
         pools?: PoolOption[];
         selectedPoolId?: number;
         selectedPoolName?: string;
+        setupProgress?: SetupProgress | null;
         dailyTrend?: TrendItem[];
         monthlyTrend?: TrendItem[];
         recentActivity?: ActivityItem[];
@@ -669,6 +679,75 @@
     data-content-density="compact"
     class="flex h-full flex-1 flex-col gap-2 overflow-x-clip rounded-xl px-2 py-2 md:gap-3 md:p-4"
 >
+    {#if setupProgress && !setupProgress.completed}
+        <section
+            class="overflow-hidden rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8e1,#f7fbef)] shadow-sm"
+        >
+            <div
+                class="grid gap-3 p-3 sm:p-4 lg:grid-cols-[1fr_auto] lg:items-center"
+            >
+                <div class="min-w-0">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p
+                                class="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700"
+                            >
+                                Lengkapi Setup
+                            </p>
+                            <h2
+                                class="mt-1 text-base font-semibold text-[#103d3a]"
+                            >
+                                Data awal belum lengkap.
+                            </h2>
+                        </div>
+                        <Badge
+                            variant="outline"
+                            class="shrink-0 rounded-full bg-background/70 dark:bg-slate-900/70"
+                        >
+                            {setupProgress.completed_count}/{setupProgress.total_count}
+                        </Badge>
+                    </div>
+                    <div
+                        class="mt-3 h-2 overflow-hidden rounded-full bg-amber-100"
+                    >
+                        <div
+                            class="h-full rounded-full bg-[#0d7066]"
+                            style={`width:${setupProgress.percent}%`}
+                        ></div>
+                    </div>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {#each setupProgress.items as item}
+                            <div
+                                class="flex min-w-0 items-center gap-2 text-xs"
+                            >
+                                {#if item.done}
+                                    <CheckCircle2
+                                        class="h-4 w-4 shrink-0 text-emerald-600"
+                                    />
+                                {:else}
+                                    <Circle
+                                        class="h-4 w-4 shrink-0 text-amber-600"
+                                    />
+                                {/if}
+                                <span
+                                    class={`truncate ${item.done ? 'text-[#103d3a]' : 'text-amber-800'}`}
+                                >
+                                    {item.label}
+                                </span>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+                <a
+                    href="/onboarding?continue=1"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b2f2c]"
+                >
+                    Lanjut setup <ArrowRight class="h-4 w-4" />
+                </a>
+            </div>
+        </section>
+    {/if}
+
     <div class="space-y-2">
         <!-- Command Center & Prioritas Grid -->
         <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
@@ -766,7 +845,7 @@
 
             <div class="space-y-2.5 xl:col-span-1">
                 <Card
-                    class="overflow-hidden rounded-lg sm:rounded-lg border-gray-200 shadow-sm border"
+                    class="overflow-hidden rounded-lg border border-border/80 shadow-sm"
                 >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <div
@@ -803,7 +882,7 @@
                             {#each upcomingCharterReminder.items as item (`upcoming-charter-${item.id}`)}
                                 <a
                                     href={`/charters/view/${item.id}`}
-                                    class="block rounded-[14px] border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-2.5 sm:p-3 transition hover:border-cyan-300/70 hover:shadow-sm"
+                                    class="block rounded-[14px] border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-2.5 transition hover:border-cyan-300/70 hover:shadow-sm sm:p-3 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.94),rgba(8,47,73,0.28))]"
                                 >
                                     <div
                                         class="mb-2 flex items-start justify-between gap-2"
@@ -865,7 +944,7 @@
                 </Card>
 
                 <Card
-                    class="rounded-lg sm:rounded-lg border-gray-200 shadow-sm border"
+                    class="rounded-lg border border-border/80 shadow-sm"
                 >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <CardTitle class="text-[13px] sm:text-[14px]"
@@ -947,7 +1026,7 @@
                 </Card>
 
                 <Card
-                    class="hidden h-fit xl:block rounded-lg border-gray-200 shadow-sm border"
+                    class="hidden h-fit rounded-lg border border-border/80 shadow-sm xl:block"
                 >
                     <CardHeader class="space-y-1 p-4 pb-2 sm:px-5 sm:pt-4">
                         <div class="flex items-start justify-between gap-3">

@@ -7,6 +7,7 @@ use App\Services\TenantProvisioningService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,9 +23,28 @@ class OnboardingController extends Controller
      */
     public function show(): Response
     {
+        $user = Auth::user();
+        $user?->refresh();
+        $selectedPlan = (string) session('registration_plan', config('saas.default_plan', 'starter'));
+        $registrationIntent = (string) session('registration_intent', 'trial');
+        if ($registrationIntent === 'payment') {
+            $registrationIntent = 'paid';
+        }
+        if (! in_array($registrationIntent, ['trial', 'paid'], true)) {
+            $registrationIntent = $selectedPlan !== '' && $selectedPlan !== 'starter'
+                ? 'paid'
+                : 'trial';
+        }
+        $tenantId = (int) ($user?->tenant_id ?? 0);
+
         return Inertia::render('Onboarding', [
-            'user_name' => Auth::user()?->name ?? '',
-            'user_email' => Auth::user()?->email ?? '',
+            'user_name' => $user?->name ?? '',
+            'user_email' => $user?->email ?? '',
+            'selectedPlan' => $selectedPlan !== '' ? $selectedPlan : 'starter',
+            'registrationIntent' => $registrationIntent,
+            'continuationMode' => $tenantId > 0,
+            'setupProgress' => $tenantId > 0 ? $this->provisioning->setupProgressForTenant($tenantId) : null,
+            'defaults' => $user ? $this->provisioning->onboardingDefaultsForUser($user) : [],
         ]);
     }
 
@@ -38,24 +58,53 @@ class OnboardingController extends Controller
         if (! $user) {
             return redirect()->route('login');
         }
+        $user->refresh();
 
         $data = $request->validate([
             'travel_name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:30'],
             'origin' => ['required', 'string', 'max:80'],
             'destination' => ['required', 'string', 'max:80'],
+            'plan' => ['nullable', 'string', 'max:50'],
+            'registration_intent' => ['nullable', 'string', 'in:trial,paid,payment'],
+            'billing_interval' => ['nullable', 'string', 'in:monthly,yearly'],
+            'segment_origin' => ['nullable', 'string', 'max:120'],
+            'segment_destination' => ['nullable', 'string', 'max:120'],
+            'pickup_times' => ['nullable', 'array'],
+            'pickup_times.*' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'ticket_price' => ['nullable', 'numeric', 'min:0'],
+            'schedule_days' => ['nullable', 'array'],
+            'schedule_days.*' => ['nullable', 'integer', 'min:0', 'max:6'],
+            'departure_time' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'unit_category' => ['nullable', 'string', 'max:120'],
+            'seat_capacity' => ['nullable', 'integer', 'min:0', 'max:200'],
+            'unit_nopol' => ['nullable', 'string', 'max:50'],
+            'armada_merk' => ['nullable', 'string', 'max:120'],
+            'driver_name' => ['nullable', 'string', 'max:120'],
+            'driver_phone' => ['nullable', 'string', 'max:30'],
         ]);
 
         $userId = (int) $user->id;
+        $plan = trim((string) ($data['plan'] ?? session('registration_plan') ?? config('saas.default_plan', 'starter')));
+        $intent = trim((string) ($data['registration_intent'] ?? session('registration_intent') ?? 'trial'));
+        if ($intent === 'payment') {
+            $intent = 'paid';
+        }
+        $intent = in_array($intent, ['trial', 'paid'], true) ? $intent : 'trial';
 
         try {
-            $this->provisioning->provisionForUser($user, [
-                ...$data,
-                'plan' => 'starter',
-                'registration_intent' => 'trial',
-                'billing_interval' => 'monthly',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ((int) ($user->tenant_id ?? 0) > 0) {
+                $result = $this->provisioning->completeSetupForUser($user, $data);
+            } else {
+                $result = $this->provisioning->provisionForUser($user, [
+                    ...$data,
+                    'plan' => $intent === 'trial' ? 'starter' : ($plan !== '' ? $plan : 'starter'),
+                    'registration_intent' => $intent,
+                    'billing_interval' => $data['billing_interval'] ?? 'monthly',
+                ]);
+            }
+            session()->forget(['registration_plan', 'registration_intent']);
+        } catch (ValidationException $e) {
             throw $e; // Let Inertia handle validation errors properly
         } catch (\Throwable $e) {
             Log::error("Onboarding failed for user #{$userId}: ".$e->getMessage()."\n".$e->getTraceAsString());
@@ -65,7 +114,6 @@ class OnboardingController extends Controller
 
         Log::info("Onboarding complete for user #{$userId}: {$data['travel_name']}");
 
-        // Redirect to subscription/payment page
-        return redirect()->route('subscription.index');
+        return redirect()->to($result['redirect_route'] ?? route('subscription.index'));
     }
 }

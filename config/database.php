@@ -3,6 +3,11 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$runningOnVercel = (bool) (env('VERCEL') || env('VERCEL_URL'));
+$pgsqlUrl = $runningOnVercel && env('DB_HOST')
+    ? null
+    : env('DB_URL');
+
 return [
 
     /*
@@ -86,7 +91,7 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            'url' => env('DB_PGSQL_URL', $pgsqlUrl),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),

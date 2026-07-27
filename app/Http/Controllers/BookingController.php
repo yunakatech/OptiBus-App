@@ -726,6 +726,10 @@ class BookingController extends Controller
                     $assignmentSelect[] = 't.status';
                 }
 
+                if (SchemaCache::hasColumn('trip_assignments', 'tenant_id')) {
+                    $assignmentSelect[] = 't.tenant_id';
+                }
+
                 if ($this->tripAssignmentsHasArmadaId()) {
                     $assignmentSelect[] = 't.armada_id';
 
@@ -1050,7 +1054,11 @@ class BookingController extends Controller
         }
 
         $select = [
+            't.id',
             't.rute',
+            't.tanggal',
+            't.jam',
+            't.unit',
             DB::raw('d.nama as driver_name'),
         ];
 
@@ -1064,6 +1072,10 @@ class BookingController extends Controller
 
         if ($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas')) {
             $select[] = DB::raw('a.nopol as nopol');
+        }
+
+        if (SchemaCache::hasColumn('trip_assignments', 'tenant_id')) {
+            $select[] = 't.tenant_id';
         }
 
         $rows = DB::table('trip_assignments as t')

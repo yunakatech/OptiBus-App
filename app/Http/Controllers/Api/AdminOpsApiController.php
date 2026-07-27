@@ -87,6 +87,8 @@ class AdminOpsApiController extends Controller
 
     public function routesIndex(): JsonResponse
     {
+        $this->attachUnmappedRoutesToWritablePool();
+
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
         $financials = $this->routeFinancialsForMonth($monthStart, $monthEnd);
@@ -171,6 +173,8 @@ class AdminOpsApiController extends Controller
             'created_at' => now(),
         ]));
 
+        $this->attachRouteToWritablePool((int) $newId);
+
         return $this->ok(['message' => 'Route created.', 'id' => $newId], 201);
     }
 
@@ -186,6 +190,9 @@ class AdminOpsApiController extends Controller
             $scheduleRouteUpdate = DB::table('schedules')->where('route_id', $id);
             $this->applyWriteTenantScopeIfExists($scheduleRouteUpdate, 'schedules');
             $scheduleRouteUpdate->update(['route_id' => null]);
+        }
+        if (SchemaCache::hasTable('pool_route')) {
+            DB::table('pool_route')->where('route_id', $id)->delete();
         }
         DB::table('routes')->where('id', $id)->delete();
 
@@ -2341,17 +2348,35 @@ class AdminOpsApiController extends Controller
         }
         if ($scope === 'history') {
             if ($hasStatusColumn) {
-                $query->where('c.status', 'done');
+                $query->whereIn('c.status', ['done', 'canceled']);
             } elseif ($hasBopStatusColumn) {
-                $query->where('c.bop_status', 'done');
+                $query->where(function (Builder $builder) use ($hasPaymentStatusColumn): void {
+                    $builder->where('c.bop_status', 'done');
+
+                    if ($hasPaymentStatusColumn) {
+                        $builder->orWhereRaw('LOWER(c.payment_status) = ?', ['canceled']);
+                    }
+                });
             }
         } elseif ($scope === 'active') {
             if ($hasStatusColumn) {
-                $query->where('c.status', '!=', 'done');
+                $query->where(function (Builder $builder): void {
+                    $builder
+                        ->whereNull('c.status')
+                        ->orWhereNotIn('c.status', ['done', 'canceled']);
+                });
             } elseif ($hasBopStatusColumn) {
-                $query->where(function (Builder $builder) {
+                $query->where(function (Builder $builder): void {
                     $builder->whereNull('c.bop_status')->orWhere('c.bop_status', '!=', 'done');
                 });
+
+                if ($hasPaymentStatusColumn) {
+                    $query->where(function (Builder $builder): void {
+                        $builder
+                            ->whereNull('c.payment_status')
+                            ->orWhereRaw('LOWER(c.payment_status) <> ?', ['canceled']);
+                    });
+                }
             }
         }
         $this->applyCharterPoolScope($query);
@@ -3559,8 +3584,8 @@ class AdminOpsApiController extends Controller
             // Pre-warm schema cache to avoid N roundtrips to information_schema on Supabase/Vercel
             SchemaCache::warm([
                 'trip_assignments' => ['rute', 'tanggal', 'jam', 'unit', 'driver_id', 'route_id', 'pool_id', 'tenant_id', 'status'],
-                'drivers'          => ['id', 'nama', 'phone', 'pool_id', 'tenant_id'],
-                'armadas'          => ['id', 'nopol', 'pool_id', 'tenant_id'],
+                'drivers' => ['id', 'nama', 'phone', 'pool_id', 'tenant_id'],
+                'armadas' => ['id', 'nopol', 'pool_id', 'tenant_id'],
             ]);
 
             if (! SchemaCache::hasTable('trip_assignments')) {
@@ -3773,10 +3798,6 @@ class AdminOpsApiController extends Controller
             $payload['armada_nopol'] = $armadaNopol ? strtoupper(trim((string) $armadaNopol)) : null;
         }
 
-        if (ManifestLifecycle::isAutoCloseDue($payload['tanggal'], substr((string) $payload['jam'], 0, 5))) {
-            return $this->error('Manifest sudah ditutup. Data assignment tidak bisa diubah lagi.', 409);
-        }
-
         $conflicts = $this->assignmentConflicts(
             $payload['tanggal'],
             $payload['jam'],
@@ -3790,8 +3811,13 @@ class AdminOpsApiController extends Controller
         }
 
         $currentAssignment = null;
+        $assignmentStatusSelect = ['id', 'rute', 'tanggal', 'jam', 'unit', 'status'];
+        if (SchemaCache::hasColumn('trip_assignments', 'tenant_id')) {
+            $assignmentStatusSelect[] = 'tenant_id';
+        }
+
         if ($id > 0) {
-            $currentAssignment = DB::table('trip_assignments')->where('id', $id)->first(['id', 'tanggal', 'jam', 'status']);
+            $currentAssignment = DB::table('trip_assignments')->where('id', $id)->first($assignmentStatusSelect);
         } else {
             $existingAssignmentId = DB::table('trip_assignments')
                 ->where('rute', $payload['rute'])
@@ -3801,7 +3827,7 @@ class AdminOpsApiController extends Controller
                 ->value('id');
 
             if ($existingAssignmentId) {
-                $currentAssignment = DB::table('trip_assignments')->where('id', (int) $existingAssignmentId)->first(['id', 'tanggal', 'jam', 'status']);
+                $currentAssignment = DB::table('trip_assignments')->where('id', (int) $existingAssignmentId)->first($assignmentStatusSelect);
             }
         }
 
@@ -6820,6 +6846,78 @@ class AdminOpsApiController extends Controller
         });
     }
 
+    private function attachRouteToWritablePool(int $routeId): void
+    {
+        if ($routeId <= 0 || ! SchemaCache::hasTable('pool_route') || ! SchemaCache::hasTable('pools')) {
+            return;
+        }
+
+        if (DB::table('pool_route')->where('route_id', $routeId)->exists()) {
+            return;
+        }
+
+        $poolId = $this->writablePoolContextId();
+        if ($poolId <= 0) {
+            return;
+        }
+
+        $poolExists = DB::table('pools')
+            ->where('id', $poolId)
+            ->where('status', 'active')
+            ->when(SchemaCache::hasColumn('pools', 'tenant_id'), function (Builder $query): void {
+                PoolScope::applyTenantScope($query, 'tenant_id');
+            })
+            ->exists();
+
+        if (! $poolExists) {
+            return;
+        }
+
+        try {
+            DB::table('pool_route')->insert([
+                'pool_id' => $poolId,
+                'route_id' => $routeId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (QueryException) {
+            // Another request may have mapped the route first.
+        }
+
+        PoolScope::flushRequestCache();
+    }
+
+    private function attachUnmappedRoutesToWritablePool(): void
+    {
+        if (! SchemaCache::hasTable('routes') || ! SchemaCache::hasTable('pool_route')) {
+            return;
+        }
+
+        $tenantId = PoolScope::tenantId();
+        if ($tenantId <= 0) {
+            return;
+        }
+
+        $poolId = $this->writablePoolContextId();
+        if ($poolId <= 0) {
+            return;
+        }
+
+        $query = DB::table('routes as r')
+            ->leftJoin('pool_route as pr', 'pr.route_id', '=', 'r.id')
+            ->whereNull('pr.id');
+
+        if (SchemaCache::hasColumn('routes', 'tenant_id')) {
+            $query->where('r.tenant_id', $tenantId);
+        }
+
+        $query
+            ->pluck('r.id')
+            ->map(static fn ($value): int => (int) $value)
+            ->filter(static fn (int $routeId): bool => $routeId > 0)
+            ->each(fn (int $routeId): null => $this->attachRouteToWritablePool($routeId));
+    }
+
     private function applyPoolOrRouteScopeToQuery(
         Builder $query,
         string $poolColumn = '',
@@ -7752,12 +7850,12 @@ class AdminOpsApiController extends Controller
     {
         // Pre-warm schema cache to batch information_schema lookups
         SchemaCache::warm([
-            'drivers'          => ['id', 'nama', 'phone', 'unit_id', 'pool_id', 'tenant_id', 'armada_id', 'armada_nopol', 'kategori',
-                                   'target_revenue_bulanan', 'target_revenue_tahunan', 'revenue', 'bop', 'fixed_cost'],
-            'armadas'          => ['id', 'nopol', 'kategori', 'pool_id', 'tenant_id'],
+            'drivers' => ['id', 'nama', 'phone', 'unit_id', 'pool_id', 'tenant_id', 'armada_id', 'armada_nopol', 'kategori',
+                'target_revenue_bulanan', 'target_revenue_tahunan', 'revenue', 'bop', 'fixed_cost'],
+            'armadas' => ['id', 'nopol', 'kategori', 'pool_id', 'tenant_id'],
             'trip_assignments' => ['driver_id', 'tanggal', 'pool_id', 'route_id', 'rute', 'jam', 'unit', 'tenant_id', 'status'],
-            'charters'         => ['start_date', 'driver_name', 'price', 'bop_price', 'payment_status', 'bop_status', 'status', 'tenant_id', 'pool_id'],
-            'luggages'         => ['driver_id', 'tanggal', 'price', 'pool_id', 'tenant_id', 'status', 'payment_status'],
+            'charters' => ['start_date', 'driver_name', 'price', 'bop_price', 'payment_status', 'bop_status', 'status', 'tenant_id', 'pool_id'],
+            'luggages' => ['driver_id', 'tanggal', 'price', 'pool_id', 'tenant_id', 'status', 'payment_status'],
         ]);
 
         if (! SchemaCache::hasTable('drivers')) {

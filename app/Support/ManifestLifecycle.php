@@ -69,11 +69,25 @@ class ManifestLifecycle
     {
         $normalized = self::normalizeStatus($status);
 
-        if (in_array($normalized, ['canceled', 'closed'], true)) {
+        if ($normalized !== 'arrived') {
             return false;
         }
 
         return self::isAutoCloseDue($tanggal, $jam, $now);
+    }
+
+    public static function shouldAutoCloseAssignment(?object $assignment, ?CarbonInterface $now = null): bool
+    {
+        if (! $assignment) {
+            return false;
+        }
+
+        return self::shouldAutoClose(
+            $assignment->status ?? 'active',
+            (string) ($assignment->tanggal ?? ''),
+            (string) ($assignment->jam ?? ''),
+            $now,
+        ) && self::activeBookingsArePaid($assignment);
     }
 
     public static function syncTripAssignmentStatus(?object $assignment, ?CarbonInterface $now = null): string
@@ -86,7 +100,7 @@ class ManifestLifecycle
         $tanggal = (string) ($assignment->tanggal ?? '');
         $jam = (string) ($assignment->jam ?? '');
 
-        if (! self::shouldAutoClose($status, $tanggal, $jam, $now)) {
+        if (! self::shouldAutoCloseAssignment($assignment, $now)) {
             $assignment->status = $status;
 
             return $status;
@@ -129,5 +143,36 @@ class ManifestLifecycle
         }
 
         return substr($value, 0, 8);
+    }
+
+    private static function activeBookingsArePaid(object $assignment): bool
+    {
+        if (
+            ! Schema::hasTable('bookings')
+            || ! Schema::hasColumn('bookings', 'pembayaran')
+        ) {
+            return false;
+        }
+
+        $query = DB::table('bookings')
+            ->where('rute', (string) ($assignment->rute ?? ''))
+            ->where('tanggal', (string) ($assignment->tanggal ?? ''))
+            ->where('jam', self::normalizeTime((string) ($assignment->jam ?? '')))
+            ->where('unit', max(1, (int) ($assignment->unit ?? 1)));
+
+        if (Schema::hasColumn('bookings', 'status')) {
+            $query->where('status', '!=', 'canceled');
+        }
+
+        if (
+            isset($assignment->tenant_id)
+            && Schema::hasColumn('bookings', 'tenant_id')
+        ) {
+            $query->where('tenant_id', (int) $assignment->tenant_id);
+        }
+
+        return ! $query
+            ->whereRaw('LOWER(TRIM(COALESCE(pembayaran, \'\'))) != ?', ['lunas'])
+            ->exists();
     }
 }

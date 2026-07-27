@@ -658,7 +658,7 @@ class BookingApiTest extends TestCase
         $this->assertNull($assignment->armada_nopol);
     }
 
-    public function test_past_departure_auto_closes_manifest_when_marked_arrived(): void
+    public function test_past_departure_stays_arrived_when_marked_arrived(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 16, 8, 0, 0));
 
@@ -705,11 +705,11 @@ class BookingApiTest extends TestCase
             $response->assertOk()
                 ->assertJsonPath('success', true)
                 ->assertJsonPath('id', $assignmentId)
-                ->assertJsonPath('status', 'closed');
+                ->assertJsonPath('status', 'arrived');
 
             $this->assertDatabaseHas('trip_assignments', [
                 'id' => $assignmentId,
-                'status' => 'closed',
+                'status' => 'arrived',
             ]);
         } finally {
             Carbon::setTestNow();
@@ -818,7 +818,7 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('error', 'Manifest sudah ditutup. Data assignment tidak bisa diubah lagi.');
     }
 
-    public function test_booking_updates_are_blocked_once_auto_close_time_is_reached(): void
+    public function test_booking_updates_are_not_blocked_by_time_only_before_arrival(): void
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
@@ -876,22 +876,86 @@ class BookingApiTest extends TestCase
                 'pembayaran' => 'Lunas',
             ]);
 
-            $response->assertStatus(409)
-                ->assertJsonPath('success', false)
-                ->assertJsonPath('error', 'Manifest sudah ditutup. Data booking tidak bisa diubah lagi.');
+            $response->assertOk()
+                ->assertJsonPath('success', true);
 
             $this->assertDatabaseHas('trip_assignments', [
                 'rute' => 'PINRANG - MAKASSAR',
                 'tanggal' => '2026-05-16',
                 'jam' => '10:00:00',
-                'status' => 'closed',
+                'status' => 'active',
+            ]);
+            $this->assertDatabaseHas('bookings', [
+                'id' => $bookingId,
+                'pembayaran' => 'Lunas',
             ]);
         } finally {
             Carbon::setTestNow();
         }
     }
 
-    public function test_same_day_departure_auto_closes_manifest_after_driver_and_nopol_are_set(): void
+    public function test_expired_manifest_command_closes_only_arrived_and_fully_paid_departures(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        Carbon::setTestNow(Carbon::create(2026, 5, 17, 11, 0, 0));
+        try {
+            foreach ([1, 2, 3] as $unit) {
+                DB::table('trip_assignments')->insert([
+                    'tenant_id' => $tenantId,
+                    'rute' => 'PINRANG - MAKASSAR',
+                    'tanggal' => '2026-05-16',
+                    'jam' => '10:00:00',
+                    'unit' => $unit,
+                    'status' => $unit === 3 ? 'departed' : 'arrived',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            foreach ([
+                [1, 'Lunas'],
+                [2, 'Belum Lunas'],
+                [3, 'Lunas'],
+            ] as [$unit, $payment]) {
+                DB::table('bookings')->insert([
+                    'tenant_id' => $tenantId,
+                    'rute' => 'PINRANG - MAKASSAR',
+                    'tanggal' => '2026-05-16',
+                    'jam' => '10:00:00',
+                    'unit' => $unit,
+                    'seat' => '1',
+                    'name' => 'PENUMPANG '.$unit,
+                    'phone' => '08120000009'.$unit,
+                    'pickup_point' => 'Terminal',
+                    'pembayaran' => $payment,
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $this->artisan('booking:close-expired-manifests')->assertSuccessful();
+
+            $this->assertDatabaseHas('trip_assignments', [
+                'unit' => 1,
+                'status' => 'closed',
+            ]);
+            $this->assertDatabaseHas('trip_assignments', [
+                'unit' => 2,
+                'status' => 'arrived',
+            ]);
+            $this->assertDatabaseHas('trip_assignments', [
+                'unit' => 3,
+                'status' => 'departed',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_same_day_departure_stays_arrived_after_driver_and_nopol_are_set(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 31, 8, 0, 0));
 
@@ -958,11 +1022,11 @@ class BookingApiTest extends TestCase
             $response->assertOk()
                 ->assertJsonPath('success', true)
                 ->assertJsonPath('id', $assignmentId)
-                ->assertJsonPath('status', 'closed');
+                ->assertJsonPath('status', 'arrived');
 
             $this->assertDatabaseHas('trip_assignments', [
                 'id' => $assignmentId,
-                'status' => 'closed',
+                'status' => 'arrived',
             ]);
         } finally {
             Carbon::setTestNow();

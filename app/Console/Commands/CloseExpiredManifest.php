@@ -11,7 +11,7 @@ class CloseExpiredManifest extends Command
 {
     protected $signature = 'booking:close-expired-manifests';
 
-    protected $description = 'Auto close manifests 24 hours after departure time';
+    protected $description = 'Auto close arrived and fully paid manifests 24 hours after departure time';
 
     public function handle(): int
     {
@@ -21,18 +21,19 @@ class CloseExpiredManifest extends Command
             return self::FAILURE;
         }
 
+        $select = ['id', 'rute', 'tanggal', 'jam', 'unit', 'status'];
+        if (Schema::hasColumn('trip_assignments', 'tenant_id')) {
+            $select[] = 'tenant_id';
+        }
+
         $rows = DB::table('trip_assignments')
-            ->whereNotIn('status', ['canceled', 'closed'])
-            ->get(['id', 'tanggal', 'jam', 'status']);
+            ->where('status', 'arrived')
+            ->get($select);
 
         $closed = 0;
 
         foreach ($rows as $row) {
-            if (! ManifestLifecycle::shouldAutoClose(
-                $row->status ?? 'active',
-                (string) ($row->tanggal ?? ''),
-                (string) ($row->jam ?? ''),
-            )) {
+            if (! ManifestLifecycle::shouldAutoCloseAssignment($row)) {
                 continue;
             }
 
