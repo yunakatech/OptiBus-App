@@ -45,8 +45,6 @@ class OperationsApiTest extends TestCase
 
         DB::table('units')->insert([
             'nama_kategori' => 'DD 1122 ZZ',
-            'merek' => 'Isuzu',
-            'type' => 'Elf',
             'kapasitas' => 12,
             'status' => 'Aktif',
             'created_at' => now(),
@@ -507,8 +505,6 @@ class OperationsApiTest extends TestCase
 
         $unitId = DB::table('units')->insertGetId([
             'nama_kategori' => 'DD 4400 PP',
-            'merek' => 'Toyota',
-            'type' => 'Hiace',
             'kapasitas' => 14,
             'status' => 'Aktif',
             'created_at' => now(),
@@ -570,8 +566,6 @@ class OperationsApiTest extends TestCase
 
         $unitId = DB::table('units')->insertGetId([
             'nama_kategori' => 'DD 5566 QQ',
-            'merek' => 'Toyota',
-            'type' => 'Hiace',
             'kapasitas' => 14,
             'status' => 'Aktif',
             'created_at' => now(),

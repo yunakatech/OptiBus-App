@@ -336,8 +336,6 @@ class AdminOpsApiTest extends TestCase
 
         $unitId = DB::table('units')->insertGetId([
             'nama_kategori' => 'DD 7788 XX',
-            'merek' => 'Isuzu',
-            'type' => 'Elf',
             'kapasitas' => 12,
             'status' => 'Aktif',
             'created_at' => now(),
@@ -391,11 +389,7 @@ class AdminOpsApiTest extends TestCase
 
         $unitCreate = $this->postJson(route('api.admin.units.save'), [
             'nama_kategori' => 'DD 9900 AA',
-            'merek' => 'Toyota',
-            'type' => 'Hiace',
             'category' => 'Micro Bus',
-            'tahun' => 2020,
-            'warna' => 'Silver',
             'kapasitas' => 14,
             'status' => 'Aktif',
         ])->assertCreated()->json();
@@ -406,11 +400,7 @@ class AdminOpsApiTest extends TestCase
         $this->postJson(route('api.admin.units.save'), [
             'id' => $unitId,
             'nama_kategori' => 'DD 9900 AB',
-            'merek' => 'Toyota',
-            'type' => 'Hiace Premio',
             'category' => 'Micro Bus',
-            'tahun' => 2022,
-            'warna' => 'White',
             'kapasitas' => 15,
             'status' => 'Aktif',
         ])->assertOk();
@@ -1661,8 +1651,6 @@ class AdminOpsApiTest extends TestCase
         $unitId = DB::table('units')->insertGetId([
             'tenant_id' => $tenantId,
             'nama_kategori' => 'DD 8899 ZZ',
-            'merek' => 'Isuzu',
-            'type' => 'Elf',
             'kapasitas' => 12,
             'status' => 'Aktif',
             'created_at' => now(),
