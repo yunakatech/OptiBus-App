@@ -337,7 +337,8 @@
                 type="button"
                 class={cn(
                     'flex min-h-11 w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    open ? 'border-primary/35 bg-slate-50' : '',
+                    'dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:active:bg-slate-900/70 dark:focus-visible:bg-slate-900/60',
+                    open ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60' : '',
                 )}
                 aria-haspopup="listbox"
                 aria-expanded={open}
@@ -371,7 +372,7 @@
 
             {#if open}
                 <div
-                    class="absolute left-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-1.5rem))] rounded-lg border border-sidebar-border/70 bg-background p-3 shadow-md"
+                    class="absolute left-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-1.5rem))] rounded-lg border border-sidebar-border/70 bg-background p-3 shadow-md dark:border-sidebar-border dark:bg-slate-950"
                     role="dialog"
                     tabindex="-1"
                     aria-modal="false"
@@ -397,7 +398,7 @@
                         </div>
                         <button
                             type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-slate-50 hover:text-foreground active:bg-slate-100"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-slate-50 hover:text-foreground active:bg-slate-100 dark:hover:bg-slate-900/60 dark:active:bg-slate-900/70"
                             aria-label="Tutup"
                             onclick={close}
                         >
@@ -407,7 +408,7 @@
 
                     {#if showSearch}
                         <div
-                            class="mt-3 flex items-center gap-2 rounded-xl border border-input bg-background px-3"
+                            class="mt-3 flex items-center gap-2 rounded-xl border border-input bg-background px-3 dark:bg-slate-950/60"
                         >
                             <Search
                                 class="size-4 shrink-0 text-muted-foreground"
@@ -432,9 +433,9 @@
                         <button
                             type="button"
                             class={cn(
-                                'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 active:bg-slate-100 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 active:bg-slate-100 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-slate-900/60 dark:active:bg-slate-900/70 dark:focus-visible:bg-slate-900/60',
                                 activeId === 0
-                                    ? 'bg-slate-50 font-semibold text-foreground'
+                                    ? 'bg-slate-50 font-semibold text-foreground dark:bg-slate-900/60'
                                     : 'text-foreground',
                             )}
                             role="option"
@@ -572,7 +573,7 @@
 
                 <!-- Popup Card Center -->
                 <div
-                    class="fixed left-1/2 top-1/2 z-[100] flex w-[calc(100vw-2.5rem)] max-w-[320px] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border/50 bg-background p-2 shadow-lg"
+                    class="fixed left-1/2 top-1/2 z-[100] flex w-[calc(100vw-2.5rem)] max-w-[320px] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border/50 bg-background p-2 shadow-lg dark:border-border/70 dark:bg-slate-950"
                     role="dialog"
                     aria-modal="true"
                     aria-label={`${label} switcher`}
@@ -594,7 +595,7 @@
                         </div>
                         <button
                             onclick={close}
-                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100/80 text-muted-foreground transition hover:bg-slate-200"
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100/80 text-muted-foreground transition hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700"
                         >
                             <X class="size-4" />
                         </button>
@@ -603,7 +604,7 @@
                     <div class="flex max-h-[65svh] flex-col px-1 pb-1 pt-2">
                         {#if showSearch}
                             <div
-                                class="mb-3 flex items-center gap-2 rounded-xl border border-input bg-slate-50/50 px-3 mx-2"
+                                class="mb-3 mx-2 flex items-center gap-2 rounded-xl border border-input bg-slate-50/50 px-3 dark:bg-slate-900/50"
                             >
                                 <Search
                                     class="size-4 shrink-0 text-muted-foreground"
@@ -626,9 +627,9 @@
                             <button
                                 type="button"
                                 class={cn(
-                                    'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50',
+                                    'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50 dark:hover:bg-slate-900/60',
                                     activeId === 0
-                                        ? 'bg-primary/5 font-bold text-primary'
+                                        ? 'bg-primary/5 font-bold text-primary dark:bg-slate-900/60 dark:text-slate-100'
                                         : 'text-foreground font-medium',
                                 )}
                                 onclick={() => void switchContext(0)}
@@ -638,7 +639,7 @@
                                         'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
                                         activeId === 0
                                             ? 'bg-primary text-white'
-                                            : 'bg-slate-100 text-slate-400',
+                                            : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
                                     )}
                                 >
                                     <Check class="size-3.5" />
@@ -649,24 +650,24 @@
                             </button>
 
                             {#each filteredOptions as item (item.id)}
-                                <button
-                                    type="button"
-                                    class={cn(
-                                        'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50',
-                                        activeId === item.id
-                                            ? 'bg-primary/5 font-bold text-primary'
-                                            : 'text-foreground font-medium',
-                                    )}
+                            <button
+                                type="button"
+                                class={cn(
+                                    'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50 dark:hover:bg-slate-900/60',
+                                    activeId === item.id
+                                        ? 'bg-primary/5 font-bold text-primary dark:bg-slate-900/60 dark:text-slate-100'
+                                        : 'text-foreground font-medium',
+                                )}
                                     onclick={() => void switchContext(item.id)}
                                 >
                                     <div
                                         class={cn(
                                             'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
-                                            activeId === item.id
-                                                ? 'bg-primary text-white'
-                                                : 'bg-slate-100 text-slate-400',
-                                        )}
-                                    >
+                                        activeId === item.id
+                                            ? 'bg-primary text-white'
+                                            : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
+                                    )}
+                                >
                                         <Check class="size-3.5" />
                                     </div>
                                     <span class="min-w-0 flex-1 truncate"
@@ -674,7 +675,7 @@
                                     >
                                     {#if item.meta}
                                         <span
-                                            class="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500"
+                                            class="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300"
                                         >
                                             {item.meta}
                                         </span>

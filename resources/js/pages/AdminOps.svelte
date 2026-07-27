@@ -7141,7 +7141,7 @@
                                                             ]
                                                           : []}
                                                 <div
-                                                    class={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5 transition ${isChecked ? 'border-sky-400/60 bg-white shadow-sm' : 'border-border/50 bg-background/60'}`}
+                                                    class={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5 transition ${isChecked ? 'border-sky-400/60 bg-white shadow-sm dark:border-sky-500/35 dark:bg-slate-950/55' : 'border-border/50 bg-background/60 dark:border-border/60 dark:bg-slate-950/35'}`}
                                                 >
                                                     <label
                                                         class="flex flex-1 cursor-pointer items-center gap-2.5"
@@ -7195,7 +7195,7 @@
                                                     </label>
                                                     {#if isChecked && pickupOptions.length > 0}
                                                         <select
-                                                            class="h-8 rounded-md border border-sky-300/70 bg-white px-2 text-[12px] font-semibold text-sky-800 shadow-sm"
+                                                            class="h-8 rounded-md border border-sky-300/70 bg-white px-2 text-[12px] font-semibold text-sky-800 shadow-sm dark:border-sky-500/30 dark:bg-slate-950/70 dark:text-sky-100"
                                                             value={configEntry?.jam_pickup ??
                                                                 pickupOptions[0]}
                                                             onchange={(e) =>
@@ -7217,7 +7217,7 @@
                                                         </select>
                                                     {:else if isChecked}
                                                         <span
-                                                            class="rounded bg-sky-100 px-2 py-1 text-[11px] text-sky-600"
+                                                            class="rounded bg-sky-100 px-2 py-1 text-[11px] text-sky-600 dark:bg-sky-950/35 dark:text-sky-200"
                                                         >
                                                             {configEntry?.jam_pickup ??
                                                                 '-'}
