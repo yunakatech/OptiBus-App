@@ -86,7 +86,7 @@ class CharterDocumentController extends Controller
             'c.payment_status',
             'c.created_at',
             DB::raw($hasStatusColumn ? 'c.status as status' : "CASE WHEN c.payment_status = 'Canceled' THEN 'canceled' WHEN c.bop_status = 'done' THEN 'done' ELSE 'active' END as status"),
-            DB::raw('u.nopol as unit_nopol'),
+            DB::raw('u.nama_kategori as unit_nama_kategori'),
             DB::raw('u.category as unit_category'),
         ];
 
@@ -132,7 +132,7 @@ class CharterDocumentController extends Controller
             'payment_status' => $row->payment_status ? (string) $row->payment_status : null,
             'status' => $row->status ? (string) $row->status : 'active',
             'unit_category' => $row->unit_category ? (string) $row->unit_category : null,
-            'unit_nopol' => $row->unit_nopol ? (string) $row->unit_nopol : null,
+            'unit_nama_kategori' => $row->unit_nama_kategori ? (string) $row->unit_nama_kategori : null,
             'armada_nopol' => $row->armada_nopol ? (string) $row->armada_nopol : null,
             'logo_data_uri' => $this->brandingLogoDataUri(),
         ];

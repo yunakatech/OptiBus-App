@@ -76,7 +76,7 @@ class LuggageDocumentController extends Controller
                 'l.tanggal',
                 'l.kode_resi',
                 DB::raw('s.name as service_name'),
-                DB::raw('u.nopol as unit_nopol'),
+                DB::raw('u.nama_kategori as unit_nama_kategori'),
                 DB::raw('r.name as route_name'),
             ])
             ->first();
@@ -99,7 +99,7 @@ class LuggageDocumentController extends Controller
             'service_name' => (string) ($row->service_name ?? ''),
             'rute' => (string) ($row->route_name ?? $row->rute ?? ''),
             'tanggal' => (string) ($row->tanggal ?? ''),
-            'unit_nopol' => (string) ($row->unit_nopol ?? ''),
+            'unit_nama_kategori' => (string) ($row->unit_nama_kategori ?? ''),
             'quantity' => (int) ($row->quantity ?? 0),
             'notes' => (string) ($row->notes ?? ''),
             'price' => (float) ($row->price ?? 0),

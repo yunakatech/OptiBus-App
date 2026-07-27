@@ -417,7 +417,7 @@ class AdminOpsApiTest extends TestCase
 
         $this->getJson(route('api.admin.units.index'))
             ->assertOk()
-            ->assertJsonPath('units.0.nopol', 'DD 9900 AB');
+            ->assertJsonPath('units.0.nama_kategori', 'DD 9900 AB');
 
         $userCreate = $this->postJson(route('api.admin.users.save'), [
             'name' => 'Ops Baru',

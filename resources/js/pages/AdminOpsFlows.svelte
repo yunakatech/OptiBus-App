@@ -49,7 +49,7 @@
     type RouteRow = { id: number; name: string };
     type Unit = {
         id: number;
-        nopol: string;
+        nama_kategori: string;
         merek?: string | null;
         type?: string | null;
         category?: string | null;
@@ -95,7 +95,7 @@
         pickup_point: string | null;
         drop_point: string | null;
         unit_id: number | null;
-        unit_nopol: string | null;
+        unit_nama_kategori: string | null;
         unit_category: string | null;
         armada_id: number | null;
         armada_nopol: string | null;
@@ -1328,7 +1328,7 @@
 
         return [
             String(unit.category ?? '').trim(),
-            String(unit.nopol ?? '').trim(),
+            String(unit.nama_kategori ?? '').trim(),
         ]
             .filter(Boolean)
             .join(' | ');
@@ -1463,7 +1463,7 @@
 
         return units.filter((unit) => {
             const haystacks = [
-                String(unit.nopol ?? '').toLowerCase(),
+                String(unit.nama_kategori ?? '').toLowerCase(),
                 String(unit.category ?? '').toLowerCase(),
                 String(unit.merek ?? '').toLowerCase(),
                 String(unit.type ?? '').toLowerCase(),
@@ -1482,7 +1482,7 @@
 
         return units.filter((unit) => {
             const haystacks = [
-                String(unit.nopol ?? '').toLowerCase(),
+                String(unit.nama_kategori ?? '').toLowerCase(),
                 String(unit.category ?? '').toLowerCase(),
                 String(unit.merek ?? '').toLowerCase(),
                 String(unit.type ?? '').toLowerCase(),
@@ -3137,7 +3137,7 @@
             `Jadwal: ${schedule}`,
             `Rute: ${row.pickup_point || '-'} → ${row.drop_point || '-'}`,
             `Driver: ${row.driver_name || '-'}`,
-            `Armada: ${row.armada_nopol || row.unit_nopol || '-'}`,
+            `Armada: ${row.armada_nopol || row.unit_nama_kategori || '-'}`,
             `Layanan: ${row.layanan || defaultCharterService}`,
             `Harga: ${totalPrice}`,
         ].join('\n');
@@ -3589,7 +3589,7 @@
                                                                     >{charterUnitLabel(
                                                                         unit,
                                                                     ) ||
-                                                                        unit.nopol}</span
+                                                                        unit.nama_kategori}</span
                                                                 >
                                                                 <span
                                                                     class="block text-[11px] text-muted-foreground"
@@ -4224,7 +4224,7 @@
                                                     >
                                                         {[
                                                             row.unit_category,
-                                                            row.unit_nopol,
+                                                            row.unit_nama_kategori,
                                                             row.armada_nopol,
                                                         ]
                                                             .filter(Boolean)

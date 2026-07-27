@@ -58,7 +58,7 @@
         payment_status: string;
         bop_status: string;
         status: string;
-        unit_nopol: string;
+        unit_nama_kategori: string;
         armada_nopol: string;
         total: number;
     };
@@ -150,7 +150,7 @@
 
     const charterVehicle = (row: CharterReportRow) => {
         const armada = String(row.armada_nopol ?? '').trim();
-        const unit = String(row.unit_nopol ?? '').trim();
+        const unit = String(row.unit_nama_kategori ?? '').trim();
 
         return armada !== '' ? armada : unit !== '' ? unit : '-';
     };
