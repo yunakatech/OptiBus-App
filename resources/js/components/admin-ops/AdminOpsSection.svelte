@@ -59,7 +59,7 @@
                 {/if}
                 {#if description !== ''}
                     <p
-                        class="mt-1 max-w-3xl text-sm text-muted-foreground md:[html[data-density=compact]_&]:text-[13px] md:[html[data-density=compact]_&]:leading-5"
+                        class="hidden max-w-3xl text-sm text-muted-foreground sm:block md:[html[data-density=compact]_&]:text-[13px] md:[html[data-density=compact]_&]:leading-5"
                     >
                         {description}
                     </p>

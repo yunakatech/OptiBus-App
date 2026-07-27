@@ -5781,7 +5781,7 @@
                                     : 'Tambah rute utama baru'}
                             </h3>
                             <p
-                                class="mt-1 max-w-2xl text-sm text-muted-foreground"
+                                class="hidden max-w-2xl text-sm text-muted-foreground sm:block"
                             >
                                 Data ini menjadi fondasi untuk jadwal dan
                                 segment, jadi nama rute dan arah perjalanan
@@ -7909,7 +7909,7 @@
                                     : 'Tambah layanan bagasi baru'}
                             </h3>
                             <p
-                                class="mt-1 max-w-2xl text-sm text-muted-foreground"
+                                class="hidden max-w-2xl text-sm text-muted-foreground sm:block"
                             >
                                 Gunakan nama layanan yang mudah dikenali
                                 operator agar pemetaan tarif bagasi tetap
@@ -7966,7 +7966,7 @@
                                     Daftar layanan bagasi
                                 </h3>
                                 <p
-                                    class="mt-1 max-w-2xl text-sm text-muted-foreground"
+                                    class="hidden max-w-2xl text-sm text-muted-foreground sm:block"
                                 >
                                     Struktur tabel dibuat singkat karena
                                     fokusnya hanya nama layanan dan aksi
@@ -8424,7 +8424,7 @@
                                         {selectedSegmentRoute.name}
                                     </h3>
                                     <p
-                                        class="mt-1 max-w-3xl text-sm text-muted-foreground"
+                                        class="hidden max-w-3xl text-sm text-muted-foreground sm:block"
                                     >
                                         Segment dibuat lebih ringkas dengan
                                         menggabungkan arah perjalanan dalam satu
@@ -10193,7 +10193,7 @@
                                     : 'Tambah pool operasional'}
                             </h3>
                             <p
-                                class="mt-1 max-w-2xl text-sm text-muted-foreground"
+                                class="hidden max-w-2xl text-sm text-muted-foreground sm:block"
                             >
                                 Mapping pool menentukan rute yang bisa dilihat
                                 user dan menjadi filter laporan per cabang atau
@@ -10843,7 +10843,7 @@
                                     : 'Tambah akun pengguna baru'}
                             </h3>
                             <p
-                                class="mt-1 max-w-2xl text-sm text-muted-foreground"
+                                class="hidden max-w-2xl text-sm text-muted-foreground sm:block"
                             >
                                 Atur identitas login dan gunakan password yang
                                 kuat agar akses panel tetap aman.
@@ -11068,7 +11068,7 @@
                                         Akses akun pengguna
                                     </h3>
                                     <p
-                                        class="mt-1 max-w-3xl text-sm text-muted-foreground"
+                                        class="hidden max-w-3xl text-sm text-muted-foreground sm:block"
                                     >
                                         Status verifikasi dibuat lebih mudah
                                         discan, sementara aksi edit dan hapus
@@ -11606,7 +11606,7 @@
                                 Jejak perubahan operasional
                             </h3>
                             <p
-                                class="mt-1 max-w-3xl text-sm text-muted-foreground"
+                                class="hidden max-w-3xl text-sm text-muted-foreground sm:block"
                             >
                                 Riwayat aktivitas dibuat lebih mudah discan
                                 dengan pemisahan yang jelas antara waktu, tag,

@@ -1047,7 +1047,7 @@
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <p class="text-sm text-muted-foreground">
+                        <p class="hidden text-sm text-muted-foreground sm:block">
                             Total: {bagasiMeta.total}
                         </p>
                         <div
@@ -1358,7 +1358,7 @@
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <p class="text-sm text-muted-foreground">
+                        <p class="hidden text-sm text-muted-foreground sm:block">
                             Total: {charterMeta.total}
                         </p>
                         <div
@@ -1813,7 +1813,7 @@
                                             Belum ada preset master carter
                                         </p>
                                         <p
-                                            class="max-w-md text-sm text-muted-foreground"
+                                            class="hidden max-w-md text-sm text-muted-foreground sm:block"
                                         >
                                             Tambahkan preset baru supaya form
                                             Carter bisa langsung mengisi rute,
@@ -1827,7 +1827,7 @@
                             <div
                                 class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5"
                             >
-                                <p class="text-sm text-muted-foreground">
+                                <p class="hidden text-sm text-muted-foreground sm:block">
                                     Menampilkan {carterRoutes.length} data pada halaman
                                     ini.
                                 </p>

@@ -309,7 +309,7 @@
             >
                 <div class="space-y-2">
                     <h1 class="text-2xl font-semibold text-foreground">Menu</h1>
-                    <p class="max-w-2xl text-sm text-muted-foreground">
+                    <p class="hidden max-w-2xl text-sm text-muted-foreground sm:block">
                         Pilih tujuan yang kamu butuhkan. Susunan dibuat ringkas
                         supaya cepat dipindai di layar kecil.
                     </p>
