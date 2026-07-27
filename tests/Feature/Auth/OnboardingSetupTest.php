@@ -61,6 +61,7 @@ class OnboardingSetupTest extends TestCase
             'ticket_price' => 120000,
             'schedule_days' => [1, 3, 5],
             'departure_time' => '08:00',
+            'unit_template_name' => 'Minibus 8 Seat',
             'unit_category' => 'Minibus',
             'seat_capacity' => 8,
             'unit_nopol' => 'DD 1234 XX',
@@ -88,7 +89,7 @@ class OnboardingSetupTest extends TestCase
         $this->assertDatabaseHas('units', [
             'tenant_id' => $tenantId,
             'pool_id' => $poolId,
-            'nopol' => 'DD 1234 XX',
+            'nopol' => 'MINIBUS 8 SEAT',
             'category' => 'Minibus',
         ]);
         $this->assertDatabaseHas('armadas', [
@@ -146,5 +147,48 @@ class OnboardingSetupTest extends TestCase
             'tenant_id' => $tenantId,
             'harga' => 125000,
         ]);
+    }
+
+    public function test_onboarding_keeps_unit_template_unique_across_tenants(): void
+    {
+        $firstUser = User::factory()->create(['email_verified_at' => now()]);
+        $secondUser = User::factory()->create(['email_verified_at' => now()]);
+
+        $basePayload = [
+            'phone' => '085211112222',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'plan' => 'starter',
+            'registration_intent' => 'trial',
+            'billing_interval' => 'monthly',
+            'unit_template_name' => 'Minibus 8 Seat',
+            'unit_category' => 'Minibus',
+            'seat_capacity' => 8,
+        ];
+
+        $this->actingAs($firstUser)->post(route('onboarding.store'), [
+            ...$basePayload,
+            'travel_name' => 'Tenant Pertama',
+            'unit_nopol' => 'DD 1111 AA',
+        ])->assertRedirect(route('dashboard', absolute: false));
+
+        $this->actingAs($secondUser)->post(route('onboarding.store'), [
+            ...$basePayload,
+            'travel_name' => 'Tenant Kedua',
+            'unit_nopol' => 'DD 2222 BB',
+        ])->assertRedirect(route('dashboard', absolute: false));
+
+        $secondTenantId = (int) DB::table('users')
+            ->where('id', $secondUser->id)
+            ->value('tenant_id');
+        $secondUnitName = (string) DB::table('units')
+            ->where('tenant_id', $secondTenantId)
+            ->value('nopol');
+
+        $this->assertSame('MINIBUS 8 SEAT', (string) DB::table('units')
+            ->where('tenant_id', (int) DB::table('users')->where('id', $firstUser->id)->value('tenant_id'))
+            ->value('nopol'));
+        $this->assertNotSame('MINIBUS 8 SEAT', $secondUnitName);
+        $this->assertStringStartsWith('MINIBUS 8 SEAT-T', $secondUnitName);
     }
 }
