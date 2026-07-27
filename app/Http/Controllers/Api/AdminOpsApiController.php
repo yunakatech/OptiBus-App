@@ -4350,77 +4350,85 @@ class AdminOpsApiController extends Controller
             'layout' => ['nullable', 'string'],
         ]);
 
-        $id = (int) ($data['id'] ?? 0);
-        $nopol = strtoupper(trim((string) $data['nopol']));
-        $existing = null;
-        if ($id > 0) {
-            $existingQuery = DB::table('units')->where('id', $id);
-            $this->applyWriteTenantScopeIfExists($existingQuery, 'units');
-            $this->applyPoolScopeIfExists($existingQuery, 'units');
-            $existing = $existingQuery->first($this->unitSelectColumns());
+        try {
+            $id = (int) ($data['id'] ?? 0);
+            $nopol = strtoupper(trim((string) $data['nopol']));
+            $existing = null;
+            if ($id > 0) {
+                $existingQuery = DB::table('units')->where('id', $id);
+                $this->applyWriteTenantScopeIfExists($existingQuery, 'units');
+                $this->applyPoolScopeIfExists($existingQuery, 'units');
+                $existing = $existingQuery->first($this->unitSelectColumns());
 
-            if (! $existing) {
-                return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
-            }
-        }
-
-        $targetPoolId = $this->resolveWritablePoolIdFromRequest(
-            $request,
-            'units',
-            (int) ($existing->pool_id ?? 0),
-            $id <= 0,
-        );
-        if ($targetPoolId < 0) {
-            return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
-        }
-
-        $duplicate = SchemaCache::hasColumn('units', 'nopol')
-            && DB::table('units')
-                ->whereRaw('UPPER(nopol) = ?', [$nopol])
-                ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
-                    PoolScope::applyTenantScope($q, 'tenant_id');
-                })
-                ->when(SchemaCache::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
-                ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
-                ->exists();
-
-        if ($duplicate) {
-            return $this->error('Nopol sudah terdaftar.', 409);
-        }
-
-        $payload = [
-            'nopol' => $nopol,
-            // Preserve legacy fields that are no longer shown in the simplified UI.
-            'merek' => $this->nullable($data['merek'] ?? ($existing->merek ?? null)),
-            'type' => $this->nullable($data['type'] ?? ($existing->type ?? null)),
-            'category' => $this->normalizeUnitCategory($data['category'] ?? null),
-            'tahun' => max(0, (int) ($data['tahun'] ?? ($existing->tahun ?? 0))),
-            'warna' => $this->nullable($data['warna'] ?? ($existing->warna ?? null)),
-            'kapasitas' => (int) ($data['kapasitas'] ?? 0),
-            'status' => $this->nullable($data['status'] ?? null) ?? 'Aktif',
-            'layout' => $this->nullable($data['layout'] ?? null),
-        ];
-        $payload = $this->filterPayloadColumns('units', $payload);
-        $payload = array_merge($payload, $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null));
-
-        if ($id > 0) {
-            $query = DB::table('units')->where('id', $id);
-            $this->applyWriteTenantScopeIfExists($query, 'units');
-            $this->applyPoolScopeIfExists($query, 'units');
-            $updated = $query->update($payload);
-
-            if ($updated === 0) {
-                return $this->error('Unit tidak ditemukan untuk pool aktif.', 404);
+                if (! $existing) {
+                    return $this->error('Kategori armada tidak ditemukan untuk pool aktif.', 404);
+                }
             }
 
-            return $this->ok(['message' => 'Unit updated.', 'id' => $id]);
+            $targetPoolId = $this->resolveWritablePoolIdFromRequest(
+                $request,
+                'units',
+                (int) ($existing->pool_id ?? 0),
+                $id <= 0,
+            );
+            if ($targetPoolId < 0) {
+                return $this->error($this->poolResolveErrorMessage($targetPoolId), $targetPoolId === -1 ? 403 : 422);
+            }
+
+            $duplicate = SchemaCache::hasColumn('units', 'nopol')
+                && DB::table('units')
+                    ->whereRaw('UPPER(nopol) = ?', [$nopol])
+                    ->when(SchemaCache::hasColumn('units', 'tenant_id'), function (Builder $q): void {
+                        PoolScope::applyTenantScope($q, 'tenant_id');
+                    })
+                    ->when(SchemaCache::hasColumn('units', 'pool_id') && $targetPoolId > 0, fn (Builder $q) => $q->where('pool_id', $targetPoolId))
+                    ->when($id > 0, fn ($q) => $q->where('id', '!=', $id))
+                    ->exists();
+
+            if ($duplicate) {
+                return $this->error('Nama template kategori armada sudah terdaftar.', 409);
+            }
+
+            $payload = [
+                'nopol' => $nopol,
+                // Preserve legacy fields that are no longer shown in the simplified UI.
+                'merek' => $this->nullable($data['merek'] ?? ($existing->merek ?? null)),
+                'type' => $this->nullable($data['type'] ?? ($existing->type ?? null)),
+                'category' => $this->normalizeUnitCategory($data['category'] ?? null),
+                'tahun' => max(0, (int) ($data['tahun'] ?? ($existing->tahun ?? 0))),
+                'warna' => $this->nullable($data['warna'] ?? ($existing->warna ?? null)),
+                'kapasitas' => (int) ($data['kapasitas'] ?? 0),
+                'status' => $this->nullable($data['status'] ?? null) ?? 'Aktif',
+                'layout' => array_key_exists('layout', $data)
+                    ? $this->nullable($data['layout'] ?? null)
+                    : $this->nullable($existing->layout ?? null),
+            ];
+            $payload = $this->filterPayloadColumns('units', $payload);
+            $payload = array_merge($payload, $this->poolPayload('units', $targetPoolId > 0 ? $targetPoolId : null));
+
+            if ($id > 0) {
+                $query = DB::table('units')->where('id', $id);
+                $this->applyWriteTenantScopeIfExists($query, 'units');
+                $this->applyPoolScopeIfExists($query, 'units');
+                $query->update($payload);
+
+                return $this->ok(['message' => 'Kategori armada updated.', 'id' => $id]);
+            }
+
+            $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), [
+                'created_at' => now(),
+            ]));
+
+            return $this->ok(['message' => 'Kategori armada created.', 'id' => $newId], 201);
+        } catch (QueryException $e) {
+            report($e);
+
+            if (($e->errorInfo[0] ?? $e->getCode()) === '23000') {
+                return $this->error('Nama template kategori armada sudah terdaftar.', 409);
+            }
+
+            return $this->error('Gagal menyimpan kategori armada. Periksa data lalu coba lagi.', 500);
         }
-
-        $newId = DB::table('units')->insertGetId(array_merge($payload, $this->tenantPayload('units'), [
-            'created_at' => now(),
-        ]));
-
-        return $this->ok(['message' => 'Unit created.', 'id' => $newId], 201);
     }
 
     private function normalizeUnitCategory(mixed $value): string

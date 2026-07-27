@@ -5088,15 +5088,20 @@
         try {
             await runWithFeedback(
                 async () => {
-                    await api('POST', '/api/admin/units', {
+                    const unitPayload: Record<string, unknown> = {
                         id: unitForm.id || undefined,
                         nopol: unitForm.nama_model,
                         pool_id: poolPayloadValue(unitForm.pool_id),
                         category: normalizeUnitCategory(unitForm.category),
                         kapasitas: Number(unitForm.kapasitas || 0),
                         status: unitForm.status,
-                        layout: unitForm.layout,
-                    });
+                    };
+
+                    if (unitForm.layout.trim() !== '') {
+                        unitPayload.layout = unitForm.layout;
+                    }
+
+                    await api('POST', '/api/admin/units', unitPayload);
                 },
                 {
                     loadingMessage: unitForm.id
