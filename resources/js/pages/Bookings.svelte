@@ -57,6 +57,7 @@
     import { LoadingButton } from '@/components/ui/loading-button';
     import { Skeleton } from '@/components/ui/skeleton';
     import { runWithFeedback } from '@/lib/action-feedback';
+    import { extractApiErrorMessage } from '@/lib/api-errors';
     import {
         formatCurrencyDisplay,
         formatCurrencyInput,
@@ -4591,6 +4592,14 @@
             return;
         }
 
+        if (isManifestLocked(openGroupDetail)) {
+            formError =
+                'Manifest sudah ditutup. Keberangkatan ini tidak bisa dipakai untuk mapping bagasi.';
+            formSuccess = '';
+
+            return;
+        }
+
         savingGroupRiturId = row.id;
         formError = '';
         formSuccess = '';
@@ -4610,7 +4619,10 @@
                     loadingMessage: `Memasang bagasi ${row.kode_resi} ke keberangkatan...`,
                     successMessage:
                         'Bagasi berhasil dimapping ke keberangkatan.',
-                    errorMessage: 'Gagal memetakan bagasi ke keberangkatan.',
+                    errorMessage: (error) =>
+                        error instanceof Error && error.message.trim() !== ''
+                            ? error.message
+                            : 'Gagal memetakan bagasi ke keberangkatan.',
                 },
             );
 
@@ -4628,6 +4640,14 @@
 
     const unmapGroupRitur = async (row: GroupRiturRow) => {
         if (!openGroupDetail || savingGroupRiturId !== null) {
+            return;
+        }
+
+        if (isManifestLocked(openGroupDetail)) {
+            formError =
+                'Manifest sudah ditutup. Keberangkatan ini tidak bisa dipakai untuk mapping bagasi.';
+            formSuccess = '';
+
             return;
         }
 
@@ -5088,10 +5108,16 @@
             response = await postOnce();
         }
 
+        const responseForError = response.clone();
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok || data.success === false) {
-            throw new Error(data.error || `Request gagal (${response.status})`);
+            throw new Error(
+                await extractApiErrorMessage(
+                    responseForError,
+                    `Request gagal (${response.status})`,
+                ),
+            );
         }
 
         if (
@@ -7595,6 +7621,9 @@
                                                 onblur={onGroupDriverBlur}
                                                 disabled={loadingGroupDriver ||
                                                     savingGroupDriver ||
+                                                    isManifestLocked(
+                                                        openGroupDetail,
+                                                    ) ||
                                                     isCanceledDeparture(
                                                         openGroupDetail,
                                                     )}
@@ -7684,6 +7713,9 @@
                                                 onblur={onGroupArmadaBlur}
                                                 disabled={loadingGroupDriver ||
                                                     savingGroupDriver ||
+                                                    isManifestLocked(
+                                                        openGroupDetail,
+                                                    ) ||
                                                     isCanceledDeparture(
                                                         openGroupDetail,
                                                     )}
@@ -7750,27 +7782,37 @@
                                         {/if}
                                     </div>
 
-                                    <div class="flex items-end">
-                                        <Button
-                                            type="button"
-                                            class="h-10 rounded-xl px-4"
-                                            onclick={() =>
-                                                void saveGroupDriverMapping()}
-                                            disabled={loadingGroupDriver ||
-                                                savingGroupDriver ||
-                                                isCanceledDeparture(
-                                                    openGroupDetail,
-                                                )}
+                                    {#if !isManifestLocked(openGroupDetail)}
+                                        <div class="flex items-end">
+                                            <Button
+                                                type="button"
+                                                class="h-10 rounded-xl px-4"
+                                                onclick={() =>
+                                                    void saveGroupDriverMapping()}
+                                                disabled={loadingGroupDriver ||
+                                                    savingGroupDriver ||
+                                                    isCanceledDeparture(
+                                                        openGroupDetail,
+                                                    )}
+                                            >
+                                                {savingGroupDriver
+                                                    ? hasSavedGroupDriverMapping()
+                                                        ? 'Mengedit...'
+                                                        : 'Menyimpan...'
+                                                    : hasSavedGroupDriverMapping()
+                                                      ? 'Edit'
+                                                      : 'Simpan'}
+                                            </Button>
+                                        </div>
+                                    {:else}
+                                        <div
+                                            class="rounded-lg border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200"
                                         >
-                                            {savingGroupDriver
-                                                ? hasSavedGroupDriverMapping()
-                                                    ? 'Mengedit...'
-                                                    : 'Menyimpan...'
-                                                : hasSavedGroupDriverMapping()
-                                                  ? 'Edit'
-                                                  : 'Simpan'}
-                                        </Button>
-                                    </div>
+                                            Manifest sudah ditutup. Mapping
+                                            driver dan armada hanya bisa
+                                            dilihat.
+                                        </div>
+                                    {/if}
                                 </div>
 
                                 {#if canMarkDepartureDeparted(openGroupDetail) || canMarkDepartureArrived(openGroupDetail)}
@@ -8062,23 +8104,25 @@
                                                         )}</span
                                                     >
                                                 </div>
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    class="rounded-full"
-                                                    onclick={() =>
-                                                        void unmapGroupRitur(
-                                                            row,
-                                                        )}
-                                                    disabled={savingGroupRiturId ===
-                                                        row.id}
-                                                >
-                                                    {savingGroupRiturId ===
-                                                    row.id
-                                                        ? 'Melepas...'
-                                                        : 'Lepas'}
-                                                </Button>
+                                                {#if !isManifestLocked(openGroupDetail)}
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        class="rounded-full"
+                                                        onclick={() =>
+                                                            void unmapGroupRitur(
+                                                                row,
+                                                            )}
+                                                        disabled={savingGroupRiturId ===
+                                                            row.id}
+                                                    >
+                                                        {savingGroupRiturId ===
+                                                        row.id
+                                                            ? 'Melepas...'
+                                                            : 'Lepas'}
+                                                    </Button>
+                                                {/if}
                                             </div>
                                         </div>
                                     {/each}
@@ -8141,6 +8185,15 @@
                                     </Button>
                                 </div>
                             </div>
+
+                            {#if isManifestLocked(openGroupDetail)}
+                                <div
+                                    class="mb-3 rounded-lg border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200"
+                                >
+                                    Manifest sudah ditutup. Kontrol mapping
+                                    bagasi hanya bisa dilihat.
+                                </div>
+                            {/if}
 
                             <div
                                 class={groupRiturFiltersExpanded
@@ -8315,20 +8368,22 @@
                                                         )}</span
                                                     >
                                                 </div>
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    class="rounded-full"
-                                                    onclick={() =>
-                                                        void mapGroupRitur(row)}
-                                                    disabled={savingGroupRiturId ===
-                                                        row.id}
-                                                >
-                                                    {savingGroupRiturId ===
-                                                    row.id
-                                                        ? 'Memasang...'
-                                                        : 'Pasang ke Keberangkatan'}
-                                                </Button>
+                                                {#if !isManifestLocked(openGroupDetail)}
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        class="rounded-full"
+                                                        onclick={() =>
+                                                            void mapGroupRitur(row)}
+                                                        disabled={savingGroupRiturId ===
+                                                            row.id}
+                                                    >
+                                                        {savingGroupRiturId ===
+                                                        row.id
+                                                            ? 'Memasang...'
+                                                            : 'Pasang ke Keberangkatan'}
+                                                    </Button>
+                                                {/if}
                                             </div>
                                         </div>
                                     {/each}

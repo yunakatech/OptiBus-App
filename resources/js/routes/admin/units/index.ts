@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:4333
@@ -88,9 +88,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
     args = applyUrlDefaults(args)
 
-    const parsedArgs = {
-                        id: args.id,
-                }
+    const parsedArgs = args as { id: string | number }
 
     return deleteMethod.definition.url
             .replace('{id}', parsedArgs.id.toString())
