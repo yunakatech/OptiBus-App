@@ -857,7 +857,7 @@
                                     >
                                     <th class="py-2 pr-2 font-semibold">Rute</th
                                     >
-                                    <th class="py-2 pr-2 font-semibold">Unit</th
+                                    <th class="py-2 pr-2 font-semibold">Slot</th
                                     >
                                     <th class="py-2 pr-2 font-semibold">Nama</th
                                     >
@@ -1147,7 +1147,7 @@
                                                     )}
                                                 </div>
                                                 <div class="text-[10px]">
-                                                    Unit {row.departure_unit ||
+                                                    Slot {row.departure_unit ||
                                                         '-'}
                                                 </div>
                                             </td>
@@ -1184,7 +1184,7 @@
                                                 <div
                                                     class="text-[10px] text-muted-foreground"
                                                 >
-                                                    Unit {row.departure_unit}
+                                                    Slot {row.departure_unit}
                                                 </div>
                                             </td>
                                             <td

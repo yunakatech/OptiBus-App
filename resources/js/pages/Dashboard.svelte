@@ -978,7 +978,7 @@
                                         <p
                                             class="text-xs font-semibold md:text-sm"
                                         >
-                                            {item.jam} - Unit {item.unit}
+                                            {item.jam} - Slot {item.unit}
                                         </p>
                                         <Badge
                                             variant="secondary"

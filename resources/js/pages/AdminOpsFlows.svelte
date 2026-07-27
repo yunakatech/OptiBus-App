@@ -5867,7 +5867,7 @@
                                     /></th
                                 ><th class="px-3 py-2 text-left">Trip</th><th
                                     class="px-3 py-2 text-left">Waktu</th
-                                ><th class="px-3 py-2 text-left">Unit</th><th
+                                ><th class="px-3 py-2 text-left">Slot</th><th
                                     class="px-3 py-2 text-left">Driver</th
                                 ><th class="px-3 py-2 text-left">Aksi</th></tr
                             ></thead

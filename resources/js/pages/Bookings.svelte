@@ -790,8 +790,8 @@
                     value,
                     label:
                         suffix !== ''
-                            ? `Unit ${value} - ${suffix}`
-                            : `Unit ${value}`,
+                            ? `Slot ${value} - ${suffix}`
+                            : `Slot ${value}`,
                 };
             });
         }
@@ -800,7 +800,7 @@
 
         return Array.from({ length: units }, (_, index) => ({
             value: index + 1,
-            label: `Unit ${index + 1}`,
+            label: `Slot ${index + 1}`,
         }));
     };
     const activeScheduleUnitOption = () => {
@@ -839,8 +839,8 @@
                     value,
                     label:
                         suffix !== ''
-                            ? `Unit ${value} - ${suffix}`
-                            : `Unit ${value}`,
+                            ? `Slot ${value} - ${suffix}`
+                            : `Slot ${value}`,
                 };
             });
         }
@@ -849,7 +849,7 @@
 
         return Array.from({ length: units }, (_, index) => ({
             value: index + 1,
-            label: `Unit ${index + 1}`,
+            label: `Slot ${index + 1}`,
         }));
     };
     const hasSelectedTrip = () => Boolean(selectedRoute && selectedJam);
@@ -894,8 +894,8 @@
                     value,
                     label:
                         label !== ''
-                            ? `Unit ${value} - ${label}`
-                            : `Unit ${value}`,
+                            ? `Slot ${value} - ${label}`
+                            : `Slot ${value}`,
                 };
             });
         }
@@ -909,7 +909,7 @@
             return {
                 value,
                 label:
-                    label !== '' ? `Unit ${value} - ${label}` : `Unit ${value}`,
+                    label !== '' ? `Slot ${value} - ${label}` : `Slot ${value}`,
             };
         });
     };
@@ -966,7 +966,7 @@
             bookingDate || '-',
             selectedRoute || 'Rute belum dipilih',
             normalizeJamToken(selectedJam) || 'Jam belum dipilih',
-            `Unit ${Number(selectedUnit || 1) || 1}`,
+            `Slot ${Number(selectedUnit || 1) || 1}`,
         ].join(' • ');
     const mobileScheduleReady = () =>
         Boolean(bookingDate && selectedRoute && selectedJam && selectedUnit);
@@ -974,7 +974,7 @@
         formError = '';
 
         if (!mobileScheduleReady()) {
-            formError = 'Lengkapi tanggal, rute, jam, dan unit dulu.';
+            formError = 'Lengkapi tanggal, rute, jam, dan slot dulu.';
 
             return;
         }
@@ -4309,7 +4309,7 @@
             );
 
             savingGroupReschedule = false;
-            formSuccess = `Penumpang ${groupRescheduleBookingName || ''} berhasil di-reschedule ke ${formatGroupDateLabel(String(response.tanggal ?? groupRescheduleDate))} • ${String(response.jam ?? jam)} • Unit ${Number(response.unit ?? unit) || unit} • Seat ${seat}.`;
+            formSuccess = `Penumpang ${groupRescheduleBookingName || ''} berhasil di-reschedule ke ${formatGroupDateLabel(String(response.tanggal ?? groupRescheduleDate))} • ${String(response.jam ?? jam)} • Slot ${Number(response.unit ?? unit) || unit} • Seat ${seat}.`;
             closeGroupRescheduleModal();
         } catch (error) {
             formError =
@@ -7259,7 +7259,7 @@
                                     normalizeJamToken(
                                         bookingSuccessSnapshot.jam,
                                     ) ||
-                                    '-'} · Unit {bookingSuccessSnapshot.unit}
+                                    '-'} · Slot {bookingSuccessSnapshot.unit}
                             </p>
                         </div>
                         <Button
@@ -7528,7 +7528,7 @@
                                 variant="secondary"
                                 class="rounded-full px-3 py-1 text-[11px]"
                             >
-                                Unit {openGroupDetail.unit}
+                                Slot {openGroupDetail.unit}
                             </Badge>
                             {#if !consoleOnly}
                                 <Badge
@@ -10197,7 +10197,7 @@
                                                     <Badge
                                                         variant="secondary"
                                                         class="rounded-full px-2 py-0.5 text-[10px]"
-                                                        >Unit {group.unit}</Badge
+                                                        >Slot {group.unit}</Badge
                                                     >
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger
@@ -10719,7 +10719,7 @@
                                         >Tanggal</th
                                     >
                                     <th class="px-2 py-2 font-medium">Jam</th>
-                                    <th class="px-2 py-2 font-medium">Unit</th>
+                                    <th class="px-2 py-2 font-medium">Slot</th>
                                     <th class="px-2 py-2 font-medium">Seat</th>
                                     <th class="px-2 py-2 font-medium">Status</th
                                     >
