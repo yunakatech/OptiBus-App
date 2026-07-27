@@ -735,29 +735,33 @@ class TenantProvisioningService
         }
 
         foreach ($days as $day) {
-            $payload = [
-                'rute' => $routeName,
-                'dow' => $day,
-                'jam' => $departureTime,
-                'units' => 1,
-                'unit_label' => 'Unit 1',
-                'unit_id' => $unitId > 0 ? $unitId : null,
-                'created_at' => now(),
-            ];
-            if (Schema::hasColumn('schedules', 'tenant_id')) {
-                $payload['tenant_id'] = $tenantId;
-            }
-            if (Schema::hasColumn('schedules', 'route_id')) {
-                $payload['route_id'] = $routeId;
-            }
-            if (Schema::hasColumn('schedules', 'seats')) {
-                $payload['seats'] = $unitId > 0 ? $this->unitSeatCount($unitId) : 0;
-            }
-
             try {
-                $scheduleId = (int) DB::table('schedules')->insertGetId($this->filterPayloadForTable('schedules', $payload));
-                $this->createScheduleUnitRow($tenantId, $scheduleId, $unitId);
-                $this->createScheduleSegmentRow($scheduleId, $segmentId, $input);
+                DB::transaction(function () use (
+                    $tenantId,
+                    $routeId,
+                    $routeName,
+                    $unitId,
+                    $segmentId,
+                    $input,
+                    $day,
+                    $departureTime,
+                ): void {
+                    $scheduleId = $this->findOrCreateOnboardingSchedule(
+                        $tenantId,
+                        $routeId,
+                        $routeName,
+                        $unitId,
+                        $day,
+                        $departureTime,
+                    );
+
+                    if ($scheduleId <= 0) {
+                        return;
+                    }
+
+                    $this->upsertScheduleUnitRow($tenantId, $scheduleId, $unitId);
+                    $this->upsertScheduleSegmentRow($tenantId, $scheduleId, $segmentId, $input);
+                });
             } catch (QueryException $e) {
                 Log::warning('onboarding.schedule_skipped', [
                     'tenant_id' => $tenantId,
@@ -768,6 +772,50 @@ class TenantProvisioningService
                 ]);
             }
         }
+    }
+
+    private function findOrCreateOnboardingSchedule(
+        int $tenantId,
+        int $routeId,
+        string $routeName,
+        int $unitId,
+        int $day,
+        string $departureTime,
+    ): int {
+        $query = DB::table('schedules')
+            ->where('rute', $routeName)
+            ->where('dow', $day)
+            ->where('jam', $departureTime);
+
+        if (Schema::hasColumn('schedules', 'tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        $existingId = (int) ($query->value('id') ?? 0);
+        if ($existingId > 0) {
+            return $existingId;
+        }
+
+        $payload = [
+            'rute' => $routeName,
+            'dow' => $day,
+            'jam' => $departureTime,
+            'units' => 1,
+            'unit_label' => 'Unit 1',
+            'unit_id' => $unitId > 0 ? $unitId : null,
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('schedules', 'tenant_id')) {
+            $payload['tenant_id'] = $tenantId;
+        }
+        if (Schema::hasColumn('schedules', 'route_id')) {
+            $payload['route_id'] = $routeId;
+        }
+        if (Schema::hasColumn('schedules', 'seats')) {
+            $payload['seats'] = $unitId > 0 ? $this->unitSeatCount($unitId) : 0;
+        }
+
+        return (int) DB::table('schedules')->insertGetId($this->filterPayloadForTable('schedules', $payload));
     }
 
     /**
@@ -830,18 +878,30 @@ class TenantProvisioningService
             return false;
         }
 
-        $query = DB::table($table);
-        if (Schema::hasColumn($table, 'tenant_id')) {
-            $query->where('tenant_id', $tenantId);
-        } elseif (Schema::hasColumn($table, 'pool_id')) {
-            $poolIds = $this->tenantPoolIds($tenantId);
-            if ($poolIds === []) {
-                return false;
-            }
-            $query->whereIn('pool_id', $poolIds);
-        } else {
+        $hasTenantColumn = Schema::hasColumn($table, 'tenant_id');
+        $hasPoolColumn = Schema::hasColumn($table, 'pool_id');
+        if (! $hasTenantColumn && ! $hasPoolColumn) {
             return false;
         }
+
+        $poolIds = $hasPoolColumn ? $this->tenantPoolIds($tenantId) : [];
+        if ($hasPoolColumn && $poolIds === [] && ! $hasTenantColumn) {
+            return false;
+        }
+
+        $query = DB::table($table)->where(function ($builder) use ($hasTenantColumn, $tenantId, $hasPoolColumn, $poolIds): void {
+            if ($hasTenantColumn) {
+                $builder->where('tenant_id', $tenantId);
+            }
+
+            if ($hasPoolColumn && $poolIds !== []) {
+                if ($hasTenantColumn) {
+                    $builder->orWhereIn('pool_id', $poolIds);
+                } else {
+                    $builder->whereIn('pool_id', $poolIds);
+                }
+            }
+        });
 
         return $query->exists();
     }
@@ -955,7 +1015,7 @@ class TenantProvisioningService
         return max(0, (int) (DB::table('units')->where('id', $unitId)->value('kapasitas') ?? 0));
     }
 
-    private function createScheduleUnitRow(int $tenantId, int $scheduleId, int $unitId): void
+    private function upsertScheduleUnitRow(int $tenantId, int $scheduleId, int $unitId): void
     {
         if ($scheduleId <= 0 || ! Schema::hasTable('schedule_units')) {
             return;
@@ -972,25 +1032,44 @@ class TenantProvisioningService
             $payload['tenant_id'] = $tenantId;
         }
 
-        DB::table('schedule_units')->insert($this->filterPayloadForTable('schedule_units', $payload));
+        $keys = ['schedule_id' => $scheduleId, 'unit_no' => 1];
+        if (Schema::hasColumn('schedule_units', 'tenant_id')) {
+            $keys['tenant_id'] = $tenantId;
+        }
+
+        DB::table('schedule_units')->updateOrInsert(
+            $keys,
+            $this->filterPayloadForTable('schedule_units', $payload),
+        );
     }
 
     /**
      * @param  array<string, mixed>  $input
      */
-    private function createScheduleSegmentRow(int $scheduleId, int $segmentId, array $input): void
+    private function upsertScheduleSegmentRow(int $tenantId, int $scheduleId, int $segmentId, array $input): void
     {
         if ($scheduleId <= 0 || $segmentId <= 0 || ! Schema::hasTable('schedule_segment')) {
             return;
         }
 
         $pickupTimes = $this->timeList($input['pickup_times'] ?? []);
-        DB::table('schedule_segment')->insert($this->filterPayloadForTable('schedule_segment', [
+        $payload = $this->filterPayloadForTable('schedule_segment', [
             'schedule_id' => $scheduleId,
             'segment_id' => $segmentId,
             'jam_pickup' => $pickupTimes[0] ?? ($this->normalizeTime($input['departure_time'] ?? null) ?: '08:00'),
             'created_at' => now(),
-        ]));
+        ]);
+
+        $keys = [
+            'schedule_id' => $scheduleId,
+            'segment_id' => $segmentId,
+        ];
+        if (Schema::hasColumn('schedule_segment', 'tenant_id')) {
+            $keys['tenant_id'] = $tenantId;
+            $payload['tenant_id'] = $tenantId;
+        }
+
+        DB::table('schedule_segment')->updateOrInsert($keys, $payload);
     }
 
     private function assignUserToPool(int $userId, int $poolId): void

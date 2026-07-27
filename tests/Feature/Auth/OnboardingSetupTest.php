@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Services\TenantProvisioningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -149,6 +150,55 @@ class OnboardingSetupTest extends TestCase
         ]);
     }
 
+    public function test_onboarding_reuses_existing_schedules_without_duplication(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $payload = [
+            'travel_name' => 'Jalur Stabil',
+            'phone' => '085211112222',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'plan' => 'starter',
+            'registration_intent' => 'trial',
+            'billing_interval' => 'monthly',
+            'segment_origin' => 'Pool Pinrang',
+            'segment_destination' => 'Makassar Kota',
+            'pickup_times' => ['08:00'],
+            'ticket_price' => 120000,
+            'schedule_days' => [1, 3, 5],
+            'departure_time' => '08:00',
+            'unit_template_name' => 'Minibus 8 Seat',
+            'unit_category' => 'Minibus',
+            'seat_capacity' => 8,
+            'unit_nopol' => 'DD 1234 XX',
+            'armada_merk' => 'Toyota',
+            'driver_name' => 'Andi Driver',
+            'driver_phone' => '085299998888',
+        ];
+
+        $this->actingAs($user)->post(route('onboarding.store'), $payload)
+            ->assertRedirect(route('dashboard', absolute: false));
+
+        $tenantId = (int) DB::table('users')->where('id', $user->id)->value('tenant_id');
+        $firstScheduleCount = DB::table('schedules')->where('tenant_id', $tenantId)->count();
+        $firstScheduleUnitCount = DB::table('schedule_units')->where('tenant_id', $tenantId)->count();
+        $firstScheduleSegmentCount = DB::table('schedule_segment')
+            ->join('schedules', 'schedule_segment.schedule_id', '=', 'schedules.id')
+            ->where('schedules.tenant_id', $tenantId)
+            ->count();
+
+        $this->actingAs($user)->post(route('onboarding.store'), $payload)
+            ->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertSame($firstScheduleCount, DB::table('schedules')->where('tenant_id', $tenantId)->count());
+        $this->assertSame($firstScheduleUnitCount, DB::table('schedule_units')->where('tenant_id', $tenantId)->count());
+        $this->assertSame($firstScheduleSegmentCount, DB::table('schedule_segment')
+            ->join('schedules', 'schedule_segment.schedule_id', '=', 'schedules.id')
+            ->where('schedules.tenant_id', $tenantId)
+            ->count());
+    }
+
     public function test_onboarding_keeps_unit_template_unique_across_tenants(): void
     {
         $firstUser = User::factory()->create(['email_verified_at' => now()]);
@@ -190,5 +240,44 @@ class OnboardingSetupTest extends TestCase
             ->value('nopol'));
         $this->assertNotSame('MINIBUS 8 SEAT', $secondUnitName);
         $this->assertStringStartsWith('MINIBUS 8 SEAT-T', $secondUnitName);
+    }
+
+    public function test_setup_progress_counts_pool_scoped_legacy_units(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->actingAs($user)->post(route('onboarding.store'), [
+            'travel_name' => 'Progress Legacy',
+            'phone' => '085211112222',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'plan' => 'starter',
+            'registration_intent' => 'trial',
+            'billing_interval' => 'monthly',
+        ])->assertRedirect(route('dashboard', absolute: false));
+
+        $tenantId = (int) DB::table('users')->where('id', $user->id)->value('tenant_id');
+        $poolId = (int) DB::table('pools')->where('tenant_id', $tenantId)->value('id');
+
+        DB::table('units')->insert([
+            'nopol' => 'LEGACY UNIT',
+            'merek' => null,
+            'type' => null,
+            'category' => 'Minibus',
+            'tahun' => 0,
+            'warna' => null,
+            'kapasitas' => 8,
+            'status' => 'Aktif',
+            'pool_id' => $poolId,
+            'created_at' => now(),
+        ]);
+
+        $progress = app(TenantProvisioningService::class)->setupProgressForTenant($tenantId);
+
+        $this->assertTrue($progress['unit']);
+        $this->assertContains(
+            ['key' => 'unit', 'label' => 'Kategori armada sudah dibuat', 'done' => true],
+            $progress['items'],
+        );
     }
 }
