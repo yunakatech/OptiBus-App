@@ -673,7 +673,7 @@
                                     SaaS Management
                                 </h1>
                                 <p
-                                    class="max-w-2xl text-sm text-muted-foreground sm:text-base"
+                                    class="hidden max-w-2xl text-sm text-muted-foreground sm:block sm:text-base"
                                 >
                                     Panel operasional untuk tenant,
                                     subscription, plan, billing, dan payment.

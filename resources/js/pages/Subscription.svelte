@@ -282,7 +282,7 @@
             <h1 class="text-2xl font-semibold tracking-tight text-foreground">
                 Langganan
             </h1>
-            <p class="mt-1 text-sm text-muted-foreground">
+            <p class="hidden text-sm text-muted-foreground sm:block">
                 Kelola paket SaaS OptiBus, invoice, dan checkout Mayar tenant.
             </p>
         </div>
@@ -305,7 +305,7 @@
                 <h2 class="mt-4 text-lg font-semibold text-foreground">
                     Data langganan belum tersedia
                 </h2>
-                <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                <p class="mx-auto mt-2 hidden max-w-md text-sm text-muted-foreground sm:block">
                     Tenant belum memiliki paket aktif. Pilih paket dari pricing
                     atau hubungi admin SaaS.
                 </p>

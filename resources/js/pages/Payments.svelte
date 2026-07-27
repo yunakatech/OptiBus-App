@@ -752,7 +752,7 @@
                     <p class="mt-3 font-semibold text-foreground">
                         Data pembayaran belum ada.
                     </p>
-                    <p class="mt-1 text-sm text-muted-foreground">
+                    <p class="mt-1 hidden text-sm text-muted-foreground sm:block">
                         Coba pindah tab status, ubah filter sumber data, atau
                         kosongkan pencarian.
                     </p>
@@ -911,7 +911,7 @@
             <div
                 class="flex flex-wrap items-center justify-between gap-3 border-t pt-3"
             >
-                <p class="text-sm text-muted-foreground">
+                <p class="hidden text-sm text-muted-foreground sm:block">
                     Total {pagination.total} data, halaman {pagination.page} dari
                     {pagination.last_page}
                 </p>
