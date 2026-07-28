@@ -140,7 +140,7 @@ class CharterDocumentController extends Controller
 
     private function brandingLogoDataUri(): ?string
     {
-        $logoPath = public_path('images/qbus-logo-full.png');
+        $logoPath = public_path('branding/OptiBus-logo-full.png');
 
         if (! is_file($logoPath)) {
             return null;

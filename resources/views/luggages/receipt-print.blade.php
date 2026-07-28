@@ -55,12 +55,12 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-height: 48px;
-            padding: 4px 8px 6px;
-            margin-bottom: 8px;
+            min-height: 30px;
+            padding: 2px 4px 4px;
+            margin-bottom: 5px;
         }
         .logo {
-            width: 118px;
+            width: 38px;
             height: auto;
             display: block;
             object-fit: contain;

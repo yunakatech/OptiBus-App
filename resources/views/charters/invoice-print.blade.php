@@ -8,19 +8,18 @@
         :root {
             color-scheme: light;
             --ink: #0f172a;
-            --muted: #64748b;
+            --muted: #475569;
             --line: #cbd5e1;
             --soft: #f8fafc;
-            --brand: #0369a1;
-            --brand-soft: #e0f2fe;
-            --danger: #b91c1c;
+            --brand: #075985;
+            --danger: #991b1b;
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            color: var(--ink);
             background: #eef4f8;
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif;
         }
         .page {
             max-width: 850px;
@@ -34,7 +33,7 @@
         }
         .print-btn {
             border: 1px solid var(--line);
-            background: white;
+            background: #ffffff;
             color: var(--ink);
             padding: 9px 13px;
             border-radius: 999px;
@@ -42,204 +41,150 @@
             cursor: pointer;
         }
         .sheet {
-            background: white;
-            border: 1px solid #dbe4ea;
-            border-radius: 22px;
-            padding: 18px;
-            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+            background: #ffffff;
+            border: 1px solid var(--line);
+            padding: 20px 22px;
+            box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
         }
-        .hero {
-            display: flex;
-            justify-content: space-between;
-            gap: 14px;
+        .doc-head {
+            display: table;
+            width: 100%;
             margin-bottom: 14px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid #e7eef3;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--ink);
         }
-        .brand-block {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
+        .brand-cell,
+        .title-cell,
+        .status-cell {
+            display: table-cell;
+            vertical-align: top;
         }
+        .brand-cell { width: 180px; }
         .brand-logo {
-            width: 138px;
+            width: 148px;
             height: auto;
             object-fit: contain;
         }
-        .brand-copy {
-            padding-top: 3px;
+        .title-cell {
+            padding: 0 14px;
+        }
+        .status-cell {
+            width: 220px;
+            text-align: right;
         }
         .eyebrow {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .12em;
+            margin-bottom: 5px;
             color: var(--brand);
+            font-size: 11px;
             font-weight: 700;
-            margin-bottom: 6px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
         }
         h1 {
-            margin: 0 0 4px;
-            font-size: 24px;
+            margin: 0 0 5px;
+            font-size: 26px;
             line-height: 1.15;
         }
         .muted {
             color: var(--muted);
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.45;
         }
-        .hero-side {
-            min-width: 230px;
-            display: grid;
-            gap: 8px;
-            justify-items: end;
-        }
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            padding: 7px 11px;
-            border-radius: 999px;
-            background: var(--brand-soft);
+        .status {
+            display: inline-block;
+            margin-bottom: 7px;
+            border: 1px solid var(--line);
+            padding: 5px 9px;
             color: var(--brand);
-            font-weight: 700;
             font-size: 11px;
-        }
-        .barcode-card {
-            border: 1px solid var(--line);
-            background: #fcfeff;
-            border-radius: 14px;
-            padding: 8px 10px;
-            text-align: center;
-            width: 100%;
-        }
-        .barcode-card img {
-            width: 100%;
-            max-width: 220px;
-            height: auto;
-        }
-        .grid-4,
-        .grid-3,
-        .grid-2 {
-            display: grid;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-        .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .card {
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 10px 12px;
-            background: var(--soft);
-        }
-        .label {
-            color: var(--muted);
-            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .04em;
             text-transform: uppercase;
-            letter-spacing: .08em;
-            margin-bottom: 5px;
         }
-        .value {
-            font-size: 13px;
-            font-weight: 700;
-            line-height: 1.35;
-        }
-        .sub-value {
-            color: var(--muted);
-            font-size: 11px;
-            margin-top: 3px;
-            line-height: 1.45;
-        }
-        .section-title {
-            margin: 14px 0 8px;
-            font-size: 14px;
-            font-weight: 700;
+        .barcode img {
+            width: 210px;
+            max-width: 100%;
+            height: auto;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+        }
+        th,
+        td {
+            border: 1px solid var(--line);
+            padding: 8px 9px;
+            vertical-align: top;
             font-size: 11px;
+            line-height: 1.45;
         }
         th {
-            text-align: left;
-            padding: 8px 10px;
+            background: var(--soft);
             color: var(--muted);
             font-size: 10px;
-            text-transform: uppercase;
             letter-spacing: .08em;
-            border-bottom: 1px solid var(--line);
-            background: #f8fbfd;
+            text-align: left;
+            text-transform: uppercase;
         }
         td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e5edf3;
-            vertical-align: top;
-        }
-        .total-box {
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 8px 12px;
-            font-size: 12px;
-            border-bottom: 1px solid #e5edf3;
-            background: white;
-        }
-        .total-row:last-child {
-            border-bottom: 0;
-        }
-        .total-row.grand {
-            background: #0f172a;
-            color: white;
             font-weight: 700;
         }
-        .notes-box {
-            margin-top: 12px;
-            border: 1px dashed var(--line);
-            border-radius: 14px;
-            padding: 10px 12px;
-            background: #fcfeff;
-            color: var(--muted);
-            font-size: 11px;
-            line-height: 1.5;
+        .section-title {
+            margin: 14px 0 7px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .normal {
+            font-weight: 400;
+        }
+        .money {
+            font-weight: 800;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .grand th,
+        .grand td {
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 13px;
+        }
+        .danger th,
+        .danger td {
+            background: #fff7f7;
+            color: var(--danger);
         }
         .doc-footer {
             margin-top: 12px;
             display: flex;
             justify-content: space-between;
             gap: 12px;
-            font-size: 10px;
             color: var(--muted);
-        }
-        .danger-box {
-            margin-top: 12px;
-            border: 1px solid #fecaca;
-            background: #fff7f7;
-            color: var(--danger);
+            font-size: 10px;
         }
         @media print {
-            body { background: white; }
+            body { background: #ffffff; }
             .page { padding: 0; }
             .toolbar { display: none; }
             .sheet {
                 border: 0;
                 box-shadow: none;
-                border-radius: 0;
                 padding: 8px 10px 0;
             }
         }
         @media (max-width: 780px) {
-            .hero { display: grid; }
-            .grid-4,
-            .grid-3,
-            .grid-2 { grid-template-columns: 1fr; }
-            .hero-side { justify-items: start; min-width: 0; }
-            .doc-footer { display: grid; }
+            .doc-head,
+            .brand-cell,
+            .title-cell,
+            .status-cell {
+                display: block;
+                width: 100%;
+                text-align: left;
+            }
+            .title-cell {
+                padding: 12px 0;
+            }
         }
     </style>
 </head>
@@ -249,116 +194,143 @@
     $status = strtolower((string) ($invoice['status'] ?? 'active'));
 @endphp
 <div class="page">
-    <div class="toolbar">
-        <button class="print-btn" type="button" onclick="window.print()">Cetak Invoice</button>
-    </div>
+    @if (($exportMode ?? 'screen') !== 'pdf')
+        <div class="toolbar">
+            <button class="print-btn" type="button" onclick="window.print()">Cetak Invoice</button>
+        </div>
+    @endif
 
-    <div class="sheet">
-        <section class="hero">
-            <div class="brand-block">
+    <section class="sheet">
+        <header class="doc-head">
+            <div class="brand-cell">
                 @if(!empty($invoice['logo_data_uri']))
                     <img class="brand-logo" src="{{ $invoice['logo_data_uri'] }}" alt="OptiBus">
                 @endif
-                <div class="brand-copy">
-                    <div class="eyebrow">Invoice Carter</div>
-                    <h1>{{ $invoice['invoice_code'] ?? '-' }}</h1>
-                    <div class="muted">
-                        {{ $invoice['name'] ?? '-' }}<br>
-                        {{ $invoice['company_name'] ?? 'Customer charter' }}{{ !empty($invoice['phone']) ? ' • '.$invoice['phone'] : '' }}
-                    </div>
+            </div>
+            <div class="title-cell">
+                <div class="eyebrow">Invoice Carter</div>
+                <h1>{{ $invoice['invoice_code'] ?? '-' }}</h1>
+                <div class="muted">
+                    {{ $invoice['name'] ?? '-' }}<br>
+                    {{ $invoice['company_name'] ?? 'Customer charter' }}
+                    @if(!empty($invoice['phone']))
+                        &bull; {{ $invoice['phone'] }}
+                    @endif
                 </div>
             </div>
-
-            <div class="hero-side">
-                <div class="pill">{{ $invoice['payment_status'] ?? '-' }}</div>
+            <div class="status-cell">
+                <div class="status">{{ $invoice['payment_status'] ?? '-' }}</div>
                 @if(!empty($invoice['barcode_svg']))
-                    <div class="barcode-card">
+                    <div class="barcode">
                         <img src="{{ $invoice['barcode_svg'] }}" alt="Barcode invoice">
-                        <div class="muted" style="margin-top: 6px;">{{ $invoice['invoice_code'] ?? '-' }}</div>
                     </div>
                 @endif
             </div>
-        </section>
+        </header>
 
-        <section class="grid-4">
-            <div class="card">
-                <div class="label">Tanggal</div>
-                <div class="value">{{ $invoice['start_date'] ?? '-' }}</div>
-                <div class="sub-value">Selesai {{ $invoice['end_date'] ?? '-' }}</div>
-            </div>
-            <div class="card">
-                <div class="label">Jam & Layanan</div>
-                <div class="value">{{ $invoice['departure_time'] ?? '--:--' }}</div>
-                <div class="sub-value">{{ $invoice['layanan'] ?? '-' }}</div>
-            </div>
-            <div class="card">
-                <div class="label">Driver</div>
-                <div class="value">{{ $invoice['driver_name'] ?? '-' }}</div>
-                <div class="sub-value">{{ $invoice['unit_category'] ?? 'Kategori armada belum dipilih' }}</div>
-            </div>
-            <div class="card">
-                <div class="label">Nopol</div>
-                <div class="value">{{ $invoice['armada_nopol'] ?? $invoice['unit_nama_kategori'] ?? '-' }}</div>
-                <div class="sub-value">Status {{ strtoupper((string) ($invoice['status'] ?? 'active')) }}</div>
-            </div>
-        </section>
+        <div class="section-title">Detail Customer dan Perjalanan</div>
+        <table>
+            <tbody>
+                <tr>
+                    <th>Customer</th>
+                    <td>{{ $invoice['name'] ?? '-' }}</td>
+                    <th>Perusahaan</th>
+                    <td>{{ $invoice['company_name'] ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <th>No. HP</th>
+                    <td>{{ $invoice['phone'] ?? '-' }}</td>
+                    <th>Layanan</th>
+                    <td>{{ $invoice['layanan'] ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <th>Tanggal Mulai</th>
+                    <td>{{ $invoice['start_date'] ?? '-' }}</td>
+                    <th>Tanggal Selesai</th>
+                    <td>{{ $invoice['end_date'] ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <th>Jam</th>
+                    <td>{{ $invoice['departure_time'] ?? '--:--' }}</td>
+                    <th>Status Charter</th>
+                    <td>{{ strtoupper((string) ($invoice['status'] ?? 'active')) }}</td>
+                </tr>
+                <tr>
+                    <th>Driver</th>
+                    <td>{{ $invoice['driver_name'] ?? '-' }}</td>
+                    <th>Armada</th>
+                    <td>{{ $invoice['unit_category'] ?? $invoice['unit_nama_kategori'] ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <th>Nopol</th>
+                    <td>{{ $invoice['armada_nopol'] ?? '-' }}</td>
+                    <th>Kode Invoice</th>
+                    <td>{{ $invoice['invoice_code'] ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <th>Titik Jemput</th>
+                    <td colspan="3">{{ $invoice['pickup_point'] ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <th>Titik Antar</th>
+                    <td colspan="3">{{ $invoice['drop_point'] ?? '-' }}</td>
+                </tr>
+            </tbody>
+        </table>
 
-        <p class="section-title">Rute dan Tagihan</p>
-        <section class="grid-2">
-            <div class="card">
-                <table>
-                    <tbody>
-                        <tr>
-                            <th style="width: 130px;">Titik Jemput</th>
-                            <td>{{ $invoice['pickup_point'] ?? '-' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Titik Antar</th>
-                            <td>{{ $invoice['drop_point'] ?? '-' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Status Bayar</th>
-                            <td>{{ $invoice['payment_status'] ?? '-' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="section-title">Rincian Tagihan</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Deskripsi</th>
+                    <th style="width: 180px; text-align: right;">Nominal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Total Charter</td>
+                    <td class="money">Rp {{ number_format((float) ($invoice['price'] ?? 0), 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td>Down Payment</td>
+                    <td class="money">Rp {{ number_format((float) ($invoice['down_payment'] ?? 0), 0, ',', '.') }}</td>
+                </tr>
+                <tr class="grand">
+                    <th>Sisa Pembayaran</th>
+                    <td class="money">Rp {{ number_format((float) ($invoice['remaining_payment'] ?? 0), 0, ',', '.') }}</td>
+                </tr>
+            </tbody>
+        </table>
 
-            <div>
-                <div class="total-box">
-                    <div class="total-row">
-                        <span>Total Charter</span>
-                        <strong>Rp {{ number_format((float) ($invoice['price'] ?? 0), 0, ',', '.') }}</strong>
-                    </div>
-                    <div class="total-row">
-                        <span>Down Payment</span>
-                        <strong>Rp {{ number_format((float) ($invoice['down_payment'] ?? 0), 0, ',', '.') }}</strong>
-                    </div>
-                    <div class="total-row grand">
-                        <span>Sisa Pembayaran</span>
-                        <strong>Rp {{ number_format((float) ($invoice['remaining_payment'] ?? 0), 0, ',', '.') }}</strong>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <div class="notes-box">
-            Invoice ini adalah ringkasan operasional dan pembayaran charter. Mohon cek ulang detail rute, armada, jadwal, dan nominal sebelum keberangkatan.
-        </div>
+        <div class="section-title">Catatan</div>
+        <table>
+            <tbody>
+                <tr>
+                    <th style="width: 140px;">Keterangan</th>
+                    <td class="normal">
+                        Invoice ini adalah ringkasan operasional dan pembayaran charter. Mohon cek ulang detail rute, armada, jadwal, dan nominal sebelum keberangkatan.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
         @if($status === 'canceled')
-            <div class="card danger-box">
-                <div class="label" style="color: #b91c1c;">Status Charter</div>
-                <div class="value" style="color: #b91c1c;">CHARTER DIBATALKAN</div>
-                <div class="sub-value" style="color: #b91c1c;">Dokumen ini hanya dipakai sebagai arsip pembatalan dan rekonsiliasi pembayaran.</div>
-            </div>
+            <div class="section-title">Status Pembatalan</div>
+            <table>
+                <tbody>
+                    <tr class="danger">
+                        <th style="width: 140px;">Status Charter</th>
+                        <td>CHARTER DIBATALKAN. Dokumen ini hanya dipakai sebagai arsip pembatalan dan rekonsiliasi pembayaran.</td>
+                    </tr>
+                </tbody>
+            </table>
         @endif
 
         <div class="doc-footer">
             <div>Dicetak dari sistem OptiBus</div>
             <div>{{ $invoice['invoice_code'] ?? '-' }}</div>
         </div>
-    </div>
+    </section>
 </div>
 
 @if($autoPrint)

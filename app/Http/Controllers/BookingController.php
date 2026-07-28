@@ -1283,7 +1283,7 @@ class BookingController extends Controller
             return $value;
         }
 
-        $path = public_path('branding/qbus-logo-full.png');
+        $path = public_path('branding/OptiBus-logo-full.png');
         if (! is_file($path)) {
             $cached = true;
 
