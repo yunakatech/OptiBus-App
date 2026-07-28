@@ -335,7 +335,7 @@
 
 <div
     data-content-density="compact"
-    class="min-h-full space-y-4 overflow-x-hidden p-3 pb-24 md:p-4 lg:space-y-3"
+    class="min-h-full space-y-4 overflow-x-hidden p-3 pb-24 md:p-4 md:pb-4 lg:space-y-3"
 >
     <div
         class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between"

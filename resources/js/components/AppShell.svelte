@@ -83,7 +83,7 @@
         {@render children?.()}
     </div>
 {:else}
-    <SidebarProvider defaultOpen={isOpen}>
+    <SidebarProvider defaultOpen={isOpen} class={className}>
         {@render children?.()}
     </SidebarProvider>
 {/if}
