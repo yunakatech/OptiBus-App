@@ -84,7 +84,7 @@
         registrationIntent === 'paid' || registrationIntent === 'payment',
     );
     const submitLabel = $derived(
-        isTrialFlow ? 'Mulai Uji Coba' : 'Daftar & Lanjut Pembayaran',
+        isTrialFlow ? 'Buat Akun Gratis' : 'Buat Akun & Lanjut Bayar',
     );
 
     const chooseTrial = () => {
@@ -97,9 +97,19 @@
         selectedPlan = planSlug;
     };
 
+    const chooseSubscription = () => {
+        const defaultPlan =
+            currentPlan?.slug && currentPlan.slug !== 'starter'
+                ? currentPlan.slug
+                : (plans.find((plan) => plan.slug !== 'starter')?.slug ??
+                  plans[0]?.slug ??
+                  'starter');
+        choosePlan(defaultPlan);
+    };
+
     function formatRupiah(v: number): string {
-        if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)}M`;
-        return `Rp ${(v / 1_000).toFixed(0)}K`;
+        if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)} jt`;
+        return `Rp ${(v / 1_000).toFixed(0)} rb`;
     }
 </script>
 
@@ -113,6 +123,16 @@
     {#snippet children({ errors, processing })}
         <div class="grid gap-3 p-3 sm:p-4">
             <div class="grid gap-2">
+                <div class="rounded-xl border border-[#d9ded4] bg-[#fbfcf8] px-3 py-2">
+                    <p class="text-xs font-semibold text-[#103d3a]">
+                        1 menit buat akun
+                    </p>
+                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                        Data travel diisi setelah akun aktif, jadi kamu bisa
+                        mulai dari email dan paket dulu.
+                    </p>
+                </div>
+
                 <a
                     href={`/auth/google/redirect?intent=${isPaymentFlow ? 'paid' : 'trial'}&plan=${selectedPlan}`}
                     class="group block rounded-xl border border-[#d9ded4] bg-white p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0d7066]/45 hover:shadow-lg hover:shadow-emerald-950/10"
@@ -165,8 +185,8 @@
                     </div>
                 </div>
 
-                <div class="grid gap-2">
-                    <Label>Pilih akses</Label>
+                <div class="grid gap-1.5">
+                    <Label>Pilih akses awal</Label>
                     <div class="grid grid-cols-2 gap-2">
                         <button
                             type="button"
@@ -177,13 +197,12 @@
                                 >Uji coba</span
                             >
                             <span class="block text-xs text-muted-foreground"
-                                >Starter 14 hari</span
+                                >Mulai tanpa bayar</span
                             >
                         </button>
                         <button
                             type="button"
-                            onclick={() =>
-                                choosePlan(currentPlan?.slug ?? plans[0]?.slug ?? 'starter')}
+                            onclick={chooseSubscription}
                             class={`rounded-xl border px-2.5 py-1.5 text-left transition ${isPaymentFlow ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a] ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white hover:border-[#0d7066]/40'}`}
                         >
                             <span class="block text-xs font-semibold"
@@ -196,42 +215,52 @@
                     </div>
                 </div>
 
-                <div class="grid gap-2">
-                    <Label>Paket</Label>
-                    <div class="grid gap-2 sm:grid-cols-3">
-                        {#each plans as plan}
-                            <button
-                                type="button"
-                                onclick={() => choosePlan(plan.slug)}
-                                class={`rounded-xl border p-2.5 text-left transition hover:-translate-y-0.5 hover:border-[#0d7066]/50 ${selectedPlan === plan.slug && isPaymentFlow ? 'border-[#0d7066] bg-[#eef7ef] shadow-sm ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white'}`}
-                            >
-                                <div class="flex items-start justify-between gap-2">
-                                    <div>
-                                        <p class="text-sm font-semibold text-foreground">
-                                            {plan.name}
-                                        </p>
-                                        <p class="mt-1 text-xs font-bold text-[#103d3a]">
-                                            {formatRupiah(plan.price_monthly)}
-                                            <span
-                                                class="text-xs font-normal text-muted-foreground"
-                                                >/bln</span
+                {#if isPaymentFlow}
+                    <div class="grid gap-2">
+                        <Label>Pilih paket langganan</Label>
+                        <div class="grid gap-2 sm:grid-cols-3">
+                            {#each plans as plan}
+                                <button
+                                    type="button"
+                                    onclick={() => choosePlan(plan.slug)}
+                                    class={`rounded-xl border p-2.5 text-left transition hover:-translate-y-0.5 hover:border-[#0d7066]/50 ${selectedPlan === plan.slug ? 'border-[#0d7066] bg-[#eef7ef] shadow-sm ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white'}`}
+                                >
+                                    <div
+                                        class="flex items-start justify-between gap-2"
+                                    >
+                                        <div>
+                                            <p
+                                                class="text-sm font-semibold text-foreground"
                                             >
-                                        </p>
+                                                {plan.name}
+                                            </p>
+                                            <p
+                                                class="mt-1 text-xs font-bold text-[#103d3a]"
+                                            >
+                                                {formatRupiah(
+                                                    plan.price_monthly,
+                                                )}
+                                                <span
+                                                    class="text-xs font-normal text-muted-foreground"
+                                                    >/bln</span
+                                                >
+                                            </p>
+                                        </div>
+                                        {#if selectedPlan === plan.slug}
+                                            <span
+                                                class="grid h-5 w-5 place-items-center rounded-full bg-[#103d3a] text-white"
+                                            >
+                                                <Check class="h-3 w-3" />
+                                            </span>
+                                        {/if}
                                     </div>
-                                    {#if selectedPlan === plan.slug && isPaymentFlow}
-                                        <span
-                                            class="grid h-5 w-5 place-items-center rounded-full bg-[#103d3a] text-white"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                        </span>
-                                    {/if}
-                                </div>
-                            </button>
-                        {/each}
+                                </button>
+                            {/each}
+                        </div>
                     </div>
-                </div>
+                {/if}
 
-                {#if plans.length === 0}
+                {#if isPaymentFlow && plans.length === 0}
                     <button
                         type="button"
                         class="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-left"

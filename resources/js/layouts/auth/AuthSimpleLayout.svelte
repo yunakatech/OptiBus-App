@@ -76,11 +76,6 @@
             {@render children?.()}
         </div>
     </div>
-    <div
-        class={`pointer-events-none absolute left-1/2 hidden -translate-x-1/2 rounded-full border border-[#d9ded4]/80 bg-white/60 px-3 py-1 font-medium text-[#687470] shadow-sm backdrop-blur md:block ${compactLogin || compactFlow ? 'bottom-3 text-[10px]' : 'bottom-4 text-[11px]'}`}
-    >
-        OptiBus menyatukan pemesanan, keberangkatan, pembayaran, dan laporan.
-    </div>
     <GlobalLoadingOverlay />
     <GlobalConfirmDialog />
     <ToastContainer />
