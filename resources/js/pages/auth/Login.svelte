@@ -27,7 +27,7 @@
 
 {#if status}
     <div
-        class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700"
+        class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700"
     >
         {status}
     </div>
@@ -36,20 +36,20 @@
 <Form
     {...store.form()}
     resetOnSuccess={['password']}
-    class="overflow-hidden rounded-[1.4rem] border border-[#d7dfd5] bg-white/92 shadow-[0_26px_80px_-46px_rgba(16,61,58,0.85)] backdrop-blur"
+    class="overflow-hidden rounded-xl border border-[#d7dfd5] bg-white/92 shadow-[0_20px_56px_-38px_rgba(16,61,58,0.82)] backdrop-blur"
 >
     {#snippet children({ errors, processing })}
-        <div class="grid gap-5 p-5">
+        <div class="grid gap-3.5 p-4">
             <a
                 href="/auth/google/redirect"
-                class="group block rounded-2xl border border-[#d9ded4] bg-[#fbfcf8] p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0d7066]/45 hover:shadow-[0_18px_40px_-30px_rgba(16,61,58,0.8)]"
+                class="group block rounded-xl border border-[#d9ded4] bg-[#fbfcf8] p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0d7066]/45 hover:shadow-[0_14px_32px_-26px_rgba(16,61,58,0.8)]"
             >
                 <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2.5">
                         <span
-                            class="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm ring-1 ring-black/5"
+                            class="grid h-9 w-9 place-items-center rounded-full bg-white shadow-sm ring-1 ring-black/5"
                         >
-                            <svg class="h-5 w-5" viewBox="0 0 24 24"
+                            <svg class="h-4 w-4" viewBox="0 0 24 24"
                                 ><path
                                     fill="#4285F4"
                                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -66,10 +66,10 @@
                             >
                         </span>
                         <div>
-                            <p class="text-sm font-semibold text-[#17201f]">
+                            <p class="text-[13px] font-semibold text-[#17201f]">
                                 Masuk dengan Google
                             </p>
-                            <p class="mt-0.5 text-xs text-[#687470]">
+                            <p class="mt-0.5 text-[11px] text-[#687470]">
                                 Paling cepat untuk pemilik dan admin pool.
                             </p>
                         </div>
@@ -91,9 +91,9 @@
                 </div>
             </div>
 
-            <div class="grid gap-4">
-                <div class="grid gap-2">
-                    <Label for="email" class="flex items-center gap-2">
+            <div class="grid gap-3">
+                <div class="grid gap-1.5">
+                    <Label for="email" class="flex items-center gap-1.5 text-xs">
                         <Mail class="h-3.5 w-3.5 text-[#0d7066]" />
                         Email
                     </Label>
@@ -104,12 +104,16 @@
                         required
                         autocomplete="email"
                         placeholder="email@example.com"
+                        class="h-8 rounded-lg px-2.5 text-[13px]"
                     />
                     <InputError message={errors.email} />
                 </div>
 
-                <div class="grid gap-2">
-                    <Label for="password" class="flex items-center gap-2">
+                <div class="grid gap-1.5">
+                    <Label
+                        for="password"
+                        class="flex items-center gap-1.5 text-xs"
+                    >
                         <LockKeyhole class="h-3.5 w-3.5 text-[#0d7066]" />
                         Kata sandi
                     </Label>
@@ -119,14 +123,15 @@
                         required
                         autocomplete="current-password"
                         placeholder="Masukkan kata sandi"
+                        class="h-8 rounded-lg px-2.5 text-[13px]"
                     />
                     <InputError message={errors.password} />
                 </div>
 
                 <div class="flex items-center justify-between gap-3">
-                    <Label for="remember" class="flex items-center gap-3">
+                    <Label for="remember" class="flex items-center gap-2">
                         <Checkbox id="remember" name="remember" />
-                        <span class="text-sm text-[#53615d]">Ingat saya</span>
+                        <span class="text-xs text-[#53615d]">Ingat saya</span>
                     </Label>
                     <TextLink
                         href="/forgot-password"
@@ -138,7 +143,7 @@
 
                 <Button
                     type="submit"
-                    class="h-11 w-full rounded-xl bg-[#103d3a] text-white hover:bg-[#0b2f2c]"
+                    class="h-9 w-full rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
                     disabled={processing}
                     data-test="login-button"
                 >
@@ -148,7 +153,7 @@
                 </Button>
             </div>
 
-            <div class="text-center text-sm text-muted-foreground">
+            <div class="text-center text-xs text-muted-foreground">
                 Belum punya akun?
                 <TextLink
                     href={register()}
