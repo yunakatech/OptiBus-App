@@ -383,17 +383,65 @@
                         Perjalanan
                     </p>
                 </div>
-                <div class="grid gap-3 md:grid-cols-6">
-                    <div class="relative space-y-1 md:col-span-6">
+                <div class="grid gap-3 md:grid-cols-12">
+                    <div class="space-y-1 md:col-span-2">
                         <label
-                            for="charter-route-master"
+                            for="charter-start-date"
                             class="text-xs font-medium text-muted-foreground"
-                            >Rute Carter</label
+                            >Tanggal Mulai</label
+                        >
+                        <input
+                            id="charter-start-date"
+                            bind:this={charterStartDateInput}
+                            type="text"
+                            value={charterForm.start_date}
+                            readonly
+                            autocomplete="off"
+                            required
+                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        />
+                    </div>
+                    <div class="space-y-1 md:col-span-2">
+                        <label
+                            for="charter-end-date"
+                            class="text-xs font-medium text-muted-foreground"
+                            >Tanggal Selesai</label
+                        >
+                        <input
+                            id="charter-end-date"
+                            bind:this={charterEndDateInput}
+                            type="text"
+                            value={charterForm.end_date}
+                            readonly
+                            autocomplete="off"
+                            required
+                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        />
+                    </div>
+                    <div class="space-y-1 md:col-span-2">
+                        <label
+                            for="charter-departure-time"
+                            class="text-xs font-medium text-muted-foreground"
+                            >Jam Berangkat</label
+                        >
+                        <input
+                            id="charter-departure-time"
+                            bind:this={charterDepartureTimeInput}
+                            type="text"
+                            value={charterForm.departure_time}
+                            readonly
+                            autocomplete="off"
+                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        />
+                    </div>
+                    <div class="relative space-y-1 md:col-span-6">
+                        <label for="charter-route-master" class="sr-only"
+                            >Rute carter</label
                         >
                         <Input
                             id="charter-route-master"
                             class="rounded-lg"
-                            placeholder="Cari rute"
+                            placeholder="Pilih rute carter"
                             bind:value={charterRouteSearch}
                             onfocus={() => {
                                 charterRouteLookupOpen = true;
@@ -450,57 +498,7 @@
                             </div>
                         {/if}
                     </div>
-                    <div class="space-y-1 md:col-span-2">
-                        <label
-                            for="charter-start-date"
-                            class="text-xs font-medium text-muted-foreground"
-                            >Tanggal Mulai</label
-                        >
-                        <input
-                            id="charter-start-date"
-                            bind:this={charterStartDateInput}
-                            type="text"
-                            value={charterForm.start_date}
-                            readonly
-                            autocomplete="off"
-                            required
-                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                        />
-                    </div>
-                    <div class="space-y-1 md:col-span-2">
-                        <label
-                            for="charter-end-date"
-                            class="text-xs font-medium text-muted-foreground"
-                            >Tanggal Selesai</label
-                        >
-                        <input
-                            id="charter-end-date"
-                            bind:this={charterEndDateInput}
-                            type="text"
-                            value={charterForm.end_date}
-                            readonly
-                            autocomplete="off"
-                            required
-                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                        />
-                    </div>
-                    <div class="space-y-1 md:col-span-2">
-                        <label
-                            for="charter-departure-time"
-                            class="text-xs font-medium text-muted-foreground"
-                            >Jam Berangkat</label
-                        >
-                        <input
-                            id="charter-departure-time"
-                            bind:this={charterDepartureTimeInput}
-                            type="text"
-                            value={charterForm.departure_time}
-                            readonly
-                            autocomplete="off"
-                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                        />
-                    </div>
-                    <div class="space-y-1 md:col-span-3">
+                    <div class="space-y-1 md:col-span-6">
                         <label
                             for="charter-pickup"
                             class="text-xs font-medium text-muted-foreground"
@@ -514,7 +512,7 @@
                             oninput={() => (charterForm.master_carter_id = 0)}
                         />
                     </div>
-                    <div class="space-y-1 md:col-span-3">
+                    <div class="space-y-1 md:col-span-6">
                         <label
                             for="charter-drop"
                             class="text-xs font-medium text-muted-foreground"
@@ -629,7 +627,7 @@
                             id="charter-armada"
                             class="rounded-lg"
                             placeholder={Number(charterForm.unit_id || 0) > 0
-                                ? 'Cari data dari menu Armada'
+                                ? 'Pilih nopol armada'
                                 : 'Pilih kategori armada terlebih dahulu'}
                             bind:value={charterArmadaSearch}
                             disabled={Number(charterForm.unit_id || 0) <= 0}

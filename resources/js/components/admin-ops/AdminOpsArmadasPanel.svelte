@@ -1220,7 +1220,13 @@
         >
     {/if}
 {/if}
-<RevenueChartTable title="Armada" subtitle="" badges={[]} density="compact">
+<RevenueChartTable
+    title="Armada"
+    subtitle=""
+    badges={[]}
+    density="compact"
+    showHeader={false}
+>
     {#snippet controls()}
         <div
             class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(170px,220px)_minmax(170px,220px)_auto]"
