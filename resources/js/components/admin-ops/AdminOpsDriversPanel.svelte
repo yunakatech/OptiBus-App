@@ -672,6 +672,7 @@
             { key: 'page', label: pageSummary() },
         ]}
         density="compact"
+        showHeader={false}
     >
         {#snippet controls()}
             <div
