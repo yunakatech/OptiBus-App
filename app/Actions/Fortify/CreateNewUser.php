@@ -25,10 +25,10 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             ...$this->profileRules(),
-            'travel_name' => ['required', 'string', 'max:120'],
-            'phone' => ['required', 'string', 'max:30'],
-            'origin' => ['required', 'string', 'max:80'],
-            'destination' => ['required', 'string', 'max:80'],
+            'travel_name' => ['nullable', 'string', 'max:120'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'origin' => ['nullable', 'string', 'max:80'],
+            'destination' => ['nullable', 'string', 'max:80'],
             'plan' => ['nullable', 'string', 'max:50'],
             'plan_slug' => ['nullable', 'string', 'max:50'],
             'registration_intent' => ['nullable', 'string', 'in:trial,paid,payment'],

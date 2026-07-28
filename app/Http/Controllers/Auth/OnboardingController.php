@@ -41,6 +41,7 @@ class OnboardingController extends Controller
         $defaults = $this->mergeDefaults(
             $defaults,
             (array) session('registration_onboarding_defaults', []),
+            (bool) session('registration_onboarding_pending', false),
         );
 
         return Inertia::render('Onboarding', [
@@ -134,7 +135,7 @@ class OnboardingController extends Controller
      * @param  array<string, mixed>  $draft
      * @return array<string, string>
      */
-    private function mergeDefaults(array $base, array $draft): array
+    private function mergeDefaults(array $base, array $draft, bool $preferDraft = false): array
     {
         $defaults = [
             'travel_name' => (string) ($base['travel_name'] ?? ''),
@@ -145,7 +146,7 @@ class OnboardingController extends Controller
 
         foreach (array_keys($defaults) as $key) {
             $value = trim((string) ($draft[$key] ?? ''));
-            if ($value !== '') {
+            if ($preferDraft || $value !== '') {
                 $defaults[$key] = $value;
             }
         }
