@@ -342,7 +342,7 @@
                 </p>
             </div>
             <div class="grid md:grid-cols-2">
-                {#each headlineMetrics as metric (metric.label)}
+                {#each headlineMetrics as metric, index (`headline-${index}-${metric.label}`)}
                     {@const Icon = metric.icon}
                     <div
                         class="min-w-0 border-b border-[#d7dfd5] p-3 last:border-b-0 sm:p-4 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 dark:border-slate-800"
@@ -372,7 +372,7 @@
     </section>
 
     <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {#each operationalMetrics as metric (metric.label)}
+        {#each operationalMetrics as metric, index (`operational-${index}-${metric.label}`)}
             <div
                 class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-900/70 sm:p-4"
             >
@@ -416,7 +416,7 @@
                 <div
                     class="grid h-32 grid-cols-12 items-end gap-1 sm:h-40 sm:gap-1.5"
                 >
-                    {#each mrrTrend as item (item.name)}
+                    {#each mrrTrend as item, index (`mrr-${index}-${item.name}`)}
                         {@const height = Math.max(
                             6,
                             Math.round(
@@ -468,7 +468,7 @@
             </div>
             {#if tenants.length > 0}
                 <div class="space-y-3 md:hidden">
-                    {#each tenants as tenant (tenant.id)}
+                    {#each tenants as tenant, index (`tenant-mobile-${index}-${tenant.id}-${tenant.slug}`)}
                         <article
                             class="rounded-xl border border-[#d7dfd5] bg-[#fbfcf8] p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70"
                         >
@@ -565,7 +565,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {#each tenants as tenant (tenant.id)}
+                            {#each tenants as tenant, index (`tenant-table-${index}-${tenant.id}-${tenant.slug}`)}
                                 <tr
                                     class="border-b last:border-0 hover:bg-[#f8faf4] dark:hover:bg-slate-900/55"
                                 >
@@ -650,7 +650,7 @@
                 </div>
                 {#if paymentWatchlist.length > 0}
                     <div class="space-y-2">
-                        {#each paymentWatchlist as invoice (invoice.id)}
+                        {#each paymentWatchlist as invoice, index (`invoice-${index}-${invoice.id}-${invoice.invoice_number}`)}
                             <div
                                 class="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800/80 dark:bg-slate-900/65"
                             >
@@ -724,7 +724,7 @@
                 </div>
                 {#if expiringSoon.length > 0}
                     <div class="space-y-2">
-                        {#each expiringSoon as item (item.id)}
+                        {#each expiringSoon as item, index (`expiring-${index}-${item.id}-${item.tenant_id}`)}
                             <div
                                 class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800/80 dark:bg-slate-900/65"
                             >
@@ -774,7 +774,7 @@
                 </div>
                 {#if recentSignups.length > 0}
                     <div class="space-y-2">
-                        {#each recentSignups as item (item.id)}
+                        {#each recentSignups as item, index (`signup-${index}-${item.id}-${item.slug}`)}
                             <div
                                 class="flex items-center justify-between gap-3 text-sm"
                             >
