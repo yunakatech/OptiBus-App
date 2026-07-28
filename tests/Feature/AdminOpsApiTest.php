@@ -2409,4 +2409,46 @@ class AdminOpsApiTest extends TestCase
             (string) $export->headers->get('content-type'),
         );
     }
+
+    public function test_pool_creator_can_see_new_pool_after_create(): void
+    {
+        $tenantId = $this->defaultTenantId();
+        $user = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => false,
+        ]);
+        $roleId = (int) DB::table('roles')->where('slug', 'tenant-owner')->value('id');
+
+        DB::table('user_role')->insert([
+            'user_id' => $user->id,
+            'role_id' => $roleId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+        $this->withSession(['active_tenant_id' => $tenantId]);
+
+        $created = $this->postJson(route('api.admin.pools.save'), [
+            'name' => 'Pool Baru Terlihat',
+            'code' => 'POOL-BARU-TERLIHAT',
+            'target_revenue' => 0,
+            'fixed_cost' => 0,
+            'status' => 'active',
+            'route_ids' => [],
+        ])->assertCreated()->json();
+
+        $poolId = (int) ($created['id'] ?? 0);
+        $this->assertGreaterThan(0, $poolId);
+        $this->assertDatabaseHas('pool_user', [
+            'user_id' => $user->id,
+            'pool_id' => $poolId,
+        ]);
+
+        $response = $this->getJson(route('api.admin.pools.index'))
+            ->assertOk()
+            ->json('pools');
+
+        $this->assertNotNull(collect($response)->firstWhere('id', $poolId));
+    }
 }
