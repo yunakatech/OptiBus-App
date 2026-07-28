@@ -547,6 +547,7 @@
     let groupArmadaSearch = $state('');
     let loadingGroupArmada = $state(false);
     let groupArmadaLookupOpen = $state(false);
+    let groupMappingEditMode = $state(false);
     let groupPassengerTab = $state<'active' | 'history' | 'ritur'>('active');
     let loadingGroupRiturs = $state(false);
     let savingGroupRiturId = $state<number | null>(null);
@@ -2490,10 +2491,6 @@
         }) ?? null;
     const isSelectedTripManifestClosed = () =>
         isManifestLocked(selectedTripGroup());
-    const hasSavedGroupDriverMapping = () =>
-        !!openGroupDetail &&
-        hasMeaningfulAssignmentValue(openGroupDetail.driver_name) &&
-        hasMeaningfulAssignmentValue(openGroupDetail.armada_nopol);
     const isReadonlyHistoryGroup = (group: BookingGroup | null | undefined) => {
         return !!group && isHistoryGroup(group);
     };
@@ -4428,6 +4425,10 @@
     };
 
     const selectGroupArmada = (item: ArmadaItem) => {
+        if (!groupMappingEditMode) {
+            return;
+        }
+
         groupArmadaSelectedId = String(item.id);
         groupArmadaNopol = item.nopol || '-';
         groupArmadaSearch = item.nopol || '';
@@ -4435,6 +4436,10 @@
     };
 
     const selectGroupDriver = (item: DriverItem) => {
+        if (!groupMappingEditMode) {
+            return;
+        }
+
         groupDriverSelectedId = String(item.id);
         groupDriverName = item.nama || '-';
         groupDriverSearch = item.nama || '';
@@ -4442,6 +4447,12 @@
     };
 
     const queueGroupDriverSearch = () => {
+        if (!groupMappingEditMode) {
+            groupDriverLookupOpen = false;
+
+            return;
+        }
+
         groupDriverLookupOpen = true;
 
         if (groupDriverLookupTimer) {
@@ -4467,6 +4478,12 @@
     };
 
     const queueGroupArmadaSearch = () => {
+        if (!groupMappingEditMode) {
+            groupArmadaLookupOpen = false;
+
+            return;
+        }
+
         groupArmadaLookupOpen = true;
 
         if (groupArmadaLookupTimer) {
@@ -4491,6 +4508,55 @@
         }, 120);
     };
 
+    const resetGroupMappingDraft = () => {
+        groupDriverSearch = groupDriverName !== '-' ? groupDriverName : '';
+        groupArmadaSearch = groupArmadaNopol !== '-' ? groupArmadaNopol : '';
+        groupDriverLookupOpen = false;
+        groupArmadaLookupOpen = false;
+
+        const matchedDriver = groupDrivers.find(
+            (driver) =>
+                driver.nama.trim().toLowerCase() ===
+                groupDriverName.trim().toLowerCase(),
+        );
+        const matchedArmada = groupArmadas.find(
+            (armada) =>
+                armada.nopol.trim().toUpperCase() ===
+                groupArmadaNopol.trim().toUpperCase(),
+        );
+
+        if (matchedDriver) {
+            groupDriverSelectedId = String(matchedDriver.id);
+        }
+
+        if (matchedArmada) {
+            groupArmadaSelectedId = String(matchedArmada.id);
+        }
+    };
+
+    const startGroupMappingEdit = () => {
+        if (
+            !openGroupDetail ||
+            isManifestLocked(openGroupDetail) ||
+            isCanceledDeparture(openGroupDetail)
+        ) {
+            return;
+        }
+
+        groupMappingEditMode = true;
+        groupDriverLookupOpen = false;
+        groupArmadaLookupOpen = false;
+
+        if (groupArmadas.length === 0) {
+            void loadGroupArmadas(groupArmadaSearch);
+        }
+    };
+
+    const cancelGroupMappingEdit = () => {
+        resetGroupMappingDraft();
+        groupMappingEditMode = false;
+    };
+
     const loadGroupDriverState = async (group: BookingGroup) => {
         loadingGroupDriver = true;
         groupDrivers = [];
@@ -4501,6 +4567,7 @@
                 ? group.driver_name
                 : '';
         groupDriverAssignmentId = null;
+        groupDriverLookupOpen = false;
         groupArmadas = [];
         groupArmadaSelectedId = '0';
         groupArmadaNopol = group.armada_nopol?.trim() || '-';
@@ -4598,6 +4665,10 @@
                 'Manifest sudah ditutup. Driver dan armada tidak bisa diubah lagi.';
             formSuccess = '';
 
+            return;
+        }
+
+        if (!groupMappingEditMode) {
             return;
         }
 
@@ -4705,6 +4776,7 @@
                     hasDepartureDateReached(openGroupDetail),
             };
             openGroupDetail = updatedGroupDetail;
+            groupMappingEditMode = false;
             formSuccess = 'Mapping driver dan armada berhasil disimpan.';
             formError = '';
         } catch (error) {
@@ -4902,6 +4974,7 @@
     const showGroupDetail = async (group: BookingGroup) => {
         openGroupDetail = group;
         groupDriverName = group.driver_name?.trim() || '-';
+        groupMappingEditMode = false;
         groupPassengerTab = 'active';
         groupRiturSearch = '';
         groupRiturFilter = 'same_route';
@@ -4995,6 +5068,7 @@
 
     const navigateBackToBookingList = () => {
         openGroupDetail = null;
+        groupMappingEditMode = false;
         router.visit('/bookings', {
             only: [...BOOKING_LIST_STATE_PROPS],
             preserveScroll: true,
@@ -7646,19 +7720,6 @@
                                 {openGroupDetail.armada_nopol || '-'}
                             </Badge>
                         </div>
-                        <div>
-                            <h3 class="text-lg font-semibold">
-                                {openGroupDetail.rute}
-                            </h3>
-                            <p class="text-sm font-semibold text-foreground">
-                                {formatGroupDateLabel(openGroupDetail.tanggal)} -
-                                {formatGroupTimeLabel(openGroupDetail.jam)}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                Driver {openGroupDetail.driver_name || '-'} • Nopol
-                                {openGroupDetail.armada_nopol || '-'}
-                            </p>
-                        </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <Button
@@ -7883,15 +7944,19 @@
                                             <Input
                                                 id="group-driver-search"
                                                 bind:value={groupDriverSearch}
-                                                class="h-10 rounded-xl !pl-9 text-sm"
+                                                class={`h-10 rounded-xl !pl-9 text-sm ${!groupMappingEditMode ? 'cursor-default bg-muted/40 text-foreground' : ''}`}
                                                 placeholder={loadingGroupDriver
                                                     ? 'Memuat data driver...'
                                                     : 'Cari nama driver'}
                                                 oninput={queueGroupDriverSearch}
                                                 onfocus={() => {
-                                                    groupDriverLookupOpen = true;
+                                                    if (groupMappingEditMode) {
+                                                        groupDriverLookupOpen =
+                                                            true;
+                                                    }
                                                 }}
                                                 onblur={onGroupDriverBlur}
+                                                readonly={!groupMappingEditMode}
                                                 disabled={loadingGroupDriver ||
                                                     savingGroupDriver ||
                                                     isManifestLocked(
@@ -7903,7 +7968,7 @@
                                             />
                                         </div>
 
-                                        {#if groupDriverLookupOpen}
+                                        {#if groupMappingEditMode && groupDriverLookupOpen}
                                             <div
                                                 class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
                                             >
@@ -7966,12 +8031,16 @@
                                             <Input
                                                 id="group-armada-search"
                                                 bind:value={groupArmadaSearch}
-                                                class="h-10 rounded-xl !pl-9 text-sm"
+                                                class={`h-10 rounded-xl !pl-9 text-sm ${!groupMappingEditMode ? 'cursor-default bg-muted/40 text-foreground' : ''}`}
                                                 placeholder={loadingGroupArmada
                                                     ? 'Memuat data armada...'
                                                     : 'Cari nopol armada'}
                                                 oninput={queueGroupArmadaSearch}
                                                 onfocus={() => {
+                                                    if (!groupMappingEditMode) {
+                                                        return;
+                                                    }
+
                                                     groupArmadaLookupOpen = true;
 
                                                     if (
@@ -7984,6 +8053,7 @@
                                                     }
                                                 }}
                                                 onblur={onGroupArmadaBlur}
+                                                readonly={!groupMappingEditMode}
                                                 disabled={loadingGroupDriver ||
                                                     savingGroupDriver ||
                                                     isManifestLocked(
@@ -7995,7 +8065,7 @@
                                             />
                                         </div>
 
-                                        {#if groupArmadaLookupOpen}
+                                        {#if groupMappingEditMode && groupArmadaLookupOpen}
                                             <div
                                                 class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
                                             >
@@ -8056,26 +8126,47 @@
                                     </div>
 
                                     {#if !isManifestLocked(openGroupDetail)}
-                                        <div class="flex items-end">
-                                            <Button
-                                                type="button"
-                                                class="h-10 rounded-xl px-4"
-                                                onclick={() =>
-                                                    void saveGroupDriverMapping()}
-                                                disabled={loadingGroupDriver ||
-                                                    savingGroupDriver ||
-                                                    isCanceledDeparture(
-                                                        openGroupDetail,
-                                                    )}
-                                            >
-                                                {savingGroupDriver
-                                                    ? hasSavedGroupDriverMapping()
-                                                        ? 'Mengedit...'
-                                                        : 'Menyimpan...'
-                                                    : hasSavedGroupDriverMapping()
-                                                      ? 'Edit'
-                                                      : 'Simpan'}
-                                            </Button>
+                                        <div class="flex items-end gap-2">
+                                            {#if groupMappingEditMode}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    class="h-10 rounded-xl px-4"
+                                                    onclick={cancelGroupMappingEdit}
+                                                    disabled={savingGroupDriver}
+                                                >
+                                                    Batal
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    class="h-10 rounded-xl px-4"
+                                                    onclick={() =>
+                                                        void saveGroupDriverMapping()}
+                                                    disabled={loadingGroupDriver ||
+                                                        savingGroupDriver ||
+                                                        isCanceledDeparture(
+                                                            openGroupDetail,
+                                                        )}
+                                                >
+                                                    {savingGroupDriver
+                                                        ? 'Menyimpan...'
+                                                        : 'Simpan Mapping'}
+                                                </Button>
+                                            {:else}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    class="h-10 rounded-xl px-4"
+                                                    onclick={startGroupMappingEdit}
+                                                    disabled={loadingGroupDriver ||
+                                                        savingGroupDriver ||
+                                                        isCanceledDeparture(
+                                                            openGroupDetail,
+                                                        )}
+                                                >
+                                                    Edit Mapping
+                                                </Button>
+                                            {/if}
                                         </div>
                                     {:else}
                                         <div
@@ -8229,35 +8320,37 @@
                 <div
                     class="mb-3 flex flex-wrap items-center justify-between gap-2"
                 >
-                    <div
-                        class="inline-flex rounded-full border border-border/70 bg-muted/30 p-1"
-                    >
-                        <button
-                            type="button"
-                            class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'active' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                            onclick={() => {
-                                groupPassengerTab = 'active';
-                            }}
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div
+                            class="inline-flex rounded-full border border-border/70 bg-muted/30 p-1"
                         >
-                            Penumpang {openGroupDetail.active}
-                        </button>
+                            <button
+                                type="button"
+                                class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'active' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                onclick={() => {
+                                    groupPassengerTab = 'active';
+                                }}
+                            >
+                                Penumpang {openGroupDetail.active}
+                            </button>
+                            <button
+                                type="button"
+                                class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'ritur' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                onclick={() => {
+                                    groupPassengerTab = 'ritur';
+                                }}
+                            >
+                                Bagasi {groupMappedRiturs.length}
+                            </button>
+                        </div>
                         <button
                             type="button"
-                            class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'history' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                            class={`rounded-full border px-4 py-2 text-sm font-medium transition ${groupPassengerTab === 'history' ? 'border-rose-500 bg-rose-600 text-white shadow-sm shadow-rose-500/20 dark:border-rose-400 dark:bg-rose-500' : 'border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100 dark:border-rose-500/25 dark:bg-rose-950/20 dark:text-rose-200 dark:hover:bg-rose-950/35'}`}
                             onclick={() => {
                                 groupPassengerTab = 'history';
                             }}
                         >
                             History Cancel {canceledGroupBookings().length}
-                        </button>
-                        <button
-                            type="button"
-                            class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'ritur' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                            onclick={() => {
-                                groupPassengerTab = 'ritur';
-                            }}
-                        >
-                            Bagasi {groupMappedRiturs.length}
                         </button>
                     </div>
                 </div>
