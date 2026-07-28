@@ -142,7 +142,7 @@
 <Form
     action={formAction}
     method="post"
-    class="overflow-hidden rounded-[1.4rem] border border-[#d7dfd5] bg-white/94 shadow-[0_26px_80px_-46px_rgba(16,61,58,0.85)] backdrop-blur"
+    class="overflow-hidden rounded-[1.1rem] border border-[#d7dfd5] bg-white/94 text-[13px] shadow-[0_20px_60px_-42px_rgba(16,61,58,0.85)] backdrop-blur md:[&_input]:h-8 md:[&_input]:px-2.5 md:[&_input]:text-[13px] md:[&_label]:text-xs"
 >
     {#snippet children({ errors, processing })}
         <input type="hidden" name="plan" value={selectedPlan} />
@@ -182,7 +182,7 @@
             <input type="hidden" name="schedule_days[]" value={day} />
         {/each}
 
-        <div class="grid gap-4 p-4 sm:p-5">
+        <div class="grid gap-3 p-3 sm:p-4">
             <div class="space-y-1">
                 <p
                     class="text-xs font-semibold uppercase tracking-[0.18em] text-[#7b6a43]"
@@ -190,7 +190,7 @@
                     {continuationMode ? 'Lanjutkan setup' : 'Setup awal'}
                 </p>
                 <h2
-                    class="text-xl font-semibold tracking-[-0.03em] text-[#103d3a]"
+                    class="text-lg font-semibold tracking-[-0.03em] text-[#103d3a]"
                 >
                     Buat aplikasi siap dipakai.
                 </h2>
@@ -198,7 +198,7 @@
 
             {#if continuationMode && progressItems.length > 0}
                 <section
-                    class="rounded-2xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
+                    class="rounded-xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
                 >
                     <div class="flex items-center justify-between gap-3">
                         <span class="text-sm font-semibold text-[#103d3a]"
@@ -216,7 +216,7 @@
                             style={`width:${progressPercent}%`}
                         ></div>
                     </div>
-                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
                         {#each progressItems as item}
                             <div class="flex items-center gap-2 text-xs">
                                 {#if item.done}
@@ -239,12 +239,12 @@
                 </section>
             {/if}
 
-            <nav class="grid grid-cols-5 gap-1 rounded-2xl bg-[#eef1e8] p-1">
+            <nav class="grid grid-cols-5 gap-1 rounded-xl bg-[#eef1e8] p-1">
                 {#each steps as step, index}
                     {@const Icon = step.icon}
                     <button
                         type="button"
-                        class={`min-w-0 rounded-xl px-2 py-2 text-center text-[11px] font-semibold transition ${
+                        class={`min-w-0 rounded-lg px-1.5 py-1.5 text-center text-[10px] font-semibold transition ${
                             currentStep === index
                                 ? 'bg-white text-[#103d3a] shadow-sm'
                                 : 'text-[#67726c] hover:bg-white/60'
@@ -259,7 +259,7 @@
                             }
                         }}
                     >
-                        <Icon class="mx-auto mb-1 h-3.5 w-3.5" />
+                        <Icon class="mx-auto mb-1 h-3 w-3" />
                         <span class="block truncate"
                             >{index + 1}. {step.label}</span
                         >
@@ -269,18 +269,18 @@
 
             {#if localError}
                 <div
-                    class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+                    class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
                 >
                     {localError}
                 </div>
             {/if}
 
             <section
-                class="grid gap-4 rounded-2xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3 sm:p-4"
+                class="grid gap-3 rounded-xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
             >
                 {#if currentStep === 0}
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="grid gap-2">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="grid gap-1.5">
                             <Label for="travel_name_view"
                                 >Nama Travel / Pool</Label
                             >
@@ -293,7 +293,7 @@
                             />
                             <InputError message={errors.travel_name} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="phone_view">Nomor WhatsApp</Label>
                             <Input
                                 id="phone_view"
@@ -304,7 +304,7 @@
                             />
                             <InputError message={errors.phone} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="origin_view">Dari</Label>
                             <Input
                                 id="origin_view"
@@ -315,7 +315,7 @@
                             />
                             <InputError message={errors.origin} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="destination_view">Tujuan</Label>
                             <Input
                                 id="destination_view"
@@ -328,8 +328,8 @@
                         </div>
                     </div>
                 {:else if currentStep === 1}
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="grid gap-2">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="grid gap-1.5">
                             <Label for="segment_origin_view">Titik awal</Label>
                             <Input
                                 id="segment_origin_view"
@@ -338,7 +338,7 @@
                             />
                             <InputError message={errors.segment_origin} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="segment_destination_view"
                                 >Titik akhir</Label
                             >
@@ -349,7 +349,7 @@
                             />
                             <InputError message={errors.segment_destination} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="ticket_price_view">Harga tiket</Label>
                             <Input
                                 id="ticket_price_view"
@@ -360,9 +360,9 @@
                             />
                             <InputError message={errors.ticket_price} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label>Jam pickup</Label>
-                            <div class="grid gap-2">
+                            <div class="grid gap-1.5">
                                 {#each pickupTimes as time, index}
                                     <div class="flex gap-2">
                                         <Input
@@ -390,13 +390,13 @@
                         </div>
                     </div>
                 {:else if currentStep === 2}
-                    <div class="grid gap-4">
-                        <div class="grid gap-2">
+                    <div class="grid gap-3">
+                        <div class="grid gap-1.5">
                             <Label>Hari operasi</Label>
-                            <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                            <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
                                 {#each dayOptions as day}
                                     <label
-                                        class={`cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-semibold transition ${
+                                        class={`cursor-pointer rounded-lg border px-2 py-1.5 text-center text-xs font-semibold transition ${
                                             scheduleDays.includes(day.value)
                                                 ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a]'
                                                 : 'border-[#d9ded4] bg-white text-[#67726c]'
@@ -414,7 +414,7 @@
                             </div>
                             <InputError message={errors.schedule_days} />
                         </div>
-                        <div class="grid gap-2 sm:max-w-xs">
+                        <div class="grid gap-1.5 sm:max-w-xs">
                             <Label for="departure_time_view"
                                 >Jam berangkat</Label
                             >
@@ -427,8 +427,8 @@
                         </div>
                     </div>
                 {:else if currentStep === 3}
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="grid gap-2">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="grid gap-1.5">
                             <Label for="unit_template_name_view"
                                 >Nama kategori</Label
                             >
@@ -439,12 +439,12 @@
                             />
                             <InputError message={errors.unit_template_name} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="unit_category_view">Kategori</Label>
                             <select
                                 id="unit_category_view"
                                 bind:value={unitCategory}
-                                class="h-10 rounded-md border border-input bg-card px-3 text-sm shadow-xs"
+                                class="h-8 rounded-md border border-input bg-card px-2.5 text-[13px] shadow-xs"
                             >
                                 <option value="">Pilih kategori</option>
                                 <option value="Minibus">Minibus</option>
@@ -453,7 +453,7 @@
                             </select>
                             <InputError message={errors.unit_category} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="seat_capacity_view">Jumlah kursi</Label>
                             <Input
                                 id="seat_capacity_view"
@@ -466,8 +466,8 @@
                         </div>
                     </div>
                 {:else}
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="grid gap-2">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="grid gap-1.5">
                             <Label for="unit_nopol_view">Nopol armada</Label>
                             <Input
                                 id="unit_nopol_view"
@@ -476,7 +476,7 @@
                             />
                             <InputError message={errors.unit_nopol} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="armada_merk_view">Merk</Label>
                             <Input
                                 id="armada_merk_view"
@@ -485,7 +485,7 @@
                             />
                             <InputError message={errors.armada_merk} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="driver_name_view">Nama driver</Label>
                             <Input
                                 id="driver_name_view"
@@ -494,7 +494,7 @@
                             />
                             <InputError message={errors.driver_name} />
                         </div>
-                        <div class="grid gap-2">
+                        <div class="grid gap-1.5">
                             <Label for="driver_phone_view"
                                 >WhatsApp driver</Label
                             >
@@ -518,7 +518,7 @@
                         <Button
                             type="button"
                             variant="outline"
-                            class="rounded-xl"
+                            class="h-9 rounded-lg text-[13px]"
                             onclick={previousStep}
                         >
                             <ArrowLeft class="mr-2 h-4 w-4" /> Kembali
@@ -528,7 +528,7 @@
                         <Button
                             type="submit"
                             variant="outline"
-                            class="rounded-xl"
+                            class="h-9 rounded-lg text-[13px]"
                             disabled={processing ||
                                 (currentStep === 0 && !canLeaveTravelStep())}
                         >
@@ -540,7 +540,7 @@
                 {#if currentStep < steps.length - 1}
                     <Button
                         type="button"
-                        class="h-11 rounded-xl bg-[#103d3a] text-white hover:bg-[#0b2f2c]"
+                        class="h-9 rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
                         onclick={nextStep}
                         disabled={processing}
                     >
@@ -550,7 +550,7 @@
                 {:else}
                     <Button
                         type="submit"
-                        class="h-11 rounded-xl bg-[#103d3a] text-white hover:bg-[#0b2f2c]"
+                        class="h-9 rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
                         disabled={processing}
                     >
                         {#if processing}<Spinner />{/if}
