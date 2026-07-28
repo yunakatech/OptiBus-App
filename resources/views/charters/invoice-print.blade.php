@@ -47,29 +47,34 @@
             box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
         }
         .doc-head {
-            display: table;
             width: 100%;
             margin-bottom: 14px;
             padding-bottom: 12px;
             border-bottom: 2px solid var(--ink);
         }
+        .doc-head-main {
+            display: table;
+            width: 100%;
+            margin-bottom: 8px;
+        }
         .brand-cell,
-        .title-cell,
         .status-cell {
             display: table-cell;
             vertical-align: top;
         }
-        .brand-cell { width: 180px; }
+        .brand-cell {
+            width: 180px;
+        }
         .brand-logo {
             width: 148px;
             height: auto;
             object-fit: contain;
         }
         .title-cell {
-            padding: 0 14px;
+            padding: 2px 0 0;
         }
         .status-cell {
-            width: 220px;
+            width: 260px;
             text-align: right;
         }
         .eyebrow {
@@ -92,7 +97,7 @@
         }
         .status {
             display: inline-block;
-            margin-bottom: 7px;
+            margin: 0 0 6px;
             border: 1px solid var(--line);
             padding: 5px 9px;
             color: var(--brand);
@@ -101,10 +106,15 @@
             letter-spacing: .04em;
             text-transform: uppercase;
         }
+        .barcode {
+            text-align: right;
+        }
         .barcode img {
+            display: block;
             width: 210px;
             max-width: 100%;
             height: auto;
+            margin-left: auto;
         }
         table {
             width: 100%;
@@ -174,9 +184,8 @@
             }
         }
         @media (max-width: 780px) {
-            .doc-head,
+            .doc-head-main,
             .brand-cell,
-            .title-cell,
             .status-cell {
                 display: block;
                 width: 100%;
@@ -184,6 +193,9 @@
             }
             .title-cell {
                 padding: 12px 0;
+            }
+            .barcode img {
+                margin-left: 0;
             }
         }
     </style>
@@ -202,10 +214,20 @@
 
     <section class="sheet">
         <header class="doc-head">
-            <div class="brand-cell">
-                @if(!empty($invoice['logo_data_uri']))
-                    <img class="brand-logo" src="{{ $invoice['logo_data_uri'] }}" alt="OptiBus">
-                @endif
+            <div class="doc-head-main">
+                <div class="brand-cell">
+                    @if(!empty($invoice['logo_data_uri']))
+                        <img class="brand-logo" src="{{ $invoice['logo_data_uri'] }}" alt="OptiBus">
+                    @endif
+                </div>
+                <div class="status-cell">
+                    <div class="status">{{ $invoice['payment_status'] ?? '-' }}</div>
+                    @if(!empty($invoice['barcode_svg']))
+                        <div class="barcode">
+                            <img src="{{ $invoice['barcode_svg'] }}" alt="Barcode invoice">
+                        </div>
+                    @endif
+                </div>
             </div>
             <div class="title-cell">
                 <div class="eyebrow">Invoice Carter</div>
@@ -217,14 +239,6 @@
                         &bull; {{ $invoice['phone'] }}
                     @endif
                 </div>
-            </div>
-            <div class="status-cell">
-                <div class="status">{{ $invoice['payment_status'] ?? '-' }}</div>
-                @if(!empty($invoice['barcode_svg']))
-                    <div class="barcode">
-                        <img src="{{ $invoice['barcode_svg'] }}" alt="Barcode invoice">
-                    </div>
-                @endif
             </div>
         </header>
 
