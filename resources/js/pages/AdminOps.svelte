@@ -7045,12 +7045,12 @@
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Jumlah Unit</span
+                                            >Jumlah Slot</span
                                         >
                                         <Input
                                             type="number"
                                             min="1"
-                                            placeholder="Jumlah unit"
+                                            placeholder="Jumlah slot"
                                             value={scheduleForm.units}
                                             oninput={(event) =>
                                                 updateScheduleUnitCount(
@@ -7268,11 +7268,11 @@
                                                 <label class="space-y-1.5">
                                                     <span
                                                         class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >Label Unit {idx +
+                                                        >Label Slot {idx +
                                                             1}</span
                                                     >
                                                     <Input
-                                                        placeholder={`Label Unit ${idx + 1}`}
+                                                        placeholder={`Label Slot ${idx + 1}`}
                                                         value={label}
                                                         oninput={(event) =>
                                                             updateScheduleUnitLabel(
@@ -7678,7 +7678,7 @@
                                                                 <p
                                                                     class="mt-2 text-[11px] text-muted-foreground"
                                                                 >
-                                                                    Unit ini
+                                                                    Slot ini
                                                                     masih
                                                                     memakai
                                                                     label

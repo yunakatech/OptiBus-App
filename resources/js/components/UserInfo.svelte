@@ -21,7 +21,7 @@
 
 <Avatar class="h-8 w-8 overflow-hidden rounded-lg">
     <AvatarImage src={avatarUrl} alt={user.name} />
-    <AvatarFallback class="rounded-lg text-black dark:text-white">
+    <AvatarFallback class="rounded-lg bg-slate-200 text-slate-800 dark:bg-slate-200 dark:text-slate-800">
         {getInitials(user.name)}
     </AvatarFallback>
 </Avatar>

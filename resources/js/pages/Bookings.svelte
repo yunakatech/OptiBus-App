@@ -9631,21 +9631,21 @@
                                             class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                                         >
                                             <div
-                                                class="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-4 py-3"
+                                                class="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-3 py-2.5"
                                             >
-                                                <div class="space-y-1">
+                                                <div class="space-y-0.5">
                                                     <p
-                                                        class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                                        class="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                                                     >
                                                         Tanggal Operasional
                                                     </p>
                                                     <h3
-                                                        class="text-base font-semibold text-foreground"
+                                                        class="text-sm font-semibold text-foreground"
                                                     >
                                                         {section.label}
                                                     </h3>
                                                     <p
-                                                        class="text-[11px] text-muted-foreground"
+                                                        class="text-[10px] leading-snug text-muted-foreground"
                                                     >
                                                         {section.totalSchedules}
                                                         keberangkatan aktif di hari
@@ -9653,22 +9653,22 @@
                                                     </p>
                                                 </div>
                                                 <div
-                                                    class="flex flex-wrap items-center gap-1.5 text-[11px]"
+                                                    class="flex flex-wrap items-center gap-1 text-[10px]"
                                                 >
                                                     <span
-                                                        class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
+                                                        class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
                                                     >
                                                         {section.totalPassengers}
                                                         penumpang aktif
                                                     </span>
                                                     <span
-                                                        class="rounded-md border border-amber-200/80 bg-amber-50 px-2 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
+                                                        class="rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
                                                     >
                                                         {section.totalUnpaid}
                                                         belum lunas
                                                     </span>
                                                     <span
-                                                        class="rounded-md border border-amber-200/80 bg-background px-2 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:text-amber-200"
+                                                        class="rounded-md border border-amber-200/80 bg-background px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:text-amber-200"
                                                     >
                                                         {formatCurrency(
                                                             section.unpaidAmount,
@@ -9679,41 +9679,41 @@
 
                                             <div class="table-container">
                                                 <table
-                                                    class="min-w-full table-fixed text-sm"
+                                                    class="min-w-full table-fixed text-[12px]"
                                                 >
                                                     <thead
                                                         class="sticky top-0 z-10 bg-background/95 text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground backdrop-blur"
                                                     >
                                                         <tr>
                                                             <th
-                                                                class="w-[128px] px-4 py-3 font-medium"
+                                                                class="w-[72px] px-2 py-1.5 font-medium"
                                                             >
                                                                 Jam
                                                             </th>
                                                             <th
-                                                                class="w-[300px] px-4 py-3 font-medium"
+                                                                class="w-[156px] px-2 py-1.5 font-medium"
                                                             >
                                                                 Rute
                                                             </th>
                                                             <th
-                                                                class="w-[260px] px-4 py-3 font-medium"
+                                                                class="w-[132px] px-2 py-1.5 font-medium"
                                                             >
                                                                 Mapping
                                                             </th>
                                                             <th
-                                                                class="w-[340px] px-4 py-3 font-medium"
+                                                                class="w-[184px] px-2 py-1.5 font-medium"
                                                             >
                                                                 Manifest &
                                                                 Pembayaran
                                                             </th>
                                                             <th
-                                                                class="w-[176px] px-4 py-3 text-right font-medium"
+                                                                class="w-[88px] px-2 py-1.5 text-right font-medium"
                                                             >
                                                                 Aksi
                                                             </th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody class="text-[13px]">
+                                                    <tbody class="text-[12px]">
                                                         {#each section.groups as group (group.key)}
                                                             {@const unpaidAmount =
                                                                 bookingGroupUnpaidAmount(
@@ -9731,49 +9731,49 @@
                                                                 class={`border-t border-border/60 align-top transition-colors hover:bg-muted/20 ${isCanceledDeparture(group) ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}
                                                             >
                                                                 <td
-                                                                    class="px-4 py-3.5"
+                                                                    class="px-2 py-1.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-1.5"
+                                                                        class="space-y-0.5"
                                                                     >
                                                                         <div
-                                                                            class="inline-flex items-center gap-2 text-sm font-semibold text-foreground"
+                                                                            class="inline-flex items-center gap-1 text-[12px] font-semibold text-foreground"
                                                                         >
                                                                             <Clock3
-                                                                                class="h-3.5 w-3.5 text-primary"
+                                                                                class="h-3 w-3 text-primary"
                                                                             />
                                                                             {formatGroupTimeLabel(
                                                                                 group.jam,
                                                                             )}
                                                                         </div>
                                                                         <div
-                                                                            class="flex flex-wrap gap-1.5"
+                                                                            class="flex flex-wrap gap-1"
                                                                         >
                                                                             <Badge
                                                                                 variant="secondary"
-                                                                                class="rounded-md px-2 py-0.5 text-[10px]"
+                                                                                class="rounded-md px-1.5 py-0.5 text-[9px]"
                                                                             >
-                                                                                Unit
+                                                                                Slot
                                                                                 {group.unit}
                                                                             </Badge>
                                                                             {#if isCanceledDeparture(group)}
                                                                                 <Badge
                                                                                     variant="destructive"
-                                                                                    class="rounded-md px-2 py-0.5 text-[10px]"
+                                                                                    class="rounded-md px-1.5 py-0.5 text-[9px]"
                                                                                 >
                                                                                     Batal
                                                                                 </Badge>
                                                                             {:else if isDepartedDeparture(group)}
                                                                                 <Badge
                                                                                     variant="secondary"
-                                                                                    class="rounded-md border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
+                                                                                    class="rounded-md border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
                                                                                 >
                                                                                     Berangkat
                                                                                 </Badge>
                                                                             {:else if isArrivedDeparture(group)}
                                                                                 <Badge
                                                                                     variant="secondary"
-                                                                                    class="rounded-md border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
+                                                                                    class="rounded-md border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
                                                                                 >
                                                                                     Tiba
                                                                                 </Badge>
@@ -9782,34 +9782,34 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3.5"
+                                                                    class="px-2 py-1.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-1.5"
+                                                                        class="space-y-0.5"
                                                                     >
                                                                         <div>
                                                                             <p
-                                                                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
+                                                                                class="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground"
                                                                             >
                                                                                 {group.departure_code}
                                                                             </p>
                                                                             <p
-                                                                                class="mt-1 text-sm font-semibold leading-snug text-foreground"
+                                                                                class="text-[12px] font-semibold leading-snug text-foreground"
                                                                             >
                                                                                 {group.rute}
                                                                             </p>
                                                                         </div>
                                                                         <div
-                                                                            class="flex flex-wrap gap-1.5 text-[11px]"
+                                                                            class="flex flex-wrap gap-1 text-[10px]"
                                                                         >
                                                                             <span
-                                                                                class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
+                                                                                class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
                                                                             >
                                                                                 Total
                                                                                 {group.total}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
+                                                                                class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
                                                                             >
                                                                                 Aktif
                                                                                 {group.active}
@@ -9818,10 +9818,10 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3.5"
+                                                                    class="px-2 py-1.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-2 text-xs"
+                                                                        class="space-y-1 text-[10px] leading-snug"
                                                                     >
                                                                         <div
                                                                             class={driverMissing
@@ -9882,42 +9882,42 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3.5"
+                                                                    class="px-2 py-1.5"
                                                                 >
                                                                     <div
-                                                                        class="space-y-2"
+                                                                        class="space-y-1.5"
                                                                     >
                                                                         <div
-                                                                            class="flex flex-wrap gap-1.5 text-[11px]"
+                                                                            class="flex flex-wrap gap-1 text-[10px]"
                                                                         >
                                                                             <span
-                                                                                class="rounded-md border border-border/70 bg-background px-2 py-1 font-medium text-muted-foreground"
+                                                                                class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
                                                                             >
                                                                                 Total
                                                                                 {group.total}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-1 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-200"
+                                                                                class="rounded-md border border-emerald-200/80 bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-200"
                                                                             >
                                                                                 Lunas
                                                                                 {group.lunas}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-md border border-amber-200/80 bg-amber-50 px-2 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
+                                                                                class="rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
                                                                             >
                                                                                 Belum
                                                                                 Lunas
                                                                                 {group.belum_lunas}
                                                                             </span>
                                                                             <span
-                                                                                class="rounded-md border border-sky-200/80 bg-sky-50 px-2 py-1 font-medium text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/20 dark:text-sky-200"
+                                                                                class="rounded-md border border-sky-200/80 bg-sky-50 px-1.5 py-0.5 font-medium text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/20 dark:text-sky-200"
                                                                             >
                                                                                 Refund
                                                                                 {group.refund}
                                                                             </span>
                                                                             {#if group.canceled > 0}
                                                                                 <span
-                                                                                    class="rounded-md border border-rose-200/80 bg-rose-50 px-2 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-200"
+                                                                                    class="rounded-md border border-rose-200/80 bg-rose-50 px-1.5 py-0.5 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-200"
                                                                                 >
                                                                                     Cancel
                                                                                     {group.canceled}
@@ -9925,10 +9925,10 @@
                                                                             {/if}
                                                                         </div>
                                                                         <div
-                                                                            class="grid gap-1 rounded-xl border border-border/70 bg-muted/20 px-3 py-2 text-[11px]"
+                                                                            class="grid gap-1 rounded-lg border border-border/70 bg-muted/20 px-2 py-1.5 text-[10px]"
                                                                         >
                                                                             <div
-                                                                                class="flex items-center justify-between gap-3"
+                                                                                class="flex items-center justify-between gap-2"
                                                                             >
                                                                                 <span
                                                                                     class="text-muted-foreground"
@@ -9947,7 +9947,7 @@
                                                                                 </span>
                                                                             </div>
                                                                             <div
-                                                                                class="flex items-center justify-between gap-3"
+                                                                                class="flex items-center justify-between gap-2"
                                                                             >
                                                                                 <span
                                                                                     class="text-muted-foreground"
@@ -9967,16 +9967,16 @@
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="w-[190px] px-4 py-3.5"
+                                                                    class="w-[88px] px-2 py-1.5"
                                                                 >
                                                                     <div
-                                                                        class="flex flex-col items-end gap-1.5"
+                                                                        class="flex flex-col items-end gap-1"
                                                                     >
                                                                         {#if canMarkDepartureDeparted(group)}
                                                                             <Button
                                                                                 type="button"
                                                                                 size="sm"
-                                                                                class="h-7 w-full justify-center rounded-md px-2.5 text-[11px]"
+                                                                                class="h-6 w-full justify-center rounded-md px-1.5 text-[10px] leading-tight"
                                                                                 onclick={() =>
                                                                                     void markDepartureDeparted(
                                                                                         group,
@@ -9992,7 +9992,7 @@
                                                                                 type="button"
                                                                                 size="sm"
                                                                                 variant="outline"
-                                                                                class="h-7 w-full justify-center rounded-md px-2.5 text-[11px]"
+                                                                                class="h-6 w-full justify-center rounded-md px-1.5 text-[10px] leading-tight"
                                                                                 onclick={() =>
                                                                                     void markDepartureArrived(
                                                                                         group,
@@ -10015,7 +10015,7 @@
                                                                                         type="button"
                                                                                         size="icon"
                                                                                         variant="outline"
-                                                                                        class="h-8 w-8 rounded-md bg-background/90"
+                                                                                        class="h-7 w-7 rounded-md bg-background/90"
                                                                                         onclick={props.onclick}
                                                                                         aria-expanded={props[
                                                                                             'aria-expanded'
@@ -10033,7 +10033,7 @@
                                                                             <DropdownMenuContent
                                                                                 align="end"
                                                                                 sideOffset={6}
-                                                                                class="z-[120] w-44 text-[11px] shadow-lg"
+                                                                                class="z-[120] w-40 text-[11px] shadow-lg"
                                                                             >
                                                                                 <DropdownMenuItem
                                                                                     onclick={() =>

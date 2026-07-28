@@ -47,7 +47,7 @@
                             alt={user.name ?? 'User avatar'}
                         />
                         <AvatarFallback
-                            class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white"
+                            class="rounded-lg bg-slate-200 font-semibold text-slate-800 dark:bg-slate-200 dark:text-slate-800"
                         >
                             {getInitials(user.name ?? '')}
                         </AvatarFallback>
