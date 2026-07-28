@@ -87,10 +87,10 @@ class OnboardingSetupTest extends TestCase
             'route_id' => $routeId,
             'rute' => 'PINRANG -> MAKASSAR',
         ]);
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('category_armada', [
             'tenant_id' => $tenantId,
             'pool_id' => $poolId,
-            'nopol' => 'MINIBUS 8 SEAT',
+            'nama_kategori' => 'MINIBUS 8 SEAT',
             'category' => 'Minibus',
         ]);
         $this->assertDatabaseHas('armadas', [

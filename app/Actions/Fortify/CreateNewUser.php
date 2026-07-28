@@ -43,6 +43,18 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $input['password'],
         ]);
 
+        session([
+            'registration_onboarding_pending' => true,
+            'registration_onboarding_defaults' => [
+                'travel_name' => trim((string) ($input['travel_name'] ?? '')),
+                'phone' => trim((string) ($input['phone'] ?? '')),
+                'origin' => trim((string) ($input['origin'] ?? '')),
+                'destination' => trim((string) ($input['destination'] ?? '')),
+            ],
+            'registration_plan' => trim((string) ($input['plan'] ?? $input['plan_slug'] ?? session('registration_plan') ?? config('saas.default_plan', 'starter'))),
+            'registration_intent' => $this->registrationIntent($input),
+        ]);
+
         // Immediately assign default role so user can access the app.
         // This is a belt-and-suspenders with CreateTenantOnRegistration listener.
         $this->assignDefaultRole((int) $user->id);
@@ -88,5 +100,18 @@ class CreateNewUser implements CreatesNewUsers
         } catch (\Throwable $e) {
             Log::error("Failed to assign role in CreateNewUser: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * @param  array<string, string>  $input
+     */
+    private function registrationIntent(array $input): string
+    {
+        $intent = trim((string) ($input['registration_intent'] ?? $input['intent'] ?? session('registration_intent') ?? 'trial'));
+        if ($intent === 'payment') {
+            $intent = 'paid';
+        }
+
+        return in_array($intent, ['trial', 'paid'], true) ? $intent : 'trial';
     }
 }

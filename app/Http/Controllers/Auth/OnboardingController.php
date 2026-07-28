@@ -37,6 +37,12 @@ class OnboardingController extends Controller
         }
         $tenantId = (int) ($user?->tenant_id ?? 0);
 
+        $defaults = $user ? $this->provisioning->onboardingDefaultsForUser($user) : [];
+        $defaults = $this->mergeDefaults(
+            $defaults,
+            (array) session('registration_onboarding_defaults', []),
+        );
+
         return Inertia::render('Onboarding', [
             'user_name' => $user?->name ?? '',
             'user_email' => $user?->email ?? '',
@@ -44,7 +50,7 @@ class OnboardingController extends Controller
             'registrationIntent' => $registrationIntent,
             'continuationMode' => $tenantId > 0,
             'setupProgress' => $tenantId > 0 ? $this->provisioning->setupProgressForTenant($tenantId) : null,
-            'defaults' => $user ? $this->provisioning->onboardingDefaultsForUser($user) : [],
+            'defaults' => $defaults,
         ]);
     }
 
@@ -104,7 +110,12 @@ class OnboardingController extends Controller
                     'billing_interval' => $data['billing_interval'] ?? 'monthly',
                 ]);
             }
-            session()->forget(['registration_plan', 'registration_intent']);
+            session()->forget([
+                'registration_plan',
+                'registration_intent',
+                'registration_onboarding_defaults',
+                'registration_onboarding_pending',
+            ]);
         } catch (ValidationException $e) {
             throw $e; // Let Inertia handle validation errors properly
         } catch (\Throwable $e) {
@@ -116,5 +127,29 @@ class OnboardingController extends Controller
         Log::info("Onboarding complete for user #{$userId}: {$data['travel_name']}");
 
         return redirect()->to($result['redirect_route'] ?? route('subscription.index'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $base
+     * @param  array<string, mixed>  $draft
+     * @return array<string, string>
+     */
+    private function mergeDefaults(array $base, array $draft): array
+    {
+        $defaults = [
+            'travel_name' => (string) ($base['travel_name'] ?? ''),
+            'phone' => (string) ($base['phone'] ?? ''),
+            'origin' => (string) ($base['origin'] ?? ''),
+            'destination' => (string) ($base['destination'] ?? ''),
+        ];
+
+        foreach (array_keys($defaults) as $key) {
+            $value = trim((string) ($draft[$key] ?? ''));
+            if ($value !== '') {
+                $defaults[$key] = $value;
+            }
+        }
+
+        return $defaults;
     }
 }
