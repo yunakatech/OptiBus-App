@@ -34,9 +34,17 @@
     const hasPools = $derived(pools.length > 0);
     const showTenant = $derived(isSuperAdmin && hasTenants);
     const showPool = $derived(hasPools);
-    const activeTenantLabel = $derived(activeTenant?.name ?? 'Semua Tenant');
+    const activeTenantLabel = $derived(
+        activeTenant?.name ?? (isSuperAdmin ? 'Tanpa Tenant' : 'Semua Tenant'),
+    );
     const activePoolLabel = $derived(activePool?.name ?? 'Semua Pool');
-    const activeSummary = $derived(`${activeTenantLabel} / ${activePoolLabel}`);
+    const activeSummary = $derived(
+        showTenant && showPool
+            ? `${activeTenantLabel} / ${activePoolLabel}`
+            : showTenant
+              ? activeTenantLabel
+              : activePoolLabel,
+    );
     let pendingTenantId = $state<number | null>(null);
     let pendingPoolId = $state<number | null>(null);
     let errorMessage = $state('');
@@ -180,7 +188,7 @@
                         >
                             <Building2 class="size-4 shrink-0" />
                             <Check class={cn('size-4 shrink-0', !activeTenant ? 'opacity-100 text-primary' : 'opacity-0')} />
-                            <span class="min-w-0 flex-1 truncate">Semua Tenant</span>
+                            <span class="min-w-0 flex-1 truncate">Tanpa Tenant</span>
                             <span class="shrink-0 text-[11px] text-muted-foreground">Platform</span>
                             {#if pendingTenantId !== null}
                                 <LoaderCircle class="size-4 shrink-0 animate-spin text-muted-foreground" />

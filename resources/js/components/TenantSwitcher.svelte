@@ -24,8 +24,10 @@
 
     const tenants = $derived((page.props.auth?.tenants ?? []) as TenantOption[]);
     const activeTenant = $derived((page.props.auth?.active_tenant ?? null) as ActiveTenant | null);
-    const activeTenantLabel = $derived(activeTenant?.name ?? 'Pilih Tenant');
     const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
+    const activeTenantLabel = $derived(
+        activeTenant?.name ?? (isSuperAdmin ? 'Tanpa Tenant' : 'Pilih Tenant'),
+    );
     const hasTenants = $derived(tenants.length > 0);
     let pendingTenantId = $state<number | null>(null);
     let errorMessage = $state('');
@@ -118,7 +120,7 @@
                 onclick={() => switchTenant(0)}
             >
                 <Check class={cn('size-4', !activeTenant ? 'opacity-100' : 'opacity-0')} />
-                <span class="min-w-0 flex-1 truncate">Semua Tenant</span>
+                <span class="min-w-0 flex-1 truncate">Tanpa Tenant</span>
                 <span class="shrink-0 text-[11px] text-muted-foreground">Platform</span>
             </DropdownMenuItem>
             {#each tenants as tenant (tenant.id)}

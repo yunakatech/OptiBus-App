@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Fortify;
@@ -27,6 +28,33 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(LoginResponseContract::class, function () {
+            return new class implements LoginResponseContract
+            {
+                public function toResponse($request)
+                {
+                    if ($request->wantsJson()) {
+                        return new JsonResponse('', 204);
+                    }
+
+                    $userId = (int) ($request->user()?->id ?? auth()->id() ?? 0);
+
+                    if ($userId > 0 && AccessControl::userIsSuperAdmin($userId)) {
+                        $request->session()->forget('active_tenant_id');
+                        $request->session()->forget('active_pool_id');
+
+                        return redirect()->route('platform.dashboard');
+                    }
+
+                    if ($userId > 0 && AccessControl::can($userId, 'dashboard.view')) {
+                        return redirect()->intended(route('dashboard'));
+                    }
+
+                    return redirect()->intended(route('subscription.index'));
+                }
+            };
+        });
+
         $this->app->singleton(LogoutResponseContract::class, function () {
             return new class implements LogoutResponseContract
             {

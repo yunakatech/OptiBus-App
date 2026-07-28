@@ -51,7 +51,11 @@
     const label = $derived.by(() => (kind === 'tenant' ? 'Tenant' : 'Pool'));
     const Icon = $derived.by(() => (kind === 'tenant' ? Building2 : MapPin));
     const allLabel = $derived.by(() =>
-        kind === 'tenant' ? 'Semua Tenant' : 'Semua Pool',
+        kind === 'tenant'
+            ? isSuperAdmin
+                ? 'Tanpa Tenant'
+                : 'Semua Tenant'
+            : 'Semua Pool',
     );
     const allMeta = $derived.by(() => (kind === 'tenant' ? 'Platform' : ''));
     const endpoint = $derived.by(() =>

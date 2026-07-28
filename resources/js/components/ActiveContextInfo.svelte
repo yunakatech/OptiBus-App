@@ -14,7 +14,10 @@
     const auth = $derived(page.props.auth ?? null);
     const activeTenant = $derived((auth?.active_tenant ?? null) as ActiveTenant | null);
     const activePool = $derived((auth?.active_pool ?? null) as ActivePool | null);
-    const activeTenantLabel = $derived(activeTenant?.name ?? 'Semua Tenant');
+    const isSuperAdmin = $derived(Boolean(auth?.user?.is_super_admin));
+    const activeTenantLabel = $derived(
+        activeTenant?.name ?? (isSuperAdmin ? 'Tanpa Tenant' : 'Semua Tenant'),
+    );
     const activePoolLabel = $derived(activePool?.name ?? 'Semua Pool');
 </script>
 

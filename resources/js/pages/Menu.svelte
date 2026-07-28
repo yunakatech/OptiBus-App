@@ -40,6 +40,7 @@
     const showTenantScopedSections = $derived(
         !isSuperAdmin || Boolean(activeTenant),
     );
+    const isPlatformContext = $derived(isSuperAdmin && !activeTenant);
     const billingLocked = $derived(
         Boolean(page.props.auth?.billing_access?.locked),
     );
@@ -288,7 +289,7 @@
             .filter(
                 (section) =>
                     showTenantScopedSections ||
-                    section.label === 'Operasional' ||
+                    (!isPlatformContext && section.label === 'Operasional') ||
                     section.label === 'Sistem',
             )
             .filter((section) => section.items.length > 0),
