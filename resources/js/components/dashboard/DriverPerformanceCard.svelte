@@ -39,7 +39,7 @@
 </script>
 
 <div
-    class={`rounded-lg border p-3 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm sm:rounded-lg sm:p-5 ${isDark ? 'border-border/80 bg-gradient-to-br from-slate-950 via-slate-950 to-amber-950/10' : 'border-border/80 bg-gradient-to-br from-background via-card to-amber-50/20'}`}
+    class={`rounded-lg border p-3 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm sm:rounded-lg sm:p-5 ${isDark ? 'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))]' : 'border-border/80 bg-gradient-to-br from-background via-card to-amber-50/20'}`}
 >
     <div class="mb-3 flex items-start justify-between gap-3 sm:mb-4">
         <div>
@@ -54,16 +54,16 @@
         </div>
         <a
             href="/admin-ops/drivers"
-            class="shrink-0 rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground transition hover:border-border hover:bg-background hover:text-foreground dark:hover:bg-slate-900/60"
+            class="shrink-0 rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground transition hover:border-border hover:bg-background hover:text-foreground dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:bg-slate-800/90 dark:hover:text-foreground"
         >
             Lihat Detail →
         </a>
     </div>
 
-    <div class="mb-3 flex rounded-lg bg-muted/70 p-1 dark:bg-slate-900/70">
+    <div class="mb-3 flex rounded-lg bg-muted/70 p-1 dark:bg-slate-950/75">
         {#each Object.keys(categories) as cat}
             <button
-                class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === cat ? 'bg-background text-foreground shadow-sm dark:bg-slate-800' : 'text-muted-foreground hover:text-foreground'}`}
+                class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === cat ? 'bg-background text-foreground shadow-sm dark:bg-slate-900/95' : 'text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:bg-slate-900/60 dark:hover:text-slate-100'}`}
                 onclick={() => (selectedCategory = cat)}
             >
                 {cat}
@@ -89,7 +89,7 @@
                         : 6}
                 {@const isMedal = i < 3}
                 <div
-                    class={`group relative rounded-xl border p-2 transition ${i === 0 ? 'border-amber-400/40 bg-amber-50/70 hover:border-amber-300 hover:bg-amber-50 dark:border-amber-400/30 dark:bg-amber-950/20 dark:hover:bg-amber-950/30' : 'border-border/70 bg-background/85 hover:border-border hover:bg-muted/40 dark:bg-slate-900/65 dark:hover:bg-slate-900/80'}`}
+                    class={`group relative rounded-xl border p-2 transition ${i === 0 ? 'border-amber-400/40 bg-amber-50/70 hover:border-amber-300 hover:bg-amber-50 dark:border-amber-400/30 dark:bg-amber-950/18 dark:hover:bg-amber-950/28' : 'border-border/70 bg-background/85 hover:border-border hover:bg-muted/40 dark:border-slate-800/80 dark:bg-slate-900/75 dark:hover:bg-slate-900/88'}`}
                 >
                     <div class="mb-1.5 flex items-center justify-between gap-2">
                         <div class="flex min-w-0 items-center gap-1.5">

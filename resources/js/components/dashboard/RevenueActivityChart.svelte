@@ -72,13 +72,13 @@
                   tickColor: '#94a3b8',
                   gridColor: 'rgba(148, 163, 184, 0.18)',
                   panelClass:
-                      'border-border/80 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 shadow-inner shadow-slate-950/40',
+                      'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))] shadow-inner shadow-slate-950/50',
                   titleClass: 'text-foreground',
                   subtitleClass:
-                      'border-sky-400/20 bg-sky-950/30 text-sky-200',
-                  countClass: 'text-muted-foreground',
-                  chartTitleClass: 'text-sky-300',
-                  chartBodyClass: 'text-slate-200/80',
+                      'border-sky-400/20 bg-sky-950/40 text-sky-100',
+                  countClass: 'text-slate-400',
+                  chartTitleClass: 'text-sky-200',
+                  chartBodyClass: 'text-slate-300/80',
               }
             : {
                   borderColor: '#2563eb',

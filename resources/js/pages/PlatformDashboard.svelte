@@ -246,7 +246,7 @@
     class="mx-auto min-w-0 max-w-[1500px] space-y-3 overflow-x-hidden p-2 pb-8 sm:space-y-4 sm:p-3 md:space-y-5 md:p-5"
 >
     <header
-        class="relative min-w-0 overflow-hidden rounded-2xl border border-emerald-900/10 bg-[linear-gradient(135deg,#103d3a,#0d7066_54%,#f7f0dc)] p-4 text-white shadow-[0_22px_70px_-40px_rgba(16,61,58,0.85)] sm:p-5 md:p-6"
+        class="relative min-w-0 overflow-hidden rounded-2xl border border-emerald-900/10 bg-[linear-gradient(135deg,#103d3a,#0d7066_54%,#f7f0dc)] p-4 text-white shadow-[0_22px_70px_-40px_rgba(16,61,58,0.85)] dark:border-slate-800/80 dark:bg-[linear-gradient(135deg,rgba(2,6,23,0.98),rgba(15,23,42,0.94)_54%,rgba(8,47,73,0.62))] sm:p-5 md:p-6"
     >
         <div
             class="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full border border-white/15 sm:-right-16 sm:-top-20 sm:h-64 sm:w-64"
@@ -279,7 +279,7 @@
                 <a class="w-full sm:w-auto" href="/admin-ops/saas/invoices">
                     <Button
                         size="sm"
-                        class="w-full justify-center rounded-full bg-white text-[#103d3a] hover:bg-emerald-50 sm:w-auto"
+                        class="w-full justify-center rounded-full bg-white text-[#103d3a] hover:bg-emerald-50 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200 sm:w-auto"
                         ><Receipt class="mr-1 h-4 w-4" /> Tagihan</Button
                     >
                 </a>
@@ -290,7 +290,7 @@
                     <Button
                         variant="outline"
                         size="sm"
-                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:w-auto"
+                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white dark:border-slate-700/80 dark:bg-slate-900/65 dark:text-slate-100 dark:hover:bg-slate-800/90 sm:w-auto"
                         ><CreditCard class="mr-1 h-4 w-4" /> Langganan</Button
                     >
                 </a>
@@ -298,7 +298,7 @@
                     <Button
                         variant="outline"
                         size="sm"
-                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:w-auto"
+                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white dark:border-slate-700/80 dark:bg-slate-900/65 dark:text-slate-100 dark:hover:bg-slate-800/90 sm:w-auto"
                         ><Building2 class="mr-1 h-4 w-4" /> Tenant</Button
                     >
                 </a>
@@ -307,14 +307,14 @@
     </header>
 
     <section
-        class="min-w-0 overflow-hidden rounded-2xl border border-[#d7dfd5] bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950"
+        class="min-w-0 overflow-hidden rounded-2xl border border-[#d7dfd5] bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-950"
     >
         <div class="grid gap-0 xl:grid-cols-[1.05fr_1.25fr]">
             <div
-                class="min-w-0 border-b border-[#d7dfd5] bg-[#f8faf4] p-4 dark:border-slate-800 dark:bg-slate-900/40 sm:p-5 xl:border-b-0 xl:border-r"
+                class="min-w-0 border-b border-[#d7dfd5] bg-[#f8faf4] p-4 dark:border-slate-800 dark:bg-slate-900/80 sm:p-5 xl:border-b-0 xl:border-r"
             >
                 <p
-                    class="text-xs font-semibold uppercase tracking-[0.18em] text-[#697570]"
+                    class="text-xs font-semibold uppercase tracking-[0.18em] text-[#697570] dark:text-slate-400"
                 >
                     {metrics.month_label}
                 </p>
@@ -325,16 +325,16 @@
                 </h2>
                 <div class="mt-3 flex flex-wrap items-center gap-2">
                     <span
-                        class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+                        class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-950/30 dark:text-emerald-200"
                     >
                         {percentDelta(metrics.mrr, metrics.previous_mrr)}
                     </span>
-                    <span class="text-xs text-muted-foreground">
+                    <span class="text-xs text-muted-foreground dark:text-slate-400">
                         dibanding {metrics.previous_month_label ?? 'bulan lalu'}
                     </span>
                 </div>
                 <p
-                    class="mt-4 hidden text-sm leading-6 text-[#53615d] sm:block"
+                    class="mt-4 hidden text-sm leading-6 text-[#53615d] dark:text-slate-300/80 sm:block"
                 >
                     Ini adalah estimasi pendapatan berulang dari tenant yang
                     masih aktif atau sedang uji coba. Jika semua tetap aktif,
@@ -348,11 +348,11 @@
                         class="min-w-0 border-b border-[#d7dfd5] p-3 last:border-b-0 sm:p-4 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 dark:border-slate-800"
                     >
                         <div
-                            class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef7ef] text-[#103d3a]"
+                            class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef7ef] text-[#103d3a] dark:bg-slate-800/80 dark:text-emerald-200"
                         >
                             <Icon class="h-4 w-4" />
                         </div>
-                        <p class="text-xs font-semibold text-[#697570]">
+                        <p class="text-xs font-semibold text-[#697570] dark:text-slate-400">
                             {metric.label}
                         </p>
                         <p
@@ -361,7 +361,7 @@
                             {metric.value}
                         </p>
                         <p
-                            class="mt-2 hidden text-xs leading-5 text-muted-foreground sm:block"
+                            class="mt-2 hidden text-xs leading-5 text-muted-foreground dark:text-slate-400 sm:block"
                         >
                             {metric.meta}
                         </p>
@@ -374,9 +374,9 @@
     <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {#each operationalMetrics as metric (metric.label)}
             <div
-                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-950 sm:p-4"
+                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-900/70 sm:p-4"
             >
-                <p class="text-xs font-semibold text-[#697570]">
+                <p class="text-xs font-semibold text-[#697570] dark:text-slate-400">
                     {metric.label}
                 </p>
                 <p
@@ -395,7 +395,7 @@
 
     {#if mrrTrend.length > 0}
         <section
-            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4 md:p-5"
+            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
         >
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -444,7 +444,7 @@
 
     <div class="grid gap-4 xl:grid-cols-[1.45fr_0.85fr]">
         <section
-            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4 md:p-5"
+            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
         >
             <div
                 class="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
@@ -461,7 +461,7 @@
                 </div>
                 <a
                     href="/admin-ops/saas/tenants"
-                    class="inline-flex w-full items-center justify-center gap-1 rounded-full border border-[#d7dfd5] px-3 py-1.5 text-xs font-semibold text-[#103d3a] transition hover:bg-[#eef7ef] sm:w-auto"
+                    class="inline-flex w-full items-center justify-center gap-1 rounded-full border border-[#d7dfd5] px-3 py-1.5 text-xs font-semibold text-[#103d3a] transition hover:bg-[#eef7ef] dark:border-slate-700/80 dark:text-slate-100 dark:hover:bg-slate-800/80 sm:w-auto"
                 >
                     Kelola <ArrowRight class="h-3.5 w-3.5" />
                 </a>
@@ -470,7 +470,7 @@
                 <div class="space-y-3 md:hidden">
                     {#each tenants as tenant (tenant.id)}
                         <article
-                            class="rounded-xl border border-[#d7dfd5] bg-[#fbfcf8] p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/45"
+                            class="rounded-xl border border-[#d7dfd5] bg-[#fbfcf8] p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70"
                         >
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
@@ -500,7 +500,7 @@
                                 class="mt-3 grid min-w-0 grid-cols-2 gap-2 text-xs"
                             >
                                 <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
                                 >
                                     <p class="text-muted-foreground">Paket</p>
                                     <p
@@ -510,7 +510,7 @@
                                     </p>
                                 </div>
                                 <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
                                 >
                                     <p class="text-muted-foreground">
                                         Berakhir
@@ -522,7 +522,7 @@
                                     </p>
                                 </div>
                                 <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
                                 >
                                     <p class="text-muted-foreground">User</p>
                                     <p
@@ -532,7 +532,7 @@
                                     </p>
                                 </div>
                                 <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
                                 >
                                     <p class="text-muted-foreground">Pool</p>
                                     <p
@@ -567,7 +567,7 @@
                         <tbody>
                             {#each tenants as tenant (tenant.id)}
                                 <tr
-                                    class="border-b last:border-0 hover:bg-[#f8faf4]"
+                                    class="border-b last:border-0 hover:bg-[#f8faf4] dark:hover:bg-slate-900/55"
                                 >
                                     <td class="py-3 pr-3">
                                         <a
@@ -643,14 +643,16 @@
                     </div>
                     <a
                         href="/admin-ops/saas/invoices"
-                        class="text-xs font-semibold text-primary">Buka</a
+                        class="text-xs font-semibold text-primary dark:text-cyan-300"
                     >
+                        Buka
+                    </a>
                 </div>
                 {#if paymentWatchlist.length > 0}
                     <div class="space-y-2">
                         {#each paymentWatchlist as invoice (invoice.id)}
                             <div
-                                class="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800"
+                                class="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800/80 dark:bg-slate-900/65"
                             >
                                 <div
                                     class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
@@ -705,7 +707,7 @@
             </section>
 
             <section
-                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4"
+                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4"
             >
                 <div class="mb-3 flex items-start gap-2">
                     <CalendarClock class="mt-0.5 h-4 w-4 text-[#0d7066]" />
@@ -724,7 +726,7 @@
                     <div class="space-y-2">
                         {#each expiringSoon as item (item.id)}
                             <div
-                                class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800"
+                                class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-800/80 dark:bg-slate-900/65"
                             >
                                 <div class="min-w-0">
                                     <p class="font-semibold text-foreground">
@@ -755,7 +757,7 @@
             </section>
 
             <section
-                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4"
+                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4"
             >
                 <div class="mb-3 flex items-start gap-2">
                     <Users class="mt-0.5 h-4 w-4 text-[#0d7066]" />

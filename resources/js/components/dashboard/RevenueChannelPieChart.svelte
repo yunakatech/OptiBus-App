@@ -63,19 +63,19 @@
             ? {
                   borderColor: '#020617',
                   panelClass:
-                      'border-border/80 bg-gradient-to-br from-slate-950 via-slate-950 to-cyan-950/10 shadow-inner shadow-slate-950/40',
+                      'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))] shadow-inner shadow-slate-950/50',
                   titleClass: 'text-foreground',
                   subtitleClass: 'text-muted-foreground',
-                  toggleClass: 'bg-slate-900/80',
-                  toggleActiveClass: 'bg-slate-800 text-foreground shadow-sm',
-                  toggleInactiveClass: 'text-muted-foreground hover:text-foreground',
-                  totalLabelClass: 'text-muted-foreground',
+                  toggleClass: 'bg-slate-950/75',
+                  toggleActiveClass: 'bg-slate-900 text-foreground shadow-sm',
+                  toggleInactiveClass: 'text-slate-400 hover:text-foreground',
+                  totalLabelClass: 'text-slate-400',
                   totalValueClass: 'text-foreground',
-                  footerLabelClass: 'text-muted-foreground',
+                  footerLabelClass: 'text-slate-400',
                   footerValueClass: 'text-foreground',
-                  chartTitleClass: 'text-sky-300',
-                  chartBodyClass: 'text-slate-200/80',
-                  dividerClass: 'bg-slate-700/70',
+                  chartTitleClass: 'text-sky-200',
+                  chartBodyClass: 'text-slate-300/80',
+                  dividerClass: 'bg-slate-700/80',
               }
             : {
                   borderColor: '#ffffff',
