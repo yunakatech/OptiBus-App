@@ -1632,7 +1632,9 @@
             return `${originValue} - ${destinationValue}`;
         }
 
-        return String(fallback ?? '').trim();
+        return String(fallback ?? '')
+            .trim()
+            .replace(/\s+(?:\?|=>|->|\u2192|\u2013|\u2014)\s+/g, ' - ');
     };
     const updateSegmentOrigin = (value: string) => {
         const origin = String(value ?? '');
@@ -6010,7 +6012,7 @@
                                             </span>
                                             <span
                                                 class="shrink-0 text-muted-foreground"
-                                                >→</span
+                                                >-</span
                                             >
                                             <span
                                                 class="min-w-0 truncate rounded-full border border-border/70 bg-background/80 px-2.5 py-1 font-medium"
@@ -6076,11 +6078,14 @@
                                                                     <p
                                                                         class="mt-0.5 text-xs text-muted-foreground"
                                                                     >
-                                                                        {segment.origin ??
-                                                                            'Origin belum diatur'}
-                                                                        ?
-                                                                        {segment.destination ??
-                                                                            'Destination belum diatur'}
+                                                                        {segmentDisplayName(
+                                                                            segment.origin ??
+                                                                                '',
+                                                                            segment.destination ??
+                                                                                '',
+                                                                            segment.rute,
+                                                                        ) ||
+                                                                            'Origin - Destination belum diatur'}
                                                                     </p>
                                                                     <p
                                                                         class="mt-0.5 text-[11px] text-muted-foreground"
@@ -6457,7 +6462,7 @@
                                                     'Origin belum diatur'}</span
                                             >
                                             <span class="text-muted-foreground"
-                                                >→</span
+                                                >-</span
                                             >
                                             <span
                                                 class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
@@ -6603,11 +6608,14 @@
                                                                 <p
                                                                     class="mt-0.5 text-xs text-muted-foreground"
                                                                 >
-                                                                    {segment.origin ??
-                                                                        'Origin belum diatur'}
-                                                                    ?
-                                                                    {segment.destination ??
-                                                                        'Destination belum diatur'}
+                                                                    {segmentDisplayName(
+                                                                        segment.origin ??
+                                                                            '',
+                                                                        segment.destination ??
+                                                                            '',
+                                                                        segment.rute,
+                                                                    ) ||
+                                                                        'Origin - Destination belum diatur'}
                                                                 </p>
                                                                 <p
                                                                     class="mt-0.5 text-[11px] text-muted-foreground"
@@ -7182,9 +7190,13 @@
                                                                 class="text-xs font-medium text-foreground"
                                                             >
                                                                 {seg.rute ||
-                                                                    seg.origin +
-                                                                        ' → ' +
-                                                                        seg.destination}
+                                                                    segmentDisplayName(
+                                                                        seg.origin ??
+                                                                            '',
+                                                                        seg.destination ??
+                                                                            '',
+                                                                        seg.rute,
+                                                                    )}
                                                             </p>
                                                             <p
                                                                 class="text-[11px] text-muted-foreground"
@@ -8555,7 +8567,7 @@
                                             </span>
                                             <span
                                                 class="shrink-0 text-muted-foreground"
-                                                >→</span
+                                                >-</span
                                             >
                                             <span
                                                 class="min-w-0 truncate rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 font-medium"
@@ -8656,7 +8668,7 @@
                                                             >
                                                             <span
                                                                 class="text-muted-foreground"
-                                                                >?</span
+                                                                >-</span
                                                             >
                                                             <span
                                                                 class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
