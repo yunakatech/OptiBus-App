@@ -276,35 +276,35 @@
 
 <div class="min-h-screen overflow-x-hidden bg-[#f7f8f4] text-[#17201f]">
     <nav
-        class="sticky top-0 z-40 bg-[#f7f8f4]/86 py-2 backdrop-blur-xl sm:py-3"
+        class="sticky top-0 z-40 bg-[#f7f8f4]/86 py-1.5 backdrop-blur-xl sm:py-2"
     >
         <div
-            class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-2.5 sm:px-6 lg:px-8"
+            class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-2.5 sm:px-5 lg:px-6"
         >
             <a
                 href="/"
-                class="flex h-10 max-w-[44vw] items-center overflow-hidden rounded-full border border-[#d9ded4]/80 bg-white/86 px-2 shadow-[0_10px_28px_-24px_rgba(23,32,31,0.9)] transition hover:border-[#b9c5bd] hover:bg-white sm:h-12 sm:max-w-none sm:px-3"
+                class="flex h-9 max-w-[44vw] items-center overflow-hidden rounded-full border border-[#d9ded4]/80 bg-white/86 px-2 shadow-[0_10px_28px_-24px_rgba(23,32,31,0.9)] transition hover:border-[#b9c5bd] hover:bg-white sm:h-10 sm:max-w-none sm:px-2.5"
                 aria-label="OptiBus"
             >
                 <AppLogo />
             </a>
             <div
-                class="hidden items-center gap-1 rounded-full border border-[#d9ded4]/90 bg-white/72 p-1 text-sm font-semibold text-[#4b5a56] shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70 md:flex"
+                class="hidden items-center gap-1 rounded-full border border-[#d9ded4]/90 bg-white/72 p-1 text-xs font-semibold text-[#4b5a56] shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70 md:flex"
             >
                 <a
                     href="/"
-                    class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    class="rounded-full px-3 py-1.5 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
                     >Beranda</a
                 >
                 <a
                     href="#compare"
-                    class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    class="rounded-full px-3 py-1.5 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
                     >Perbandingan</a
                 >
                 {#if isAuthenticated}
                     <a
                         href={appHref}
-                        class="rounded-full px-4 py-2 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                        class="rounded-full px-3 py-1.5 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
                         >Dasbor</a
                     >
                 {/if}
@@ -315,7 +315,7 @@
                 {#if !isAuthenticated}
                     <a
                         href="/login"
-                        class="inline-flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-semibold text-[#4b5a56] transition hover:bg-[#eef2eb] hover:text-[#17201f] sm:h-10 sm:px-4 sm:text-sm"
+                        class="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-xs font-semibold text-[#4b5a56] transition hover:bg-[#eef2eb] hover:text-[#17201f] sm:h-9 sm:px-3"
                         >Masuk</a
                     >
                 {/if}
@@ -323,7 +323,7 @@
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-9 items-center justify-center rounded-full bg-[#103d3a] px-3 text-xs font-semibold text-white shadow-[0_12px_26px_-18px_rgba(16,61,58,0.9)] transition hover:-translate-y-0.5 hover:bg-[#0b2f2c] sm:h-10 sm:px-5 sm:text-sm"
+                    class="inline-flex h-8 items-center justify-center rounded-full bg-[#103d3a] px-3 text-xs font-semibold text-white shadow-[0_12px_26px_-18px_rgba(16,61,58,0.9)] transition hover:-translate-y-0.5 hover:bg-[#0b2f2c] sm:h-9 sm:px-4"
                 >
                     {isAuthenticated ? 'Dasbor' : 'Mulai'}
                 </a>
@@ -334,26 +334,26 @@
     <main>
         <section class="border-b border-[#d9ded4]">
             <div
-                class="mx-auto grid max-w-7xl gap-5 px-4 py-9 sm:px-6 sm:py-12 md:grid-cols-[1fr_auto] md:items-end lg:px-8"
+                class="mx-auto grid max-w-6xl gap-4 px-4 py-7 sm:px-5 sm:py-9 md:grid-cols-[1fr_auto] md:items-end lg:px-6"
             >
                 <div>
                     <p class="text-sm font-semibold uppercase text-[#b96c20]">
                         Harga
                     </p>
                     <h1
-                        class="mt-3 max-w-3xl text-[2.15rem] font-semibold leading-tight tracking-normal sm:text-5xl"
+                        class="mt-2 max-w-3xl text-[1.9rem] font-semibold leading-tight tracking-normal sm:text-4xl"
                     >
                         Pilih kapasitas sesuai ukuran travel.
                     </h1>
                     <p
-                        class="mt-4 max-w-2xl text-base leading-7 text-[#53615d]"
+                        class="mt-3 max-w-2xl text-sm leading-6 text-[#53615d]"
                     >
                         Pilih paket untuk lanjut pembayaran, atau mulai uji coba
                         Starter dari tombol uji coba.
                     </p>
                 </div>
                 <div
-                    class="rounded-2xl border border-[#d9ded4] bg-white p-4 text-sm text-[#53615d] shadow-[0_16px_44px_-34px_rgba(23,32,31,0.9)]"
+                    class="rounded-xl border border-[#d9ded4] bg-white p-3 text-sm text-[#53615d] shadow-[0_16px_44px_-34px_rgba(23,32,31,0.9)]"
                 >
                     <div
                         class="flex items-center gap-2 font-semibold text-[#17201f]"
@@ -368,19 +368,19 @@
             </div>
         </section>
 
-        <section class="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8">
+        <section class="mx-auto max-w-6xl px-4 py-7 sm:px-5 sm:py-9 lg:px-6">
             <div class="grid gap-4 lg:grid-cols-3">
                 {#each plans as plan}
                     <article
-                        class={`flex flex-col rounded-2xl border bg-white p-4 shadow-[0_18px_44px_-36px_rgba(23,32,31,0.95)] sm:p-5 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}
+                        class={`flex flex-col rounded-2xl border bg-white p-3 shadow-[0_18px_44px_-36px_rgba(23,32,31,0.95)] sm:p-4 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}
                     >
-                        <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="text-xl font-semibold">
+                                <h2 class="text-lg font-semibold">
                                     {plan.name}
                                 </h2>
                                 <p
-                                    class="mt-2 min-h-14 text-sm leading-6 text-[#53615d]"
+                                    class="mt-2 min-h-10 text-sm leading-6 text-[#53615d]"
                                 >
                                     {plan.description}
                                 </p>
@@ -393,10 +393,10 @@
                             {/if}
                         </div>
 
-                        <div class="mt-6 border-y border-[#e1e6df] py-5">
+                        <div class="mt-4 border-y border-[#e1e6df] py-4">
                             <div class="flex items-baseline gap-2">
                                 <span
-                                    class="text-[2.1rem] font-semibold sm:text-4xl"
+                                    class="text-[1.75rem] font-semibold sm:text-3xl"
                                     >{formatRupiah(plan.price_monthly)}</span
                                 >
                                 <span class="text-sm text-[#53615d]"
@@ -415,30 +415,30 @@
                             </p>
                         </div>
 
-                        <div class="mt-5 grid grid-cols-2 gap-2 text-sm">
+                        <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
                             <div
-                                class="rounded-xl bg-[#f1f4ee] p-3 sm:rounded-md"
+                                class="rounded-xl bg-[#f1f4ee] p-2.5 sm:rounded-md"
                             >
                                 <BusFront
                                     class="mb-2 h-4 w-4 text-[#0d7066]"
                                 />{limitLabel(plan.max_armadas, 'armada')}
                             </div>
                             <div
-                                class="rounded-xl bg-[#f1f4ee] p-3 sm:rounded-md"
+                                class="rounded-xl bg-[#f1f4ee] p-2.5 sm:rounded-md"
                             >
                                 <Route
                                     class="mb-2 h-4 w-4 text-[#0d7066]"
                                 />{limitLabel(plan.max_routes, 'rute')}
                             </div>
                             <div
-                                class="rounded-xl bg-[#f1f4ee] p-3 sm:rounded-md"
+                                class="rounded-xl bg-[#f1f4ee] p-2.5 sm:rounded-md"
                             >
                                 <UsersRound
                                     class="mb-2 h-4 w-4 text-[#0d7066]"
                                 />{limitLabel(plan.max_users, 'pengguna')}
                             </div>
                             <div
-                                class="rounded-xl bg-[#f1f4ee] p-3 sm:rounded-md"
+                                class="rounded-xl bg-[#f1f4ee] p-2.5 sm:rounded-md"
                             >
                                 <Building2
                                     class="mb-2 h-4 w-4 text-[#0d7066]"
@@ -446,7 +446,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-5 grow space-y-2">
+                        <div class="mt-4 grow space-y-1.5">
                             {#each (plan.features ?? [])
                                 .filter((feature) => feature.included)
                                 .slice(0, 5) as feature}
@@ -474,7 +474,7 @@
                             href={isAuthenticated
                                 ? subscriptionHref
                                 : `/register?plan=${plan.slug}&intent=paid`}
-                            class={`mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl text-sm font-semibold sm:h-11 sm:rounded-md ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}
+                            class={`mt-5 inline-flex h-10 w-full items-center justify-center rounded-xl text-sm font-semibold sm:h-9 sm:rounded-md ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}
                         >
                             {isAuthenticated
                                 ? 'Kelola paket'
@@ -487,9 +487,9 @@
         </section>
 
         <section id="compare" class="border-y border-[#d9ded4] bg-white">
-            <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+            <div class="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10 lg:px-6">
                 <div
-                    class="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end"
+                    class="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-end"
                 >
                     <div>
                         <p
@@ -498,13 +498,13 @@
                             Perbandingan fitur
                         </p>
                         <h2
-                            class="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl"
+                            class="mt-2 text-xl font-semibold tracking-normal sm:text-2xl"
                         >
                             Lihat batas kapasitas dan fitur utama.
                         </h2>
                     </div>
                     <div
-                        class="inline-flex w-fit items-center gap-2 rounded-full border border-[#d9ded4] px-3 py-1.5 text-sm text-[#53615d]"
+                        class="inline-flex w-fit items-center gap-2 rounded-full border border-[#d9ded4] px-3 py-1.5 text-xs text-[#53615d]"
                     >
                         <ShieldCheck class="h-4 w-4 text-[#0d7066]" />
                         Tenant dan pool terpisah
@@ -514,7 +514,7 @@
                 <div class="grid gap-3 md:hidden">
                     {#each comparisonRows as row}
                         <div
-                            class="rounded-2xl border border-[#d9ded4] bg-[#fbfcf8] p-4"
+                            class="rounded-2xl border border-[#d9ded4] bg-[#fbfcf8] p-3"
                         >
                             <p class="text-sm font-semibold text-[#17201f]">
                                 {row.label}
@@ -545,18 +545,18 @@
                     class="hidden overflow-hidden rounded-lg border border-[#d9ded4] md:block"
                 >
                     <div class="overflow-x-auto">
-                        <table class="w-full min-w-[760px] text-sm">
+                        <table class="w-full min-w-[680px] text-xs">
                             <thead>
                                 <tr
                                     class="border-b border-[#d9ded4] bg-[#f1f4ee]"
                                 >
                                     <th
-                                        class="px-4 py-3 text-left font-semibold"
+                                        class="px-3 py-2.5 text-left font-semibold"
                                         >Item</th
                                     >
                                     {#each plans as plan}
                                         <th
-                                            class="px-4 py-3 text-center font-semibold"
+                                            class="px-3 py-2.5 text-center font-semibold"
                                             >{plan.name}</th
                                         >
                                     {/each}
@@ -564,30 +564,30 @@
                             </thead>
                             <tbody>
                                 <tr class="border-b border-[#e5e9e2]">
-                                    <td class="px-4 py-3 font-medium">Armada</td
+                                    <td class="px-3 py-2.5 font-medium">Armada</td
                                     >
                                     {#each plans as plan}<td
-                                            class="px-4 py-3 text-center"
+                                            class="px-3 py-2.5 text-center"
                                             >{capacityLabel(
                                                 plan.max_armadas,
                                             )}</td
                                         >{/each}
                                 </tr>
                                 <tr class="border-b border-[#e5e9e2]">
-                                    <td class="px-4 py-3 font-medium">Rute</td>
+                                    <td class="px-3 py-2.5 font-medium">Rute</td>
                                     {#each plans as plan}<td
-                                            class="px-4 py-3 text-center"
+                                            class="px-3 py-2.5 text-center"
                                             >{capacityLabel(
                                                 plan.max_routes,
                                             )}</td
                                         >{/each}
                                 </tr>
                                 <tr class="border-b border-[#e5e9e2]">
-                                    <td class="px-4 py-3 font-medium"
+                                    <td class="px-3 py-2.5 font-medium"
                                         >Pengguna</td
                                     >
                                     {#each plans as plan}<td
-                                            class="px-4 py-3 text-center"
+                                            class="px-3 py-2.5 text-center"
                                             >{capacityLabel(plan.max_users)}</td
                                         >{/each}
                                 </tr>
@@ -595,7 +595,7 @@
                                     <tr
                                         class="border-b border-[#e5e9e2] last:border-0"
                                     >
-                                        <td class="px-4 py-3 font-medium"
+                                        <td class="px-3 py-2.5 font-medium"
                                             >{featureName}</td
                                         >
                                         {#each plans as plan}
@@ -605,7 +605,7 @@
                                                         item.name ===
                                                         featureName,
                                                 )}
-                                            <td class="px-4 py-3 text-center">
+                                            <td class="px-3 py-2.5 text-center">
                                                 {#if feature?.included}
                                                     <Check
                                                         class="mx-auto h-4 w-4 text-[#0d7066]"
@@ -626,7 +626,7 @@
             </div>
         </section>
 
-        <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <section class="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10 lg:px-6">
             <div class="grid gap-4 md:grid-cols-[0.8fr_1.2fr]">
                 <div>
                     <div
@@ -636,7 +636,7 @@
                         Cara memilih
                     </div>
                     <h2
-                        class="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl"
+                        class="mt-2 text-xl font-semibold tracking-normal sm:text-2xl"
                     >
                         Paket mengikuti skala operasional.
                     </h2>
@@ -644,7 +644,7 @@
                 <div class="grid gap-3">
                     {#each buyingGuides as guide}
                         <div
-                            class="rounded-2xl border border-[#d9ded4] bg-white p-4 shadow-[0_16px_40px_-34px_rgba(23,32,31,0.9)] sm:rounded-lg sm:p-5"
+                            class="rounded-2xl border border-[#d9ded4] bg-white p-3 shadow-[0_16px_40px_-34px_rgba(23,32,31,0.9)] sm:rounded-lg sm:p-4"
                         >
                             <h3 class="font-semibold">{guide.title}</h3>
                             <p class="mt-1 text-sm leading-6 text-[#53615d]">
@@ -658,14 +658,14 @@
 
         <section class="border-t border-[#d9ded4] bg-[#103d3a]">
             <div
-                class="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-white sm:px-6 sm:py-12 md:grid-cols-[1fr_auto] md:items-center lg:px-8"
+                class="mx-auto grid max-w-6xl gap-5 px-4 py-8 text-white sm:px-5 sm:py-10 md:grid-cols-[1fr_auto] md:items-center lg:px-6"
             >
                 <div>
                     <p class="text-sm font-semibold uppercase text-[#a8dccd]">
                         Uji coba 14 hari
                     </p>
                     <h2
-                        class="mt-2 text-2xl font-semibold tracking-normal text-white sm:text-3xl"
+                        class="mt-2 text-xl font-semibold tracking-normal text-white sm:text-2xl"
                     >
                         Mulai dengan paket yang paling dekat dengan kondisi saat
                         ini.
@@ -675,7 +675,7 @@
                     href={isAuthenticated
                         ? subscriptionHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb] sm:h-11 sm:rounded-md"
+                    class="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb] sm:h-9 sm:rounded-md"
                 >
                     {isAuthenticated ? 'Kelola langganan' : 'Daftar sekarang'}
                     <ArrowRight class="ml-2 h-4 w-4" />
@@ -686,7 +686,7 @@
 
     <footer class="border-t border-[#d9ded4] bg-[#f7f8f4]">
         <div
-            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-[#53615d] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8"
+            class="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-sm text-[#53615d] sm:px-5 md:flex-row md:items-center md:justify-between lg:px-6"
         >
             <span>OptiBus - Paket SaaS operasional travel.</span>
             <div class="flex flex-wrap gap-x-5 gap-y-2">
