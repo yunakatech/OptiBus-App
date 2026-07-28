@@ -13,7 +13,7 @@ final class SegmentName
             return $originValue.' - '.$destinationValue;
         }
 
-        return trim((string) $fallback);
+        return self::normalizeDisplaySeparator(trim((string) $fallback));
     }
 
     public static function jam(?string $value): string
@@ -38,6 +38,21 @@ final class SegmentName
     public static function jamSummary(mixed $value, mixed $fallback = null): string
     {
         return implode(', ', self::jamList($value, $fallback));
+    }
+
+    private static function normalizeDisplaySeparator(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        $normalized = preg_replace(
+            '/\s+(?:\?|=>|->|\x{2192}|\x{2013}|\x{2014})\s+/u',
+            ' - ',
+            $value,
+        );
+
+        return trim((string) ($normalized ?? $value));
     }
 
     /**
