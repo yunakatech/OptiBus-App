@@ -1,8 +1,8 @@
 <script module lang="ts">
     export const layout = {
-        title: 'Verify email',
+        title: 'Verifikasi Email',
         description:
-            'Please verify your email address by clicking on the link we just emailed to you.',
+            'Silakan verifikasi alamat email Anda melalui link yang kami kirimkan.',
     };
 </script>
 
@@ -22,17 +22,16 @@
     } = $props();
 </script>
 
-<AppHead title="Email verification" />
+<AppHead title="Verifikasi Email" />
 
 {#if status === 'verification-link-sent'}
     <div class="mb-4 text-center text-sm font-medium text-green-600">
-        A new verification link has been sent to the email address you provided
-        during registration.
+        Link verifikasi baru sudah dikirim ke alamat email Anda.
     </div>
 {:else if status === 'verification-link-failed'}
     <div class="mb-4 text-center text-sm font-medium text-destructive">
-        We could not send the verification email right now. Please try again in a
-        moment.
+        Email verifikasi belum bisa dikirim saat ini. Silakan coba lagi sebentar
+        lagi.
     </div>
 {/if}
 
@@ -40,11 +39,11 @@
     {#snippet children({ processing })}
         <Button type="submit" disabled={processing} variant="secondary">
             {#if processing}<Spinner />{/if}
-            Resend verification email
+            Kirim ulang email verifikasi
         </Button>
 
         <TextLink href={logout()} as="button" class="mx-auto block text-sm">
-            Log out
+            Keluar
         </TextLink>
     {/snippet}
 </Form>

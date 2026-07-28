@@ -60,6 +60,22 @@ class VerificationNotificationTest extends TestCase
         Notification::assertSentTo($user, VerifyEmail::class);
     }
 
+    public function test_verification_email_uses_indonesian_copy(): void
+    {
+        $user = User::factory()->unverified()->create([
+            'name' => 'Andi',
+            'email' => 'andi@example.com',
+        ]);
+
+        $message = (new VerifyEmail)->toMail($user);
+
+        $this->assertSame('Verifikasi alamat email OptiBus', $message->subject);
+        $this->assertSame('Halo Andi,', $message->greeting);
+        $this->assertSame('Verifikasi Email', $message->actionText);
+        $this->assertContains('Terima kasih sudah mendaftar di OptiBus.', $message->introLines);
+        $this->assertContains('Jika Anda tidak membuat akun OptiBus, abaikan email ini.', $message->outroLines);
+    }
+
     public function test_resend_verification_notification_gracefully_handles_mail_failures(): void
     {
         $user = Mockery::mock(User::class)->makePartial();
