@@ -8,6 +8,7 @@
     import ProfileMenu from '@/components/ProfileMenu.svelte';
     import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
     import { Button } from '@/components/ui/button';
+    import { SidebarTrigger } from '@/components/ui/sidebar';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { shouldPrefetchNavigationHref } from '@/lib/navigation';
     import { toUrl } from '@/lib/utils';
@@ -54,6 +55,9 @@
 >
     <div class="flex min-w-0 items-center gap-2">
         <MobileSettingsMenuButton />
+        <SidebarTrigger
+            class="hidden h-9 w-9 rounded-md border border-input bg-background text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:inline-flex"
+        />
 
         {#if isDashboardPage}
             <div class="min-w-0 leading-tight">
