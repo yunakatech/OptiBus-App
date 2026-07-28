@@ -177,13 +177,32 @@
             body { background: #ffffff; }
             .page { padding: 0; }
             .toolbar { display: none; }
+            .doc-head-main {
+                display: table;
+                width: 100%;
+            }
+            .brand-cell,
+            .status-cell {
+                display: table-cell;
+                vertical-align: top;
+            }
+            .brand-cell {
+                width: 180px;
+            }
+            .status-cell {
+                width: 260px;
+                text-align: right;
+            }
+            .barcode img {
+                margin-left: auto;
+            }
             .sheet {
                 border: 0;
                 box-shadow: none;
                 padding: 8px 10px 0;
             }
         }
-        @media (max-width: 780px) {
+        @media screen and (max-width: 780px) {
             .doc-head-main,
             .brand-cell,
             .status-cell {

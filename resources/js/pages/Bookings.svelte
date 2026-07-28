@@ -1717,7 +1717,6 @@
                 phone,
                 pickup_point: pickupPoint,
                 pembayaran,
-                segment_id: segmentId,
                 discount,
             });
 
@@ -1741,6 +1740,20 @@
                     discount,
                 };
             }
+
+            updateBookingRowInLocalGroups(currentDetailSeat.id, {
+                seat,
+                name,
+                phone,
+                pickup_point: pickupPoint,
+                pembayaran,
+                discount,
+            });
+            localLatestBookings = localLatestBookings.map((row) =>
+                row.id === currentDetailSeat.id
+                    ? { ...row, seat, name, phone, pembayaran }
+                    : row,
+            );
 
             detailEditMode = false;
             formSuccess = `Data kursi ${seat} berhasil diperbarui.`;
@@ -1810,6 +1823,9 @@
                             ? { ...item, pembayaran: 'Lunas' }
                             : item,
                     );
+                    updateBookingRowInLocalGroups(bookingId, {
+                        pembayaran: 'Lunas',
+                    });
                     localLatestBookings = localLatestBookings.map((row) =>
                         row.id === bookingId
                             ? { ...row, pembayaran: 'Lunas' }
