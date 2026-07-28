@@ -2,14 +2,14 @@
     <img
         src="/branding/OptiBus-logo-full.png"
         alt="OptiBus Booking & Operations Workspace"
-        class="h-9 w-auto max-w-[210px] object-contain group-data-[collapsible=icon]:hidden"
+        class="h-9 w-auto max-w-[210px] object-contain transition group-data-[collapsible=icon]:hidden dark:brightness-0 dark:invert"
         loading="eager"
         decoding="async"
     />
     <img
         src="/branding/OptiBus-logo-mark.png"
         alt="OptiBus"
-        class="hidden h-8 w-8 object-contain group-data-[collapsible=icon]:block"
+        class="hidden h-8 w-8 object-contain transition group-data-[collapsible=icon]:block dark:brightness-0 dark:invert"
         loading="eager"
         decoding="async"
     />

@@ -139,13 +139,13 @@
 
 {#if mode === 'desktop'}
     {#if showTenant || showPool}
-        <DropdownMenu class={cn('relative min-w-0 w-full', className)}>
+        <DropdownMenu class={cn('relative w-full min-w-0 max-w-full', className)}>
             <DropdownMenuTrigger asChild>
                 {#snippet children(props)}
                     <button
                         type="button"
                         class={cn(
-                            'flex min-h-11 w-full min-w-0 items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:focus-visible:bg-slate-900/60',
+                            'flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:focus-visible:bg-slate-900/60',
                             props['data-state'] === 'open'
                                 ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60'
                                 : '',
@@ -156,7 +156,10 @@
                         data-state={props['data-state']}
                     >
                         <Building2 class="size-4 shrink-0 text-primary" />
-                        <span class="min-w-0 flex-1 truncate text-left text-sm font-semibold text-foreground">
+                        <span
+                            class="block min-w-0 flex-1 truncate text-left text-sm font-semibold text-foreground"
+                            title={activeSummary}
+                        >
                             {activeSummary}
                         </span>
                         <ChevronDown class="size-4 shrink-0 text-muted-foreground" />
@@ -166,7 +169,7 @@
             <DropdownMenuContent
                 align="end"
                 sideOffset={8}
-                class="w-[18rem] max-w-[calc(100vw-1rem)] p-2"
+                class="w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden p-2"
             >
                 <div class="max-h-[70svh] space-y-1 overflow-y-auto pr-1 scrollbar-thin">
                     {#if showTenant}
@@ -192,8 +195,8 @@
                             >
                                 <Building2 class="size-4 shrink-0" />
                                 <Check class={cn('size-4 shrink-0', activeTenant?.id === tenant.id ? 'opacity-100 text-primary' : 'opacity-0')} />
-                                <span class="min-w-0 flex-1 truncate">{tenant.name}</span>
-                                <span class="shrink-0 text-[11px] text-muted-foreground">{tenant.slug}</span>
+                                <span class="min-w-0 flex-1 truncate" title={tenant.name}>{tenant.name}</span>
+                                <span class="max-w-20 shrink-0 truncate text-[11px] text-muted-foreground" title={tenant.slug}>{tenant.slug}</span>
                                 {#if pendingTenantId === tenant.id}
                                     <LoaderCircle class="size-4 shrink-0 animate-spin text-muted-foreground" />
                                 {/if}
@@ -227,9 +230,9 @@
                             >
                                 <MapPin class="size-4 shrink-0" />
                                 <Check class={cn('size-4 shrink-0', activePool?.id === pool.id ? 'opacity-100 text-primary' : 'opacity-0')} />
-                                <span class="min-w-0 flex-1 truncate">{pool.name}</span>
+                                <span class="min-w-0 flex-1 truncate" title={pool.name}>{pool.name}</span>
                                 {#if pool.code}
-                                    <span class="shrink-0 text-[11px] text-muted-foreground">{pool.code}</span>
+                                    <span class="max-w-16 shrink-0 truncate text-[11px] text-muted-foreground" title={pool.code}>{pool.code}</span>
                                 {/if}
                                 {#if pendingPoolId === pool.id}
                                     <LoaderCircle class="size-4 shrink-0 animate-spin text-muted-foreground" />
