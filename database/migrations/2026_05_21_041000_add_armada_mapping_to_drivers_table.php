@@ -23,25 +23,37 @@ return new class extends Migration
             }
         });
 
-        if (! Schema::hasTable('units') || ! Schema::hasTable('armadas')) {
+        $unitTable = Schema::hasTable('category_armada')
+            ? 'category_armada'
+            : (Schema::hasTable('units') ? 'units' : null);
+
+        if ($unitTable === null || ! Schema::hasTable('armadas')) {
+            return;
+        }
+
+        $unitColumn = Schema::hasColumn($unitTable, 'nama_kategori')
+            ? 'nama_kategori'
+            : (Schema::hasColumn($unitTable, 'nopol') ? 'nopol' : null);
+
+        if ($unitColumn === null) {
             return;
         }
 
         DB::table('drivers as d')
-            ->leftJoin('units as u', 'd.unit_id', '=', 'u.id')
+            ->leftJoin($unitTable.' as u', 'd.unit_id', '=', 'u.id')
             ->whereNotNull('d.unit_id')
             ->whereNull('d.armada_id')
-            ->select(['d.id', 'u.nopol'])
+            ->select(['d.id', DB::raw('u.'.$unitColumn.' as unit_value')])
             ->orderBy('d.id')
             ->get()
             ->each(function ($row): void {
-                $nopol = strtoupper(trim((string) ($row->nopol ?? '')));
-                if ($nopol === '') {
+                $unitValue = strtoupper(trim((string) ($row->unit_value ?? '')));
+                if ($unitValue === '') {
                     return;
                 }
 
                 $armada = DB::table('armadas')
-                    ->whereRaw('UPPER(nopol) = ?', [$nopol])
+                    ->whereRaw('UPPER(nopol) = ?', [$unitValue])
                     ->first(['id', 'nopol']);
 
                 if (! $armada) {

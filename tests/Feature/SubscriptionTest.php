@@ -244,7 +244,7 @@ class SubscriptionTest extends TestCase
 
         $this->assertDatabaseHas('tenants', [
             'id' => $tenantId,
-            'status' => 'pending_payment',
+            'status' => 'active',
         ]);
         $this->assertDatabaseHas('subscriptions', [
             'tenant_id' => $tenantId,
@@ -257,6 +257,76 @@ class SubscriptionTest extends TestCase
             'payment_gateway' => 'Mayar',
             'gateway_reference' => 'txn_fleet_123',
             'gateway_checkout_url' => 'https://mayar.test/pay/pay_fleet_123',
+        ]);
+    }
+
+    public function test_subscription_upgrade_keeps_existing_access_until_invoice_is_paid(): void
+    {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+        ]);
+
+        Http::fake([
+            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
+                'data' => [
+                    'id' => 'pay_upgrade_123',
+                    'transactionId' => 'txn_upgrade_123',
+                    'link' => 'https://mayar.test/pay/pay_upgrade_123',
+                    'status' => 'open',
+                ],
+            ]),
+        ]);
+
+        [$user, $tenantId, $starterSubscriptionId] = $this->tenantWithSubscription(
+            planSlug: 'starter',
+            tenantStatus: 'active',
+            subscriptionStatus: 'active',
+            trialEndsAt: null,
+            endsAt: now()->addDays(14)->toDateString(),
+        );
+        $fleetPlanId = (int) DB::table('plans')->where('slug', 'fleet')->value('id');
+
+        $this->actingAs($user)
+            ->post(route('subscription.checkout'), [
+                'plan_slug' => 'fleet',
+                'billing_interval' => 'monthly',
+            ])
+            ->assertRedirect('https://mayar.test/pay/pay_upgrade_123');
+
+        $this->assertDatabaseHas('tenants', [
+            'id' => $tenantId,
+            'status' => 'active',
+        ]);
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $starterSubscriptionId,
+            'tenant_id' => $tenantId,
+            'status' => 'active',
+        ]);
+
+        $newSubscriptionId = (int) DB::table('subscriptions')
+            ->where('tenant_id', $tenantId)
+            ->where('plan_id', $fleetPlanId)
+            ->value('id');
+
+        $this->assertGreaterThan(0, $newSubscriptionId);
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $newSubscriptionId,
+            'tenant_id' => $tenantId,
+            'plan_id' => $fleetPlanId,
+            'status' => 'pending_payment',
+            'billing_interval' => 'monthly',
+        ]);
+
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'tenant_id' => $tenantId,
+            'subscription_id' => $newSubscriptionId,
+            'status' => 'pending',
+            'payment_gateway' => 'Mayar',
+            'gateway_reference' => 'txn_upgrade_123',
+            'gateway_checkout_url' => 'https://mayar.test/pay/pay_upgrade_123',
         ]);
     }
 

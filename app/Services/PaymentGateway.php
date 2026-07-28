@@ -122,6 +122,15 @@ class PaymentGateway
                         'ends_at' => $newEndsAt,
                         'updated_at' => now(),
                     ]);
+
+                    DB::table('subscriptions')
+                        ->where('tenant_id', (int) $sub->tenant_id)
+                        ->where('id', '!=', (int) $sub->id)
+                        ->whereIn('status', ['active', 'trial', 'pending_payment', 'past_due'])
+                        ->update([
+                            'status' => 'expired',
+                            'updated_at' => now(),
+                        ]);
                 }
             }
 

@@ -106,6 +106,12 @@
             | BillingAccess
             | null,
     );
+    const currentPlanSlug = $derived(
+        currentPlan?.slug ?? tenantSub?.plan_slug ?? '',
+    );
+    const currentPlanMonthly = $derived(
+        Number(currentPlan?.price_monthly ?? 0),
+    );
 
     const payableInvoice = $derived(
         invoices.find((invoice) =>
@@ -127,7 +133,7 @@
     const canAccessDashboard = $derived(
         Boolean(billingAccess?.allowed),
     );
-    const canChoosePlan = $derived(Boolean(billingAccess?.locked && !payableInvoice));
+    const canChoosePlan = $derived(Boolean(!payableInvoice));
     const paymentLinkReady = $derived(
         Boolean(payableInvoice?.gateway_checkout_url),
     );
@@ -233,21 +239,23 @@
     }
 
     function planStateLabel(plan: Plan): string {
-        if (plan.slug === currentPlan?.slug) {
+        if (plan.slug === currentPlanSlug) {
             return tenantSub?.subscription_status === 'trial'
                 ? 'Trial Starter'
                 : 'Paket aktif';
         }
 
-        if (billingAccess?.locked) {
-            return plan.price_monthly > (currentPlan?.price_monthly ?? 0)
-                ? 'Upgrade tersedia'
-                : 'Pilih paket';
+        if (payableInvoice) {
+            return 'Selesaikan invoice aktif dulu';
         }
 
-        return plan.price_monthly > (currentPlan?.price_monthly ?? 0)
-            ? 'Upgrade tersedia'
-            : 'Downgrade tersedia';
+        return plan.price_monthly > currentPlanMonthly
+            ? `Upgrade ke ${plan.name}`
+            : `Ganti ke ${plan.name}`;
+    }
+
+    function planButtonVariant(plan: Plan): 'default' | 'outline' {
+        return plan.slug === currentPlanSlug ? 'default' : 'outline';
     }
 
     function startCheckout(plan: Plan): void {
@@ -545,11 +553,18 @@
                         >
                     </CardHeader>
                     <CardContent>
+                        <div
+                            class="mb-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground"
+                        >
+                            {payableInvoice
+                                ? 'Ada invoice aktif yang perlu diselesaikan lebih dulu sebelum ganti paket.'
+                                : 'Kamu bisa upgrade atau ganti paket kapan saja. Paket lama tetap berjalan sampai invoice upgrade lunas.'}
+                        </div>
                         <div class="grid gap-3 md:grid-cols-3">
                             {#each plans as plan}
                                 <div
                                     class={`rounded-lg border p-3 ${
-                                        plan.slug === currentPlan?.slug
+                                        plan.slug === currentPlanSlug
                                             ? 'border-primary bg-primary/5'
                                             : 'border-border/70'
                                     }`}
@@ -562,7 +577,7 @@
                                         >
                                             {plan.name}
                                         </p>
-                                        {#if plan.slug === currentPlan?.slug}
+                                        {#if plan.slug === currentPlanSlug}
                                             <CheckCircle2
                                                 class="h-4 w-4 text-primary"
                                             />
@@ -582,31 +597,19 @@
                                     >
                                         {plan.description}
                                     </p>
-                                    {#if canChoosePlan}
-                                        <Button
-                                            type="button"
-                                            variant={plan.slug === currentPlan?.slug
-                                                ? 'default'
-                                                : 'outline'}
-                                            class="mt-3 h-9 w-full rounded-lg"
-                                            disabled={checkoutPlanSlug !== ''}
-                                            onclick={() => startCheckout(plan)}
-                                        >
-                                            {checkoutPlanSlug === plan.slug
-                                                ? 'Membuat checkout...'
-                                                : `Pilih ${plan.name}`}
-                                        </Button>
-                                    {:else}
-                                        <Badge
-                                            variant={plan.slug ===
-                                            currentPlan?.slug
-                                                ? 'default'
-                                                : 'outline'}
-                                            class="mt-3 w-full justify-center"
-                                        >
-                                            {planStateLabel(plan)}
-                                        </Badge>
-                                    {/if}
+                                    <Button
+                                        type="button"
+                                        variant={planButtonVariant(plan)}
+                                        class="mt-3 h-9 w-full rounded-lg"
+                                        disabled={checkoutPlanSlug !== '' ||
+                                            plan.slug === currentPlanSlug ||
+                                            !canChoosePlan}
+                                        onclick={() => startCheckout(plan)}
+                                    >
+                                        {checkoutPlanSlug === plan.slug
+                                            ? 'Membuat checkout...'
+                                            : planStateLabel(plan)}
+                                    </Button>
                                 </div>
                             {/each}
                         </div>

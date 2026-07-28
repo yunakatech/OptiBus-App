@@ -133,6 +133,7 @@ class SubscriptionPaymentController extends Controller
             return back()->with('status', 'billing_missing_tenant');
         }
 
+        $tenantSub = PoolScope::tenantSubscription();
         $data = $request->validate([
             'plan_slug' => ['required', 'string', 'in:starter,pro,fleet'],
             'billing_interval' => ['nullable', 'string', 'in:monthly,yearly'],
@@ -154,19 +155,33 @@ class SubscriptionPaymentController extends Controller
             return back()->with('status', 'billing_plan_free');
         }
 
-        $invoiceId = DB::transaction(function () use ($tenantId, $plan, $billingInterval, $amount): int {
-            DB::table('tenants')->where('id', $tenantId)->update([
-                'status' => 'pending_payment',
-                'updated_at' => now(),
-            ]);
+        $preserveCurrentAccess = in_array(
+            (string) ($tenantSub['subscription_status'] ?? ''),
+            ['active', 'trial'],
+            true,
+        );
 
-            DB::table('subscriptions')
-                ->where('tenant_id', $tenantId)
-                ->whereIn('status', ['trial', 'active', 'past_due'])
-                ->update([
-                    'status' => 'expired',
+        $invoiceId = DB::transaction(function () use (
+            $tenantId,
+            $plan,
+            $billingInterval,
+            $amount,
+            $preserveCurrentAccess,
+        ): int {
+            if (! $preserveCurrentAccess) {
+                DB::table('tenants')->where('id', $tenantId)->update([
+                    'status' => 'pending_payment',
                     'updated_at' => now(),
                 ]);
+
+                DB::table('subscriptions')
+                    ->where('tenant_id', $tenantId)
+                    ->whereIn('status', ['trial', 'active', 'past_due'])
+                    ->update([
+                        'status' => 'expired',
+                        'updated_at' => now(),
+                    ]);
+            }
 
             $subscriptionId = (int) DB::table('subscriptions')->insertGetId([
                 'tenant_id' => $tenantId,
