@@ -5,7 +5,9 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use App\Support\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
@@ -53,6 +55,8 @@ class RegistrationTest extends TestCase
 
     public function test_trial_registration_creates_trial_subscription_without_invoice(): void
     {
+        Notification::fake();
+
         $response = $this->post(route('register.store'), [
             'name' => 'Trial User',
             'email' => 'trial@example.com',
@@ -64,6 +68,11 @@ class RegistrationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('onboarding', absolute: false));
+        Notification::assertSentToTimes(
+            User::where('email', 'trial@example.com')->firstOrFail(),
+            VerifyEmail::class,
+            1,
+        );
 
         $this->get(route('onboarding'))
             ->assertOk()

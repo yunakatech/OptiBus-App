@@ -32,6 +32,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
         try {
             $this->notify(new VerifyEmail);
+            if (function_exists('session')) {
+                session()->put('email_verification_sent_for_user', (int) ($this->id ?? 0));
+            }
         } catch (Throwable $e) {
             $this->emailVerificationSendException = $e;
 
