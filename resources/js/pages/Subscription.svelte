@@ -6,7 +6,6 @@
 
 <script lang="ts">
     import { Link, page, router } from '@inertiajs/svelte';
-    import { onDestroy, onMount } from 'svelte';
     import {
         AlertTriangle,
         CheckCircle2,
@@ -161,28 +160,6 @@
               : 'Invoice akan muncul otomatis setelah memilih paket berbayar.',
     );
     let checkoutPlanSlug = $state('');
-    let previousDensity: string | null = null;
-
-    onMount(() => {
-        if (typeof document === 'undefined') {
-            return;
-        }
-
-        previousDensity = document.documentElement.getAttribute('data-density');
-        document.documentElement.setAttribute('data-density', 'compact');
-    });
-
-    onDestroy(() => {
-        if (typeof document === 'undefined') {
-            return;
-        }
-
-        if (previousDensity) {
-            document.documentElement.setAttribute('data-density', previousDensity);
-        } else {
-            document.documentElement.removeAttribute('data-density');
-        }
-    });
 
     function formatRupiah(value: number): string {
         return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
