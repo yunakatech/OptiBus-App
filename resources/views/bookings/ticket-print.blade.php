@@ -7,16 +7,15 @@
     <style>
         :root {
             --ink: #0f172a;
-            --muted: #64748b;
-            --line: #d7e3ea;
-            --soft: #f8fbfd;
+            --muted: #475569;
+            --line: #cbd5e1;
+            --soft: #f8fafc;
             --brand: #075985;
-            --brand-soft: #e0f2fe;
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            background: #edf5f9;
+            background: #eef4f8;
             color: var(--ink);
             font-family: Arial, Helvetica, sans-serif;
         }
@@ -24,7 +23,7 @@
             min-height: 100vh;
             display: grid;
             place-items: center;
-            padding: 28px;
+            padding: 26px;
         }
         .toolbar {
             position: fixed;
@@ -33,7 +32,7 @@
         }
         .print-btn {
             border: 1px solid var(--line);
-            background: white;
+            background: #ffffff;
             color: var(--ink);
             padding: 10px 14px;
             border-radius: 999px;
@@ -42,165 +41,146 @@
         }
         .ticket {
             width: min(760px, 100%);
-            background: white;
+            background: #ffffff;
             border: 1px solid var(--line);
-            border-radius: 26px;
-            overflow: hidden;
-            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
-        }
-        .hero {
             padding: 22px 24px;
-            background:
-                radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 45%),
-                linear-gradient(135deg, #f8fcff 0%, #eef8fd 100%);
-            border-bottom: 1px solid var(--line);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
         }
-        .brand-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 12px;
+        .doc-head {
+            display: table;
+            width: 100%;
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--ink);
+        }
+        .brand-cell,
+        .title-cell {
+            display: table-cell;
+            vertical-align: top;
         }
         .brand-logo {
-            width: 148px;
+            width: 150px;
             height: auto;
             object-fit: contain;
         }
-        .brand-copy {
-            flex: 1;
+        .title-cell {
+            text-align: right;
         }
         .eyebrow {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .14em;
+            margin-bottom: 5px;
             color: var(--brand);
+            font-size: 11px;
             font-weight: 700;
-            margin-bottom: 8px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
         }
         h1 {
-            margin: 0 0 6px;
-            font-size: 28px;
+            margin: 0 0 5px;
+            font-size: 26px;
+            line-height: 1.15;
         }
-        .sub {
+        .doc-code {
             color: var(--muted);
-            font-size: 13px;
+            font-size: 12px;
+            line-height: 1.5;
         }
-        .codes {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 14px;
+        .barcode-row {
+            margin: 8px 0 14px;
+            text-align: right;
         }
-        .barcode-card {
-            margin-top: 14px;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 18px;
-            padding: 10px 12px;
-            max-width: 320px;
-        }
-        .barcode-card img {
-            display: block;
-            width: 100%;
+        .barcode-row img {
+            width: 260px;
+            max-width: 100%;
             height: auto;
         }
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: var(--brand-soft);
-            color: var(--brand);
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table {
+            margin-top: 12px;
             font-size: 12px;
-            font-weight: 700;
         }
-        .body {
-            padding: 22px 24px 24px;
-        }
-        .grid {
-            display: grid;
-            gap: 14px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .card {
-            background: var(--soft);
+        .info-table th,
+        .info-table td {
             border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 14px 16px;
+            padding: 9px 10px;
+            vertical-align: top;
         }
-        .label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .08em;
+        .info-table th {
+            width: 24%;
+            background: var(--soft);
             color: var(--muted);
-            margin-bottom: 6px;
+            font-size: 10px;
+            letter-spacing: .08em;
+            text-align: left;
+            text-transform: uppercase;
         }
-        .value {
-            font-size: 15px;
+        .info-table td {
             font-weight: 700;
         }
-        .muted {
+        .sub-value {
+            display: block;
+            margin-top: 3px;
             color: var(--muted);
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 400;
+            line-height: 1.45;
         }
-        .footer {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px dashed var(--line);
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            align-items: center;
+        .section-title {
+            margin: 14px 0 7px;
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
         }
         .amount {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 800;
         }
-        .signatures {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px;
-            margin-top: 18px;
+        .note {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--line);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.55;
         }
-        .signature-card {
-            border: 1px dashed var(--line);
-            border-radius: 18px;
-            padding: 14px;
-            min-height: 118px;
-            background: #fcfeff;
+        .signature-table {
+            margin-top: 16px;
+            font-size: 12px;
             text-align: center;
         }
-        .signature-role {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .1em;
+        .signature-table th,
+        .signature-table td {
+            width: 50%;
+            border: 1px solid var(--line);
+            padding: 9px 12px;
+        }
+        .signature-table th {
+            background: var(--soft);
             color: var(--muted);
+            font-size: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
         }
         .signature-space {
-            height: 48px;
-        }
-        .signature-name {
-            border-top: 1px solid var(--line);
-            padding-top: 8px;
-            font-weight: 700;
-            font-size: 13px;
+            height: 52px;
         }
         .doc-footer {
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px dashed var(--line);
+            margin-top: 12px;
             display: flex;
             justify-content: space-between;
             gap: 12px;
             color: var(--muted);
-            font-size: 11px;
+            font-size: 10px;
         }
         @media print {
-            body { background: white; }
-            .page { padding: 0; min-height: auto; display: block; }
+            body { background: #ffffff; }
+            .page { min-height: auto; display: block; padding: 0; }
             .toolbar { display: none; }
-            .ticket { box-shadow: none; border-radius: 0; width: 100%; border: none; }
+            .ticket { width: 100%; border: 0; box-shadow: none; padding: 0; }
         }
     </style>
 </head>
@@ -213,90 +193,101 @@
 
     <div class="page">
         <section class="ticket">
-            <div class="hero">
-                <div class="brand-row">
-                    <div class="brand-copy">
-                        <div class="eyebrow">OptiBus Ticket</div>
-                        <h1>Tiket Keberangkatan</h1>
-                        <div class="sub">Dokumen tiket perjalanan penumpang untuk keberangkatan terjadwal.</div>
-                    </div>
+            <header class="doc-head">
+                <div class="brand-cell">
                     @if (!empty($ticket['logo_data_uri']))
                         <img src="{{ $ticket['logo_data_uri'] }}" alt="OptiBus" class="brand-logo">
                     @endif
                 </div>
-                <div class="codes">
-                    <div class="pill">{{ $ticket['ticket_code'] }}</div>
-                    <div class="pill">{{ $ticket['departure_code'] }}</div>
-                </div>
-                @if (!empty($ticket['barcode_svg']))
-                    <div class="barcode-card">
-                        <img src="{{ $ticket['barcode_svg'] }}" alt="Barcode {{ $ticket['ticket_code'] }}">
+                <div class="title-cell">
+                    <div class="eyebrow">OptiBus Ticket</div>
+                    <h1>Tiket Keberangkatan</h1>
+                    <div class="doc-code">
+                        Kode Tiket: <strong>{{ $ticket['ticket_code'] }}</strong><br>
+                        Keberangkatan: <strong>{{ $ticket['departure_code'] }}</strong>
                     </div>
-                @endif
+                </div>
+            </header>
+
+            @if (!empty($ticket['barcode_svg']))
+                <div class="barcode-row">
+                    <img src="{{ $ticket['barcode_svg'] }}" alt="Barcode {{ $ticket['ticket_code'] }}">
+                </div>
+            @endif
+
+            <div class="section-title">Data Penumpang dan Perjalanan</div>
+            <table class="info-table">
+                <tbody>
+                    <tr>
+                        <th>Penumpang</th>
+                        <td>
+                            {{ $ticket['name'] ?: '-' }}
+                            <span class="sub-value">{{ $ticket['phone'] ?: '-' }}</span>
+                        </td>
+                        <th>Seat</th>
+                        <td>
+                            {{ $ticket['seat'] ?: '-' }}
+                            <span class="sub-value">{{ $ticket['status'] ?: '-' }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Rute</th>
+                        <td>
+                            {{ $ticket['rute'] ?: '-' }}
+                            <span class="sub-value">{{ $ticket['segment_name'] ?: '-' }}</span>
+                        </td>
+                        <th>Tanggal / Jam</th>
+                        <td>
+                            {{ $ticket['tanggal'] ?: '-' }} &bull; {{ $ticket['jam'] ?: '-' }}
+                            <span class="sub-value">Unit {{ $ticket['unit'] ?? 1 }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Driver</th>
+                        <td>
+                            {{ $ticket['driver_name'] ?: '-' }}
+                            <span class="sub-value">Nopol {{ $ticket['armada_nopol'] ?: '-' }}</span>
+                        </td>
+                        <th>Jemput</th>
+                        <td>{{ $ticket['pickup_point'] ?: '-' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-title">Pembayaran</div>
+            <table class="info-table">
+                <tbody>
+                    <tr>
+                        <th>Metode / Status</th>
+                        <td>{{ $ticket['pembayaran'] ?: '-' }}</td>
+                        <th>Total</th>
+                        <td class="amount">Rp {{ number_format(max(((float) ($ticket['price'] ?? 0)) - ((float) ($ticket['discount'] ?? 0)), 0), 0, ',', '.') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="note">
+                Tunjukkan tiket ini saat keberangkatan. Simpan PDF jika diperlukan untuk arsip.
             </div>
 
-            <div class="body">
-                <div class="grid">
-                    <div class="card">
-                        <div class="label">Penumpang</div>
-                        <div class="value">{{ $ticket['name'] ?: '-' }}</div>
-                        <div class="muted">{{ $ticket['phone'] ?: '-' }}</div>
-                    </div>
-                    <div class="card">
-                        <div class="label">Seat</div>
-                        <div class="value">{{ $ticket['seat'] ?: '-' }}</div>
-                        <div class="muted">{{ $ticket['status'] ?: '-' }}</div>
-                    </div>
-                    <div class="card">
-                        <div class="label">Rute</div>
-                        <div class="value">{{ $ticket['rute'] ?: '-' }}</div>
-                        <div class="muted">{{ $ticket['segment_name'] ?: '-' }}</div>
-                    </div>
-                    <div class="card">
-                        <div class="label">Tanggal & Jam</div>
-                        <div class="value">{{ $ticket['tanggal'] ?: '-' }} &bull; {{ $ticket['jam'] ?: '-' }}</div>
-                        <div class="muted">Unit {{ $ticket['unit'] ?? 1 }}</div>
-                    </div>
-                    <div class="card">
-                        <div class="label">Driver</div>
-                        <div class="value">{{ $ticket['driver_name'] ?: '-' }}</div>
-                        <div class="muted">Nopol {{ $ticket['armada_nopol'] ?: '-' }}</div>
-                    </div>
-                    <div class="card">
-                        <div class="label">Jemput & Bayar</div>
-                        <div class="value">{{ $ticket['pickup_point'] ?: '-' }}</div>
-                        <div class="muted">{{ $ticket['pembayaran'] ?: '-' }}</div>
-                    </div>
-                </div>
+            <table class="signature-table">
+                <thead>
+                    <tr>
+                        <th>Petugas OptiBus</th>
+                        <th>Penumpang</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><div class="signature-space"></div>______________________</td>
+                        <td><div class="signature-space"></div>{{ $ticket['name'] ?: '______________________' }}</td>
+                    </tr>
+                </tbody>
+            </table>
 
-                <div class="footer">
-                    <div>
-                        <div class="label">Catatan</div>
-                        <div class="muted">Tunjukkan tiket ini saat keberangkatan. Simpan PDF jika diperlukan untuk arsip.</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div class="label">Total</div>
-                        <div class="amount">Rp {{ number_format(max(((float) ($ticket['price'] ?? 0)) - ((float) ($ticket['discount'] ?? 0)), 0), 0, ',', '.') }}</div>
-                    </div>
-                </div>
-
-                <div class="signatures">
-                    <div class="signature-card">
-                        <div class="signature-role">Petugas OptiBus</div>
-                        <div class="signature-space"></div>
-                        <div class="signature-name">______________________</div>
-                    </div>
-                    <div class="signature-card">
-                        <div class="signature-role">Penumpang</div>
-                        <div class="signature-space"></div>
-                        <div class="signature-name">{{ $ticket['name'] ?: '______________________' }}</div>
-                    </div>
-                </div>
-
-                <div class="doc-footer">
-                    <div>OptiBus Booking &amp; Operations Workspace</div>
-                    <div>Generated {{ now()->format('d/m/Y H:i') }}</div>
-                </div>
+            <div class="doc-footer">
+                <div>OptiBus Booking &amp; Operations Workspace</div>
+                <div>Generated {{ now()->format('d/m/Y H:i') }}</div>
             </div>
         </section>
     </div>
