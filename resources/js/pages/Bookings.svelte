@@ -9291,11 +9291,24 @@
     {#if !consoleOnly && !groupDetailPage}
         <Card class="border-sidebar-border/70 dark:border-sidebar-border">
             <CardHeader>
-                <CardTitle
-                    >{listOnly
-                        ? 'Keberangkatan'
-                        : 'Keberangkatan Terbaru'}</CardTitle
+                <div
+                    class="flex flex-wrap items-center justify-between gap-3"
                 >
+                    <CardTitle
+                        >{listOnly
+                            ? 'Keberangkatan'
+                            : 'Keberangkatan Terbaru'}</CardTitle
+                    >
+                    {#if listOnly}
+                        <span
+                            class="inline-flex rounded-full border border-cyan-200/80 bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-800 shadow-sm dark:border-cyan-500/30 dark:bg-cyan-950/25 dark:text-cyan-100 md:text-base"
+                        >
+                            Tanggal aktif: {formatGroupDateLabel(
+                                bookingListDateFrom,
+                            )}
+                        </span>
+                    {/if}
+                </div>
                 {#if !listOnly}
                     <CardDescription>
                         Preview data keberangkatan terbaru dari tabel
@@ -9333,11 +9346,6 @@
                             class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
                         >
                             <div class="space-y-1">
-                                <p
-                                    class="text-xs font-medium text-muted-foreground"
-                                >
-                                    Tanggal aktif {bookingListDateFrom}
-                                </p>
                                 <div
                                     class="flex flex-wrap items-center gap-1.5 text-[11px]"
                                 >
