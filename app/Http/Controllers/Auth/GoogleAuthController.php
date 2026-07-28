@@ -80,6 +80,9 @@ class GoogleAuthController extends Controller
 
         // Returning users go directly to dashboard
         if (AccessControl::userIsSuperAdmin((int) $user->id)) {
+            $request->session()->forget('active_tenant_id');
+            $request->session()->forget('active_pool_id');
+
             return redirect()->intended(route('platform.dashboard'));
         }
 

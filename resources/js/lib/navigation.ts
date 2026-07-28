@@ -345,6 +345,7 @@ export function getVisibleNavSections(auth: AuthLike): NavSection[] {
     const isSuperAdmin = Boolean(auth?.user?.is_super_admin);
     const activeTenant = auth?.active_tenant ?? null;
     const showTenantScopedSections = !isSuperAdmin || Boolean(activeTenant);
+    const isPlatformContext = isSuperAdmin && !activeTenant;
     const billingLocked = Boolean(auth?.billing_access?.locked);
 
     return getMainNavSections()
@@ -374,7 +375,7 @@ export function getVisibleNavSections(auth: AuthLike): NavSection[] {
         .filter(
             (section) =>
                 showTenantScopedSections ||
-                section.id === 'operasional' ||
+                (!isPlatformContext && section.id === 'operasional') ||
                 section.id === 'sistem',
         )
         .filter((section) => section.items.length > 0);
@@ -392,7 +393,14 @@ export function flattenNavSections(sections: NavSection[]): FlatNavItem[] {
 
 export function getVisibleMobileNavItems(auth: AuthLike): NavItem[] {
     const permissions = auth?.permissions ?? [];
+    const isSuperAdmin = Boolean(auth?.user?.is_super_admin);
+    const activeTenant = auth?.active_tenant ?? null;
+    const isPlatformContext = isSuperAdmin && !activeTenant;
     const billingLocked = Boolean(auth?.billing_access?.locked);
+
+    if (isPlatformContext) {
+        return [];
+    }
 
     return billingLocked
         ? billingLockedItems

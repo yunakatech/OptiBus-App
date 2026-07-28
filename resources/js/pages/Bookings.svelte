@@ -447,6 +447,31 @@
         }
     });
 
+    $effect(() => {
+        if (!listOnly || !groupDetailPage || !groupDetailKey) {
+            return;
+        }
+
+        const target = localBookingGroups.find(
+            (group) => group.key === groupDetailKey,
+        );
+
+        if (target) {
+            formError = '';
+
+            if (openGroupDetail?.key !== target.key) {
+                void showGroupDetail(target);
+            }
+
+            return;
+        }
+
+        if (bookingListHydrated) {
+            openGroupDetail = null;
+            formError = 'Detail keberangkatan tidak ditemukan.';
+        }
+    });
+
     let bookingDate = $state(today);
     let selectedRoute = $state('');
     let selectedJam = $state('');
@@ -5787,18 +5812,6 @@
         void initPickers();
 
         if (listOnly) {
-            if (groupDetailPage && groupDetailKey) {
-                const target = localBookingGroups.find(
-                    (group) => group.key === groupDetailKey,
-                );
-
-                if (target) {
-                    void showGroupDetail(target);
-                } else {
-                    formError = 'Detail keberangkatan tidak ditemukan.';
-                }
-            }
-
             if (bookingListReady) {
                 clearDataStale(['bookings']);
             } else if (consumeDataStale(['bookings'])) {
@@ -5964,7 +5977,7 @@
                             <div
                                 class="mt-2 flex gap-1.5 overflow-x-auto pb-0.5"
                             >
-                                {#each quickDatePresets as preset (`quick-date-${preset.value}`)}
+                                {#each quickDatePresets as preset, index (`quick-date-${index}-${preset.value}`)}
                                     <Button
                                         type="button"
                                         size="sm"
@@ -5995,7 +6008,7 @@
                                     disabled={loadingRoutes}
                                 >
                                     <option value="">Pilih rute</option>
-                                    {#each availableRoutes as route (route)}
+                                    {#each availableRoutes as route, index (`route-${index}-${route}`)}
                                         <option value={route}>{route}</option>
                                     {/each}
                                 </select>
@@ -6016,7 +6029,7 @@
                                             schedules.length === 0}
                                     >
                                         <option value="">Pilih jam</option>
-                                        {#each schedules as schedule (schedule.jam)}
+                                        {#each schedules as schedule, index (`schedule-${index}-${schedule.jam}`)}
                                             <option value={schedule.jam}>
                                                 {schedule.jam}{schedule.unit_label
                                                     ? ` | ${schedule.unit_label}`
@@ -6050,7 +6063,7 @@
                                         bind:value={selectedUnit}
                                         onchange={() => void loadSeatDetails()}
                                     >
-                                        {#each unitOptions() as option (`unit-opt-${option.value}`)}
+                                        {#each unitOptions() as option, index (`unit-opt-${index}-${option.value}`)}
                                             <option value={option.value}
                                                 >{option.label}</option
                                             >
@@ -6377,7 +6390,7 @@
                                 </p>
                             {:else}
                                 <div class="max-h-56 space-y-2 overflow-auto">
-                                    {#each rekapItems as item (item.booking_id)}
+                                    {#each rekapItems as item, index (`rekap-mobile-${index}-${item.booking_id}`)}
                                         <div
                                             class="rounded-xl border bg-card px-3 py-2"
                                         >
@@ -6492,7 +6505,7 @@
                                             <div
                                                 class="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background p-1 shadow-lg"
                                             >
-                                                {#each customerSuggestions as item, idx (`cust-suggest-${idx}-${item.phone}`)}
+                                                {#each customerSuggestions as item, idx (`cust-suggest-${idx}-${item.phone}-${item.name}`)}
                                                     <button
                                                         type="button"
                                                         class="flex w-full flex-col items-start rounded px-2 py-2 text-left hover:bg-muted"
@@ -6594,7 +6607,7 @@
                                                 ? 'Memuat segment...'
                                                 : 'Pilih segment rute'}
                                         </option>
-                                        {#each scheduleSegmentOptions() as segment (`segment-opt-${segment.id}`)}
+                                        {#each scheduleSegmentOptions() as segment, index (`segment-opt-${index}-${segment.id}`)}
                                             <option value={segment.id}>
                                                 {segment.rute}{segmentJamSummary(
                                                     segment.jam_pickups,
@@ -6618,7 +6631,7 @@
                                         class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formPayment}
                                     >
-                                        {#each paymentOptions as option (option)}
+                                        {#each paymentOptions as option, index (`payment-opt-${index}-${option}`)}
                                             <option value={option}
                                                 >{option}</option
                                             >
@@ -6769,7 +6782,7 @@
                             </p>
                         {:else}
                             <div class="max-h-72 space-y-2 overflow-auto">
-                                {#each rekapItems as item (item.booking_id)}
+                                {#each rekapItems as item, index (`rekap-detail-${index}-${item.booking_id}`)}
                                     <div
                                         class="rounded-md border bg-background p-2.5"
                                     >
@@ -7072,7 +7085,7 @@
                                 class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
                                 bind:value={detailEditPayment}
                             >
-                                {#each paymentOptions as option (option)}
+                                {#each paymentOptions as option, index (`detail-payment-${index}-${option}`)}
                                     <option value={option}>{option}</option>
                                 {/each}
                             </select>
@@ -7100,7 +7113,7 @@
                                           'Tanpa Segment'
                                         : 'Pilih segment rute'}</option
                                 >
-                                {#each scheduleSegmentOptions() as segment (`detail-segment-${segment.id}`)}
+                                {#each scheduleSegmentOptions() as segment, index (`detail-segment-${index}-${segment.id}`)}
                                     <option value={segment.id}>
                                         {segment.rute}{segmentJamSummary(
                                             segment.jam_pickups,
@@ -7408,7 +7421,7 @@
                                 </Button>
                             </div>
                             <div class="mt-3 space-y-2">
-                                {#each bookingSuccessWhatsappChoices as choice (choice.phone)}
+                                {#each bookingSuccessWhatsappChoices as choice, index (`booking-whatsapp-${index}-${choice.phone}`)}
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -7493,7 +7506,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {#each rekapItems as item (item.booking_id)}
+                        {#each rekapItems as item, index (`rekap-modal-${index}-${item.booking_id}`)}
                                     <tr class="border-b/70">
                                         <td class="px-3 py-2 font-medium"
                                             >{item.seat}</td
@@ -7890,7 +7903,7 @@
                                                     </p>
                                                 {:else}
                                                     <div class="space-y-1">
-                                                        {#each filteredGroupDrivers() as driver (`group-driver-${driver.id}`)}
+                                                        {#each filteredGroupDrivers() as driver, index (`group-driver-${index}-${driver.id}`)}
                                                             <button
                                                                 type="button"
                                                                 class="flex w-full items-start justify-between rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70 dark:hover:border-cyan-500/20 dark:hover:bg-cyan-950/20"
@@ -7982,7 +7995,7 @@
                                                     </p>
                                                 {:else}
                                                     <div class="space-y-1">
-                                                        {#each filteredGroupArmadas() as armada (`group-armada-${armada.id}`)}
+                                                        {#each filteredGroupArmadas() as armada, index (`group-armada-${index}-${armada.id}`)}
                                                             <button
                                                                 type="button"
                                                                 class="flex w-full items-start justify-between rounded-xl border border-transparent px-3 py-2 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70 dark:hover:border-cyan-500/20 dark:hover:bg-cyan-950/20"
@@ -8277,7 +8290,7 @@
                                 </div>
                             {:else}
                                 <div class="space-y-2">
-                                    {#each filteredMappedRiturs() as row (row.id)}
+                                    {#each filteredMappedRiturs() as row, index (`mapped-ritur-${index}-${row.id}`)}
                                         <div
                                             class="rounded-lg border border-border/70 bg-background/85 p-3"
                                         >
@@ -8541,7 +8554,7 @@
                                 </div>
                             {:else}
                                 <div class="space-y-2">
-                                    {#each filteredAvailableRiturs() as row (row.id)}
+                                    {#each filteredAvailableRiturs() as row, index (`available-ritur-${index}-${row.id}`)}
                                         <div
                                             class="rounded-lg border border-border/70 bg-background/85 p-3"
                                         >
@@ -8643,7 +8656,7 @@
                                 ini.
                             </div>
                         {/if}
-                        {#each visibleGroupBookings() as row (row.id)}
+                        {#each visibleGroupBookings() as row, index (`group-booking-mobile-${index}-${row.id}`)}
                             <div
                                 class="rounded-lg border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/25 p-3.5 shadow-xs dark:to-cyan-950/15"
                             >
@@ -8897,7 +8910,7 @@
                                         </td>
                                     </tr>
                                 {/if}
-                                {#each visibleGroupBookings() as row (row.id)}
+                                {#each visibleGroupBookings() as row, index (`group-booking-table-${index}-${row.id}`)}
                                     <tr
                                         class="border-b/70 align-top transition-colors hover:bg-muted/20"
                                     >
@@ -9296,7 +9309,7 @@
                 <ul
                     class="list-disc space-y-2 pl-5 text-sm text-muted-foreground"
                 >
-                    {#each migrationChecklist as item (item)}
+                    {#each migrationChecklist as item, index (`migration-${index}-${item}`)}
                         <li>{item}</li>
                     {/each}
                 </ul>
@@ -9445,7 +9458,7 @@
                                     bind:value={bookingListRoute}
                                 >
                                     <option value="all">Semua Rute</option>
-                                    {#each bookingListRoutes() as route (`booking-route-filter-${route}`)}
+                                    {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
                                         <option value={route}>{route}</option>
                                     {/each}
                                 </select>
@@ -9535,7 +9548,7 @@
                                                 ? 'Memuat rute...'
                                                 : 'Pilih rute'}</option
                                         >
-                                        {#each emptyDepartureRoutes as route (`empty-departure-route-${route}`)}
+                                        {#each emptyDepartureRoutes as route, index (`empty-departure-route-${index}-${route}`)}
                                             <option value={route}
                                                 >{route}</option
                                             >
@@ -9552,7 +9565,7 @@
                                                 ? 'Memuat jam...'
                                                 : 'Pilih jam'}</option
                                         >
-                                        {#each emptyDepartureSchedules as schedule (`empty-departure-schedule-${schedule.jam}`)}
+                                        {#each emptyDepartureSchedules as schedule, index (`empty-departure-schedule-${index}-${schedule.jam}`)}
                                             <option value={schedule.jam}>
                                                 {schedule.jam} - BOP {formatCurrency(
                                                     Number(schedule.bop || 0),
@@ -9565,7 +9578,7 @@
                                         bind:value={emptyDepartureUnit}
                                         disabled={!emptyDepartureJam}
                                     >
-                                        {#each emptyDepartureUnitOptions() as option (`empty-departure-unit-${option.value}`)}
+                                        {#each emptyDepartureUnitOptions() as option, index (`empty-departure-unit-${index}-${option.value}`)}
                                             <option value={option.value}
                                                 >{option.label}</option
                                             >
@@ -9673,7 +9686,7 @@
                         <div class="space-y-4">
                             {#if bookingListDesktopView === 'sheet'}
                                 <div class="hidden space-y-4 lg:block">
-                                    {#each bookingDateSectionsMemo as section (section.key)}
+                                    {#each bookingDateSectionsMemo as section, index (`booking-date-section-${index}-${section.key}`)}
                                         <section
                                             class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                                         >
@@ -9761,7 +9774,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody class="text-[12px]">
-                                                        {#each section.groups as group (group.key)}
+                                                        {#each section.groups as group, index (`section-group-${index}-${group.key}`)}
                                                             {@const unpaidAmount =
                                                                 bookingGroupUnpaidAmount(
                                                                     group,
@@ -10191,7 +10204,7 @@
                                     ? 'space-y-2.5 lg:hidden'
                                     : 'grid gap-2 md:grid-cols-2 xl:grid-cols-3'}
                             >
-                                {#each visibleBookingGroups() as group (group.key)}
+                                {#each visibleBookingGroups() as group, index (`booking-group-card-${index}-${group.key}`)}
                                     {@const unpaidAmount =
                                         bookingGroupUnpaidAmount(group)}
                                     <div
@@ -10544,7 +10557,7 @@
                     </p>
                 {:else}
                     <div class="space-y-2.5 md:hidden">
-                        {#each localLatestBookings as booking (booking.id)}
+                        {#each localLatestBookings as booking, index (`latest-mobile-${index}-${booking.id}`)}
                             <div
                                 class="group relative overflow-hidden rounded-lg border border-border/70 bg-card/95 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-safe:transition-all hover:shadow-md hover:shadow-cyan-900/10 active:scale-[0.99]"
                             >
@@ -10779,7 +10792,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {#each localLatestBookings as booking (booking.id)}
+                                {#each localLatestBookings as booking, index (`latest-table-${index}-${booking.id}`)}
                                     <tr class="border-b/70">
                                         <td class="px-2 py-2">
                                             <p class="text-xs font-medium">
