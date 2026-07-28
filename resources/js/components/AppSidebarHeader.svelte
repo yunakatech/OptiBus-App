@@ -77,7 +77,7 @@
         {#if !isBookingConsolePage}
             <TenantPoolSwitcher
                 mode="desktop"
-                class="hidden min-w-0 max-w-52 flex-[0_1_13rem] xl:block"
+                class="hidden w-40 min-w-0 max-w-40 shrink-0 xl:block"
             />
         {/if}
         <div class="min-w-0 flex-1">
