@@ -10,14 +10,14 @@
 </script>
 
 <script lang="ts">
-    import { page, router } from '@inertiajs/svelte';
+    import { router } from '@inertiajs/svelte';
     import {
+        CalendarDays,
         CreditCard,
         Download,
         MoreHorizontal,
         RefreshCw,
         Search,
-        WalletCards,
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
@@ -27,7 +27,6 @@
         Card,
         CardContent,
         CardHeader,
-        CardTitle,
     } from '@/components/ui/card';
     import {
         DropdownMenu,
@@ -47,6 +46,7 @@
         consumeDataStale,
         markDataStale,
     } from '@/lib/data-invalidation';
+    import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
 
     type StatusKey = 'unpaid' | 'dp' | 'paid';
     type SourceKey = 'all' | 'booking' | 'charter' | 'luggage';
@@ -55,6 +55,8 @@
         status: StatusKey;
         source: SourceKey;
         q: string;
+        date_from: string;
+        date_to: string;
         page: number;
         per_page: number;
     };
@@ -100,12 +102,6 @@
         source_access: Record<'booking' | 'charter' | 'luggage', boolean>;
     };
 
-    type AuthPoolScope = {
-        all?: boolean;
-        pool_name?: string;
-        route_ids?: number[];
-    } | null;
-
     let {
         filters,
         paymentData = null,
@@ -130,6 +126,9 @@
     let activeStatus = $state<StatusKey>('unpaid');
     let activeSource = $state<SourceKey>('all');
     let searchQuery = $state('');
+    let dateFrom = $state('');
+    let dateTo = $state('');
+    let dateRangeMessage = $state('');
     let perPage = $state(20);
     let localData = $state<PaymentData | null>(null);
     let loading = $state(false);
@@ -138,18 +137,11 @@
         Record<string, { payment_status: string; down_payment: string }>
     >({});
     let initializedFromProps = $state(false);
+    let dateFromInput = $state<HTMLInputElement | null>(null);
+    let dateToInput = $state<HTMLInputElement | null>(null);
+    let dateFromPicker: FlatpickrInstance | null = null;
+    let dateToPicker: FlatpickrInstance | null = null;
 
-    const authPoolScope = $derived(
-        (page.props.auth?.pool_scope ?? null) as AuthPoolScope,
-    );
-    const poolContextName = $derived(
-        String(authPoolScope?.pool_name ?? 'Semua Pool'),
-    );
-    const poolRouteCount = $derived(
-        Array.isArray(authPoolScope?.route_ids)
-            ? authPoolScope.route_ids.length
-            : 0,
-    );
     const rows = $derived(localData?.rows ?? []);
     const pagination = $derived(
         localData?.pagination ?? {
@@ -180,6 +172,154 @@
             : 0,
     );
 
+    const formatDateValue = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    };
+
+    const parseDateValue = (value: string) => {
+        const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) {
+            return null;
+        }
+
+        const date = new Date(
+            Number(match[1]),
+            Number(match[2]) - 1,
+            Number(match[3]),
+        );
+
+        return Number.isNaN(date.getTime()) ? null : date;
+    };
+
+    const addMonthsClamped = (date: Date, months: number) => {
+        const next = new Date(date);
+        const targetMonth = next.getMonth() + months;
+        const originalDay = next.getDate();
+
+        next.setDate(1);
+        next.setMonth(targetMonth);
+        const lastDay = new Date(
+            next.getFullYear(),
+            next.getMonth() + 1,
+            0,
+        ).getDate();
+        next.setDate(Math.min(originalDay, lastDay));
+
+        return next;
+    };
+
+    const syncDatePickerBounds = () => {
+        const from = parseDateValue(dateFrom);
+        const to = parseDateValue(dateTo);
+
+        dateFromPicker?.set('maxDate', to ? formatDateValue(to) : null);
+        dateToPicker?.set('minDate', from ? formatDateValue(from) : null);
+        dateToPicker?.set(
+            'maxDate',
+            from ? formatDateValue(addMonthsClamped(from, 3)) : null,
+        );
+    };
+
+    const syncDatePickerValues = () => {
+        if (dateFrom) {
+            dateFromPicker?.setDate(dateFrom, false, 'Y-m-d');
+        } else {
+            dateFromPicker?.clear(false);
+        }
+
+        if (dateTo) {
+            dateToPicker?.setDate(dateTo, false, 'Y-m-d');
+        } else {
+            dateToPicker?.clear(false);
+        }
+
+        syncDatePickerBounds();
+    };
+
+    const normalizeDateRange = (changed: 'from' | 'to') => {
+        const from = parseDateValue(dateFrom);
+        const to = parseDateValue(dateTo);
+
+        dateRangeMessage = '';
+
+        if (!from || !to) {
+            syncDatePickerBounds();
+
+            return;
+        }
+
+        if (from.getTime() > to.getTime()) {
+            if (changed === 'from') {
+                dateTo = dateFrom;
+            } else {
+                dateFrom = dateTo;
+            }
+            syncDatePickerValues();
+
+            return;
+        }
+
+        const maxTo = addMonthsClamped(from, 3);
+        if (to.getTime() > maxTo.getTime()) {
+            if (changed === 'from') {
+                dateTo = formatDateValue(maxTo);
+            } else {
+                dateFrom = formatDateValue(addMonthsClamped(to, -3));
+            }
+            dateRangeMessage = 'Periode dibatasi maksimal 3 bulan.';
+            syncDatePickerValues();
+
+            return;
+        }
+
+        syncDatePickerBounds();
+    };
+
+    const destroyDatePickers = () => {
+        dateFromPicker?.destroy();
+        dateFromPicker = null;
+        dateToPicker?.destroy();
+        dateToPicker = null;
+    };
+
+    const initDatePickers = async () => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const flatpickr = await loadFlatpickr();
+
+        if (dateFromInput && !dateFromPicker) {
+            dateFromPicker = flatpickr(dateFromInput, {
+                dateFormat: 'Y-m-d',
+                disableMobile: true,
+                defaultDate: dateFrom || undefined,
+                onChange: (_selectedDates, dateStr) => {
+                    dateFrom = dateStr || '';
+                    normalizeDateRange('from');
+                },
+            });
+        }
+
+        if (dateToInput && !dateToPicker) {
+            dateToPicker = flatpickr(dateToInput, {
+                dateFormat: 'Y-m-d',
+                disableMobile: true,
+                defaultDate: dateTo || undefined,
+                onChange: (_selectedDates, dateStr) => {
+                    dateTo = dateStr || '';
+                    normalizeDateRange('to');
+                },
+            });
+        }
+
+        syncDatePickerValues();
+    };
+
     $effect(() => {
         if (initializedFromProps) {
             return;
@@ -188,6 +328,8 @@
         activeStatus = filters.status ?? 'unpaid';
         activeSource = filters.source ?? 'all';
         searchQuery = filters.q ?? '';
+        dateFrom = filters.date_from ?? '';
+        dateTo = filters.date_to ?? '';
         perPage = Number(filters.per_page || 20);
         localData = paymentData;
         initializedFromProps = true;
@@ -350,6 +492,7 @@
     };
 
     const reloadData = (pageNumber = 1) => {
+        normalizeDateRange('to');
         consumeDataStale(['payments']);
         loading = true;
         router.get(
@@ -358,6 +501,8 @@
                 status: activeStatus,
                 source: activeSource,
                 q: searchQuery.trim(),
+                date_from: dateFrom,
+                date_to: dateTo,
                 page: pageNumber,
                 per_page: perPage,
             },
@@ -395,6 +540,8 @@
         const params = new URLSearchParams({
             status: activeStatus,
             source: activeSource,
+            date_from: dateFrom,
+            date_to: dateTo,
         });
         const keyword = searchQuery.trim();
 
@@ -451,6 +598,8 @@
     };
 
     onMount(() => {
+        void initDatePickers();
+
         const checkSoon = () => {
             window.setTimeout(reloadIfPaymentDataStale, 0);
         };
@@ -468,6 +617,7 @@
             window.removeEventListener('pageshow', checkSoon);
             window.removeEventListener('focus', checkSoon);
             document.removeEventListener('visibilitychange', checkWhenVisible);
+            destroyDatePickers();
         };
     });
 </script>
@@ -571,34 +721,6 @@
         class="overflow-hidden border-sidebar-border/70 bg-linear-to-br from-background via-background to-cyan-50/30 dark:border-sidebar-border dark:to-cyan-950/15"
     >
         <CardHeader class="space-y-4 border-b bg-background/80 backdrop-blur">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="space-y-2">
-                    <div
-                        class="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800 dark:border-cyan-400/20 dark:bg-cyan-950/30 dark:text-cyan-100"
-                    >
-                        <WalletCards class="h-3.5 w-3.5" />
-                        Pembayaran
-                    </div>
-                    <div>
-                        <CardTitle class="text-xl md:text-2xl"
-                            >Pembayaran</CardTitle
-                        >
-                    </div>
-                </div>
-                <div
-                    class="rounded-lg border border-cyan-200/70 bg-cyan-50/70 px-3 py-2 text-xs text-cyan-950 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-100"
-                >
-                    <p class="font-semibold">Pool aktif: {poolContextName}</p>
-                    <p
-                        class="mt-0.5 text-[11px] text-cyan-800/80 dark:text-cyan-200/75"
-                    >
-                        {authPoolScope?.all
-                            ? 'Semua pool'
-                            : `${poolRouteCount} rute mapped ke user ini`}
-                    </p>
-                </div>
-            </div>
-
             <div class="grid gap-2 md:grid-cols-3">
                 {#each statusTabs as tab (tab.key)}
                     <button
@@ -674,7 +796,51 @@
                         </Button>
                     {/each}
                 </div>
-                <div class="flex flex-col gap-2 md:flex-row md:items-center">
+                <div
+                    class="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-end"
+                >
+                    <div
+                        class="grid min-w-0 gap-2 rounded-full border border-border/70 bg-background/80 p-1.5 sm:grid-cols-2 md:w-[23rem]"
+                    >
+                        <label class="relative block min-w-0">
+                            <span class="sr-only">Tanggal mulai</span>
+                            <CalendarDays
+                                class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
+                            />
+                            <input
+                                bind:this={dateFromInput}
+                                bind:value={dateFrom}
+                                class="h-9 w-full rounded-full border border-transparent bg-transparent pr-3 pl-9 text-sm outline-none transition focus:border-cyan-300 focus:bg-background focus:ring-2 focus:ring-cyan-500/15"
+                                placeholder="Dari tanggal"
+                                autocomplete="off"
+                                onblur={() => normalizeDateRange('from')}
+                                onkeydown={(event) => {
+                                    if (event.key === 'Enter') {
+                                        reloadData(1);
+                                    }
+                                }}
+                            />
+                        </label>
+                        <label class="relative block min-w-0">
+                            <span class="sr-only">Tanggal akhir</span>
+                            <CalendarDays
+                                class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
+                            />
+                            <input
+                                bind:this={dateToInput}
+                                bind:value={dateTo}
+                                class="h-9 w-full rounded-full border border-transparent bg-transparent pr-3 pl-9 text-sm outline-none transition focus:border-cyan-300 focus:bg-background focus:ring-2 focus:ring-cyan-500/15"
+                                placeholder="Sampai tanggal"
+                                autocomplete="off"
+                                onblur={() => normalizeDateRange('to')}
+                                onkeydown={(event) => {
+                                    if (event.key === 'Enter') {
+                                        reloadData(1);
+                                    }
+                                }}
+                            />
+                        </label>
+                    </div>
                     <div class="relative min-w-0 md:w-80">
                         <Search
                             class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
@@ -726,6 +892,12 @@
                     </Button>
                 </div>
             </div>
+
+            {#if dateRangeMessage}
+                <p class="-mt-2 text-xs text-amber-700 dark:text-amber-300">
+                    {dateRangeMessage}
+                </p>
+            {/if}
 
             {#if !localData}
                 <div
