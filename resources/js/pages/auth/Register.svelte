@@ -108,23 +108,23 @@
 <Form
     {...store.form()}
     resetOnSuccess={['password', 'password_confirmation']}
-    class="overflow-hidden rounded-[1.4rem] border border-[#d7dfd5] bg-white/94 shadow-[0_26px_80px_-46px_rgba(16,61,58,0.85)] backdrop-blur"
+    class="overflow-hidden rounded-[1.1rem] border border-[#d7dfd5] bg-white/94 text-[13px] shadow-[0_20px_60px_-42px_rgba(16,61,58,0.85)] backdrop-blur md:[&_input]:h-8 md:[&_input]:px-2.5 md:[&_input]:text-[13px] md:[&_label]:text-xs"
 >
     {#snippet children({ errors, processing })}
-        <div class="grid gap-5 p-4 sm:p-5">
+        <div class="grid gap-3 p-3 sm:p-4">
             <div class="grid gap-2">
                 <a
                     href={`/auth/google/redirect?intent=${isPaymentFlow ? 'paid' : 'trial'}&plan=${selectedPlan}`}
-                    class="group block rounded-2xl border border-[#d9ded4] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0d7066]/45 hover:shadow-lg hover:shadow-emerald-950/10"
+                    class="group block rounded-xl border border-[#d9ded4] bg-white p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0d7066]/45 hover:shadow-lg hover:shadow-emerald-950/10"
                 >
                     <div
-                        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                        class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2.5">
                             <span
-                                class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-sm ring-1 ring-black/5"
+                                class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white shadow-sm ring-1 ring-black/5"
                             >
-                                <svg class="h-5 w-5" viewBox="0 0 24 24"
+                                <svg class="h-4 w-4" viewBox="0 0 24 24"
                                     ><path
                                         fill="#4285F4"
                                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -147,7 +147,7 @@
                             </div>
                         </div>
                         <span
-                            class="inline-flex h-10 items-center justify-center rounded-full bg-emerald-700 px-4 text-sm font-semibold text-white shadow-sm transition group-hover:bg-emerald-800 dark:bg-emerald-500 dark:text-emerald-950 dark:group-hover:bg-emerald-400"
+                            class="inline-flex h-8 items-center justify-center rounded-full bg-emerald-700 px-3 text-xs font-semibold text-white shadow-sm transition group-hover:bg-emerald-800 dark:bg-emerald-500 dark:text-emerald-950 dark:group-hover:bg-emerald-400"
                         >
                             Lanjut dengan Google
                             <ArrowRight class="ml-2 h-4 w-4" />
@@ -171,9 +171,9 @@
                         <button
                             type="button"
                             onclick={chooseTrial}
-                            class={`rounded-xl border px-3 py-2 text-left transition ${isTrialFlow ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a] ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white hover:border-[#0d7066]/40'}`}
+                            class={`rounded-xl border px-2.5 py-1.5 text-left transition ${isTrialFlow ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a] ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white hover:border-[#0d7066]/40'}`}
                         >
-                            <span class="block text-sm font-semibold"
+                            <span class="block text-xs font-semibold"
                                 >Uji coba</span
                             >
                             <span class="block text-xs text-muted-foreground"
@@ -184,9 +184,9 @@
                             type="button"
                             onclick={() =>
                                 choosePlan(currentPlan?.slug ?? plans[0]?.slug ?? 'starter')}
-                            class={`rounded-xl border px-3 py-2 text-left transition ${isPaymentFlow ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a] ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white hover:border-[#0d7066]/40'}`}
+                            class={`rounded-xl border px-2.5 py-1.5 text-left transition ${isPaymentFlow ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a] ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white hover:border-[#0d7066]/40'}`}
                         >
-                            <span class="block text-sm font-semibold"
+                            <span class="block text-xs font-semibold"
                                 >Langganan</span
                             >
                             <span class="block text-xs text-muted-foreground"
@@ -203,14 +203,14 @@
                             <button
                                 type="button"
                                 onclick={() => choosePlan(plan.slug)}
-                                class={`rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-[#0d7066]/50 ${selectedPlan === plan.slug && isPaymentFlow ? 'border-[#0d7066] bg-[#eef7ef] shadow-sm ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white'}`}
+                                class={`rounded-xl border p-2.5 text-left transition hover:-translate-y-0.5 hover:border-[#0d7066]/50 ${selectedPlan === plan.slug && isPaymentFlow ? 'border-[#0d7066] bg-[#eef7ef] shadow-sm ring-1 ring-[#0d7066]/15' : 'border-[#d9ded4] bg-white'}`}
                             >
                                 <div class="flex items-start justify-between gap-2">
                                     <div>
                                         <p class="text-sm font-semibold text-foreground">
                                             {plan.name}
                                         </p>
-                                        <p class="mt-1 text-sm font-bold text-[#103d3a]">
+                                        <p class="mt-1 text-xs font-bold text-[#103d3a]">
                                             {formatRupiah(plan.price_monthly)}
                                             <span
                                                 class="text-xs font-normal text-muted-foreground"
@@ -220,9 +220,9 @@
                                     </div>
                                     {#if selectedPlan === plan.slug && isPaymentFlow}
                                         <span
-                                            class="grid h-6 w-6 place-items-center rounded-full bg-[#103d3a] text-white"
+                                            class="grid h-5 w-5 place-items-center rounded-full bg-[#103d3a] text-white"
                                         >
-                                            <Check class="h-3.5 w-3.5" />
+                                            <Check class="h-3 w-3" />
                                         </span>
                                     {/if}
                                 </div>
@@ -234,7 +234,7 @@
                 {#if plans.length === 0}
                     <button
                         type="button"
-                        class="w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left"
+                        class="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-left"
                         onclick={chooseTrial}
                     >
                         <span class="block text-sm font-semibold"
@@ -254,15 +254,15 @@
             </div>
 
             <section
-                class="grid gap-4 rounded-2xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3 sm:p-4"
+                class="grid gap-3 rounded-xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
             >
                 <div>
                     <h3 class="text-sm font-semibold text-foreground">
                         Data Travel
                     </h3>
                 </div>
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="grid gap-2 sm:col-span-2">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="grid gap-1.5 sm:col-span-2">
                         <Label for="travel_name"
                             >Nama Travel / Pool <span class="text-destructive"
                                 >*</span
@@ -277,7 +277,7 @@
                         />
                         <InputError message={errors.travel_name} />
                     </div>
-                    <div class="grid gap-2 sm:col-span-2">
+                    <div class="grid gap-1.5 sm:col-span-2">
                         <Label for="phone"
                             >Nomor WhatsApp <span class="text-destructive"
                                 >*</span
@@ -292,7 +292,7 @@
                         />
                         <InputError message={errors.phone} />
                     </div>
-                    <div class="grid gap-2">
+                    <div class="grid gap-1.5">
                         <Label for="origin"
                             >Dari <span class="text-destructive">*</span></Label
                         >
@@ -305,7 +305,7 @@
                         />
                         <InputError message={errors.origin} />
                     </div>
-                    <div class="grid gap-2">
+                    <div class="grid gap-1.5">
                         <Label for="destination"
                             >Tujuan <span class="text-destructive">*</span
                             ></Label
@@ -323,15 +323,15 @@
             </section>
 
             <section
-                class="grid gap-4 rounded-2xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3 sm:p-4"
+                class="grid gap-3 rounded-xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
             >
                 <div>
                     <h3 class="text-sm font-semibold text-foreground">
                         Akun Pemilik
                     </h3>
                 </div>
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="grid gap-2">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="grid gap-1.5">
                         <Label for="name"
                             >Nama Anda <span class="text-destructive">*</span
                             ></Label
@@ -346,7 +346,7 @@
                         />
                         <InputError message={errors.name} />
                     </div>
-                    <div class="grid gap-2">
+                    <div class="grid gap-1.5">
                         <Label for="email"
                             >Email <span class="text-destructive">*</span
                             ></Label
@@ -361,7 +361,7 @@
                         />
                         <InputError message={errors.email} />
                     </div>
-                    <div class="grid gap-2">
+                    <div class="grid gap-1.5">
                         <Label for="password"
                             >Kata Sandi <span class="text-destructive">*</span
                             ></Label
@@ -376,7 +376,7 @@
                         />
                         <InputError message={errors.password} />
                     </div>
-                    <div class="grid gap-2">
+                    <div class="grid gap-1.5">
                         <Label for="password_confirmation"
                             >Konfirmasi Kata Sandi <span class="text-destructive"
                                 >*</span
@@ -397,7 +397,7 @@
 
             <Button
                 type="submit"
-                class="h-11 w-full rounded-xl bg-[#103d3a] text-white hover:bg-[#0b2f2c]"
+                class="h-9 w-full rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
                 disabled={processing}
             >
                 {#if processing}<Spinner />{/if}
@@ -405,7 +405,7 @@
                 {#if !processing}<ArrowRight class="ml-2 h-4 w-4" />{/if}
             </Button>
 
-            <div class="text-center text-sm text-muted-foreground">
+            <div class="text-center text-xs text-muted-foreground">
                 Sudah punya akun?
                 <TextLink href={login()} class="underline underline-offset-4"
                     >Masuk</TextLink
