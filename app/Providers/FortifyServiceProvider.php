@@ -7,6 +7,7 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Support\AccessControl;
 use App\Support\TenantBillingAccess;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,15 @@ class FortifyServiceProvider extends ServiceProvider
                     $userId = (int) ($request->user()?->id ?? auth()->id() ?? 0);
                     if ($userId <= 0) {
                         return redirect()->route('subscription.index');
+                    }
+
+                    $user = $request->user();
+                    if (
+                        $user instanceof MustVerifyEmail
+                        && ! $user->hasVerifiedEmail()
+                        && (int) $request->session()->get('email_verification_sent_for_user', 0) !== $userId
+                    ) {
+                        $user->sendEmailVerificationNotification();
                     }
 
                     if ($request->session()->get('registration_onboarding_pending', false)) {
