@@ -20,11 +20,28 @@
         revenue_luggage: number;
     };
 
+    const createSummaryScope = (): SummaryScopeStats => ({
+        total_bookings: 0,
+        total_passengers: 0,
+        revenue_booking: 0,
+        revenue_charter: 0,
+        revenue_luggage: 0,
+    });
+
+    const createSummaryScopes = (): Record<
+        'day' | 'month' | 'year',
+        SummaryScopeStats
+    > => ({
+        day: createSummaryScope(),
+        month: createSummaryScope(),
+        year: createSummaryScope(),
+    });
+
     let {
-        summaryStatsByScope,
+        summaryStatsByScope = createSummaryScopes(),
         toCurrency,
     }: {
-        summaryStatsByScope: Record<
+        summaryStatsByScope?: Record<
             'day' | 'month' | 'year',
             SummaryScopeStats
         >;
@@ -32,7 +49,9 @@
     } = $props();
 
     let selectedScope = $state<'month' | 'year'>('month');
-    let summaryStats = $derived(summaryStatsByScope[selectedScope]);
+    let summaryStats = $derived(
+        summaryStatsByScope?.[selectedScope] ?? createSummaryScope(),
+    );
 
     let chartCanvas: HTMLCanvasElement;
     let chartInstance: Chart | null = null;
@@ -332,7 +351,7 @@
                 Booking
             </p>
             <p class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}>
-                {toCurrency(summaryStats.revenue_booking)}
+                {toCurrency(Number(summaryStats.revenue_booking || 0))}
             </p>
         </div>
         <div class="text-center relative">
@@ -348,7 +367,7 @@
                 Carter
             </p>
             <p class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}>
-                {toCurrency(summaryStats.revenue_charter)}
+                {toCurrency(Number(summaryStats.revenue_charter || 0))}
             </p>
         </div>
         <div class="text-center relative">
@@ -364,7 +383,7 @@
                 Bagasi
             </p>
             <p class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}>
-                {toCurrency(summaryStats.revenue_luggage)}
+                {toCurrency(Number(summaryStats.revenue_luggage || 0))}
             </p>
         </div>
     </div>
