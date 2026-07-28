@@ -22,7 +22,6 @@
         MoreHorizontal,
         Pencil,
         Plus,
-        Route,
         Send,
         Trash2,
     } from 'lucide-svelte';
@@ -46,7 +45,6 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import DataTable from '@/components/terminal/DataTable.svelte';
-    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
     import AdminOpsPoolsPanel from '@/components/admin-ops/AdminOpsPoolsPanel.svelte';
     import AdminOpsUnitsLayoutPanel from '@/components/admin-ops/AdminOpsUnitsLayoutPanel.svelte';
     import { hasPermission } from '@/lib/access';
@@ -5760,16 +5758,6 @@
                 </p>{/if}
             {#if error}<p class="text-sm text-red-600">{error}</p>{/if}
             {#if message}<p class="text-sm text-emerald-600">{message}</p>{/if}
-            {#if usesHybridSettings('drivers')}
-                <div class="flex flex-col gap-2 md:flex-row">
-                    <TerminalFilter
-                        bind:query={driverSearch}
-                        placeholder="Cari nama, telepon, atau nopol driver"
-                        on:search={() => reloadSettingsWithInertia(1)}
-                    />
-                </div>
-            {/if}
-
             {#if activeTab === 'routes'}
                 {#if activeMode === 'form'}
                     <form
@@ -5856,25 +5844,6 @@
                     <div
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div
-                            class="flex items-center justify-between gap-3 border-b border-border/70 bg-muted/20 px-5 py-4"
-                        >
-                            <Badge
-                                variant="secondary"
-                                class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
-                            >
-                                {routes.length} rute aktif
-                            </Badge>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                class="h-9 rounded-full px-3 text-xs font-semibold"
-                                onclick={resetRouteForm}
-                            >
-                                Tambah Rute
-                            </Button>
-                        </div>
                         <div class="grid gap-3 p-3 md:hidden">
                             {#if routes.length === 0}
                                 <div
@@ -6920,9 +6889,7 @@
                             <div
                                 class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
                             >
-                                <div
-                                    class="grid gap-3 md:min-w-[420px] md:grid-cols-[minmax(0,1fr)_auto]"
-                                >
+                                <div class="grid gap-3 md:min-w-[420px]">
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
@@ -6949,15 +6916,6 @@
                                             {/each}
                                         </select>
                                     </label>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        class="h-10 self-end"
-                                        onclick={() => void setTab('routes')}
-                                    >
-                                        <Route class="mr-2 h-4 w-4" />
-                                        Kelola Rute
-                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -7972,33 +7930,6 @@
                     <div
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div
-                            class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
-                        >
-                            <div>
-                                <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
-                                >
-                                    Tarif Bagasi
-                                </p>
-                                <h3 class="mt-1 text-lg font-semibold">
-                                    Daftar layanan bagasi
-                                </h3>
-                                <p
-                                    class="hidden max-w-2xl text-sm text-muted-foreground sm:block"
-                                >
-                                    Struktur tabel dibuat singkat karena
-                                    fokusnya hanya nama layanan dan aksi
-                                    pengelolaannya.
-                                </p>
-                            </div>
-                            <Badge
-                                variant="secondary"
-                                class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
-                            >
-                                {services.length} layanan
-                            </Badge>
-                        </div>
                         <div class="grid gap-3 p-3 md:hidden">
                             {#if services.length === 0}
                                 <div
@@ -9649,7 +9580,7 @@
                                             >Kategori</th
                                         >
                                         <th
-                                            class="w-[22%] px-3 py-2.5 text-left"
+                                            class="w-[18%] px-3 py-2.5 text-left"
                                             >Kapasitas/Layout</th
                                         >
                                         <th
@@ -9657,7 +9588,7 @@
                                             >Status</th
                                         >
                                         <th
-                                            class="w-[14%] px-3 py-2.5 text-left"
+                                            class="w-[18%] px-3 py-2.5 text-center"
                                             >Aksi</th
                                         >
                                     </tr>
@@ -9706,9 +9637,9 @@
                                                     {row.status ?? '-'}
                                                 </Badge>
                                             </td>
-                                            <td class="px-3 py-2.5">
+                                            <td class="px-3 py-2.5 text-center">
                                                 <div
-                                                    class="flex items-center justify-end gap-1.5"
+                                                    class="flex items-center justify-center gap-1.5"
                                                 >
                                                     <Button
                                                         type="button"
@@ -11072,36 +11003,8 @@
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
                         <div
-                            class="flex flex-col gap-4 border-b border-border/70 bg-[linear-gradient(135deg,rgba(168,85,247,0.05),rgba(15,23,42,0.03))] px-5 py-4"
+                            class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(168,85,247,0.05),rgba(15,23,42,0.03))] px-5 py-4"
                         >
-                            <div
-                                class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
-                            >
-                                <div>
-                                    <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
-                                    >
-                                        Users
-                                    </p>
-                                    <h3 class="mt-1 text-lg font-semibold">
-                                        Akses akun pengguna
-                                    </h3>
-                                    <p
-                                        class="hidden max-w-3xl text-sm text-muted-foreground sm:block"
-                                    >
-                                        Status verifikasi dibuat lebih mudah
-                                        discan, sementara aksi edit dan hapus
-                                        dipindahkan ke meatball menu agar
-                                        konsisten dengan menu lain.
-                                    </p>
-                                </div>
-                                <Badge
-                                    variant="secondary"
-                                    class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
-                                >
-                                    {users.length} akun
-                                </Badge>
-                            </div>
                             <div class="flex justify-end md:hidden">
                                 <Button
                                     type="button"
@@ -11612,33 +11515,6 @@
                 <div
                     class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                 >
-                    <div
-                        class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(239,68,68,0.05),rgba(15,23,42,0.03))] px-5 py-4 lg:flex-row lg:items-end lg:justify-between"
-                    >
-                        <div>
-                            <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
-                            >
-                                Logs Aktivitas
-                            </p>
-                            <h3 class="mt-1 text-lg font-semibold">
-                                Jejak perubahan operasional
-                            </h3>
-                            <p
-                                class="hidden max-w-3xl text-sm text-muted-foreground sm:block"
-                            >
-                                Riwayat aktivitas dibuat lebih mudah discan
-                                dengan pemisahan yang jelas antara waktu, tag,
-                                aktivitas, detail, dan aktor.
-                            </p>
-                        </div>
-                        <Badge
-                            variant="secondary"
-                            class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
-                        >
-                            {activityLogs.length} aktivitas
-                        </Badge>
-                    </div>
                     <div class="grid gap-3 p-3 md:hidden">
                         {#each activityLogs as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
                             <article

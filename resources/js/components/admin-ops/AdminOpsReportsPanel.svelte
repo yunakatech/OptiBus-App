@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
 
     type ReportKind = 'booking' | 'charter' | 'bagasi';
@@ -85,7 +84,6 @@
             label: string;
             dataLabel: string;
             itemLabel: string;
-            intro: string;
             tone: string;
             subtleTone: string;
         }
@@ -94,7 +92,6 @@
             label: 'Booking',
             dataLabel: 'transaksi',
             itemLabel: 'transaksi',
-            intro: 'Pantau tiket reguler, titik jemput, dan nilai bersih setiap penumpang dalam satu alur yang lebih rapi.',
             tone: 'border-sky-200/80 bg-sky-50/80 text-sky-700',
             subtleTone:
                 'border-sky-200/70 bg-[linear-gradient(135deg,rgba(14,165,233,0.10),rgba(15,23,42,0.02))]',
@@ -103,7 +100,6 @@
             label: 'Carter',
             dataLabel: 'perjalanan',
             itemLabel: 'perjalanan',
-            intro: 'Lihat performa perjalanan carter, armada, dan status pembayaran tanpa perlu pindah ke panel lain.',
             tone: 'border-emerald-200/80 bg-emerald-50/80 text-emerald-700',
             subtleTone:
                 'border-emerald-200/70 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(15,23,42,0.02))]',
@@ -112,7 +108,6 @@
             label: 'Bagasi',
             dataLabel: 'resi',
             itemLabel: 'resi',
-            intro: 'Ringkas pemasukan bagasi beserta pengirim, penerima, dan progres pengiriman dalam tampilan yang cepat dibaca.',
             tone: 'border-amber-200/80 bg-amber-50/85 text-amber-700',
             subtleTone:
                 'border-amber-200/70 bg-[linear-gradient(135deg,rgba(245,158,11,0.11),rgba(15,23,42,0.02))]',
@@ -283,40 +278,8 @@
         <div
             class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.92),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(148,163,184,0.13),transparent_38%)]"
         ></div>
-        <div class="relative space-y-5 px-5 py-5 md:px-6">
-            <div
-                class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
-            >
-                <div class="max-w-4xl space-y-3">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <Badge
-                            variant="secondary"
-                            class="rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]"
-                        >
-                            Laporan Operasional
-                        </Badge>
-                        <span
-                            class={`inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${resolvedMeta(reportSummary, reportType).tone}`}
-                        >
-                            {resolvedMeta(reportSummary, reportType).label}
-                        </span>
-                    </div>
-
-                    <div class="space-y-1">
-                        <h3 class="text-xl font-semibold tracking-tight">
-                            Pendapatan
-                            {resolvedMeta(
-                                reportSummary,
-                                reportType,
-                            ).label.toLowerCase()}
-                            dalam satu panel yang lebih mudah dipantau
-                        </h3>
-                        <p class="text-sm leading-6 text-muted-foreground">
-                            {resolvedMeta(reportSummary, reportType).intro}
-                        </p>
-                    </div>
-                </div>
-
+        <div class="relative space-y-4 px-5 py-5 md:px-6">
+            <div class="flex justify-end">
                 <div class="flex flex-wrap gap-2">
                     <a
                         href={exportHref(
@@ -352,10 +315,10 @@
             </div>
             <div
                 class={reportFiltersExpanded
-                    ? `grid gap-3 rounded-lg border p-3 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`
-                    : `hidden rounded-lg border p-3 md:grid md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`}
+                    ? `grid gap-4 rounded-xl border p-4 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`
+                    : `hidden rounded-xl border p-4 md:grid md:gap-4 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`}
             >
-                <label class="flex min-w-0 flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-2">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
@@ -372,7 +335,7 @@
                     </select>
                 </label>
 
-                <label class="flex min-w-0 flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-2">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
@@ -392,7 +355,7 @@
                     </select>
                 </label>
 
-                <label class="flex min-w-0 flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-2">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
@@ -414,7 +377,7 @@
                     </select>
                 </label>
 
-                <label class="flex min-w-0 flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-2">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
@@ -431,7 +394,7 @@
                     />
                 </label>
 
-                <label class="flex min-w-0 flex-col gap-1.5">
+                <label class="flex min-w-0 flex-col gap-2">
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
