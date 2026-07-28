@@ -56,10 +56,6 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('register.store'), [
             'name' => 'Trial User',
             'email' => 'trial@example.com',
-            'travel_name' => 'Trial Travel',
-            'phone' => '085211112222',
-            'origin' => 'Pinrang',
-            'destination' => 'Makassar',
             'plan' => 'starter',
             'registration_intent' => 'trial',
             'password' => 'password',
@@ -73,10 +69,10 @@ class RegistrationTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Onboarding')
-                ->where('defaults.travel_name', 'Trial Travel')
-                ->where('defaults.phone', '085211112222')
-                ->where('defaults.origin', 'Pinrang')
-                ->where('defaults.destination', 'Makassar')
+                ->where('defaults.travel_name', '')
+                ->where('defaults.phone', '')
+                ->where('defaults.origin', '')
+                ->where('defaults.destination', '')
             );
 
         $tenantId = (int) DB::table('users')->where('email', 'trial@example.com')->value('tenant_id');
@@ -99,10 +95,6 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('register.store'), [
             'name' => 'Fixed Role User',
             'email' => 'fixed-role@example.com',
-            'travel_name' => 'Fixed Role Travel',
-            'phone' => '085255556666',
-            'origin' => 'Pinrang',
-            'destination' => 'Makassar',
             'plan' => 'starter',
             'registration_intent' => 'trial',
             'password' => 'password',
@@ -121,10 +113,6 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('register.store'), [
             'name' => 'Payment User',
             'email' => 'payment@example.com',
-            'travel_name' => 'Payment Travel',
-            'phone' => '085233334444',
-            'origin' => 'Pinrang',
-            'destination' => 'Makassar',
             'plan' => 'pro',
             'registration_intent' => 'payment',
             'password' => 'password',
@@ -159,10 +147,6 @@ class RegistrationTest extends TestCase
         $this->post(route('register.store'), [
             'name' => 'Locked User',
             'email' => 'locked@example.com',
-            'travel_name' => 'Locked Travel',
-            'phone' => '085233334445',
-            'origin' => 'Pinrang',
-            'destination' => 'Makassar',
             'plan' => 'pro',
             'registration_intent' => 'paid',
             'password' => 'password',
