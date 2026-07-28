@@ -547,7 +547,7 @@
     let groupArmadaSearch = $state('');
     let loadingGroupArmada = $state(false);
     let groupArmadaLookupOpen = $state(false);
-    let groupPassengerTab = $state<'active' | 'ritur'>('active');
+    let groupPassengerTab = $state<'active' | 'history' | 'ritur'>('active');
     let loadingGroupRiturs = $state(false);
     let savingGroupRiturId = $state<number | null>(null);
     let groupRiturSearch = $state('');
@@ -2532,9 +2532,25 @@
                 (row) => !isCanceledBooking(row.status),
             ),
         );
+    const canceledGroupBookings = () =>
+        visibleGroupBookingRows(
+            (openGroupDetail?.bookings ?? []).filter((row) =>
+                isCanceledBooking(row.status),
+            ),
+        );
+    const refundedCanceledBookings = () =>
+        canceledGroupBookings().filter((row) =>
+            isRefundPayment(row.pembayaran),
+        );
+    const refundableCanceledBookings = () =>
+        canceledGroupBookings().filter((row) => canRefundCanceledBooking(row));
     const visibleGroupBookings = () => {
         if (groupPassengerTab === 'ritur') {
             return [];
+        }
+
+        if (groupPassengerTab === 'history') {
+            return canceledGroupBookings();
         }
 
         return activeGroupBookings();
@@ -2546,6 +2562,8 @@
         );
     const bookingRowFinalPrice = (row: BookingGroup['bookings'][number]) =>
         Math.max(Number(row.price || 0) - Number(row.discount || 0), 0);
+    const refundAmount = (rows: BookingGroup['bookings']) =>
+        rows.reduce((total, row) => total + bookingRowFinalPrice(row), 0);
     const groupPaymentTotals = () => {
         const rows = activeGroupBookings();
 
@@ -8225,6 +8243,15 @@
                         </button>
                         <button
                             type="button"
+                            class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'history' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                            onclick={() => {
+                                groupPassengerTab = 'history';
+                            }}
+                        >
+                            History Cancel {canceledGroupBookings().length}
+                        </button>
+                        <button
+                            type="button"
                             class={`rounded-full px-4 py-1.5 text-sm transition ${groupPassengerTab === 'ritur' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                             onclick={() => {
                                 groupPassengerTab = 'ritur';
@@ -8233,11 +8260,6 @@
                             Bagasi {groupMappedRiturs.length}
                         </button>
                     </div>
-                    <p class="text-xs text-muted-foreground">
-                        {groupPassengerTab === 'active'
-                            ? 'Daftar penumpang aktif pada keberangkatan ini.'
-                            : `Bagasi dengan status ${luggageReceivedStatus} dan rute yang sama muncul otomatis agar lebih cepat dimapping.`}
-                    </p>
                 </div>
 
                 {#if groupPassengerTab === 'ritur'}
@@ -8255,12 +8277,6 @@
                                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
                                     >
                                         Bagasi Terpasang
-                                    </p>
-                                    <p
-                                        class="mt-1 text-sm text-muted-foreground"
-                                    >
-                                        Bagasi yang sudah dimapping ke
-                                        keberangkatan ini.
                                     </p>
                                 </div>
                                 <div
@@ -8359,7 +8375,7 @@
                                                         )}</span
                                                     >
                                                 </div>
-                                                {#if !isManifestLocked(openGroupDetail)}
+                                                {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
                                                     <Button
                                                         type="button"
                                                         size="sm"
@@ -8396,13 +8412,6 @@
                                         class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
                                     >
                                         Bagasi Siap Dimapping
-                                    </p>
-                                    <p
-                                        class="mt-1 text-sm text-muted-foreground"
-                                    >
-                                        Hanya bagasi berstatus {luggageReceivedStatus}
-                                        dengan rute yang sama dan belum dipasang ke
-                                        keberangkatan lain.
                                     </p>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -8524,24 +8533,6 @@
                                     </Button>
                                 </div>
 
-                                <div
-                                    class="mb-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
-                                >
-                                    <Badge
-                                        variant="secondary"
-                                        class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                    >
-                                        Rute {openGroupDetail.rute}
-                                    </Badge>
-                                    <Badge
-                                        variant="secondary"
-                                        class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                    >
-                                        Tanggal {formatGroupDateLabel(
-                                            openGroupDetail.tanggal,
-                                        )}
-                                    </Badge>
-                                </div>
                             </div>
 
                             {#if filteredAvailableRiturs().length === 0}
@@ -8647,13 +8638,71 @@
                         </div>
                     </div>
                 {:else}
+                    {#if groupPassengerTab === 'history'}
+                        <div
+                            class="mb-3 grid gap-2 rounded-lg border border-rose-200/70 bg-rose-50/65 p-3 dark:border-rose-500/20 dark:bg-rose-950/15 sm:grid-cols-3"
+                        >
+                            <div>
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-700 dark:text-rose-300"
+                                >
+                                    History Cancel
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold text-rose-700 dark:text-rose-200"
+                                >
+                                    {canceledGroupBookings().length} penumpang
+                                </p>
+                            </div>
+                            <div>
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700 dark:text-sky-300"
+                                >
+                                    Refund Selesai
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold text-sky-700 dark:text-sky-200"
+                                >
+                                    {refundedCanceledBookings().length} data · {formatCurrency(
+                                        refundAmount(
+                                            refundedCanceledBookings(),
+                                        ),
+                                    )}
+                                </p>
+                            </div>
+                            <div>
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
+                                >
+                                    Perlu Refund
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-200"
+                                >
+                                    {refundableCanceledBookings().length} data · {formatCurrency(
+                                        refundAmount(
+                                            refundableCanceledBookings(),
+                                        ),
+                                    )}
+                                </p>
+                            </div>
+                            <p
+                                class="text-xs leading-5 text-muted-foreground sm:col-span-3"
+                            >
+                                Status Refund menandai dana sudah dikembalikan
+                                secara manual. Sistem tidak mengirim dana
+                                otomatis ke penumpang.
+                            </p>
+                        </div>
+                    {/if}
                     <div class="space-y-2 md:hidden">
                         {#if visibleGroupBookings().length === 0}
                             <div
                                 class="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground"
                             >
-                                Belum ada penumpang aktif pada keberangkatan
-                                ini.
+                                {groupPassengerTab === 'history'
+                                    ? 'Belum ada history cancel pada keberangkatan ini.'
+                                    : 'Belum ada penumpang aktif pada keberangkatan ini.'}
                             </div>
                         {/if}
                         {#each visibleGroupBookings() as row, index (`group-booking-mobile-${index}-${row.id}`)}
@@ -8749,7 +8798,7 @@
                                                         Reschedule
                                                     </DropdownMenuItem>
                                                 {/if}
-                                                {#if !isManifestLocked(openGroupDetail) && !isSettledPayment(row.pembayaran)}
+                                                {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status) && !isSettledPayment(row.pembayaran)}
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void markBookingRowAsPaid(
@@ -8779,7 +8828,7 @@
                                                 >
                                                     Print Tiket
                                                 </DropdownMenuItem>
-                                                {#if !isManifestLocked(openGroupDetail)}
+                                                {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void cancelBookingRow(
@@ -8905,8 +8954,9 @@
                                             colspan="6"
                                             class="px-3 py-6 text-center text-sm text-muted-foreground"
                                         >
-                                            Belum ada penumpang aktif pada
-                                            keberangkatan ini.
+                                            {groupPassengerTab === 'history'
+                                                ? 'Belum ada history cancel pada keberangkatan ini.'
+                                                : 'Belum ada penumpang aktif pada keberangkatan ini.'}
                                         </td>
                                     </tr>
                                 {/if}
@@ -8959,7 +9009,7 @@
                                                         >
                                                             Copy Data
                                                         </DropdownMenuItem>
-                                                        {#if !isManifestLocked(openGroupDetail)}
+                                                        {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
                                                                     void openGroupRowEdit(
@@ -8990,18 +9040,6 @@
                                                                     Lunas
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if canRefundCanceledBooking(row)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void markBookingRowAsRefund(
-                                                                            row.id,
-                                                                            row.seat,
-                                                                            row.pembayaran,
-                                                                        )}
-                                                                >
-                                                                    Refund
-                                                                </DropdownMenuItem>
-                                                            {/if}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
                                                                     void cancelBookingRow(
@@ -9011,6 +9049,18 @@
                                                                     )}
                                                             >
                                                                 Cancel
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if !isManifestLocked(openGroupDetail) && canRefundCanceledBooking(row)}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void markBookingRowAsRefund(
+                                                                        row.id,
+                                                                        row.seat,
+                                                                        row.pembayaran,
+                                                                    )}
+                                                            >
+                                                                Refund
                                                             </DropdownMenuItem>
                                                         {/if}
                                                         <DropdownMenuItem
