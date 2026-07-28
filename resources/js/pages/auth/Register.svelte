@@ -123,16 +123,6 @@
     {#snippet children({ errors, processing })}
         <div class="grid gap-3 p-3 sm:p-4">
             <div class="grid gap-2">
-                <div class="rounded-xl border border-[#d9ded4] bg-[#fbfcf8] px-3 py-2">
-                    <p class="text-xs font-semibold text-[#103d3a]">
-                        1 menit buat akun
-                    </p>
-                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                        Data travel diisi setelah akun aktif, jadi kamu bisa
-                        mulai dari email dan paket dulu.
-                    </p>
-                </div>
-
                 <a
                     href={`/auth/google/redirect?intent=${isPaymentFlow ? 'paid' : 'trial'}&plan=${selectedPlan}`}
                     class="group block rounded-xl border border-[#d9ded4] bg-white p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0d7066]/45 hover:shadow-lg hover:shadow-emerald-950/10"
@@ -285,11 +275,6 @@
             <section
                 class="grid gap-3 rounded-xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
             >
-                <div>
-                    <h3 class="text-sm font-semibold text-foreground">
-                        Akun Pemilik
-                    </h3>
-                </div>
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div class="grid gap-1.5">
                         <Label for="name"
