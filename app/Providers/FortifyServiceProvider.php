@@ -54,6 +54,10 @@ class FortifyServiceProvider extends ServiceProvider
                         return redirect()->route('subscription.index');
                     }
 
+                    if ($request->session()->get('registration_onboarding_pending', false)) {
+                        return redirect()->route('onboarding');
+                    }
+
                     $billingAccess = TenantBillingAccess::forUser($userId);
                     if ($billingAccess['locked'] ?? false) {
                         return redirect()->route('subscription.index');

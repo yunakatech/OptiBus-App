@@ -28,7 +28,7 @@ class CreateTenantOnRegistration
 
         $result = $this->provisioning->provisionForUser($user, $input);
 
-        session()->forget(['registration_plan', 'registration_intent']);
+        session()->put('registration_onboarding_pending', true);
         if (! empty($result['redirect_route'])) {
             session()->put('url.intended', (string) $result['redirect_route']);
         }

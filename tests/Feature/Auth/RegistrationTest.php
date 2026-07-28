@@ -67,7 +67,17 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('onboarding', absolute: false));
+
+        $this->get(route('onboarding'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Onboarding')
+                ->where('defaults.travel_name', 'Trial Travel')
+                ->where('defaults.phone', '085211112222')
+                ->where('defaults.origin', 'Pinrang')
+                ->where('defaults.destination', 'Makassar')
+            );
 
         $tenantId = (int) DB::table('users')->where('email', 'trial@example.com')->value('tenant_id');
         $starterPlanId = (int) DB::table('plans')->where('slug', 'starter')->value('id');
@@ -100,7 +110,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('onboarding', absolute: false));
         $this->assertTrue(AccessControl::can((int) auth()->id(), 'dashboard.view'));
     }
 
@@ -122,7 +132,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('subscription.index', absolute: false));
+        $response->assertRedirect(route('onboarding', absolute: false));
 
         $tenantId = (int) DB::table('users')->where('email', 'payment@example.com')->value('tenant_id');
         $subscription = DB::table('subscriptions')->where('tenant_id', $tenantId)->first();
