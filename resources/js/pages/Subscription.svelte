@@ -258,6 +258,57 @@
         return plan.slug === currentPlanSlug ? 'default' : 'outline';
     }
 
+    function planCardBadge(plan: Plan): BadgeMeta {
+        if (plan.slug === currentPlanSlug) {
+            return {
+                variant: 'default',
+                label:
+                    tenantSub?.subscription_status === 'trial'
+                        ? 'Aktif Trial'
+                        : 'Paket Aktif',
+            };
+        }
+
+        if (payableInvoice) {
+            return {
+                variant: 'outline',
+                label: 'Tunggu Invoice',
+            };
+        }
+
+        return plan.price_monthly > currentPlanMonthly
+            ? { variant: 'secondary', label: 'Upgrade' }
+            : { variant: 'outline', label: 'Ganti Paket' };
+    }
+
+    function planCardClass(plan: Plan): string {
+        if (plan.slug === currentPlanSlug) {
+            return 'border-primary/70 bg-[linear-gradient(180deg,rgba(239,246,255,0.95),rgba(224,231,255,0.65))] shadow-[0_18px_45px_-28px_rgba(14,165,233,0.35)] ring-1 ring-primary/15 dark:border-sky-400/30 dark:bg-[linear-gradient(180deg,rgba(8,15,30,0.96),rgba(15,23,42,0.84))] dark:shadow-[0_18px_45px_-28px_rgba(2,132,199,0.28)]';
+        }
+
+        if (payableInvoice) {
+            return 'border-border/70 bg-muted/20';
+        }
+
+        return plan.price_monthly > currentPlanMonthly
+            ? 'border-sky-300/70 bg-sky-50/60 dark:border-sky-400/25 dark:bg-sky-950/20'
+            : 'border-border/70 bg-background';
+    }
+
+    function planHint(plan: Plan): string {
+        if (plan.slug === currentPlanSlug) {
+            return 'Paket yang sedang dipakai tenant ini.';
+        }
+
+        if (payableInvoice) {
+            return 'Selesaikan invoice aktif sebelum checkout paket baru.';
+        }
+
+        return plan.price_monthly > currentPlanMonthly
+            ? 'Cocok untuk naik kelas operasional.'
+            : 'Bisa dipilih tanpa menunggu invoice aktif.';
+    }
+
     function startCheckout(plan: Plan): void {
         if (checkoutPlanSlug !== '') {
             return;
@@ -563,23 +614,36 @@
                         <div class="grid gap-3 md:grid-cols-3">
                             {#each plans as plan}
                                 <div
-                                    class={`rounded-lg border p-3 ${
-                                        plan.slug === currentPlanSlug
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border/70'
-                                    }`}
+                                    class={`relative overflow-hidden rounded-lg border p-3 transition-all duration-200 ${planCardClass(plan)}`}
                                 >
+                                    {#if plan.slug === currentPlanSlug}
+                                        <div class="absolute inset-x-0 top-0 h-1 bg-primary"></div>
+                                        <div class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-sky-400/12 blur-3xl"></div>
+                                    {/if}
                                     <div
-                                        class="flex items-center justify-between gap-2"
+                                        class="flex items-start justify-between gap-2"
                                     >
-                                        <p
-                                            class="font-semibold text-foreground"
-                                        >
-                                            {plan.name}
-                                        </p>
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <p class="font-semibold text-foreground">
+                                                    {plan.name}
+                                                </p>
+                                                <Badge
+                                                    variant={planCardBadge(plan).variant}
+                                                    class={plan.slug === currentPlanSlug
+                                                        ? 'rounded-full border-primary/20 bg-primary text-primary-foreground shadow-sm'
+                                                        : ''}
+                                                >
+                                                    {planCardBadge(plan).label}
+                                                </Badge>
+                                            </div>
+                                            <p class="mt-1 text-[11px] leading-5 text-muted-foreground">
+                                                {planHint(plan)}
+                                            </p>
+                                        </div>
                                         {#if plan.slug === currentPlanSlug}
                                             <CheckCircle2
-                                                class="h-4 w-4 text-primary"
+                                                class="mt-0.5 h-4 w-4 shrink-0 text-primary"
                                             />
                                         {/if}
                                     </div>
@@ -597,10 +661,26 @@
                                     >
                                         {plan.description}
                                     </p>
+                                    <div class="mt-3 flex flex-wrap gap-1.5">
+                                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${plan.slug === currentPlanSlug ? 'border-primary/20 bg-white/80 text-primary dark:border-sky-400/20 dark:bg-slate-900/70 dark:text-sky-200' : 'border-border/70 bg-background text-muted-foreground'}`}>
+                                            {plan.price_monthly > currentPlanMonthly
+                                                ? `+${formatRupiah(plan.price_monthly - currentPlanMonthly)}`
+                                                : currentPlanSlug === plan.slug
+                                                  ? 'Sedang aktif'
+                                                  : 'Setara atau lebih rendah'}
+                                        </span>
+                                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${plan.slug === currentPlanSlug ? 'border-primary/20 bg-white/80 text-primary dark:border-sky-400/20 dark:bg-slate-900/70 dark:text-sky-200' : 'border-border/70 bg-background text-muted-foreground'}`}>
+                                            {plan.slug === currentPlanSlug
+                                                ? 'Tidak perlu checkout'
+                                                : payableInvoice
+                                                  ? 'Checkout tertunda'
+                                                  : 'Siap checkout'}
+                                        </span>
+                                    </div>
                                     <Button
                                         type="button"
                                         variant={planButtonVariant(plan)}
-                                        class="mt-3 h-9 w-full rounded-lg"
+                                        class={`mt-3 h-9 w-full rounded-lg ${plan.slug === currentPlanSlug ? 'shadow-sm shadow-primary/15' : ''}`}
                                         disabled={checkoutPlanSlug !== '' ||
                                             plan.slug === currentPlanSlug ||
                                             !canChoosePlan}
@@ -616,94 +696,93 @@
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b border-border/60 bg-muted/20">
                         <CardTitle class="flex items-center gap-2 text-lg">
-                            <Receipt class="h-5 w-5" />
+                            <span
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-background/80 text-primary shadow-sm"
+                            >
+                                <Receipt class="h-5 w-5" />
+                            </span>
                             Riwayat Invoice
                         </CardTitle>
+                        <CardDescription>
+                            Rekap pembayaran, status, dan akses checkout yang
+                            masih aktif.
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="p-0">
                         {#if invoices.length > 0}
                             <div
-                                class="table-container hidden rounded-lg border md:block"
+                                class="table-container hidden md:block"
                             >
                                 <table class="w-full text-sm">
                                     <thead
-                                        class="bg-muted/50 text-left text-xs uppercase text-muted-foreground"
+                                        class="bg-muted/70 text-left text-[11px] uppercase tracking-wide text-muted-foreground"
                                     >
                                         <tr>
-                                            <th class="px-3 py-2">Invoice</th>
-                                            <th class="px-3 py-2">Gateway</th>
+                                            <th class="px-4 py-3">Invoice</th>
+                                            <th class="px-4 py-3">Gateway</th>
                                             <th class="px-3 py-2"
                                                 >Jatuh Tempo</th
                                             >
-                                            <th class="px-3 py-2 text-right"
+                                            <th class="px-4 py-3 text-right"
                                                 >Nominal</th
                                             >
-                                            <th class="px-3 py-2">Status</th>
-                                            <th class="px-3 py-2 text-right"
+                                            <th class="px-4 py-3">Status</th>
+                                            <th class="px-4 py-3 text-right"
                                                 >Aksi</th
                                             >
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-border/70 text-[13px]">
                                         {#each invoices as invoice}
-                                            <tr>
-                                                <td class="px-3 py-3">
-                                                    <p
-                                                        class="font-semibold text-foreground"
-                                                    >
+                                            <tr class="transition-colors hover:bg-muted/30">
+                                                <td class="px-4 py-3.5">
+                                                    <p class="font-semibold tracking-tight text-foreground">
                                                         {invoice.invoice_number}
                                                     </p>
-                                                    <p
-                                                        class="mt-0.5 text-xs text-muted-foreground"
-                                                    >
-                                                        {formatDate(
+                                                    <p class="mt-1 text-xs text-muted-foreground">
+                                                        Dibuat {formatDate(
                                                             invoice.created_at,
                                                         )}
                                                     </p>
                                                 </td>
-                                                <td
-                                                    class="px-3 py-3 text-muted-foreground"
-                                                >
-                                                    {invoice.payment_gateway ||
-                                                        'Mayar'}
+                                                <td class="px-4 py-3.5">
+                                                    <span class="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                                        {invoice.payment_gateway ||
+                                                            'Mayar'}
+                                                    </span>
                                                 </td>
-                                                <td
-                                                    class="px-3 py-3 text-muted-foreground"
-                                                >
+                                                <td class="px-3 py-3.5 text-muted-foreground">
                                                     {formatDate(
                                                         invoice.due_date,
                                                     )}
                                                 </td>
-                                                <td
-                                                    class="px-3 py-3 text-right font-semibold"
-                                                >
+                                                <td class="px-4 py-3.5 text-right font-semibold tracking-tight">
                                                     {formatRupiah(
                                                         invoice.amount,
                                                     )}
                                                 </td>
-                                                <td class="px-3 py-3">
+                                                <td class="px-4 py-3.5">
                                                     <Badge
                                                         variant={invoiceStatusBadge(
                                                             invoice,
                                                         ).variant}
+                                                        class="rounded-full px-2.5 py-0.5"
                                                     >
                                                         {invoiceStatusBadge(
                                                             invoice,
                                                         ).label}
                                                     </Badge>
                                                 </td>
-                                                <td
-                                                    class="px-3 py-3 text-right"
-                                                >
+                                                <td class="px-4 py-3.5 text-right">
                                                     {#if ['pending', 'overdue', 'failed'].includes(invoice.status) && invoice.gateway_checkout_url}
                                                         <a
                                                             href={invoice.gateway_checkout_url}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            class="inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                                                            class="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80 hover:underline"
                                                         >
                                                             Bayar Mayar
                                                             <ExternalLink
@@ -725,23 +804,19 @@
                                 </table>
                             </div>
 
-                            <div class="space-y-3 md:hidden">
+                            <div class="space-y-3 p-4 md:hidden">
                                 {#each invoices as invoice}
-                                    <div class="rounded-lg border p-3">
+                                    <div class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm">
                                         <div
                                             class="flex items-start justify-between gap-3"
                                         >
                                             <div class="min-w-0">
-                                                <p
-                                                    class="truncate font-semibold text-foreground"
-                                                >
+                                                <p class="truncate font-semibold tracking-tight text-foreground">
                                                     {invoice.invoice_number}
                                                 </p>
-                                                <p
-                                                    class="mt-1 text-xs text-muted-foreground"
-                                                >
+                                                <p class="mt-1 text-xs text-muted-foreground">
                                                     {invoice.payment_gateway ||
-                                                        'Mayar'} - {formatDate(
+                                                        'Mayar'} · {formatDate(
                                                         invoice.due_date,
                                                     )}
                                                 </p>
@@ -750,6 +825,7 @@
                                                 variant={invoiceStatusBadge(
                                                     invoice,
                                                 ).variant}
+                                                class="rounded-full px-2.5 py-0.5"
                                             >
                                                 {invoiceStatusBadge(invoice)
                                                     .label}
@@ -758,8 +834,7 @@
                                         <div
                                             class="mt-3 flex items-center justify-between gap-3"
                                         >
-                                            <span
-                                                class="font-semibold text-foreground"
+                                            <span class="font-semibold tracking-tight text-foreground"
                                                 >{formatRupiah(
                                                     invoice.amount,
                                                 )}</span
@@ -769,7 +844,7 @@
                                                     href={invoice.gateway_checkout_url}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    class="inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                                                    class="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80 hover:underline"
                                                 >
                                                     Bayar Mayar
                                                     <ExternalLink
@@ -789,15 +864,24 @@
                                 {/each}
                             </div>
                         {:else}
-                            <div
-                                class="rounded-lg border border-dashed p-6 text-center"
-                            >
-                                <Receipt
-                                    class="mx-auto h-8 w-8 text-muted-foreground"
-                                />
-                                <p class="mt-3 text-sm text-muted-foreground">
-                                    Belum ada invoice.
-                                </p>
+                            <div class="p-4">
+                                <div
+                                    class="rounded-2xl border border-dashed border-border/70 bg-muted/10 px-6 py-8 text-center"
+                                >
+                                    <span
+                                        class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-background/90 text-muted-foreground shadow-sm"
+                                    >
+                                        <Receipt class="h-6 w-6" />
+                                    </span>
+                                    <p class="mt-4 text-sm font-semibold text-foreground">
+                                        Belum ada invoice.
+                                    </p>
+                                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                                        Saat tagihan dibuat, riwayat pembayaran
+                                        akan tampil di sini beserta tautan
+                                        checkout aktif.
+                                    </p>
+                                </div>
                             </div>
                         {/if}
                     </CardContent>
@@ -805,10 +889,14 @@
             </div>
 
             <div class="space-y-4">
-                <Card>
-                    <CardHeader>
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b border-border/60 bg-muted/20">
                         <CardTitle class="flex items-center gap-2 text-lg">
-                            <CreditCard class="h-5 w-5" />
+                            <span
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-background/80 text-primary shadow-sm"
+                            >
+                                <CreditCard class="h-5 w-5" />
+                            </span>
                             Pembayaran SaaS
                         </CardTitle>
                         <CardDescription
@@ -816,69 +904,84 @@
                             subscription.</CardDescription
                         >
                     </CardHeader>
-                    <CardContent class="space-y-3 text-sm">
+                    <CardContent class="space-y-3 p-4 text-sm">
                         <div
-                            class="flex items-center justify-between gap-3 rounded-lg border p-3"
+                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
                         >
-                            <span class="text-muted-foreground">Gateway</span>
-                            <span class="font-semibold text-foreground"
-                                >Mayar</span
-                            >
+                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                Gateway
+                            </p>
+                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                                Mayar
+                            </p>
                         </div>
                         <div
-                            class="flex items-center justify-between gap-3 rounded-lg border p-3"
+                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
                         >
-                            <span class="text-muted-foreground"
-                                >Invoice paid</span
-                            >
-                            <span class="font-semibold text-foreground"
-                                >{invoices.filter(
+                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                Invoice paid
+                            </p>
+                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                                {invoices.filter(
                                     (invoice) => invoice.status === 'paid',
-                                ).length}</span
-                            >
+                                ).length}
+                            </p>
                         </div>
                         <div
-                            class="flex items-center justify-between gap-3 rounded-lg border p-3"
+                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
                         >
-                            <span class="text-muted-foreground"
-                                >Invoice aktif</span
-                            >
-                            <span class="font-semibold text-foreground"
-                                >{payableInvoice ? 'Ada' : 'Tidak ada'}</span
-                            >
+                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                Invoice aktif
+                            </p>
+                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                                {payableInvoice ? 'Ada' : 'Tidak ada'}
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="text-lg">Akses Akun</CardTitle>
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b border-border/60 bg-muted/20">
+                        <CardTitle class="flex items-center gap-2 text-lg">
+                            <span
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-background/80 text-primary shadow-sm"
+                            >
+                                <ShieldAlert class="h-5 w-5" />
+                            </span>
+                            Akses Akun
+                        </CardTitle>
                         <CardDescription
                             >Mapping tenant, pool, dan role aktif akun ini.</CardDescription
                         >
                     </CardHeader>
-                    <CardContent class="space-y-3 text-sm">
+                    <CardContent class="space-y-3 p-4 text-sm">
                         <div
-                            class="flex items-center justify-between gap-3 rounded-lg border p-3"
+                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
                         >
-                            <span class="text-muted-foreground">Tenant ID</span>
-                            <span class="font-semibold text-foreground"
-                                >#{accountAccess.tenant_id ||
-                                    tenantSub.tenant_id}</span
-                            >
+                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                Tenant ID
+                            </p>
+                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                                #{accountAccess.tenant_id ||
+                                    tenantSub.tenant_id}
+                            </p>
                         </div>
                         <div
-                            class="flex items-center justify-between gap-3 rounded-lg border p-3"
+                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
                         >
-                            <span class="text-muted-foreground"
-                                >Pool terhubung</span
-                            >
-                            <span class="font-semibold text-foreground"
-                                >{accountAccess.pool_count}</span
-                            >
+                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                Pool terhubung
+                            </p>
+                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                                {accountAccess.pool_count}
+                            </p>
                         </div>
-                        <div class="rounded-lg border p-3">
-                            <span class="text-muted-foreground">Role</span>
+                        <div
+                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                        >
+                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                Role
+                            </p>
                             <div class="mt-2 flex flex-wrap gap-1.5">
                                 {#each accountAccess.role_names as role}
                                     <Badge variant="outline">{role}</Badge>
