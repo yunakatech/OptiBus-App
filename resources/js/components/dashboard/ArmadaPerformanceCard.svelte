@@ -64,7 +64,7 @@
 </script>
 
 <div
-    class={`overflow-hidden rounded-lg border p-3 text-card-foreground shadow-xs transition hover:shadow-sm sm:rounded-lg sm:p-5 ${isDark ? 'border-border/80 bg-gradient-to-br from-slate-950 via-slate-950 to-cyan-950/10' : 'border-border/80 bg-gradient-to-br from-background via-card to-cyan-50/20'}`}
+    class={`overflow-hidden rounded-lg border p-3 text-card-foreground shadow-xs transition hover:shadow-sm sm:rounded-lg sm:p-5 ${isDark ? 'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))]' : 'border-border/80 bg-gradient-to-br from-background via-card to-cyan-50/20'}`}
 >
     <div class="mb-3 flex items-start justify-between gap-3 sm:mb-4">
         <div>
@@ -84,10 +84,10 @@
         </span>
     </div>
 
-    <div class="mb-3 flex rounded-lg bg-muted/70 p-1 dark:bg-slate-900/70">
+    <div class="mb-3 flex rounded-lg bg-muted/70 p-1 dark:bg-slate-950/75">
         {#each categoryOptions as category (category)}
             <button
-                class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === category ? 'bg-background text-foreground shadow-sm dark:bg-slate-800' : 'text-muted-foreground hover:text-foreground'}`}
+                class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === category ? 'bg-background text-foreground shadow-sm dark:bg-slate-900/95' : 'text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:bg-slate-900/60 dark:hover:text-slate-100'}`}
                 onclick={() => (selectedCategory = category)}
             >
                 {category}
@@ -112,7 +112,7 @@
                           )
                         : 6}
                 <div
-                    class={`group relative rounded-xl border p-2 transition ${index === 0 ? 'border-cyan-400/40 bg-cyan-50/70 hover:border-cyan-300 hover:bg-cyan-50 dark:border-cyan-400/30 dark:bg-cyan-950/20 dark:hover:bg-cyan-950/30' : 'border-border/70 bg-background/85 hover:border-border hover:bg-muted/40 dark:bg-slate-900/65 dark:hover:bg-slate-900/80'}`}
+                    class={`group relative rounded-xl border p-2 transition ${index === 0 ? 'border-cyan-400/40 bg-cyan-50/70 hover:border-cyan-300 hover:bg-cyan-50 dark:border-cyan-400/30 dark:bg-cyan-950/18 dark:hover:bg-cyan-950/28' : 'border-border/70 bg-background/85 hover:border-border hover:bg-muted/40 dark:border-slate-800/80 dark:bg-slate-900/75 dark:hover:bg-slate-900/88'}`}
                 >
                     <div class="mb-1.5 flex items-start justify-between gap-2">
                         <div class="min-w-0">

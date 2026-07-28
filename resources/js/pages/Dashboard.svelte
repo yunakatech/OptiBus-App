@@ -681,7 +681,7 @@
 >
     {#if setupProgress && !setupProgress.completed}
         <section
-            class="overflow-hidden rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8e1,#f7fbef)] shadow-sm"
+            class="overflow-hidden rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8e1,#f7fbef)] shadow-sm dark:border-amber-500/20 dark:bg-[linear-gradient(135deg,rgba(69,26,3,0.72),rgba(9,14,24,0.94))]"
         >
             <div
                 class="grid gap-3 p-3 sm:p-4 lg:grid-cols-[1fr_auto] lg:items-center"
@@ -702,16 +702,16 @@
                         </div>
                         <Badge
                             variant="outline"
-                            class="shrink-0 rounded-full bg-background/70 dark:bg-slate-900/70"
+                            class="shrink-0 rounded-full bg-background/70 dark:border-slate-700/80 dark:bg-slate-900/75"
                         >
                             {setupProgress.completed_count}/{setupProgress.total_count}
                         </Badge>
                     </div>
                     <div
-                        class="mt-3 h-2 overflow-hidden rounded-full bg-amber-100"
+                        class="mt-3 h-2 overflow-hidden rounded-full bg-amber-100 dark:bg-slate-800"
                     >
                         <div
-                            class="h-full rounded-full bg-[#0d7066]"
+                            class="h-full rounded-full bg-[#0d7066] dark:bg-emerald-400"
                             style={`width:${setupProgress.percent}%`}
                         ></div>
                     </div>
@@ -902,7 +902,7 @@
                                             </p>
                                         </div>
                                         <span
-                                            class="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-700"
+                                            class="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-950/45 dark:text-cyan-200"
                                         >
                                             {charterReminderTag(item)}
                                         </span>
@@ -930,7 +930,7 @@
                             {#if upcomingCharterOverflow > 0}
                                 <a
                                     href="/charters"
-                                    class="flex flex-col gap-1 rounded-xl border border-dashed border-cyan-300/70 bg-cyan-50/70 px-3 py-2 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100/80 sm:flex-row sm:items-center sm:justify-between"
+                                    class="flex flex-col gap-1 rounded-xl border border-dashed border-cyan-300/70 bg-cyan-50/70 px-3 py-2 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100/80 sm:flex-row sm:items-center sm:justify-between dark:border-cyan-500/25 dark:bg-cyan-950/20 dark:text-cyan-100 dark:hover:bg-cyan-950/35"
                                 >
                                     <span
                                         >Lihat {upcomingCharterOverflow} reminder

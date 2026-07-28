@@ -52,15 +52,15 @@
                   tickColor: '#94a3b8',
                   gridColor: 'rgba(148, 163, 184, 0.18)',
                   panelClass:
-                      'border-border/80 bg-gradient-to-br from-slate-950 via-slate-950 to-sky-950/10 shadow-inner shadow-slate-950/40',
+                      'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))] shadow-inner shadow-slate-950/50',
                   titleClass: 'text-foreground',
                   subtitleClass: 'text-muted-foreground',
-                  legendTextClass: 'text-muted-foreground',
-                  chartTitleClass: 'text-sky-300',
-                  chartBodyClass: 'text-slate-200/80',
-                  totalLabelClass: 'text-muted-foreground',
+                  legendTextClass: 'text-slate-400',
+                  chartTitleClass: 'text-sky-200',
+                  chartBodyClass: 'text-slate-300/80',
+                  totalLabelClass: 'text-slate-400',
                   totalValueClass: 'text-foreground',
-                  footerLabelClass: 'text-muted-foreground',
+                  footerLabelClass: 'text-slate-400',
                   footerValueClass: 'text-foreground',
               }
             : {
