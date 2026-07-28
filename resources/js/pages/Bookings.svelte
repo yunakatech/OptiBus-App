@@ -8859,7 +8859,8 @@
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent
                                                 align="end"
-                                                sideOffset={6}
+                                                side="top"
+                                                sideOffset={8}
                                                 class="z-[120] w-44 text-[11px] shadow-lg"
                                             >
                                                 <DropdownMenuItem
@@ -9089,8 +9090,8 @@
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent
                                                         align="start"
-                                                        side="right"
-                                                        sideOffset={6}
+                                                        side="top"
+                                                        sideOffset={8}
                                                         class="z-[120] w-44 text-[11px] shadow-lg"
                                                     >
                                                         <DropdownMenuItem

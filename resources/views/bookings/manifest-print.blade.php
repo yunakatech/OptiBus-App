@@ -266,7 +266,7 @@
 
             <div class="section-title">
                 <span>Penumpang Aktif</span>
-                <span class="meta">{{ count($manifest['passengers']) }} data</span>
+                <span class="meta">{{ count($manifest['passengers']) }} data &middot; Revenue Rp {{ number_format((float) ($manifest['passenger_revenue'] ?? 0), 0, ',', '.') }}</span>
             </div>
             <table>
                 <thead>

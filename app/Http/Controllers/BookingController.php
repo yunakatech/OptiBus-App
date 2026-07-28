@@ -209,6 +209,14 @@ class BookingController extends Controller
             'refund' => $group['refund'],
             'belum_lunas' => $group['belum_lunas'],
             'passengers' => $activePassengers,
+            'passenger_revenue' => array_reduce(
+                $activePassengers,
+                static fn (float $carry, array $row): float => $carry + max(
+                    ((float) ($row['price'] ?? 0)) - ((float) ($row['discount'] ?? 0)),
+                    0,
+                ),
+                0.0,
+            ),
             'luggages' => $manifestLuggages,
             'luggage_total' => count($manifestLuggages),
             'luggage_revenue' => array_reduce(
