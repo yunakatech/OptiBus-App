@@ -369,11 +369,7 @@
     })();
     const initialUiPreferences = readUiPreferences();
     const isIsoDateKey = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
-    const initialBookingListDate = isIsoDateKey(
-        String(initialUiPreferences.defaultDateRange ?? ''),
-    )
-        ? String(initialUiPreferences.defaultDateRange)
-        : today;
+    const initialBookingListDate = today;
     const initialBookingListDesktopView =
         initialUiPreferences.defaultViewMode === 'cards' ? 'cards' : 'sheet';
     const paymentOptions = [
@@ -423,6 +419,7 @@
     let bookingListDesktopView = $state<'sheet' | 'cards'>(
         initialBookingListDesktopView,
     );
+    let bookingListDateManuallyChanged = $state(false);
     let bookingListVisibleCount = $state(24);
     let lastBookingListFilterSignature = $state('');
     let bookingListFiltersExpanded = $state(false);
@@ -2302,6 +2299,26 @@
 
         return clockKeyFromDate(new Date(clientClockTickMs));
     };
+
+    $effect(() => {
+        if (!listOnly || groupDetailPage || bookingListDateManuallyChanged) {
+            return;
+        }
+
+        const currentToday = currentClockKey().slice(0, 10) || today;
+
+        if (
+            bookingListDateFrom === currentToday &&
+            bookingListDateTo === currentToday
+        ) {
+            return;
+        }
+
+        bookingListDateFrom = currentToday;
+        bookingListDateTo = currentToday;
+        bookingListDatePicker?.setDate(currentToday, false, 'Y-m-d');
+    });
+
     const isArrivedDeparture = (group: BookingGroup | null | undefined) =>
         String(group?.departure_status || '')
             .trim()
@@ -2779,19 +2796,23 @@
         bookingListDesktopView = viewMode;
         persistUiPreferences({ defaultViewMode: viewMode });
     };
-    const setBookingListDate = (value: string) => {
+    const setBookingListDate = (value: string, manual = true) => {
         const safeDate = isIsoDateKey(value) ? value : today;
 
         if (
             bookingListDateFrom === safeDate &&
             bookingListDateTo === safeDate
         ) {
+            if (manual) {
+                bookingListDateManuallyChanged = true;
+            }
+
             return;
         }
 
         bookingListDateFrom = safeDate;
         bookingListDateTo = safeDate;
-        persistUiPreferences({ defaultDateRange: safeDate });
+        bookingListDateManuallyChanged = manual;
     };
     const reloadBookingListData = () => {
         if (!listOnly) {
@@ -2826,12 +2847,14 @@
         }, 180);
     };
     const resetBookingListFilters = () => {
+        const currentToday = currentClockKey().slice(0, 10) || today;
+
         bookingListRoute = 'all';
-        bookingListDateFrom = today;
-        bookingListDateTo = today;
+        bookingListDateFrom = currentToday;
+        bookingListDateTo = currentToday;
         bookingListPayment = 'all';
-        bookingListDatePicker?.setDate(today, true, 'Y-m-d');
-        persistUiPreferences({ defaultDateRange: today });
+        bookingListDateManuallyChanged = false;
+        bookingListDatePicker?.setDate(currentToday, false, 'Y-m-d');
     };
 
     const loadEmptyDepartureSchedules = async () => {
