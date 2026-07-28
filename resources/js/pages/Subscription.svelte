@@ -333,7 +333,10 @@
 
 <AppHead title="Langganan" />
 
-<div class="min-h-full space-y-5 overflow-x-hidden p-3 pb-24 md:p-4">
+<div
+    data-content-density="compact"
+    class="min-h-full space-y-4 overflow-x-hidden p-3 pb-24 md:p-4 lg:space-y-3"
+>
     <div
         class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
     >
@@ -376,8 +379,8 @@
             </CardContent>
         </Card>
     {:else}
-        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div class="space-y-4">
+        <div class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div class="space-y-3 lg:space-y-4">
                 <Card class="overflow-hidden">
                     <CardHeader class="border-b bg-muted/20">
                         <div
@@ -392,7 +395,7 @@
                                         >{tenantSub.tenant_name}</span
                                     >
                                 </div>
-                                <CardTitle class="mt-3 text-2xl">
+                                <CardTitle class="mt-2 text-xl lg:text-2xl">
                                     {currentPlan?.name ?? tenantSub.plan_name}
                                 </CardTitle>
                                 <CardDescription class="mt-1">
@@ -416,8 +419,8 @@
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent class="grid gap-3 p-4 md:grid-cols-3">
-                        <div class="rounded-lg border border-border/70 p-3">
+                    <CardContent class="grid gap-3 p-3 md:grid-cols-3 lg:p-4">
+                        <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
                             <p class="text-xs text-muted-foreground">
                                 Periode / trial
                             </p>
@@ -427,7 +430,7 @@
                                     : formatDate(tenantSub.ends_at)}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/70 p-3">
+                        <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
                             <p class="text-xs text-muted-foreground">
                                 Invoice aktif
                             </p>
@@ -437,7 +440,7 @@
                                     : '-'}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/70 p-3">
+                        <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
                             <p class="text-xs text-muted-foreground">Gateway</p>
                             <p class="mt-1 font-semibold text-foreground">
                                 Mayar
@@ -476,7 +479,7 @@
                                     {/if}
                                 </div>
                                 <div>
-                                    <CardTitle class="text-xl"
+                                    <CardTitle class="text-lg lg:text-xl"
                                         >{activeBillingTitle}</CardTitle
                                     >
                                     <CardDescription class="mt-1"
@@ -503,11 +506,11 @@
 
                     {#if payableInvoice}
                         <CardContent
-                            class="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_260px]"
+                            class="grid gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_240px] lg:p-4"
                         >
                             <div class="grid gap-3 sm:grid-cols-3">
                                 <div
-                                    class="rounded-lg border bg-background p-3"
+                                    class="rounded-lg border bg-background p-2.5 lg:p-3"
                                 >
                                     <p class="text-xs text-muted-foreground">
                                         Invoice
@@ -518,9 +521,7 @@
                                         {payableInvoice.invoice_number}
                                     </p>
                                 </div>
-                                <div
-                                    class="rounded-lg border bg-background p-3"
-                                >
+                                <div class="rounded-lg border bg-background p-2.5 lg:p-3">
                                     <p class="text-xs text-muted-foreground">
                                         Jatuh tempo
                                     </p>
@@ -530,9 +531,7 @@
                                         {formatDate(payableInvoice.due_date)}
                                     </p>
                                 </div>
-                                <div
-                                    class="rounded-lg border bg-background p-3"
-                                >
+                                <div class="rounded-lg border bg-background p-2.5 lg:p-3">
                                     <p class="text-xs text-muted-foreground">
                                         Status Mayar
                                     </p>
@@ -544,11 +543,11 @@
                                 </div>
                             </div>
 
-                            <div class="rounded-lg border bg-background p-3">
+                            <div class="rounded-lg border bg-background p-2.5 lg:p-3">
                                 {#if paymentLinkReady}
                                     <Button
                                         asChild
-                                        class="h-10 w-full rounded-lg"
+                                        class="h-9 w-full rounded-lg lg:h-10"
                                     >
                                         {#snippet children(props)}
                                             <a
@@ -596,14 +595,16 @@
 
                 <Card>
                     <CardHeader>
-                        <CardTitle class="text-lg">Paket Tersedia</CardTitle>
+                        <CardTitle class="text-lg lg:text-xl"
+                            >Paket Tersedia</CardTitle
+                        >
                         <CardDescription
                             >Trial memakai Starter selama 14 hari. Starter
                             berbayar, Pro, dan Fleet aktif setelah checkout
                             Mayar lunas.</CardDescription
                         >
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="p-3 lg:p-4">
                         <div
                             class="mb-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground"
                         >
@@ -614,7 +615,7 @@
                         <div class="grid gap-3 md:grid-cols-3">
                             {#each plans as plan}
                                 <div
-                                    class={`relative overflow-hidden rounded-lg border p-3 transition-all duration-200 ${planCardClass(plan)}`}
+                                    class={`relative overflow-hidden rounded-lg border p-2.5 transition-all duration-200 lg:p-3 ${planCardClass(plan)}`}
                                 >
                                     {#if plan.slug === currentPlanSlug}
                                         <div class="absolute inset-x-0 top-0 h-1 bg-primary"></div>
@@ -647,9 +648,7 @@
                                             />
                                         {/if}
                                     </div>
-                                    <p
-                                        class="mt-2 text-lg font-semibold text-foreground"
-                                    >
+                                    <p class="mt-2 text-base font-semibold text-foreground lg:text-lg">
                                         {formatRupiah(plan.price_monthly)}
                                         <span
                                             class="text-xs font-normal text-muted-foreground"
@@ -657,7 +656,7 @@
                                         >
                                     </p>
                                     <p
-                                        class="mt-2 min-h-10 text-xs leading-5 text-muted-foreground"
+                                        class="mt-2 min-h-10 text-[11px] leading-5 text-muted-foreground lg:text-xs"
                                     >
                                         {plan.description}
                                     </p>
@@ -680,7 +679,7 @@
                                     <Button
                                         type="button"
                                         variant={planButtonVariant(plan)}
-                                        class={`mt-3 h-9 w-full rounded-lg ${plan.slug === currentPlanSlug ? 'shadow-sm shadow-primary/15' : ''}`}
+                                        class={`mt-3 h-8 w-full rounded-lg lg:h-9 ${plan.slug === currentPlanSlug ? 'shadow-sm shadow-primary/15' : ''}`}
                                         disabled={checkoutPlanSlug !== '' ||
                                             plan.slug === currentPlanSlug ||
                                             !canChoosePlan}
@@ -716,21 +715,21 @@
                             <div
                                 class="table-container hidden md:block"
                             >
-                                <table class="w-full text-sm">
+                                <table class="w-full table-fixed text-[12px] lg:text-sm">
                                     <thead
                                         class="bg-muted/70 text-left text-[11px] uppercase tracking-wide text-muted-foreground"
                                     >
                                         <tr>
-                                            <th class="px-4 py-3">Invoice</th>
-                                            <th class="px-4 py-3">Gateway</th>
-                                            <th class="px-3 py-2"
+                                            <th class="w-[24%] px-3 py-2.5">Invoice</th>
+                                            <th class="w-[14%] px-3 py-2.5">Gateway</th>
+                                            <th class="w-[16%] px-3 py-2.5"
                                                 >Jatuh Tempo</th
                                             >
-                                            <th class="px-4 py-3 text-right"
+                                            <th class="w-[18%] px-3 py-2.5 text-right"
                                                 >Nominal</th
                                             >
-                                            <th class="px-4 py-3">Status</th>
-                                            <th class="px-4 py-3 text-right"
+                                            <th class="w-[16%] px-3 py-2.5">Status</th>
+                                            <th class="w-[12%] px-3 py-2.5 text-right"
                                                 >Aksi</th
                                             >
                                         </tr>
@@ -738,8 +737,8 @@
                                     <tbody class="divide-y divide-border/70 text-[13px]">
                                         {#each invoices as invoice}
                                             <tr class="transition-colors hover:bg-muted/30">
-                                                <td class="px-4 py-3.5">
-                                                    <p class="font-semibold tracking-tight text-foreground">
+                                                <td class="px-3 py-2.5 align-top">
+                                                    <p class="truncate font-semibold tracking-tight text-foreground">
                                                         {invoice.invoice_number}
                                                     </p>
                                                     <p class="mt-1 text-xs text-muted-foreground">
@@ -748,35 +747,35 @@
                                                         )}
                                                     </p>
                                                 </td>
-                                                <td class="px-4 py-3.5">
-                                                    <span class="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                                <td class="px-3 py-2.5 align-top">
+                                                    <span class="inline-flex rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                                                         {invoice.payment_gateway ||
                                                             'Mayar'}
                                                     </span>
                                                 </td>
-                                                <td class="px-3 py-3.5 text-muted-foreground">
+                                                <td class="px-3 py-2.5 align-top text-muted-foreground">
                                                     {formatDate(
                                                         invoice.due_date,
                                                     )}
                                                 </td>
-                                                <td class="px-4 py-3.5 text-right font-semibold tracking-tight">
+                                                <td class="px-3 py-2.5 text-right font-semibold tracking-tight">
                                                     {formatRupiah(
                                                         invoice.amount,
                                                     )}
                                                 </td>
-                                                <td class="px-4 py-3.5">
+                                                <td class="px-3 py-2.5 align-top">
                                                     <Badge
                                                         variant={invoiceStatusBadge(
                                                             invoice,
                                                         ).variant}
-                                                        class="rounded-full px-2.5 py-0.5"
+                                                        class="rounded-full px-2 py-0.5"
                                                     >
                                                         {invoiceStatusBadge(
                                                             invoice,
                                                         ).label}
                                                     </Badge>
                                                 </td>
-                                                <td class="px-4 py-3.5 text-right">
+                                                <td class="px-3 py-2.5 text-right">
                                                     {#if ['pending', 'overdue', 'failed'].includes(invoice.status) && invoice.gateway_checkout_url}
                                                         <a
                                                             href={invoice.gateway_checkout_url}
@@ -816,7 +815,7 @@
                                                 </p>
                                                 <p class="mt-1 text-xs text-muted-foreground">
                                                     {invoice.payment_gateway ||
-                                                        'Mayar'} · {formatDate(
+                                                        'Mayar'} - {formatDate(
                                                         invoice.due_date,
                                                     )}
                                                 </p>
@@ -904,9 +903,9 @@
                             subscription.</CardDescription
                         >
                     </CardHeader>
-                    <CardContent class="space-y-3 p-4 text-sm">
+                    <CardContent class="space-y-2.5 p-3 text-sm lg:p-4">
                         <div
-                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                            class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                                 Gateway
@@ -916,7 +915,7 @@
                             </p>
                         </div>
                         <div
-                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                            class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                                 Invoice paid
@@ -928,7 +927,7 @@
                             </p>
                         </div>
                         <div
-                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                            class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                                 Invoice aktif
@@ -954,9 +953,9 @@
                             >Mapping tenant, pool, dan role aktif akun ini.</CardDescription
                         >
                     </CardHeader>
-                    <CardContent class="space-y-3 p-4 text-sm">
+                    <CardContent class="space-y-2.5 p-3 text-sm lg:p-4">
                         <div
-                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                            class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                                 Tenant ID
@@ -967,7 +966,7 @@
                             </p>
                         </div>
                         <div
-                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                            class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                                 Pool terhubung
@@ -977,7 +976,7 @@
                             </p>
                         </div>
                         <div
-                            class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                            class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                                 Role
