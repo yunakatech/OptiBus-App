@@ -20,7 +20,7 @@
         breadcrumbs?: BreadcrumbItem[];
     } = $props();
 
-    const auth = $derived(page.props.auth);
+    const auth = $derived(page.props.auth ?? null);
     const url = currentUrlState();
     const bookingConsoleHref = toUrl('/booking-console');
     const canPrefetchBookingConsole =
@@ -111,6 +111,6 @@
             </Button>
         {/if}
         <HeaderThemeControls />
-        <ProfileMenu user={auth.user} />
+        <ProfileMenu user={auth?.user ?? null} />
     </div>
 </header>

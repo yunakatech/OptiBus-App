@@ -164,8 +164,73 @@
         items: Array<{ key: string; label: string; done: boolean }>;
     };
 
+    const createDashboardStats = (): DashboardStats => ({
+        total_bookings: 0,
+        pending: 0,
+        confirmed: 0,
+        canceled: 0,
+        live_fleet: 0,
+        revenue_today: 0,
+        revenue_booking_month: 0,
+        revenue_charter_month: 0,
+        revenue_luggage_month: 0,
+        revenue_total_today: 0,
+        revenue_total_month: 0,
+        revenue_total_year: 0,
+        bop_booking_month: 0,
+        bop_charter_month: 0,
+        margin_booking_month: 0,
+        margin_charter_month: 0,
+        margin_total_month: 0,
+        target_revenue_month: 0,
+        achievement_percent: 0,
+        top_route: '-',
+        top_route_count: 0,
+    });
+
+    const createSummaryScope = (): SummaryScopeStats => ({
+        total_bookings: 0,
+        total_passengers: 0,
+        revenue_booking: 0,
+        revenue_charter: 0,
+        revenue_luggage: 0,
+        bop_booking: 0,
+        bop_charter: 0,
+        margin_booking: 0,
+        margin_charter: 0,
+        target_revenue: 0,
+        achievement_percent: 0,
+    });
+
+    const createSummaryScopes = (): Record<
+        'day' | 'month' | 'year',
+        SummaryScopeStats
+    > => ({
+        day: createSummaryScope(),
+        month: createSummaryScope(),
+        year: createSummaryScope(),
+    });
+
+    const createUpcomingCharterReminder = (): UpcomingCharterReminder => ({
+        total: 0,
+        visible_count: 0,
+        items: [],
+    });
+
+    const createDriverCategories = (): Record<string, any[]> => ({
+        Minibus: [],
+        Mediumbus: [],
+        Bigbus: [],
+    });
+
+    const createArmadaCategories = (): ArmadaPerformanceCategories => ({
+        Minibus: [],
+        Mediumbus: [],
+        Bigbus: [],
+    });
+
     let {
-        stats,
+        stats = createDashboardStats(),
         pools = [] as PoolOption[],
         selectedPoolId = 0,
         selectedPoolName = 'Semua Pool',
@@ -174,100 +239,13 @@
         monthlyTrend = [],
         recentActivity = [],
         departuresToday = [],
-        upcomingCharterReminder = { total: 0, visible_count: 0, items: [] },
+        upcomingCharterReminder = createUpcomingCharterReminder(),
         recentActivityTotal = 0,
         recentActivityVisibleCount = 0,
-        topDrivers = { Minibus: [], Mediumbus: [], Bigbus: [] } as Record<
-            string,
-            any[]
-        >,
-        topArmadas = {
-            Minibus: [],
-            Mediumbus: [],
-            Bigbus: [],
-        } as ArmadaPerformanceCategories,
-        summaryStatsByScope = {
-            day: {
-                total_bookings: 0,
-                total_passengers: 0,
-                revenue_booking: 0,
-                revenue_charter: 0,
-                revenue_luggage: 0,
-                bop_booking: 0,
-                bop_charter: 0,
-                margin_booking: 0,
-                margin_charter: 0,
-                target_revenue: 0,
-                achievement_percent: 0,
-            },
-            month: {
-                total_bookings: 0,
-                total_passengers: 0,
-                revenue_booking: 0,
-                revenue_charter: 0,
-                revenue_luggage: 0,
-                bop_booking: 0,
-                bop_charter: 0,
-                margin_booking: 0,
-                margin_charter: 0,
-                target_revenue: 0,
-                achievement_percent: 0,
-            },
-            year: {
-                total_bookings: 0,
-                total_passengers: 0,
-                revenue_booking: 0,
-                revenue_charter: 0,
-                revenue_luggage: 0,
-                bop_booking: 0,
-                bop_charter: 0,
-                margin_booking: 0,
-                margin_charter: 0,
-                target_revenue: 0,
-                achievement_percent: 0,
-            },
-        },
-        summaryComparisonByScope = {
-            day: {
-                total_bookings: 0,
-                total_passengers: 0,
-                revenue_booking: 0,
-                revenue_charter: 0,
-                revenue_luggage: 0,
-                bop_booking: 0,
-                bop_charter: 0,
-                margin_booking: 0,
-                margin_charter: 0,
-                target_revenue: 0,
-                achievement_percent: 0,
-            },
-            month: {
-                total_bookings: 0,
-                total_passengers: 0,
-                revenue_booking: 0,
-                revenue_charter: 0,
-                revenue_luggage: 0,
-                bop_booking: 0,
-                bop_charter: 0,
-                margin_booking: 0,
-                margin_charter: 0,
-                target_revenue: 0,
-                achievement_percent: 0,
-            },
-            year: {
-                total_bookings: 0,
-                total_passengers: 0,
-                revenue_booking: 0,
-                revenue_charter: 0,
-                revenue_luggage: 0,
-                bop_booking: 0,
-                bop_charter: 0,
-                margin_booking: 0,
-                margin_charter: 0,
-                target_revenue: 0,
-                achievement_percent: 0,
-            },
-        },
+        topDrivers = createDriverCategories(),
+        topArmadas = createArmadaCategories(),
+        summaryStatsByScope = createSummaryScopes(),
+        summaryComparisonByScope = createSummaryScopes(),
         summaryPeriodByScope = {
             day: {
                 current_label: 'Hari Ini',
@@ -286,20 +264,20 @@
             },
         },
     }: {
-        stats: DashboardStats;
+        stats?: DashboardStats;
         pools?: PoolOption[];
         selectedPoolId?: number;
         selectedPoolName?: string;
         setupProgress?: SetupProgress | null;
-        dailyTrend?: TrendItem[];
-        monthlyTrend?: TrendItem[];
-        recentActivity?: ActivityItem[];
-        departuresToday?: DepartureItem[];
-        upcomingCharterReminder?: UpcomingCharterReminder;
-        recentActivityTotal?: number;
-        recentActivityVisibleCount?: number;
-        topDrivers?: Record<string, any[]>;
-        topArmadas?: ArmadaPerformanceCategories;
+        dailyTrend?: TrendItem[] | null;
+        monthlyTrend?: TrendItem[] | null;
+        recentActivity?: ActivityItem[] | null;
+        departuresToday?: DepartureItem[] | null;
+        upcomingCharterReminder?: UpcomingCharterReminder | null;
+        recentActivityTotal?: number | null;
+        recentActivityVisibleCount?: number | null;
+        topDrivers?: Record<string, any[]> | null;
+        topArmadas?: ArmadaPerformanceCategories | null;
         summaryStatsByScope?: Record<
             'day' | 'month' | 'year',
             SummaryScopeStats
@@ -314,8 +292,43 @@
         >;
     } = $props();
 
-    const activeTrendRows = $derived(dailyTrend);
-    const operationalTrendSourceRows = $derived(monthlyTrend);
+    const safeSummaryStatsByScope = $derived(
+        summaryStatsByScope ?? createSummaryScopes(),
+    );
+    const safeSummaryPeriodByScope = $derived(
+        summaryPeriodByScope ?? {
+            day: {
+                current_label: 'Hari Ini',
+                previous_label: 'Kemarin',
+                subtitle_label: 'hari ini',
+            },
+            month: {
+                current_label: 'Bulan Ini',
+                previous_label: 'Bulan Lalu',
+                subtitle_label: 'bulan ini',
+            },
+            year: {
+                current_label: 'Tahun Ini',
+                previous_label: 'Tahun Lalu',
+                subtitle_label: 'tahun ini',
+            },
+        },
+    );
+    const safeUpcomingCharterReminder = $derived(
+        upcomingCharterReminder ?? createUpcomingCharterReminder(),
+    );
+    const safeDailyTrend = $derived(dailyTrend ?? []);
+    const safeMonthlyTrend = $derived(monthlyTrend ?? []);
+    const safeRecentActivity = $derived(recentActivity ?? []);
+    const safeDeparturesToday = $derived(departuresToday ?? []);
+    const safeRecentActivityTotal = $derived(Number(recentActivityTotal ?? 0));
+    const safeRecentActivityVisibleCount = $derived(
+        Number(recentActivityVisibleCount ?? 0),
+    );
+    const safeTopDrivers = $derived(topDrivers ?? createDriverCategories());
+    const safeTopArmadas = $derived(topArmadas ?? createArmadaCategories());
+    const activeTrendRows = $derived(safeDailyTrend);
+    const operationalTrendSourceRows = $derived(safeMonthlyTrend);
     const maxTrendRevenue = $derived(
         Math.max(
             0,
@@ -325,25 +338,26 @@
     const lineScaleMax = $derived(maxTrendRevenue > 0 ? maxTrendRevenue : 1);
     const upcomingCharterOverflow = $derived(
         Math.max(
-            Number(upcomingCharterReminder.total || 0) -
-                Number(upcomingCharterReminder.visible_count || 0),
+            Number(safeUpcomingCharterReminder.total || 0) -
+                Number(safeUpcomingCharterReminder.visible_count || 0),
             0,
         ),
     );
     const recentActivityOverflow = $derived(
         Math.max(
-            Number(recentActivityTotal || 0) -
-                Number(recentActivityVisibleCount || 0),
+            safeRecentActivityTotal - safeRecentActivityVisibleCount,
             0,
         ),
     );
     const departuresTodayTotalBookings = $derived(
-        departuresToday.reduce(
+        safeDeparturesToday.reduce(
             (total, item) => total + Number(item.total_bookings || 0),
             0,
         ),
     );
-    const nextCharter = $derived(upcomingCharterReminder.items[0] ?? null);
+    const nextCharter = $derived(
+        safeUpcomingCharterReminder.items[0] ?? null,
+    );
     const hasTrendTransactionCounts = $derived(
         operationalTrendSourceRows.some(
             (item) => Number(item.transaction_count || 0) > 0,
@@ -358,7 +372,7 @@
                 ? Number(item.transaction_count || 0)
                 : index === operationalTrendSourceRows.length - 1
                   ? Math.max(
-                        departuresToday.length,
+                        safeDeparturesToday.length,
                         departuresTodayTotalBookings,
                     )
                   : 0,
@@ -383,8 +397,16 @@
             )
             .join('|')}`,
     );
-    const activeSummaryStats = $derived(summaryStatsByScope.month);
-    const activeSummaryPeriod = $derived(summaryPeriodByScope.month);
+    const activeSummaryStats = $derived(
+        safeSummaryStatsByScope.month ?? createSummaryScope(),
+    );
+    const activeSummaryPeriod = $derived(
+        safeSummaryPeriodByScope.month ?? {
+            current_label: 'Bulan Ini',
+            previous_label: 'Bulan Lalu',
+            subtitle_label: 'bulan ini',
+        },
+    );
     const activeTotalRevenue = $derived(
         Number(activeSummaryStats.revenue_booking || 0) +
             Number(activeSummaryStats.revenue_charter || 0) +
@@ -753,14 +775,17 @@
         <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <!-- Revenue Activity Chart -->
             <RevenueActivityChart
-                monthlyTrend={dailyTrend}
+                monthlyTrend={safeDailyTrend}
                 {toCurrency}
                 title="Revenue 30 Hari Terakhir"
                 subtitle="Aktivitas Harian"
             />
 
             <!-- Prioritas Hari Ini replaced with RevenueChannelPieChart -->
-            <RevenueChannelPieChart {summaryStatsByScope} {toCurrency} />
+            <RevenueChannelPieChart
+                summaryStatsByScope={safeSummaryStatsByScope}
+                {toCurrency}
+            />
         </div>
     </div>
 
@@ -835,12 +860,18 @@
         <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
             <div class="space-y-2.5 xl:col-span-2">
                 <!-- Command Center -->
-                <CommandCenter {monthlyTrend} {toCurrency} />
+                <CommandCenter monthlyTrend={safeMonthlyTrend} {toCurrency} />
 
                 <!-- Driver Performance Card -->
-                <DriverPerformanceCard categories={topDrivers} {toCurrency} />
+                <DriverPerformanceCard
+                    categories={safeTopDrivers}
+                    {toCurrency}
+                />
 
-                <ArmadaPerformanceCard categories={topArmadas} {toCurrency} />
+                <ArmadaPerformanceCard
+                    categories={safeTopArmadas}
+                    {toCurrency}
+                />
             </div>
 
             <div class="space-y-2.5 xl:col-span-1">
@@ -860,11 +891,11 @@
                                     tanggal paling dekat</CardDescription
                                 >
                             </div>
-                            {#if upcomingCharterReminder.total > 0}
+                            {#if safeUpcomingCharterReminder.total > 0}
                                 <Badge
                                     variant="secondary"
                                     class="w-fit shrink-0"
-                                    >{upcomingCharterReminder.total} data</Badge
+                                    >{safeUpcomingCharterReminder.total} data</Badge
                                 >
                             {/if}
                         </div>
@@ -872,14 +903,14 @@
                     <CardContent
                         class="space-y-2 px-3 pb-3 pt-0 sm:space-y-2.5 sm:px-5 sm:pb-4"
                     >
-                        {#if upcomingCharterReminder.items.length === 0}
+                        {#if safeUpcomingCharterReminder.items.length === 0}
                             <div
                                 class="rounded-xl border border-dashed p-3 text-[11px] text-muted-foreground text-center"
                             >
                                 Belum ada data carter.
                             </div>
                         {:else}
-                            {#each upcomingCharterReminder.items as item (`upcoming-charter-${item.id}`)}
+                            {#each safeUpcomingCharterReminder.items as item (`upcoming-charter-${item.id}`)}
                                 <a
                                     href={`/charters/view/${item.id}`}
                                     class="block rounded-[14px] border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-2.5 transition hover:border-cyan-300/70 hover:shadow-sm sm:p-3 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.94),rgba(8,47,73,0.28))]"
@@ -965,12 +996,12 @@
                         {#if copyError}
                             <p class="text-xs text-destructive">{copyError}</p>
                         {/if}
-                        {#if departuresToday.length === 0}
+                        {#if safeDeparturesToday.length === 0}
                             <p class="text-xs text-muted-foreground">
                                 Belum ada data keberangkatan hari ini.
                             </p>
                         {:else}
-                            {#each departuresToday as item, idx (`departure-${idx}-${item.rute}-${item.jam}-${item.unit}`)}
+                            {#each safeDeparturesToday as item, idx (`departure-${idx}-${item.rute}-${item.jam}-${item.unit}`)}
                                 <div class="rounded-md border p-2.5">
                                     <div
                                         class="mb-1 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
@@ -1038,15 +1069,15 @@
                                     >Update terbaru dari sistem</CardDescription
                                 >
                             </div>
-                            {#if recentActivityTotal > 0}
+                            {#if safeRecentActivityTotal > 0}
                                 <Badge variant="secondary" class="shrink-0"
-                                    >{recentActivityTotal} log</Badge
+                                    >{safeRecentActivityTotal} log</Badge
                                 >
                             {/if}
                         </div>
                     </CardHeader>
                     <CardContent class="pb-4 pt-0 sm:px-5">
-                        {#if recentActivity.length === 0}
+                        {#if safeRecentActivity.length === 0}
                             <p class="text-xs text-muted-foreground">
                                 Belum ada aktivitas.
                             </p>
@@ -1054,7 +1085,7 @@
                             <div
                                 class="divide-y divide-border rounded-xl border border-border/70 bg-background/70"
                             >
-                                {#each recentActivity as item, idx (`activity-desktop-${idx}-${item.tag}`)}
+                                {#each safeRecentActivity as item, idx (`activity-desktop-${idx}-${item.tag}`)}
                                     <div
                                         class="flex items-start justify-between gap-3 px-3 py-2.5"
                                     >
@@ -1114,20 +1145,20 @@
                                 >Update terbaru dari sistem</CardDescription
                             >
                         </div>
-                        {#if recentActivityTotal > 0}
+                        {#if safeRecentActivityTotal > 0}
                             <Badge variant="secondary" class="w-fit shrink-0"
-                                >{recentActivityTotal} log</Badge
+                                >{safeRecentActivityTotal} log</Badge
                             >
                         {/if}
                     </div>
                 </CardHeader>
                 <CardContent class="space-y-2.5 pt-0">
-                    {#if recentActivity.length === 0}
+                    {#if safeRecentActivity.length === 0}
                         <p class="text-xs text-muted-foreground">
                             Belum ada aktivitas.
                         </p>
                     {:else}
-                        {#each recentActivity as item, idx (`activity-mobile-${idx}-${item.tag}`)}
+                        {#each safeRecentActivity as item, idx (`activity-mobile-${idx}-${item.tag}`)}
                             <div class="rounded-md border p-2.5">
                                 <div
                                     class="mb-1 flex items-start justify-between gap-2"

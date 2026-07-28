@@ -28,7 +28,7 @@
         breadcrumbs?: BreadcrumbItem[];
     } = $props();
 
-    const auth = $derived(page.props.auth);
+    const auth = $derived(page.props.auth ?? null);
     const url = currentUrlState();
     const dashboardHref = toUrl(dashboard());
     const canPrefetchDashboard = shouldPrefetchNavigationHref(dashboardHref);
@@ -166,7 +166,7 @@
                     </Button>
                 {/if}
                 <HeaderThemeControls />
-                <ProfileMenu user={auth.user} triggerClass="shrink-0" />
+                <ProfileMenu user={auth?.user ?? null} triggerClass="shrink-0" />
             </div>
         </div>
     </div>
