@@ -336,40 +336,77 @@
         </section>
 
         <div class="space-y-5">
-            {#each visibleMenuSections as section (section.label)}
+            {#if visibleMenuSections.length === 0}
                 <section
-                    class="space-y-3 rounded-lg border border-border/70 bg-card p-3 shadow-sm sm:p-4"
+                    class="rounded-lg border border-dashed border-border/80 bg-card p-5 text-center shadow-sm"
                 >
-                    <div class="flex items-center justify-between gap-3">
-                        <h2
-                            class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                    <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
+                        <div
+                            class="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary"
                         >
-                            {section.label}
-                        </h2>
-                    </div>
-
-                    <div
-                        class="grid grid-cols-2 gap-2 min-[390px]:gap-3 sm:grid-cols-3 lg:grid-cols-4"
-                    >
-                        {#each section.items as item (item.href)}
-                            <Link
-                                href={toUrl(item.href)}
-                                class="flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-lg border bg-background px-3 py-3 text-center text-xs font-semibold text-foreground transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-0.5 {url.isCurrentOrParentUrl(
-                                    item.href,
-                                    url.currentUrl,
-                                )
-                                    ? 'border-primary bg-primary/10 text-primary'
-                                    : 'hover:bg-accent'}"
-                            >
-                                <item.icon class="size-5 shrink-0" />
-                                <span class="line-clamp-2 leading-tight">
-                                    {item.title}
-                                </span>
-                            </Link>
-                        {/each}
+                            <LayoutGrid class="size-5" />
+                        </div>
+                        <div class="space-y-1">
+                            <h2 class="text-base font-semibold text-foreground">
+                                Menu belum tersedia
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                Belum ada akses menu yang aktif untuk akun ini.
+                                Jika ini tidak sesuai, cek hak akses user.
+                            </p>
+                        </div>
+                        <Button asChild class="w-full rounded-full">
+                            {#snippet children(props)}
+                                <Link
+                                    {...props}
+                                    href={billingLocked
+                                        ? '/subscription'
+                                        : dashboardHref}
+                                >
+                                    {billingLocked
+                                        ? 'Buka Langganan'
+                                        : 'Buka Dashboard'}
+                                </Link>
+                            {/snippet}
+                        </Button>
                     </div>
                 </section>
-            {/each}
+            {:else}
+                {#each visibleMenuSections as section (section.label)}
+                    <section
+                        class="space-y-3 rounded-lg border border-border/70 bg-card p-3 shadow-sm sm:p-4"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <h2
+                                class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            >
+                                {section.label}
+                            </h2>
+                        </div>
+
+                        <div
+                            class="grid grid-cols-2 gap-2 min-[390px]:gap-3 sm:grid-cols-3 lg:grid-cols-4"
+                        >
+                            {#each section.items as item (item.href)}
+                                <Link
+                                    href={toUrl(item.href)}
+                                    class="flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-lg border bg-background px-3 py-3 text-center text-xs font-semibold text-foreground transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-0.5 {url.isCurrentOrParentUrl(
+                                        item.href,
+                                        url.currentUrl,
+                                    )
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'hover:bg-accent'}"
+                                >
+                                    <item.icon class="size-5 shrink-0" />
+                                    <span class="line-clamp-2 leading-tight">
+                                        {item.title}
+                                    </span>
+                                </Link>
+                            {/each}
+                        </div>
+                    </section>
+                {/each}
+            {/if}
         </div>
     </div>
 </div>
