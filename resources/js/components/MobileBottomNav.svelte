@@ -177,68 +177,70 @@
     });
 </script>
 
-<nav
-    class={`fixed inset-x-0 bottom-0 z-40 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 transition-[padding] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${isCompact ? 'px-14' : 'px-2'}`}
-    aria-label="Mobile bottom navigation"
->
-    <div
-        class={`mx-auto w-full border border-sidebar-border/70 bg-background/88 ring-1 ring-black/5 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[16rem] rounded-lg p-1 shadow-[0_12px_24px_-22px_hsl(201_96%_30%_/_0.75)]' : 'max-w-md rounded-lg p-1.5 shadow-[0_14px_30px_-24px_hsl(201_96%_30%_/_0.7)]'}`}
+{#if visibleMainItems.length > 0}
+    <nav
+        class={`fixed inset-x-0 bottom-0 z-40 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 transition-[padding] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${isCompact ? 'px-14' : 'px-2'}`}
+        aria-label="Mobile bottom navigation"
     >
         <div
-            class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1rem]' : 'rounded-[1.15rem]'}`}
+            class={`mx-auto w-full border border-sidebar-border/70 bg-background/88 ring-1 ring-black/5 backdrop-blur-xl transition-[max-width,padding,border-radius,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'max-w-[16rem] rounded-lg p-1 shadow-[0_12px_24px_-22px_hsl(201_96%_30%_/_0.75)]' : 'max-w-md rounded-lg p-1.5 shadow-[0_14px_30px_-24px_hsl(201_96%_30%_/_0.7)]'}`}
         >
             <div
-                class={`pointer-events-none absolute left-0 z-0 transition-[transform,padding,inset] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'inset-y-0.5 px-1' : 'inset-y-[3px] px-[5px]'}`}
-                style={`width: ${100 / navCount}%; transform: translateX(${activeIndex * 100}%);`}
+                class={`relative overflow-hidden transition-[border-radius] duration-300 ${isCompact ? 'rounded-[1rem]' : 'rounded-[1.15rem]'}`}
             >
                 <div
-                    class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/25 to-sky-500/15 shadow-[0_8px_20px_-12px_hsl(200_95%_45%_/_0.7)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-lg' : 'rounded-xl'}`}
-                ></div>
-            </div>
+                    class={`pointer-events-none absolute left-0 z-0 transition-[transform,padding,inset] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isCompact ? 'inset-y-0.5 px-1' : 'inset-y-[3px] px-[5px]'}`}
+                    style={`width: ${100 / navCount}%; transform: translateX(${activeIndex * 100}%);`}
+                >
+                    <div
+                        class={`h-full border border-cyan-300/30 bg-linear-to-b from-cyan-500/25 to-sky-500/15 shadow-[0_8px_20px_-12px_hsl(200_95%_45%_/_0.7)] transition-[border-radius] duration-300 ${isCompact ? 'rounded-lg' : 'rounded-xl'}`}
+                    ></div>
+                </div>
 
-            <ul
-                class="relative z-10 grid"
-                style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}
-            >
-                {#each visibleMainItems as item (toUrl(item.href))}
-                    {@const itemHref = toUrl(item.href)}
-                    <li>
-                        <a
-                            href={itemHref}
-                            aria-label={item.title}
-                            title={item.title}
-                            aria-busy={pendingHref === itemHref}
-                            onpointerenter={() => prefetchNavItem(itemHref)}
-                            onpointerdown={() => prepareNavPress(itemHref)}
-                            onfocus={() => prefetchNavItem(itemHref)}
-                            onclick={(event) => visitNavItem(event, itemHref)}
-                            class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref ===
-                            itemHref
-                                ? 'opacity-70'
-                                : ''} {isCompact
-                                ? 'h-10 rounded-lg'
-                                : 'h-12 rounded-xl'} {isNavItemActive(item.href)
-                                ? 'text-primary'
-                                : 'text-muted-foreground/90'}"
-                        >
-                            {#if pendingHref === itemHref}
-                                <span
-                                    class="absolute right-2 top-2 size-1.5 rounded-full bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.9)] motion-safe:animate-ping"
-                                ></span>
-                            {/if}
-                            {#if item.icon}
-                                <item.icon
-                                    class="shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {isCompact
-                                        ? 'size-4'
-                                        : 'size-5'} {isNavItemActive(item.href)
-                                        ? '-translate-y-0.5 scale-110'
-                                        : 'group-hover:-translate-y-0.5'}"
-                                />
-                            {/if}
-                        </a>
-                    </li>
-                {/each}
-            </ul>
+                <ul
+                    class="relative z-10 grid"
+                    style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}
+                >
+                    {#each visibleMainItems as item (toUrl(item.href))}
+                        {@const itemHref = toUrl(item.href)}
+                        <li>
+                            <a
+                                href={itemHref}
+                                aria-label={item.title}
+                                title={item.title}
+                                aria-busy={pendingHref === itemHref}
+                                onpointerenter={() => prefetchNavItem(itemHref)}
+                                onpointerdown={() => prepareNavPress(itemHref)}
+                                onfocus={() => prefetchNavItem(itemHref)}
+                                onclick={(event) => visitNavItem(event, itemHref)}
+                                class="group relative flex touch-manipulation select-none items-center justify-center transition-all duration-150 ease-out active:scale-[0.97] {pendingHref ===
+                                itemHref
+                                    ? 'opacity-70'
+                                    : ''} {isCompact
+                                    ? 'h-10 rounded-lg'
+                                    : 'h-12 rounded-xl'} {isNavItemActive(item.href)
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground/90'}"
+                            >
+                                {#if pendingHref === itemHref}
+                                    <span
+                                        class="absolute right-2 top-2 size-1.5 rounded-full bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.9)] motion-safe:animate-ping"
+                                    ></span>
+                                {/if}
+                                {#if item.icon}
+                                    <item.icon
+                                        class="shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {isCompact
+                                            ? 'size-4'
+                                            : 'size-5'} {isNavItemActive(item.href)
+                                            ? '-translate-y-0.5 scale-110'
+                                            : 'group-hover:-translate-y-0.5'}"
+                                    />
+                                {/if}
+                            </a>
+                        </li>
+                    {/each}
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+{/if}

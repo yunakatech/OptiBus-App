@@ -212,6 +212,32 @@
     const exportLabel = (type: ReportKind) =>
         type === 'booking' ? 'Export Booking CSV' : 'Export Revenue CSV';
 
+    const csvFilename = (type: ReportKind, from: string, to: string) => {
+        const safeFrom = String(from || 'awal').replace(/[^0-9A-Za-z-]/g, '');
+        const safeTo = String(to || 'akhir').replace(/[^0-9A-Za-z-]/g, '');
+        const prefix =
+            type === 'booking'
+                ? 'bookings-report'
+                : type === 'bagasi'
+                  ? 'report-bagasi'
+                  : 'report-charter';
+
+        return `${prefix}-${safeFrom}-to-${safeTo}.csv`;
+    };
+
+    const filenameFromDisposition = (disposition: string | null) => {
+        const value = String(disposition || '');
+        const utfMatch = value.match(/filename\*=UTF-8''([^;]+)/i);
+
+        if (utfMatch?.[1]) {
+            return decodeURIComponent(utfMatch[1].replace(/"/g, ''));
+        }
+
+        const normalMatch = value.match(/filename="?([^";]+)"?/i);
+
+        return normalMatch?.[1] ?? '';
+    };
+
     const resolvedReportType = (
         summary: ReportSummary | null,
         fallback: ReportKind,
@@ -269,6 +295,77 @@
     } = $props();
 
     let reportFiltersExpanded = $state(false);
+    let reportExporting = $state(false);
+    let reportExportError = $state('');
+
+    const downloadReportCsv = async () => {
+        if (reportExporting) {
+            return;
+        }
+
+        const type = resolvedReportType(reportSummary, reportType);
+        const href = exportHref(
+            type,
+            reportFrom,
+            reportTo,
+            reportPoolId,
+            reportRouteId,
+        );
+
+        reportExporting = true;
+        reportExportError = '';
+
+        try {
+            const response = await fetch(href, {
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'text/csv, application/json, text/plain, */*',
+                },
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                let message = text.trim();
+
+                try {
+                    const parsed = JSON.parse(text) as {
+                        message?: string;
+                        error?: string;
+                    };
+                    message = parsed.message || parsed.error || message;
+                } catch {
+                    message = message.replace(/<[^>]+>/g, ' ').trim();
+                }
+
+                throw new Error(
+                    message ||
+                        `Export CSV gagal. Server merespons ${response.status}.`,
+                );
+            }
+
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const filename =
+                filenameFromDisposition(
+                    response.headers.get('content-disposition'),
+                ) || csvFilename(type, reportFrom, reportTo);
+
+            link.href = objectUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        } catch (error) {
+            reportExportError =
+                error instanceof Error
+                    ? error.message
+                    : 'Export CSV gagal. Coba lagi.';
+        } finally {
+            reportExporting = false;
+        }
+    };
 </script>
 
 <div
@@ -280,21 +377,28 @@
         ></div>
         <div class="relative space-y-4 px-5 py-5 md:px-6">
             <div class="flex justify-end">
-                <div class="flex flex-wrap gap-2">
-                    <a
-                        href={exportHref(
-                            resolvedReportType(reportSummary, reportType),
-                            reportFrom,
-                            reportTo,
-                            reportPoolId,
-                            reportRouteId,
-                        )}
-                        class="inline-flex h-11 items-center justify-center rounded-lg border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition hover:bg-muted/25"
+                <div class="flex flex-col items-end gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="h-11 rounded-lg px-4 text-sm shadow-sm"
+                        onclick={() => void downloadReportCsv()}
+                        disabled={reportExporting}
                     >
-                        {exportLabel(
-                            resolvedReportType(reportSummary, reportType),
-                        )}
-                    </a>
+                        {reportExporting
+                            ? 'Menyiapkan CSV...'
+                            : exportLabel(
+                                  resolvedReportType(
+                                      reportSummary,
+                                      reportType,
+                                  ),
+                              )}
+                    </Button>
+                    {#if reportExportError}
+                        <p class="max-w-sm text-right text-xs text-rose-600">
+                            {reportExportError}
+                        </p>
+                    {/if}
                 </div>
             </div>
 
