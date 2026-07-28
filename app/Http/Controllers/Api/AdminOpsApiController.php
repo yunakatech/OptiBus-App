@@ -5814,6 +5814,7 @@ class AdminOpsApiController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]));
+                $this->assignCurrentUserToPool($poolId);
             }
 
             if ($routeIds === []) {
@@ -6715,6 +6716,33 @@ class AdminOpsApiController extends Controller
     private function currentUserPoolIds(): array
     {
         return PoolScope::userPoolIds();
+    }
+
+    private function assignCurrentUserToPool(int $poolId): void
+    {
+        $userId = (int) (auth()->id() ?? 0);
+        if ($poolId <= 0 || $userId <= 0 || ! SchemaCache::hasTable('pool_user')) {
+            return;
+        }
+
+        $exists = DB::table('pool_user')
+            ->where('user_id', $userId)
+            ->where('pool_id', $poolId)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        DB::table('pool_user')->insert([
+            'user_id' => $userId,
+            'pool_id' => $poolId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Cache::forget("inertia:pools:user:{$userId}:v2");
+        PoolScope::flushRequestCache();
     }
 
     /**
