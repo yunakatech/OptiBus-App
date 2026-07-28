@@ -6,7 +6,9 @@ use App\Http\Controllers\Auth\SafeEmailVerificationNotificationController;
 use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -44,6 +46,21 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        VerifyEmail::toMailUsing(function (object $notifiable, string $url): MailMessage {
+            $expireMinutes = (int) config('auth.verification.expire', 60);
+            $name = trim((string) ($notifiable->name ?? ''));
+
+            return (new MailMessage)
+                ->subject('Verifikasi alamat email OptiBus')
+                ->greeting($name !== '' ? "Halo {$name}," : 'Halo,')
+                ->line('Terima kasih sudah mendaftar di OptiBus.')
+                ->line('Klik tombol di bawah ini untuk memverifikasi alamat email Anda dan melanjutkan penggunaan akun.')
+                ->action('Verifikasi Email', $url)
+                ->line("Link verifikasi ini berlaku selama {$expireMinutes} menit.")
+                ->line('Jika Anda tidak membuat akun OptiBus, abaikan email ini.')
+                ->salutation('Salam, Tim OptiBus');
+        });
 
         if ((bool) config('app.force_https')) {
             URL::forceScheme('https');
