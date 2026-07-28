@@ -586,7 +586,7 @@
         if (Math.abs(amount) >= 1_000_000)
             return `Rp ${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
         if (Math.abs(amount) >= 1_000)
-            return `Rp ${(amount / 1_000).toFixed(0)}K`;
+            return `Rp ${(amount / 1_000).toFixed(0)} rb`;
         return `Rp ${amount.toLocaleString('id-ID')}`;
     }
 
