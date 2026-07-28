@@ -140,7 +140,7 @@
 {#if mode === 'desktop'}
     {#if showTenant || showPool}
         <DropdownMenu class={cn('relative w-full min-w-0 max-w-full', className)}>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild class="w-full min-w-0 max-w-full">
                 {#snippet children(props)}
                     <button
                         type="button"
