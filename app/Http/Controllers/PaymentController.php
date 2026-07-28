@@ -6,6 +6,7 @@ use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\DeferredInertia;
 use App\Support\PoolScope;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -186,20 +187,72 @@ class PaymentController extends Controller
     }
 
     /**
-     * @return array{status: string, source: string, q: string, page: int, per_page: int}
+     * @return array{status: string, source: string, q: string, date_from: string, date_to: string, page: int, per_page: int}
      */
     private function filters(Request $request): array
     {
         $status = strtolower(trim((string) $request->query('status', 'unpaid')));
         $source = strtolower(trim((string) $request->query('source', 'all')));
+        [$dateFrom, $dateTo] = $this->dateRangeFilters($request);
 
         return [
             'status' => in_array($status, self::STATUSES, true) ? $status : 'unpaid',
             'source' => in_array($source, self::SOURCES, true) ? $source : 'all',
             'q' => trim((string) $request->query('q', '')),
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
             'page' => max(1, (int) $request->query('page', 1)),
             'per_page' => max(10, min(50, (int) $request->query('per_page', 20))),
         ];
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function dateRangeFilters(Request $request): array
+    {
+        $today = CarbonImmutable::today();
+        $rawFrom = $this->parseDateFilter($request->query('date_from'));
+        $rawTo = $this->parseDateFilter($request->query('date_to'));
+
+        if ($rawFrom === null && $rawTo === null) {
+            $from = $today->subMonthsNoOverflow(3);
+            $to = $today;
+        } elseif ($rawFrom !== null && $rawTo === null) {
+            $from = $rawFrom;
+            $to = $rawFrom->addMonthsNoOverflow(3);
+        } elseif ($rawFrom === null && $rawTo !== null) {
+            $to = $rawTo;
+            $from = $rawTo->subMonthsNoOverflow(3);
+        } else {
+            $from = $rawFrom;
+            $to = $rawTo;
+        }
+
+        if ($from->gt($to)) {
+            [$from, $to] = [$to, $from];
+        }
+
+        $maxTo = $from->addMonthsNoOverflow(3);
+        if ($to->gt($maxTo)) {
+            $to = $maxTo;
+        }
+
+        return [$from->toDateString(), $to->toDateString()];
+    }
+
+    private function parseDateFilter(mixed $value): ?CarbonImmutable
+    {
+        $date = trim((string) $value);
+        if ($date === '') {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::createFromFormat('Y-m-d', $date)->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -254,7 +307,24 @@ class PaymentController extends Controller
             $query->where('status_bucket', $status);
         }
 
+        $this->applyDateRange($query, $filters);
+
         return $query;
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyDateRange(Builder $query, array $filters): void
+    {
+        $dateFrom = (string) ($filters['date_from'] ?? '');
+        $dateTo = (string) ($filters['date_to'] ?? '');
+
+        if ($dateFrom === '' || $dateTo === '') {
+            return;
+        }
+
+        $query->whereBetween('trx_date', [$dateFrom, $dateTo]);
     }
 
     /**
@@ -483,7 +553,11 @@ class PaymentController extends Controller
         if ($baseQuery !== null) {
             $rows = DB::query()
                 ->fromSub($baseQuery, 'payment_rows')
-                ->whereNotNull('status_bucket')
+                ->whereNotNull('status_bucket');
+
+            $this->applyDateRange($rows, $filters);
+
+            $rows = $rows
                 ->select('status_bucket')
                 ->selectRaw('COUNT(*) as total, COALESCE(SUM(amount), 0) as amount, COALESCE(SUM(remaining_amount), 0) as remaining')
                 ->groupBy('status_bucket')
