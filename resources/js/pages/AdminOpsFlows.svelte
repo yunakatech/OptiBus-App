@@ -1924,7 +1924,7 @@
         const primary = [
             departureDate,
             departureTime !== '' ? departureTime : '',
-            departureUnit > 0 ? `Unit ${departureUnit}` : '',
+            departureUnit > 0 ? `Slot ${departureUnit}` : '',
         ]
             .filter(Boolean)
             .join(' • ');
