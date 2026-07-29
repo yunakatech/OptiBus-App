@@ -392,7 +392,7 @@ class AdminOpsController extends Controller
         }
 
         $query = DB::table('routes')->orderBy('name');
-        PoolScope::applyRouteScope($query, 'routes.id', 'routes.name');
+        PoolScope::applyTenantRouteScope($query, 'routes.id', 'routes.name');
         $this->applyTenantScopeIfExists($query, 'routes');
 
         return $query
@@ -414,11 +414,11 @@ class AdminOpsController extends Controller
     {
         return [
             'routes' => $this->countScoped('routes', function (Builder $query): void {
-                PoolScope::applyRouteScope($query, 'routes.id', 'routes.name');
+                PoolScope::applyTenantRouteScope($query, 'routes.id', 'routes.name');
                 $this->applyTenantScopeIfExists($query, 'routes');
             }),
             'schedules' => $this->countScoped('schedules', function (Builder $query): void {
-                PoolScope::applyRouteScope(
+                PoolScope::applyTenantRouteScope(
                     $query,
                     SchemaCache::hasColumn('schedules', 'route_id') ? 'schedules.route_id' : '',
                     'schedules.rute',
@@ -427,14 +427,12 @@ class AdminOpsController extends Controller
             }),
             'drivers' => $this->countScoped('drivers', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'drivers');
-                $this->applyPoolScopeIfExists($query, 'drivers');
             }),
             'luggage_services' => $this->countScoped('luggage_services', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'luggage_services');
-                $this->applyPoolScopeIfExists($query, 'luggage_services');
             }),
             'segments' => $this->countScoped('segments', function (Builder $query): void {
-                PoolScope::applyRouteScope($query, 'segments.route_id', 'segments.rute');
+                PoolScope::applyTenantRouteScope($query, 'segments.route_id', 'segments.rute');
                 $this->applyTenantScopeIfExists($query, 'segments');
             }),
             'customers' => $this->countScoped('customers', function (Builder $query): void {
@@ -443,16 +441,9 @@ class AdminOpsController extends Controller
             }),
             'armadas' => $this->countScoped('armadas', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'armadas');
-                $this->applyPoolScopeIfExists($query, 'armadas');
             }),
             'pools' => $this->countScoped('pools', function (Builder $query): void {
                 $this->applyTenantScopeIfExists($query, 'pools');
-                if (! AccessControl::userIsSuperAdmin((int) (auth()->id() ?? 0)) && PoolScope::tablesReady()) {
-                    $poolIds = PoolScope::userPoolIds();
-                    $poolIds === []
-                        ? $query->whereRaw('1 = 0')
-                        : $query->whereIn('pools.id', $poolIds);
-                }
             }),
             'logs' => ActivityLog::countForTenant(),
         ];

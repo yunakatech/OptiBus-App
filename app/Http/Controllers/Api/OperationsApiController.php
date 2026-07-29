@@ -27,9 +27,6 @@ class OperationsApiController extends Controller
             ->when(SchemaCache::hasColumn('master_carter', 'tenant_id'), function ($query): void {
                 PoolScope::applyTenantScope($query, 'tenant_id');
             })
-            ->when(SchemaCache::hasColumn('master_carter', 'pool_id'), function (Builder $query): void {
-                $this->applyPoolScopeIfExists($query, 'master_carter');
-            })
             ->orderBy('name')
             ->get(['id', 'name', 'origin', 'destination', 'duration', 'rental_price', 'bop_price']);
 
@@ -55,7 +52,7 @@ class OperationsApiController extends Controller
         if ($routeName !== '') {
             $query->where('r.name', $routeName);
         }
-        PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
+        PoolScope::applyTenantRouteScope($query, 's.route_id', 's.rute');
 
         $segments = $query->orderBy('s.rute')->get()->map(function ($row) {
             $row->rute = SegmentName::display(
@@ -86,7 +83,7 @@ class OperationsApiController extends Controller
         if (SchemaCache::hasColumn('segments', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 's.tenant_id');
         }
-        PoolScope::applyRouteScope($query, 's.route_id', 's.rute');
+        PoolScope::applyTenantRouteScope($query, 's.route_id', 's.rute');
 
         $price = $query->value('s.harga');
 
@@ -113,7 +110,6 @@ class OperationsApiController extends Controller
         if (SchemaCache::hasColumn('category_armada', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
-        $this->applyPoolScopeIfExists($query, 'category_armada');
         if (SchemaCache::hasColumn('category_armada', 'status')) {
             $query->where('status', 'Aktif');
         }
@@ -152,7 +148,6 @@ class OperationsApiController extends Controller
         if (SchemaCache::hasColumn('armadas', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
-        $this->applyPoolScopeIfExists($query, 'armadas');
         $availableColumns = array_flip($columns);
 
         if ($q !== '') {
@@ -199,7 +194,6 @@ class OperationsApiController extends Controller
         if (SchemaCache::hasColumn('drivers', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
-        $this->applyPoolScopeIfExists($query, 'drivers');
 
         $columns = ['id', 'nama', 'phone'];
         if (SchemaCache::hasColumn('drivers', 'pool_id')) {
@@ -228,7 +222,6 @@ class OperationsApiController extends Controller
         if (SchemaCache::hasColumn('luggage_services', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
-        $this->applyPoolScopeIfExists($query, 'luggage_services');
 
         $services = $query->get(['id', 'name']);
 
@@ -388,9 +381,8 @@ class OperationsApiController extends Controller
         if (SchemaCache::hasColumn('category_armada', 'tenant_id')) {
             PoolScope::applyTenantScope($unitQuery, 'tenant_id');
         }
-        $this->applyPoolScopeIfExists($unitQuery, 'category_armada', '', (int) ($payload['pool_id'] ?? 0) ?: null);
         if (! $unitQuery->exists()) {
-            return $this->error('Kategori armada tidak ditemukan untuk pool aktif.', 422);
+            return $this->error('Kategori armada tidak ditemukan untuk tenant ini.', 422);
         }
 
         if (SchemaCache::hasColumn('charters', 'status')) {
@@ -442,9 +434,8 @@ class OperationsApiController extends Controller
             if (SchemaCache::hasColumn('category_armada', 'tenant_id')) {
                 PoolScope::applyTenantScope($unitQuery, 'tenant_id');
             }
-            $this->applyPoolScopeIfExists($unitQuery, 'category_armada', '', $customerPoolId > 0 ? $customerPoolId : null);
             if (! $unitQuery->exists()) {
-                return $this->error('Kategori armada tidak ditemukan untuk pool aktif.', 422);
+                return $this->error('Kategori armada tidak ditemukan untuk tenant ini.', 422);
             }
         }
         $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim', $customerPoolId);
@@ -649,15 +640,8 @@ class OperationsApiController extends Controller
             return 0;
         }
 
-        $scope = PoolScope::forCurrentUser();
-        $allowedPoolIds = $scope['all']
-            ? DB::table('pools')
-                ->where('status', 'active')
-                ->pluck('id')
-                ->map(static fn ($value) => (int) $value)
-                ->values()
-                ->all()
-            : $scope['pool_ids'];
+        $scope = PoolScope::tenantOperationalScope();
+        $allowedPoolIds = $scope['pool_ids'];
 
         if ($allowedPoolIds === []) {
             return -1;
@@ -692,11 +676,12 @@ class OperationsApiController extends Controller
             return $isAllowed($mappedPoolId) ? $mappedPoolId : -1;
         }
 
-        if (count($allowedPoolIds) === 1) {
-            return (int) $allowedPoolIds[0];
+        $fallbackPoolId = $this->writablePoolContextId();
+        if ($fallbackPoolId > 0 && $isAllowed($fallbackPoolId)) {
+            return $fallbackPoolId;
         }
 
-        return $scope['all'] ? 0 : -2;
+        return -2;
     }
 
     private function poolIdForCharterLabel(string $label): int
@@ -707,8 +692,11 @@ class OperationsApiController extends Controller
         }
 
         $routes = DB::table('pool_route as pr')
-            ->join('routes as r', 'pr.route_id', '=', 'r.id')
-            ->get(['pr.pool_id', 'r.name', 'r.origin', 'r.destination']);
+            ->join('routes as r', 'pr.route_id', '=', 'r.id');
+        if (SchemaCache::hasColumn('routes', 'tenant_id')) {
+            PoolScope::applyTenantScope($routes, 'r.tenant_id');
+        }
+        $routes = $routes->get(['pr.pool_id', 'r.name', 'r.origin', 'r.destination']);
 
         foreach ($routes as $route) {
             foreach (['name', 'origin', 'destination'] as $field) {

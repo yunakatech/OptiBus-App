@@ -320,7 +320,9 @@ class PoolScope
             return false;
         }
 
-        $scope = self::forCurrentUser($poolId, $userId);
+        $scope = $poolId > 0
+            ? self::forCurrentUser($poolId, $userId)
+            : self::tenantOperationalScope($userId);
         if ($scope['all']) {
             return true;
         }
@@ -354,6 +356,180 @@ class PoolScope
         $query->where(function (Builder $builder) use ($routeIdColumn, $routeNameColumn, $routeIds, $routeNames): void {
             self::appendRouteClauses($builder, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames);
         });
+    }
+
+    /**
+     * Scope route-linked operational data to the current tenant, not the active pool.
+     */
+    public static function applyTenantRouteScope(Builder $query, string $routeIdColumn = '', string $routeNameColumn = '', ?int $userId = null): void
+    {
+        $scope = self::tenantOperationalScope($userId);
+        if ($scope['all']) {
+            return;
+        }
+
+        $routeIds = $scope['route_ids'];
+        $routeNames = $scope['route_names'];
+        if (($routeIdColumn === '' || $routeIds === []) && ($routeNameColumn === '' || $routeNames === [])) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $builder) use ($routeIdColumn, $routeNameColumn, $routeIds, $routeNames): void {
+            self::appendRouteClauses($builder, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames);
+        });
+    }
+
+    /**
+     * Scope pool/route-linked operational data to every pool/route in the current tenant.
+     */
+    public static function applyTenantPoolOrRouteScope(
+        Builder $query,
+        string $poolColumn = '',
+        string $routeIdColumn = '',
+        string $routeNameColumn = '',
+        ?int $userId = null,
+    ): void {
+        $scope = self::tenantOperationalScope($userId);
+        if ($scope['all']) {
+            return;
+        }
+
+        $poolIds = $scope['pool_ids'];
+        $routeIds = $scope['route_ids'];
+        $routeNames = $scope['route_names'];
+
+        if (
+            ($poolColumn === '' || $poolIds === [])
+            && ($routeIdColumn === '' || $routeIds === [])
+            && ($routeNameColumn === '' || $routeNames === [])
+        ) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $builder) use ($poolColumn, $poolIds, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames): void {
+            if ($poolColumn !== '' && $poolIds !== []) {
+                $builder->whereIn($poolColumn, $poolIds);
+
+                if (($routeIdColumn !== '' && $routeIds !== []) || ($routeNameColumn !== '' && $routeNames !== [])) {
+                    $builder->orWhere(function (Builder $legacy) use ($poolColumn, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames): void {
+                        $legacy->whereNull($poolColumn);
+                        self::appendRouteClauses($legacy, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames);
+                    });
+                }
+
+                return;
+            }
+
+            self::appendRouteClauses($builder, $routeIdColumn, $routeIds, $routeNameColumn, $routeNames);
+        });
+    }
+
+    /**
+     * @return array{all: bool, pool_ids: array<int, int>, route_ids: array<int, int>, route_names: array<int, string>, labels: array<int, string>, pool_name: string, target_revenue: float, tenant_id: int}
+     */
+    public static function tenantOperationalScope(?int $userId = null): array
+    {
+        $userId ??= (int) (auth()->id() ?? 0);
+        $cacheKey = self::requestCacheKey('tenant-operational:'.$userId);
+        if (array_key_exists($cacheKey, self::$scopeCache)) {
+            return self::$scopeCache[$cacheKey];
+        }
+
+        $tenantId = self::tenantId($userId);
+        if ($tenantId <= 0) {
+            return self::$scopeCache[$cacheKey] = [
+                'all' => true,
+                'pool_ids' => [],
+                'route_ids' => [],
+                'route_names' => [],
+                'labels' => [],
+                'pool_name' => 'Semua Pool',
+                'target_revenue' => 0.0,
+                'tenant_id' => 0,
+            ];
+        }
+
+        if (! self::tablesReady()) {
+            return self::$scopeCache[$cacheKey] = [
+                'all' => false,
+                'pool_ids' => [],
+                'route_ids' => [],
+                'route_names' => [],
+                'labels' => [],
+                'pool_name' => 'Tenant',
+                'target_revenue' => 0.0,
+                'tenant_id' => $tenantId,
+            ];
+        }
+
+        $poolQuery = DB::table('pools')
+            ->where('status', 'active')
+            ->orderBy('name');
+        if (SchemaCache::hasColumn('pools', 'tenant_id')) {
+            $poolQuery->where(function (Builder $builder) use ($tenantId): void {
+                $builder->where('tenant_id', $tenantId);
+
+                if (app()->environment('testing')) {
+                    $builder->orWhereNull('tenant_id');
+                }
+            });
+        }
+
+        $pools = $poolQuery->get(['id', 'name', 'target_revenue']);
+        $poolIds = $pools->pluck('id')->map(static fn ($value): int => (int) $value)->values()->all();
+
+        $routeQuery = DB::table('routes')->orderBy('name');
+        if (SchemaCache::hasColumn('routes', 'tenant_id')) {
+            $routeQuery->where(function (Builder $builder) use ($tenantId): void {
+                $builder->where('tenant_id', $tenantId);
+
+                if (app()->environment('testing')) {
+                    $builder->orWhereNull('tenant_id');
+                }
+            });
+        } elseif ($poolIds !== [] && SchemaCache::hasTable('pool_route')) {
+            $routeQuery
+                ->join('pool_route as tenant_pr', 'tenant_pr.route_id', '=', 'routes.id')
+                ->whereIn('tenant_pr.pool_id', $poolIds);
+        }
+
+        $routes = $routeQuery->get(['routes.id', 'routes.name', 'routes.origin', 'routes.destination']);
+        $labels = [];
+        $routeNames = [];
+        foreach ($routes as $route) {
+            $routeName = trim((string) ($route->name ?? ''));
+            $origin = trim((string) ($route->origin ?? ''));
+            $destination = trim((string) ($route->destination ?? ''));
+
+            if ($routeName !== '') {
+                $routeNames[] = $routeName;
+            }
+            if ($origin !== '' && $destination !== '') {
+                $routeNames[] = $origin.' - '.$destination;
+            }
+
+            foreach (['name', 'origin', 'destination'] as $field) {
+                $value = trim((string) ($route->{$field} ?? ''));
+                if ($value !== '') {
+                    $labels[] = $value;
+                }
+            }
+        }
+
+        return self::$scopeCache[$cacheKey] = [
+            'all' => false,
+            'pool_ids' => $poolIds,
+            'route_ids' => $routes->pluck('id')->map(static fn ($value): int => (int) $value)->unique()->values()->all(),
+            'route_names' => collect($routeNames)->unique()->values()->all(),
+            'labels' => collect($labels)->unique()->values()->all(),
+            'pool_name' => $pools->count() === 1 ? (string) ($pools->first()->name ?? 'Pool') : 'Semua Pool Tenant',
+            'target_revenue' => (float) $pools->sum('target_revenue'),
+            'tenant_id' => $tenantId,
+        ];
     }
 
     public static function applyPoolOrRouteScope(
@@ -465,6 +641,8 @@ class PoolScope
 
         if (SchemaCache::hasTable('customers') && SchemaCache::hasColumn('customers', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
+
+            return;
         }
 
         $poolIds = $scope['pool_ids'];
@@ -545,6 +723,8 @@ class PoolScope
 
         if (SchemaCache::hasTable('customer_bagasi') && SchemaCache::hasColumn('customer_bagasi', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
+
+            return;
         }
 
         $poolIds = $scope['pool_ids'];
@@ -628,6 +808,8 @@ class PoolScope
 
         if (SchemaCache::hasTable('customer_charter') && SchemaCache::hasColumn('customer_charter', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
+
+            return;
         }
 
         $poolIds = $scope['pool_ids'];
@@ -846,6 +1028,28 @@ class PoolScope
         }
 
         return in_array($poolId, array_map('intval', $scope['pool_ids'] ?? []), true);
+    }
+
+    public static function poolBelongsToTenant(int $poolId, ?int $userId = null): bool
+    {
+        if ($poolId <= 0 || ! SchemaCache::hasTable('pools')) {
+            return false;
+        }
+
+        $tenantId = self::tenantId($userId);
+        if ($tenantId <= 0) {
+            return false;
+        }
+
+        $query = DB::table('pools')
+            ->where('id', $poolId)
+            ->where('status', 'active');
+
+        if (SchemaCache::hasColumn('pools', 'tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        return $query->exists();
     }
 
     public static function defaultWritablePoolId(?int $userId = null): int
