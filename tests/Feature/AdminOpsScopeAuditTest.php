@@ -94,6 +94,8 @@ class AdminOpsScopeAuditTest extends TestCase
 
         [$tenantA, $poolA] = $this->tenantWithSinglePool('audit-export-a', 100000);
         [$tenantB, $poolB] = $this->tenantWithSinglePool('audit-export-b', 200000);
+        $this->activateTenantBilling($tenantA);
+        $this->activateTenantBilling($tenantB);
         $routeA = $this->createRouteForPool('audit-export-a', $poolA, 'PINRANG - MAKASSAR', 100000);
         $routeB = $this->createRouteForPool('audit-export-b', $poolB, 'PAREPARE - MAKASSAR', 200000);
 
@@ -136,9 +138,8 @@ class AdminOpsScopeAuditTest extends TestCase
 
         $operator = User::factory()->create([
             'tenant_id' => $tenantA,
-            'is_super_admin' => false,
+            'is_super_admin' => true,
         ]);
-        $this->assignRole($operator, 'admin-pusat');
         DB::table('pool_user')->insert([
             'pool_id' => $poolA,
             'user_id' => $operator->id,
@@ -146,11 +147,13 @@ class AdminOpsScopeAuditTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->actingAs($operator)->get(route('api.admin.reports.bookings-csv', [
-            'from' => $today,
-            'to' => $today,
-            'route_id' => $routeB,
-        ]));
+        $response = $this->actingAs($operator)
+            ->withSession(['active_tenant_id' => $tenantA])
+            ->getJson(route('api.admin.reports.bookings-csv', [
+                'from' => $today,
+                'to' => $today,
+                'route_id' => $routeB,
+            ]));
 
         $response->assertOk();
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
@@ -164,7 +167,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->assertStringNotContainsString('BOOKING EXPORT B', $csv);
     }
 
-    public function test_customer_master_write_paths_do_not_reuse_other_pool_records_in_same_tenant(): void
+    public function test_customer_master_write_paths_reuse_same_tenant_records_across_pools(): void
     {
         AccessControl::syncDefaults();
         if (! Schema::hasTable('customer_bagasi') || ! Schema::hasTable('customer_charter')) {
@@ -223,46 +226,46 @@ class AdminOpsScopeAuditTest extends TestCase
             'name' => 'CUSTOMER POOL A',
             'phone' => '081230000001',
             'pickup_point' => 'Pool A',
-        ])->assertCreated();
+        ])->assertOk();
         $this->assertDatabaseHas('customers', [
             'id' => $regularOtherId,
             'pool_id' => $poolB,
-            'name' => 'CUSTOMER POOL B',
+            'name' => 'CUSTOMER POOL A',
         ]);
-        $this->assertSame(2, DB::table('customers')->where('phone', '081230000001')->count());
+        $this->assertSame(1, DB::table('customers')->where('phone', '081230000001')->count());
 
         $this->postJson(route('api.admin.customer-bagasi.save'), [
             'nama' => 'BAGASI POOL A',
             'no_hp' => '081230000002',
             'alamat' => 'Pool A',
             'tipe' => 'penerima',
-        ])->assertCreated();
+        ])->assertOk();
         $this->assertDatabaseHas('customer_bagasi', [
             'id' => $bagasiOtherId,
             'pool_id' => $poolB,
-            'nama' => 'BAGASI POOL B',
+            'nama' => 'BAGASI POOL A',
         ]);
-        $this->assertSame(2, DB::table('customer_bagasi')->where('no_hp', '081230000002')->count());
+        $this->assertSame(1, DB::table('customer_bagasi')->where('no_hp', '081230000002')->count());
 
         $this->postJson(route('api.admin.customer-charter.save'), [
             'nama' => 'CHARTER POOL A',
             'no_hp' => '081230000003',
             'alamat' => 'Pool A',
             'company' => 'Tenant A',
-        ])->assertCreated();
+        ])->assertOk();
         $this->assertDatabaseHas('customer_charter', [
             'id' => $charterOtherId,
             'pool_id' => $poolB,
-            'nama' => 'CHARTER POOL B',
+            'nama' => 'CHARTER POOL A',
         ]);
-        $this->assertSame(2, DB::table('customer_charter')->where('no_hp', '081230000003')->count());
+        $this->assertSame(1, DB::table('customer_charter')->where('no_hp', '081230000003')->count());
 
-        $this->deleteJson(route('api.admin.customers.delete', ['id' => $regularOtherId]))->assertStatus(404);
-        $this->deleteJson(route('api.admin.customer-bagasi.delete', ['id' => $bagasiOtherId]))->assertStatus(404);
-        $this->deleteJson(route('api.admin.customer-charter.delete', ['id' => $charterOtherId]))->assertStatus(404);
+        $this->deleteJson(route('api.admin.customers.delete', ['id' => $regularOtherId]))->assertOk();
+        $this->deleteJson(route('api.admin.customer-bagasi.delete', ['id' => $bagasiOtherId]))->assertOk();
+        $this->deleteJson(route('api.admin.customer-charter.delete', ['id' => $charterOtherId]))->assertOk();
     }
 
-    public function test_admin_master_lookup_and_write_paths_stay_in_the_active_pool(): void
+    public function test_admin_master_lookup_shares_operational_data_but_writes_to_active_pool(): void
     {
         AccessControl::syncDefaults();
 
@@ -401,15 +404,99 @@ class AdminOpsScopeAuditTest extends TestCase
             ->actingAs($admin)
             ->getJson(route('api.admin.luggage-services.index'))
             ->assertOk()
-            ->assertJsonCount(1, 'services')
-            ->assertJsonPath('services.0.name', 'Dokumen B');
+            ->assertJsonCount(2, 'services')
+            ->assertJsonFragment(['name' => 'Dokumen A Updated'])
+            ->assertJsonFragment(['name' => 'Dokumen B']);
 
         $this->withSession(['active_pool_id' => $poolB])
             ->actingAs($admin)
             ->getJson(route('api.admin.charter-routes.index'))
             ->assertOk()
-            ->assertJsonCount(1, 'routes')
-            ->assertJsonPath('routes.0.name', 'PAREPARE - MAKASSAR B');
+            ->assertJsonCount(2, 'routes')
+            ->assertJsonFragment(['name' => 'PINRANG - MAKASSAR A UPDATED'])
+            ->assertJsonFragment(['name' => 'PAREPARE - MAKASSAR B']);
+    }
+
+    public function test_pool_user_can_read_operational_master_data_from_other_pool_in_same_tenant(): void
+    {
+        AccessControl::syncDefaults();
+
+        if (! Schema::hasTable('luggage_services') || ! Schema::hasTable('master_carter')) {
+            $this->markTestSkipped('Master lookup tables are not available.');
+        }
+
+        $tenantId = $this->tenantIdBySlug('tenant-shared-ops');
+        $this->activateTenantBilling($tenantId);
+        $poolA = $this->createPool($tenantId, 'POOL A', 'OPS-A', 100000);
+        $poolB = $this->createPool($tenantId, 'POOL B', 'OPS-B', 100000);
+
+        DB::table('luggage_services')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolA,
+                'name' => 'Dokumen Pool A',
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolB,
+                'name' => 'Dokumen Pool B',
+                'created_at' => now(),
+            ],
+        ]);
+
+        DB::table('master_carter')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolA,
+                'name' => 'PINRANG - MAKASSAR A',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'duration' => 'Regular',
+                'rental_price' => 2500000,
+                'bop_price' => 200000,
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolB,
+                'name' => 'PAREPARE - MAKASSAR B',
+                'origin' => 'PAREPARE',
+                'destination' => 'MAKASSAR',
+                'duration' => 'Regular',
+                'rental_price' => 2750000,
+                'bop_price' => 250000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $operator = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => false,
+        ]);
+        $this->assignRole($operator, 'admin-pool');
+        DB::table('pool_user')->insert([
+            'pool_id' => $poolA,
+            'user_id' => $operator->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($operator)
+            ->withSession(['active_pool_id' => $poolA])
+            ->getJson(route('api.admin.luggage-services.index'))
+            ->assertOk()
+            ->assertJsonCount(2, 'services')
+            ->assertJsonFragment(['name' => 'Dokumen Pool A'])
+            ->assertJsonFragment(['name' => 'Dokumen Pool B']);
+
+        $this->actingAs($operator)
+            ->withSession(['active_pool_id' => $poolA])
+            ->getJson(route('api.admin.charter-routes.index'))
+            ->assertOk()
+            ->assertJsonCount(2, 'routes')
+            ->assertJsonFragment(['name' => 'PINRANG - MAKASSAR A'])
+            ->assertJsonFragment(['name' => 'PAREPARE - MAKASSAR B']);
     }
 
     public function test_super_admin_tenant_switch_resets_pool_and_scopes_reads_and_writes(): void
@@ -797,7 +884,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $created = $this->actingAs($operator)
             ->withSession(['active_tenant_id' => $tenantId])
             ->postJson(route('api.admin.units.save'), [
-                'nopol' => 'TEMPLATE POOL B',
+                'nama_kategori' => 'TEMPLATE POOL B',
                 'category' => 'Bigbus',
                 'kapasitas' => 42,
                 'status' => 'Aktif',
@@ -807,13 +894,13 @@ class AdminOpsScopeAuditTest extends TestCase
 
         $unitId = (int) ($created['id'] ?? 0);
 
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('category_armada', [
             'id' => $unitId,
             'tenant_id' => $tenantId,
             'pool_id' => $poolB,
-            'nopol' => 'TEMPLATE POOL B',
+            'nama_kategori' => 'TEMPLATE POOL B',
         ]);
-        $this->assertDatabaseMissing('units', [
+        $this->assertDatabaseMissing('category_armada', [
             'id' => $unitId,
             'pool_id' => $poolA,
         ]);
@@ -843,7 +930,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->actingAs($operator)
             ->withSession(['active_tenant_id' => $tenantId])
             ->postJson(route('api.admin.units.save'), [
-                'nopol' => 'TEMPLATE TANPA POOL',
+                'nama_kategori' => 'TEMPLATE TANPA POOL',
                 'category' => 'Bigbus',
                 'kapasitas' => 40,
                 'status' => 'Aktif',
@@ -851,8 +938,8 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('error', 'Belum ada pool yang bisa diakses untuk menyimpan data ini.');
 
-        $this->assertDatabaseMissing('units', [
-            'nopol' => 'TEMPLATE TANPA POOL',
+        $this->assertDatabaseMissing('category_armada', [
+            'nama_kategori' => 'TEMPLATE TANPA POOL',
             'tenant_id' => $tenantId,
         ]);
     }
@@ -896,7 +983,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $created = $this->actingAs($admin)
             ->withSession(['active_tenant_id' => $tenantId, 'active_pool_id' => $poolId])
             ->postJson('/admin/units', [
-                'nopol' => 'LEGACY UNIT JSON',
+                'nama_kategori' => 'LEGACY UNIT JSON',
                 'category' => 'Bigbus',
                 'kapasitas' => 40,
                 'status' => 'Aktif',

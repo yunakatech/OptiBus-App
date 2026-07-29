@@ -443,7 +443,7 @@ class BookingController extends Controller
      */
     private function bookingTotals(): array
     {
-        return Cache::remember('bookings:totals:'.PoolScope::cacheKey(), now()->addSeconds(30), function (): array {
+        return Cache::remember('bookings:totals:tenant:'.PoolScope::tenantId(), now()->addSeconds(30), function (): array {
             return [
                 'bookings' => SchemaCache::hasTable('bookings') ? $this->scopedBookingQuery()->count() : 0,
                 'customers' => SchemaCache::hasTable('customers') ? $this->scopedCustomersCount() : 0,
@@ -456,7 +456,7 @@ class BookingController extends Controller
     private function scopedBookingQuery(string $table = 'bookings', string $routeNameColumn = 'rute'): Builder
     {
         $query = DB::table($table);
-        PoolScope::applyRouteScope($query, $this->bookingRouteIdColumn($table), $routeNameColumn);
+        PoolScope::applyTenantRouteScope($query, $this->bookingRouteIdColumn($table), $routeNameColumn);
         $this->applyTenantScopeIfExists($query, $table);
 
         return $query;
@@ -503,7 +503,7 @@ class BookingController extends Controller
     private function scopedRoutesQuery(): Builder
     {
         $query = DB::table('routes');
-        PoolScope::applyRouteScope($query, 'routes.id', 'routes.name');
+        PoolScope::applyTenantRouteScope($query, 'routes.id', 'routes.name');
         $this->applyTenantScopeIfExists($query, 'routes');
 
         return $query;
@@ -514,7 +514,7 @@ class BookingController extends Controller
         $query = DB::table($table);
         $prefix = $alias !== '' ? $alias.'.' : '';
 
-        PoolScope::applyRouteScope(
+        PoolScope::applyTenantRouteScope(
             $query,
             SchemaCache::hasColumn('schedules', 'route_id') ? $prefix.'route_id' : '',
             $prefix.'rute',

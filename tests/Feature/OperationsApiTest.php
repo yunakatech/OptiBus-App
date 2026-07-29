@@ -114,7 +114,7 @@ class OperationsApiTest extends TestCase
             ->assertJsonPath('scope_limited', false);
     }
 
-    public function test_master_data_endpoints_follow_the_active_pool_context(): void
+    public function test_master_data_endpoints_share_operational_data_across_tenant_pools(): void
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
@@ -179,16 +179,16 @@ class OperationsApiTest extends TestCase
         $this->withSession(['active_pool_id' => $poolA])
             ->getJson(route('api.master.luggage-services'))
             ->assertOk()
-            ->assertJsonCount(1, 'services')
-            ->assertJsonPath('services.0.name', 'Dokumen A')
-            ->assertJsonMissing(['name' => 'Dokumen B']);
+            ->assertJsonCount(2, 'services')
+            ->assertJsonFragment(['name' => 'Dokumen A'])
+            ->assertJsonFragment(['name' => 'Dokumen B']);
 
         $this->withSession(['active_pool_id' => $poolA])
             ->getJson(route('api.master.charter-routes'))
             ->assertOk()
-            ->assertJsonCount(1, 'routes')
-            ->assertJsonPath('routes.0.name', 'PINRANG - MAKASSAR A')
-            ->assertJsonMissing(['name' => 'PAREPARE - MAKASSAR B']);
+            ->assertJsonCount(2, 'routes')
+            ->assertJsonFragment(['name' => 'PINRANG - MAKASSAR A'])
+            ->assertJsonFragment(['name' => 'PAREPARE - MAKASSAR B']);
     }
 
     public function test_customer_search_matches_split_terms_address_and_phone_variants(): void
@@ -398,14 +398,13 @@ class OperationsApiTest extends TestCase
 
         $this->getJson(route('api.master.customers.search', ['q' => 'customer']))
             ->assertOk()
-            ->assertJsonCount(3, 'customers')
             ->assertJsonPath('scope_limited', true)
             ->assertJsonPath('scope_name', 'POOL PINRANG')
             ->assertJsonFragment(['name' => 'CUSTOMER LEGACY ROUTE'])
             ->assertJsonFragment(['name' => 'CUSTOMER ROUTE ID'])
             ->assertJsonFragment(['name' => 'CUSTOMER TANPA BOOKING'])
-            ->assertJsonMissing(['name' => 'CUSTOMER LUAR POOL'])
-            ->assertJsonMissing(['name' => 'CUSTOMER ROUTE ID SALAH']);
+            ->assertJsonFragment(['name' => 'CUSTOMER LUAR POOL'])
+            ->assertJsonFragment(['name' => 'CUSTOMER ROUTE ID SALAH']);
     }
 
     public function test_pool_operator_can_search_master_bagasi_and_charter_customers_by_pool_without_transactions(): void
@@ -489,13 +488,15 @@ class OperationsApiTest extends TestCase
 
         $this->getJson(route('api.admin.customer-bagasi.index', ['q' => 'bagasi']))
             ->assertOk()
-            ->assertJsonCount(1, 'customers')
-            ->assertJsonPath('customers.0.nama', 'BAGASI PINRANG');
+            ->assertJsonCount(2, 'customers')
+            ->assertJsonFragment(['nama' => 'BAGASI PINRANG'])
+            ->assertJsonFragment(['nama' => 'BAGASI LUAR']);
 
         $this->getJson(route('api.admin.customer-charter.index', ['q' => 'carter']))
             ->assertOk()
-            ->assertJsonCount(1, 'customers')
-            ->assertJsonPath('customers.0.nama', 'CARTER PINRANG');
+            ->assertJsonCount(2, 'customers')
+            ->assertJsonFragment(['nama' => 'CARTER PINRANG'])
+            ->assertJsonFragment(['nama' => 'CARTER LUAR']);
     }
 
     public function test_submit_charter_rejects_pool_that_conflicts_with_mapped_route(): void
