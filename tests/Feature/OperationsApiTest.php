@@ -394,17 +394,30 @@ class OperationsApiTest extends TestCase
 
         $this->actingAs($operator);
 
-        $this->assertTrue(PoolScope::canAccessRouteName('Pinrang - Makassar'));
+        $this->assertTrue(PoolScope::canAccessRouteName('Pinrang - Makassar', $poolId));
 
-        $this->getJson(route('api.master.customers.search', ['q' => 'customer']))
+        $this->withSession(['active_pool_id' => $poolId])
+            ->getJson(route('api.master.customers.search', ['q' => 'customer']))
             ->assertOk()
             ->assertJsonPath('scope_limited', true)
             ->assertJsonPath('scope_name', 'POOL PINRANG')
+            ->assertJsonCount(3, 'customers')
+            ->assertJsonFragment(['name' => 'CUSTOMER LEGACY ROUTE'])
+            ->assertJsonFragment(['name' => 'CUSTOMER ROUTE ID'])
+            ->assertJsonFragment(['name' => 'CUSTOMER TANPA BOOKING'])
+            ->assertJsonMissing(['name' => 'CUSTOMER LUAR POOL'])
+            ->assertJsonMissing(['name' => 'CUSTOMER ROUTE ID SALAH']);
+
+        $allPoolResponse = $this->withSession(['active_pool_id' => 0])
+            ->getJson(route('api.master.customers.search', ['q' => 'customer']))
+            ->assertOk()
+            ->assertJsonPath('scope_name', 'Semua Pool')
             ->assertJsonFragment(['name' => 'CUSTOMER LEGACY ROUTE'])
             ->assertJsonFragment(['name' => 'CUSTOMER ROUTE ID'])
             ->assertJsonFragment(['name' => 'CUSTOMER TANPA BOOKING'])
             ->assertJsonFragment(['name' => 'CUSTOMER LUAR POOL'])
             ->assertJsonFragment(['name' => 'CUSTOMER ROUTE ID SALAH']);
+        $this->assertGreaterThanOrEqual(5, count($allPoolResponse->json('customers', [])));
     }
 
     public function test_pool_operator_can_search_master_bagasi_and_charter_customers_by_pool_without_transactions(): void
@@ -486,13 +499,29 @@ class OperationsApiTest extends TestCase
 
         $this->actingAs($operator);
 
-        $this->getJson(route('api.admin.customer-bagasi.index', ['q' => 'bagasi']))
+        $this->withSession(['active_pool_id' => $poolId])
+            ->getJson(route('api.admin.customer-bagasi.index', ['q' => 'bagasi']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonFragment(['nama' => 'BAGASI PINRANG'])
+            ->assertJsonMissing(['nama' => 'BAGASI LUAR']);
+
+        $this->withSession(['active_pool_id' => $poolId])
+            ->getJson(route('api.admin.customer-charter.index', ['q' => 'carter']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonFragment(['nama' => 'CARTER PINRANG'])
+            ->assertJsonMissing(['nama' => 'CARTER LUAR']);
+
+        $this->withSession(['active_pool_id' => 0])
+            ->getJson(route('api.admin.customer-bagasi.index', ['q' => 'bagasi']))
             ->assertOk()
             ->assertJsonCount(2, 'customers')
             ->assertJsonFragment(['nama' => 'BAGASI PINRANG'])
             ->assertJsonFragment(['nama' => 'BAGASI LUAR']);
 
-        $this->getJson(route('api.admin.customer-charter.index', ['q' => 'carter']))
+        $this->withSession(['active_pool_id' => 0])
+            ->getJson(route('api.admin.customer-charter.index', ['q' => 'carter']))
             ->assertOk()
             ->assertJsonCount(2, 'customers')
             ->assertJsonFragment(['nama' => 'CARTER PINRANG'])

@@ -232,6 +232,11 @@ class OperationsApiController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $scope = PoolScope::forCurrentUser();
+        $activePoolId = (int) session('active_pool_id', 0);
+        $tenantId = PoolScope::tenantId();
+        if ($activePoolId <= 0 && $tenantId > 0) {
+            $scope['pool_name'] = 'Semua Pool';
+        }
 
         if ($q === '' || mb_strlen($q) < 2) {
             return $this->ok([
@@ -248,7 +253,10 @@ class OperationsApiController extends Controller
             0,
             6,
         );
-        $cacheKey = 'ops:customer-search:v2:'.PoolScope::cacheKey().':'.md5($normalizedQuery);
+        $cacheScopeKey = $activePoolId > 0
+            ? PoolScope::cacheKey($activePoolId)
+            : 'tenant:'.$tenantId.':all-pools:user:'.(int) (auth()->id() ?? 0);
+        $cacheKey = 'ops:customer-search:v3:'.$cacheScopeKey.':'.md5($normalizedQuery);
         $result = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($normalizedQuery, $tokens) {
             $normalizedPhoneSql = $this->normalizedCustomerPhoneSql();
             $phoneVariants = $this->customerPhoneSearchVariants($normalizedQuery);
@@ -831,6 +839,7 @@ class OperationsApiController extends Controller
 
         $tenantId = $this->requireTenantContext();
         $existingQuery = DB::table('customer_bagasi')->where('no_hp', $noHp);
+        PoolScope::applyCustomerBagasiScope($existingQuery, 'customer_bagasi', $poolId);
         if (SchemaCache::hasColumn('customer_bagasi', 'tenant_id')) {
             if ($tenantId > 0) {
                 $existingQuery->where('tenant_id', $tenantId);
@@ -844,6 +853,7 @@ class OperationsApiController extends Controller
                 $nextTipe = 'keduanya';
             }
             $updateQuery = DB::table('customer_bagasi')->where('id', (int) $existing->id);
+            PoolScope::applyCustomerBagasiScope($updateQuery, 'customer_bagasi', $poolId);
             if (SchemaCache::hasColumn('customer_bagasi', 'tenant_id')) {
                 if ($tenantId > 0) {
                     $updateQuery->where('tenant_id', $tenantId);
