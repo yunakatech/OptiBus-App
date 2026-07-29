@@ -7910,8 +7910,8 @@ class AdminOpsApiController extends Controller
             ->when(SchemaCache::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
                 PoolScope::applyTenantScope($q, 'd.tenant_id');
             })
-            ->when(SchemaCache::hasColumn('drivers', 'pool_id'), function (Builder $q) use ($poolId): void {
-                $this->applyPoolScopeIfExists($q, 'drivers', 'd', $poolId > 0 ? $poolId : null);
+            ->when($poolId > 0 && SchemaCache::hasColumn('drivers', 'pool_id'), function (Builder $q) use ($poolId): void {
+                $this->applyPoolScopeIfExists($q, 'drivers', 'd', $poolId);
             })
             ->orderBy(SchemaCache::hasColumn('drivers', 'nama') ? 'd.nama' : 'd.id')
             ->get($select);

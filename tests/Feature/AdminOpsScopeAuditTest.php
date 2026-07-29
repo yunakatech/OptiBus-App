@@ -499,6 +499,53 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonFragment(['name' => 'PAREPARE - MAKASSAR B']);
     }
 
+    public function test_pool_user_can_read_drivers_from_other_pool_in_same_tenant(): void
+    {
+        AccessControl::syncDefaults();
+
+        $tenantId = $this->tenantIdBySlug('tenant-shared-driver');
+        $this->activateTenantBilling($tenantId);
+        $poolA = $this->createPool($tenantId, 'POOL A', 'DRV-A', 100000);
+        $poolB = $this->createPool($tenantId, 'POOL B', 'DRV-B', 100000);
+
+        DB::table('drivers')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolA,
+                'nama' => 'DRIVER POOL A',
+                'phone' => '081500000001',
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolB,
+                'nama' => 'DRIVER POOL B',
+                'phone' => '081500000002',
+                'created_at' => now(),
+            ],
+        ]);
+
+        $operator = User::factory()->create([
+            'tenant_id' => $tenantId,
+            'is_super_admin' => false,
+        ]);
+        $this->assignRole($operator, 'admin-pool');
+        DB::table('pool_user')->insert([
+            'pool_id' => $poolA,
+            'user_id' => $operator->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($operator)
+            ->withSession(['active_pool_id' => $poolA])
+            ->getJson(route('api.admin.drivers.index'))
+            ->assertOk()
+            ->assertJsonCount(2, 'drivers')
+            ->assertJsonFragment(['nama' => 'DRIVER POOL A'])
+            ->assertJsonFragment(['nama' => 'DRIVER POOL B']);
+    }
+
     public function test_super_admin_tenant_switch_resets_pool_and_scopes_reads_and_writes(): void
     {
         AccessControl::syncDefaults();
