@@ -167,7 +167,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->assertStringNotContainsString('BOOKING EXPORT B', $csv);
     }
 
-    public function test_customer_master_write_paths_reuse_same_tenant_records_across_pools(): void
+    public function test_customer_master_write_paths_are_separated_by_active_pool_and_merge_in_all_pool(): void
     {
         AccessControl::syncDefaults();
         if (! Schema::hasTable('customer_bagasi') || ! Schema::hasTable('customer_charter')) {
@@ -222,47 +222,98 @@ class AdminOpsScopeAuditTest extends TestCase
 
         $this->actingAs($operator);
 
-        $this->postJson(route('api.admin.customers.save'), [
-            'name' => 'CUSTOMER POOL A',
-            'phone' => '081230000001',
-            'pickup_point' => 'Pool A',
-        ])->assertOk();
+        $this->withSession(['active_pool_id' => $poolA])
+            ->postJson(route('api.admin.customers.save'), [
+                'name' => 'CUSTOMER POOL A',
+                'phone' => '081230000001',
+                'pickup_point' => 'Pool A',
+            ])
+            ->assertCreated();
+        $regularPoolAId = (int) DB::table('customers')
+            ->where('phone', '081230000001')
+            ->where('pool_id', $poolA)
+            ->value('id');
+        $this->assertGreaterThan(0, $regularPoolAId);
         $this->assertDatabaseHas('customers', [
             'id' => $regularOtherId,
             'pool_id' => $poolB,
-            'name' => 'CUSTOMER POOL A',
+            'name' => 'CUSTOMER POOL B',
         ]);
-        $this->assertSame(1, DB::table('customers')->where('phone', '081230000001')->count());
+        $this->assertSame(2, DB::table('customers')->where('phone', '081230000001')->count());
 
-        $this->postJson(route('api.admin.customer-bagasi.save'), [
-            'nama' => 'BAGASI POOL A',
-            'no_hp' => '081230000002',
-            'alamat' => 'Pool A',
-            'tipe' => 'penerima',
-        ])->assertOk();
+        $this->withSession(['active_pool_id' => $poolA])
+            ->postJson(route('api.admin.customer-bagasi.save'), [
+                'nama' => 'BAGASI POOL A',
+                'no_hp' => '081230000002',
+                'alamat' => 'Pool A',
+                'tipe' => 'penerima',
+            ])
+            ->assertCreated();
+        $bagasiPoolAId = (int) DB::table('customer_bagasi')
+            ->where('no_hp', '081230000002')
+            ->where('pool_id', $poolA)
+            ->value('id');
+        $this->assertGreaterThan(0, $bagasiPoolAId);
         $this->assertDatabaseHas('customer_bagasi', [
             'id' => $bagasiOtherId,
             'pool_id' => $poolB,
-            'nama' => 'BAGASI POOL A',
+            'nama' => 'BAGASI POOL B',
         ]);
-        $this->assertSame(1, DB::table('customer_bagasi')->where('no_hp', '081230000002')->count());
+        $this->assertSame(2, DB::table('customer_bagasi')->where('no_hp', '081230000002')->count());
 
-        $this->postJson(route('api.admin.customer-charter.save'), [
-            'nama' => 'CHARTER POOL A',
-            'no_hp' => '081230000003',
-            'alamat' => 'Pool A',
-            'company' => 'Tenant A',
-        ])->assertOk();
+        $this->withSession(['active_pool_id' => $poolA])
+            ->postJson(route('api.admin.customer-charter.save'), [
+                'nama' => 'CHARTER POOL A',
+                'no_hp' => '081230000003',
+                'alamat' => 'Pool A',
+                'company' => 'Tenant A',
+            ])
+            ->assertCreated();
+        $charterPoolAId = (int) DB::table('customer_charter')
+            ->where('no_hp', '081230000003')
+            ->where('pool_id', $poolA)
+            ->value('id');
+        $this->assertGreaterThan(0, $charterPoolAId);
         $this->assertDatabaseHas('customer_charter', [
             'id' => $charterOtherId,
             'pool_id' => $poolB,
-            'nama' => 'CHARTER POOL A',
+            'nama' => 'CHARTER POOL B',
         ]);
-        $this->assertSame(1, DB::table('customer_charter')->where('no_hp', '081230000003')->count());
+        $this->assertSame(2, DB::table('customer_charter')->where('no_hp', '081230000003')->count());
 
-        $this->deleteJson(route('api.admin.customers.delete', ['id' => $regularOtherId]))->assertOk();
-        $this->deleteJson(route('api.admin.customer-bagasi.delete', ['id' => $bagasiOtherId]))->assertOk();
-        $this->deleteJson(route('api.admin.customer-charter.delete', ['id' => $charterOtherId]))->assertOk();
+        $this->withSession(['active_pool_id' => $poolA])
+            ->getJson(route('api.admin.customers.index', ['q' => 'customer']))
+            ->assertOk()
+            ->assertJsonCount(1, 'customers')
+            ->assertJsonFragment(['name' => 'CUSTOMER POOL A'])
+            ->assertJsonMissing(['name' => 'CUSTOMER POOL B']);
+
+        $this->withSession(['active_pool_id' => 0])
+            ->getJson(route('api.admin.customers.index', ['q' => 'customer']))
+            ->assertOk()
+            ->assertJsonCount(2, 'customers')
+            ->assertJsonFragment(['name' => 'CUSTOMER POOL A'])
+            ->assertJsonFragment(['name' => 'CUSTOMER POOL B']);
+
+        $this->withSession(['active_pool_id' => $poolA])
+            ->deleteJson(route('api.admin.customers.delete', ['id' => $regularOtherId]))
+            ->assertNotFound();
+        $this->withSession(['active_pool_id' => $poolA])
+            ->deleteJson(route('api.admin.customer-bagasi.delete', ['id' => $bagasiOtherId]))
+            ->assertNotFound();
+        $this->withSession(['active_pool_id' => $poolA])
+            ->deleteJson(route('api.admin.customer-charter.delete', ['id' => $charterOtherId]))
+            ->assertNotFound();
+
+        $this->withSession(['active_pool_id' => 0])
+            ->deleteJson(route('api.admin.customers.delete', ['id' => $regularOtherId]))
+            ->assertOk();
+        $this->withSession(['active_pool_id' => 0])
+            ->deleteJson(route('api.admin.customer-bagasi.delete', ['id' => $bagasiOtherId]))
+            ->assertOk();
+        $this->withSession(['active_pool_id' => 0])
+            ->deleteJson(route('api.admin.customer-charter.delete', ['id' => $charterOtherId]))
+            ->assertOk();
     }
 
     public function test_admin_master_lookup_shares_operational_data_but_writes_to_active_pool(): void

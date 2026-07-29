@@ -1199,30 +1199,30 @@ class AdminOpsApiController extends Controller
             return $this->ok(['message' => 'Customer updated.', 'id' => $id]);
         }
 
+        $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', 0, true);
+        if ($poolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($poolId), 422);
+        }
+
         $existingQuery = DB::table('customers')->where('phone', $payload['phone']);
-        PoolScope::applyCustomerScope($existingQuery, 'customers');
+        PoolScope::applyCustomerScope($existingQuery, 'customers', $poolId);
         $this->applyWriteTenantScopeIfExists($existingQuery, 'customers');
         $existing = $existingQuery->first([
             'id',
             SchemaCache::hasColumn('customers', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
         ]);
         if ($existing) {
-            $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', (int) ($existing->pool_id ?? 0), false);
+            $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', (int) ($existing->pool_id ?? 0), true);
             if ($poolId < 0) {
                 return $this->error($this->poolResolveErrorMessage($poolId), 422);
             }
 
             $customerUpdate = DB::table('customers')->where('id', (int) $existing->id);
-            PoolScope::applyCustomerScope($customerUpdate, 'customers');
+            PoolScope::applyCustomerScope($customerUpdate, 'customers', $poolId);
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
             $customerUpdate->update(array_merge($payload, $this->poolPayload('customers', $poolId > 0 ? $poolId : null)));
 
             return $this->ok(['message' => 'Customer updated by phone.', 'id' => (int) $existing->id]);
-        }
-
-        $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customers', 0, true);
-        if ($poolId < 0) {
-            return $this->error($this->poolResolveErrorMessage($poolId), 422);
         }
 
         $newId = DB::table('customers')->insertGetId(array_merge($payload, $this->poolPayload('customers', $poolId > 0 ? $poolId : null), [
@@ -1339,12 +1339,12 @@ class AdminOpsApiController extends Controller
             ];
 
             $existingQuery = DB::table('customers')->where('phone', $phone);
-            PoolScope::applyCustomerScope($existingQuery, 'customers');
+            PoolScope::applyCustomerScope($existingQuery, 'customers', $poolId);
             $this->applyWriteTenantScopeIfExists($existingQuery, 'customers');
             $existingId = $existingQuery->value('id');
             if ($existingId) {
                 $customerUpdate = DB::table('customers')->where('id', (int) $existingId);
-                PoolScope::applyCustomerScope($customerUpdate, 'customers');
+                PoolScope::applyCustomerScope($customerUpdate, 'customers', $poolId);
                 $this->applyWriteTenantScopeIfExists($customerUpdate, 'customers');
                 $customerUpdate->update($payload);
                 $this->assignCustomerPoolIfMissing((int) $existingId, $poolId);
@@ -3952,6 +3952,7 @@ class AdminOpsApiController extends Controller
             'no_hp' => ['required', 'string', 'max:30'],
             'alamat' => ['nullable', 'string'],
             'tipe' => ['nullable', 'string', 'max:20'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -3961,39 +3962,50 @@ class AdminOpsApiController extends Controller
             'alamat' => $this->nullable($data['alamat'] ?? null),
             'tipe' => $this->nullable($data['tipe'] ?? null) ?? 'pengirim',
         ];
-        $poolId = $this->defaultCustomerPoolId('customer_bagasi');
 
         if ($id > 0) {
             $customerUpdate = DB::table('customer_bagasi')->where('id', $id);
             PoolScope::applyCustomerBagasiScope($customerUpdate, 'customer_bagasi');
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_bagasi');
-            if (! $customerUpdate->exists()) {
+            $existing = $customerUpdate->first([
+                'id',
+                SchemaCache::hasColumn('customer_bagasi', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+            ]);
+            if (! $existing) {
                 return $this->error('Customer bagasi not found.', 404);
             }
 
-            $customerUpdate->update($payload);
-            $this->assignCustomerPoolIfMissing($id, $poolId, 'customer_bagasi');
+            $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customer_bagasi', (int) ($existing->pool_id ?? 0), false);
+            if ($poolId < 0) {
+                return $this->error($this->poolResolveErrorMessage($poolId), 422);
+            }
+
+            $customerUpdate->update(array_merge($payload, $this->poolPayload('customer_bagasi', $poolId > 0 ? $poolId : null)));
 
             return $this->ok(['message' => 'Customer bagasi updated.', 'id' => $id]);
         }
 
+        $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customer_bagasi', 0, true);
+        if ($poolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($poolId), 422);
+        }
+
         $existingQuery = DB::table('customer_bagasi')->where('no_hp', $payload['no_hp']);
-        PoolScope::applyCustomerBagasiScope($existingQuery, 'customer_bagasi');
+        PoolScope::applyCustomerBagasiScope($existingQuery, 'customer_bagasi', $poolId);
         $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_bagasi');
         $existingId = (int) ($existingQuery->value('id') ?? 0);
         if ($existingId > 0) {
             $customerUpdate = DB::table('customer_bagasi')->where('id', $existingId);
-            PoolScope::applyCustomerBagasiScope($customerUpdate, 'customer_bagasi');
+            PoolScope::applyCustomerBagasiScope($customerUpdate, 'customer_bagasi', $poolId);
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_bagasi');
-            $customerUpdate->update($payload);
-            $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_bagasi');
+            $customerUpdate->update(array_merge($payload, $this->poolPayload('customer_bagasi', $poolId > 0 ? $poolId : null)));
 
             return $this->ok(['message' => 'Customer bagasi updated by phone.', 'id' => $existingId]);
         }
 
         $newId = DB::table('customer_bagasi')->insertGetId(array_merge(
             $payload,
-            $poolId > 0 ? ['pool_id' => $poolId] : [],
+            $this->poolPayload('customer_bagasi', $poolId > 0 ? $poolId : null),
             $this->tenantPayload('customer_bagasi'),
             ['created_at' => now()],
         ));
@@ -4070,6 +4082,7 @@ class AdminOpsApiController extends Controller
             'no_hp' => ['required', 'string', 'max:30'],
             'alamat' => ['nullable', 'string'],
             'company' => ['nullable', 'string', 'max:180'],
+            'pool_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -4079,39 +4092,50 @@ class AdminOpsApiController extends Controller
             'alamat' => $this->nullable($data['alamat'] ?? null),
             'company' => $this->nullable($data['company'] ?? null),
         ];
-        $poolId = $this->defaultCustomerPoolId('customer_charter');
 
         if ($id > 0) {
             $customerUpdate = DB::table('customer_charter')->where('id', $id);
             PoolScope::applyCustomerCharterScope($customerUpdate, 'customer_charter');
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
-            if (! $customerUpdate->exists()) {
+            $existing = $customerUpdate->first([
+                'id',
+                SchemaCache::hasColumn('customer_charter', 'pool_id') ? 'pool_id' : DB::raw('NULL as pool_id'),
+            ]);
+            if (! $existing) {
                 return $this->error('Customer charter not found.', 404);
             }
 
-            $customerUpdate->update($payload);
-            $this->assignCustomerPoolIfMissing($id, $poolId, 'customer_charter');
+            $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customer_charter', (int) ($existing->pool_id ?? 0), false);
+            if ($poolId < 0) {
+                return $this->error($this->poolResolveErrorMessage($poolId), 422);
+            }
+
+            $customerUpdate->update(array_merge($payload, $this->poolPayload('customer_charter', $poolId > 0 ? $poolId : null)));
 
             return $this->ok(['message' => 'Customer charter updated.', 'id' => $id]);
         }
 
+        $poolId = $this->resolveWritablePoolIdFromRequest($request, 'customer_charter', 0, true);
+        if ($poolId < 0) {
+            return $this->error($this->poolResolveErrorMessage($poolId), 422);
+        }
+
         $existingQuery = DB::table('customer_charter')->where('no_hp', $payload['no_hp']);
-        PoolScope::applyCustomerCharterScope($existingQuery, 'customer_charter');
+        PoolScope::applyCustomerCharterScope($existingQuery, 'customer_charter', $poolId);
         $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_charter');
         $existingId = (int) ($existingQuery->value('id') ?? 0);
         if ($existingId > 0) {
             $customerUpdate = DB::table('customer_charter')->where('id', $existingId);
-            PoolScope::applyCustomerCharterScope($customerUpdate, 'customer_charter');
+            PoolScope::applyCustomerCharterScope($customerUpdate, 'customer_charter', $poolId);
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
-            $customerUpdate->update($payload);
-            $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_charter');
+            $customerUpdate->update(array_merge($payload, $this->poolPayload('customer_charter', $poolId > 0 ? $poolId : null)));
 
             return $this->ok(['message' => 'Customer charter updated by phone.', 'id' => $existingId]);
         }
 
         $newId = DB::table('customer_charter')->insertGetId(array_merge(
             $payload,
-            $poolId > 0 ? ['pool_id' => $poolId] : [],
+            $this->poolPayload('customer_charter', $poolId > 0 ? $poolId : null),
             $this->tenantPayload('customer_charter'),
             ['created_at' => now()],
         ));
@@ -7407,7 +7431,7 @@ class AdminOpsApiController extends Controller
 
         $existingQuery = DB::table('customer_bagasi')
             ->where('no_hp', $noHp);
-        PoolScope::applyCustomerBagasiScope($existingQuery, 'customer_bagasi');
+        PoolScope::applyCustomerBagasiScope($existingQuery, 'customer_bagasi', $poolId);
         $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_bagasi');
         $existing = $existingQuery->first(['id', 'tipe']);
 
@@ -7419,7 +7443,7 @@ class AdminOpsApiController extends Controller
             }
 
             $customerUpdate = DB::table('customer_bagasi')->where('id', (int) $existing->id);
-            PoolScope::applyCustomerBagasiScope($customerUpdate, 'customer_bagasi');
+            PoolScope::applyCustomerBagasiScope($customerUpdate, 'customer_bagasi', $poolId);
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_bagasi');
             $customerUpdate->update([
                 'nama' => $nama,
@@ -10128,7 +10152,7 @@ XML;
             : 0;
 
         $existingQuery = DB::table('customer_charter')->where('no_hp', $phone);
-        PoolScope::applyCustomerCharterScope($existingQuery, 'customer_charter');
+        PoolScope::applyCustomerCharterScope($existingQuery, 'customer_charter', $poolId);
         $this->applyWriteTenantScopeIfExists($existingQuery, 'customer_charter');
         $existingId = (int) ($existingQuery->value('id') ?? 0);
 
@@ -10146,7 +10170,7 @@ XML;
             }
 
             $customerUpdate = DB::table('customer_charter')->where('id', $existingId);
-            PoolScope::applyCustomerCharterScope($customerUpdate, 'customer_charter');
+            PoolScope::applyCustomerCharterScope($customerUpdate, 'customer_charter', $poolId);
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
             $customerUpdate->update($updatePayload);
             $this->assignCustomerPoolIfMissing($existingId, $poolId, 'customer_charter');
@@ -10163,7 +10187,7 @@ XML;
             ));
         } catch (QueryException) {
             $customerUpdate = DB::table('customer_charter')->where('no_hp', $phone);
-            PoolScope::applyCustomerCharterScope($customerUpdate, 'customer_charter');
+            PoolScope::applyCustomerCharterScope($customerUpdate, 'customer_charter', $poolId);
             $this->applyWriteTenantScopeIfExists($customerUpdate, 'customer_charter');
             $customerUpdate->update([
                 'nama' => $customerPayload['nama'],
@@ -10171,7 +10195,7 @@ XML;
                 'company' => $customerPayload['company'],
             ]);
             $existingAfterError = DB::table('customer_charter')->where('no_hp', $phone);
-            PoolScope::applyCustomerCharterScope($existingAfterError, 'customer_charter');
+            PoolScope::applyCustomerCharterScope($existingAfterError, 'customer_charter', $poolId);
             $this->applyWriteTenantScopeIfExists($existingAfterError, 'customer_charter');
             $this->assignCustomerPoolIfMissing((int) ($existingAfterError->value('id') ?? 0), $poolId, 'customer_charter');
         }

@@ -634,15 +634,26 @@ class PoolScope
 
     public static function applyCustomerScope(Builder $query, string $customerAlias = 'customers', int $poolId = 0, ?int $userId = null): void
     {
-        $scope = self::forCurrentUser($poolId, $userId);
+        $effectivePoolId = self::effectiveCustomerPoolId($poolId);
+        if ($effectivePoolId <= 0 && SchemaCache::hasTable('customers') && SchemaCache::hasColumn('customers', 'tenant_id')) {
+            if (self::tenantId($userId) <= 0 && AccessControl::userIsSuperAdmin($userId ?? (int) (auth()->id() ?? 0))) {
+                $query->whereRaw('1 = 0');
+
+                return;
+            }
+
+            self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
+
+            return;
+        }
+
+        $scope = self::forCurrentUser($effectivePoolId, $userId, false);
         if ($scope['all']) {
             return;
         }
 
         if (SchemaCache::hasTable('customers') && SchemaCache::hasColumn('customers', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
-
-            return;
         }
 
         $poolIds = $scope['pool_ids'];
@@ -716,15 +727,26 @@ class PoolScope
 
     public static function applyCustomerBagasiScope(Builder $query, string $customerAlias = 'customer_bagasi', int $poolId = 0, ?int $userId = null): void
     {
-        $scope = self::forCurrentUser($poolId, $userId);
+        $effectivePoolId = self::effectiveCustomerPoolId($poolId);
+        if ($effectivePoolId <= 0 && SchemaCache::hasTable('customer_bagasi') && SchemaCache::hasColumn('customer_bagasi', 'tenant_id')) {
+            if (self::tenantId($userId) <= 0 && AccessControl::userIsSuperAdmin($userId ?? (int) (auth()->id() ?? 0))) {
+                $query->whereRaw('1 = 0');
+
+                return;
+            }
+
+            self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
+
+            return;
+        }
+
+        $scope = self::forCurrentUser($effectivePoolId, $userId, false);
         if ($scope['all']) {
             return;
         }
 
         if (SchemaCache::hasTable('customer_bagasi') && SchemaCache::hasColumn('customer_bagasi', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
-
-            return;
         }
 
         $poolIds = $scope['pool_ids'];
@@ -746,7 +768,7 @@ class PoolScope
             $customerPoolColumn,
             $customerPhoneColumn,
             $poolIds,
-            $poolId,
+            $effectivePoolId,
             $userId,
         ): void {
             if ($canUseCustomerPool) {
@@ -761,14 +783,14 @@ class PoolScope
                 $canUseCustomerPool,
                 $customerPoolColumn,
                 $customerPhoneColumn,
-                $poolId,
+                $effectivePoolId,
                 $userId,
             ): void {
                 if ($canUseCustomerPool) {
                     $legacy->whereNull($customerPoolColumn);
                 }
 
-                $legacy->whereExists(function (Builder $exists) use ($customerPhoneColumn, $poolId, $userId): void {
+                $legacy->whereExists(function (Builder $exists) use ($customerPhoneColumn, $effectivePoolId, $userId): void {
                     $exists
                         ->selectRaw('1')
                         ->from('luggages as scoped_luggages')
@@ -787,7 +809,7 @@ class PoolScope
                         SchemaCache::hasColumn('luggages', 'pool_id') ? 'scoped_luggages.pool_id' : '',
                         SchemaCache::hasColumn('luggages', 'rute_id') ? 'scoped_luggages.rute_id' : '',
                         'scoped_luggages.rute',
-                        $poolId,
+                        $effectivePoolId,
                         $userId,
                     );
                 });
@@ -801,15 +823,26 @@ class PoolScope
 
     public static function applyCustomerCharterScope(Builder $query, string $customerAlias = 'customer_charter', int $poolId = 0, ?int $userId = null): void
     {
-        $scope = self::forCurrentUser($poolId, $userId);
+        $effectivePoolId = self::effectiveCustomerPoolId($poolId);
+        if ($effectivePoolId <= 0 && SchemaCache::hasTable('customer_charter') && SchemaCache::hasColumn('customer_charter', 'tenant_id')) {
+            if (self::tenantId($userId) <= 0 && AccessControl::userIsSuperAdmin($userId ?? (int) (auth()->id() ?? 0))) {
+                $query->whereRaw('1 = 0');
+
+                return;
+            }
+
+            self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
+
+            return;
+        }
+
+        $scope = self::forCurrentUser($effectivePoolId, $userId, false);
         if ($scope['all']) {
             return;
         }
 
         if (SchemaCache::hasTable('customer_charter') && SchemaCache::hasColumn('customer_charter', 'tenant_id')) {
             self::applyTenantScope($query, self::qualifiedColumn($customerAlias, 'tenant_id'), $userId);
-
-            return;
         }
 
         $poolIds = $scope['pool_ids'];
@@ -831,7 +864,7 @@ class PoolScope
             $customerPoolColumn,
             $customerPhoneColumn,
             $poolIds,
-            $poolId,
+            $effectivePoolId,
             $userId,
         ): void {
             if ($canUseCustomerPool) {
@@ -846,14 +879,14 @@ class PoolScope
                 $canUseCustomerPool,
                 $customerPoolColumn,
                 $customerPhoneColumn,
-                $poolId,
+                $effectivePoolId,
                 $userId,
             ): void {
                 if ($canUseCustomerPool) {
                     $legacy->whereNull($customerPoolColumn);
                 }
 
-                $legacy->whereExists(function (Builder $exists) use ($customerPhoneColumn, $poolId, $userId): void {
+                $legacy->whereExists(function (Builder $exists) use ($customerPhoneColumn, $effectivePoolId, $userId): void {
                     $exists
                         ->selectRaw('1')
                         ->from('charters as scoped_charters')
@@ -863,7 +896,7 @@ class PoolScope
                         self::applyTenantScope($exists, 'scoped_charters.tenant_id', $userId);
                     }
 
-                    self::applyCharterScope($exists, 'scoped_charters', $poolId, $userId);
+                    self::applyCharterScope($exists, 'scoped_charters', $effectivePoolId, $userId);
                 });
             };
 
@@ -871,6 +904,15 @@ class PoolScope
                 ? $customerScope->orWhere($legacyCharterClause)
                 : $customerScope->where($legacyCharterClause);
         });
+    }
+
+    private static function effectiveCustomerPoolId(int $poolId = 0): int
+    {
+        if ($poolId > 0) {
+            return $poolId;
+        }
+
+        return (int) session('active_pool_id', 0);
     }
 
     /**
