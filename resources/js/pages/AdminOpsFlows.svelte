@@ -235,32 +235,37 @@
     ];
     const defaultCharterService = charterServiceOptions[0];
     const grantedPermissions = $derived(page.props.auth?.permissions ?? []);
+    const tenantWriteDisabled = $derived(
+        Boolean((page.props.auth as any)?.tenant_context_required),
+    );
+    const tenantReadOnlyMessage =
+        'Mode Semua Tenant aktif. Pilih tenant untuk membuat atau mengubah data.';
     const canCharterCreate = $derived(
-        hasPermission(grantedPermissions, 'charter.create'),
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'charter.create'),
     );
     const canCharterUpdate = $derived(
-        hasPermission(grantedPermissions, 'charter.update'),
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'charter.update'),
     );
     const canCharterDelete = $derived(
-        hasPermission(grantedPermissions, 'charter.delete'),
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'charter.delete'),
     );
     const canCharterPrint = $derived(
         hasPermission(grantedPermissions, 'charter.print'),
     );
     const canLuggageCreate = $derived(
-        hasPermission(grantedPermissions, 'luggage.create'),
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'luggage.create'),
     );
     const canLuggageUpdate = $derived(
-        hasPermission(grantedPermissions, 'luggage.update'),
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'luggage.update'),
     );
     const canLuggagePrint = $derived(
         hasPermission(grantedPermissions, 'luggage.print'),
     );
     const canBookingUpdate = $derived(
-        hasPermission(grantedPermissions, 'booking.update'),
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.update'),
     );
     const canBookingDelete = $derived(
-        hasPermission(grantedPermissions, 'booking.delete'),
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.delete'),
     );
     let activeTab = $state<TabName>('charters');
     let activeMode = $state<ViewMode>('data');
@@ -2729,6 +2734,13 @@
         event.preventDefault();
         message = '';
         error = '';
+
+        if (tenantWriteDisabled) {
+            error = tenantReadOnlyMessage;
+
+            return;
+        }
+
         savingCharter = true;
 
         try {
@@ -2787,6 +2799,13 @@
         event.preventDefault();
         message = '';
         error = '';
+
+        if (tenantWriteDisabled) {
+            error = tenantReadOnlyMessage;
+
+            return;
+        }
+
         savingLuggage = true;
 
         try {
@@ -2841,6 +2860,13 @@
         event.preventDefault();
         message = '';
         error = '';
+
+        if (tenantWriteDisabled) {
+            error = tenantReadOnlyMessage;
+
+            return;
+        }
+
         savingAssignment = true;
 
         try {
@@ -3495,6 +3521,14 @@
 <AppHead title={tabTitle(activeTab)} />
 
 <div data-content-density="compact" class="space-y-4 p-3 pb-28 md:p-4">
+    {#if tenantWriteDisabled}
+        <div
+            class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-sm"
+        >
+            {tenantReadOnlyMessage}
+        </div>
+    {/if}
+
     <Card>
         <CardHeader class="space-y-3">
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -3895,6 +3929,7 @@
                             {poolLabel}
                             {poolNameById}
                             {savingCharter}
+                            {tenantWriteDisabled}
                             {onCharterCustomerQueryInput}
                             {applyCharterCustomer}
                             {onCharterRouteBlur}
@@ -5051,6 +5086,7 @@
                                         type="submit"
                                         class="h-9 rounded-xl px-4 text-xs"
                                         loading={savingLuggage}
+                                        disabled={tenantWriteDisabled}
                                         loadingText={luggageForm.id
                                             ? 'Menyimpan perubahan...'
                                             : 'Menyimpan bagasi...'}
@@ -5818,6 +5854,7 @@
                             <LoadingButton
                                 type="submit"
                                 loading={savingAssignment}
+                                disabled={tenantWriteDisabled}
                                 loadingText={assignmentForm.id
                                     ? 'Menyimpan...'
                                     : 'Assigning...'}

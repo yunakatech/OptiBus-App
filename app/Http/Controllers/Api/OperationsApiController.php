@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
 use App\Support\PoolScope;
 use App\Support\SegmentName;
+use App\Support\TenantWriteContext;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -530,16 +531,7 @@ class OperationsApiController extends Controller
 
     private function requireTenantContext(): int
     {
-        $tenantId = PoolScope::tenantId();
-        if ($tenantId > 0) {
-            return $tenantId;
-        }
-
-        abort(response()->json([
-            'success' => false,
-            'error' => 'Pilih tenant dulu.',
-            'redirect_url' => route('platform.dashboard', absolute: false),
-        ], 409));
+        return TenantWriteContext::requireTenant();
     }
 
     private function currentPoolContextId(): int

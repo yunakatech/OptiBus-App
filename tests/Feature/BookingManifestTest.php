@@ -20,6 +20,14 @@ class BookingManifestTest extends TestCase
         $jam = '09:00:00';
         $unit = 1;
 
+        DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
+            'name' => $route,
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
         $activeBookingId = DB::table('bookings')->insertGetId([
             'tenant_id' => $tenantId,
             'rute' => $route,

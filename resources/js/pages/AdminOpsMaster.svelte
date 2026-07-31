@@ -84,6 +84,12 @@
         masterData?: MasterDataPayload | null;
     } = $props();
 
+    const tenantWriteDisabled = $derived(
+        Boolean((page.props.auth as any)?.tenant_context_required),
+    );
+    const tenantReadOnlyMessage =
+        'Mode Semua Tenant aktif. Pilih tenant untuk membuat atau mengubah data.';
+
     let activeTab = $state<TabName>('customer-bagasi');
     let activeMode = $state<ViewMode>('data');
     let lockedMenuView = $state(false);
@@ -428,6 +434,12 @@
         message = '';
         error = '';
 
+        if (tenantWriteDisabled) {
+            error = tenantReadOnlyMessage;
+
+            return;
+        }
+
         if (activeTab === 'customer-bagasi') {
             bagasiForm = {
                 id: 0,
@@ -459,6 +471,13 @@
         event.preventDefault();
         message = '';
         error = '';
+
+        if (tenantWriteDisabled) {
+            error = tenantReadOnlyMessage;
+
+            return;
+        }
+
         setSubmitKey('bagasi-customer');
 
         try {
@@ -502,6 +521,13 @@
         event.preventDefault();
         message = '';
         error = '';
+
+        if (tenantWriteDisabled) {
+            error = tenantReadOnlyMessage;
+
+            return;
+        }
+
         setSubmitKey('charter-customer');
 
         try {
@@ -549,6 +575,13 @@
         event.preventDefault();
         message = '';
         error = '';
+
+        if (tenantWriteDisabled) {
+            error = tenantReadOnlyMessage;
+
+            return;
+        }
+
         setSubmitKey('carter-route');
 
         try {
@@ -714,6 +747,7 @@
                             type="button"
                             size="sm"
                             class="h-10 w-full justify-center rounded-lg px-4 sm:h-9 sm:w-auto sm:rounded-full"
+                            disabled={tenantWriteDisabled}
                             onclick={openCreateMasterForm}
                         >
                             <Plus class="mr-2 h-4 w-4" />
@@ -768,6 +802,13 @@
             {#if busy}<p class="text-sm text-muted-foreground">
                     Memuat data...
                 </p>{/if}
+            {#if tenantWriteDisabled}
+                <div
+                    class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-sm"
+                >
+                    {tenantReadOnlyMessage}
+                </div>
+            {/if}
             {#if error}<p class="text-sm text-red-600">{error}</p>{/if}
             {#if message}<p class="text-sm text-emerald-600">{message}</p>{/if}
 
@@ -812,6 +853,7 @@
                             <LoadingButton
                                 type="submit"
                                 loading={isSubmitActive('bagasi-customer')}
+                                disabled={tenantWriteDisabled}
                                 loadingText={bagasiForm.id
                                     ? 'Menyimpan...'
                                     : 'Membuat...'}
@@ -924,6 +966,7 @@
                                                 class="z-[120] w-44"
                                             >
                                                 <DropdownMenuItem
+                                                    disabled={tenantWriteDisabled}
                                                     onclick={() => {
                                                         bagasiForm = {
                                                             id: row.id,
@@ -951,7 +994,8 @@
                                                             'Customer bagasi deleted.',
                                                         )}
                                                     disabled={pendingDeleteKey ===
-                                                        `/api/admin/customer-bagasi/${row.id}`}
+                                                        `/api/admin/customer-bagasi/${row.id}` ||
+                                                        tenantWriteDisabled}
                                                 >
                                                     <Trash2
                                                         class="mr-2 h-3.5 w-3.5"
@@ -1008,6 +1052,7 @@
                                                 type="button"
                                                 size="sm"
                                                 variant="outline"
+                                                disabled={tenantWriteDisabled}
                                                 onclick={() => {
                                                     bagasiForm = {
                                                         id: row.id,
@@ -1027,7 +1072,8 @@
                                                 size="sm"
                                                 variant="outline"
                                                 disabled={pendingDeleteKey ===
-                                                    `/api/admin/customer-bagasi/${row.id}`}
+                                                    `/api/admin/customer-bagasi/${row.id}` ||
+                                                    tenantWriteDisabled}
                                                 onclick={() =>
                                                     void removeRow(
                                                         `/api/admin/customer-bagasi/${row.id}`,
@@ -1119,6 +1165,7 @@
                             <LoadingButton
                                 type="submit"
                                 loading={isSubmitActive('charter-customer')}
+                                disabled={tenantWriteDisabled}
                                 loadingText={charterForm.id
                                     ? 'Menyimpan...'
                                     : 'Membuat...'}
@@ -1223,6 +1270,7 @@
                                             class="z-[120] w-44"
                                         >
                                             <DropdownMenuItem
+                                                disabled={tenantWriteDisabled}
                                                 onclick={() => {
                                                     charterForm = {
                                                         id: row.id,
@@ -1248,7 +1296,8 @@
                                                         'Customer charter deleted.',
                                                     )}
                                                 disabled={pendingDeleteKey ===
-                                                    `/api/admin/customer-charter/${row.id}`}
+                                                    `/api/admin/customer-charter/${row.id}` ||
+                                                    tenantWriteDisabled}
                                             >
                                                 <Trash2
                                                     class="mr-2 h-3.5 w-3.5"
@@ -1320,6 +1369,7 @@
                                                 type="button"
                                                 size="sm"
                                                 variant="outline"
+                                                disabled={tenantWriteDisabled}
                                                 onclick={() => {
                                                     charterForm = {
                                                         id: row.id,
@@ -1338,7 +1388,8 @@
                                                 size="sm"
                                                 variant="outline"
                                                 disabled={pendingDeleteKey ===
-                                                    `/api/admin/customer-charter/${row.id}`}
+                                                    `/api/admin/customer-charter/${row.id}` ||
+                                                    tenantWriteDisabled}
                                                 onclick={() =>
                                                     void removeRow(
                                                         `/api/admin/customer-charter/${row.id}`,
@@ -1548,6 +1599,7 @@
                             <LoadingButton
                                 type="submit"
                                 loading={isSubmitActive('carter-route')}
+                                disabled={tenantWriteDisabled}
                                 loadingText={carterRouteForm.id
                                     ? 'Menyimpan...'
                                     : 'Membuat...'}
@@ -1739,6 +1791,7 @@
                                                                 size="sm"
                                                                 variant="outline"
                                                                 class="rounded-full px-4"
+                                                                disabled={tenantWriteDisabled}
                                                                 onclick={() => {
                                                                     carterRouteForm =
                                                                         {
@@ -1778,7 +1831,8 @@
                                                                 variant="outline"
                                                                 class="rounded-full px-4"
                                                                 disabled={pendingDeleteKey ===
-                                                                    `/api/admin/charter-routes/${row.id}`}
+                                                                    `/api/admin/charter-routes/${row.id}` ||
+                                                                    tenantWriteDisabled}
                                                                 onclick={() =>
                                                                     void removeRow(
                                                                         `/api/admin/charter-routes/${row.id}`,

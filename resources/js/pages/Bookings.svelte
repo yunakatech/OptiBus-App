@@ -312,6 +312,12 @@
         serverNow?: string;
     } = $props();
 
+    const tenantWriteDisabled = $derived(
+        Boolean((page.props.auth as any)?.tenant_context_required),
+    );
+    const tenantReadOnlyMessage =
+        'Mode Semua Tenant aktif. Pilih tenant untuk membuat atau mengubah data.';
+
     const toDateKey = (date: Date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -2984,6 +2990,13 @@
     };
 
     const openEmptyDepartureForm = async () => {
+        if (!emptyDepartureOpen && tenantWriteDisabled) {
+            formError = tenantReadOnlyMessage;
+            formSuccess = '';
+
+            return;
+        }
+
         emptyDepartureOpen = !emptyDepartureOpen;
 
         if (!emptyDepartureOpen) {
@@ -3011,6 +3024,13 @@
 
     const saveEmptyDeparture = async () => {
         if (savingEmptyDeparture) {
+            return;
+        }
+
+        if (tenantWriteDisabled) {
+            formError = tenantReadOnlyMessage;
+            formSuccess = '';
+
             return;
         }
 
@@ -5620,6 +5640,12 @@
         formName = normalizeNameForBooking(formName);
         formPhone = normalizePhoneForBooking(formPhone);
 
+        if (tenantWriteDisabled) {
+            formError = tenantReadOnlyMessage;
+
+            return;
+        }
+
         if (!selectedRoute || !selectedJam) {
             formError = 'Pilih rute dan jadwal terlebih dahulu.';
 
@@ -5951,6 +5977,14 @@
     data-content-density="compact"
     class={`flex h-full w-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-3 pb-32 md:p-4 ${listOnly && !groupDetailPage ? 'mx-auto max-w-[1500px]' : ''}`}
 >
+    {#if tenantWriteDisabled}
+        <div
+            class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-sm"
+        >
+            {tenantReadOnlyMessage}
+        </div>
+    {/if}
+
     {#if !listOnly}
         <Card
             class="overflow-hidden border-sidebar-border/70 bg-gradient-to-b from-background to-muted/10 dark:border-sidebar-border"
@@ -6811,6 +6845,7 @@
                                         class="h-11 w-full rounded-xl px-5 text-sm sm:w-auto"
                                         onclick={() => void submitBooking()}
                                         disabled={submittingBooking ||
+                                            tenantWriteDisabled ||
                                             !selectedRoute ||
                                             !selectedJam}
                                         loading={submittingBooking}
@@ -9508,6 +9543,8 @@
                                     ? 'secondary'
                                     : 'default'}
                                 class="h-9 rounded-xl px-4 text-xs"
+                                disabled={!emptyDepartureOpen &&
+                                    tenantWriteDisabled}
                                 onclick={() => void openEmptyDepartureForm()}
                             >
                                 {#if emptyDepartureOpen}
@@ -9749,6 +9786,7 @@
                                         loading={savingEmptyDeparture}
                                         loadingText="Menyimpan..."
                                         disabled={savingEmptyDeparture ||
+                                            tenantWriteDisabled ||
                                             !emptyDepartureRoute ||
                                             !emptyDepartureJam}
                                     >

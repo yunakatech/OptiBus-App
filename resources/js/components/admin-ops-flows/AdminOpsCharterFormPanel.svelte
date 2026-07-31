@@ -117,6 +117,7 @@
         charterDriverLookupOpen = $bindable(false),
         charterPaymentStatusOptions = [],
         savingCharter = false,
+        tenantWriteDisabled = false,
         activePools,
         poolLabel,
         poolNameById,
@@ -170,6 +171,7 @@
         charterDriverLookupOpen?: boolean;
         charterPaymentStatusOptions?: string[];
         savingCharter?: boolean;
+        tenantWriteDisabled?: boolean;
         activePools: () => PoolOption[];
         poolLabel: (pool: PoolOption | null | undefined) => string;
         poolNameById: (poolId: number | null | undefined) => string;
@@ -1041,6 +1043,7 @@
                     type="submit"
                     class="h-9 rounded-lg px-4"
                     loading={savingCharter}
+                    disabled={tenantWriteDisabled}
                     loadingText={charterForm.id
                         ? 'Menyimpan perubahan...'
                         : 'Menyimpan charter...'}
