@@ -195,6 +195,8 @@ class AdminOpsController extends Controller
 
                 $segmentRequest = clone $listRequest;
                 $segmentRequest->query->remove('paginate');
+                $segmentRequest->query->remove('route_id');
+                $segmentRequest->query->remove('rute');
             }
 
             if ($tab === 'segments' && (int) $listRequest->query('route_id', 0) <= 0) {

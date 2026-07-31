@@ -103,17 +103,22 @@ class GoogleAuthController extends Controller
 
         Auth::login($user, true);
 
-        // New users must complete onboarding before accessing dashboard
-        if ($isNewUser) {
-            return redirect()->route('onboarding');
-        }
-
-        // Returning users go directly to dashboard
         if (AccessControl::userIsSuperAdmin((int) $user->id)) {
             $request->session()->forget('active_tenant_id');
             $request->session()->forget('active_pool_id');
+            $request->session()->forget([
+                'registration_plan',
+                'registration_intent',
+                'registration_onboarding_defaults',
+                'registration_onboarding_pending',
+            ]);
 
             return redirect()->intended(route('platform.dashboard'));
+        }
+
+        // New tenant users must complete onboarding before accessing dashboard.
+        if ($isNewUser) {
+            return redirect()->route('onboarding');
         }
 
         return redirect()->intended(route('dashboard'));

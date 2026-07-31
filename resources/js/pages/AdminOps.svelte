@@ -1455,7 +1455,11 @@
         const grouped: Record<number, SegmentRow[]> = {};
 
         for (const segment of segments) {
-            const routeId = Number(segment.route_id || 0);
+            const routeId =
+                Number(segment.route_id || 0) ||
+                scheduleRouteIdByName(
+                    String(segment.route_name ?? segment.rute ?? ''),
+                );
 
             if (routeId <= 0) {
                 continue;

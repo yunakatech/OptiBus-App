@@ -658,6 +658,7 @@
     let bookingListDatePicker: FlatpickrInstance | null = null;
     const API_TIMEOUT_MS = 15000;
     const BOOKING_LIST_PAGE_SIZE = 24;
+    const BOOKING_SUCCESS_MESSAGE_TITLE = 'BOOKING BERHASIL';
     const BOOKING_LIST_DATA_PROPS = [
         'bookingGroups',
         'bookingRouteOptions',
@@ -1657,7 +1658,7 @@
         const includePaymentOptions = payment.toLowerCase() === 'belum lunas';
 
         const lines = [
-            'BOOKING BERHASIL ✅',
+            BOOKING_SUCCESS_MESSAGE_TITLE,
             '',
             `Tanggal: ${bookingDate || '-'}`,
             `Jam Segment: ${segmentJamSummary(detailSeat.segment_jam_pickups) || segmentJamLabel(detailSeat.segment_jam) || '-'}`,
@@ -1891,7 +1892,7 @@
             return;
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal : ${bookingDate}`;
+        const header = `${BOOKING_SUCCESS_MESSAGE_TITLE}\n\nTanggal : ${bookingDate}`;
         const lines = rekapItems.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
@@ -1931,7 +1932,7 @@
         if (snapshot.items.length === 1) {
             const item = snapshot.items[0];
             const lines = [
-                'BOOKING BERHASIL ✅',
+                BOOKING_SUCCESS_MESSAGE_TITLE,
                 '',
                 `Tanggal: ${snapshot.tanggal || '-'}`,
                 `Jam Segment: ${segmentJamSummary(snapshot.segment_jam_pickups) || segmentJamLabel(snapshot.segment_jam) || '-'}`,
@@ -1955,7 +1956,7 @@
             return lines.join('\n');
         }
 
-        const header = `BOOKING BERHASIL ✅\n\nTanggal : ${snapshot.tanggal}`;
+        const header = `${BOOKING_SUCCESS_MESSAGE_TITLE}\n\nTanggal : ${snapshot.tanggal}`;
         const lines = snapshot.items.map(
             (item, index) =>
                 `${index + 1}. Kursi ${item.seat} - ${item.name} - ${item.phone}\n` +
@@ -1980,6 +1981,9 @@
             .filter((part) => part !== '')
             .join('\n\n');
     };
+
+    const sanitizeWhatsappText = (text: string) =>
+        text.replace(/\uFFFD/g, '').replace(/\r\n?/g, '\n').trim();
 
     const copyBookingSuccessDetail = async () => {
         if (!bookingSuccessSnapshot) {
@@ -2054,7 +2058,7 @@
         snapshot: BookingSuccessSnapshot,
         phone = '',
     ) => {
-        const text = buildBookingSuccessCopyText(snapshot);
+        const text = sanitizeWhatsappText(buildBookingSuccessCopyText(snapshot));
 
         if (text === '') {
             bookingSuccessFeedback = 'Detail booking belum tersedia.';
@@ -5183,7 +5187,7 @@
         const payment = String(row.pembayaran || '').trim();
         const includePaymentOptions = payment.toLowerCase() === 'belum lunas';
         const lines = [
-            'BOOKING BERHASIL ✅',
+            BOOKING_SUCCESS_MESSAGE_TITLE,
             '',
             `Tanggal: ${formatGroupDateLabel(group.tanggal)}`,
             `Jam: ${formatGroupTimeLabel(group.jam)}`,

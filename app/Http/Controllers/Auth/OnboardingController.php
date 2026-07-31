@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\TenantProvisioningService;
+use App\Support\AccessControl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -21,10 +22,24 @@ class OnboardingController extends Controller
      * Show onboarding form for Google OAuth users.
      * GET /onboarding
      */
-    public function show(): Response
+    public function show(): Response|\Illuminate\Http\RedirectResponse
     {
         $user = Auth::user();
         $user?->refresh();
+
+        if ($user && AccessControl::userIsSuperAdmin((int) $user->id)) {
+            session()->forget([
+                'registration_plan',
+                'registration_intent',
+                'registration_onboarding_defaults',
+                'registration_onboarding_pending',
+                'active_tenant_id',
+                'active_pool_id',
+            ]);
+
+            return redirect()->route('platform.dashboard');
+        }
+
         $selectedPlan = (string) session('registration_plan', config('saas.default_plan', 'starter'));
         $registrationIntent = (string) session('registration_intent', 'trial');
         if ($registrationIntent === 'payment') {
@@ -66,6 +81,19 @@ class OnboardingController extends Controller
             return redirect()->route('login');
         }
         $user->refresh();
+
+        if (AccessControl::userIsSuperAdmin((int) $user->id)) {
+            session()->forget([
+                'registration_plan',
+                'registration_intent',
+                'registration_onboarding_defaults',
+                'registration_onboarding_pending',
+                'active_tenant_id',
+                'active_pool_id',
+            ]);
+
+            return redirect()->route('platform.dashboard');
+        }
 
         $data = $request->validate([
             'travel_name' => ['required', 'string', 'max:120'],
