@@ -62,6 +62,27 @@ class TenantInvitationTest extends TestCase
             ->assertOk();
     }
 
+    public function test_tenant_owner_cannot_invite_user_with_platform_role(): void
+    {
+        Notification::fake();
+        [$owner] = $this->tenantOwnerContext();
+        $adminPusatRoleId = (int) DB::table('roles')->where('slug', 'admin-pusat')->value('id');
+
+        $this->actingAs($owner)
+            ->postJson('/api/admin/users/invitations', [
+                'name' => 'Platform Leak',
+                'email' => 'platform-leak@example.com',
+                'role_ids' => [$adminPusatRoleId],
+            ])
+            ->assertStatus(403)
+            ->assertJsonPath('error', 'Role ini tidak boleh diberikan dari akun tenant.');
+
+        $this->assertDatabaseMissing('tenant_invitations', [
+            'email' => 'platform-leak@example.com',
+        ]);
+        Notification::assertNothingSent();
+    }
+
     public function test_google_invitation_consume_creates_user_and_assigns_access(): void
     {
         Notification::fake();
