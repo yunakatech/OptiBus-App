@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\PaymentGateway;
+use App\Services\TenantInvitationService;
 use App\Support\AccessControl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,16 +16,25 @@ use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
 {
+    public function __construct(
+        private readonly TenantInvitationService $tenantInvitationService,
+    ) {}
+
     /**
      * Redirect to Google OAuth.
      * GET /auth/google/redirect
      */
     public function redirect(Request $request)
     {
+        if ($request->filled('invite')) {
+            session(['google_invitation_token' => trim((string) $request->query('invite'))]);
+        }
+
         if ($request->has('intent')) {
             session(['registration_intent' => $request->intent]);
             session(['registration_plan' => $request->plan]);
         }
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -45,6 +55,26 @@ class GoogleAuthController extends Controller
         $email = $googleUser->getEmail();
         $name = $googleUser->getName() ?? $googleUser->getNickname() ?? 'Google User';
         $avatar = $googleUser->getAvatar();
+        $inviteToken = (string) $request->session()->pull('google_invitation_token', '');
+
+        $invitationResult = $this->tenantInvitationService->consumeForGoogle($email, $name, $avatar, $inviteToken);
+        if (($invitationResult['status'] ?? '') === 'consumed' && $invitationResult['user'] instanceof User) {
+            $user = $invitationResult['user'];
+            Auth::login($user, true);
+
+            return redirect()->intended(route('dashboard'));
+        }
+
+        if (in_array(($invitationResult['status'] ?? ''), ['email_mismatch', 'tenant_conflict', 'limit_reached'], true)) {
+            $message = match ($invitationResult['status']) {
+                'email_mismatch' => 'Email Google tidak sesuai dengan undangan tenant.',
+                'tenant_conflict' => 'Akun Google ini sudah terhubung ke tenant lain.',
+                'limit_reached' => 'Batas user paket tenant sudah tercapai.',
+                default => 'Undangan tenant tidak dapat digunakan.',
+            };
+
+            return redirect()->route('login')->with('status', $message);
+        }
 
         // Find or create user
         $user = User::where('email', $email)->first();
@@ -150,7 +180,7 @@ class GoogleAuthController extends Controller
                 ->where('tenants.email', $email)
                 ->where(function ($q) {
                     $q->where('subscriptions.status', 'trial')
-                      ->orWhereNotNull('subscriptions.trial_ends_at');
+                        ->orWhereNotNull('subscriptions.trial_ends_at');
                 })
                 ->exists();
             if ($alreadyHadTrial) {

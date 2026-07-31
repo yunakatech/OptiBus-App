@@ -360,6 +360,10 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
 
         Route::get('users', [AdminOpsApiController::class, 'usersIndex'])->middleware('permission:user.manage')->name('users.index');
         Route::post('users', [AdminOpsApiController::class, 'usersSave'])->middleware('permission:user.manage')->name('users.save');
+        Route::get('users/invitations', [AdminOpsApiController::class, 'userInvitationsIndex'])->middleware('permission:user.manage')->name('users.invitations.index');
+        Route::post('users/invitations', [AdminOpsApiController::class, 'userInvitationsSave'])->middleware('permission:user.manage')->name('users.invitations.save');
+        Route::post('users/invitations/{id}/resend', [AdminOpsApiController::class, 'userInvitationsResend'])->middleware('permission:user.manage')->name('users.invitations.resend');
+        Route::delete('users/invitations/{id}', [AdminOpsApiController::class, 'userInvitationsDelete'])->middleware('permission:user.manage')->name('users.invitations.delete');
         Route::post('users/{id}/verify', [AdminOpsApiController::class, 'usersVerify'])->middleware('permission:user.manage')->name('users.verify');
         Route::post('users/{id}/unverify', [AdminOpsApiController::class, 'usersUnverify'])->middleware('permission:user.manage')->name('users.unverify');
         Route::post('users/{id}/send-verification', [AdminOpsApiController::class, 'usersSendVerification'])->middleware('permission:user.manage')->name('users.send-verification');
