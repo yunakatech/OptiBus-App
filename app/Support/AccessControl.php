@@ -384,4 +384,77 @@ class AccessControl
             ->values()
             ->all();
     }
+
+    /**
+     * @return array<int, array{id: int, name: string, slug: string, description: string}>
+     */
+    public static function assignableRolesForSelect(?int $userId = null): array
+    {
+        if (! self::tablesReady()) {
+            return [];
+        }
+
+        $userId ??= (int) (auth()->id() ?? 0);
+        $query = DB::table('roles')->orderBy('name');
+        self::applyAssignableRoleScope($query, $userId);
+
+        return $query
+            ->get(['id', 'name', 'slug', 'description'])
+            ->map(static fn ($role): array => [
+                'id' => (int) $role->id,
+                'name' => (string) $role->name,
+                'slug' => (string) $role->slug,
+                'description' => (string) ($role->description ?? ''),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, int>  $roleIds
+     * @return array<int, int>
+     */
+    public static function assignableRoleIdsForUser(int $userId, array $roleIds): array
+    {
+        $roleIds = array_values(array_unique(array_filter(
+            array_map(static fn ($value): int => (int) $value, $roleIds),
+            static fn (int $value): bool => $value > 0,
+        )));
+
+        if ($roleIds === [] || ! self::tablesReady()) {
+            return [];
+        }
+
+        $query = DB::table('roles')->whereIn('id', $roleIds);
+        self::applyAssignableRoleScope($query, $userId);
+
+        return $query
+            ->pluck('id')
+            ->map(static fn ($value): int => (int) $value)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Keep platform/global roles out of tenant-level user mapping.
+     */
+    private static function applyAssignableRoleScope(\Illuminate\Database\Query\Builder $query, int $userId): void
+    {
+        if (self::userIsSuperAdmin($userId)) {
+            $query->where('slug', '!=', 'super-admin');
+
+            return;
+        }
+
+        $query
+            ->whereNotIn('slug', ['super-admin', 'admin-pusat'])
+            ->whereNotExists(function ($subQuery): void {
+                $subQuery
+                    ->selectRaw('1')
+                    ->from('role_permission as assignable_rp')
+                    ->join('permissions as assignable_p', 'assignable_rp.permission_id', '=', 'assignable_p.id')
+                    ->whereColumn('assignable_rp.role_id', 'roles.id')
+                    ->whereIn('assignable_p.slug', ['platform.manage', 'role.manage']);
+            });
+    }
 }

@@ -892,11 +892,26 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertJsonPath('error', 'Pilih tenant dulu.');
     }
 
-    public function test_non_super_admin_users_cannot_see_or_assign_super_admin_role(): void
+    public function test_non_super_admin_users_cannot_see_or_assign_platform_roles(): void
     {
         AccessControl::syncDefaults();
 
         [$tenantId, $poolId] = $this->tenantWithSinglePool('audit-user-role-tenant', 150000);
+        $roleManagePermissionId = (int) DB::table('permissions')->where('slug', 'role.manage')->value('id');
+        $customPlatformRoleId = (int) DB::table('roles')->insertGetId([
+            'name' => 'Platform Support Custom',
+            'slug' => 'platform-support-custom',
+            'description' => 'Custom platform role that must not leak to tenants.',
+            'is_system' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('role_permission')->insert([
+            'role_id' => $customPlatformRoleId,
+            'permission_id' => $roleManagePermissionId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $operator = User::factory()->create([
             'tenant_id' => $tenantId,
@@ -911,14 +926,22 @@ class AdminOpsScopeAuditTest extends TestCase
         ]);
 
         $superAdminRoleId = (int) (DB::table('roles')->where('slug', 'super-admin')->value('id') ?? 0);
+        $adminPusatRoleId = (int) (DB::table('roles')->where('slug', 'admin-pusat')->value('id') ?? 0);
 
         $this->actingAs($operator);
 
         $response = $this->getJson(route('api.admin.users.index'))
             ->assertOk();
+        $roleSlugs = collect($response->json('roles', []))
+            ->map(static fn (array $role): string => (string) ($role['slug'] ?? ''));
         $this->assertFalse(
-            collect($response->json('roles', []))
-                ->contains(fn (array $role): bool => (string) ($role['slug'] ?? '') === 'super-admin'),
+            $roleSlugs->contains('super-admin'),
+        );
+        $this->assertFalse(
+            $roleSlugs->contains('admin-pusat'),
+        );
+        $this->assertFalse(
+            $roleSlugs->contains('platform-support-custom'),
         );
 
         $this->postJson(route('api.admin.users.save'), [
@@ -926,6 +949,20 @@ class AdminOpsScopeAuditTest extends TestCase
             'email' => 'escalated-user@example.com',
             'password' => 'password123',
             'role_ids' => [$superAdminRoleId],
+        ])->assertStatus(403);
+
+        $this->postJson(route('api.admin.users.save'), [
+            'name' => 'Admin Pusat Leaked User',
+            'email' => 'admin-pusat-leaked@example.com',
+            'password' => 'password123',
+            'role_ids' => [$adminPusatRoleId],
+        ])->assertStatus(403);
+
+        $this->postJson(route('api.admin.users.save'), [
+            'name' => 'Custom Platform Leaked User',
+            'email' => 'custom-platform-leaked@example.com',
+            'password' => 'password123',
+            'role_ids' => [$customPlatformRoleId],
         ])->assertStatus(403);
     }
 

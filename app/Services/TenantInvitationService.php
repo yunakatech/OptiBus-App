@@ -28,7 +28,7 @@ class TenantInvitationService
 
         $email = $this->normalizeEmail($email);
         $name = trim((string) $name);
-        $roleIds = $this->validRoleIds($roleIds);
+        $roleIds = $this->validRoleIds($roleIds, true);
         $poolIds = $this->validPoolIds($tenantId, $poolIds);
         $token = $this->newToken();
         $now = now();
@@ -224,7 +224,7 @@ class TenantInvitationService
                 $user = User::whereKey($user->id)->first();
             }
 
-            $roleIds = $this->validRoleIds($this->integerArrayFromJson($invitation->role_ids ?? null));
+            $roleIds = $this->validRoleIds($this->integerArrayFromJson($invitation->role_ids ?? null), false);
             $poolIds = $this->validPoolIds($tenantId, $this->integerArrayFromJson($invitation->pool_ids ?? null));
             $this->syncUserRoles((int) $user->id, $roleIds);
             $this->syncUserPools((int) $user->id, $poolIds);
@@ -317,19 +317,26 @@ class TenantInvitationService
      * @param  array<int, int>  $roleIds
      * @return array<int, int>
      */
-    private function validRoleIds(array $roleIds): array
+    private function validRoleIds(array $roleIds, bool $strict = false): array
     {
         $roleIds = array_values(array_unique(array_filter(array_map('intval', $roleIds), static fn (int $id): bool => $id > 0)));
         if ($roleIds === [] || ! AccessControl::tablesReady()) {
             return [];
         }
 
-        return DB::table('roles')
-            ->whereIn('id', $roleIds)
-            ->where('slug', '!=', 'super-admin')
-            ->pluck('id')
-            ->map(static fn ($value): int => (int) $value)
-            ->all();
+        $validRoleIds = AccessControl::assignableRoleIdsForUser(0, $roleIds);
+
+        if ($strict) {
+            $sortedRequested = $roleIds;
+            sort($sortedRequested);
+            sort($validRoleIds);
+
+            if ($sortedRequested !== $validRoleIds) {
+                throw new \RuntimeException('Role ini tidak boleh diberikan dari akun tenant.');
+            }
+        }
+
+        return $validRoleIds;
     }
 
     /**

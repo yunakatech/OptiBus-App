@@ -379,7 +379,7 @@ class AdminOpsController extends Controller
         return [
             'tab' => $tab,
             'pools' => $payload['pools'] ?? [],
-            'roles' => AccessControl::rolesForSelect(),
+            'roles' => AccessControl::assignableRolesForSelect((int) (auth()->id() ?? 0)),
             'can_manage_pools' => (bool) ($payload['can_manage'] ?? true),
         ];
     }

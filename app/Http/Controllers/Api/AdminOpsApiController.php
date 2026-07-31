@@ -6145,8 +6145,7 @@ class AdminOpsApiController extends Controller
             })->values();
         }
 
-        $roles = AccessControl::rolesForSelect();
-        $roles = array_values(array_filter($roles, static fn (array $role): bool => (string) ($role['slug'] ?? '') !== 'super-admin'));
+        $roles = AccessControl::assignableRolesForSelect((int) (auth()->id() ?? 0));
 
         return $this->ok([
             'users' => $users,
@@ -6205,12 +6204,29 @@ class AdminOpsApiController extends Controller
             return $this->error('Email ini sudah terhubung ke tenant lain.', 409);
         }
 
+        $roleIds = collect($data['role_ids'] ?? [])
+            ->map(static fn ($value): int => (int) $value)
+            ->filter(static fn (int $value): bool => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+        if ($roleIds !== []) {
+            $assignableRoleIds = AccessControl::assignableRoleIdsForUser(0, $roleIds);
+            sort($assignableRoleIds);
+            $sortedRoleIds = $roleIds;
+            sort($sortedRoleIds);
+
+            if ($assignableRoleIds !== $sortedRoleIds) {
+                return $this->error('Role ini tidak boleh diberikan dari akun tenant.', 403);
+            }
+        }
+
         try {
             $result = $this->tenantInvitationService->create(
                 $tenantId,
                 (string) $data['email'],
                 (string) ($data['name'] ?? ''),
-                collect($data['role_ids'] ?? [])->map(static fn ($value): int => (int) $value)->all(),
+                $roleIds,
                 collect($data['pool_ids'] ?? [])->map(static fn ($value): int => (int) $value)->all(),
                 (int) (auth()->id() ?? 0),
             );
@@ -6370,9 +6386,13 @@ class AdminOpsApiController extends Controller
         }
 
         if (AccessControl::tablesReady() && $roleIds !== []) {
-            $validRoleIds = DB::table('roles')->whereIn('id', $roleIds)->pluck('id')->map(static fn ($value) => (int) $value)->all();
-            if (count($validRoleIds) !== count($roleIds)) {
-                return $this->error('Ada role yang tidak ditemukan.', 422);
+            $assignableRoleIds = AccessControl::assignableRoleIdsForUser((int) (auth()->id() ?? 0), $roleIds);
+            sort($assignableRoleIds);
+            $sortedRoleIds = $roleIds;
+            sort($sortedRoleIds);
+
+            if ($assignableRoleIds !== $sortedRoleIds) {
+                return $this->error('Role ini tidak boleh diberikan dari akun tenant.', 403);
             }
         }
 
