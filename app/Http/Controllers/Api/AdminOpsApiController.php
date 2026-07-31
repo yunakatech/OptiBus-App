@@ -15,6 +15,7 @@ use App\Support\PoolScope;
 use App\Support\RoleAccessData;
 use App\Support\SchemaCache;
 use App\Support\SegmentName;
+use App\Support\TenantWriteContext;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Query\Builder;
@@ -443,12 +444,7 @@ class AdminOpsApiController extends Controller
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
         }
 
-        $scheduleJam = substr($jam, 0, 5);
-        $routeSegmentJamPickups = $this->scheduleSegmentJamOptions($routeId, $routeName);
         $segmentConfigs = is_array($data['segment_configs'] ?? null) ? $data['segment_configs'] : [];
-        if (empty($segmentConfigs) && $routeSegmentJamPickups !== [] && ! in_array($scheduleJam, $routeSegmentJamPickups, true)) {
-            return $this->error('Jam jadwal harus cocok dengan jam segment pada rute ini.', 422);
-        }
 
         // Validasi duplikat dihapus agar satu jam jadwal bisa dibuat berulang kali untuk segment berbeda
         // $duplicateQuery = DB::table('schedules')->...
@@ -5060,7 +5056,7 @@ class AdminOpsApiController extends Controller
         if ($poolId > 0 && $this->poolTablesReady()) {
             $tenantId = PoolScope::tenantId($userId);
             if ($tenantId <= 0) {
-                return $this->error('Pilih tenant dulu.', 422);
+                return $this->tenantContextError();
             }
 
             $poolQuery = DB::table('pools')
@@ -6056,10 +6052,6 @@ class AdminOpsApiController extends Controller
 
     public function usersIndex(Request $request): JsonResponse
     {
-        if ($this->currentUserIsSuperAdmin() && PoolScope::tenantId(auth()->id()) <= 0) {
-            return $this->error('Pilih tenant dulu.', 409);
-        }
-
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
         $select = ['id', 'name', 'email', 'email_verified_at', 'created_at'];
@@ -6171,7 +6163,7 @@ class AdminOpsApiController extends Controller
 
         $tenantId = PoolScope::tenantId(auth()->id());
         if ($tenantId <= 0) {
-            return $this->error('Pilih tenant dulu.', 409);
+            return $this->tenantContextError();
         }
 
         return $this->ok([
@@ -6187,7 +6179,7 @@ class AdminOpsApiController extends Controller
 
         $tenantId = PoolScope::tenantId(auth()->id());
         if ($tenantId <= 0) {
-            return $this->error('Pilih tenant dulu.', 409);
+            return $this->tenantContextError();
         }
 
         if (FeatureGate::enabled() && SchemaCache::hasColumn('users', 'tenant_id')) {
@@ -6246,7 +6238,7 @@ class AdminOpsApiController extends Controller
 
         $tenantId = PoolScope::tenantId(auth()->id());
         if ($tenantId <= 0) {
-            return $this->error('Pilih tenant dulu.', 409);
+            return $this->tenantContextError();
         }
 
         try {
@@ -6275,7 +6267,7 @@ class AdminOpsApiController extends Controller
 
         $tenantId = PoolScope::tenantId(auth()->id());
         if ($tenantId <= 0) {
-            return $this->error('Pilih tenant dulu.', 409);
+            return $this->tenantContextError();
         }
 
         $this->tenantInvitationService->revoke($id, $tenantId);
@@ -6299,7 +6291,7 @@ class AdminOpsApiController extends Controller
         }
 
         if ($this->currentUserIsSuperAdmin() && PoolScope::tenantId(auth()->id()) <= 0) {
-            return $this->error('Pilih tenant dulu.', 409);
+            return $this->tenantContextError();
         }
 
         $data = $request->validate([
@@ -6448,7 +6440,7 @@ class AdminOpsApiController extends Controller
         $authUserId = (int) (auth()->id() ?? 0);
 
         if ($this->currentUserIsSuperAdmin() && PoolScope::tenantId(auth()->id()) <= 0) {
-            return $this->error('Pilih tenant dulu.', 409);
+            return $this->tenantContextError();
         }
 
         if ($id === $authUserId) {
@@ -10071,9 +10063,7 @@ XML;
      */
     private function tenantPayload(string $table): array
     {
-        $tenantId = $this->writeTenantId($table);
-
-        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+        return TenantWriteContext::payloadForTable($table);
     }
 
     private function writeTenantId(string $table): int
@@ -10082,16 +10072,7 @@ XML;
             return 0;
         }
 
-        $tenantId = PoolScope::tenantId();
-        if ($tenantId <= 0) {
-            abort(response()->json([
-                'success' => false,
-                'error' => 'Pilih tenant dulu.',
-                'redirect_url' => route('platform.dashboard', absolute: false),
-            ], 409));
-        }
-
-        return $tenantId;
+        return TenantWriteContext::requireTenant();
     }
 
     private function poolPayload(string $table, ?int $poolId = null): array
@@ -11201,5 +11182,10 @@ XML;
     private function error(string $message, int $status = 400, array $extra = []): JsonResponse
     {
         return response()->json(array_merge(['success' => false, 'error' => $message], $extra), $status);
+    }
+
+    private function tenantContextError(int $status = 409): JsonResponse
+    {
+        return response()->json(TenantWriteContext::errorPayload(), $status);
     }
 }

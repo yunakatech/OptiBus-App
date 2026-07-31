@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Support\AccessControl;
 use App\Support\PoolScope;
+use App\Support\TenantWriteContext;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,21 +26,21 @@ class EnsureSuperAdminTenantContext
             return $next($request);
         }
 
+        if ($request->isMethodSafe()) {
+            return $next($request);
+        }
+
         if (PoolScope::tenantId($userId) > 0) {
             return $next($request);
         }
 
         if ($request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Pilih tenant dulu.',
-                'redirect_url' => route('platform.dashboard', absolute: false),
-            ], 409);
+            return response()->json(TenantWriteContext::errorPayload(), 409);
         }
 
         return redirect()
             ->route('platform.dashboard')
-            ->with('status', 'Pilih tenant dulu.');
+            ->with('status', TenantWriteContext::MESSAGE);
     }
 
     private function isExemptRoute(Request $request): bool

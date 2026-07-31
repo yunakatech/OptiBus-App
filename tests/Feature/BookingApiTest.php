@@ -35,6 +35,26 @@ class BookingApiTest extends TestCase
         return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
+    private function ensureDefaultRouteScope(int $tenantId): void
+    {
+        $routeExists = DB::table('routes')
+            ->where('tenant_id', $tenantId)
+            ->where('name', 'PINRANG - MAKASSAR')
+            ->exists();
+
+        if ($routeExists) {
+            return;
+        }
+
+        DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+    }
+
     public function test_authenticated_user_can_get_schedules(): void
     {
         $this->actingAsSuperAdmin();
@@ -501,6 +521,7 @@ class BookingApiTest extends TestCase
     public function test_payment_only_update_does_not_require_complete_booking_fields(): void
     {
         $this->actingAsSuperAdmin();
+        $this->ensureDefaultRouteScope($this->defaultTenantId());
 
         $bookingId = DB::table('bookings')->insertGetId([
             'rute' => 'PINRANG - MAKASSAR',
@@ -538,6 +559,7 @@ class BookingApiTest extends TestCase
     public function test_empty_departure_rejects_existing_active_departure(): void
     {
         $this->actingAsSuperAdmin();
+        $this->ensureDefaultRouteScope($this->defaultTenantId());
 
         $date = '2026-05-15';
         $dow = Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek;
@@ -612,6 +634,7 @@ class BookingApiTest extends TestCase
     public function test_cancel_departure_clears_assignment_meta(): void
     {
         $this->actingAsSuperAdmin();
+        $this->ensureDefaultRouteScope($this->defaultTenantId());
 
         $driverId = DB::table('drivers')->insertGetId([
             'nama' => 'DRIVER BATAL',
@@ -660,6 +683,7 @@ class BookingApiTest extends TestCase
 
         try {
             $this->actingAsSuperAdmin();
+            $this->ensureDefaultRouteScope($this->defaultTenantId());
 
             $tanggal = now()->subDay()->format('Y-m-d');
             $driverId = DB::table('drivers')->insertGetId([
@@ -1032,6 +1056,7 @@ class BookingApiTest extends TestCase
     public function test_departure_cannot_be_marked_arrived_without_driver_and_nopol(): void
     {
         $this->actingAsSuperAdmin();
+        $this->ensureDefaultRouteScope($this->defaultTenantId());
 
         $tanggal = now()->subDay()->format('Y-m-d');
 

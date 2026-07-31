@@ -39,6 +39,14 @@ class BookingPageTest extends TestCase
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
 
+        DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
         $driverId = DB::table('drivers')->insertGetId([
             'tenant_id' => $tenantId,
             'nama' => 'DRIVER HISTORY',
@@ -141,7 +149,7 @@ class BookingPageTest extends TestCase
                 ->missingAll(['bookingRouteOptions', 'bookingGroups'])
                 ->loadDeferredProps('booking-list', fn (Assert $reload) => $reload
                     ->where('bookingRouteOptions', ['PINRANG - MAKASSAR'])
-                    ->has('bookingGroups', 2)
+                    ->has('bookingGroups', 1)
                     ->where('bookingGroups.0.rute', 'PINRANG - MAKASSAR')
                     ->where('bookingGroups.0.total', 2)
                     ->where('bookingGroups.0.lunas', 1)
@@ -154,6 +162,14 @@ class BookingPageTest extends TestCase
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
+
+        DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
 
         DB::table('bookings')->insert([
             [

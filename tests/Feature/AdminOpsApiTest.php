@@ -167,7 +167,7 @@ class AdminOpsApiTest extends TestCase
         ])->assertStatus(409);
     }
 
-    public function test_schedule_save_requires_matching_segment_jam_and_index_includes_matches(): void
+    public function test_schedule_save_allows_manual_jam_and_index_includes_matching_segments(): void
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
@@ -192,16 +192,17 @@ class AdminOpsApiTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $this->postJson(route('api.admin.schedules.save'), [
+        $manual = $this->postJson(route('api.admin.schedules.save'), [
             'route_id' => $routeId,
             'rute' => 'PINRANG - MAKASSAR',
             'dow' => 1,
             'jam' => '08:00',
             'units' => 1,
             'unit_label' => 'Reguler',
-        ])
-            ->assertStatus(422)
-            ->assertJsonPath('error', 'Jam jadwal harus cocok dengan jam segment pada rute ini.');
+        ])->assertCreated()->json();
+
+        $manualScheduleId = (int) ($manual['id'] ?? 0);
+        $this->assertTrue($manualScheduleId > 0);
 
         $create = $this->postJson(route('api.admin.schedules.save'), [
             'route_id' => $routeId,
@@ -219,7 +220,7 @@ class AdminOpsApiTest extends TestCase
             'route_id' => $routeId,
         ]))
             ->assertOk()
-            ->assertJsonCount(1, 'schedules')
+            ->assertJsonCount(2, 'schedules')
             ->assertJsonPath('schedules.0.id', $scheduleId)
             ->assertJsonPath('schedules.0.segment_matches.0.id', $segmentId)
             ->assertJsonPath('schedules.0.segment_jam_pickups.0', '07:30')

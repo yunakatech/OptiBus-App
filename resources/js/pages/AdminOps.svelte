@@ -539,6 +539,12 @@
         settingsMasters?: SettingsMastersPayload | null;
     } = $props();
 
+    const tenantWriteDisabled = $derived(
+        Boolean((page.props.auth as any)?.tenant_context_required),
+    );
+    const tenantReadOnlyMessage =
+        'Mode Semua Tenant aktif. Pilih tenant untuk membuat atau mengubah data.';
+
     const days = [
         'Minggu',
         'Senin',
@@ -1770,34 +1776,11 @@
 
         return Array.from(jams).sort((a, b) => a.localeCompare(b, 'id'));
     };
-    const scheduleJamOptionsForRoute = (routeName: string, routeId = 0) => {
-        const effectiveRouteId = Number(
-            routeId || scheduleRouteIdByName(routeName) || 0,
-        );
-        const effectiveRouteSegments = segmentsForRoute(effectiveRouteId);
-        const jams = new Set<string>();
-
-        for (const segment of effectiveRouteSegments) {
-            const pickupJams = segmentJamList(segment.jam_pickups);
-            const sourceJams =
-                pickupJams.length > 0
-                    ? pickupJams
-                    : segmentJamList(segment.jam);
-
-            for (const jam of sourceJams) {
-                if (jam !== '') {
-                    jams.add(jam);
-                }
-            }
-        }
-
-        return Array.from(jams).sort((a, b) => a.localeCompare(b, 'id'));
-    };
     const scheduleRouteJamHint = () => {
         const jams = scheduleRouteJamOptions();
 
         if (jams.length > 0) {
-            return `Satu segment bisa punya beberapa jam pickup. Jadwal hanya mengikuti jam yang terdaftar pada segment (Tersedia: ${jams.join(', ')}).`;
+            return `Jam segment tersedia sebagai shortcut/mapping opsional: ${jams.join(', ')}. Jam jadwal tetap bisa diisi bebas.`;
         }
 
         if (scheduleSegmentsForRoute().length > 0) {
@@ -2575,7 +2558,7 @@
         reports: null,
     };
     const canWriteTab = (tab: TabName) =>
-        hasPermission(permissions, tabWritePermission[tab]);
+        !tenantWriteDisabled && hasPermission(permissions, tabWritePermission[tab]);
     const setFormMode = (mode: ViewMode) => {
         if (
             activeTab === 'armadas' &&
@@ -4428,7 +4411,7 @@
                 scheduleRouteOptions[0] ||
                 '',
             dow: 1,
-            jam: scheduleRouteJamOptions()[0] || '08:00',
+            jam: '08:00',
             units: 1,
             bop: '',
             unit_id: 0,
@@ -4767,25 +4750,10 @@
 
             const selectedRouteId = scheduleRouteIdByName(activeRoute);
             const normalizedJam = segmentJamLabel(scheduleForm.jam);
-            const routeJamOptions = scheduleJamOptionsForRoute(
-                activeRoute,
-                selectedRouteId,
-            );
-
             const hasSegmentConfigs =
                 Array.isArray(scheduleForm.segment_configs) &&
                 scheduleForm.segment_configs.length > 0;
 
-            // Only enforce jam-matching when no explicit segment configs are set
-            if (
-                !hasSegmentConfigs &&
-                routeJamOptions.length > 0 &&
-                !routeJamOptions.includes(normalizedJam)
-            ) {
-                throw new Error(
-                    `Jam jadwal harus mengikuti jam segment pada rute ini. Pilih salah satu: ${routeJamOptions.join(', ')}.`,
-                );
-            }
             await runWithFeedback(
                 async () => {
                     await api('POST', '/api/admin/schedules', {
@@ -4856,7 +4824,7 @@
             ) ||
             scheduleRouteOptions[0] ||
             '';
-        const defaultJam = scheduleRouteJamOptions()[0] || '08:00';
+        const defaultJam = '08:00';
         scheduleForm = {
             id: 0,
             rute: routeName,
@@ -5548,23 +5516,6 @@
     });
 
     $effect(() => {
-        if (
-            activeTab !== 'schedules' ||
-            activeMode !== 'form' ||
-            scheduleForm.id > 0
-        ) {
-            return;
-        }
-
-        const mappedJam = scheduleRouteJamOptions()[0] || '';
-        const currentJam = segmentJamLabel(scheduleForm.jam);
-
-        if (mappedJam !== '' && currentJam !== mappedJam) {
-            applyScheduleJam(mappedJam);
-        }
-    });
-
-    $effect(() => {
         const isSegmentFormActive =
             activeTab === 'segments' && activeMode === 'form';
         const jamPickupCount = segmentForm.jam_pickups.length;
@@ -5859,6 +5810,13 @@
 
     <Card class="overflow-hidden border-border/70 shadow-sm">
         <CardHeader class="border-b border-border/70 bg-muted/20">
+            {#if tenantWriteDisabled && hasFormTab(activeTab)}
+                <div
+                    class="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-sm"
+                >
+                    {tenantReadOnlyMessage}
+                </div>
+            {/if}
             {#if lockedMenuView}
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <CardTitle class="text-lg md:text-xl"

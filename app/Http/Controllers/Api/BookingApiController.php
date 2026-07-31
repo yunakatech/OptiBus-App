@@ -9,6 +9,7 @@ use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
 use App\Support\SchemaCache;
 use App\Support\SegmentName;
+use App\Support\TenantWriteContext;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -787,6 +788,8 @@ class BookingApiController extends Controller
 
     public function emptyDeparture(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -879,6 +882,8 @@ class BookingApiController extends Controller
 
     public function cancelDeparture(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -966,6 +971,8 @@ class BookingApiController extends Controller
 
     public function departDeparture(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -1053,6 +1060,8 @@ class BookingApiController extends Controller
 
     public function arriveDeparture(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -1151,6 +1160,8 @@ class BookingApiController extends Controller
 
     public function closeManifest(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -1357,6 +1368,8 @@ class BookingApiController extends Controller
 
     public function mapDepartureRitur(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -1448,6 +1461,8 @@ class BookingApiController extends Controller
 
     public function unmapDepartureRitur(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:120'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -1527,6 +1542,8 @@ class BookingApiController extends Controller
 
     public function submit(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:100'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
@@ -1719,6 +1736,8 @@ class BookingApiController extends Controller
 
     public function update(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $payload = $request->validate([
             'booking_id' => ['nullable', 'integer', 'min:1'],
             'id' => ['nullable', 'integer', 'min:1'],
@@ -1940,6 +1959,8 @@ class BookingApiController extends Controller
 
     public function bulkUpdatePayments(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $payload = $request->validate([
             'booking_ids' => ['required', 'array', 'min:1'],
             'booking_ids.*' => ['integer', 'min:1'],
@@ -2043,6 +2064,8 @@ class BookingApiController extends Controller
 
     public function cancel(Request $request): JsonResponse
     {
+        $this->requireTenantWriteContext();
+
         $payload = $request->validate([
             'booking_id' => ['nullable', 'integer', 'min:1'],
             'id' => ['nullable', 'integer', 'min:1'],
@@ -2394,16 +2417,12 @@ class BookingApiController extends Controller
      */
     private function tenantPayload(string $table): array
     {
-        if (! SchemaCache::hasColumn($table, 'tenant_id')) {
-            return [];
-        }
+        return TenantWriteContext::payloadForTable($table);
+    }
 
-        $tenantId = PoolScope::tenantId();
-        if ($tenantId <= 0) {
-            $tenantId = $this->defaultTenantId();
-        }
-
-        return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+    private function requireTenantWriteContext(): void
+    {
+        TenantWriteContext::requireTenant();
     }
 
     private function defaultTenantId(): int
