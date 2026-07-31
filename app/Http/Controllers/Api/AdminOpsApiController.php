@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\PaymentGateway;
+use App\Services\TenantInvitationService;
 use App\Services\TenantProvisioningService;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
@@ -33,6 +34,7 @@ class AdminOpsApiController extends Controller
 {
     public function __construct(
         private readonly RoleAccessData $roleAccessData,
+        private readonly TenantInvitationService $tenantInvitationService,
     ) {}
 
     private ?bool $schedulesHasRouteId = null;
@@ -6158,6 +6160,135 @@ class AdminOpsApiController extends Controller
             'users' => $users,
             'roles' => $roles,
             'pagination' => $result['meta'],
+        ]);
+    }
+
+    public function userInvitationsIndex(): JsonResponse
+    {
+        if ($response = $this->requirePermission('user.manage')) {
+            return $response;
+        }
+
+        $tenantId = PoolScope::tenantId(auth()->id());
+        if ($tenantId <= 0) {
+            return $this->error('Pilih tenant dulu.', 409);
+        }
+
+        return $this->ok([
+            'invitations' => $this->tenantInvitationService->listForTenant($tenantId),
+        ]);
+    }
+
+    public function userInvitationsSave(Request $request): JsonResponse
+    {
+        if ($response = $this->requirePermission('user.manage')) {
+            return $response;
+        }
+
+        $tenantId = PoolScope::tenantId(auth()->id());
+        if ($tenantId <= 0) {
+            return $this->error('Pilih tenant dulu.', 409);
+        }
+
+        if (FeatureGate::enabled() && SchemaCache::hasColumn('users', 'tenant_id')) {
+            if (! FeatureGate::canCreate('user.management', 'users', 'tenant_id')) {
+                return $this->error(FeatureGate::limitMessage('user.management') ?? 'Batas user paket Anda sudah tercapai.', 403);
+            }
+        }
+
+        $data = $request->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'pool_ids' => ['nullable', 'array'],
+            'pool_ids.*' => ['integer', 'min:1'],
+            'role_ids' => ['nullable', 'array'],
+            'role_ids.*' => ['integer', 'min:1'],
+        ]);
+
+        $existingUser = DB::table('users')
+            ->where('email', strtolower(trim((string) $data['email'])))
+            ->first(['id', 'tenant_id']);
+        $existingTenantId = (int) ($existingUser->tenant_id ?? 0);
+        if ($existingUser && $existingTenantId > 0 && $existingTenantId !== $tenantId) {
+            return $this->error('Email ini sudah terhubung ke tenant lain.', 409);
+        }
+
+        try {
+            $result = $this->tenantInvitationService->create(
+                $tenantId,
+                (string) $data['email'],
+                (string) ($data['name'] ?? ''),
+                collect($data['role_ids'] ?? [])->map(static fn ($value): int => (int) $value)->all(),
+                collect($data['pool_ids'] ?? [])->map(static fn ($value): int => (int) $value)->all(),
+                (int) (auth()->id() ?? 0),
+            );
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+
+        ActivityLog::write('user.invitation.created', 'Undangan user dibuat', (string) $data['email'], null, [
+            'tenant_id' => $tenantId,
+            'actor_user_id' => (int) (auth()->id() ?? 0),
+            'invitation_id' => (int) ($result['invitation']->id ?? 0),
+        ]);
+
+        return $this->ok([
+            'message' => 'Invitation sent.',
+            'invitations' => $this->tenantInvitationService->listForTenant($tenantId),
+        ], 201);
+    }
+
+    public function userInvitationsResend(int $id): JsonResponse
+    {
+        if ($response = $this->requirePermission('user.manage')) {
+            return $response;
+        }
+
+        $tenantId = PoolScope::tenantId(auth()->id());
+        if ($tenantId <= 0) {
+            return $this->error('Pilih tenant dulu.', 409);
+        }
+
+        try {
+            $invitation = $this->tenantInvitationService->resend($id, $tenantId);
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+
+        ActivityLog::write('user.invitation.resent', 'Undangan user dikirim ulang', (string) ($invitation->email ?? ''), null, [
+            'tenant_id' => $tenantId,
+            'actor_user_id' => (int) (auth()->id() ?? 0),
+            'invitation_id' => $id,
+        ]);
+
+        return $this->ok([
+            'message' => 'Invitation resent.',
+            'invitations' => $this->tenantInvitationService->listForTenant($tenantId),
+        ]);
+    }
+
+    public function userInvitationsDelete(int $id): JsonResponse
+    {
+        if ($response = $this->requirePermission('user.manage')) {
+            return $response;
+        }
+
+        $tenantId = PoolScope::tenantId(auth()->id());
+        if ($tenantId <= 0) {
+            return $this->error('Pilih tenant dulu.', 409);
+        }
+
+        $this->tenantInvitationService->revoke($id, $tenantId);
+
+        ActivityLog::write('user.invitation.revoked', 'Undangan user dibatalkan', '', null, [
+            'tenant_id' => $tenantId,
+            'actor_user_id' => (int) (auth()->id() ?? 0),
+            'invitation_id' => $id,
+        ]);
+
+        return $this->ok([
+            'message' => 'Invitation revoked.',
+            'invitations' => $this->tenantInvitationService->listForTenant($tenantId),
         ]);
     }
 

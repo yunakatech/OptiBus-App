@@ -359,6 +359,20 @@
         role_ids: number[];
         role_names: string[];
     };
+    type TenantInvitationRow = {
+        id: number;
+        name: string;
+        email: string;
+        status: 'pending' | 'accepted' | 'revoked' | 'expired' | string;
+        role_ids: number[];
+        role_names: string[];
+        pool_ids: number[];
+        pool_names: string[];
+        created_at: string | null;
+        expires_at: string | null;
+        accepted_at: string | null;
+        revoked_at: string | null;
+    };
     type RoleOption = {
         id: number;
         name: string;
@@ -747,6 +761,7 @@
     let pools = $state<PoolRow[]>([]);
     let canManagePools = $state(true);
     let users = $state<UserRow[]>([]);
+    let userInvitations = $state<TenantInvitationRow[]>([]);
     let roles = $state<RoleOption[]>([]);
     let activityLogs = $state<ActivityLogRow[]>([]);
     let units = $state<UnitRow[]>([]);
@@ -919,6 +934,12 @@
         email: '',
         password: '',
         is_super_admin: false,
+        pool_ids: [] as number[],
+        role_ids: [] as number[],
+    });
+    let invitationForm = $state({
+        name: '',
+        email: '',
         pool_ids: [] as number[],
         role_ids: [] as number[],
     });
@@ -1828,6 +1849,24 @@
         };
     };
 
+    const toggleInvitationPool = (poolId: number, checked: boolean) => {
+        const id = Number(poolId || 0);
+
+        if (id <= 0) {
+            return;
+        }
+
+        const current = Array.isArray(invitationForm.pool_ids)
+            ? invitationForm.pool_ids
+            : [];
+        invitationForm = {
+            ...invitationForm,
+            pool_ids: checked
+                ? Array.from(new Set([...current, id]))
+                : current.filter((item) => Number(item) !== id),
+        };
+    };
+
     const toggleUserRole = (roleId: number, checked: boolean) => {
         const id = Number(roleId || 0);
 
@@ -1840,6 +1879,24 @@
             : [];
         userForm = {
             ...userForm,
+            role_ids: checked
+                ? Array.from(new Set([...current, id]))
+                : current.filter((item) => Number(item) !== id),
+        };
+    };
+
+    const toggleInvitationRole = (roleId: number, checked: boolean) => {
+        const id = Number(roleId || 0);
+
+        if (id <= 0) {
+            return;
+        }
+
+        const current = Array.isArray(invitationForm.role_ids)
+            ? invitationForm.role_ids
+            : [];
+        invitationForm = {
+            ...invitationForm,
             role_ids: checked
                 ? Array.from(new Set([...current, id]))
                 : current.filter((item) => Number(item) !== id),
@@ -1864,6 +1921,20 @@
         row.is_super_admin
             ? { items: ['Semua Pool'], overflow: 0 }
             : compactListPreview(row.pool_names, limit);
+    const invitationStatusLabel = (status: string) =>
+        ({
+            pending: 'Pending',
+            accepted: 'Accepted',
+            revoked: 'Revoked',
+            expired: 'Expired',
+        })[status] ?? status;
+    const invitationStatusClass = (status: string) =>
+        ({
+            pending: 'border-sky-200 bg-sky-50 text-sky-700',
+            accepted: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+            revoked: 'border-slate-200 bg-slate-50 text-slate-600',
+            expired: 'border-amber-200 bg-amber-50 text-amber-700',
+        })[status] ?? 'border-border bg-muted/30 text-muted-foreground';
     const armadaCategoryOptions = $derived.by<string[]>(() => {
         const categories = [...unitCategoryOptions];
 
@@ -4036,12 +4107,15 @@
                 query === ''
                     ? '/api/admin/users'
                     : `/api/admin/users?q=${encodeURIComponent(query)}`;
-            const [userResponse, poolResponse] = await Promise.all([
+            const [userResponse, poolResponse, invitationResponse] =
+                await Promise.all([
                 api('GET', url),
                 api('GET', '/api/admin/pools/options'),
+                api('GET', '/api/admin/users/invitations'),
             ]);
             users = userResponse.users ?? [];
             roles = userResponse.roles ?? [];
+            userInvitations = invitationResponse.invitations ?? [];
             pools = poolResponse.pools ?? [];
             setPoolManageAccess(Boolean(poolResponse.can_manage ?? true));
         } catch (e) {
@@ -4615,6 +4689,13 @@
             email: '',
             password: '',
             is_super_admin: false,
+            pool_ids: [],
+            role_ids: [],
+        });
+    const resetInvitationForm = () =>
+        (invitationForm = {
+            name: '',
+            email: '',
             pool_ids: [],
             role_ids: [],
         });
@@ -5272,6 +5353,90 @@
             error = e instanceof Error ? e.message : 'Gagal simpan user.';
         } finally {
             clearSubmitKey('user');
+        }
+    };
+
+    const sendInvitation = async (event: SubmitEvent) => {
+        event.preventDefault();
+        message = '';
+        error = '';
+        setSubmitKey('invitation');
+
+        try {
+            const result = await runWithFeedback(
+                async () =>
+                    await api('POST', '/api/admin/users/invitations', {
+                        name: invitationForm.name,
+                        email: invitationForm.email,
+                        pool_ids: invitationForm.pool_ids,
+                        role_ids: invitationForm.role_ids,
+                    }),
+                {
+                    loadingMessage: 'Mengirim undangan Google...',
+                    successMessage: 'Undangan Google terkirim.',
+                    errorMessage: 'Gagal mengirim undangan.',
+                },
+            );
+            userInvitations = result.invitations ?? userInvitations;
+            message = 'Invitation sent.';
+            resetInvitationForm();
+        } catch (e) {
+            error =
+                e instanceof Error ? e.message : 'Gagal mengirim undangan.';
+        } finally {
+            clearSubmitKey('invitation');
+        }
+    };
+
+    const resendInvitation = async (row: TenantInvitationRow) => {
+        message = '';
+        error = '';
+
+        try {
+            const result = await runWithFeedback(
+                async () =>
+                    await api(
+                        'POST',
+                        `/api/admin/users/invitations/${row.id}/resend`,
+                    ),
+                {
+                    loadingMessage: 'Mengirim ulang undangan...',
+                    successMessage: 'Undangan dikirim ulang.',
+                    errorMessage: 'Gagal mengirim ulang undangan.',
+                },
+            );
+            userInvitations = result.invitations ?? userInvitations;
+            message = 'Invitation resent.';
+        } catch (e) {
+            error =
+                e instanceof Error
+                    ? e.message
+                    : 'Gagal mengirim ulang undangan.';
+        }
+    };
+
+    const revokeInvitation = async (row: TenantInvitationRow) => {
+        message = '';
+        error = '';
+
+        try {
+            const result = await runWithFeedback(
+                async () =>
+                    await api(
+                        'DELETE',
+                        `/api/admin/users/invitations/${row.id}`,
+                    ),
+                {
+                    loadingMessage: 'Membatalkan undangan...',
+                    successMessage: 'Undangan dibatalkan.',
+                    errorMessage: 'Gagal membatalkan undangan.',
+                },
+            );
+            userInvitations = result.invitations ?? userInvitations;
+            message = 'Invitation revoked.';
+        } catch (e) {
+            error =
+                e instanceof Error ? e.message : 'Gagal membatalkan undangan.';
         }
     };
 
@@ -11036,6 +11201,311 @@
                                     onclick={() => void loadUsers()}
                                     >Search</Button
                                 >
+                            </div>
+                        </div>
+                        <div
+                            class="grid gap-3 border-b border-border/70 bg-muted/10 p-3 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.35fr)]"
+                        >
+                            <form
+                                class="rounded-lg border border-border/70 bg-background/95 p-4"
+                                onsubmit={sendInvitation}
+                            >
+                                <div class="mb-3">
+                                    <p
+                                        class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                    >
+                                        Undang User Google
+                                    </p>
+                                    <h3 class="mt-1 text-sm font-semibold">
+                                        Kirim akses tenant via Google login
+                                    </h3>
+                                </div>
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <label class="space-y-1.5">
+                                        <span
+                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >Nama</span
+                                        >
+                                        <Input
+                                            placeholder="Nama opsional"
+                                            bind:value={invitationForm.name}
+                                        />
+                                    </label>
+                                    <label class="space-y-1.5">
+                                        <span
+                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >Email Google</span
+                                        >
+                                        <Input
+                                            type="email"
+                                            placeholder="user@gmail.com"
+                                            bind:value={invitationForm.email}
+                                            required
+                                        />
+                                    </label>
+                                </div>
+                                <div class="mt-3 grid gap-3 xl:grid-cols-2">
+                                    <div
+                                        class="rounded-lg border border-border/70 bg-muted/10 p-3"
+                                    >
+                                        <div
+                                            class="mb-2 flex items-center justify-between gap-2"
+                                        >
+                                            <span
+                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >Role</span
+                                            >
+                                            <Badge
+                                                variant="secondary"
+                                                class="rounded-full"
+                                            >
+                                                {invitationForm.role_ids.length}
+                                            </Badge>
+                                        </div>
+                                        <div
+                                            class="grid max-h-40 gap-2 overflow-auto"
+                                        >
+                                            {#each roleOptions as role (role.id)}
+                                                <label
+                                                    class="flex items-start gap-2 rounded-lg border border-border/70 bg-background/80 p-2 text-xs"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        class="mt-0.5"
+                                                        checked={invitationForm.role_ids.includes(
+                                                            role.id,
+                                                        )}
+                                                        onchange={(event) =>
+                                                            toggleInvitationRole(
+                                                                role.id,
+                                                                (
+                                                                    event.currentTarget as HTMLInputElement
+                                                                ).checked,
+                                                            )}
+                                                    />
+                                                    <span class="font-medium">
+                                                        {role.name}
+                                                    </span>
+                                                </label>
+                                            {/each}
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="rounded-lg border border-border/70 bg-muted/10 p-3"
+                                    >
+                                        <div
+                                            class="mb-2 flex items-center justify-between gap-2"
+                                        >
+                                            <span
+                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >Pool</span
+                                            >
+                                            <Badge
+                                                variant="secondary"
+                                                class="rounded-full"
+                                            >
+                                                {invitationForm.pool_ids.length}
+                                            </Badge>
+                                        </div>
+                                        <div
+                                            class="grid max-h-40 gap-2 overflow-auto"
+                                        >
+                                            {#each poolOptions as pool (pool.id)}
+                                                <label
+                                                    class="flex items-start gap-2 rounded-lg border border-border/70 bg-background/80 p-2 text-xs"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        class="mt-0.5"
+                                                        checked={invitationForm.pool_ids.includes(
+                                                            pool.id,
+                                                        )}
+                                                        onchange={(event) =>
+                                                            toggleInvitationPool(
+                                                                pool.id,
+                                                                (
+                                                                    event.currentTarget as HTMLInputElement
+                                                                ).checked,
+                                                            )}
+                                                    />
+                                                    <span>
+                                                        <span
+                                                            class="font-medium"
+                                                            >{pool.name}</span
+                                                        >
+                                                        <span
+                                                            class="ml-1 text-muted-foreground"
+                                                            >{pool.code ||
+                                                                ''}</span
+                                                        >
+                                                    </span>
+                                                </label>
+                                            {/each}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <LoadingButton
+                                        type="submit"
+                                        loading={isSubmitActive('invitation')}
+                                        loadingText="Mengirim..."
+                                    >
+                                        Kirim Undangan
+                                    </LoadingButton>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onclick={resetInvitationForm}
+                                        >Reset</Button
+                                    >
+                                </div>
+                            </form>
+
+                            <div
+                                class="rounded-lg border border-border/70 bg-background/95 p-4"
+                            >
+                                <div
+                                    class="mb-3 flex items-center justify-between gap-2"
+                                >
+                                    <div>
+                                        <p
+                                            class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                        >
+                                            Invitation
+                                        </p>
+                                        <h3
+                                            class="mt-1 text-sm font-semibold"
+                                        >
+                                            Pending dan riwayat undangan
+                                        </h3>
+                                    </div>
+                                    <Badge
+                                        variant="secondary"
+                                        class="rounded-full"
+                                    >
+                                        {userInvitations.length}
+                                    </Badge>
+                                </div>
+                                <div
+                                    class="grid max-h-[360px] gap-2 overflow-auto"
+                                >
+                                    {#if userInvitations.length === 0}
+                                        <div
+                                            class="rounded-lg border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground"
+                                        >
+                                            Belum ada undangan tenant.
+                                        </div>
+                                    {:else}
+                                        {#each userInvitations as invitation (invitation.id)}
+                                            {@const inviteRoles =
+                                                compactListPreview(
+                                                    invitation.role_names,
+                                                    2,
+                                                )}
+                                            {@const invitePools =
+                                                compactListPreview(
+                                                    invitation.pool_names,
+                                                    2,
+                                                )}
+                                            <article
+                                                class="rounded-lg border border-border/70 bg-muted/10 p-3"
+                                            >
+                                                <div
+                                                    class="flex items-start justify-between gap-3"
+                                                >
+                                                    <div class="min-w-0">
+                                                        <p
+                                                            class="truncate text-sm font-semibold"
+                                                        >
+                                                            {invitation.name ||
+                                                                invitation.email}
+                                                        </p>
+                                                        <p
+                                                            class="truncate text-xs text-muted-foreground"
+                                                        >
+                                                            {invitation.email}
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        class={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${invitationStatusClass(invitation.status)}`}
+                                                    >
+                                                        {invitationStatusLabel(
+                                                            invitation.status,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="mt-2 grid gap-2 text-xs md:grid-cols-2"
+                                                >
+                                                    <div>
+                                                        <span
+                                                            class="font-semibold text-muted-foreground"
+                                                            >Role:</span
+                                                        >
+                                                        {inviteRoles.items.join(
+                                                            ', ',
+                                                        ) || '-'}
+                                                        {#if inviteRoles.overflow > 0}
+                                                            +{inviteRoles.overflow}
+                                                        {/if}
+                                                    </div>
+                                                    <div>
+                                                        <span
+                                                            class="font-semibold text-muted-foreground"
+                                                            >Pool:</span
+                                                        >
+                                                        {invitePools.items.join(
+                                                            ', ',
+                                                        ) || '-'}
+                                                        {#if invitePools.overflow > 0}
+                                                            +{invitePools.overflow}
+                                                        {/if}
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="mt-2 flex flex-wrap items-center justify-between gap-2"
+                                                >
+                                                    <span
+                                                        class="text-[11px] text-muted-foreground"
+                                                    >
+                                                        Expires: {invitation.expires_at ||
+                                                            '-'}
+                                                    </span>
+                                                    {#if invitation.status === 'pending'}
+                                                        <div
+                                                            class="flex flex-wrap gap-1.5"
+                                                        >
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                class="h-7 rounded-lg text-xs"
+                                                                onclick={() =>
+                                                                    void resendInvitation(
+                                                                        invitation,
+                                                                    )}
+                                                            >
+                                                                Resend
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                class="h-7 rounded-lg text-xs"
+                                                                onclick={() =>
+                                                                    void revokeInvitation(
+                                                                        invitation,
+                                                                    )}
+                                                            >
+                                                                Revoke
+                                                            </Button>
+                                                        </div>
+                                                    {/if}
+                                                </div>
+                                            </article>
+                                        {/each}
+                                    {/if}
+                                </div>
                             </div>
                         </div>
                         <div class="grid gap-2.5 p-2.5 md:hidden">
