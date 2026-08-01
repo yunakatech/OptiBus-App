@@ -7749,7 +7749,7 @@
                                     variant="secondary"
                                     class="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
                                 >
-                                    Manifest Tertutup
+                                    Manifest Close
                                 </Badge>
                             {/if}
                             <Badge
@@ -9880,11 +9880,6 @@
                                                 class="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-3 py-2.5"
                                             >
                                                 <div class="space-y-0.5">
-                                                    <p
-                                                        class="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                                                    >
-                                                        Tanggal Operasional
-                                                    </p>
                                                     <h3
                                                         class="text-sm font-semibold text-foreground"
                                                     >
@@ -10022,6 +10017,13 @@
                                                                                     class="rounded-md border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
                                                                                 >
                                                                                     Tiba
+                                                                                </Badge>
+                                                                            {:else if isManifestClosed(group)}
+                                                                                <Badge
+                                                                                    variant="secondary"
+                                                                                    class="rounded-md border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
+                                                                                >
+                                                                                    Manifest Close
                                                                                 </Badge>
                                                                             {/if}
                                                                         </div>
@@ -10439,6 +10441,13 @@
                                                         >
                                                             Tiba
                                                         </Badge>
+                                                    {:else if isManifestClosed(group)}
+                                                        <Badge
+                                                            variant="secondary"
+                                                            class="rounded-full border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
+                                                        >
+                                                            Manifest Close
+                                                        </Badge>
                                                     {/if}
                                                     <Badge
                                                         variant="secondary"
@@ -10471,11 +10480,12 @@
                                                                 </Button>
                                                             {/snippet}
                                                         </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            sideOffset={6}
-                                                            class="z-[120] w-44 text-[11px] shadow-lg"
-                                                        >
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        side="top"
+                                                        sideOffset={6}
+                                                        class="z-[120] w-44 text-[11px] shadow-lg"
+                                                    >
                                                             <DropdownMenuItem
                                                                 onclick={() =>
                                                                     navigateToGroupDetail(
