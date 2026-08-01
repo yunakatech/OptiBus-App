@@ -2502,7 +2502,7 @@
     const isSelectedTripManifestClosed = () =>
         isManifestLocked(selectedTripGroup());
     const isReadonlyHistoryGroup = (group: BookingGroup | null | undefined) => {
-        return !!group && isHistoryGroup(group);
+        return !!group && isManifestLocked(group);
     };
     const isReadonlyHistoryBooking = (bookingId: number) => {
         if (!openGroupDetail || bookingId <= 0) {

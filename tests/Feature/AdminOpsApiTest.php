@@ -133,7 +133,7 @@ class AdminOpsApiTest extends TestCase
         $this->assertNotNull(collect($routes)->firstWhere('id', $routeId));
     }
 
-    public function test_schedule_duplicate_is_rejected(): void
+    public function test_schedule_save_allows_repeated_route_day_and_time(): void
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
@@ -157,14 +157,25 @@ class AdminOpsApiTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $this->postJson(route('api.admin.schedules.save'), [
+        $created = $this->postJson(route('api.admin.schedules.save'), [
             'route_id' => $routeId,
             'rute' => 'PINRANG - MAKASSAR',
             'dow' => 1,
             'jam' => '08:00',
             'units' => 1,
             'unit_label' => 'Reguler',
-        ])->assertStatus(409);
+        ])->assertCreated()->json();
+
+        $this->assertGreaterThan(0, (int) ($created['id'] ?? 0));
+        $this->assertSame(
+            2,
+            DB::table('schedules')
+                ->where('tenant_id', $tenantId)
+                ->where('route_id', $routeId)
+                ->where('dow', 1)
+                ->whereIn('jam', ['08:00', '08:00:00'])
+                ->count(),
+        );
     }
 
     public function test_schedule_save_allows_manual_jam_and_index_includes_matching_segments(): void
@@ -334,6 +345,7 @@ class AdminOpsApiTest extends TestCase
     public function test_driver_and_luggage_service_crud_works(): void
     {
         $this->actingAsSuperAdmin();
+        $this->activatePoolForTenant($this->defaultTenantId(), 'POOL SERVICE TEST', 'SERVICE-TEST');
 
         $unitId = DB::table('category_armada')->insertGetId([
             'nama_kategori' => 'DD 7788 XX',
@@ -532,7 +544,7 @@ class AdminOpsApiTest extends TestCase
         ])->assertCreated()->json();
 
         $unitId = (int) ($unitCreate['id'] ?? 0);
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('category_armada', [
             'id' => $unitId,
             'tenant_id' => $tenantId,
             'category' => 'Bigbus',
@@ -747,6 +759,7 @@ class AdminOpsApiTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        $this->withSession(['active_pool_id' => $poolId]);
 
         $segmentCreate = $this->postJson(route('api.admin.segments.save'), [
             'route_id' => $routeId,
@@ -1648,6 +1661,7 @@ class AdminOpsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
+        $poolId = $this->activatePoolForTenant($tenantId, 'POOL OPS TEST', 'OPS-TEST');
 
         $unitId = DB::table('category_armada')->insertGetId([
             'tenant_id' => $tenantId,
@@ -1677,8 +1691,10 @@ class AdminOpsApiTest extends TestCase
             'destination' => 'MAKASSAR',
             'created_at' => now(),
         ]);
+        $this->mapRouteToPool($poolId, $routeId);
 
         $charter = $this->postJson(route('api.admin.charters.save'), [
+            'pool_id' => $poolId,
             'name' => 'ROMBONGAN TEST',
             'company_name' => 'PT TEST',
             'phone' => '08129999',
@@ -1714,6 +1730,7 @@ class AdminOpsApiTest extends TestCase
 
         $this->postJson(route('api.admin.charters.save'), [
             'id' => $charterId,
+            'pool_id' => $poolId,
             'name' => 'ROMBONGAN TEST UPDATE',
             'company_name' => 'PT TEST UPDATE',
             'phone' => '08129999',
@@ -1800,7 +1817,9 @@ class AdminOpsApiTest extends TestCase
         $csv = $this->get(route('api.admin.reports.bookings-csv', [
             'from' => now()->toDateString(),
             'to' => now()->toDateString(),
-        ]));
+        ]), [
+            'Accept' => 'application/json',
+        ]);
         $csv->assertOk();
         $this->assertStringContainsString('text/csv', (string) $csv->headers->get('content-type'));
 
@@ -2038,6 +2057,7 @@ class AdminOpsApiTest extends TestCase
     public function test_customer_ops_crud_works(): void
     {
         $this->actingAsSuperAdmin();
+        $this->activatePoolForTenant($this->defaultTenantId(), 'POOL CUSTOMER TEST', 'CUST-TEST');
 
         $bagasi = $this->postJson(route('api.admin.customer-bagasi.save'), [
             'nama' => 'PENGIRIM A',
@@ -2120,10 +2140,14 @@ class AdminOpsApiTest extends TestCase
     public function test_bulk_actions_endpoints_work(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $poolId = $this->activatePoolForTenant($tenantId, 'POOL BULK TEST', 'BULK-TEST');
 
         $charterIds = [];
         for ($i = 0; $i < 2; $i++) {
             $charterIds[] = DB::table('charters')->insertGetId([
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolId,
                 'name' => 'C'.$i,
                 'start_date' => now()->toDateString(),
                 'end_date' => now()->toDateString(),
@@ -2135,6 +2159,8 @@ class AdminOpsApiTest extends TestCase
         $luggageIds = [];
         for ($i = 0; $i < 2; $i++) {
             $luggageIds[] = DB::table('luggages')->insertGetId([
+                'tenant_id' => $tenantId,
+                'pool_id' => $poolId,
                 'sender_name' => 'S'.$i,
                 'sender_phone' => '081'.$i,
                 'receiver_name' => 'R'.$i,
@@ -2149,6 +2175,7 @@ class AdminOpsApiTest extends TestCase
         $assignmentIds = [];
         for ($i = 0; $i < 2; $i++) {
             $assignmentIds[] = DB::table('trip_assignments')->insertGetId([
+                'tenant_id' => $tenantId,
                 'rute' => 'RUTE '.$i,
                 'tanggal' => now()->toDateString(),
                 'jam' => '08:00:00',
@@ -2245,11 +2272,13 @@ class AdminOpsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
+        $poolId = $this->activatePoolForTenant($tenantId, 'POOL LIFECYCLE TEST', 'LIFE-TEST');
 
         $today = now()->toDateString();
 
         $charterId = DB::table('charters')->insertGetId([
             'tenant_id' => $tenantId,
+            'pool_id' => $poolId,
             'name' => 'CHARTER LIFECYCLE',
             'start_date' => $today,
             'end_date' => $today,
@@ -2274,6 +2303,7 @@ class AdminOpsApiTest extends TestCase
 
         $luggageId = DB::table('luggages')->insertGetId([
             'tenant_id' => $tenantId,
+            'pool_id' => $poolId,
             'sender_name' => 'S',
             'sender_phone' => '081',
             'receiver_name' => 'R',
@@ -2326,6 +2356,7 @@ class AdminOpsApiTest extends TestCase
 
         DB::table('luggages')->insert([
             'tenant_id' => $tenantId,
+            'pool_id' => $poolId,
             'sender_name' => 'CSV S',
             'sender_phone' => '08111',
             'receiver_name' => 'CSV R',
@@ -2341,7 +2372,9 @@ class AdminOpsApiTest extends TestCase
             'from' => $today,
             'to' => $today,
             'type' => 'reguler',
-        ]));
+        ]), [
+            'Accept' => 'application/json',
+        ]);
         $csvReguler->assertOk();
         $this->assertStringContainsString('text/csv', (string) $csvReguler->headers->get('content-type'));
 
@@ -2349,7 +2382,9 @@ class AdminOpsApiTest extends TestCase
             'from' => $today,
             'to' => $today,
             'type' => 'bagasi',
-        ]));
+        ]), [
+            'Accept' => 'application/json',
+        ]);
         $csvBagasi->assertOk();
         $this->assertStringContainsString('text/csv', (string) $csvBagasi->headers->get('content-type'));
 
@@ -2357,7 +2392,9 @@ class AdminOpsApiTest extends TestCase
             'from' => $today,
             'to' => $today,
             'type' => 'charter',
-        ]));
+        ]), [
+            'Accept' => 'application/json',
+        ]);
         $csvCharter->assertOk();
         $this->assertStringContainsString('text/csv', (string) $csvCharter->headers->get('content-type'));
     }
@@ -2403,7 +2440,9 @@ class AdminOpsApiTest extends TestCase
         $this->assertSame('Makassar Timur', $response['pools'][0]['region'] ?? null);
         $this->assertContains('Makassar Timur', $response['regions'] ?? []);
 
-        $export = $this->get(route('api.admin.pools.export'));
+        $export = $this->get(route('api.admin.pools.export'), [
+            'Accept' => 'application/json',
+        ]);
         $export->assertOk();
         $this->assertStringContainsString(
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -2451,5 +2490,35 @@ class AdminOpsApiTest extends TestCase
             ->json('pools');
 
         $this->assertNotNull(collect($response)->firstWhere('id', $poolId));
+    }
+
+    private function activatePoolForTenant(int $tenantId, string $name, string $code): int
+    {
+        $poolId = (int) DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => $name,
+            'code' => $code,
+            'status' => 'active',
+            'target_revenue' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->withSession([
+            'active_tenant_id' => $tenantId,
+            'active_pool_id' => $poolId,
+        ]);
+
+        return $poolId;
+    }
+
+    private function mapRouteToPool(int $poolId, int $routeId): void
+    {
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
