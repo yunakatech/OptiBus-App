@@ -336,9 +336,10 @@
                 <p
                     class="mt-4 hidden text-sm leading-6 text-[#53615d] dark:text-slate-300/80 sm:block"
                 >
-                    Ini adalah estimasi pendapatan berulang dari tenant yang
-                    masih aktif atau sedang uji coba. Jika semua tetap aktif,
-                    perkiraan setahun menjadi {formatRupiah(metrics.arr)}.
+                    Ini adalah estimasi pendapatan berulang dari tenant aktif.
+                    Tenant yang masih uji coba tidak ikut dihitung. Jika semua
+                    tenant aktif tetap bertahan, perkiraan setahun menjadi
+                    {formatRupiah(metrics.arr)}.
                 </p>
             </div>
             <div class="grid md:grid-cols-2">

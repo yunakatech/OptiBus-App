@@ -39,15 +39,15 @@ class PlatformDashboardController extends Controller
         $previousMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
         $previousMonthEnd = $previousMonthStart->copy()->endOfMonth();
 
-        // MRR: Sum of plan prices for active + trialing subscriptions
+        // MRR: Sum of plan prices for paid active subscriptions only.
         $mrr = $this->computeMrr();
         $previousMrr = $this->computeMrrAt($previousMonthEnd);
 
-        // Active tenants (trial + active status)
+        // Active tenants: paid active subscriptions only.
         $activeTenants = $this->countActiveTenants();
         $previousActiveTenants = $this->countActiveTenantsAt($previousMonthEnd);
 
-        // Total Processed Volume (TPV): sum of all booking/charter/luggage revenue
+        // Total Processed Volume (TPV): sum of operational revenue from paid active tenants only.
         $tpvMonth = $this->computeTpv($monthStart, $today);
         $tpvPreviousMonth = $this->computeTpv($previousMonthStart, $previousMonthEnd);
 
@@ -368,7 +368,7 @@ class PlatformDashboardController extends Controller
 
         return (float) DB::table('subscriptions')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
-            ->whereIn('subscriptions.status', ['trial', 'active'])
+            ->where('subscriptions.status', 'active')
             ->sum(DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly)'));
     }
 
@@ -380,7 +380,7 @@ class PlatformDashboardController extends Controller
 
         return (float) DB::table('subscriptions')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
-            ->whereIn('subscriptions.status', ['trial', 'active'])
+            ->where('subscriptions.status', 'active')
             ->where('subscriptions.starts_at', '<=', $date->toDateString())
             ->where(function ($q) use ($date) {
                 $q->whereNull('subscriptions.ends_at')
@@ -396,7 +396,7 @@ class PlatformDashboardController extends Controller
         }
 
         return (int) DB::table('subscriptions')
-            ->whereIn('status', ['trial', 'active'])
+            ->where('status', 'active')
             ->distinct('tenant_id')
             ->count('tenant_id');
     }
@@ -408,7 +408,7 @@ class PlatformDashboardController extends Controller
         }
 
         return (int) DB::table('subscriptions')
-            ->whereIn('status', ['trial', 'active'])
+            ->where('status', 'active')
             ->where('starts_at', '<=', $date->toDateString())
             ->where(function ($q) use ($date) {
                 $q->whereNull('ends_at')
@@ -424,6 +424,7 @@ class PlatformDashboardController extends Controller
 
         if (Schema::hasTable('bookings')) {
             $tpv += (float) DB::table('bookings')
+                ->whereIn('tenant_id', $this->activeRevenueTenantIds())
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
                 ->sum(DB::raw('COALESCE(price, 0) - COALESCE(discount, 0)'));
@@ -431,17 +432,30 @@ class PlatformDashboardController extends Controller
 
         if (Schema::hasTable('charters')) {
             $tpv += (float) DB::table('charters')
+                ->whereIn('tenant_id', $this->activeRevenueTenantIds())
                 ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
                 ->sum('price');
         }
 
         if (Schema::hasTable('luggages')) {
             $tpv += (float) DB::table('luggages')
+                ->whereIn('tenant_id', $this->activeRevenueTenantIds())
                 ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
                 ->sum('price');
         }
 
         return $tpv;
+    }
+
+    /**
+     * @return \Illuminate\Database\Query\Builder
+     */
+    private function activeRevenueTenantIds()
+    {
+        return DB::table('subscriptions')
+            ->select('tenant_id')
+            ->where('status', 'active')
+            ->distinct();
     }
 
     private function countTrialsConverted(Carbon $start, Carbon $end): int
