@@ -9,6 +9,7 @@
     import X from 'lucide-svelte/icons/x';
     import { onMount, tick } from 'svelte';
     import { extractApiErrorMessage } from '@/lib/api-errors';
+    import { saveUiPreferences } from '@/lib/ui-preferences';
     import { cn } from '@/lib/utils';
     import type {
         ActivePool,
@@ -183,6 +184,12 @@
                         response,
                         'Gagal mengganti konteks.',
                     ),
+                );
+            }
+
+            if (kind === 'pool' && id > 0) {
+                await saveUiPreferences({ defaultPoolId: id }).catch(
+                    () => undefined,
                 );
             }
 

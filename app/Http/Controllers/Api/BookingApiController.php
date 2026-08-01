@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\ActivityLog;
 use App\Support\BookingCode;
+use App\Support\BookingPoolContext;
 use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
 use App\Support\SchemaCache;
@@ -1543,6 +1544,7 @@ class BookingApiController extends Controller
     public function submit(Request $request): JsonResponse
     {
         $this->requireTenantWriteContext();
+        BookingPoolContext::requirePool((int) ($request->user()?->id ?? 0));
 
         $data = $request->validate([
             'rute' => ['required', 'string', 'max:100'],

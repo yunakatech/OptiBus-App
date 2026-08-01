@@ -25,6 +25,7 @@ class BookingPageTest extends TestCase
     public function test_booking_console_page_renders_the_booking_console_component(): void
     {
         $this->actingAsSuperAdmin();
+        $this->createPool($this->defaultTenantId(), 'Default Booking Pool', 'DBP');
 
         $this->get(route('booking-console.index'))
             ->assertOk()
@@ -215,5 +216,18 @@ class BookingPageTest extends TestCase
                 ->where('groupDetailPage', true)
                 ->where('groupDetailKey', $groupKey)
                 ->has('bookingGroups', 2));
+    }
+
+    private function createPool(int $tenantId, string $name, string $code): int
+    {
+        return (int) DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => $name,
+            'code' => $code,
+            'status' => 'active',
+            'target_revenue' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

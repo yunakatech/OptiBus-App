@@ -8,6 +8,7 @@ export type User = {
         defaultViewMode?: 'sheet' | 'cards';
         defaultDateRange?: string;
         itemsPerPage?: number;
+        defaultPoolId?: number;
         [key: string]: unknown;
     };
     email_verified_at: string | null;

@@ -13,6 +13,7 @@
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
     import { extractApiErrorMessage } from '@/lib/api-errors';
+    import { saveUiPreferences } from '@/lib/ui-preferences';
     import { cn } from '@/lib/utils';
     import type { ActivePool, ActiveTenant, PoolOption, TenantOption } from '@/types/auth';
 
@@ -129,6 +130,12 @@
                         response,
                         'Gagal mengganti pool.',
                     ),
+                );
+            }
+
+            if (poolId > 0) {
+                await saveUiPreferences({ defaultPoolId: poolId }).catch(
+                    () => undefined,
                 );
             }
 

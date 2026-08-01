@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\BookingCode;
+use App\Support\BookingPoolContext;
 use App\Support\Code39;
 use App\Support\DeferredInertia;
 use App\Support\HeadlessPdf;
@@ -11,6 +12,7 @@ use App\Support\PoolScope;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +34,7 @@ class BookingController extends Controller
 
     private ?bool $tripAssignmentsHasStatus = null;
 
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
         SchemaCache::warm([
             'bookings' => ['rute', 'departure_code', 'ticket_code', 'route_id', 'tenant_id'],
@@ -43,12 +45,19 @@ class BookingController extends Controller
             'cancellations' => [],
         ]);
 
-        $component = $request->routeIs('booking-console.index') ? 'BookingConsole' : 'Bookings';
+        $isBookingConsole = $request->routeIs('booking-console.index');
+        if ($isBookingConsole && BookingPoolContext::resolve((int) ($request->user()?->id ?? 0)) <= 0) {
+            return redirect()
+                ->route('menu.index')
+                ->with('error', BookingPoolContext::MESSAGE);
+        }
+
+        $component = $isBookingConsole ? 'BookingConsole' : 'Bookings';
         $isGroupDetailPage = $request->routeIs('bookings.detail');
         $listOnly = $request->routeIs('bookings.index') || $isGroupDetailPage;
         $usesDeferredInertia = DeferredInertia::opsEnabled();
         $deferBookingList = $usesDeferredInertia && $request->routeIs('bookings.index');
-        $deferLatestBookings = $usesDeferredInertia && $request->routeIs('booking-console.index');
+        $deferLatestBookings = $usesDeferredInertia && $isBookingConsole;
         $groupDetailKey = $isGroupDetailPage ? (string) $request->route('groupKey', '') : '';
         $bookingGroups = null;
         $resolveBookingGroups = function () use ($listOnly, &$bookingGroups): array {
