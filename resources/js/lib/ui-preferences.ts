@@ -6,6 +6,7 @@ export type UiPreferences = {
     defaultViewMode?: UiViewMode;
     defaultDateRange?: string;
     itemsPerPage?: number;
+    defaultPoolId?: number;
 };
 
 const UI_PREFERENCES_ENDPOINT = '/api/user/ui-preferences';
@@ -22,6 +23,17 @@ function normalizeItemsPerPage(value: unknown): number | undefined {
     }
 
     return undefined;
+}
+
+function normalizePoolId(value: unknown): number | undefined {
+    const parsed =
+        typeof value === 'number'
+            ? value
+            : typeof value === 'string' && value.trim() !== ''
+              ? Number(value)
+              : NaN;
+
+    return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : undefined;
 }
 
 function csrfToken(): string {
@@ -44,6 +56,7 @@ export function readUiPreferences(): UiPreferences {
     const defaultViewMode = prefs.defaultViewMode;
     const defaultDateRange = prefs.defaultDateRange;
     const itemsPerPage = prefs.itemsPerPage;
+    const defaultPoolId = prefs.defaultPoolId;
 
     return {
         defaultViewMode:
@@ -55,6 +68,7 @@ export function readUiPreferences(): UiPreferences {
                 ? defaultDateRange
                 : undefined,
         itemsPerPage: normalizeItemsPerPage(itemsPerPage),
+        defaultPoolId: normalizePoolId(defaultPoolId),
     };
 }
 
@@ -103,5 +117,6 @@ export async function saveUiPreferences(
                 ? saved.defaultDateRange
                 : undefined,
         itemsPerPage: normalizeItemsPerPage(saved.itemsPerPage),
+        defaultPoolId: normalizePoolId(saved.defaultPoolId),
     };
 }

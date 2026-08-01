@@ -6055,6 +6055,11 @@ class AdminOpsApiController extends Controller
         $q = trim((string) $request->query('q', ''));
         [$page, $perPage] = $this->paginationParams($request);
         $select = ['id', 'name', 'email', 'email_verified_at', 'created_at'];
+        if (SchemaCache::hasColumn('users', 'ui_preferences')) {
+            $select[] = 'ui_preferences';
+        } else {
+            $select[] = DB::raw('NULL as ui_preferences');
+        }
         if (SchemaCache::hasColumn('users', 'is_super_admin')) {
             $select[] = 'is_super_admin';
         } else {
@@ -6088,6 +6093,8 @@ class AdminOpsApiController extends Controller
         $users = collect($result['data'])->map(function ($row): array {
             $item = (array) $row;
             $item['is_super_admin'] = (bool) ($item['is_super_admin'] ?? false);
+            $item['default_pool_id'] = $this->defaultPoolIdFromPreferences($item['ui_preferences'] ?? null);
+            unset($item['ui_preferences']);
             $item['pool_ids'] = [];
             $item['pool_names'] = [];
             $item['role_ids'] = [];
@@ -6323,6 +6330,7 @@ class AdminOpsApiController extends Controller
             'is_super_admin' => ['nullable', 'boolean'],
             'pool_ids' => ['nullable', 'array'],
             'pool_ids.*' => ['integer', 'min:1'],
+            'default_pool_id' => ['nullable', 'integer', 'min:0'],
             'role_ids' => ['nullable', 'array'],
             'role_ids.*' => ['integer', 'min:1'],
         ]);
@@ -6377,12 +6385,16 @@ class AdminOpsApiController extends Controller
             ->unique()
             ->values()
             ->all();
+        $defaultPoolId = max(0, (int) ($data['default_pool_id'] ?? 0));
 
         if ($this->poolTablesReady() && $poolIds !== []) {
             $validPoolIds = DB::table('pools')->whereIn('id', $poolIds)->pluck('id')->map(static fn ($value) => (int) $value)->all();
             if (count($validPoolIds) !== count($poolIds)) {
                 return $this->error('Ada pool yang tidak ditemukan.', 422);
             }
+        }
+        if ($defaultPoolId > 0 && ! in_array($defaultPoolId, $poolIds, true)) {
+            return $this->error('Default pool harus termasuk pool user.', 422);
         }
 
         if (AccessControl::tablesReady() && $roleIds !== []) {
@@ -6408,11 +6420,22 @@ class AdminOpsApiController extends Controller
                         ->orWhere('is_super_admin', false);
                 });
             }
-            if (! $query->exists()) {
+            $existingUserRow = $query->first(
+                SchemaCache::hasColumn('users', 'ui_preferences')
+                    ? ['id', 'ui_preferences']
+                    : ['id'],
+            );
+            if (! $existingUserRow) {
                 return $this->error('User tidak ditemukan.', 404);
             }
             if (! $this->currentUserIsSuperAdmin() && (bool) ($data['is_super_admin'] ?? false)) {
                 return $this->error('Hanya Super Admin yang bisa menjadikan user sebagai Super Admin.', 403);
+            }
+            if (SchemaCache::hasColumn('users', 'ui_preferences')) {
+                $payload['ui_preferences'] = $this->mergeDefaultPoolPreference(
+                    $existingUserRow->ui_preferences ?? null,
+                    $defaultPoolId,
+                );
             }
             $query->update(array_merge($payload, ['updated_at' => now()]));
             $this->syncUserPools($id, $poolIds);
@@ -6430,6 +6453,10 @@ class AdminOpsApiController extends Controller
 
         if (! isset($payload['password'])) {
             return $this->error('Password wajib untuk user baru.', 422);
+        }
+
+        if (SchemaCache::hasColumn('users', 'ui_preferences')) {
+            $payload['ui_preferences'] = $this->mergeDefaultPoolPreference(null, $defaultPoolId);
         }
 
         $newId = DB::table('users')->insertGetId(array_merge($payload, $this->tenantPayload('users'), [
@@ -6453,6 +6480,43 @@ class AdminOpsApiController extends Controller
         ]);
 
         return $this->ok(['message' => 'User created.', 'id' => $newId], 201);
+    }
+
+    private function defaultPoolIdFromPreferences(mixed $preferences): int
+    {
+        $decoded = $this->decodeUserPreferences($preferences);
+
+        return max(0, (int) ($decoded['defaultPoolId'] ?? $decoded['default_pool_id'] ?? 0));
+    }
+
+    private function mergeDefaultPoolPreference(mixed $preferences, int $defaultPoolId): string
+    {
+        $decoded = $this->decodeUserPreferences($preferences);
+        if ($defaultPoolId > 0) {
+            $decoded['defaultPoolId'] = $defaultPoolId;
+        } else {
+            unset($decoded['defaultPoolId'], $decoded['default_pool_id']);
+        }
+
+        return json_encode($decoded, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeUserPreferences(mixed $preferences): array
+    {
+        if (is_array($preferences)) {
+            return $preferences;
+        }
+
+        if (is_string($preferences) && trim($preferences) !== '') {
+            $decoded = json_decode($preferences, true);
+
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return [];
     }
 
     public function usersDelete(int $id): JsonResponse

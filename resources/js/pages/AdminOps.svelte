@@ -354,6 +354,7 @@
         email_verified_at: string | null;
         created_at: string | null;
         is_super_admin: boolean;
+        default_pool_id?: number | null;
         pool_ids: number[];
         pool_names: string[];
         role_ids: number[];
@@ -940,6 +941,7 @@
         email: '',
         password: '',
         is_super_admin: false,
+        default_pool_id: 0,
         pool_ids: [] as number[],
         role_ids: [] as number[],
     });
@@ -1833,6 +1835,10 @@
             pool_ids: checked
                 ? Array.from(new Set([...current, id]))
                 : current.filter((item) => Number(item) !== id),
+            default_pool_id:
+                !checked && Number(userForm.default_pool_id) === id
+                    ? 0
+                    : userForm.default_pool_id,
         };
     };
 
@@ -4676,6 +4682,7 @@
             email: '',
             password: '',
             is_super_admin: false,
+            default_pool_id: 0,
             pool_ids: [],
             role_ids: [],
         });
@@ -5304,6 +5311,7 @@
                         password: userForm.password,
                         is_super_admin: userForm.is_super_admin,
                         pool_ids: userForm.pool_ids,
+                        default_pool_id: Number(userForm.default_pool_id || 0),
                         role_ids: userForm.role_ids,
                     });
                 },
@@ -11099,6 +11107,33 @@
                                         </label>
                                     {/each}
                                 </div>
+                                <label
+                                    class="block space-y-1.5 rounded-xl border border-border/70 bg-background/80 p-3"
+                                >
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >
+                                        Default Pool Booking
+                                    </span>
+                                    <select
+                                        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                        bind:value={userForm.default_pool_id}
+                                        disabled={!canManagePools ||
+                                            userForm.is_super_admin ||
+                                            userForm.pool_ids.length === 0}
+                                    >
+                                        <option value={0}>Belum dipilih</option>
+                                        {#each poolOptions.filter((pool) => userForm.pool_ids.includes(pool.id)) as pool (pool.id)}
+                                            <option value={pool.id}
+                                                >{pool.name}</option
+                                            >
+                                        {/each}
+                                    </select>
+                                    <p class="text-xs text-muted-foreground">
+                                        Dipakai otomatis saat user masuk Booking
+                                        Console dari kondisi Semua Pool.
+                                    </p>
+                                </label>
                                 <p class="text-xs text-muted-foreground">
                                     Jika user bukan Super Admin dan tidak punya
                                     pool, data route-based tidak akan terlihat.
@@ -11527,6 +11562,11 @@
                                                                 Boolean(
                                                                     row.is_super_admin,
                                                                 ),
+                                                            default_pool_id:
+                                                                Number(
+                                                                    row.default_pool_id ??
+                                                                        0,
+                                                                ),
                                                             pool_ids: [
                                                                 ...(row.pool_ids ??
                                                                     []),
@@ -11865,6 +11905,10 @@
                                                         password: '',
                                                         is_super_admin: Boolean(
                                                             user.is_super_admin,
+                                                        ),
+                                                        default_pool_id: Number(
+                                                            user.default_pool_id ??
+                                                                0,
                                                         ),
                                                         pool_ids: [
                                                             ...(user.pool_ids ??
