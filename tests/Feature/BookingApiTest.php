@@ -838,6 +838,71 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('error', 'Manifest sudah ditutup. Data assignment tidak bisa diubah lagi.');
     }
 
+    public function test_arrived_manifest_allows_booking_edit_and_cancel_before_close(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $bookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => '1',
+            'name' => 'PENUMPANG ARRIVED',
+            'phone' => '081200000091',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
+
+        DB::table('trip_assignments')->insert([
+            'tenant_id' => $tenantId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'armada_nopol' => 'DD 1234 AR',
+            'status' => 'arrived',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson(route('api.bookings.update'), [
+            'booking_id' => $bookingId,
+            'name' => 'PENUMPANG ARRIVED EDIT',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'name' => 'PENUMPANG ARRIVED EDIT',
+        ]);
+
+        $this->postJson(route('api.bookings.cancel'), [
+            'booking_id' => $bookingId,
+            'reason' => 'Cancel before manifest closed',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'status' => 'canceled',
+        ]);
+    }
+
     public function test_booking_updates_are_not_blocked_by_time_only_before_arrival(): void
     {
         $this->actingAsSuperAdmin();
