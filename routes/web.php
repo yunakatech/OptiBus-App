@@ -265,6 +265,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     });
 
     Route::prefix('api/admin')->name('api.admin.')->middleware(RedirectBrowserApiRequests::class)->group(function () {
+        Route::post('payments/bulk', [PaymentController::class, 'bulkUpdate'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.bulk');
         Route::post('payments/{source}/{id}', [PaymentController::class, 'update'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.update');
 
         Route::get('routes', [AdminOpsApiController::class, 'routesIndex'])->middleware('permission:master.view')->name('routes.index');

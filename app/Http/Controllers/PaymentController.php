@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\DeferredInertia;
+use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -123,10 +124,6 @@ class PaymentController extends Controller
             return $this->error('Sumber data pembayaran tidak dikenali.', 404);
         }
 
-        if (! $this->canUpdateSource($source)) {
-            return $this->error('Anda tidak memiliki akses untuk mengubah pembayaran ini.', 403);
-        }
-
         $data = $request->validate([
             'payment_status' => ['required', 'string', 'max:40'],
             'down_payment' => ['nullable', 'numeric', 'min:0'],
@@ -134,11 +131,120 @@ class PaymentController extends Controller
         $paymentStatus = $this->canonicalPaymentStatus($source, (string) $data['payment_status']);
         $downPayment = array_key_exists('down_payment', $data) ? (float) $data['down_payment'] : null;
 
-        return match ($source) {
-            'booking' => $this->updateBookingPayment($id, $paymentStatus),
-            'charter' => $this->updateCharterPayment($id, $paymentStatus, $downPayment),
-            'luggage' => $this->updateLuggagePayment($id, $paymentStatus),
-        };
+        $result = $this->updatePaymentSource($source, $id, $paymentStatus, $downPayment, true);
+        if (! ($result['ok'] ?? false)) {
+            return $this->error((string) ($result['message'] ?? 'Gagal memperbarui pembayaran.'), (int) ($result['status'] ?? 400));
+        }
+
+        return $this->ok([
+            'message' => (string) ($result['message'] ?? 'Pembayaran berhasil diperbarui.'),
+            'payment_status' => (string) ($result['payment_status'] ?? $paymentStatus),
+        ]);
+    }
+
+    public function bulkUpdate(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'items' => ['required', 'array', 'min:1', 'max:100'],
+            'items.*.source' => ['required', 'string', 'in:booking,charter,luggage'],
+            'items.*.id' => ['required', 'integer', 'min:1'],
+            'payment_status' => ['required', 'string', 'max:50'],
+            'down_payment' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $items = collect($payload['items'])
+            ->map(static fn ($item): array => [
+                'source' => strtolower(trim((string) ($item['source'] ?? ''))),
+                'id' => (int) ($item['id'] ?? 0),
+            ])
+            ->filter(static fn (array $item): bool => in_array($item['source'], ['booking', 'charter', 'luggage'], true) && $item['id'] > 0)
+            ->values()
+            ->all();
+
+        if ($items === []) {
+            return $this->error('Tidak ada transaksi yang valid untuk diproses.', 422);
+        }
+
+        $targetStatus = $this->normalizeBulkPaymentStatus((string) $payload['payment_status']);
+        $downPayment = array_key_exists('down_payment', $payload)
+            ? (float) $payload['down_payment']
+            : null;
+
+        if ($targetStatus === 'DP') {
+            foreach ($items as $item) {
+                if ($item['source'] !== 'charter') {
+                    return $this->error('Bulk DP hanya bisa untuk carter.', 422);
+                }
+            }
+
+            if ($downPayment === null || $downPayment <= 0) {
+                return $this->error('Nominal DP wajib diisi untuk bulk carter.', 422);
+            }
+        }
+
+        $updated = [];
+        $skipped = [];
+
+        DB::transaction(function () use ($items, $targetStatus, $downPayment, &$updated, &$skipped): void {
+            foreach ($items as $item) {
+                $source = (string) $item['source'];
+                $paymentStatus = $this->canonicalPaymentStatus($source, $targetStatus);
+                $itemDownPayment = $source === 'charter' && $targetStatus === 'DP'
+                    ? $downPayment
+                    : null;
+
+                $result = $this->updatePaymentSource($source, (int) $item['id'], $paymentStatus, $itemDownPayment, false);
+                if (($result['ok'] ?? false) === true) {
+                    $updated[] = $result;
+
+                    continue;
+                }
+
+                $skipped[] = [
+                    'source' => $source,
+                    'id' => (int) $item['id'],
+                    'reason' => (string) ($result['reason'] ?? 'skipped'),
+                    'message' => (string) ($result['message'] ?? 'Dilewati.'),
+                ];
+            }
+
+            if ($updated !== []) {
+                $updatedLabels = array_values(array_filter(array_map(
+                    static fn (array $item): string => trim((string) ($item['label'] ?? '')),
+                    $updated,
+                )));
+                $skippedLabels = array_values(array_filter(array_map(
+                    static fn (array $item): string => trim((string) ($item['source'] ?? '')).'#'.(int) ($item['id'] ?? 0).'('.(string) ($item['reason'] ?? 'skipped').')',
+                    $skipped,
+                )));
+
+                ActivityLog::write(
+                    'PAYMENT',
+                    'Pembayaran serentak diperbarui',
+                    'Status: '.$targetStatus
+                    .' | Diperbarui: '.count($updated)
+                    .' | Dilewati: '.count($skipped)
+                    .($updatedLabels !== [] ? ' | Item: '.implode(', ', array_slice($updatedLabels, 0, 10)) : '')
+                    .($skippedLabels !== [] ? ' | Skip: '.implode(', ', array_slice($skippedLabels, 0, 10)) : ''),
+                    (string) (auth()->user()?->email ?? auth()->user()?->name ?? 'system'),
+                    [
+                        'payment_status' => $targetStatus,
+                        'updated_count' => count($updated),
+                        'skipped_count' => count($skipped),
+                        'updated_items' => $updated,
+                        'skipped_items' => $skipped,
+                    ],
+                );
+            }
+        });
+
+        return $this->ok([
+            'message' => 'Status pembayaran serentak berhasil diproses.',
+            'payment_status' => $targetStatus,
+            'updated_count' => count($updated),
+            'skipped_count' => count($skipped),
+            'skipped_items' => $skipped,
+        ]);
     }
 
     /**
@@ -625,14 +731,124 @@ class PaymentController extends Controller
 
     private function updateBookingPayment(int $id, string $paymentStatus): JsonResponse
     {
+        $result = $this->updatePaymentSource('booking', $id, $paymentStatus, null, true);
+        if (! ($result['ok'] ?? false)) {
+            return $this->error((string) ($result['message'] ?? 'Gagal memperbarui pembayaran.'), (int) ($result['status'] ?? 400));
+        }
+
+        return $this->ok([
+            'message' => (string) ($result['message'] ?? 'Pembayaran booking diperbarui.'),
+            'payment_status' => (string) ($result['payment_status'] ?? $paymentStatus),
+        ]);
+    }
+
+    private function updateCharterPayment(int $id, string $paymentStatus, ?float $downPayment): JsonResponse
+    {
+        $result = $this->updatePaymentSource('charter', $id, $paymentStatus, $downPayment, true);
+        if (! ($result['ok'] ?? false)) {
+            return $this->error((string) ($result['message'] ?? 'Gagal memperbarui pembayaran.'), (int) ($result['status'] ?? 400));
+        }
+
+        return $this->ok([
+            'message' => (string) ($result['message'] ?? 'Pembayaran carter diperbarui.'),
+            'payment_status' => (string) ($result['payment_status'] ?? $paymentStatus),
+        ]);
+    }
+
+    private function updateLuggagePayment(int $id, string $paymentStatus): JsonResponse
+    {
+        $result = $this->updatePaymentSource('luggage', $id, $paymentStatus, null, true);
+        if (! ($result['ok'] ?? false)) {
+            return $this->error((string) ($result['message'] ?? 'Gagal memperbarui pembayaran.'), (int) ($result['status'] ?? 400));
+        }
+
+        return $this->ok([
+            'message' => (string) ($result['message'] ?? 'Pembayaran bagasi diperbarui.'),
+            'payment_status' => (string) ($result['payment_status'] ?? $paymentStatus),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function updatePaymentSource(string $source, int $id, string $paymentStatus, ?float $downPayment = null, bool $writeLog = true): array
+    {
+        if (! in_array($source, ['booking', 'charter', 'luggage'], true)) {
+            return [
+                'ok' => false,
+                'status' => 404,
+                'message' => 'Sumber data pembayaran tidak dikenali.',
+                'reason' => 'invalid_source',
+            ];
+        }
+
+        if (! $this->canUpdateSource($source)) {
+            return [
+                'ok' => false,
+                'status' => 403,
+                'message' => 'Anda tidak memiliki akses untuk mengubah pembayaran ini.',
+                'reason' => 'forbidden',
+            ];
+        }
+
+        return match ($source) {
+            'booking' => $this->updateBookingPaymentRecord($id, $paymentStatus, $writeLog),
+            'charter' => $this->updateCharterPaymentRecord($id, $paymentStatus, $downPayment, $writeLog),
+            'luggage' => $this->updateLuggagePaymentRecord($id, $paymentStatus, $writeLog),
+        };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function updateBookingPaymentRecord(int $id, string $paymentStatus, bool $writeLog = true): array
+    {
         $hasRouteId = Schema::hasColumn('bookings', 'route_id');
         $query = DB::table('bookings as b')->where('b.id', $id);
         PoolScope::applyRouteScope($query, $hasRouteId ? 'b.route_id' : '', 'b.rute');
         $this->applyTenantScopeIfExists($query, 'bookings', 'b');
 
-        $row = $query->first(['b.id', 'b.name', 'b.rute', 'b.pembayaran']);
+        $row = $query->first(['b.id', 'b.name', 'b.rute', 'b.pembayaran', 'b.status', 'b.tanggal', 'b.jam', 'b.unit']);
         if (! $row) {
-            return $this->error('Data booking tidak ditemukan atau di luar akses pool.', 404);
+            return [
+                'ok' => false,
+                'status' => 404,
+                'message' => 'Data booking tidak ditemukan atau di luar akses pool.',
+                'reason' => 'not_found',
+                'source' => 'booking',
+                'id' => $id,
+            ];
+        }
+
+        $currentStatus = strtolower(trim((string) ($row->status ?? '')));
+        if (in_array($currentStatus, ['canceled', 'cancelled'], true)) {
+            return [
+                'ok' => false,
+                'status' => 409,
+                'message' => 'Booking sudah dibatalkan. Status pembayaran tidak bisa diubah lagi.',
+                'reason' => 'canceled',
+                'source' => 'booking',
+                'id' => $id,
+                'label' => (string) ($row->name ?? '#'.$id),
+            ];
+        }
+
+        $assignment = $this->findTripAssignmentForPayment(
+            (string) ($row->rute ?? ''),
+            (string) ($row->tanggal ?? ''),
+            (string) ($row->jam ?? ''),
+            max(1, (int) ($row->unit ?? 1)),
+        );
+        if ($this->manifestTripIsLocked($assignment)) {
+            return [
+                'ok' => false,
+                'status' => 409,
+                'message' => 'Manifest sudah ditutup. Status pembayaran tidak bisa diubah lagi.',
+                'reason' => 'manifest_closed',
+                'source' => 'booking',
+                'id' => $id,
+                'label' => (string) ($row->name ?? '#'.$id),
+            ];
         }
 
         $before = (string) ($row->pembayaran ?? '');
@@ -641,15 +857,39 @@ class PaymentController extends Controller
             'updated_at' => now(),
         ]);
 
-        $this->writePaymentLog('BOOKING', 'Pembayaran booking '.($row->name ?? '#'.$id).' diperbarui', $before, $paymentStatus, [
-            'booking_id' => $id,
-            'route' => (string) ($row->rute ?? ''),
-        ]);
+        $label = (string) ($row->name ?? '#'.$id);
+        if ($writeLog) {
+            $this->writePaymentLog('BOOKING', 'Pembayaran booking '.$label.' diperbarui', $before, $paymentStatus, [
+                'booking_id' => $id,
+                'route' => (string) ($row->rute ?? ''),
+            ]);
+        }
 
-        return $this->ok(['message' => 'Pembayaran booking diperbarui.', 'payment_status' => $paymentStatus]);
+        return [
+            'ok' => true,
+            'status' => 200,
+            'message' => 'Pembayaran booking diperbarui.',
+            'payment_status' => $paymentStatus,
+            'source' => 'booking',
+            'id' => $id,
+            'label' => $label,
+            'before' => $before,
+            'after' => $paymentStatus,
+            'log_tag' => 'BOOKING',
+            'log_title' => 'Pembayaran booking '.$label.' diperbarui',
+            'log_before' => $before,
+            'log_after' => $paymentStatus,
+            'log_extra' => [
+                'booking_id' => $id,
+                'route' => (string) ($row->rute ?? ''),
+            ],
+        ];
     }
 
-    private function updateCharterPayment(int $id, string $paymentStatus, ?float $downPayment): JsonResponse
+    /**
+     * @return array<string, mixed>
+     */
+    private function updateCharterPaymentRecord(int $id, string $paymentStatus, ?float $downPayment = null, bool $writeLog = true): array
     {
         $query = DB::table('charters as c')->where('c.id', $id);
         PoolScope::applyCharterScope($query, 'c');
@@ -657,7 +897,14 @@ class PaymentController extends Controller
 
         $row = $query->first(['c.id', 'c.name', 'c.payment_status', 'c.down_payment']);
         if (! $row) {
-            return $this->error('Data carter tidak ditemukan atau di luar akses pool.', 404);
+            return [
+                'ok' => false,
+                'status' => 404,
+                'message' => 'Data carter tidak ditemukan atau di luar akses pool.',
+                'reason' => 'not_found',
+                'source' => 'charter',
+                'id' => $id,
+            ];
         }
 
         $payload = ['payment_status' => $paymentStatus];
@@ -671,16 +918,43 @@ class PaymentController extends Controller
 
         DB::table('charters')->where('id', $id)->update($payload);
 
-        $this->writePaymentLog('CHARTER', 'Pembayaran carter '.($row->name ?? '#'.$id).' diperbarui', (string) ($row->payment_status ?? ''), $paymentStatus, [
-            'charter_id' => $id,
+        $label = (string) ($row->name ?? '#'.$id);
+        if ($writeLog) {
+            $this->writePaymentLog('CHARTER', 'Pembayaran carter '.$label.' diperbarui', (string) ($row->payment_status ?? ''), $paymentStatus, [
+                'charter_id' => $id,
+                'down_payment_before' => (float) ($row->down_payment ?? 0),
+                'down_payment_after' => (float) ($payload['down_payment'] ?? $row->down_payment ?? 0),
+            ]);
+        }
+
+        return [
+            'ok' => true,
+            'status' => 200,
+            'message' => 'Pembayaran carter diperbarui.',
+            'payment_status' => $paymentStatus,
+            'source' => 'charter',
+            'id' => $id,
+            'label' => $label,
+            'before' => (string) ($row->payment_status ?? ''),
+            'after' => $paymentStatus,
             'down_payment_before' => (float) ($row->down_payment ?? 0),
             'down_payment_after' => (float) ($payload['down_payment'] ?? $row->down_payment ?? 0),
-        ]);
-
-        return $this->ok(['message' => 'Pembayaran carter diperbarui.', 'payment_status' => $paymentStatus]);
+            'log_tag' => 'CHARTER',
+            'log_title' => 'Pembayaran carter '.$label.' diperbarui',
+            'log_before' => (string) ($row->payment_status ?? ''),
+            'log_after' => $paymentStatus,
+            'log_extra' => [
+                'charter_id' => $id,
+                'down_payment_before' => (float) ($row->down_payment ?? 0),
+                'down_payment_after' => (float) ($payload['down_payment'] ?? $row->down_payment ?? 0),
+            ],
+        ];
     }
 
-    private function updateLuggagePayment(int $id, string $paymentStatus): JsonResponse
+    /**
+     * @return array<string, mixed>
+     */
+    private function updateLuggagePaymentRecord(int $id, string $paymentStatus, bool $writeLog = true): array
     {
         $hasPoolId = Schema::hasColumn('luggages', 'pool_id');
         $hasRouteId = Schema::hasColumn('luggages', 'rute_id');
@@ -695,19 +969,144 @@ class PaymentController extends Controller
 
         $row = $query->first(['l.id', 'l.kode_resi', 'l.sender_name', 'l.payment_status']);
         if (! $row) {
-            return $this->error('Data bagasi tidak ditemukan atau di luar akses pool.', 404);
+            return [
+                'ok' => false,
+                'status' => 404,
+                'message' => 'Data bagasi tidak ditemukan atau di luar akses pool.',
+                'reason' => 'not_found',
+                'source' => 'luggage',
+                'id' => $id,
+            ];
         }
 
         DB::table('luggages')->where('id', $id)->update([
             'payment_status' => $paymentStatus,
         ]);
 
-        $this->writePaymentLog('BAGASI', 'Pembayaran bagasi '.($row->kode_resi ?? '#'.$id).' diperbarui', (string) ($row->payment_status ?? ''), $paymentStatus, [
-            'luggage_id' => $id,
-            'sender_name' => (string) ($row->sender_name ?? ''),
+        $label = trim((string) ($row->kode_resi ?? '')) ?: '#'.$id;
+        if ($writeLog) {
+            $this->writePaymentLog('BAGASI', 'Pembayaran bagasi '.$label.' diperbarui', (string) ($row->payment_status ?? ''), $paymentStatus, [
+                'luggage_id' => $id,
+                'sender_name' => (string) ($row->sender_name ?? ''),
+            ]);
+        }
+
+        return [
+            'ok' => true,
+            'status' => 200,
+            'message' => 'Pembayaran bagasi diperbarui.',
+            'payment_status' => $paymentStatus,
+            'source' => 'luggage',
+            'id' => $id,
+            'label' => $label,
+            'before' => (string) ($row->payment_status ?? ''),
+            'after' => $paymentStatus,
+            'log_tag' => 'BAGASI',
+            'log_title' => 'Pembayaran bagasi '.$label.' diperbarui',
+            'log_before' => (string) ($row->payment_status ?? ''),
+            'log_after' => $paymentStatus,
+            'log_extra' => [
+                'luggage_id' => $id,
+                'sender_name' => (string) ($row->sender_name ?? ''),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function findTripAssignmentForPayment(string $rute, string $tanggal, string $jam, int $unit): ?object
+    {
+        if (! Schema::hasTable('trip_assignments')) {
+            return null;
+        }
+
+        $targetRoute = $this->normalizeRouteName($rute);
+        $query = DB::table('trip_assignments as t')
+            ->where('tanggal', $tanggal)
+            ->where('t.jam', $this->normalizeTime($jam))
+            ->where('t.unit', $unit);
+
+        PoolScope::applyRouteIdentity(
+            $query,
+            $rute,
+            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            't.rute',
+        );
+        PoolScope::applyRouteScope(
+            $query,
+            Schema::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+            't.rute',
+        );
+        $this->applyTenantScopeIfExists($query, 'trip_assignments', 't');
+
+        $rows = $query->get([
+            't.id',
+            't.rute',
+            't.tanggal',
+            't.jam',
+            't.unit',
+            Schema::hasColumn('trip_assignments', 'status') ? 't.status' : DB::raw("'active' as status"),
         ]);
 
-        return $this->ok(['message' => 'Pembayaran bagasi diperbarui.', 'payment_status' => $paymentStatus]);
+        return $rows->first(fn ($row) => $this->normalizeRouteName((string) ($row->rute ?? '')) === $targetRoute);
+    }
+
+    private function manifestTripIsLocked(?object $assignment): bool
+    {
+        if (! $assignment) {
+            return false;
+        }
+
+        return in_array(
+            ManifestLifecycle::syncTripAssignmentStatus($assignment),
+            ['canceled', 'closed'],
+            true,
+        );
+    }
+
+    private function normalizeBulkPaymentStatus(string $status): string
+    {
+        $normalized = mb_strtolower(trim($status));
+
+        if (in_array($normalized, ['paid', 'lunas'], true)) {
+            return 'Lunas';
+        }
+
+        if (in_array($normalized, ['dp', 'down payment'], true)) {
+            return 'DP';
+        }
+
+        if (in_array($normalized, ['belum bayar', 'unpaid'], true)) {
+            return 'Belum Bayar';
+        }
+
+        return 'Belum Lunas';
+    }
+
+    private function normalizeRouteName(string $value): string
+    {
+        $normalized = strtoupper(trim(preg_replace('/\s+/', ' ', $value) ?? ''));
+        $normalized = str_replace([' => ', ' -> ', ' â†’ ', ' â€“ ', ' â€” ', ' - '], ' TO ', $normalized);
+        $normalized = str_replace(['=>', '->', 'â†’', 'â€“', 'â€”'], ' TO ', $normalized);
+        $normalized = preg_replace('/\s*-\s*/', ' TO ', $normalized) ?? $normalized;
+
+        return trim(preg_replace('/\s+/', ' ', $normalized) ?? $normalized);
+    }
+
+    private function normalizeTime(string $time): string
+    {
+        $value = trim($time);
+
+        if (preg_match('/^\d{2}:\d{2}$/', $value) === 1) {
+            return $value.':00';
+        }
+
+        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $value) === 1) {
+            return $value;
+        }
+
+        return substr($value, 0, 8);
     }
 
     private function canonicalPaymentStatus(string $source, string $status): string

@@ -204,6 +204,300 @@ class PaymentPageTest extends TestCase
         ]);
     }
 
+    public function test_bulk_payment_update_updates_visible_booking_and_luggage_rows_only(): void
+    {
+        [$operator, $pinrangRouteId, $makassarRouteId, $pinrangPoolId, $makassarPoolId] = $this->seedPoolOperator();
+        $tenantId = $this->defaultTenantId();
+
+        $insideBookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $pinrangRouteId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-06-05',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => 'A1',
+            'name' => 'BOOKING PINRANG BULK',
+            'phone' => '081100011',
+            'pickup_point' => 'Pinrang',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $outsideBookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $makassarRouteId,
+            'rute' => 'MAKASSAR - PAREPARE',
+            'tanggal' => '2026-06-05',
+            'jam' => '10:00:00',
+            'unit' => 1,
+            'seat' => 'A2',
+            'name' => 'BOOKING MAKASSAR BULK',
+            'phone' => '081100012',
+            'pickup_point' => 'Makassar',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'price' => 140000,
+            'discount' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $insideLuggageId = DB::table('luggages')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $pinrangPoolId,
+            'sender_name' => 'BAGASI PINRANG BULK',
+            'sender_phone' => '082100011',
+            'receiver_name' => 'PENERIMA PINRANG BULK',
+            'receiver_phone' => '083100011',
+            'rute_id' => $pinrangRouteId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-06-05',
+            'quantity' => 1,
+            'price' => 50000,
+            'payment_status' => 'Belum Bayar',
+            'status' => 'Diterima',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $outsideLuggageId = DB::table('luggages')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $makassarPoolId,
+            'sender_name' => 'BAGASI MAKASSAR BULK',
+            'sender_phone' => '082100012',
+            'receiver_name' => 'PENERIMA MAKASSAR BULK',
+            'receiver_phone' => '083100012',
+            'rute_id' => $makassarRouteId,
+            'rute' => 'MAKASSAR - PAREPARE',
+            'tanggal' => '2026-06-05',
+            'quantity' => 1,
+            'price' => 45000,
+            'payment_status' => 'Belum Bayar',
+            'status' => 'Diterima',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($operator);
+
+        $response = $this->postJson(route('api.admin.payments.bulk'), [
+            'items' => [
+                ['source' => 'booking', 'id' => $insideBookingId],
+                ['source' => 'booking', 'id' => $outsideBookingId],
+                ['source' => 'luggage', 'id' => $insideLuggageId],
+                ['source' => 'luggage', 'id' => $outsideLuggageId],
+            ],
+            'payment_status' => 'Lunas',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('payment_status', 'Lunas')
+            ->assertJsonPath('updated_count', 2)
+            ->assertJsonPath('skipped_count', 2);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $insideBookingId,
+            'pembayaran' => 'Lunas',
+        ]);
+        $this->assertDatabaseHas('bookings', [
+            'id' => $outsideBookingId,
+            'pembayaran' => 'Belum Lunas',
+        ]);
+        $this->assertDatabaseHas('luggages', [
+            'id' => $insideLuggageId,
+            'payment_status' => 'Lunas',
+        ]);
+        $this->assertDatabaseHas('luggages', [
+            'id' => $outsideLuggageId,
+            'payment_status' => 'Belum Bayar',
+        ]);
+    }
+
+    public function test_bulk_payment_dp_works_for_multiple_charters(): void
+    {
+        [$operator, $pinrangRouteId] = $this->seedPoolOperator();
+        $tenantId = $this->defaultTenantId();
+
+        $firstCharterId = DB::table('charters')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => DB::table('pools')->where('tenant_id', $tenantId)->where('code', 'PNR')->value('id'),
+            'name' => 'CARTER BULK 1',
+            'start_date' => '2026-06-05',
+            'end_date' => '2026-06-05',
+            'pickup_point' => 'PINRANG',
+            'drop_point' => 'MAKASSAR',
+            'price' => 2500000,
+            'down_payment' => 500000,
+            'payment_status' => 'Belum Lunas',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $secondCharterId = DB::table('charters')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => DB::table('pools')->where('tenant_id', $tenantId)->where('code', 'PNR')->value('id'),
+            'name' => 'CARTER BULK 2',
+            'start_date' => '2026-06-05',
+            'end_date' => '2026-06-05',
+            'pickup_point' => 'PINRANG',
+            'drop_point' => 'PAREPARE',
+            'price' => 2400000,
+            'down_payment' => 400000,
+            'payment_status' => 'Belum Lunas',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($operator);
+
+        $response = $this->postJson(route('api.admin.payments.bulk'), [
+            'items' => [
+                ['source' => 'charter', 'id' => $firstCharterId],
+                ['source' => 'charter', 'id' => $secondCharterId],
+            ],
+            'payment_status' => 'DP',
+            'down_payment' => 750000,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('payment_status', 'DP')
+            ->assertJsonPath('updated_count', 2)
+            ->assertJsonPath('skipped_count', 0);
+
+        $this->assertDatabaseHas('charters', [
+            'id' => $firstCharterId,
+            'payment_status' => 'DP',
+            'down_payment' => 750000,
+        ]);
+        $this->assertDatabaseHas('charters', [
+            'id' => $secondCharterId,
+            'payment_status' => 'DP',
+            'down_payment' => 750000,
+        ]);
+    }
+
+    public function test_bulk_payment_dp_rejects_booking_and_luggage_items(): void
+    {
+        [$operator, $pinrangRouteId, $makassarRouteId, $pinrangPoolId] = $this->seedPoolOperator();
+        $tenantId = $this->defaultTenantId();
+
+        $bookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $pinrangRouteId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-06-05',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => 'A1',
+            'name' => 'BOOKING DP BLOCKED',
+            'phone' => '081100021',
+            'pickup_point' => 'Pinrang',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $luggageId = DB::table('luggages')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $pinrangPoolId,
+            'sender_name' => 'BAGASI DP BLOCKED',
+            'sender_phone' => '082100021',
+            'receiver_name' => 'PENERIMA DP BLOCKED',
+            'receiver_phone' => '083100021',
+            'rute_id' => $pinrangRouteId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-06-05',
+            'quantity' => 1,
+            'price' => 50000,
+            'payment_status' => 'Belum Bayar',
+            'status' => 'Diterima',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($operator);
+
+        $response = $this->postJson(route('api.admin.payments.bulk'), [
+            'items' => [
+                ['source' => 'booking', 'id' => $bookingId],
+                ['source' => 'luggage', 'id' => $luggageId],
+            ],
+            'payment_status' => 'DP',
+            'down_payment' => 500000,
+        ]);
+
+        $response->assertStatus(422);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'pembayaran' => 'Belum Lunas',
+        ]);
+        $this->assertDatabaseHas('luggages', [
+            'id' => $luggageId,
+            'payment_status' => 'Belum Bayar',
+        ]);
+    }
+
+    public function test_bulk_payment_skips_closed_manifest_booking(): void
+    {
+        [$operator, $pinrangRouteId] = $this->seedPoolOperator();
+        $tenantId = $this->defaultTenantId();
+
+        $bookingId = DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $pinrangRouteId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-06-05',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => 'A1',
+            'name' => 'BOOKING CLOSED MANIFEST',
+            'phone' => '081100031',
+            'pickup_point' => 'Pinrang',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('trip_assignments')->insert([
+            'tenant_id' => $tenantId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-06-05',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'status' => 'closed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($operator);
+
+        $response = $this->postJson(route('api.admin.payments.bulk'), [
+            'items' => [
+                ['source' => 'booking', 'id' => $bookingId],
+            ],
+            'payment_status' => 'Lunas',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('updated_count', 0)
+            ->assertJsonPath('skipped_count', 1);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'pembayaran' => 'Belum Lunas',
+        ]);
+    }
+
     public function test_payment_export_csv_respects_filter_and_pool_scope(): void
     {
         [$operator, $pinrangRouteId, $makassarRouteId] = $this->seedPoolOperator();
