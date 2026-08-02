@@ -18,10 +18,17 @@
     import DeleteUser from '@/components/DeleteUser.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
+    import {
+        Avatar,
+        AvatarFallback,
+        AvatarImage,
+    } from '@/components/ui/avatar';
     import TextLink from '@/components/TextLink.svelte';
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
+    import { resolveAvatarUrl } from '@/lib/avatar';
+    import { getInitials } from '@/lib/initials';
     import { send } from '@/routes/verification';
 
     let {
@@ -33,6 +40,7 @@
     } = $props();
 
     const user = $derived(page.props.auth.user);
+    const avatarUrl = $derived(resolveAvatarUrl(user.avatar, user.name));
 </script>
 
 <AppHead title="Profile settings" />
@@ -52,6 +60,33 @@
         options={{ preserveScroll: true }}
     >
         {#snippet children({ errors, processing })}
+            <div class="flex items-start gap-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <Avatar class="h-20 w-20 rounded-2xl">
+                    <AvatarImage src={avatarUrl} alt={user.name} />
+                    <AvatarFallback class="rounded-2xl bg-slate-200 text-slate-800 dark:bg-slate-200 dark:text-slate-800">
+                        {getInitials(user.name)}
+                    </AvatarFallback>
+                </Avatar>
+
+                <div class="grid flex-1 gap-2">
+                    <div>
+                        <Label for="avatar">Profile picture</Label>
+                        <Input
+                            id="avatar"
+                            type="file"
+                            name="avatar"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            class="mt-1 block w-full"
+                        />
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        PNG, JPG, WEBP, atau GIF. Maks 2 MB. Foto lama akan
+                        otomatis diganti saat Anda mengunggah yang baru.
+                    </p>
+                    <InputError class="mt-1" message={errors.avatar} />
+                </div>
+            </div>
+
             <div class="grid gap-2">
                 <Label for="name">Name</Label>
                 <Input

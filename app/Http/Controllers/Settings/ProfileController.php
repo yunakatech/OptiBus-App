@@ -9,6 +9,8 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,13 +32,20 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill(collect($validated)->except('avatar')->all());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        if ($request->hasFile('avatar')) {
+            $this->replaceAvatar($user, $request->file('avatar'));
+        }
+
+        $user->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 
@@ -50,6 +59,8 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        $this->deleteStoredAvatar($user->avatar);
+
         Auth::logout();
 
         $user->delete();
@@ -58,5 +69,61 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function replaceAvatar(\App\Models\User $user, \Illuminate\Http\UploadedFile $file): void
+    {
+        $previousAvatar = $user->avatar;
+        $path = $file->store('avatars', 'public');
+
+        $user->avatar = Storage::disk('public')->url($path);
+
+        $this->deleteStoredAvatar($previousAvatar, $user->avatar);
+    }
+
+    private function deleteStoredAvatar(?string $avatar, ?string $except = null): void
+    {
+        $path = $this->avatarDiskPath($avatar);
+
+        if ($path === null) {
+            return;
+        }
+
+        if ($except !== null && $this->avatarDiskPath($except) === $path) {
+            return;
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function avatarDiskPath(?string $avatar): ?string
+    {
+        $value = trim((string) $avatar);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (Str::startsWith($value, ['http://', 'https://'])) {
+            $parsedPath = parse_url($value, PHP_URL_PATH);
+
+            if (! is_string($parsedPath) || ! Str::startsWith($parsedPath, '/storage/')) {
+                return null;
+            }
+
+            $value = $parsedPath;
+        }
+
+        if (Str::startsWith($value, '/storage/')) {
+            return Str::after($value, '/storage/');
+        }
+
+        if (Str::startsWith($value, 'storage/')) {
+            return Str::after($value, 'storage/');
+        }
+
+        return $value;
     }
 }
