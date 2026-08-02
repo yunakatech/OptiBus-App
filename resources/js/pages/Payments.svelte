@@ -50,6 +50,7 @@
 
     type StatusKey = 'unpaid' | 'dp' | 'paid';
     type SourceKey = 'all' | 'booking' | 'charter' | 'luggage';
+    type BulkPaymentStatus = 'Belum Lunas' | 'DP' | 'Lunas';
 
     type PaymentFilters = {
         status: StatusKey;
@@ -133,16 +134,57 @@
     let localData = $state<PaymentData | null>(null);
     let loading = $state(false);
     let updatingKey = $state('');
+    let bulkLoading = $state(false);
+    let bulkInfoMessage = $state('');
+    let bulkErrorMessage = $state('');
+    let selectedKeys = $state<string[]>([]);
+    let bulkPaymentStatus = $state<BulkPaymentStatus>('Lunas');
+    let bulkDownPayment = $state('');
     let drafts = $state<
         Record<string, { payment_status: string; down_payment: string }>
     >({});
     let initializedFromProps = $state(false);
     let dateFromInput = $state<HTMLInputElement | null>(null);
     let dateToInput = $state<HTMLInputElement | null>(null);
+    let selectAllInput = $state<HTMLInputElement | null>(null);
     let dateFromPicker: FlatpickrInstance | null = null;
     let dateToPicker: FlatpickrInstance | null = null;
 
     const rows = $derived(localData?.rows ?? []);
+    const selectedRows = $derived(
+        rows.filter((row) => selectedKeys.includes(row.key)),
+    );
+    const selectableRows = $derived(rows.filter((row) => row.can_update));
+    const selectableRowKeys = $derived(selectableRows.map((row) => row.key));
+    const selectedRowsCount = $derived(selectedRows.length);
+    const selectedRowsAllVisibleSelectable = $derived(
+        selectableRows.length > 0 &&
+            selectableRows.every((row) => selectedKeys.includes(row.key)),
+    );
+    const selectedRowsAllCharter = $derived(
+        selectedRows.length > 0 &&
+            selectedRows.every((row) => row.source === 'charter'),
+    );
+    const selectedRowsEditable = $derived(
+        selectedRows.every((row) => row.can_update),
+    );
+    const bulkDownPaymentAmount = $derived(parseCurrencyInput(bulkDownPayment));
+    const bulkStatusWarning = $derived(
+        selectedRowsCount === 0
+            ? ''
+            : !selectedRowsEditable
+              ? 'Ada transaksi terpilih yang tidak bisa diubah.'
+              : bulkPaymentStatus === 'DP' && !selectedRowsAllCharter
+                ? 'Status DP hanya bisa untuk carter.'
+                : bulkPaymentStatus === 'DP' && bulkDownPaymentAmount <= 0
+                  ? 'Nominal DP wajib diisi.'
+                  : '',
+    );
+    const bulkApplyDisabled = $derived(
+        selectedRowsCount === 0 ||
+            bulkLoading ||
+            bulkStatusWarning !== '',
+    );
     const pagination = $derived(
         localData?.pagination ?? {
             page: Number(filters.page || 1),
@@ -340,6 +382,23 @@
             clearDataStale(['payments']);
             localData = paymentData;
             loading = false;
+        }
+    });
+
+    $effect(() => {
+        const visibleKeys = new Set(rows.map((row) => row.key));
+        const nextSelected = selectedKeys.filter((key) => visibleKeys.has(key));
+
+        if (nextSelected.length !== selectedKeys.length) {
+            selectedKeys = nextSelected;
+        }
+    });
+
+    $effect(() => {
+        if (selectAllInput) {
+            selectAllInput.indeterminate =
+                selectedRowsCount > 0 &&
+                selectedRowsCount < selectableRows.length;
         }
     });
 
@@ -560,6 +619,64 @@
     const setSource = (source: SourceKey) => {
         activeSource = source;
         reloadData(1);
+    };
+
+    const clearBulkSelection = () => {
+        selectedKeys = [];
+    };
+
+    const toggleSelectAllVisible = (checked: boolean) => {
+        selectedKeys = checked ? [...selectableRowKeys] : [];
+    };
+
+    const applyBulkPayment = async () => {
+        const warning = bulkStatusWarning;
+        if (warning !== '') {
+            bulkErrorMessage = warning;
+
+            return;
+        }
+
+        const items = selectedRows.map((row) => ({
+            source: row.source,
+            id: row.id,
+        }));
+
+        if (items.length === 0) {
+            return;
+        }
+
+        bulkLoading = true;
+        bulkErrorMessage = '';
+        bulkInfoMessage = '';
+
+        try {
+            const payload: Record<string, unknown> = {
+                items,
+                payment_status: bulkPaymentStatus,
+            };
+
+            if (bulkPaymentStatus === 'DP') {
+                payload.down_payment = bulkDownPaymentAmount;
+            }
+
+            const response = await apiPost('/api/admin/payments/bulk', payload);
+            const updatedCount = Number(response.updated_count || 0);
+            const skippedCount = Number(response.skipped_count || 0);
+
+            bulkInfoMessage = `${updatedCount} transaksi diperbarui${skippedCount > 0 ? `, ${skippedCount} dilewati` : ''}.`;
+            clearBulkSelection();
+            bulkDownPayment = '';
+            markDataStale(['bookings', 'flows', 'dashboard', 'payments']);
+            reloadData(pagination.page);
+        } catch (error) {
+            bulkErrorMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Gagal memproses pembayaran serentak.';
+        } finally {
+            bulkLoading = false;
+        }
     };
 
     const updatePayment = async (row: PaymentRow) => {
@@ -899,6 +1016,97 @@
                 </p>
             {/if}
 
+            {#if selectedRowsCount > 0}
+                <div
+                    class="sticky top-3 z-30 rounded-lg border border-cyan-200 bg-cyan-50/95 p-3 shadow-sm backdrop-blur dark:border-cyan-500/20 dark:bg-cyan-950/25"
+                >
+                    <div
+                        class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
+                    >
+                        <div class="min-w-0 space-y-1">
+                            <p
+                                class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-800 dark:text-cyan-200"
+                            >
+                                Bulk Payment
+                            </p>
+                            <p class="text-sm font-semibold text-cyan-950 dark:text-cyan-50">
+                                {selectedRowsCount} transaksi dipilih
+                            </p>
+                            {#if bulkStatusWarning}
+                                <p class="text-xs text-rose-700 dark:text-rose-300">
+                                    {bulkStatusWarning}
+                                </p>
+                            {/if}
+                        </div>
+
+                        <div
+                            class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-end"
+                        >
+                            <label class="block min-w-40 space-y-1">
+                                <span
+                                    class="text-xs font-semibold text-cyan-900 dark:text-cyan-100"
+                                >
+                                    Status
+                                </span>
+                                <select
+                                    class="h-9 w-full rounded-full border border-cyan-200 bg-background px-3 text-sm shadow-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15 dark:border-cyan-500/20"
+                                    bind:value={bulkPaymentStatus}
+                                >
+                                    {#each paymentOptions as option (option)}
+                                        <option value={option}>{option}</option>
+                                    {/each}
+                                </select>
+                            </label>
+
+                            {#if bulkPaymentStatus === 'DP' && selectedRowsAllCharter}
+                                <label class="block min-w-44 space-y-1">
+                                    <span
+                                        class="text-xs font-semibold text-cyan-900 dark:text-cyan-100"
+                                    >
+                                        Nominal DP
+                                    </span>
+                                    <Input
+                                        class="h-9 rounded-full border-cyan-200 text-right shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15 dark:border-cyan-500/20"
+                                        value={bulkDownPayment}
+                                        oninput={(event) =>
+                                            (bulkDownPayment =
+                                                (event.currentTarget as HTMLInputElement)
+                                                    .value)}
+                                    />
+                                </label>
+                            {/if}
+
+                            <Button
+                                type="button"
+                                class="h-9 rounded-full bg-cyan-700 text-white hover:bg-cyan-800 dark:bg-cyan-600 dark:hover:bg-cyan-500"
+                                disabled={bulkApplyDisabled}
+                                onclick={() => void applyBulkPayment()}
+                            >
+                                {bulkLoading ? 'Memproses...' : 'Terapkan'}
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-9 rounded-full border-cyan-200 text-cyan-900 hover:bg-cyan-100 dark:border-cyan-500/20 dark:text-cyan-100 dark:hover:bg-cyan-950/35"
+                                disabled={bulkLoading}
+                                onclick={clearBulkSelection}
+                            >
+                                Bersihkan
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+
+            {#if bulkInfoMessage || bulkErrorMessage}
+                <p
+                    class={`-mt-1 text-xs ${bulkErrorMessage ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+                >
+                    {bulkErrorMessage || bulkInfoMessage}
+                </p>
+            {/if}
+
             {#if !localData}
                 <div
                     class="space-y-2 rounded-lg border border-border/70 bg-card p-4"
@@ -938,6 +1146,20 @@
                             class="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground"
                         >
                             <tr>
+                                <th class="w-12 px-4 py-3">
+                                    <input
+                                        bind:this={selectAllInput}
+                                        type="checkbox"
+                                        class="h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500"
+                                        checked={selectedRowsAllVisibleSelectable}
+                                        disabled={selectableRows.length === 0}
+                                        onchange={(event) =>
+                                            toggleSelectAllVisible(
+                                                (event.currentTarget as HTMLInputElement)
+                                                    .checked,
+                                            )}
+                                    />
+                                </th>
                                 <th class="px-4 py-3">Transaksi</th>
                                 <th class="px-4 py-3">Customer</th>
                                 <th class="px-4 py-3">Pool/Rute</th>
@@ -949,6 +1171,16 @@
                         <tbody class="divide-y divide-border/70">
                             {#each rows as row (row.key)}
                                 <tr class="align-top">
+                                    <td class="px-4 py-3 align-top">
+                                        <input
+                                            bind:group={selectedKeys}
+                                            value={row.key}
+                                            type="checkbox"
+                                            class="mt-1 h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                            disabled={!row.can_update}
+                                            aria-label={`Pilih ${row.code}`}
+                                        />
+                                    </td>
                                     <td class="px-4 py-3">
                                         <div class="space-y-1">
                                             <Badge
@@ -1029,20 +1261,30 @@
                             class="rounded-lg border border-border/70 bg-card p-3 shadow-sm"
                         >
                             <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <Badge
-                                        class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}
-                                    >
-                                        {row.source_label}
-                                    </Badge>
-                                    <p
-                                        class="mt-2 font-semibold text-foreground"
-                                    >
-                                        {row.customer_name || row.code}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground">
-                                        {row.code} | {row.date || '-'}
-                                    </p>
+                                <div class="flex min-w-0 items-start gap-2">
+                                    <input
+                                        bind:group={selectedKeys}
+                                        value={row.key}
+                                        type="checkbox"
+                                        class="mt-1 h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                        disabled={!row.can_update}
+                                        aria-label={`Pilih ${row.code}`}
+                                    />
+                                    <div class="min-w-0">
+                                        <Badge
+                                            class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}
+                                        >
+                                            {row.source_label}
+                                        </Badge>
+                                        <p
+                                            class="mt-2 truncate font-semibold text-foreground"
+                                        >
+                                            {row.customer_name || row.code}
+                                        </p>
+                                        <p class="truncate text-xs text-muted-foreground">
+                                            {row.code} | {row.date || '-'}
+                                        </p>
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <Badge
