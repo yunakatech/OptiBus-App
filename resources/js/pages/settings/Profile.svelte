@@ -13,6 +13,7 @@
 
 <script lang="ts">
     import { Form, page } from '@inertiajs/svelte';
+    import { onDestroy } from 'svelte';
     import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import AppHead from '@/components/AppHead.svelte';
     import DeleteUser from '@/components/DeleteUser.svelte';
@@ -41,6 +42,35 @@
 
     const user = $derived(page.props.auth.user);
     const avatarUrl = $derived(resolveAvatarUrl(user.avatar, user.name));
+    let avatarPreviewUrl = $state('');
+    let avatarPreviewObjectUrl = '';
+
+    const clearAvatarPreview = () => {
+        if (avatarPreviewObjectUrl) {
+            URL.revokeObjectURL(avatarPreviewObjectUrl);
+            avatarPreviewObjectUrl = '';
+        }
+
+        avatarPreviewUrl = '';
+    };
+
+    const handleAvatarChange = (event: Event) => {
+        clearAvatarPreview();
+
+        const input = event.currentTarget as HTMLInputElement | null;
+        const file = input?.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        avatarPreviewObjectUrl = URL.createObjectURL(file);
+        avatarPreviewUrl = avatarPreviewObjectUrl;
+    };
+
+    onDestroy(() => {
+        clearAvatarPreview();
+    });
 </script>
 
 <AppHead title="Profile settings" />
@@ -62,7 +92,7 @@
         {#snippet children({ errors, processing })}
             <div class="flex items-start gap-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
                 <Avatar class="h-20 w-20 rounded-2xl">
-                    <AvatarImage src={avatarUrl} alt={user.name} />
+                    <AvatarImage src={avatarPreviewUrl || avatarUrl} alt={user.name} />
                     <AvatarFallback class="rounded-2xl bg-slate-200 text-slate-800 dark:bg-slate-200 dark:text-slate-800">
                         {getInitials(user.name)}
                     </AvatarFallback>
@@ -77,6 +107,7 @@
                             name="avatar"
                             accept="image/png,image/jpeg,image/webp,image/gif"
                             class="mt-1 block w-full"
+                            onchange={handleAvatarChange}
                         />
                     </div>
                     <p class="text-xs text-muted-foreground">
