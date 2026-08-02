@@ -48,13 +48,26 @@ class ProfileUpdateTest extends TestCase
 
     public function test_profile_picture_can_be_replaced_and_previous_file_is_deleted(): void
     {
-        Storage::fake('public');
+        config()->set('filesystems.disks.supabase.key', 'test-key');
+        config()->set('filesystems.disks.supabase.secret', 'test-secret');
+        config()->set('filesystems.disks.supabase.region', 'us-east-1');
+        config()->set('filesystems.disks.supabase.bucket', 'avatars');
+        config()->set(
+            'filesystems.disks.supabase.endpoint',
+            'https://project.test/storage/v1/s3',
+        );
+        config()->set(
+            'filesystems.disks.supabase.url',
+            'https://project.test/storage/v1/object/public/avatars',
+        );
 
-        $oldPath = 'avatars/old-avatar.jpg';
-        Storage::disk('public')->put($oldPath, 'old-avatar');
+        Storage::fake('supabase');
+
+        $oldPath = 'old-avatar.jpg';
+        Storage::disk('supabase')->put($oldPath, 'old-avatar');
 
         $user = User::factory()->create([
-            'avatar' => Storage::disk('public')->url($oldPath),
+            'avatar' => config('filesystems.disks.supabase.url').'/'.ltrim($oldPath, '/'),
         ]);
 
         $response = $this
@@ -71,13 +84,19 @@ class ProfileUpdateTest extends TestCase
 
         $user->refresh();
 
-        $this->assertStringContainsString('/storage/avatars/', $user->avatar ?? '');
-        $this->assertNotSame(Storage::disk('public')->url($oldPath), $user->avatar);
-        Storage::disk('public')->assertMissing($oldPath);
+        $this->assertStringContainsString(
+            '/storage/v1/object/public/avatars/',
+            $user->avatar ?? '',
+        );
+        $this->assertNotSame(
+            config('filesystems.disks.supabase.url').'/'.ltrim($oldPath, '/'),
+            $user->avatar,
+        );
+        Storage::disk('supabase')->assertMissing($oldPath);
 
-        $newPath = Str::after($user->avatar ?? '', '/storage/');
+        $newPath = Str::after($user->avatar ?? '', '/storage/v1/object/public/avatars/');
         $this->assertNotSame('', $newPath);
-        Storage::disk('public')->assertExists($newPath);
+        Storage::disk('supabase')->assertExists($newPath);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
