@@ -257,6 +257,89 @@ class BookingApiTest extends TestCase
         ]);
     }
 
+    public function test_update_booking_updates_segment_and_price_from_detail_popup(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        $segmentOldId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '09:00:00',
+            'harga' => 150000,
+            'created_at' => now(),
+        ]);
+        $segmentNewId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - PAREPARE',
+            'origin' => 'PINRANG',
+            'destination' => 'PAREPARE',
+            'jam' => '07:30:00',
+            'jam_pickups' => json_encode(['07:30', '08:45']),
+            'harga' => 250000,
+            'created_at' => now(),
+        ]);
+
+        $bookingId = (int) DB::table('bookings')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => 'A1',
+            'name' => 'RIDWAN',
+            'phone' => '081234567890',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'segment_id' => $segmentOldId,
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $update = $this->postJson(route('api.bookings.update'), [
+            'booking_id' => $bookingId,
+            'segment_id' => $segmentNewId,
+        ]);
+
+        $update->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('trip_changed', false);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $bookingId,
+            'segment_id' => $segmentNewId,
+            'price' => 250000,
+        ]);
+
+        $detail = $this->getJson(route('api.bookings.seats-detail', [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00',
+            'unit' => 1,
+        ]));
+
+        $detail->assertOk()
+            ->assertJsonPath('details.A1.segment_name', 'PINRANG - PAREPARE')
+            ->assertJsonPath('details.A1.segment_jam', '07:30')
+            ->assertJsonPath('details.A1.segment_jam_pickups.0', '07:30');
+    }
+
     public function test_booked_seats_detail_includes_segment_time_and_display_name(): void
     {
         $this->actingAsSuperAdmin();

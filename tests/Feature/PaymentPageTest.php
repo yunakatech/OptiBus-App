@@ -261,7 +261,6 @@ class PaymentPageTest extends TestCase
             'payment_status' => 'Belum Bayar',
             'status' => 'Diterima',
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
         $outsideLuggageId = DB::table('luggages')->insertGetId([
             'tenant_id' => $tenantId,
@@ -278,7 +277,6 @@ class PaymentPageTest extends TestCase
             'payment_status' => 'Belum Bayar',
             'status' => 'Diterima',
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         $this->actingAs($operator);
@@ -318,12 +316,13 @@ class PaymentPageTest extends TestCase
 
     public function test_bulk_payment_dp_works_for_multiple_charters(): void
     {
-        [$operator, $pinrangRouteId] = $this->seedPoolOperator();
+        [$operator] = $this->seedPoolOperator();
         $tenantId = $this->defaultTenantId();
+        $poolId = DB::table('pools')->where('tenant_id', $tenantId)->where('code', 'PNR')->value('id');
 
         $firstCharterId = DB::table('charters')->insertGetId([
             'tenant_id' => $tenantId,
-            'pool_id' => DB::table('pools')->where('tenant_id', $tenantId)->where('code', 'PNR')->value('id'),
+            'pool_id' => $poolId,
             'name' => 'CARTER BULK 1',
             'start_date' => '2026-06-05',
             'end_date' => '2026-06-05',
@@ -334,11 +333,10 @@ class PaymentPageTest extends TestCase
             'payment_status' => 'Belum Lunas',
             'status' => 'active',
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
         $secondCharterId = DB::table('charters')->insertGetId([
             'tenant_id' => $tenantId,
-            'pool_id' => DB::table('pools')->where('tenant_id', $tenantId)->where('code', 'PNR')->value('id'),
+            'pool_id' => $poolId,
             'name' => 'CARTER BULK 2',
             'start_date' => '2026-06-05',
             'end_date' => '2026-06-05',
@@ -349,7 +347,6 @@ class PaymentPageTest extends TestCase
             'payment_status' => 'Belum Lunas',
             'status' => 'active',
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         $this->actingAs($operator);
@@ -382,7 +379,7 @@ class PaymentPageTest extends TestCase
 
     public function test_bulk_payment_dp_rejects_booking_and_luggage_items(): void
     {
-        [$operator, $pinrangRouteId, $makassarRouteId, $pinrangPoolId] = $this->seedPoolOperator();
+        [$operator, $pinrangRouteId, , $pinrangPoolId] = $this->seedPoolOperator();
         $tenantId = $this->defaultTenantId();
 
         $bookingId = DB::table('bookings')->insertGetId([
@@ -418,7 +415,6 @@ class PaymentPageTest extends TestCase
             'payment_status' => 'Belum Bayar',
             'status' => 'Diterima',
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         $this->actingAs($operator);

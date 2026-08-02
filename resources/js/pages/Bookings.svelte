@@ -1706,6 +1706,8 @@
         }
 
         const currentDetailSeat = detailSeat;
+        const selectedSegment =
+            segments.find((segment) => segment.id === segmentId) ?? null;
 
         const seat = normalizeSeatToken(detailEditSeat);
         const name = normalizeNameForBooking(detailEditName);
@@ -1750,6 +1752,7 @@
                 phone,
                 pickup_point: pickupPoint,
                 pembayaran,
+                segment_id: segmentId,
                 discount,
             });
 
@@ -1770,6 +1773,19 @@
                     pickup_point: pickupPoint,
                     pembayaran,
                     segment_id: segmentId,
+                    segment_name:
+                        selectedSegment?.rute ||
+                        currentDetailSeat.segment_name ||
+                        '-',
+                    segment_jam:
+                        segmentJamSummary(selectedSegment?.jam_pickups) ||
+                        segmentJamLabel(selectedSegment?.jam) ||
+                        currentDetailSeat.segment_jam ||
+                        '',
+                    segment_jam_pickups:
+                        selectedSegment?.jam_pickups ||
+                        currentDetailSeat.segment_jam_pickups ||
+                        [],
                     discount,
                 };
             }
@@ -1780,6 +1796,11 @@
                 phone,
                 pickup_point: pickupPoint,
                 pembayaran,
+                segment_name:
+                    refreshed?.segment_name ||
+                    selectedSegment?.rute ||
+                    currentDetailSeat.segment_name ||
+                    '-',
                 discount,
             });
             localLatestBookings = localLatestBookings.map((row) =>
