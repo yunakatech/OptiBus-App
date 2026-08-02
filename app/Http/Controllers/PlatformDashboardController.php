@@ -13,6 +13,9 @@ use Inertia\Response;
 
 class PlatformDashboardController extends Controller
 {
+    /** @var array<int, string> */
+    private const PAID_BOOKING_STATUSES = ['lunas', 'redbus', 'traveloka', 'qris', 'transfer', 'transfer bju', 'tunai'];
+
     public function __invoke(): Response
     {
         $today = Carbon::today();
@@ -47,7 +50,7 @@ class PlatformDashboardController extends Controller
         $activeTenants = $this->countActiveTenants();
         $previousActiveTenants = $this->countActiveTenantsAt($previousMonthEnd);
 
-        // Total Processed Volume (TPV): sum of operational revenue from paid active tenants only.
+        // Total Processed Volume (TPV): sum of collected operational revenue from paid active tenants only.
         $tpvMonth = $this->computeTpv($monthStart, $today);
         $tpvPreviousMonth = $this->computeTpv($previousMonthStart, $previousMonthEnd);
 
@@ -427,21 +430,38 @@ class PlatformDashboardController extends Controller
                 ->whereIn('tenant_id', $this->activeRevenueTenantIds())
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
-                ->sum(DB::raw('COALESCE(price, 0) - COALESCE(discount, 0)'));
+                ->sum(DB::raw(
+                    "CASE
+                        WHEN LOWER(COALESCE(pembayaran, '')) IN ('".implode("','", self::PAID_BOOKING_STATUSES)."')
+                        THEN COALESCE(price, 0) - COALESCE(discount, 0)
+                        ELSE 0
+                    END",
+                ));
         }
 
         if (Schema::hasTable('charters')) {
             $tpv += (float) DB::table('charters')
                 ->whereIn('tenant_id', $this->activeRevenueTenantIds())
                 ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
-                ->sum('price');
+                ->sum(DB::raw(
+                    "CASE
+                        WHEN LOWER(COALESCE(payment_status, '')) = 'lunas' THEN COALESCE(price, 0)
+                        WHEN LOWER(COALESCE(payment_status, '')) = 'dp' THEN COALESCE(down_payment, 0)
+                        ELSE 0
+                    END",
+                ));
         }
 
         if (Schema::hasTable('luggages')) {
             $tpv += (float) DB::table('luggages')
                 ->whereIn('tenant_id', $this->activeRevenueTenantIds())
                 ->whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
-                ->sum('price');
+                ->sum(DB::raw(
+                    "CASE
+                        WHEN LOWER(COALESCE(payment_status, '')) = 'lunas' THEN COALESCE(price, 0)
+                        ELSE 0
+                    END",
+                ));
         }
 
         return $tpv;

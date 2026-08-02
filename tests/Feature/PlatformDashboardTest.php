@@ -12,6 +12,9 @@ class PlatformDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @var array<int, string> */
+    private const PAID_BOOKING_STATUSES = ['lunas', 'redbus', 'traveloka', 'qris', 'transfer', 'transfer bju', 'tunai'];
+
     public function test_platform_dashboard_ignores_trial_tenant_revenue_from_metrics(): void
     {
         Carbon::setTestNow('2026-06-05 10:00:00');
@@ -48,6 +51,23 @@ class PlatformDashboardTest extends TestCase
                     'updated_at' => now(),
                 ],
                 [
+                    'tenant_id' => $activeTenantId,
+                    'rute' => 'PLATFORM ACTIVE ROUTE',
+                    'tanggal' => '2026-06-05',
+                    'jam' => '09:15:00',
+                    'unit' => 1,
+                    'seat' => 'A3',
+                    'name' => 'AKTIF DASHBOARD UNPAID',
+                    'phone' => '081200000003',
+                    'pickup_point' => 'Terminal',
+                    'pembayaran' => 'Belum Lunas',
+                    'status' => 'active',
+                    'price' => 500000,
+                    'discount' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
                     'tenant_id' => $trialTenantId,
                     'rute' => 'PLATFORM TRIAL ROUTE',
                     'tanggal' => '2026-06-05',
@@ -73,6 +93,19 @@ class PlatformDashboardTest extends TestCase
                     'start_date' => '2026-06-05',
                     'end_date' => '2026-06-05',
                     'price' => 200000,
+                    'down_payment' => 0,
+                    'payment_status' => 'Lunas',
+                    'status' => 'active',
+                    'created_at' => now(),
+                ],
+                [
+                    'tenant_id' => $activeTenantId,
+                    'name' => 'CARTER AKTIF PLATFORM DP',
+                    'start_date' => '2026-06-05',
+                    'end_date' => '2026-06-05',
+                    'price' => 600000,
+                    'down_payment' => 150000,
+                    'payment_status' => 'DP',
                     'status' => 'active',
                     'created_at' => now(),
                 ],
@@ -82,6 +115,8 @@ class PlatformDashboardTest extends TestCase
                     'start_date' => '2026-06-05',
                     'end_date' => '2026-06-05',
                     'price' => 800000,
+                    'down_payment' => 0,
+                    'payment_status' => 'Lunas',
                     'status' => 'active',
                     'created_at' => now(),
                 ],
@@ -97,6 +132,17 @@ class PlatformDashboardTest extends TestCase
                     'price' => 300000,
                     'status' => 'Diterima',
                     'payment_status' => 'Lunas',
+                    'created_at' => now(),
+                ],
+                [
+                    'tenant_id' => $activeTenantId,
+                    'sender_name' => 'PENGIRIM AKTIF UNPAID',
+                    'sender_phone' => '081300000003',
+                    'receiver_name' => 'PENERIMA AKTIF UNPAID',
+                    'receiver_phone' => '081400000003',
+                    'price' => 900000,
+                    'status' => 'Diterima',
+                    'payment_status' => 'Belum Bayar',
                     'created_at' => now(),
                 ],
                 [
@@ -233,7 +279,13 @@ class PlatformDashboardTest extends TestCase
                 ->whereIn('tenant_id', $tenantIds)
                 ->where('status', '!=', 'canceled')
                 ->whereBetween('tanggal', ['2026-06-01', '2026-06-30'])
-                ->sum(DB::raw('COALESCE(price, 0) - COALESCE(discount, 0)'));
+                ->sum(DB::raw(
+                    "CASE
+                        WHEN LOWER(COALESCE(pembayaran, '')) IN ('".implode("','", self::PAID_BOOKING_STATUSES)."')
+                        THEN COALESCE(price, 0) - COALESCE(discount, 0)
+                        ELSE 0
+                    END",
+                ));
         }
 
         if (DB::table('charters')->exists()) {
@@ -243,7 +295,13 @@ class PlatformDashboardTest extends TestCase
                     ->where('status', 'active')
                     ->distinct())
                 ->whereBetween('start_date', ['2026-06-01', '2026-06-30'])
-                ->sum('price');
+                ->sum(DB::raw(
+                    "CASE
+                        WHEN LOWER(COALESCE(payment_status, '')) = 'lunas' THEN COALESCE(price, 0)
+                        WHEN LOWER(COALESCE(payment_status, '')) = 'dp' THEN COALESCE(down_payment, 0)
+                        ELSE 0
+                    END",
+                ));
         }
 
         if (DB::table('luggages')->exists()) {
@@ -253,7 +311,12 @@ class PlatformDashboardTest extends TestCase
                     ->where('status', 'active')
                     ->distinct())
                 ->whereBetween('tanggal', ['2026-06-01', '2026-06-30'])
-                ->sum('price');
+                ->sum(DB::raw(
+                    "CASE
+                        WHEN LOWER(COALESCE(payment_status, '')) = 'lunas' THEN COALESCE(price, 0)
+                        ELSE 0
+                    END",
+                ));
         }
 
         return $total;
