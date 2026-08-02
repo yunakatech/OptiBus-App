@@ -1706,9 +1706,6 @@
         }
 
         const currentDetailSeat = detailSeat;
-        const selectedSegment =
-            segments.find((segment) => segment.id === segmentId) ?? null;
-
         const seat = normalizeSeatToken(detailEditSeat);
         const name = normalizeNameForBooking(detailEditName);
         const phone = normalizePhoneForBooking(detailEditPhone);
@@ -1716,6 +1713,8 @@
         const pembayaran = String(detailEditPayment || 'Belum Lunas').trim();
         const segmentId =
             Number(detailEditSegmentId) > 0 ? Number(detailEditSegmentId) : 0;
+        const selectedSegment =
+            segments.find((segment) => segment.id === segmentId) ?? null;
         const discount = parseCurrencyInput(detailEditDiscount);
 
         if (seat === '' || name === '' || phone === '' || pickupPoint === '') {
