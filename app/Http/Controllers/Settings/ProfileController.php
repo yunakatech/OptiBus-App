@@ -9,11 +9,15 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -42,8 +46,28 @@ class ProfileController extends Controller
             $user->email_verified_at = null;
         }
 
-        if ($request->hasFile('avatar') && Schema::hasColumn('users', 'avatar')) {
-            $this->replaceAvatar($user, $request->file('avatar'));
+        if ($request->hasFile('avatar')) {
+            if (! Schema::hasColumn('users', 'avatar')) {
+                throw ValidationException::withMessages([
+                    'avatar' => 'Kolom avatar belum tersedia. Jalankan migrasi database terlebih dahulu.',
+                ]);
+            }
+
+            try {
+                $this->replaceAvatar($user, $request->file('avatar'));
+            } catch (Throwable $e) {
+                Log::warning('profile.avatar_upload_failed', [
+                    'exception' => $e::class,
+                    'message' => $e->getMessage(),
+                    'storage' => $this->safeSupabaseStorageDiagnostics(),
+                ]);
+
+                report($e);
+
+                throw ValidationException::withMessages([
+                    'avatar' => 'Gagal mengunggah foto profil ke storage. Periksa konfigurasi Supabase Storage.',
+                ]);
+            }
         }
 
         $user->save();
@@ -84,7 +108,7 @@ class ProfileController extends Controller
             : $file->storeAs('avatars', $filename, $disk);
 
         if (! is_string($path) || $path === '') {
-            return;
+            throw new RuntimeException('Profile avatar upload returned an empty path.');
         }
 
         $user->avatar = $this->avatarUrl($disk, $path);
@@ -126,6 +150,31 @@ class ProfileController extends Controller
             && trim((string) config('filesystems.disks.supabase.bucket', '')) !== ''
             && trim((string) config('filesystems.disks.supabase.endpoint', '')) !== ''
             && trim((string) config('filesystems.disks.supabase.url', '')) !== '';
+    }
+
+    /**
+     * Keep production logs useful without exposing Supabase credentials.
+     *
+     * @return array<string, bool|string|null>
+     */
+    private function safeSupabaseStorageDiagnostics(): array
+    {
+        $endpoint = trim((string) config('filesystems.disks.supabase.endpoint', ''));
+        $url = trim((string) config('filesystems.disks.supabase.url', ''));
+
+        return [
+            'disk' => $this->avatarDisk(),
+            'bucket' => trim((string) config('filesystems.disks.supabase.bucket', '')) ?: null,
+            'region' => trim((string) config('filesystems.disks.supabase.region', '')) ?: null,
+            'endpoint_host' => $endpoint !== '' ? parse_url($endpoint, PHP_URL_HOST) : null,
+            'endpoint_path' => $endpoint !== '' ? parse_url($endpoint, PHP_URL_PATH) : null,
+            'url_host' => $url !== '' ? parse_url($url, PHP_URL_HOST) : null,
+            'url_path' => $url !== '' ? parse_url($url, PHP_URL_PATH) : null,
+            'key_configured' => trim((string) config('filesystems.disks.supabase.key', '')) !== '',
+            'secret_configured' => trim((string) config('filesystems.disks.supabase.secret', '')) !== '',
+            'url_configured' => $url !== '',
+            'endpoint_configured' => $endpoint !== '',
+        ];
     }
 
     private function avatarStorageDiskForValue(?string $avatar): string

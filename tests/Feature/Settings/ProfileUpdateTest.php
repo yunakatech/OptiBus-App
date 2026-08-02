@@ -4,7 +4,9 @@ namespace Tests\Feature\Settings;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -97,6 +99,30 @@ class ProfileUpdateTest extends TestCase
         $newPath = Str::after($user->avatar ?? '', '/storage/v1/object/public/avatars/');
         $this->assertNotSame('', $newPath);
         Storage::disk('supabase')->assertExists($newPath);
+    }
+
+    public function test_profile_picture_update_returns_error_when_avatar_column_is_missing(): void
+    {
+        $user = User::factory()->create(['avatar' => null]);
+
+        Schema::table('users', function (Blueprint $table): void {
+            $table->dropColumn('avatar');
+        });
+
+        $response = $this
+            ->actingAs($user)
+            ->from(route('profile.edit'))
+            ->patch(route('profile.update'), [
+                'name' => 'Test User',
+                'email' => $user->email,
+                'avatar' => UploadedFile::fake()->image('avatar.png'),
+            ]);
+
+        $response
+            ->assertSessionHasErrors('avatar')
+            ->assertRedirect(route('profile.edit'));
+
+        $this->assertFalse(Schema::hasColumn('users', 'avatar'));
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
