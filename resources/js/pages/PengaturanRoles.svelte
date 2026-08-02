@@ -452,8 +452,8 @@
                     errorMessage: 'Gagal menyimpan role.',
                 },
             );
-            message = isEditing ? 'Role updated.' : 'Role created.';
             resetForm();
+            message = isEditing ? 'Role updated.' : 'Role created.';
             roleView = 'data';
             reloadRolesWithInertia(1);
         } catch (e) {

@@ -3,10 +3,12 @@
 namespace Tests\Feature\Settings;
 
 use App\Models\User;
+use App\Support\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -143,9 +145,9 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
-    public function test_user_can_delete_their_account()
+    public function test_super_admin_can_delete_their_account()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['is_super_admin' => true]);
 
         $response = $this
             ->actingAs($user)
@@ -177,5 +179,56 @@ class ProfileUpdateTest extends TestCase
             ->assertRedirect(route('profile.edit'));
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_tenant_owner_cannot_delete_account(): void
+    {
+        AccessControl::syncDefaults();
+
+        $user = User::factory()->create(['is_super_admin' => false]);
+        $this->assignRole($user, 'tenant-owner');
+
+        $response = $this
+            ->actingAs($user)
+            ->from(route('profile.edit'))
+            ->delete(route('profile.destroy'), [
+                'password' => 'password',
+            ]);
+
+        $response->assertForbidden();
+
+        $this->assertNotNull($user->fresh());
+    }
+
+    public function test_regular_user_cannot_delete_account(): void
+    {
+        $user = User::factory()->create(['is_super_admin' => false]);
+
+        $response = $this
+            ->actingAs($user)
+            ->from(route('profile.edit'))
+            ->delete(route('profile.destroy'), [
+                'password' => 'password',
+            ]);
+
+        $response->assertForbidden();
+
+        $this->assertNotNull($user->fresh());
+    }
+
+    private function assignRole(User $user, string $slug): void
+    {
+        $roleId = (int) DB::table('roles')->where('slug', $slug)->value('id');
+
+        if ($roleId <= 0) {
+            $this->fail("Role [{$slug}] is missing.");
+        }
+
+        DB::table('user_role')->insert([
+            'user_id' => $user->id,
+            'role_id' => $roleId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

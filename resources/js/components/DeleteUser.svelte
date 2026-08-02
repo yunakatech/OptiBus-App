@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Form } from '@inertiajs/svelte';
+    import { Form, page } from '@inertiajs/svelte';
     import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
@@ -15,8 +15,11 @@
         DialogTrigger,
     } from '@/components/ui/dialog';
     import { Label } from '@/components/ui/label';
+
+    const isSuperAdmin = $derived(Boolean(page.props.auth?.user?.is_super_admin));
 </script>
 
+{#if isSuperAdmin}
 <div class="space-y-6">
     <Heading
         variant="small"
@@ -90,3 +93,4 @@
         </Dialog>
     </div>
 </div>
+{/if}
