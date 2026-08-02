@@ -5386,6 +5386,7 @@
             const response = await fetch(url, {
                 method: 'GET',
                 credentials: 'same-origin',
+                cache: 'no-store',
                 signal: controller.signal,
                 headers: {
                     Accept: 'application/json',
