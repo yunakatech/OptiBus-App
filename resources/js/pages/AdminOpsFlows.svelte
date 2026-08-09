@@ -4427,6 +4427,8 @@
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent
                                                         align="end"
+                                                        side="top"
+                                                        sideOffset={8}
                                                         class="w-48"
                                                     >
                                                         <DropdownMenuItem
@@ -5843,6 +5845,8 @@
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent
                                                     align="end"
+                                                    side="top"
+                                                    sideOffset={8}
                                                     class="w-52 text-[10px]"
                                                 >
                                                     {#if canLuggageUpdate && !lockedLuggageActions}
@@ -6370,6 +6374,8 @@
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent
                                                             align="end"
+                                                            side="top"
+                                                            sideOffset={8}
                                                             class="w-52"
                                                         >
                                                             {@const lockedLuggageActions =
