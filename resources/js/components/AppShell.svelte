@@ -1,6 +1,7 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
+    import SupportButton from '@/components/SupportButton.svelte';
     import { SidebarProvider } from '@/components/ui/sidebar';
     import type { AppVariant } from '@/types';
     import { onMount, onDestroy } from 'svelte';
@@ -81,9 +82,11 @@
 {#if variant === 'header'}
     <div class="flex min-h-screen w-full flex-col {className}">
         {@render children?.()}
+        <SupportButton />
     </div>
 {:else}
     <SidebarProvider defaultOpen={isOpen} class={className}>
         {@render children?.()}
+        <SupportButton />
     </SidebarProvider>
 {/if}

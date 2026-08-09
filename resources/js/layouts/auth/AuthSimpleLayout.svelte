@@ -3,6 +3,7 @@
     import type { Snippet } from 'svelte';
     import GlobalConfirmDialog from '@/components/GlobalConfirmDialog.svelte';
     import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay.svelte';
+    import SupportButton from '@/components/SupportButton.svelte';
     import ToastContainer from '@/components/ToastContainer.svelte';
     import { home } from '@/routes';
 
@@ -75,6 +76,9 @@
             </div>
             {@render children?.()}
         </div>
+    </div>
+    <div class="relative z-10 mt-5">
+        <SupportButton variant="compact" />
     </div>
     <GlobalLoadingOverlay />
     <GlobalConfirmDialog />
