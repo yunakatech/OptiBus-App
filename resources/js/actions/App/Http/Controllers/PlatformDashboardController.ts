@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PlatformDashboardController::__invoke
- * @see app/Http/Controllers/PlatformDashboardController.php:16
+ * @see app/Http/Controllers/PlatformDashboardController.php:19
  * @route '/platform/dashboard'
  */
 const PlatformDashboardController = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ PlatformDashboardController.definition = {
 
 /**
 * @see \App\Http\Controllers\PlatformDashboardController::__invoke
- * @see app/Http/Controllers/PlatformDashboardController.php:16
+ * @see app/Http/Controllers/PlatformDashboardController.php:19
  * @route '/platform/dashboard'
  */
 PlatformDashboardController.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ PlatformDashboardController.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PlatformDashboardController::__invoke
- * @see app/Http/Controllers/PlatformDashboardController.php:16
+ * @see app/Http/Controllers/PlatformDashboardController.php:19
  * @route '/platform/dashboard'
  */
 PlatformDashboardController.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ PlatformDashboardController.get = (options?: RouteQueryOptions): RouteDefinition
 })
 /**
 * @see \App\Http\Controllers\PlatformDashboardController::__invoke
- * @see app/Http/Controllers/PlatformDashboardController.php:16
+ * @see app/Http/Controllers/PlatformDashboardController.php:19
  * @route '/platform/dashboard'
  */
 PlatformDashboardController.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ PlatformDashboardController.head = (options?: RouteQueryOptions): RouteDefinitio
 
     /**
 * @see \App\Http\Controllers\PlatformDashboardController::__invoke
- * @see app/Http/Controllers/PlatformDashboardController.php:16
+ * @see app/Http/Controllers/PlatformDashboardController.php:19
  * @route '/platform/dashboard'
  */
     const PlatformDashboardControllerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ PlatformDashboardController.head = (options?: RouteQueryOptions): RouteDefinitio
 
             /**
 * @see \App\Http\Controllers\PlatformDashboardController::__invoke
- * @see app/Http/Controllers/PlatformDashboardController.php:16
+ * @see app/Http/Controllers/PlatformDashboardController.php:19
  * @route '/platform/dashboard'
  */
         PlatformDashboardControllerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ PlatformDashboardController.head = (options?: RouteQueryOptions): RouteDefinitio
         })
             /**
 * @see \App\Http\Controllers\PlatformDashboardController::__invoke
- * @see app/Http/Controllers/PlatformDashboardController.php:16
+ * @see app/Http/Controllers/PlatformDashboardController.php:19
  * @route '/platform/dashboard'
  */
         PlatformDashboardControllerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

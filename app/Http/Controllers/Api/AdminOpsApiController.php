@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminOpsApiController extends Controller
@@ -2938,6 +2939,7 @@ class AdminOpsApiController extends Controller
         $from = trim((string) $request->query('from', ''));
         $to = trim((string) $request->query('to', ''));
         $status = trim((string) $request->query('status', ''));
+        $condition = trim((string) $request->query('condition', ''));
         $paymentStatus = trim((string) $request->query('payment_status', ''));
         $q = trim((string) $request->query('q', ''));
         $luggageColumns = array_flip(Schema::getColumnListing('luggages'));
@@ -3014,6 +3016,9 @@ class AdminOpsApiController extends Controller
                 $selectColumn($luggageColumns, 'pengirim_id', 'pengirim_id'),
                 $selectColumn($luggageColumns, 'penerima_id', 'penerima_id'),
                 $selectColumn($luggageColumns, 'quantity', 'quantity'),
+                $selectColumn($luggageColumns, 'damaged_quantity', 'damaged_quantity'),
+                $selectColumn($luggageColumns, 'lost_quantity', 'lost_quantity'),
+                $selectColumn($luggageColumns, 'condition_status', 'condition_status'),
                 $selectColumn($luggageColumns, 'notes', 'notes'),
                 $selectColumn($luggageColumns, 'price', 'price'),
                 $selectColumn($luggageColumns, 'status', 'status'),
@@ -3045,6 +3050,14 @@ class AdminOpsApiController extends Controller
         }
         if ($status !== '' && $hasStatusColumn) {
             $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageStatusAliases($status));
+        }
+        if ($condition !== '' && isset($luggageColumns['condition_status'])) {
+            $conditionValues = match ($this->normalizeLuggageCondition($condition)) {
+                'damaged' => ['damaged', 'damaged_and_lost'],
+                'lost' => ['lost', 'damaged_and_lost'],
+                default => [$this->normalizeLuggageCondition($condition)],
+            };
+            $query->whereIn('l.condition_status', $conditionValues);
         }
         if ($paymentStatus !== '' && $hasPaymentStatusColumn) {
             $query->where('l.payment_status', $paymentStatus);
@@ -3118,6 +3131,11 @@ class AdminOpsApiController extends Controller
             ->map(function ($row) {
                 $item = (array) $row;
                 $item['status'] = $this->normalizeLuggageStatus($item['status'] ?? null);
+                $item['condition_status'] = $this->normalizeLuggageCondition(
+                    $item['condition_status'] ?? null,
+                    (int) ($item['damaged_quantity'] ?? 0),
+                    (int) ($item['lost_quantity'] ?? 0),
+                );
                 $item['route_name'] = trim((string) ($item['route_name'] ?? '')) !== ''
                     ? (string) $item['route_name']
                     : (string) ($item['rute'] ?? '');
@@ -3560,6 +3578,398 @@ class AdminOpsApiController extends Controller
         );
 
         return $this->ok(['message' => 'Tracking log added.', 'id' => $id, 'kode_resi' => $resi]);
+    }
+
+    public function luggageIncidentsIndex(int $id): JsonResponse
+    {
+        if (! SchemaCache::hasTable('luggage_incidents')) {
+            return $this->error('Tabel insiden bagasi belum tersedia.', 503);
+        }
+
+        $luggage = $this->luggageForIncident($id);
+        if (! $luggage) {
+            return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($luggage->pool_id ?? 0), [$luggage->rute ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
+
+        $query = DB::table('luggage_incidents as li')->where('li.luggage_id', $id);
+        $this->applyTenantScopeIfExists($query, 'luggage_incidents', 'li');
+        $incidents = $query
+            ->orderByDesc('li.id')
+            ->get([
+                'li.id',
+                'li.luggage_id',
+                'li.type',
+                'li.quantity',
+                'li.description',
+                'li.status',
+                'li.claim_status',
+                'li.claim_amount',
+                'li.approved_amount',
+                'li.resolution_note',
+                'li.reported_by_user_id',
+                'li.reviewed_by_user_id',
+                'li.reported_at',
+                'li.resolved_at',
+                'li.created_at',
+                'li.updated_at',
+            ])
+            ->values();
+
+        return $this->ok([
+            'luggage' => $this->luggageIncidentSummary($luggage),
+            'incidents' => $incidents,
+        ]);
+    }
+
+    public function luggageIncidentStore(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'type' => ['required', Rule::in(['damaged', 'lost'])],
+            'quantity' => ['required', 'integer', 'min:1'],
+            'description' => ['required', 'string', 'max:4000'],
+        ]);
+
+        if (! SchemaCache::hasTable('luggage_incidents')) {
+            return $this->error('Tabel insiden bagasi belum tersedia.', 503);
+        }
+
+        $tenantId = TenantWriteContext::requireTenant();
+        $luggage = $this->luggageForIncident($id, true);
+        if (! $luggage) {
+            return $this->error('Luggage not found.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($luggage->pool_id ?? 0), [$luggage->rute ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke data bagasi ini.', 403);
+        }
+
+        if ($this->normalizeLuggageStatus($luggage->status ?? null) === 'canceled') {
+            return $this->error('Bagasi canceled tidak dapat dibuatkan insiden baru.', 422);
+        }
+
+        $incident = DB::transaction(function () use ($data, $id, $tenantId): array {
+            $lockedQuery = DB::table('luggages')->where('id', $id)->lockForUpdate();
+            $this->applyWriteTenantScopeIfExists($lockedQuery, 'luggages');
+            $locked = $lockedQuery->first([
+                'id',
+                'quantity',
+                'damaged_quantity',
+                'lost_quantity',
+                'condition_status',
+                'status',
+                'pool_id',
+                'rute',
+                'kode_resi',
+            ]);
+
+            if (! $locked) {
+                throw ValidationException::withMessages(['luggage' => 'Luggage not found.']);
+            }
+
+            if ($this->normalizeLuggageStatus($locked->status ?? null) === 'canceled') {
+                throw ValidationException::withMessages([
+                    'status' => 'Bagasi canceled tidak dapat dibuatkan insiden baru.',
+                ]);
+            }
+
+            $quantity = max(1, (int) ($locked->quantity ?? 1));
+            $damagedQuantity = max(0, (int) ($locked->damaged_quantity ?? 0));
+            $lostQuantity = max(0, (int) ($locked->lost_quantity ?? 0));
+            $reportedQuantity = (int) $data['quantity'];
+
+            if ($damagedQuantity + $lostQuantity + $reportedQuantity > $quantity) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'Jumlah insiden melebihi jumlah barang pada resi ini.',
+                ]);
+            }
+
+            if ($data['type'] === 'damaged') {
+                $damagedQuantity += $reportedQuantity;
+            } else {
+                $lostQuantity += $reportedQuantity;
+            }
+
+            $conditionStatus = $this->normalizeLuggageCondition(
+                null,
+                $damagedQuantity,
+                $lostQuantity,
+            );
+            $luggagePayload = [
+                'damaged_quantity' => $damagedQuantity,
+                'lost_quantity' => $lostQuantity,
+                'condition_status' => $conditionStatus,
+            ];
+
+            $luggageUpdate = DB::table('luggages')->where('id', $id);
+            $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
+            $luggageUpdate->update($luggagePayload);
+
+            $incidentId = DB::table('luggage_incidents')->insertGetId(array_merge([
+                'luggage_id' => $id,
+                'tenant_id' => $tenantId,
+                'pool_id' => (int) ($locked->pool_id ?? 0) > 0 ? (int) $locked->pool_id : null,
+                'type' => $data['type'],
+                'quantity' => $reportedQuantity,
+                'description' => trim((string) $data['description']),
+                'status' => 'reported',
+                'claim_status' => 'none',
+                'claim_amount' => 0,
+                'approved_amount' => 0,
+                'reported_by_user_id' => auth()->id(),
+                'reported_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], $this->tenantPayload('luggage_incidents')));
+
+            $resi = $locked->kode_resi ?: $this->ensureLuggageResi($id);
+            $this->appendLuggageLogByResi(
+                $resi,
+                'incident-'.$data['type'],
+                $this->buildSummaryParts([
+                    'Insiden '.$data['type'].' dilaporkan ('.$reportedQuantity.' barang).',
+                    trim((string) $data['description']),
+                ]),
+            );
+
+            return [
+                'id' => $incidentId,
+                'condition_status' => $conditionStatus,
+                'damaged_quantity' => $damagedQuantity,
+                'lost_quantity' => $lostQuantity,
+            ];
+        });
+
+        return $this->ok([
+            'message' => 'Insiden bagasi berhasil dilaporkan.',
+            'incident' => $incident,
+        ], 201);
+    }
+
+    public function luggageIncidentUpdate(Request $request, int $incidentId): JsonResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['reported', 'investigating', 'approved', 'rejected', 'resolved'])],
+            'description' => ['nullable', 'string', 'max:4000'],
+            'resolution_note' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $record = $this->luggageIncidentRecord($incidentId);
+        if (! $record) {
+            return $this->error('Insiden bagasi tidak ditemukan.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($record->pool_id ?? 0), [$record->rute ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke insiden bagasi ini.', 403);
+        }
+
+        TenantWriteContext::requireTenant();
+        $result = DB::transaction(function () use ($data, $incidentId): array {
+            $query = DB::table('luggage_incidents as li')
+                ->join('luggages as l', 'l.id', '=', 'li.luggage_id')
+                ->where('li.id', $incidentId)
+                ->lockForUpdate();
+            $this->applyWriteTenantScopeIfExists($query, 'luggage_incidents', 'li');
+            $this->applyWriteTenantScopeIfExists($query, 'luggages', 'l');
+            $current = $query->first([
+                'li.id',
+                'li.luggage_id',
+                'li.type',
+                'li.quantity',
+                'li.status',
+                'li.description',
+                'li.resolution_note',
+                'l.quantity as luggage_quantity',
+                'l.damaged_quantity',
+                'l.lost_quantity',
+                'l.pool_id',
+                'l.rute',
+                'l.kode_resi',
+            ]);
+
+            if (! $current) {
+                throw ValidationException::withMessages(['incident' => 'Insiden bagasi tidak ditemukan.']);
+            }
+
+            $currentStatus = (string) $current->status;
+            $nextStatus = (string) $data['status'];
+            if (in_array($currentStatus, ['rejected', 'resolved'], true) && $nextStatus !== $currentStatus) {
+                throw ValidationException::withMessages([
+                    'status' => 'Insiden yang sudah selesai tidak dapat dibuka kembali.',
+                ]);
+            }
+
+            $wasActive = in_array($currentStatus, ['reported', 'investigating', 'approved'], true);
+            $willClose = in_array($nextStatus, ['rejected', 'resolved'], true);
+            $damagedQuantity = max(0, (int) ($current->damaged_quantity ?? 0));
+            $lostQuantity = max(0, (int) ($current->lost_quantity ?? 0));
+
+            if ($wasActive && $willClose) {
+                if ($current->type === 'damaged') {
+                    $damagedQuantity = max(0, $damagedQuantity - (int) $current->quantity);
+                } else {
+                    $lostQuantity = max(0, $lostQuantity - (int) $current->quantity);
+                }
+
+                $luggageUpdate = DB::table('luggages')->where('id', (int) $current->luggage_id);
+                $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
+                $luggageUpdate->update([
+                    'damaged_quantity' => $damagedQuantity,
+                    'lost_quantity' => $lostQuantity,
+                    'condition_status' => $this->normalizeLuggageCondition(null, $damagedQuantity, $lostQuantity),
+                ]);
+            }
+
+            $incidentPayload = [
+                'status' => $nextStatus,
+                'description' => array_key_exists('description', $data)
+                    ? trim((string) ($data['description'] ?? ''))
+                    : $current->description,
+                'resolution_note' => array_key_exists('resolution_note', $data)
+                    ? $this->nullable($data['resolution_note'] ?? null)
+                    : $current->resolution_note,
+                'reviewed_by_user_id' => auth()->id(),
+                'resolved_at' => $willClose ? now() : null,
+                'updated_at' => now(),
+            ];
+
+            DB::table('luggage_incidents')->where('id', $incidentId)->update($incidentPayload);
+            $this->appendLuggageLogByResi(
+                $current->kode_resi ?: $this->ensureLuggageResi((int) $current->luggage_id),
+                'incident-'.$nextStatus,
+                $this->buildSummaryParts([
+                    'Insiden '.$current->type.' diubah menjadi '.$nextStatus.'.',
+                    $incidentPayload['resolution_note'],
+                ]),
+            );
+
+            return [
+                'status' => $nextStatus,
+                'condition_status' => $this->normalizeLuggageCondition(null, $damagedQuantity, $lostQuantity),
+                'damaged_quantity' => $damagedQuantity,
+                'lost_quantity' => $lostQuantity,
+            ];
+        });
+
+        return $this->ok([
+            'message' => 'Insiden bagasi berhasil diperbarui.',
+            'incident' => $result,
+        ]);
+    }
+
+    public function luggageIncidentClaim(Request $request, int $incidentId): JsonResponse
+    {
+        $data = $request->validate([
+            'claim_status' => ['required', Rule::in(['none', 'submitted', 'approved', 'paid', 'rejected'])],
+            'claim_amount' => ['nullable', 'numeric', 'min:0'],
+            'approved_amount' => ['nullable', 'numeric', 'min:0'],
+            'resolution_note' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $record = $this->luggageIncidentRecord($incidentId);
+        if (! $record) {
+            return $this->error('Insiden bagasi tidak ditemukan.', 404);
+        }
+
+        if (! $this->transactionPoolSnapshotAccessible((int) ($record->pool_id ?? 0), [$record->rute ?? ''])) {
+            return $this->error('Anda tidak memiliki akses ke klaim bagasi ini.', 403);
+        }
+
+        TenantWriteContext::requireTenant();
+        $result = DB::transaction(function () use ($data, $incidentId): array {
+            $query = DB::table('luggage_incidents as li')
+                ->join('luggages as l', 'l.id', '=', 'li.luggage_id')
+                ->where('li.id', $incidentId)
+                ->lockForUpdate();
+            $this->applyWriteTenantScopeIfExists($query, 'luggage_incidents', 'li');
+            $this->applyWriteTenantScopeIfExists($query, 'luggages', 'l');
+            $current = $query->first([
+                'li.id',
+                'li.luggage_id',
+                'li.type',
+                'li.status',
+                'li.claim_status',
+                'li.claim_amount',
+                'li.approved_amount',
+                'li.resolution_note',
+                'l.pool_id',
+                'l.rute',
+                'l.kode_resi',
+            ]);
+
+            if (! $current) {
+                throw ValidationException::withMessages(['incident' => 'Insiden bagasi tidak ditemukan.']);
+            }
+
+            if (! in_array($current->status, ['approved', 'resolved'], true)) {
+                throw ValidationException::withMessages([
+                    'claim_status' => 'Klaim hanya dapat diproses setelah insiden disetujui.',
+                ]);
+            }
+
+            $claimStatus = (string) $data['claim_status'];
+            $claimAmount = array_key_exists('claim_amount', $data)
+                ? (float) $data['claim_amount']
+                : (float) ($current->claim_amount ?? 0);
+            $approvedAmount = array_key_exists('approved_amount', $data)
+                ? (float) $data['approved_amount']
+                : (float) ($current->approved_amount ?? 0);
+
+            if (in_array($claimStatus, ['submitted', 'approved', 'paid'], true) && $claimAmount <= 0) {
+                throw ValidationException::withMessages([
+                    'claim_amount' => 'Nominal klaim wajib lebih besar dari nol.',
+                ]);
+            }
+
+            if ($approvedAmount > $claimAmount) {
+                throw ValidationException::withMessages([
+                    'approved_amount' => 'Nominal disetujui tidak boleh melebihi nominal klaim.',
+                ]);
+            }
+
+            if ($claimStatus === 'paid' && $approvedAmount <= 0) {
+                throw ValidationException::withMessages([
+                    'approved_amount' => 'Nominal disetujui wajib diisi sebelum klaim dibayar.',
+                ]);
+            }
+
+            if (in_array($current->claim_status, ['paid', 'rejected'], true) && $claimStatus !== $current->claim_status) {
+                throw ValidationException::withMessages([
+                    'claim_status' => 'Klaim yang sudah final tidak dapat dibuka kembali.',
+                ]);
+            }
+
+            DB::table('luggage_incidents')->where('id', $incidentId)->update([
+                'claim_status' => $claimStatus,
+                'claim_amount' => $claimAmount,
+                'approved_amount' => $approvedAmount,
+                'resolution_note' => array_key_exists('resolution_note', $data)
+                    ? $this->nullable($data['resolution_note'] ?? null)
+                    : $current->resolution_note,
+                'reviewed_by_user_id' => auth()->id(),
+                'updated_at' => now(),
+            ]);
+
+            $this->appendLuggageLogByResi(
+                $current->kode_resi ?: $this->ensureLuggageResi((int) $current->luggage_id),
+                'claim-'.$claimStatus,
+                'Klaim '.$current->type.' diubah menjadi '.$claimStatus.'. Nominal disetujui: Rp '.number_format($approvedAmount, 0, ',', '.'),
+            );
+
+            return [
+                'claim_status' => $claimStatus,
+                'claim_amount' => $claimAmount,
+                'approved_amount' => $approvedAmount,
+            ];
+        });
+
+        return $this->ok([
+            'message' => 'Klaim bagasi berhasil diperbarui.',
+            'claim' => $result,
+        ]);
     }
 
     public function assignmentsIndex(Request $request): JsonResponse
@@ -7749,6 +8159,113 @@ class AdminOpsApiController extends Controller
     private function luggageArrivedStatus(): string
     {
         return 'Tiba di Tujuan';
+    }
+
+    private function luggageForIncident(int $id, bool $write = false): ?object
+    {
+        if (! SchemaCache::hasTable('luggages')) {
+            return null;
+        }
+
+        $query = DB::table('luggages')->where('id', $id);
+        if ($write) {
+            $this->applyWriteTenantScopeIfExists($query, 'luggages');
+        } else {
+            $this->applyTenantScopeIfExists($query, 'luggages');
+        }
+
+        return $query->first([
+            'id',
+            $this->luggagesHasPoolIdColumn() ? 'pool_id' : DB::raw('NULL as pool_id'),
+            SchemaCache::hasColumn('luggages', 'tenant_id') ? 'tenant_id' : DB::raw('NULL as tenant_id'),
+            'rute',
+            'kode_resi',
+            'quantity',
+            SchemaCache::hasColumn('luggages', 'damaged_quantity') ? 'damaged_quantity' : DB::raw('0 as damaged_quantity'),
+            SchemaCache::hasColumn('luggages', 'lost_quantity') ? 'lost_quantity' : DB::raw('0 as lost_quantity'),
+            SchemaCache::hasColumn('luggages', 'condition_status') ? 'condition_status' : DB::raw("'normal' as condition_status"),
+            'status',
+            'payment_status',
+            'sender_name',
+            'receiver_name',
+        ]);
+    }
+
+    private function luggageIncidentRecord(int $incidentId): ?object
+    {
+        if (! SchemaCache::hasTable('luggage_incidents')) {
+            return null;
+        }
+
+        $query = DB::table('luggage_incidents as li')
+            ->join('luggages as l', 'l.id', '=', 'li.luggage_id')
+            ->where('li.id', $incidentId);
+        $this->applyTenantScopeIfExists($query, 'luggage_incidents', 'li');
+        $this->applyTenantScopeIfExists($query, 'luggages', 'l');
+
+        return $query->first([
+            'li.id',
+            'li.luggage_id',
+            'li.type',
+            'li.quantity',
+            'li.description',
+            'li.status',
+            'li.claim_status',
+            'li.claim_amount',
+            'li.approved_amount',
+            'li.resolution_note',
+            'l.pool_id',
+            'l.rute',
+            'l.kode_resi',
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function luggageIncidentSummary(object $luggage): array
+    {
+        return [
+            'id' => (int) $luggage->id,
+            'kode_resi' => $luggage->kode_resi,
+            'sender_name' => $luggage->sender_name,
+            'receiver_name' => $luggage->receiver_name,
+            'status' => $this->normalizeLuggageStatus($luggage->status ?? null),
+            'payment_status' => $luggage->payment_status,
+            'quantity' => (int) ($luggage->quantity ?? 0),
+            'damaged_quantity' => (int) ($luggage->damaged_quantity ?? 0),
+            'lost_quantity' => (int) ($luggage->lost_quantity ?? 0),
+            'condition_status' => $this->normalizeLuggageCondition(
+                $luggage->condition_status ?? null,
+                (int) ($luggage->damaged_quantity ?? 0),
+                (int) ($luggage->lost_quantity ?? 0),
+            ),
+        ];
+    }
+
+    private function normalizeLuggageCondition(
+        mixed $condition,
+        int $damagedQuantity = 0,
+        int $lostQuantity = 0,
+    ): string {
+        $raw = strtolower(trim((string) ($condition ?? '')));
+        if (in_array($raw, ['normal', 'damaged', 'lost', 'damaged_and_lost'], true)) {
+            return $raw;
+        }
+
+        if ($damagedQuantity > 0 && $lostQuantity > 0) {
+            return 'damaged_and_lost';
+        }
+
+        if ($damagedQuantity > 0) {
+            return 'damaged';
+        }
+
+        if ($lostQuantity > 0) {
+            return 'lost';
+        }
+
+        return 'normal';
     }
 
     private function normalizeLuggageStatus(mixed $status): string

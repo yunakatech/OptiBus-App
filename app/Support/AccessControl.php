@@ -31,6 +31,8 @@ class AccessControl
             'luggage.delete' => ['name' => 'Hapus Bagasi', 'group' => 'Bagasi'],
             'luggage.print' => ['name' => 'Cetak Resi Bagasi', 'group' => 'Bagasi'],
             'luggage.tracking' => ['name' => 'Update Tracking Bagasi', 'group' => 'Bagasi'],
+            'luggage.incident' => ['name' => 'Laporkan Insiden Bagasi', 'group' => 'Bagasi'],
+            'luggage.claim' => ['name' => 'Kelola Klaim Bagasi', 'group' => 'Bagasi'],
             'customer.view' => ['name' => 'Lihat Customer', 'group' => 'Customer'],
             'customer.create' => ['name' => 'Tambah Customer', 'group' => 'Customer'],
             'customer.update' => ['name' => 'Edit Customer', 'group' => 'Customer'],
@@ -77,7 +79,7 @@ class AccessControl
                 'permissions' => [
                     'dashboard.view', 'booking.view', 'booking.create', 'booking.update', 'booking.print',
                     'charter.view', 'charter.create', 'charter.update', 'charter.print',
-                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking',
+                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking', 'luggage.incident',
                     'customer.view', 'customer.create', 'customer.update', 'report.view', 'payment.update',
                     'master.view', 'driver.view', 'armada.view', 'logs.view',
                 ],
@@ -89,7 +91,7 @@ class AccessControl
                     'dashboard.view',
                     'booking.view', 'booking.create', 'booking.update', 'booking.delete', 'booking.print',
                     'charter.view', 'charter.create', 'charter.update', 'charter.delete', 'charter.print',
-                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.delete', 'luggage.print', 'luggage.tracking',
+                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.delete', 'luggage.print', 'luggage.tracking', 'luggage.incident', 'luggage.claim',
                     'customer.view', 'customer.create', 'customer.update', 'customer.delete', 'customer.import',
                     'report.view', 'report.export', 'payment.update',
                     'master.view', 'master.manage',
@@ -107,7 +109,7 @@ class AccessControl
             'operator-bagasi' => [
                 'name' => 'Operator Bagasi',
                 'description' => 'Fokus transaksi dan tracking bagasi.',
-                'permissions' => ['dashboard.view', 'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking', 'customer.view', 'customer.create', 'customer.update'],
+                'permissions' => ['dashboard.view', 'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking', 'luggage.incident', 'customer.view', 'customer.create', 'customer.update'],
             ],
             'operator-carter' => [
                 'name' => 'Operator Carter',
@@ -117,7 +119,7 @@ class AccessControl
             'keuangan' => [
                 'name' => 'Keuangan',
                 'description' => 'Melihat transaksi, update pembayaran, dan laporan.',
-                'permissions' => ['dashboard.view', 'booking.view', 'charter.view', 'luggage.view', 'customer.view', 'report.view', 'report.export', 'payment.update'],
+                'permissions' => ['dashboard.view', 'booking.view', 'charter.view', 'luggage.view', 'luggage.claim', 'customer.view', 'report.view', 'report.export', 'payment.update'],
             ],
             'viewer' => [
                 'name' => 'Viewer',

@@ -1,8 +1,8 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6291
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6574
+ * @route '/api/admin/users/invitations'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
@@ -11,13 +11,13 @@ export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 index.definition = {
     methods: ["get","head"],
-    url: '/api/admin/roles',
+    url: '/api/admin/users/invitations',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6291
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6574
+ * @route '/api/admin/users/invitations'
  */
 index.url = (options?: RouteQueryOptions) => {
     return index.definition.url + queryParams(options)
@@ -25,8 +25,8 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6291
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6574
+ * @route '/api/admin/users/invitations'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
@@ -34,8 +34,8 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6291
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6574
+ * @route '/api/admin/users/invitations'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
@@ -44,8 +44,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6291
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6574
+ * @route '/api/admin/users/invitations'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: index.url(options),
@@ -54,8 +54,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6291
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6574
+ * @route '/api/admin/users/invitations'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url(options),
@@ -63,8 +63,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6291
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6574
+ * @route '/api/admin/users/invitations'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url({
@@ -79,8 +79,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6307
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6590
+ * @route '/api/admin/users/invitations'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: save.url(options),
@@ -89,13 +89,13 @@ export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 save.definition = {
     methods: ["post"],
-    url: '/api/admin/roles',
+    url: '/api/admin/users/invitations',
 } satisfies RouteDefinition<["post"]>
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6307
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6590
+ * @route '/api/admin/users/invitations'
  */
 save.url = (options?: RouteQueryOptions) => {
     return save.definition.url + queryParams(options)
@@ -103,8 +103,8 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6307
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6590
+ * @route '/api/admin/users/invitations'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: save.url(options),
@@ -113,8 +113,8 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6307
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6590
+ * @route '/api/admin/users/invitations'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: save.url(options),
@@ -123,8 +123,8 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6307
- * @route '/api/admin/roles'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6590
+ * @route '/api/admin/users/invitations'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: save.url(options),
@@ -133,9 +133,83 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     
     save.form = saveForm
 /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::resend
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6666
+ * @route '/api/admin/users/invitations/{id}/resend'
+ */
+export const resend = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: resend.url(args, options),
+    method: 'post',
+})
+
+resend.definition = {
+    methods: ["post"],
+    url: '/api/admin/users/invitations/{id}/resend',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::resend
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6666
+ * @route '/api/admin/users/invitations/{id}/resend'
+ */
+resend.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    
+    if (Array.isArray(args)) {
+        args = {
+                    id: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        id: args.id,
+                }
+
+    return resend.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::resend
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6666
+ * @route '/api/admin/users/invitations/{id}/resend'
+ */
+resend.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: resend.url(args, options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::resend
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6666
+ * @route '/api/admin/users/invitations/{id}/resend'
+ */
+    const resendForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: resend.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::resend
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6666
+ * @route '/api/admin/users/invitations/{id}/resend'
+ */
+        resendForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: resend.url(args, options),
+            method: 'post',
+        })
+    
+    resend.form = resendForm
+/**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6426
- * @route '/api/admin/roles/{id}'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6695
+ * @route '/api/admin/users/invitations/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: deleteMethod.url(args, options),
@@ -144,13 +218,13 @@ export const deleteMethod = (args: { id: string | number } | [id: string | numbe
 
 deleteMethod.definition = {
     methods: ["delete"],
-    url: '/api/admin/roles/{id}',
+    url: '/api/admin/users/invitations/{id}',
 } satisfies RouteDefinition<["delete"]>
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6426
- * @route '/api/admin/roles/{id}'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6695
+ * @route '/api/admin/users/invitations/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -177,8 +251,8 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6426
- * @route '/api/admin/roles/{id}'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6695
+ * @route '/api/admin/users/invitations/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: deleteMethod.url(args, options),
@@ -187,8 +261,8 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6426
- * @route '/api/admin/roles/{id}'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6695
+ * @route '/api/admin/users/invitations/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: deleteMethod.url(args, {
@@ -202,8 +276,8 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6426
- * @route '/api/admin/roles/{id}'
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6695
+ * @route '/api/admin/users/invitations/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: deleteMethod.url(args, {
@@ -216,10 +290,11 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
         })
     
     deleteMethod.form = deleteMethodForm
-const roles = {
+const invitations = {
     index: Object.assign(index, index),
 save: Object.assign(save, save),
+resend: Object.assign(resend, resend),
 delete: Object.assign(deleteMethod, deleteMethod),
 }
 
-export default roles
+export default invitations

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\UserPreferenceController::update
- * @see app/Http/Controllers/UserPreferenceController.php:11
+ * @see app/Http/Controllers/UserPreferenceController.php:13
  * @route '/api/user/ui-preferences'
  */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -16,7 +16,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPreferenceController::update
- * @see app/Http/Controllers/UserPreferenceController.php:11
+ * @see app/Http/Controllers/UserPreferenceController.php:13
  * @route '/api/user/ui-preferences'
  */
 update.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPreferenceController::update
- * @see app/Http/Controllers/UserPreferenceController.php:11
+ * @see app/Http/Controllers/UserPreferenceController.php:13
  * @route '/api/user/ui-preferences'
  */
 update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -35,7 +35,7 @@ update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
     /**
 * @see \App\Http\Controllers\UserPreferenceController::update
- * @see app/Http/Controllers/UserPreferenceController.php:11
+ * @see app/Http/Controllers/UserPreferenceController.php:13
  * @route '/api/user/ui-preferences'
  */
     const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -50,7 +50,7 @@ update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
             /**
 * @see \App\Http\Controllers\UserPreferenceController::update
- * @see app/Http/Controllers/UserPreferenceController.php:11
+ * @see app/Http/Controllers/UserPreferenceController.php:13
  * @route '/api/user/ui-preferences'
  */
         updateForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
