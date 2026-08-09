@@ -12,6 +12,7 @@
     import History from 'lucide-svelte/icons/history';
     import IdCard from 'lucide-svelte/icons/id-card';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
+    import MessageCircle from 'lucide-svelte/icons/message-circle';
     import MapPinned from 'lucide-svelte/icons/map-pinned';
     import Plus from 'lucide-svelte/icons/plus';
     import Package from 'lucide-svelte/icons/package';
@@ -26,11 +27,13 @@
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { shouldPrefetchNavigationHref } from '@/lib/navigation';
     import { mobileHiddenMenuHrefs } from '@/lib/mobileNavigation';
+    import { getSupportWhatsappHref } from '@/lib/support';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
 
     const url = currentUrlState();
     const dashboardHref = toUrl(dashboard());
+    const supportHref = $derived(getSupportWhatsappHref(page.url || '/menu'));
     const canPrefetchDashboard = shouldPrefetchNavigationHref(dashboardHref);
     const permissions = $derived(page.props.auth?.permissions ?? []);
     const isSuperAdmin = $derived(
@@ -310,7 +313,9 @@
             >
                 <div class="space-y-2">
                     <h1 class="text-2xl font-semibold text-foreground">Menu</h1>
-                    <p class="hidden max-w-2xl text-sm text-muted-foreground sm:block">
+                    <p
+                        class="hidden max-w-2xl text-sm text-muted-foreground sm:block"
+                    >
                         Pilih tujuan yang kamu butuhkan. Susunan dibuat ringkas
                         supaya cepat dipindai di layar kecil.
                     </p>
@@ -341,7 +346,9 @@
                 <section
                     class="rounded-lg border border-dashed border-border/80 bg-card p-5 text-center shadow-sm"
                 >
-                    <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
+                    <div
+                        class="mx-auto flex max-w-sm flex-col items-center gap-3"
+                    >
                         <div
                             class="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary"
                         >
@@ -407,6 +414,21 @@
                         </div>
                     </section>
                 {/each}
+
+                <section
+                    class="rounded-lg border border-[#b9d8d0] bg-[#effaf7] p-3 shadow-sm sm:p-4"
+                >
+                    <a
+                        href={supportHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="flex min-h-[5.5rem] items-center justify-center gap-2 rounded-lg border border-[#b9d8d0] bg-white px-4 py-3 text-center text-sm font-semibold text-[#17655f] transition hover:-translate-y-0.5 hover:bg-[#f7fffd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168c7c] focus-visible:ring-offset-2"
+                        aria-label="Hubungi bantuan OptiBus melalui WhatsApp"
+                    >
+                        <MessageCircle class="size-5 shrink-0" />
+                        <span>Bantuan WhatsApp</span>
+                    </a>
+                </section>
             {/if}
         </div>
     </div>
