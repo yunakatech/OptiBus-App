@@ -2962,6 +2962,9 @@ class AdminOpsApiController extends Controller
         $hasCreatedAtColumn = isset($luggageColumns['created_at']);
         $hasStatusColumn = isset($luggageColumns['status']);
         $hasPaymentStatusColumn = isset($luggageColumns['payment_status']);
+        $hasConditionStatusColumn = isset($luggageColumns['condition_status']);
+        $hasDamagedQuantityColumn = isset($luggageColumns['damaged_quantity']);
+        $hasLostQuantityColumn = isset($luggageColumns['lost_quantity']);
         $hasTripAssignmentLink = isset($luggageColumns['trip_assignment_id']) && SchemaCache::hasTable('trip_assignments');
         $tripAssignmentColumns = $hasTripAssignmentLink ? array_flip(Schema::getColumnListing('trip_assignments')) : [];
         $canJoinDrivers = $hasTripAssignmentLink
@@ -3051,13 +3054,28 @@ class AdminOpsApiController extends Controller
         if ($status !== '' && $hasStatusColumn) {
             $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageStatusAliases($status));
         }
-        if ($condition !== '' && isset($luggageColumns['condition_status'])) {
-            $conditionValues = match ($this->normalizeLuggageCondition($condition)) {
-                'damaged' => ['damaged', 'damaged_and_lost'],
-                'lost' => ['lost', 'damaged_and_lost'],
-                default => [$this->normalizeLuggageCondition($condition)],
-            };
-            $query->whereIn('l.condition_status', $conditionValues);
+        if ($condition !== '' && ($hasConditionStatusColumn || ($hasDamagedQuantityColumn && $hasLostQuantityColumn))) {
+            $normalizedCondition = $this->normalizeLuggageCondition($condition);
+
+            if ($hasDamagedQuantityColumn && $hasLostQuantityColumn) {
+                match ($normalizedCondition) {
+                    'damaged' => $query->where('l.damaged_quantity', '>', 0),
+                    'lost' => $query->where('l.lost_quantity', '>', 0),
+                    'damaged_and_lost' => $query
+                        ->where('l.damaged_quantity', '>', 0)
+                        ->where('l.lost_quantity', '>', 0),
+                    default => $query
+                        ->where('l.damaged_quantity', '<=', 0)
+                        ->where('l.lost_quantity', '<=', 0),
+                };
+            } elseif ($hasConditionStatusColumn) {
+                $conditionValues = match ($normalizedCondition) {
+                    'damaged' => ['damaged', 'damaged_and_lost'],
+                    'lost' => ['lost', 'damaged_and_lost'],
+                    default => [$normalizedCondition],
+                };
+                $query->whereIn('l.condition_status', $conditionValues);
+            }
         }
         if ($paymentStatus !== '' && $hasPaymentStatusColumn) {
             $query->where('l.payment_status', $paymentStatus);
@@ -8249,10 +8267,6 @@ class AdminOpsApiController extends Controller
         int $lostQuantity = 0,
     ): string {
         $raw = strtolower(trim((string) ($condition ?? '')));
-        if (in_array($raw, ['normal', 'damaged', 'lost', 'damaged_and_lost'], true)) {
-            return $raw;
-        }
-
         if ($damagedQuantity > 0 && $lostQuantity > 0) {
             return 'damaged_and_lost';
         }
@@ -8263,6 +8277,10 @@ class AdminOpsApiController extends Controller
 
         if ($lostQuantity > 0) {
             return 'lost';
+        }
+
+        if (in_array($raw, ['normal', 'damaged', 'lost', 'damaged_and_lost'], true)) {
+            return $raw;
         }
 
         return 'normal';
