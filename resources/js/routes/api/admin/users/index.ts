@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import invitations from './invitations'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6463
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6481
  * @route '/api/admin/users'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6463
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6481
  * @route '/api/admin/users'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6463
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6481
  * @route '/api/admin/users'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6463
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6481
  * @route '/api/admin/users'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6463
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6481
  * @route '/api/admin/users'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6463
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6481
  * @route '/api/admin/users'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -64,7 +64,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6463
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6481
  * @route '/api/admin/users'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,7 +80,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6720
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6738
  * @route '/api/admin/users'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -95,7 +95,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6720
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6738
  * @route '/api/admin/users'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6720
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6738
  * @route '/api/admin/users'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -114,7 +114,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6720
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6738
  * @route '/api/admin/users'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -124,7 +124,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6720
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6738
  * @route '/api/admin/users'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -135,7 +135,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     save.form = saveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::verify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6996
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7014
  * @route '/api/admin/users/{id}/verify'
  */
 export const verify = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -150,7 +150,7 @@ verify.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::verify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6996
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7014
  * @route '/api/admin/users/{id}/verify'
  */
 verify.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -178,7 +178,7 @@ verify.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::verify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6996
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7014
  * @route '/api/admin/users/{id}/verify'
  */
 verify.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -188,7 +188,7 @@ verify.post = (args: { id: string | number } | [id: string | number ] | string |
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::verify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6996
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7014
  * @route '/api/admin/users/{id}/verify'
  */
     const verifyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -198,7 +198,7 @@ verify.post = (args: { id: string | number } | [id: string | number ] | string |
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::verify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6996
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7014
  * @route '/api/admin/users/{id}/verify'
  */
         verifyForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -209,7 +209,7 @@ verify.post = (args: { id: string | number } | [id: string | number ] | string |
     verify.form = verifyForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::unverify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7019
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7037
  * @route '/api/admin/users/{id}/unverify'
  */
 export const unverify = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -224,7 +224,7 @@ unverify.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::unverify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7019
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7037
  * @route '/api/admin/users/{id}/unverify'
  */
 unverify.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -252,7 +252,7 @@ unverify.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::unverify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7019
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7037
  * @route '/api/admin/users/{id}/unverify'
  */
 unverify.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -262,7 +262,7 @@ unverify.post = (args: { id: string | number } | [id: string | number ] | string
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::unverify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7019
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7037
  * @route '/api/admin/users/{id}/unverify'
  */
     const unverifyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -272,7 +272,7 @@ unverify.post = (args: { id: string | number } | [id: string | number ] | string
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::unverify
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7019
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7037
  * @route '/api/admin/users/{id}/unverify'
  */
         unverifyForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -283,7 +283,7 @@ unverify.post = (args: { id: string | number } | [id: string | number ] | string
     unverify.form = unverifyForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::sendVerification
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7044
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7062
  * @route '/api/admin/users/{id}/send-verification'
  */
 export const sendVerification = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -298,7 +298,7 @@ sendVerification.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::sendVerification
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7044
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7062
  * @route '/api/admin/users/{id}/send-verification'
  */
 sendVerification.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -326,7 +326,7 @@ sendVerification.url = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::sendVerification
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7044
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7062
  * @route '/api/admin/users/{id}/send-verification'
  */
 sendVerification.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -336,7 +336,7 @@ sendVerification.post = (args: { id: string | number } | [id: string | number ] 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::sendVerification
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7044
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7062
  * @route '/api/admin/users/{id}/send-verification'
  */
     const sendVerificationForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -346,7 +346,7 @@ sendVerification.post = (args: { id: string | number } | [id: string | number ] 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::sendVerification
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:7044
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:7062
  * @route '/api/admin/users/{id}/send-verification'
  */
         sendVerificationForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -357,7 +357,7 @@ sendVerification.post = (args: { id: string | number } | [id: string | number ] 
     sendVerification.form = sendVerificationForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6932
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6950
  * @route '/api/admin/users/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -372,7 +372,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6932
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6950
  * @route '/api/admin/users/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -400,7 +400,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6932
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6950
  * @route '/api/admin/users/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -410,7 +410,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6932
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6950
  * @route '/api/admin/users/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -425,7 +425,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:6932
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:6950
  * @route '/api/admin/users/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

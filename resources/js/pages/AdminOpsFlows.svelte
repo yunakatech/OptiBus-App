@@ -2491,6 +2491,11 @@
                 ? payload.luggages.map((row) => ({
                       ...row,
                       status: normalizeLuggageStatus(row.status),
+                      condition_status: normalizeLuggageCondition(
+                          row.condition_status,
+                          row.damaged_quantity,
+                          row.lost_quantity,
+                      ),
                   }))
                 : [];
             luggageMeta = payload.pagination ?? luggageMeta;
@@ -2665,6 +2670,11 @@
             ? r.luggages.map((row: Luggage) => ({
                   ...row,
                   status: normalizeLuggageStatus(row.status),
+                  condition_status: normalizeLuggageCondition(
+                      row.condition_status,
+                      row.damaged_quantity,
+                      row.lost_quantity,
+                  ),
               }))
             : [];
         luggageMeta = r.pagination ?? luggageMeta;
@@ -3159,6 +3169,51 @@
                 damaged_and_lost: 'Rusak & Hilang',
             } as Record<string, string>
         )[String(condition ?? '').toLowerCase()] ?? 'Normal';
+    };
+
+    const normalizeLuggageCondition = (
+        condition: string | null | undefined,
+        damagedQuantity: number | null | undefined = 0,
+        lostQuantity: number | null | undefined = 0,
+    ) => {
+        const damaged = Number(damagedQuantity || 0);
+        const lost = Number(lostQuantity || 0);
+
+        if (damaged > 0 && lost > 0) {
+            return 'damaged_and_lost';
+        }
+
+        if (damaged > 0) {
+            return 'damaged';
+        }
+
+        if (lost > 0) {
+            return 'lost';
+        }
+
+        const normalized = String(condition ?? '').trim().toLowerCase();
+
+        return ['normal', 'damaged', 'lost', 'damaged_and_lost'].includes(
+            normalized,
+        )
+            ? normalized
+            : 'normal';
+    };
+
+    const luggageConditionSummary = (row: Luggage) => {
+        const parts: string[] = [];
+        const damaged = Number(row.damaged_quantity || 0);
+        const lost = Number(row.lost_quantity || 0);
+
+        if (damaged > 0) {
+            parts.push(`Rusak: ${damaged}`);
+        }
+
+        if (lost > 0) {
+            parts.push(`Hilang: ${lost}`);
+        }
+
+        return parts.join(' | ');
     };
 
     const luggageConditionClass = (condition: string | null | undefined) => {
@@ -5374,7 +5429,7 @@
                         >
                             <dialog
                                 open
-                                class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border/80 bg-background p-5 shadow-2xl"
+                                class="relative m-0 max-h-[90vh] w-[min(100%,42rem)] max-w-2xl overflow-y-auto rounded-2xl border border-border/80 bg-background p-5 shadow-2xl"
                                 aria-labelledby="luggage-incident-title"
                             >
                                 <div class="flex items-start justify-between gap-4">
@@ -5686,7 +5741,11 @@
                                 {@const normalizedLuggageStatus =
                                     normalizeLuggageStatus(row.status)}
                                 {@const normalizedLuggageCondition =
-                                    row.condition_status ?? 'normal'}
+                                    normalizeLuggageCondition(
+                                        row.condition_status,
+                                        row.damaged_quantity,
+                                        row.lost_quantity,
+                                    )}
                                 {@const departureInfo =
                                     luggageDepartureInfo(row)}
                                 {@const lockedLuggageActions = [
@@ -5919,6 +5978,14 @@
                                         </p>
                                     </div>
 
+                                    {#if luggageConditionSummary(row)}
+                                        <p
+                                            class="mt-2 rounded-lg border border-rose-200/70 bg-rose-50/70 px-2 py-1 text-[8px] font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/20 dark:text-rose-300"
+                                        >
+                                            Kondisi: {luggageConditionSummary(row)}
+                                        </p>
+                                    {/if}
+
                                     <div
                                         class="mt-2 grid grid-cols-2 gap-1.5 text-[9px]"
                                     >
@@ -6040,6 +6107,10 @@
                                     >
                                     <th
                                         class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                        >Kondisi</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Berangkat</th
                                     >
                                     <th
@@ -6060,7 +6131,7 @@
                                 {#if luggages.length === 0}
                                     <tr>
                                         <td
-                                            colspan="11"
+                                            colspan="12"
                                             class="px-4 py-8 text-center text-[11px] text-muted-foreground"
                                         >
                                             Belum ada data bagasi yang cocok
@@ -6072,7 +6143,11 @@
                                         {@const normalizedLuggageStatus =
                                             normalizeLuggageStatus(row.status)}
                                         {@const normalizedLuggageCondition =
-                                            row.condition_status ?? 'normal'}
+                                            normalizeLuggageCondition(
+                                                row.condition_status,
+                                                row.damaged_quantity,
+                                                row.lost_quantity,
+                                            )}
                                         {@const departureInfo =
                                             luggageDepartureInfo(row)}
                                         <tr
@@ -6163,13 +6238,21 @@
                                                             row.status,
                                                         )}</span
                                                     >
-                                                    <span
-                                                        class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
-                                                        >{luggageConditionLabel(
-                                                            normalizedLuggageCondition,
-                                                        )}</span
-                                                    >
                                                 </div>
+                                            </td>
+                                            <td class="px-2.5 py-2 align-top">
+                                                <span
+                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
+                                                    >{luggageConditionLabel(
+                                                        normalizedLuggageCondition,
+                                                    )}</span
+                                                >
+                                                {#if luggageConditionSummary(row)}
+                                                    <span
+                                                        class="mt-1 block text-[7px] text-muted-foreground"
+                                                        >{luggageConditionSummary(row)}</span
+                                                    >
+                                                {/if}
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 {#if departureInfo}
