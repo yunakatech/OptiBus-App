@@ -78,7 +78,7 @@
         </div>
     </div>
     <div class="relative z-10 mt-5">
-        <SupportButton variant="compact" />
+        <SupportButton />
     </div>
     <GlobalLoadingOverlay />
     <GlobalConfirmDialog />
