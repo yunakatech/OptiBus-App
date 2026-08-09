@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { Link, router } from '@inertiajs/svelte';
+    import { Link, page, router } from '@inertiajs/svelte';
     import LogOut from 'lucide-svelte/icons/log-out';
+    import MessageCircle from 'lucide-svelte/icons/message-circle';
     import Settings from 'lucide-svelte/icons/settings';
     import {
         DropdownMenuGroup,
@@ -9,6 +10,7 @@
         DropdownMenuSeparator,
     } from '@/components/ui/dropdown-menu';
     import UserInfo from '@/components/UserInfo.svelte';
+    import { getSupportWhatsappHref } from '@/lib/support';
     import { toUrl } from '@/lib/utils';
     import { logout } from '@/routes';
     import { edit } from '@/routes/profile';
@@ -19,6 +21,8 @@
     }: {
         user: User;
     } = $props();
+
+    const supportHref = $derived(getSupportWhatsappHref(page.url || '/'));
 
     function handleLogout(propsOnClick?: () => void) {
         return () => {
@@ -49,6 +53,21 @@
         {/snippet}
     </DropdownMenuItem>
 </DropdownMenuGroup>
+<DropdownMenuSeparator />
+<DropdownMenuItem asChild>
+    {#snippet children(props)}
+        <a
+            {...props}
+            href={supportHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Hubungi bantuan OptiBus melalui WhatsApp"
+        >
+            <MessageCircle class="mr-2 h-4 w-4" />
+            Bantuan WhatsApp
+        </a>
+    {/snippet}
+</DropdownMenuItem>
 <DropdownMenuSeparator />
 <DropdownMenuItem asChild>
     {#snippet children(props)}
