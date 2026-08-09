@@ -154,6 +154,10 @@
         damaged_quantity?: number | null;
         lost_quantity?: number | null;
         condition_status?: string | null;
+        has_incident_history?: boolean | null;
+        latest_incident_status?: string | null;
+        latest_claim_status?: string | null;
+        incident_history_label?: string | null;
     };
     type LuggageIncident = {
         id: number;
@@ -3251,6 +3255,14 @@
             rejected: 'Ditolak',
         })[status] ?? status;
 
+    const luggageClaimHistoryLabel = (status: string | null | undefined) =>
+        ({
+            submitted: 'Klaim Diproses',
+            approved: 'Klaim Disetujui',
+            paid: 'Klaim Dibayar',
+            rejected: 'Klaim Ditolak',
+        })[String(status ?? '')] ?? null;
+
     const closeLuggageIncidentModal = () => {
         luggageIncidentModalOpen = false;
         luggageIncidentLuggage = null;
@@ -5610,10 +5622,18 @@
                                                                     {luggageIncidentStatusLabel(incident.status)}
                                                                 </span>
                                                                 <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold">
-                                                                    Klaim: {luggageClaimStatusLabel(incident.claim_status)}
+                                                                    Klaim: {luggageClaimHistoryLabel(incident.claim_status) ?? luggageClaimStatusLabel(incident.claim_status)}
                                                                 </span>
                                                             </div>
                                                             <p class="mt-2 text-sm text-foreground">{incident.description}</p>
+                                                            <p class="mt-1 text-xs text-muted-foreground">
+                                                                Klaim Rp {Number(incident.claim_amount ?? 0).toLocaleString('id-ID')}
+                                                                | Disetujui Rp {Number(incident.approved_amount ?? 0).toLocaleString('id-ID')}
+                                                            </p>
+                                                            <p class="mt-1 text-xs text-muted-foreground">
+                                                                Dilaporkan: {incident.reported_at ?? '-'}
+                                                                | Selesai: {incident.resolved_at ?? '-'}
+                                                            </p>
                                                             {#if incident.resolution_note}
                                                                 <p class="mt-1 text-xs text-muted-foreground">{incident.resolution_note}</p>
                                                             {/if}
@@ -5773,7 +5793,7 @@
                                             </p>
                                         </div>
                                         <div
-                                            class="flex shrink-0 items-center gap-1"
+                                            class="flex max-w-[72%] shrink-0 flex-wrap items-center justify-end gap-1"
                                         >
                                             <span
                                                 class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageStatusClass(row.status)}`}
@@ -5785,6 +5805,20 @@
                                             >
                                                 {luggageConditionLabel(normalizedLuggageCondition)}
                                             </span>
+                                            {#if row.has_incident_history && row.incident_history_label}
+                                                {#if row.latest_incident_status}
+                                                    <span
+                                                        class="rounded-full border border-border/70 bg-muted/30 px-1.5 py-0.5 text-[8px] font-semibold text-muted-foreground"
+                                                    >
+                                                        {luggageIncidentStatusLabel(row.latest_incident_status)}
+                                                    </span>
+                                                {/if}
+                                                <span
+                                                    class="rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[8px] font-semibold text-sky-700"
+                                                >
+                                                    {row.incident_history_label}
+                                                </span>
+                                            {/if}
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     {#snippet children(props)}
@@ -6252,6 +6286,20 @@
                                                         class="mt-1 block text-[7px] text-muted-foreground"
                                                         >{luggageConditionSummary(row)}</span
                                                     >
+                                                {/if}
+                                                {#if row.has_incident_history && row.incident_history_label}
+                                                    {#if row.latest_incident_status}
+                                                        <span
+                                                            class="mt-1 mr-1 inline-flex rounded-md border border-border/70 bg-muted/30 px-1.5 py-0.5 text-[7px] font-semibold text-muted-foreground"
+                                                        >
+                                                            {luggageIncidentStatusLabel(row.latest_incident_status)}
+                                                        </span>
+                                                    {/if}
+                                                    <span
+                                                        class="mt-1 inline-flex rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[7px] font-semibold text-sky-700"
+                                                    >
+                                                        {row.incident_history_label}
+                                                    </span>
                                                 {/if}
                                             </td>
                                             <td class="px-2.5 py-2 align-top">

@@ -110,9 +110,15 @@ class LuggageIncidentTest extends TestCase
             'resolution_note' => 'Kompensasi dibayarkan.',
         ])->assertOk();
 
+        $this->patchJson(route('api.admin.luggages.incidents.update', [
+            'incidentId' => $incident['id'],
+        ]), [
+            'status' => 'resolved',
+        ])->assertOk();
+
         $this->assertDatabaseHas('luggage_incidents', [
             'id' => $incident['id'],
-            'status' => 'approved',
+            'status' => 'resolved',
             'claim_status' => 'paid',
             'approved_amount' => 100000,
         ]);
@@ -120,6 +126,48 @@ class LuggageIncidentTest extends TestCase
             'id' => $luggageId,
             'status' => 'canceled',
             'payment_status' => 'Belum Bayar',
+        ]);
+
+        $this->getJson(route('api.admin.luggages.index', ['condition' => 'damaged']))
+            ->assertOk()
+            ->assertJsonPath('luggages.0.id', $luggageId)
+            ->assertJsonPath('luggages.0.condition_status', 'damaged')
+            ->assertJsonPath('luggages.0.has_incident_history', true)
+            ->assertJsonPath('luggages.0.latest_incident_status', 'resolved')
+            ->assertJsonPath('luggages.0.latest_claim_status', 'paid')
+            ->assertJsonPath('luggages.0.incident_history_label', 'Rusak - Klaim Dibayar');
+    }
+
+    public function test_new_incident_validation_uses_active_incidents_not_closed_history(): void
+    {
+        [$tenantId, $poolId] = $this->tenantAndPool('incident-active-history');
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->withSession(['active_pool_id' => $poolId]);
+        $luggageId = $this->luggage($tenantId, $poolId, 1);
+
+        $incident = $this->postJson(route('api.admin.luggages.incidents.store', ['id' => $luggageId]), [
+            'type' => 'damaged',
+            'quantity' => 1,
+            'description' => 'Insiden pertama selesai.',
+        ])->assertCreated()->json('incident');
+
+        foreach (['investigating', 'approved', 'resolved'] as $status) {
+            $this->patchJson(route('api.admin.luggages.incidents.update', [
+                'incidentId' => $incident['id'],
+            ]), ['status' => $status])->assertOk();
+        }
+
+        $this->postJson(route('api.admin.luggages.incidents.store', ['id' => $luggageId]), [
+            'type' => 'lost',
+            'quantity' => 1,
+            'description' => 'Insiden kedua setelah history selesai.',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('luggages', [
+            'id' => $luggageId,
+            'damaged_quantity' => 1,
+            'lost_quantity' => 1,
+            'condition_status' => 'damaged_and_lost',
         ]);
     }
 

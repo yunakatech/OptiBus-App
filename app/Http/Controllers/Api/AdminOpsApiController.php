@@ -2965,6 +2965,7 @@ class AdminOpsApiController extends Controller
         $hasConditionStatusColumn = isset($luggageColumns['condition_status']);
         $hasDamagedQuantityColumn = isset($luggageColumns['damaged_quantity']);
         $hasLostQuantityColumn = isset($luggageColumns['lost_quantity']);
+        $hasLuggageIncidentsTable = SchemaCache::hasTable('luggage_incidents');
         $hasTripAssignmentLink = isset($luggageColumns['trip_assignment_id']) && SchemaCache::hasTable('trip_assignments');
         $tripAssignmentColumns = $hasTripAssignmentLink ? array_flip(Schema::getColumnListing('trip_assignments')) : [];
         $canJoinDrivers = $hasTripAssignmentLink
@@ -3054,27 +3055,35 @@ class AdminOpsApiController extends Controller
         if ($status !== '' && $hasStatusColumn) {
             $this->applyLuggageStatusFilter($query, 'l.status', $this->luggageStatusAliases($status));
         }
-        if ($condition !== '' && ($hasConditionStatusColumn || ($hasDamagedQuantityColumn && $hasLostQuantityColumn))) {
+        if ($condition !== '' && ($hasConditionStatusColumn || ($hasDamagedQuantityColumn && $hasLostQuantityColumn) || $hasLuggageIncidentsTable)) {
             $normalizedCondition = $this->normalizeLuggageCondition($condition);
 
-            if ($hasDamagedQuantityColumn && $hasLostQuantityColumn) {
-                match ($normalizedCondition) {
-                    'damaged' => $query->where('l.damaged_quantity', '>', 0),
-                    'lost' => $query->where('l.lost_quantity', '>', 0),
-                    'damaged_and_lost' => $query
-                        ->where('l.damaged_quantity', '>', 0)
-                        ->where('l.lost_quantity', '>', 0),
-                    default => $query
-                        ->where('l.damaged_quantity', '<=', 0)
-                        ->where('l.lost_quantity', '<=', 0),
-                };
-            } elseif ($hasConditionStatusColumn) {
-                $conditionValues = match ($normalizedCondition) {
-                    'damaged' => ['damaged', 'damaged_and_lost'],
-                    'lost' => ['lost', 'damaged_and_lost'],
-                    default => [$normalizedCondition],
-                };
-                $query->whereIn('l.condition_status', $conditionValues);
+            if ($normalizedCondition === 'normal') {
+                if ($hasDamagedQuantityColumn) {
+                    $query->where('l.damaged_quantity', '<=', 0);
+                }
+                if ($hasLostQuantityColumn) {
+                    $query->where('l.lost_quantity', '<=', 0);
+                }
+                if ($hasLuggageIncidentsTable) {
+                    $query->whereNotExists(function ($incidentQuery): void {
+                        $incidentQuery
+                            ->select(DB::raw(1))
+                            ->from('luggage_incidents as li')
+                            ->whereColumn('li.luggage_id', 'l.id');
+                        $this->applyTenantScopeIfExists($incidentQuery, 'luggage_incidents', 'li');
+                    });
+                } elseif ($hasConditionStatusColumn) {
+                    $query->where('l.condition_status', 'normal');
+                }
+            } elseif ($normalizedCondition === 'damaged_and_lost') {
+                $this->applyLuggageHistoricalIncidentTypeFilter($query, 'damaged', $hasDamagedQuantityColumn, $hasLuggageIncidentsTable, $hasConditionStatusColumn);
+                $this->applyLuggageHistoricalIncidentTypeFilter($query, 'lost', $hasLostQuantityColumn, $hasLuggageIncidentsTable, $hasConditionStatusColumn);
+            } else {
+                $hasQuantityColumn = $normalizedCondition === 'damaged'
+                    ? $hasDamagedQuantityColumn
+                    : $hasLostQuantityColumn;
+                $this->applyLuggageHistoricalIncidentTypeFilter($query, $normalizedCondition, $hasQuantityColumn, $hasLuggageIncidentsTable, $hasConditionStatusColumn);
             }
         }
         if ($paymentStatus !== '' && $hasPaymentStatusColumn) {
@@ -3145,15 +3154,43 @@ class AdminOpsApiController extends Controller
         $this->applyTenantScopeIfExists($query, 'luggages', 'l');
 
         $result = $this->paginateQuery($query, $page, $perPage);
+        $historyByLuggage = $this->luggageIncidentHistoryForIds(
+            collect($result['data'])
+                ->map(fn ($row): int => (int) $row->id)
+                ->all(),
+        );
         $rows = collect($result['data'])
-            ->map(function ($row) {
+            ->map(function ($row) use ($historyByLuggage) {
                 $item = (array) $row;
                 $item['status'] = $this->normalizeLuggageStatus($item['status'] ?? null);
+                $history = $historyByLuggage[(int) ($item['id'] ?? 0)] ?? null;
+                $damagedQuantity = max(
+                    0,
+                    (int) ($item['damaged_quantity'] ?? 0),
+                    (int) ($history['damaged_quantity'] ?? 0),
+                );
+                $lostQuantity = max(
+                    0,
+                    (int) ($item['lost_quantity'] ?? 0),
+                    (int) ($history['lost_quantity'] ?? 0),
+                );
+                $item['damaged_quantity'] = $damagedQuantity;
+                $item['lost_quantity'] = $lostQuantity;
                 $item['condition_status'] = $this->normalizeLuggageCondition(
                     $item['condition_status'] ?? null,
-                    (int) ($item['damaged_quantity'] ?? 0),
-                    (int) ($item['lost_quantity'] ?? 0),
+                    $damagedQuantity,
+                    $lostQuantity,
                 );
+                $item['has_incident_history'] = $history !== null;
+                $item['latest_incident_status'] = $history['latest_incident_status'] ?? null;
+                $item['latest_claim_status'] = $history['latest_claim_status'] ?? null;
+                $item['incident_history_label'] = $history === null
+                    ? null
+                    : $this->luggageIncidentHistoryLabel(
+                        $item['condition_status'],
+                        $history['latest_incident_status'] ?? null,
+                        $history['latest_claim_status'] ?? null,
+                    );
                 $item['route_name'] = trim((string) ($item['route_name'] ?? '')) !== ''
                     ? (string) $item['route_name']
                     : (string) ($item['rute'] ?? '');
@@ -3167,6 +3204,47 @@ class AdminOpsApiController extends Controller
             'luggages' => $rows,
             'pagination' => $result['meta'],
         ]);
+    }
+
+    private function applyLuggageHistoricalIncidentTypeFilter(
+        $query,
+        string $type,
+        bool $hasQuantityColumn,
+        bool $hasIncidentTable,
+        bool $hasConditionStatusColumn,
+    ): void {
+        $quantityColumn = $type === 'damaged' ? 'damaged_quantity' : 'lost_quantity';
+
+        $query->where(function ($conditionQuery) use ($type, $quantityColumn, $hasQuantityColumn, $hasIncidentTable, $hasConditionStatusColumn): void {
+            $hasSource = false;
+
+            if ($hasQuantityColumn) {
+                $conditionQuery->where('l.'.$quantityColumn, '>', 0);
+                $hasSource = true;
+            }
+
+            if ($hasIncidentTable) {
+                $exists = function ($incidentQuery) use ($type): void {
+                    $incidentQuery
+                        ->select(DB::raw(1))
+                        ->from('luggage_incidents as li')
+                        ->whereColumn('li.luggage_id', 'l.id')
+                        ->where('li.type', $type);
+                    $this->applyTenantScopeIfExists($incidentQuery, 'luggage_incidents', 'li');
+                };
+
+                if ($hasSource) {
+                    $conditionQuery->orWhereExists($exists);
+                } else {
+                    $conditionQuery->whereExists($exists);
+                    $hasSource = true;
+                }
+            }
+
+            if (! $hasSource && $hasConditionStatusColumn) {
+                $conditionQuery->whereIn('l.condition_status', [$type, 'damaged_and_lost']);
+            }
+        });
     }
 
     public function luggagesSave(Request $request): JsonResponse
@@ -3695,15 +3773,26 @@ class AdminOpsApiController extends Controller
             }
 
             $quantity = max(1, (int) ($locked->quantity ?? 1));
-            $damagedQuantity = max(0, (int) ($locked->damaged_quantity ?? 0));
-            $lostQuantity = max(0, (int) ($locked->lost_quantity ?? 0));
             $reportedQuantity = (int) $data['quantity'];
+            $historicalQuantities = $this->luggageIncidentQuantities($id);
+            $activeQuantities = $this->luggageIncidentQuantities($id, true);
 
-            if ($damagedQuantity + $lostQuantity + $reportedQuantity > $quantity) {
+            if ($quantity < $activeQuantities['damaged'] + $activeQuantities['lost'] + $reportedQuantity) {
                 throw ValidationException::withMessages([
                     'quantity' => 'Jumlah insiden melebihi jumlah barang pada resi ini.',
                 ]);
             }
+
+            $damagedQuantity = max(
+                0,
+                (int) ($locked->damaged_quantity ?? 0),
+                $historicalQuantities['damaged'],
+            );
+            $lostQuantity = max(
+                0,
+                (int) ($locked->lost_quantity ?? 0),
+                $historicalQuantities['lost'],
+            );
 
             if ($data['type'] === 'damaged') {
                 $damagedQuantity += $reportedQuantity;
@@ -3820,26 +3909,18 @@ class AdminOpsApiController extends Controller
                 ]);
             }
 
-            $wasActive = in_array($currentStatus, ['reported', 'investigating', 'approved'], true);
             $willClose = in_array($nextStatus, ['rejected', 'resolved'], true);
-            $damagedQuantity = max(0, (int) ($current->damaged_quantity ?? 0));
-            $lostQuantity = max(0, (int) ($current->lost_quantity ?? 0));
-
-            if ($wasActive && $willClose) {
-                if ($current->type === 'damaged') {
-                    $damagedQuantity = max(0, $damagedQuantity - (int) $current->quantity);
-                } else {
-                    $lostQuantity = max(0, $lostQuantity - (int) $current->quantity);
-                }
-
-                $luggageUpdate = DB::table('luggages')->where('id', (int) $current->luggage_id);
-                $this->applyWriteTenantScopeIfExists($luggageUpdate, 'luggages');
-                $luggageUpdate->update([
-                    'damaged_quantity' => $damagedQuantity,
-                    'lost_quantity' => $lostQuantity,
-                    'condition_status' => $this->normalizeLuggageCondition(null, $damagedQuantity, $lostQuantity),
-                ]);
-            }
+            $historicalQuantities = $this->luggageIncidentQuantities((int) $current->luggage_id);
+            $damagedQuantity = max(
+                0,
+                (int) ($current->damaged_quantity ?? 0),
+                $historicalQuantities['damaged'],
+            );
+            $lostQuantity = max(
+                0,
+                (int) ($current->lost_quantity ?? 0),
+                $historicalQuantities['lost'],
+            );
 
             $incidentPayload = [
                 'status' => $nextStatus,
@@ -8239,10 +8320,143 @@ class AdminOpsApiController extends Controller
     }
 
     /**
+     * @return array{damaged: int, lost: int}
+     */
+    private function luggageIncidentQuantities(int $luggageId, bool $activeOnly = false): array
+    {
+        if (! SchemaCache::hasTable('luggage_incidents')) {
+            return ['damaged' => 0, 'lost' => 0];
+        }
+
+        $query = DB::table('luggage_incidents')
+            ->where('luggage_id', $luggageId);
+        $this->applyTenantScopeIfExists($query, 'luggage_incidents');
+
+        if ($activeOnly) {
+            $query->whereIn('status', ['reported', 'investigating', 'approved']);
+        }
+
+        $quantities = ['damaged' => 0, 'lost' => 0];
+        foreach ($query->get(['type', 'quantity']) as $incident) {
+            $type = (string) $incident->type;
+            if (isset($quantities[$type])) {
+                $quantities[$type] += max(0, (int) $incident->quantity);
+            }
+        }
+
+        return $quantities;
+    }
+
+    /**
+     * @param  array<int, int>  $luggageIds
+     * @return array<int, array<string, mixed>>
+     */
+    private function luggageIncidentHistoryForIds(array $luggageIds): array
+    {
+        $luggageIds = array_values(array_filter(array_map('intval', $luggageIds), fn (int $id): bool => $id > 0));
+        if ($luggageIds === [] || ! SchemaCache::hasTable('luggage_incidents')) {
+            return [];
+        }
+
+        $query = DB::table('luggage_incidents as li')
+            ->whereIn('li.luggage_id', $luggageIds)
+            ->orderByDesc('li.id');
+        $this->applyTenantScopeIfExists($query, 'luggage_incidents', 'li');
+
+        $history = [];
+        foreach ($query->get([
+            'li.id',
+            'li.luggage_id',
+            'li.type',
+            'li.quantity',
+            'li.status',
+            'li.claim_status',
+        ]) as $incident) {
+            $luggageId = (int) $incident->luggage_id;
+            $history[$luggageId] ??= [
+                'damaged_quantity' => 0,
+                'lost_quantity' => 0,
+                'latest_incident_status' => null,
+                'latest_claim_status' => null,
+            ];
+
+            $type = (string) $incident->type;
+            if ($type === 'damaged') {
+                $history[$luggageId]['damaged_quantity'] += max(0, (int) $incident->quantity);
+            } elseif ($type === 'lost') {
+                $history[$luggageId]['lost_quantity'] += max(0, (int) $incident->quantity);
+            }
+
+            if ($history[$luggageId]['latest_incident_status'] === null) {
+                $history[$luggageId]['latest_incident_status'] = (string) $incident->status;
+                $history[$luggageId]['latest_claim_status'] = (string) $incident->claim_status;
+            }
+        }
+
+        return $history;
+    }
+
+    private function luggageIncidentHistoryLabel(
+        string $condition,
+        ?string $incidentStatus,
+        ?string $claimStatus,
+    ): string {
+        $conditionLabel = match ($condition) {
+            'damaged' => 'Rusak',
+            'lost' => 'Hilang',
+            'damaged_and_lost' => 'Rusak & Hilang',
+            default => 'Normal',
+        };
+        $claimLabel = $this->luggageClaimHistoryLabel($claimStatus);
+
+        return $conditionLabel.' - '.($claimLabel ?? $this->luggageIncidentStatusLabel($incidentStatus));
+    }
+
+    private function luggageIncidentStatusLabel(?string $status): string
+    {
+        return match ($status) {
+            'reported' => 'Dilaporkan',
+            'investigating' => 'Diperiksa',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+            'resolved' => 'Selesai',
+            default => 'Riwayat Insiden',
+        };
+    }
+
+    private function luggageClaimHistoryLabel(?string $status): ?string
+    {
+        return match ($status) {
+            'submitted' => 'Klaim Diproses',
+            'approved' => 'Klaim Disetujui',
+            'paid' => 'Klaim Dibayar',
+            'rejected' => 'Klaim Ditolak',
+            default => null,
+        };
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function luggageIncidentSummary(object $luggage): array
     {
+        $history = $this->luggageIncidentHistoryForIds([(int) $luggage->id])[(int) $luggage->id] ?? null;
+        $damagedQuantity = max(
+            0,
+            (int) ($luggage->damaged_quantity ?? 0),
+            (int) ($history['damaged_quantity'] ?? 0),
+        );
+        $lostQuantity = max(
+            0,
+            (int) ($luggage->lost_quantity ?? 0),
+            (int) ($history['lost_quantity'] ?? 0),
+        );
+        $conditionStatus = $this->normalizeLuggageCondition(
+            $luggage->condition_status ?? null,
+            $damagedQuantity,
+            $lostQuantity,
+        );
+
         return [
             'id' => (int) $luggage->id,
             'kode_resi' => $luggage->kode_resi,
@@ -8251,13 +8465,19 @@ class AdminOpsApiController extends Controller
             'status' => $this->normalizeLuggageStatus($luggage->status ?? null),
             'payment_status' => $luggage->payment_status,
             'quantity' => (int) ($luggage->quantity ?? 0),
-            'damaged_quantity' => (int) ($luggage->damaged_quantity ?? 0),
-            'lost_quantity' => (int) ($luggage->lost_quantity ?? 0),
-            'condition_status' => $this->normalizeLuggageCondition(
-                $luggage->condition_status ?? null,
-                (int) ($luggage->damaged_quantity ?? 0),
-                (int) ($luggage->lost_quantity ?? 0),
-            ),
+            'damaged_quantity' => $damagedQuantity,
+            'lost_quantity' => $lostQuantity,
+            'condition_status' => $conditionStatus,
+            'has_incident_history' => $history !== null,
+            'latest_incident_status' => $history['latest_incident_status'] ?? null,
+            'latest_claim_status' => $history['latest_claim_status'] ?? null,
+            'incident_history_label' => $history === null
+                ? null
+                : $this->luggageIncidentHistoryLabel(
+                    $conditionStatus,
+                    $history['latest_incident_status'] ?? null,
+                    $history['latest_claim_status'] ?? null,
+                ),
         ];
     }
 
