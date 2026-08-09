@@ -7704,6 +7704,7 @@
                                                                     </DropdownMenuTrigger>
                                                                     <DropdownMenuContent
                                                                         align="end"
+                                                                        side="top"
                                                                         sideOffset={8}
                                                                         class="z-[120] w-44"
                                                                     >
