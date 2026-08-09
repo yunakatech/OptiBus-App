@@ -3782,6 +3782,14 @@
             query.q = armadaSearch.trim();
         }
 
+        if (activeTab === 'armadas' && Number(armadaPoolId || 0) > 0) {
+            query.pool_id = Number(armadaPoolId || 0);
+        }
+
+        if (activeTab === 'armadas' && armadaPeriod.trim() !== '') {
+            query.period = armadaPeriod.trim();
+        }
+
         if (activeTab === 'pools' && poolSearch.trim() !== '') {
             query.q = poolSearch.trim();
         }

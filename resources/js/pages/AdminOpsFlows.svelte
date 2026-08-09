@@ -151,6 +151,27 @@
         payment_status: string | null;
         kode_resi: string | null;
         created_at: string | null;
+        damaged_quantity?: number | null;
+        lost_quantity?: number | null;
+        condition_status?: string | null;
+    };
+    type LuggageIncident = {
+        id: number;
+        luggage_id: number;
+        type: 'damaged' | 'lost';
+        quantity: number;
+        description: string;
+        status: 'reported' | 'investigating' | 'approved' | 'rejected' | 'resolved' | string;
+        claim_status: 'none' | 'submitted' | 'approved' | 'paid' | 'rejected' | string;
+        claim_amount: number | string;
+        approved_amount: number | string;
+        resolution_note: string | null;
+        reported_by_user_id?: number | null;
+        reviewed_by_user_id?: number | null;
+        reported_at?: string | null;
+        resolved_at?: string | null;
+        created_at?: string | null;
+        updated_at?: string | null;
     };
     type Assignment = {
         id: number;
@@ -261,6 +282,13 @@
     const canLuggagePrint = $derived(
         hasPermission(grantedPermissions, 'luggage.print'),
     );
+    const canLuggageIncident = $derived(
+        !tenantWriteDisabled &&
+            hasPermission(grantedPermissions, 'luggage.incident'),
+    );
+    const canLuggageClaim = $derived(
+        !tenantWriteDisabled && hasPermission(grantedPermissions, 'luggage.claim'),
+    );
     const canBookingUpdate = $derived(
         !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.update'),
     );
@@ -281,6 +309,20 @@
     let savingAssignment = $state(false);
     let pendingDeleteKey = $state('');
     let pendingLuggageActionKey = $state('');
+    let luggageIncidentModalOpen = $state(false);
+    let luggageIncidentModalMode = $state<'report' | 'history' | 'claim'>('report');
+    let luggageIncidentBusy = $state(false);
+    let luggageIncidentLuggage = $state<Luggage | null>(null);
+    let luggageIncidentRows = $state<LuggageIncident[]>([]);
+    let luggageIncidentSelected = $state<LuggageIncident | null>(null);
+    let luggageIncidentType = $state<'damaged' | 'lost'>('damaged');
+    let luggageIncidentQuantity = $state(1);
+    let luggageIncidentDescription = $state('');
+    let luggageIncidentStatus = $state('investigating');
+    let luggageIncidentClaimStatus = $state('submitted');
+    let luggageIncidentClaimAmount = $state(0);
+    let luggageIncidentApprovedAmount = $state(0);
+    let luggageIncidentResolutionNote = $state('');
 
     let routes = $state<RouteRow[]>([]);
     let units = $state<Unit[]>([]);
@@ -334,6 +376,7 @@
     let luggageFilterDateInput = $state<HTMLInputElement | null>(null);
     let luggageFilterDatePicker: FlatpickrInstance | null = null;
     let luggageStatusFilter = $state('');
+    let luggageConditionFilter = $state('');
     let exportFromDateInput = $state<HTMLInputElement | null>(null);
     let exportToDateInput = $state<HTMLInputElement | null>(null);
     let exportFromDatePicker: FlatpickrInstance | null = null;
@@ -945,7 +988,7 @@
     };
 
     const sendApiRequest = async (
-        method: 'GET' | 'POST' | 'DELETE',
+        method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
         url: string,
         body?: Record<string, unknown>,
     ) => {
@@ -976,7 +1019,7 @@
     };
 
     const api = async (
-        method: 'GET' | 'POST' | 'DELETE',
+        method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
         url: string,
         body?: Record<string, unknown>,
     ) => {
@@ -1055,6 +1098,10 @@
 
         if (luggageStatusFilter !== '') {
             q.set('status', luggageStatusFilter);
+        }
+
+        if (luggageConditionFilter !== '') {
+            q.set('condition', luggageConditionFilter);
         }
 
         if (filterQuery.trim() !== '') {
@@ -3103,6 +3150,197 @@
         }
     };
 
+    const luggageConditionLabel = (condition: string | null | undefined) => {
+        return (
+            {
+                normal: 'Normal',
+                damaged: 'Rusak',
+                lost: 'Hilang',
+                damaged_and_lost: 'Rusak & Hilang',
+            } as Record<string, string>
+        )[String(condition ?? '').toLowerCase()] ?? 'Normal';
+    };
+
+    const luggageConditionClass = (condition: string | null | undefined) => {
+        const normalized = String(condition ?? '').toLowerCase();
+
+        if (normalized === 'lost' || normalized === 'damaged_and_lost') {
+            return 'bg-rose-100 text-rose-700 border border-rose-200';
+        }
+
+        if (normalized === 'damaged') {
+            return 'bg-orange-100 text-orange-700 border border-orange-200';
+        }
+
+        return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+    };
+
+    const luggageIncidentTypeLabel = (type: string) =>
+        type === 'lost' ? 'Hilang' : 'Rusak';
+
+    const luggageIncidentStatusLabel = (status: string) =>
+        ({
+            reported: 'Dilaporkan',
+            investigating: 'Diperiksa',
+            approved: 'Disetujui',
+            rejected: 'Ditolak',
+            resolved: 'Selesai',
+        })[status] ?? status;
+
+    const luggageClaimStatusLabel = (status: string) =>
+        ({
+            none: 'Belum diajukan',
+            submitted: 'Diajukan',
+            approved: 'Disetujui',
+            paid: 'Dibayar',
+            rejected: 'Ditolak',
+        })[status] ?? status;
+
+    const closeLuggageIncidentModal = () => {
+        luggageIncidentModalOpen = false;
+        luggageIncidentLuggage = null;
+        luggageIncidentRows = [];
+        luggageIncidentSelected = null;
+        luggageIncidentBusy = false;
+    };
+
+    const openLuggageIncidentReport = (row: Luggage, type: 'damaged' | 'lost') => {
+        luggageIncidentLuggage = row;
+        luggageIncidentModalMode = 'report';
+        luggageIncidentType = type;
+        luggageIncidentQuantity = 1;
+        luggageIncidentDescription = '';
+        luggageIncidentModalOpen = true;
+    };
+
+    const loadLuggageIncidents = async (
+        row: Luggage,
+        mode: 'history' | 'claim' = 'history',
+    ) => {
+        luggageIncidentBusy = true;
+        luggageIncidentLuggage = row;
+        luggageIncidentModalMode = mode;
+        luggageIncidentModalOpen = true;
+        message = '';
+        error = '';
+
+        try {
+            const payload = await api(
+                'GET',
+                `/api/admin/luggages/${row.id}/incidents`,
+            );
+            luggageIncidentRows = Array.isArray(payload.incidents)
+                ? (payload.incidents as LuggageIncident[])
+                : [];
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal memuat insiden bagasi.';
+        } finally {
+            luggageIncidentBusy = false;
+        }
+    };
+
+    const submitLuggageIncident = async (event: SubmitEvent) => {
+        event.preventDefault();
+        if (!luggageIncidentLuggage || !canLuggageIncident) {
+            return;
+        }
+
+        luggageIncidentBusy = true;
+        message = '';
+        error = '';
+
+        try {
+            await api(
+                'POST',
+                `/api/admin/luggages/${luggageIncidentLuggage.id}/incidents`,
+                {
+                    type: luggageIncidentType,
+                    quantity: Number(luggageIncidentQuantity || 0),
+                    description: luggageIncidentDescription,
+                },
+            );
+            message = 'Insiden bagasi berhasil dilaporkan.';
+            await reloadActiveFlowList(luggageMeta.page, false);
+            await loadLuggageIncidents(luggageIncidentLuggage, 'history');
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal melaporkan insiden bagasi.';
+        } finally {
+            luggageIncidentBusy = false;
+        }
+    };
+
+    const updateLuggageIncident = async (
+        incident: LuggageIncident,
+        status: string,
+    ) => {
+        if (!canLuggageIncident || luggageIncidentBusy) {
+            return;
+        }
+
+        luggageIncidentBusy = true;
+        message = '';
+        error = '';
+
+        try {
+            await api('PATCH', `/api/admin/luggages/incidents/${incident.id}`, {
+                status,
+                resolution_note: luggageIncidentResolutionNote,
+            });
+            message = 'Status insiden berhasil diperbarui.';
+            if (luggageIncidentLuggage) {
+                await reloadActiveFlowList(luggageMeta.page, false);
+                await loadLuggageIncidents(luggageIncidentLuggage, 'history');
+            }
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal memperbarui insiden bagasi.';
+        } finally {
+            luggageIncidentBusy = false;
+        }
+    };
+
+    const openLuggageClaim = (incident: LuggageIncident) => {
+        luggageIncidentSelected = incident;
+        luggageIncidentModalMode = 'claim';
+        luggageIncidentClaimStatus =
+            incident.claim_status === 'none' ? 'submitted' : incident.claim_status;
+        luggageIncidentClaimAmount = Number(incident.claim_amount ?? 0);
+        luggageIncidentApprovedAmount = Number(incident.approved_amount ?? 0);
+        luggageIncidentResolutionNote = incident.resolution_note ?? '';
+    };
+
+    const submitLuggageClaim = async (event: SubmitEvent) => {
+        event.preventDefault();
+        if (!luggageIncidentSelected || !canLuggageClaim) {
+            return;
+        }
+
+        luggageIncidentBusy = true;
+        message = '';
+        error = '';
+
+        try {
+            await api(
+                'POST',
+                `/api/admin/luggages/incidents/${luggageIncidentSelected.id}/claim`,
+                {
+                    claim_status: luggageIncidentClaimStatus,
+                    claim_amount: Number(luggageIncidentClaimAmount || 0),
+                    approved_amount: Number(luggageIncidentApprovedAmount || 0),
+                    resolution_note: luggageIncidentResolutionNote,
+                },
+            );
+            message = 'Klaim bagasi berhasil diperbarui.';
+            if (luggageIncidentLuggage) {
+                await reloadActiveFlowList(luggageMeta.page, false);
+                await loadLuggageIncidents(luggageIncidentLuggage, 'history');
+            }
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal memperbarui klaim bagasi.';
+        } finally {
+            luggageIncidentBusy = false;
+        }
+    };
+
     const openLuggagePrint = (id: number) => {
         if (id <= 0) {
             return;
@@ -5120,9 +5358,271 @@
                                     }}
                                 >
                                     Tambah Bagasi
-                                </Button>{/if}
+                            </Button>{/if}
                         </div>
                     </div>
+
+                    {#if luggageIncidentModalOpen}
+                        <div
+                            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+                            role="presentation"
+                            onclick={(event) => {
+                                if (event.target === event.currentTarget) {
+                                    closeLuggageIncidentModal();
+                                }
+                            }}
+                        >
+                            <dialog
+                                open
+                                class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border/80 bg-background p-5 shadow-2xl"
+                                aria-labelledby="luggage-incident-title"
+                            >
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p
+                                            id="luggage-incident-title"
+                                            class="text-base font-semibold"
+                                        >
+                                            {luggageIncidentModalMode === 'report'
+                                                ? `Laporkan Insiden ${luggageIncidentTypeLabel(luggageIncidentType)}`
+                                                : luggageIncidentModalMode === 'claim'
+                                                  ? 'Proses Klaim Bagasi'
+                                                  : 'Riwayat Insiden Bagasi'}
+                                        </p>
+                                        <p class="mt-1 text-xs text-muted-foreground">
+                                            {luggageIncidentLuggage?.kode_resi ??
+                                                `Bagasi #${luggageIncidentLuggage?.id ?? '-'}`}
+                                            -
+                                            {luggageIncidentLuggage?.sender_name ?? '-'}
+                                            ke
+                                            {luggageIncidentLuggage?.receiver_name ?? '-'}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-8 rounded-lg px-3 text-xs"
+                                        onclick={closeLuggageIncidentModal}
+                                    >
+                                        Tutup
+                                    </Button>
+                                </div>
+
+                                {#if luggageIncidentBusy}
+                                    <div
+                                        class="mt-6 rounded-xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground"
+                                    >
+                                        Memuat proses insiden...
+                                    </div>
+                                {:else if luggageIncidentModalMode === 'report'}
+                                    <form
+                                        class="mt-5 space-y-4"
+                                        onsubmit={submitLuggageIncident}
+                                    >
+                                        <div class="grid gap-3 sm:grid-cols-2">
+                                            <label class="space-y-1 text-xs font-medium">
+                                                Jenis Insiden
+                                                <select
+                                                    class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                                                    bind:value={luggageIncidentType}
+                                                >
+                                                    <option value="damaged">Rusak</option>
+                                                    <option value="lost">Hilang</option>
+                                                </select>
+                                            </label>
+                                            <label class="space-y-1 text-xs font-medium">
+                                                Jumlah Barang
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max={luggageIncidentLuggage?.quantity ?? 1}
+                                                    bind:value={luggageIncidentQuantity}
+                                                    required
+                                                />
+                                            </label>
+                                        </div>
+                                        <label class="block space-y-1 text-xs font-medium">
+                                            Uraian Kejadian
+                                            <textarea
+                                                class="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                                bind:value={luggageIncidentDescription}
+                                                placeholder="Jelaskan kondisi barang dan lokasi kejadian"
+                                                required
+                                            ></textarea>
+                                        </label>
+                                        <p class="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                                            Status pengiriman dan pembayaran tidak berubah otomatis.
+                                            Insiden akan masuk riwayat untuk diperiksa.
+                                        </p>
+                                        <div class="flex justify-end gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                class="rounded-xl"
+                                                onclick={closeLuggageIncidentModal}
+                                            >
+                                                Batal
+                                            </Button>
+                                            <Button type="submit" class="rounded-xl">
+                                                Simpan Laporan
+                                            </Button>
+                                        </div>
+                                    </form>
+                                {:else if luggageIncidentModalMode === 'claim' && luggageIncidentSelected}
+                                    <form class="mt-5 space-y-4" onsubmit={submitLuggageClaim}>
+                                        <div class="rounded-xl border border-border/70 bg-muted/20 px-3 py-3 text-xs">
+                                            <p class="font-semibold">
+                                                {luggageIncidentTypeLabel(luggageIncidentSelected.type)} -
+                                                {luggageIncidentSelected.quantity} barang
+                                            </p>
+                                            <p class="mt-1 text-muted-foreground">
+                                                {luggageIncidentSelected.description}
+                                            </p>
+                                        </div>
+                                        <div class="grid gap-3 sm:grid-cols-3">
+                                            <label class="space-y-1 text-xs font-medium">
+                                                Status Klaim
+                                                <select
+                                                    class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                                                    bind:value={luggageIncidentClaimStatus}
+                                                >
+                                                    <option value="submitted">Diajukan</option>
+                                                    <option value="approved">Disetujui</option>
+                                                    <option value="paid">Dibayar</option>
+                                                    <option value="rejected">Ditolak</option>
+                                                </select>
+                                            </label>
+                                            <label class="space-y-1 text-xs font-medium">
+                                                Nominal Klaim
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    bind:value={luggageIncidentClaimAmount}
+                                                />
+                                            </label>
+                                            <label class="space-y-1 text-xs font-medium">
+                                                Nominal Disetujui
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    bind:value={luggageIncidentApprovedAmount}
+                                                />
+                                            </label>
+                                        </div>
+                                        <label class="block space-y-1 text-xs font-medium">
+                                            Catatan Penyelesaian
+                                            <textarea
+                                                class="min-h-24 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                                bind:value={luggageIncidentResolutionNote}
+                                                placeholder="Catatan persetujuan atau pembayaran kompensasi"
+                                            ></textarea>
+                                        </label>
+                                        <div class="flex justify-end gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                class="rounded-xl"
+                                                onclick={() => {
+                                                    luggageIncidentModalMode = 'history';
+                                                    luggageIncidentSelected = null;
+                                                }}
+                                            >
+                                                Kembali
+                                            </Button>
+                                            <Button type="submit" class="rounded-xl">
+                                                Simpan Klaim
+                                            </Button>
+                                        </div>
+                                    </form>
+                                {:else}
+                                    <div class="mt-5 space-y-3">
+                                        {#if luggageIncidentRows.length === 0}
+                                            <div
+                                                class="rounded-xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground"
+                                            >
+                                                Belum ada insiden pada resi ini.
+                                            </div>
+                                        {:else}
+                                            {#each luggageIncidentRows as incident (incident.id)}
+                                                <article class="rounded-xl border border-border/70 bg-card p-3">
+                                                    <div class="flex flex-wrap items-start justify-between gap-3">
+                                                        <div class="min-w-0">
+                                                            <div class="flex flex-wrap items-center gap-2">
+                                                                <span class="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700">
+                                                                    {luggageIncidentTypeLabel(incident.type)} - {incident.quantity} barang
+                                                                </span>
+                                                                <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold">
+                                                                    {luggageIncidentStatusLabel(incident.status)}
+                                                                </span>
+                                                                <span class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold">
+                                                                    Klaim: {luggageClaimStatusLabel(incident.claim_status)}
+                                                                </span>
+                                                            </div>
+                                                            <p class="mt-2 text-sm text-foreground">{incident.description}</p>
+                                                            {#if incident.resolution_note}
+                                                                <p class="mt-1 text-xs text-muted-foreground">{incident.resolution_note}</p>
+                                                            {/if}
+                                                        </div>
+                                                        <div class="flex flex-wrap justify-end gap-1.5">
+                                                            {#if canLuggageIncident && incident.status === 'reported'}
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    onclick={() => void updateLuggageIncident(incident, 'investigating')}
+                                                                >
+                                                                    Mulai Periksa
+                                                                </Button>
+                                                            {/if}
+                                                            {#if canLuggageIncident && incident.status === 'investigating'}
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    onclick={() => void updateLuggageIncident(incident, 'approved')}
+                                                                >
+                                                                    Setujui Insiden
+                                                                </Button>
+                                                            {/if}
+                                                            {#if canLuggageIncident && ['reported', 'investigating', 'approved'].includes(incident.status)}
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    class="h-7 rounded-lg px-2 text-[10px] text-rose-700"
+                                                                    onclick={() => void updateLuggageIncident(incident, 'rejected')}
+                                                                >
+                                                                    Tolak
+                                                                </Button>
+                                                            {/if}
+                                                            {#if canLuggageIncident && incident.status === 'approved'}
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    onclick={() => void updateLuggageIncident(incident, 'resolved')}
+                                                                >
+                                                                    Tandai Selesai
+                                                                </Button>
+                                                            {/if}
+                                                            {#if canLuggageClaim && ['approved', 'resolved'].includes(incident.status) && incident.claim_status !== 'paid'}
+                                                                <Button
+                                                                    type="button"
+                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    onclick={() => openLuggageClaim(incident)}
+                                                                >
+                                                                    Proses Klaim
+                                                                </Button>
+                                                            {/if}
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            {/each}
+                                        {/if}
+                                    </div>
+                                {/if}
+                            </dialog>
+                        </div>
+                    {/if}
                     <!-- Status tabs -->
                     <div
                         class="flex flex-wrap gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-1"
@@ -5142,6 +5642,35 @@
                             >
                                 {tab.label}
                             </button>
+                            {/each}
+                    </div>
+                    <div
+                        class="flex flex-wrap items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-1"
+                    >
+                        <span class="px-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Kondisi
+                        </span>
+                        {#each [
+                            { key: '', label: 'Semua' },
+                            { key: 'normal', label: 'Normal' },
+                            { key: 'damaged', label: 'Rusak' },
+                            { key: 'lost', label: 'Hilang' },
+                            { key: 'damaged_and_lost', label: 'Rusak & Hilang' },
+                        ] as condition (condition.key)}
+                            <button
+                                type="button"
+                                class={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
+                                    luggageConditionFilter === condition.key
+                                        ? 'bg-white text-foreground shadow-sm dark:bg-slate-800 dark:text-slate-100'
+                                        : 'text-muted-foreground hover:bg-white/60 hover:text-foreground dark:hover:bg-slate-800/60'
+                                }`}
+                                onclick={() => {
+                                    luggageConditionFilter = condition.key;
+                                    void loadLuggages(1);
+                                }}
+                            >
+                                {condition.label}
+                            </button>
                         {/each}
                     </div>
                     <div class="grid gap-3 md:hidden">
@@ -5156,6 +5685,8 @@
                             {#each luggages as row (row.id)}
                                 {@const normalizedLuggageStatus =
                                     normalizeLuggageStatus(row.status)}
+                                {@const normalizedLuggageCondition =
+                                    row.condition_status ?? 'normal'}
                                 {@const departureInfo =
                                     luggageDepartureInfo(row)}
                                 {@const lockedLuggageActions = [
@@ -5189,6 +5720,11 @@
                                                 class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageStatusClass(row.status)}`}
                                             >
                                                 {luggageStatusLabel(row.status)}
+                                            </span>
+                                            <span
+                                                class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
+                                            >
+                                                {luggageConditionLabel(normalizedLuggageCondition)}
                                             </span>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -5266,6 +5802,30 @@
                                                         >
                                                             Print Resi
                                                         </DropdownMenuItem>{/if}
+                                                    <DropdownMenuItem
+                                                        onclick={() => void loadLuggageIncidents(row, 'history')}
+                                                    >
+                                                        Lihat Insiden
+                                                    </DropdownMenuItem>
+                                                    {#if canLuggageIncident && normalizedLuggageStatus !== 'canceled'}
+                                                        <DropdownMenuItem
+                                                            onclick={() => openLuggageIncidentReport(row, 'damaged')}
+                                                        >
+                                                            Laporkan Rusak
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() => openLuggageIncidentReport(row, 'lost')}
+                                                        >
+                                                            Laporkan Hilang
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if canLuggageClaim && normalizedLuggageCondition !== 'normal'}
+                                                        <DropdownMenuItem
+                                                            onclick={() => void loadLuggageIncidents(row, 'history')}
+                                                        >
+                                                            Proses Klaim
+                                                        </DropdownMenuItem>
+                                                    {/if}
                                                     {#if canLuggageUpdate && !lockedLuggageActions}
                                                         <DropdownMenuItem
                                                             disabled={pendingLuggageActionKey ===
@@ -5511,6 +6071,8 @@
                                     {#each luggages as row (row.id)}
                                         {@const normalizedLuggageStatus =
                                             normalizeLuggageStatus(row.status)}
+                                        {@const normalizedLuggageCondition =
+                                            row.condition_status ?? 'normal'}
                                         {@const departureInfo =
                                             luggageDepartureInfo(row)}
                                         <tr
@@ -5594,12 +6156,20 @@
                                                 >
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageStatusClass(row.status)}`}
-                                                    >{luggageStatusLabel(
-                                                        row.status,
-                                                    )}</span
-                                                >
+                                                <div class="flex flex-col items-start gap-1">
+                                                    <span
+                                                        class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                        >{luggageStatusLabel(
+                                                            row.status,
+                                                        )}</span
+                                                    >
+                                                    <span
+                                                        class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
+                                                        >{luggageConditionLabel(
+                                                            normalizedLuggageCondition,
+                                                        )}</span
+                                                    >
+                                                </div>
                                             </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 {#if departureInfo}
@@ -5728,6 +6298,30 @@
                                                                 >
                                                                     Print Resi
                                                                 </DropdownMenuItem>{/if}
+                                                            <DropdownMenuItem
+                                                                onclick={() => void loadLuggageIncidents(row, 'history')}
+                                                            >
+                                                                Lihat Insiden
+                                                            </DropdownMenuItem>
+                                                            {#if canLuggageIncident && normalizedLuggageStatus !== 'canceled'}
+                                                                <DropdownMenuItem
+                                                                    onclick={() => openLuggageIncidentReport(row, 'damaged')}
+                                                                >
+                                                                    Laporkan Rusak
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onclick={() => openLuggageIncidentReport(row, 'lost')}
+                                                                >
+                                                                    Laporkan Hilang
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggageClaim && normalizedLuggageCondition !== 'normal'}
+                                                                <DropdownMenuItem
+                                                                    onclick={() => void loadLuggageIncidents(row, 'history')}
+                                                                >
+                                                                    Proses Klaim
+                                                                </DropdownMenuItem>
+                                                            {/if}
                                                             {#if canLuggageUpdate && !lockedLuggageActions}
                                                                 <DropdownMenuItem
                                                                     disabled={pendingLuggageActionKey ===

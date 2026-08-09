@@ -321,6 +321,10 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::post('luggages/{id}/mark-canceled', [AdminOpsApiController::class, 'luggagesMarkCanceled'])->middleware('permission:luggage.update')->name('luggages.mark-canceled');
         Route::get('luggages/{id}/tracking', [AdminOpsApiController::class, 'luggagesTracking'])->middleware('permission:luggage.view,luggage.tracking')->name('luggages.tracking');
         Route::post('luggages/{id}/tracking', [AdminOpsApiController::class, 'luggagesTrackingAdd'])->middleware('permission:luggage.tracking')->name('luggages.tracking.add');
+        Route::get('luggages/{id}/incidents', [AdminOpsApiController::class, 'luggageIncidentsIndex'])->middleware('permission:luggage.view,luggage.incident')->name('luggages.incidents.index');
+        Route::post('luggages/{id}/incidents', [AdminOpsApiController::class, 'luggageIncidentStore'])->middleware('permission:luggage.incident')->name('luggages.incidents.store');
+        Route::patch('luggages/incidents/{incidentId}', [AdminOpsApiController::class, 'luggageIncidentUpdate'])->middleware('permission:luggage.incident')->name('luggages.incidents.update');
+        Route::post('luggages/incidents/{incidentId}/claim', [AdminOpsApiController::class, 'luggageIncidentClaim'])->middleware('permission:luggage.claim')->name('luggages.incidents.claim');
         Route::delete('luggages/{id}', [AdminOpsApiController::class, 'luggagesDelete'])->middleware('permission:luggage.delete')->name('luggages.delete');
 
         Route::get('assignments', [AdminOpsApiController::class, 'assignmentsIndex'])->middleware('permission:booking.view')->name('assignments.index');

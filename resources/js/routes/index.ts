@@ -212,7 +212,7 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     register.form = registerForm
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::onboarding
- * @see app/Http/Controllers/Auth/OnboardingController.php:24
+ * @see app/Http/Controllers/Auth/OnboardingController.php:25
  * @route '/onboarding'
  */
 export const onboarding = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -227,7 +227,7 @@ onboarding.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::onboarding
- * @see app/Http/Controllers/Auth/OnboardingController.php:24
+ * @see app/Http/Controllers/Auth/OnboardingController.php:25
  * @route '/onboarding'
  */
 onboarding.url = (options?: RouteQueryOptions) => {
@@ -236,7 +236,7 @@ onboarding.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::onboarding
- * @see app/Http/Controllers/Auth/OnboardingController.php:24
+ * @see app/Http/Controllers/Auth/OnboardingController.php:25
  * @route '/onboarding'
  */
 onboarding.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -245,7 +245,7 @@ onboarding.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Auth\OnboardingController::onboarding
- * @see app/Http/Controllers/Auth/OnboardingController.php:24
+ * @see app/Http/Controllers/Auth/OnboardingController.php:25
  * @route '/onboarding'
  */
 onboarding.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -255,7 +255,7 @@ onboarding.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Auth\OnboardingController::onboarding
- * @see app/Http/Controllers/Auth/OnboardingController.php:24
+ * @see app/Http/Controllers/Auth/OnboardingController.php:25
  * @route '/onboarding'
  */
     const onboardingForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -265,7 +265,7 @@ onboarding.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Auth\OnboardingController::onboarding
- * @see app/Http/Controllers/Auth/OnboardingController.php:24
+ * @see app/Http/Controllers/Auth/OnboardingController.php:25
  * @route '/onboarding'
  */
         onboardingForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -274,7 +274,7 @@ onboarding.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Auth\OnboardingController::onboarding
- * @see app/Http/Controllers/Auth/OnboardingController.php:24
+ * @see app/Http/Controllers/Auth/OnboardingController.php:25
  * @route '/onboarding'
  */
         onboardingForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -523,7 +523,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     dashboard.form = dashboardForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:92
  * @route '/admin/luggage-services'
  */
 export const adminLuggageServices = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -537,7 +537,7 @@ adminLuggageServices.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:92
  * @route '/admin/luggage-services'
  */
 adminLuggageServices.url = (options?: RouteQueryOptions) => {
@@ -545,7 +545,7 @@ adminLuggageServices.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:92
  * @route '/admin/luggage-services'
  */
 adminLuggageServices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -553,7 +553,7 @@ adminLuggageServices.get = (options?: RouteQueryOptions): RouteDefinition<'get'>
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:92
  * @route '/admin/luggage-services'
  */
 adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -562,7 +562,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:92
  * @route '/admin/luggage-services'
  */
     const adminLuggageServicesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -571,7 +571,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:92
  * @route '/admin/luggage-services'
  */
         adminLuggageServicesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -579,7 +579,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:92
  * @route '/admin/luggage-services'
  */
         adminLuggageServicesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -594,7 +594,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
     
     adminLuggageServices.form = adminLuggageServicesForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:107
  * @route '/admin/routes'
  */
 export const admin_routes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -608,7 +608,7 @@ admin_routes.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:107
  * @route '/admin/routes'
  */
 admin_routes.url = (options?: RouteQueryOptions) => {
@@ -616,7 +616,7 @@ admin_routes.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:107
  * @route '/admin/routes'
  */
 admin_routes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -624,7 +624,7 @@ admin_routes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:107
  * @route '/admin/routes'
  */
 admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -633,7 +633,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:107
  * @route '/admin/routes'
  */
     const admin_routesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -642,7 +642,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:107
  * @route '/admin/routes'
  */
         admin_routesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -650,7 +650,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:107
  * @route '/admin/routes'
  */
         admin_routesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -665,7 +665,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     admin_routes.form = admin_routesForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:120
  * @route '/admin/schedules'
  */
 export const admin_schedules = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -679,7 +679,7 @@ admin_schedules.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:120
  * @route '/admin/schedules'
  */
 admin_schedules.url = (options?: RouteQueryOptions) => {
@@ -687,7 +687,7 @@ admin_schedules.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:120
  * @route '/admin/schedules'
  */
 admin_schedules.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -695,7 +695,7 @@ admin_schedules.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:120
  * @route '/admin/schedules'
  */
 admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -704,7 +704,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:120
  * @route '/admin/schedules'
  */
     const admin_schedulesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -713,7 +713,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:120
  * @route '/admin/schedules'
  */
         admin_schedulesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -721,7 +721,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:120
  * @route '/admin/schedules'
  */
         admin_schedulesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -736,7 +736,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     
     admin_schedules.form = admin_schedulesForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:135
  * @route '/admin/segments'
  */
 export const admin_segments = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -750,7 +750,7 @@ admin_segments.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:135
  * @route '/admin/segments'
  */
 admin_segments.url = (options?: RouteQueryOptions) => {
@@ -758,7 +758,7 @@ admin_segments.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:135
  * @route '/admin/segments'
  */
 admin_segments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -766,7 +766,7 @@ admin_segments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:135
  * @route '/admin/segments'
  */
 admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -775,7 +775,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:135
  * @route '/admin/segments'
  */
     const admin_segmentsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -784,7 +784,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:135
  * @route '/admin/segments'
  */
         admin_segmentsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -792,7 +792,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:135
  * @route '/admin/segments'
  */
         admin_segmentsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -807,7 +807,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     
     admin_segments.form = admin_segmentsForm
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:148
  * @route '/admin/units'
  */
 export const admin_units = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -821,7 +821,7 @@ admin_units.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:148
  * @route '/admin/units'
  */
 admin_units.url = (options?: RouteQueryOptions) => {
@@ -829,7 +829,7 @@ admin_units.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:148
  * @route '/admin/units'
  */
 admin_units.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -837,7 +837,7 @@ admin_units.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:148
  * @route '/admin/units'
  */
 admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -846,7 +846,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:148
  * @route '/admin/units'
  */
     const admin_unitsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -855,7 +855,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:148
  * @route '/admin/units'
  */
         admin_unitsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -863,7 +863,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see [serialized-closure]:2
+ * @see routes/web.php:148
  * @route '/admin/units'
  */
         admin_unitsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -879,7 +879,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     admin_units.form = admin_unitsForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4504
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4911
  * @route '/admin/armada-categories'
  */
 export const adminArmadaCategories = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -894,7 +894,7 @@ adminArmadaCategories.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4504
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4911
  * @route '/admin/armada-categories'
  */
 adminArmadaCategories.url = (options?: RouteQueryOptions) => {
@@ -903,7 +903,7 @@ adminArmadaCategories.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4504
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4911
  * @route '/admin/armada-categories'
  */
 adminArmadaCategories.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -912,7 +912,7 @@ adminArmadaCategories.get = (options?: RouteQueryOptions): RouteDefinition<'get'
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4504
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4911
  * @route '/admin/armada-categories'
  */
 adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -922,7 +922,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4504
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4911
  * @route '/admin/armada-categories'
  */
     const adminArmadaCategoriesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -932,7 +932,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4504
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4911
  * @route '/admin/armada-categories'
  */
         adminArmadaCategoriesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -941,7 +941,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4504
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4911
  * @route '/admin/armada-categories'
  */
         adminArmadaCategoriesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -957,7 +957,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
     adminArmadaCategories.form = adminArmadaCategoriesForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1384
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1373
  * @route '/admin/activity-logs'
  */
 export const adminActivityLogs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -972,7 +972,7 @@ adminActivityLogs.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1384
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1373
  * @route '/admin/activity-logs'
  */
 adminActivityLogs.url = (options?: RouteQueryOptions) => {
@@ -981,7 +981,7 @@ adminActivityLogs.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1384
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1373
  * @route '/admin/activity-logs'
  */
 adminActivityLogs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -990,7 +990,7 @@ adminActivityLogs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1384
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1373
  * @route '/admin/activity-logs'
  */
 adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1000,7 +1000,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1384
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1373
  * @route '/admin/activity-logs'
  */
     const adminActivityLogsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1010,7 +1010,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1384
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1373
  * @route '/admin/activity-logs'
  */
         adminActivityLogsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1019,7 +1019,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1384
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1373
  * @route '/admin/activity-logs'
  */
         adminActivityLogsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1035,7 +1035,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     adminActivityLogs.form = adminActivityLogsForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5099
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5505
  * @route '/admin/tenant/switch'
  */
 export const admin_tenant_switch = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1050,7 +1050,7 @@ admin_tenant_switch.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5099
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5505
  * @route '/admin/tenant/switch'
  */
 admin_tenant_switch.url = (options?: RouteQueryOptions) => {
@@ -1059,7 +1059,7 @@ admin_tenant_switch.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5099
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5505
  * @route '/admin/tenant/switch'
  */
 admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1069,7 +1069,7 @@ admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5099
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5505
  * @route '/admin/tenant/switch'
  */
     const admin_tenant_switchForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1079,7 +1079,7 @@ admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5099
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5505
  * @route '/admin/tenant/switch'
  */
         admin_tenant_switchForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1090,7 +1090,7 @@ admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'
     admin_tenant_switch.form = admin_tenant_switchForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5051
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5457
  * @route '/admin/pool/switch'
  */
 export const admin_pool_switch = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1105,7 +1105,7 @@ admin_pool_switch.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5051
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5457
  * @route '/admin/pool/switch'
  */
 admin_pool_switch.url = (options?: RouteQueryOptions) => {
@@ -1114,7 +1114,7 @@ admin_pool_switch.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5051
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5457
  * @route '/admin/pool/switch'
  */
 admin_pool_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1124,7 +1124,7 @@ admin_pool_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5051
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5457
  * @route '/admin/pool/switch'
  */
     const admin_pool_switchForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1134,7 +1134,7 @@ admin_pool_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5051
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5457
  * @route '/admin/pool/switch'
  */
         admin_pool_switchForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

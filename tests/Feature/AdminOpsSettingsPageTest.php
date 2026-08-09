@@ -136,6 +136,33 @@ class AdminOpsSettingsPageTest extends TestCase
             );
     }
 
+    public function test_armada_settings_page_preserves_pool_and_period_query_parameters(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $tenantId = $this->defaultTenantId();
+        $poolId = (int) DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL FILTER BULAN',
+            'code' => 'PFB',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->get(route('admin-ops.armadas', [
+            'pool_id' => $poolId,
+            'period' => '2026-07',
+            'q' => 'filter armada',
+        ]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('initialTab', 'armadas')
+                ->where('settingsQuery.pool_id', $poolId)
+                ->where('settingsQuery.period', '2026-07')
+                ->where('settingsQuery.q', 'filter armada'),
+            );
+    }
+
     public function test_read_only_operator_can_open_lists_but_cannot_use_manage_actions(): void
     {
         AccessControl::syncDefaults();

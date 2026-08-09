@@ -1,7 +1,62 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
+* @see \App\Http\Controllers\PaymentController::bulk
+ * @see app/Http/Controllers/PaymentController.php:145
+ * @route '/api/admin/payments/bulk'
+ */
+export const bulk = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulk.url(options),
+    method: 'post',
+})
+
+bulk.definition = {
+    methods: ["post"],
+    url: '/api/admin/payments/bulk',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\PaymentController::bulk
+ * @see app/Http/Controllers/PaymentController.php:145
+ * @route '/api/admin/payments/bulk'
+ */
+bulk.url = (options?: RouteQueryOptions) => {
+    return bulk.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PaymentController::bulk
+ * @see app/Http/Controllers/PaymentController.php:145
+ * @route '/api/admin/payments/bulk'
+ */
+bulk.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulk.url(options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\PaymentController::bulk
+ * @see app/Http/Controllers/PaymentController.php:145
+ * @route '/api/admin/payments/bulk'
+ */
+    const bulkForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: bulk.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PaymentController::bulk
+ * @see app/Http/Controllers/PaymentController.php:145
+ * @route '/api/admin/payments/bulk'
+ */
+        bulkForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: bulk.url(options),
+            method: 'post',
+        })
+    
+    bulk.form = bulkForm
+/**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:118
+ * @see app/Http/Controllers/PaymentController.php:120
  * @route '/api/admin/payments/{source}/{id}'
  */
 export const update = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +71,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:118
+ * @see app/Http/Controllers/PaymentController.php:120
  * @route '/api/admin/payments/{source}/{id}'
  */
 update.url = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -42,7 +97,7 @@ update.url = (args: { source: string | number, id: string | number } | [source: 
 
 /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:118
+ * @see app/Http/Controllers/PaymentController.php:120
  * @route '/api/admin/payments/{source}/{id}'
  */
 update.post = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -52,7 +107,7 @@ update.post = (args: { source: string | number, id: string | number } | [source:
 
     /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:118
+ * @see app/Http/Controllers/PaymentController.php:120
  * @route '/api/admin/payments/{source}/{id}'
  */
     const updateForm = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -62,7 +117,7 @@ update.post = (args: { source: string | number, id: string | number } | [source:
 
             /**
 * @see \App\Http\Controllers\PaymentController::update
- * @see app/Http/Controllers/PaymentController.php:118
+ * @see app/Http/Controllers/PaymentController.php:120
  * @route '/api/admin/payments/{source}/{id}'
  */
         updateForm.post = (args: { source: string | number, id: string | number } | [source: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -72,7 +127,8 @@ update.post = (args: { source: string | number, id: string | number } | [source:
     
     update.form = updateForm
 const payments = {
-    update: Object.assign(update, update),
+    bulk: Object.assign(bulk, bulk),
+update: Object.assign(update, update),
 }
 
 export default payments
