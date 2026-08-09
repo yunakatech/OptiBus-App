@@ -3073,7 +3073,8 @@ class AdminOpsApiController extends Controller
                             ->whereColumn('li.luggage_id', 'l.id');
                         $this->applyTenantScopeIfExists($incidentQuery, 'luggage_incidents', 'li');
                     });
-                } elseif ($hasConditionStatusColumn) {
+                }
+                if ($hasConditionStatusColumn) {
                     $query->where('l.condition_status', 'normal');
                 }
             } elseif ($normalizedCondition === 'damaged_and_lost') {
@@ -3243,6 +3244,8 @@ class AdminOpsApiController extends Controller
 
             if (! $hasSource && $hasConditionStatusColumn) {
                 $conditionQuery->whereIn('l.condition_status', [$type, 'damaged_and_lost']);
+            } elseif ($hasConditionStatusColumn) {
+                $conditionQuery->orWhereIn('l.condition_status', [$type, 'damaged_and_lost']);
             }
         });
     }

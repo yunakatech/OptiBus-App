@@ -43,6 +43,13 @@ class LuggageIncidentTest extends TestCase
             ->assertJsonPath('luggages.0.id', $luggageId)
             ->assertJsonPath('luggages.0.condition_status', 'damaged_and_lost');
 
+        foreach (['damaged', 'lost', 'damaged_and_lost'] as $condition) {
+            $this->getJson(route('api.admin.luggages.index', ['condition' => $condition]))
+                ->assertOk()
+                ->assertJsonPath('luggages.0.id', $luggageId)
+                ->assertJsonPath('luggages.0.condition_status', 'damaged_and_lost');
+        }
+
         $this->assertDatabaseCount('luggage_incidents', 2);
         $this->assertDatabaseCount('bagasi_logs', 2);
     }
@@ -66,6 +73,31 @@ class LuggageIncidentTest extends TestCase
             'condition_status' => 'normal',
             'lost_quantity' => 0,
         ]);
+    }
+
+    public function test_condition_filters_include_legacy_condition_status_values(): void
+    {
+        [$tenantId, $poolId] = $this->tenantAndPool('incident-legacy-filter');
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->withSession(['active_pool_id' => $poolId]);
+        $luggageId = $this->luggage($tenantId, $poolId, 2);
+
+        DB::table('luggages')->where('id', $luggageId)->update([
+            'condition_status' => 'damaged_and_lost',
+            'damaged_quantity' => 0,
+            'lost_quantity' => 0,
+        ]);
+
+        foreach (['damaged', 'lost', 'damaged_and_lost'] as $condition) {
+            $this->getJson(route('api.admin.luggages.index', ['condition' => $condition]))
+                ->assertOk()
+                ->assertJsonPath('luggages.0.id', $luggageId)
+                ->assertJsonPath('luggages.0.condition_status', 'damaged_and_lost');
+        }
+
+        $this->getJson(route('api.admin.luggages.index', ['condition' => 'normal']))
+            ->assertOk()
+            ->assertJsonCount(0, 'luggages');
     }
 
     public function test_canceled_luggage_cannot_receive_new_incident_but_existing_incident_can_be_claimed(): void
