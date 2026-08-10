@@ -828,6 +828,8 @@
     });
     let selectedScheduleRoute = $state('');
     let selectedScheduleRouteId = $state(0);
+    let scheduleFormStep = $state(1);
+    let scheduleManualSegments = $state(false);
     let selectedSegmentRouteId = $state(0);
     let driverForm = $state({
         id: 0,
@@ -2603,6 +2605,11 @@
         }
 
         if (activeTab === 'schedules') {
+            if (selectedScheduleRouteId <= 0 && selectedScheduleRoute === '') {
+                error = 'Pilih rute perjalanan terlebih dahulu sebelum membuat jadwal.';
+
+                return;
+            }
             resetScheduleForm();
         }
 
@@ -4414,8 +4421,10 @@
         };
     };
 
-    const resetScheduleForm = () =>
-        (scheduleForm = {
+    const resetScheduleForm = () => {
+        scheduleFormStep = 1;
+        scheduleManualSegments = false;
+        scheduleForm = {
             id: 0,
             rute:
                 canonicalScheduleRouteName(
@@ -4432,7 +4441,101 @@
             unit_ids: [0],
             unit_labels: ['Unit 1'],
             segment_configs: [],
+        };
+    };
+
+    const scheduleWizardSteps = [
+        {
+            number: 1,
+            title: 'Waktu',
+            description: 'Hari dan jam berangkat',
+        },
+        {
+            number: 2,
+            title: 'Kendaraan',
+            description: 'Jumlah dan layout kursi',
+        },
+        {
+            number: 3,
+            title: 'Segment',
+            description: 'Layanan dan pemeriksaan',
+        },
+    ] as const;
+
+    const scheduleRouteIsReady = () =>
+        Boolean(
+            canonicalScheduleRouteName(
+                scheduleForm.rute || selectedScheduleRoute,
+                selectedScheduleRouteId,
+            ),
+        );
+    const scheduleTimeIsReady = () =>
+        /^\d{2}:\d{2}$/.test(String(scheduleForm.jam || '').trim());
+    const scheduleUnitCountIsReady = () => Number(scheduleForm.units) >= 1;
+    const scheduleAutomaticSegments = () => {
+        const jam = segmentJamLabel(scheduleForm.jam);
+
+        if (jam === '') {
+            return [];
+        }
+
+        return scheduleSegmentsForRoute().filter((segment) => {
+            const pickupJams = segmentJamList(segment.jam_pickups);
+
+            return pickupJams.includes(jam) || segmentJamLabel(segment.jam) === jam;
         });
+    };
+    const scheduleConfiguredSegmentCount = () =>
+        scheduleManualSegments && scheduleForm.segment_configs.length > 0
+            ? scheduleForm.segment_configs.length
+            : scheduleAutomaticSegments().length;
+    const scheduleLayoutReadyCount = () =>
+        scheduleForm.unit_ids.filter((unitId) => Number(unitId) > 0).length;
+    const scheduleLayoutIsReady = () =>
+        scheduleLayoutReadyCount() >= Math.max(1, Number(scheduleForm.units));
+    const scheduleStepError = (step: number) => {
+        if (step >= 2 && !scheduleRouteIsReady()) {
+            return 'Pilih rute perjalanan terlebih dahulu.';
+        }
+
+        if (step >= 2 && !scheduleTimeIsReady()) {
+            return 'Isi jam berangkat dengan format HH:MM.';
+        }
+
+        if (step >= 2 && !scheduleUnitCountIsReady()) {
+            return 'Jumlah kendaraan minimal 1.';
+        }
+
+        return '';
+    };
+    const goToScheduleStep = (step: number) => {
+        const target = Math.max(1, Math.min(3, Number(step)));
+
+        if (target > scheduleFormStep) {
+            const validationError = scheduleStepError(target);
+
+            if (validationError !== '') {
+                error = validationError;
+
+                return;
+            }
+        }
+
+        error = '';
+        scheduleFormStep = target;
+    };
+    const nextScheduleStep = () => goToScheduleStep(scheduleFormStep + 1);
+    const previousScheduleStep = () => {
+        error = '';
+        scheduleFormStep = Math.max(1, scheduleFormStep - 1);
+    };
+    const toggleScheduleManualSegments = () => {
+        scheduleManualSegments = !scheduleManualSegments;
+    };
+    const cancelScheduleForm = () => {
+        resetScheduleForm();
+        activeMode = 'data';
+    };
 
     // ── Segment config helpers ───────────────────────────────────────────────
     const addScheduleSegmentConfig = (segmentId: number) => {
@@ -4839,6 +4942,13 @@
             ) ||
             scheduleRouteOptions[0] ||
             '';
+
+        if (routeName === '') {
+            error = 'Pilih rute perjalanan terlebih dahulu sebelum membuat jadwal.';
+
+            return;
+        }
+
         const defaultJam = '08:00';
         scheduleForm = {
             id: 0,
@@ -4852,6 +4962,8 @@
             unit_labels: ['Unit 1'],
             segment_configs: [],
         };
+        scheduleFormStep = 1;
+        scheduleManualSegments = false;
         activeMode = 'form';
     };
 
@@ -4919,6 +5031,13 @@
             unit_labels: buildDefaultUnitLabels(totalUnits, labels),
             segment_configs: loadedSegmentConfigs,
         };
+        scheduleManualSegments = loadedSegmentConfigs.length > 0;
+        scheduleFormStep =
+            loadedSegmentConfigs.length > 0
+                ? 3
+                : unitIdsFromOptions.some((unitId) => unitId > 0)
+                  ? 2
+                  : 1;
         activeMode = 'form';
     };
 
@@ -7036,7 +7155,7 @@
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
-                                            >Rute aktif</span
+                                            >Rute perjalanan</span
                                         >
                                         <select
                                             class="h-10 rounded-lg border border-input bg-background/95 px-3 text-sm shadow-sm"
@@ -7058,6 +7177,9 @@
                                                 >
                                             {/each}
                                         </select>
+                                        <p class="text-[11px] text-muted-foreground">
+                                            Jadwal ini akan berulang setiap minggu pada hari yang dipilih.
+                                        </p>
                                     </label>
                                 </div>
                             </div>
@@ -7071,7 +7193,7 @@
                                 title={scheduleForm.id
                                     ? 'Perbarui jadwal keberangkatan'
                                     : 'Tambah jadwal keberangkatan baru'}
-                                description="Atur hari, jam, jumlah unit, dan BOP. Konfigurasi kategori armada per unit akan dipakai langsung oleh dropdown kursi di booking."
+                                description="Ikuti tiga langkah sederhana untuk mengatur waktu, kendaraan, dan layanan perjalanan."
                                 toneClass="bg-muted/20"
                                 bodyClass="space-y-4"
                             >
@@ -7080,12 +7202,45 @@
                                     bind:value={scheduleForm.rute}
                                 />
                                 <div
+                                    class="rounded-xl border border-border/70 bg-background/80 p-3"
+                                >
+                                    <div
+                                        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                                    >
+                                        <div>
+                                            <p class="text-xs font-semibold text-foreground">
+                                                Langkah {scheduleFormStep} dari 3
+                                            </p>
+                                            <p class="text-[11px] text-muted-foreground">
+                                                Ikuti langkah berikut untuk menyiapkan jadwal dengan mudah.
+                                            </p>
+                                        </div>
+                                        <div class="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5">
+                                            {#each scheduleWizardSteps as step (step.number)}
+                                                <button
+                                                    type="button"
+                                                    class={`min-w-[118px] rounded-lg border px-3 py-2 text-left transition ${scheduleFormStep === step.number ? 'border-primary bg-primary/10 text-primary' : scheduleFormStep > step.number ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-border/70 bg-background text-muted-foreground'}`}
+                                                    onclick={() => goToScheduleStep(step.number)}
+                                                >
+                                                    <span class="block text-[11px] font-semibold">
+                                                        {step.number}. {step.title}
+                                                    </span>
+                                                    <span class="mt-0.5 block text-[10px]">
+                                                        {step.description}
+                                                    </span>
+                                                </button>
+                                            {/each}
+                                        </div>
+                                    </div>
+                                </div>
+                                {#if scheduleFormStep === 1}
+                                <div
                                     class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
                                 >
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Hari</span
+                                            >Hari keberangkatan</span
                                         >
                                         <select
                                             class="h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -7101,7 +7256,7 @@
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Jam Keberangkatan</span
+                                            >Jam berangkat</span
                                         >
                                         <input
                                             bind:this={scheduleTimeInput}
@@ -7115,11 +7270,7 @@
                                         <p
                                             class="mt-1 text-[11px] text-muted-foreground"
                                         >
-                                            {scheduleJamIsMapped(
-                                                scheduleForm.jam,
-                                            )
-                                                ? 'Jam ini sudah cocok dengan mapping segment.'
-                                                : scheduleRouteJamHint()}
+                                            Jam berangkat dapat diisi bebas. Pilihan cepat hanya membantu mencocokkan jam segment.
                                         </p>
                                         <div class="mt-2 flex flex-wrap gap-2">
                                             {#if scheduleRouteJamOptions().length > 0}
@@ -7154,7 +7305,7 @@
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Jumlah Slot</span
+                                            >Jumlah kendaraan</span
                                         >
                                         <Input
                                             type="number"
@@ -7174,7 +7325,7 @@
                                     <label class="space-y-1.5">
                                         <span
                                             class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >BOP</span
+                                            >Biaya operasional (BOP)</span
                                         >
                                         <Input
                                             type="text"
@@ -7192,10 +7343,22 @@
                                                 };
                                             }}
                                         />
+                                        <p class="mt-1 text-[11px] text-muted-foreground" title="BOP adalah biaya operasional perjalanan.">
+                                            Biaya ini dipakai untuk menghitung operasional keberangkatan.
+                                        </p>
                                     </label>
                                 </div>
+                                <div class="flex justify-between gap-2">
+                                    <Button type="button" variant="outline" onclick={cancelScheduleForm}>
+                                        Batal
+                                    </Button>
+                                    <Button type="button" onclick={nextScheduleStep}>
+                                        Lanjut: Kendaraan
+                                    </Button>
+                                </div>
+                                {/if}
 
-                                {#if scheduleSegmentsForRoute().length > 0}
+                                {#if scheduleFormStep === 3}
                                     <div
                                         class="rounded-lg border border-sky-200/70 bg-sky-50/40 p-4"
                                     >
@@ -7206,26 +7369,32 @@
                                                 <p
                                                     class="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700"
                                                 >
-                                                    Konfigurasi Segment
+                                                    Layanan atau Segment Perjalanan
                                                 </p>
                                                 <p
                                                     class="mt-1 text-xs text-muted-foreground"
                                                 >
-                                                    Pilih segment yang aktif
-                                                    untuk jadwal ini. Setiap
-                                                    segment harus memilih satu
-                                                    jam pickup.
+                                                    Sistem mencocokkan segment berdasarkan jam berangkat. Atur manual jika diperlukan.
                                                 </p>
                                             </div>
-                                            {#if scheduleForm.segment_configs.length > 0}
+                                            <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
                                                 <span
                                                     class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-700"
                                                 >
-                                                    {scheduleForm
-                                                        .segment_configs.length} terpilih
+                                                    {scheduleConfiguredSegmentCount()} layanan cocok
                                                 </span>
-                                            {/if}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    class="h-8 rounded-lg px-2.5 text-[11px]"
+                                                    onclick={toggleScheduleManualSegments}
+                                                >
+                                                    {scheduleManualSegments ? 'Tutup pengaturan' : 'Atur manual'}
+                                                </Button>
+                                            </div>
                                         </div>
+                                        {#if scheduleManualSegments}
                                         <div class="grid gap-2.5">
                                             {#each scheduleSegmentsForRoute() as seg (seg.id)}
                                                 {@const isChecked =
@@ -7346,43 +7515,76 @@
                                                 </div>
                                             {/each}
                                         </div>
-                                        {#if scheduleForm.segment_configs.length === 0}
+                                        {:else}
+                                            <div class="grid gap-2">
+                                                {#if scheduleAutomaticSegments().length > 0}
+                                                    {#each scheduleAutomaticSegments() as seg (seg.id)}
+                                                        <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200/70 bg-emerald-50/50 px-3 py-2.5">
+                                                            <div class="min-w-0">
+                                                                <p class="truncate text-xs font-medium text-foreground">
+                                                                    {seg.rute || segmentDisplayName(seg.origin ?? '', seg.destination ?? '', seg.rute)}
+                                                                </p>
+                                                                <p class="text-[11px] text-muted-foreground">
+                                                                    Pickup {segmentJamSummary(seg.jam_pickups) || segmentJamLabel(seg.jam) || '-'}
+                                                                </p>
+                                                            </div>
+                                                            <span class="shrink-0 text-xs font-semibold text-emerald-700">
+                                                                Rp {formatCurrency(Number(seg.harga || 0))}
+                                                            </span>
+                                                        </div>
+                                                    {/each}
+                                                {:else}
+                                                    <p class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-[11px] text-amber-700">
+                                                        Belum ada segment untuk rute ini. Jadwal tetap dapat disimpan dan segment dapat ditambahkan nanti.
+                                                    </p>
+                                                {/if}
+                                            </div>
+                                        {/if}
+                                        {#if scheduleManualSegments && scheduleForm.segment_configs.length === 0}
                                             <p
                                                 class="mt-2.5 text-[11px] text-amber-600"
                                             >
-                                                ⚠ Belum ada segment dipilih.
-                                                Matching akan menggunakan jam
-                                                jadwal secara otomatis.
+                                                Belum ada segment manual dipilih. Sistem tetap dapat menggunakan pencocokan otomatis.
                                             </p>
                                         {/if}
+                                        <div class="mt-4 flex justify-start">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onclick={previousScheduleStep}
+                                            >
+                                                Kembali ke Kendaraan
+                                            </Button>
+                                        </div>
                                     </div>
                                 {/if}
 
+                                {#if scheduleFormStep === 2}
                                 <div
                                     class="rounded-lg border border-input/70 bg-muted/10 p-4"
                                 >
                                     <p
                                         class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                     >
-                                        Konfigurasi Keberangkatan
+                                        Kendaraan yang Berangkat
                                     </p>
                                     <p
                                         class="mt-1 text-xs text-muted-foreground"
                                     >
-                                        Setiap unit bisa memakai kategori
-                                        armada/layout berbeda. Dropdown kursi
-                                        booking akan mengikuti setting ini.
+                                        Atur label kendaraan dan layout kursi yang akan dipakai saat booking.
                                     </p>
                                     <div class="mt-4 grid gap-3">
                                         {#each scheduleForm.unit_labels as label, idx (`unit-label-${idx}`)}
+                                            {@const selectedUnitId = Number(scheduleForm.unit_ids[idx] ?? 0)}
+                                            {@const selectedUnit = units.find((unit) => unit.id === selectedUnitId)}
                                             <div
                                                 class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]"
                                             >
                                                 <label class="space-y-1.5">
                                                     <span
                                                         class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >Label Slot {idx +
-                                                            1}</span
+                                                        >Kendaraan {idx +
+                                                            1} · Label</span
                                                     >
                                                     <Input
                                                         placeholder={`Label Slot ${idx + 1}`}
@@ -7395,12 +7597,16 @@
                                                                 ).value,
                                                             )}
                                                     />
+                                                    <p class="text-[11px] text-muted-foreground">
+                                                        {selectedUnit?.kapasitas
+                                                            ? `${selectedUnit.kapasitas} kursi tersedia`
+                                                            : 'Kapasitas mengikuti layout yang dipilih'}
+                                                    </p>
                                                 </label>
                                                 <label class="space-y-1.5">
                                                     <span
                                                         class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >Kategori Armada /
-                                                        Layout</span
+                                                        >Kategori armada dan layout kursi</span
                                                     >
                                                     <select
                                                         class="h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -7418,8 +7624,7 @@
                                                             )}
                                                     >
                                                         <option value={0}
-                                                            >Pilih kategori
-                                                            armada/layout</option
+                                                            >Pilih kendaraan/layout</option
                                                         >
                                                         {#each units as unit (unit.id)}
                                                             <option
@@ -7439,15 +7644,68 @@
                                 <div
                                     class="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-xs text-muted-foreground"
                                 >
-                                    BOP akan dipakai otomatis pada data
-                                    keberangkatan. Jika jumlah unit berubah,
-                                    label dan pilihan kategori armada akan ikut
-                                    menyesuaikan.
+                                    {#if !scheduleLayoutIsReady()}
+                                        Kendaraan masih menggunakan layout dasar. Anda dapat mengaturnya nanti.
+                                    {:else}
+                                        Semua kendaraan sudah memiliki layout kursi.
+                                    {/if}
+                                    Jika jumlah kendaraan berubah, label dan pilihan layout akan ikut menyesuaikan.
                                 </div>
+                                <div class="flex justify-between gap-2">
+                                    <div class="flex gap-2">
+                                        <Button type="button" variant="outline" onclick={cancelScheduleForm}>
+                                            Batal
+                                        </Button>
+                                        <Button type="button" variant="outline" onclick={previousScheduleStep}>
+                                            Kembali
+                                        </Button>
+                                    </div>
+                                    <Button type="button" onclick={nextScheduleStep}>
+                                        Lanjut: Segment
+                                    </Button>
+                                </div>
+                                {/if}
 
+                                {#if scheduleFormStep === 3}
+                                <div
+                                    class="rounded-xl border border-border/70 bg-muted/20 p-4"
+                                >
+                                    <p class="text-xs font-semibold text-foreground">
+                                        Pemeriksaan jadwal
+                                    </p>
+                                    <div class="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                                        <div class="rounded-lg bg-background px-3 py-2">
+                                            <span class="text-muted-foreground">Rute</span>
+                                            <p class="font-semibold">{scheduleForm.rute || selectedScheduleRoute || '-'}</p>
+                                        </div>
+                                        <div class="rounded-lg bg-background px-3 py-2">
+                                            <span class="text-muted-foreground">Keberangkatan</span>
+                                            <p class="font-semibold">{days[Number(scheduleForm.dow)]} · {scheduleForm.jam}</p>
+                                        </div>
+                                        <div class="rounded-lg bg-background px-3 py-2">
+                                            <span class="text-muted-foreground">Kendaraan</span>
+                                            <p class="font-semibold">{scheduleForm.units} kendaraan · {scheduleLayoutReadyCount()}/{scheduleForm.units} layout</p>
+                                        </div>
+                                        <div class="rounded-lg bg-background px-3 py-2">
+                                            <span class="text-muted-foreground">Segment</span>
+                                            <p class="font-semibold">{scheduleConfiguredSegmentCount()} layanan cocok</p>
+                                        </div>
+                                        <div class="rounded-lg bg-background px-3 py-2 sm:col-span-2">
+                                            <span class="text-muted-foreground">Biaya operasional</span>
+                                            <p class="font-semibold">Rp {formatCurrency(parseRupiahInput(scheduleForm.bop))}</p>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div
                                     class="flex flex-wrap gap-2 border-t border-border/70 pt-4"
                                 >
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onclick={previousScheduleStep}
+                                    >
+                                        Kembali
+                                    </Button>
                                     <LoadingButton
                                         type="submit"
                                         loading={isSubmitActive('schedule')}
@@ -7461,10 +7719,11 @@
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onclick={resetScheduleForm}
-                                        >Reset</Button
+                                        onclick={cancelScheduleForm}
+                                        >Batal</Button
                                     >
                                 </div>
+                                {/if}
                             </AdminOpsSection>
                         </form>
                     {/if}
@@ -7521,7 +7780,7 @@
                                     variant="outline"
                                     class="rounded-full px-3 py-1 text-muted-foreground"
                                 >
-                                    {activeScheduleGroup?.totalUnits ?? 0} unit
+                                    {activeScheduleGroup?.totalUnits ?? 0} kendaraan
                                 </Badge>
                                 <Badge
                                     variant="outline"
@@ -7557,8 +7816,8 @@
                                                     class="text-[11px] text-muted-foreground"
                                                 >
                                                     {day.rows.length > 0
-                                                        ? `${formatScheduleWindow(day.firstDeparture, day.lastDeparture)} • ${day.totalUnits} unit`
-                                                        : 'Belum ada jadwal'}
+                                                        ? `${formatScheduleWindow(day.firstDeparture, day.lastDeparture)} • ${day.totalUnits} kendaraan`
+                                                        : 'Belum ada jadwal pada hari ini'}
                                                 </p>
                                             </div>
                                             <div
@@ -7597,17 +7856,12 @@
                                                     <p
                                                         class="text-sm font-medium text-foreground"
                                                     >
-                                                        Belum ada slot
-                                                        keberangkatan
+                                                        Belum ada jadwal pada hari ini
                                                     </p>
                                                     <p
                                                         class="mt-1 text-xs text-muted-foreground"
                                                     >
-                                                        Tambahkan jam
-                                                        keberangkatan untuk hari
-                                                        ini supaya tim
-                                                        operasional bisa
-                                                        langsung memakainya.
+                                                        Tambahkan jam keberangkatan untuk mulai mengatur operasional.
                                                     </p>
                                                 </div>
                                             </div>
@@ -7637,7 +7891,7 @@
                                                                         class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700"
                                                                     >
                                                                         {row.units}
-                                                                        unit
+                                                                        kendaraan
                                                                     </span>
                                                                     <span
                                                                         class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
@@ -7645,8 +7899,8 @@
                                                                         {Array.isArray(
                                                                             row.segment_matches,
                                                                         )
-                                                                            ? `${row.segment_matches.length} segment`
-                                                                            : '0 segment'}
+                                                                            ? `${row.segment_matches.length} layanan`
+                                                                            : '0 layanan'}
                                                                     </span>
                                                                 </div>
                                                                 <div
@@ -7655,7 +7909,7 @@
                                                                     <span
                                                                         class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
                                                                     >
-                                                                        {formatCurrency(
+                                                                        BOP {formatCurrency(
                                                                             Number(
                                                                                 row.bop ||
                                                                                     0,
@@ -7674,7 +7928,7 @@
                                                                 <p
                                                                     class="text-[11px] text-muted-foreground"
                                                                 >
-                                                                    Jam segment:
+                                                                    Jam layanan:
                                                                     {segmentJamSummary(
                                                                         row.segment_jam_pickups,
                                                                     ) ||
@@ -7744,8 +7998,7 @@
                                                                 <p
                                                                     class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                                                                 >
-                                                                    Konfigurasi
-                                                                    Unit
+                                                                    Kendaraan yang Berangkat
                                                                 </p>
                                                                 <span
                                                                     class="text-[11px] text-muted-foreground"
