@@ -6634,10 +6634,10 @@
                 <p class="sr-only" aria-live="assertive">{formError}</p>
 
                 <div
-                    class={`gap-4 xl:grid-cols-[1.3fr_1fr] ${mobileBookingStep === 1 ? 'hidden md:grid' : 'grid'}`}
+                    class={`min-w-0 gap-4 xl:grid-cols-[minmax(420px,1.3fr)_minmax(0,1fr)] ${mobileBookingStep === 1 ? 'hidden md:grid' : 'grid'}`}
                 >
                     <div
-                        class={`space-y-3 rounded-lg border border-border/70 bg-linear-to-b from-background to-cyan-500/[0.03] p-4 shadow-sm ${mobileBookingStep === 2 ? 'block' : 'hidden md:block'}`}
+                        class={`min-w-0 space-y-3 rounded-lg border border-border/70 bg-linear-to-b from-background to-cyan-500/[0.03] p-4 shadow-sm ${mobileBookingStep === 2 ? 'block' : 'hidden md:block'}`}
                     >
                         <div class="flex items-center justify-between">
                             <div>
@@ -6968,7 +6968,7 @@
                     </div>
 
                     <div
-                        class={`space-y-3 ${mobileBookingStep === 3 ? 'block' : 'hidden md:block'}`}
+                        class={`min-w-0 space-y-3 ${mobileBookingStep === 3 ? 'block' : 'hidden md:block'}`}
                     >
                         {#if selectedSeats.length > 1}
                             <div
@@ -7003,7 +7003,7 @@
                                     </label>
                                 </div>
                                 <div
-                                    class="flex gap-2 overflow-x-auto pb-1"
+                                    class="min-w-0 max-w-full flex gap-2 overflow-x-auto pb-1"
                                     role="tablist"
                                     aria-label="Data penumpang per kursi"
                                 >
