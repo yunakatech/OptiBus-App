@@ -666,7 +666,7 @@ closeManifest.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     closeManifest.form = closeManifestForm
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::bulkUpdatePayments
- * @see app/Http/Controllers/Api/BookingApiController.php:1962
+ * @see app/Http/Controllers/Api/BookingApiController.php:2034
  * @route '/api/bookings/bulk-payment'
  */
 export const bulkUpdatePayments = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -681,7 +681,7 @@ bulkUpdatePayments.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::bulkUpdatePayments
- * @see app/Http/Controllers/Api/BookingApiController.php:1962
+ * @see app/Http/Controllers/Api/BookingApiController.php:2034
  * @route '/api/bookings/bulk-payment'
  */
 bulkUpdatePayments.url = (options?: RouteQueryOptions) => {
@@ -690,7 +690,7 @@ bulkUpdatePayments.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::bulkUpdatePayments
- * @see app/Http/Controllers/Api/BookingApiController.php:1962
+ * @see app/Http/Controllers/Api/BookingApiController.php:2034
  * @route '/api/bookings/bulk-payment'
  */
 bulkUpdatePayments.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -700,7 +700,7 @@ bulkUpdatePayments.post = (options?: RouteQueryOptions): RouteDefinition<'post'>
 
     /**
 * @see \App\Http\Controllers\Api\BookingApiController::bulkUpdatePayments
- * @see app/Http/Controllers/Api/BookingApiController.php:1962
+ * @see app/Http/Controllers/Api/BookingApiController.php:2034
  * @route '/api/bookings/bulk-payment'
  */
     const bulkUpdatePaymentsForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -710,7 +710,7 @@ bulkUpdatePayments.post = (options?: RouteQueryOptions): RouteDefinition<'post'>
 
             /**
 * @see \App\Http\Controllers\Api\BookingApiController::bulkUpdatePayments
- * @see app/Http/Controllers/Api/BookingApiController.php:1962
+ * @see app/Http/Controllers/Api/BookingApiController.php:2034
  * @route '/api/bookings/bulk-payment'
  */
         bulkUpdatePaymentsForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -886,7 +886,7 @@ submit.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     submit.form = submitForm
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::update
- * @see app/Http/Controllers/Api/BookingApiController.php:1739
+ * @see app/Http/Controllers/Api/BookingApiController.php:1811
  * @route '/api/bookings/update'
  */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -901,7 +901,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::update
- * @see app/Http/Controllers/Api/BookingApiController.php:1739
+ * @see app/Http/Controllers/Api/BookingApiController.php:1811
  * @route '/api/bookings/update'
  */
 update.url = (options?: RouteQueryOptions) => {
@@ -910,7 +910,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::update
- * @see app/Http/Controllers/Api/BookingApiController.php:1739
+ * @see app/Http/Controllers/Api/BookingApiController.php:1811
  * @route '/api/bookings/update'
  */
 update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -920,7 +920,7 @@ update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\BookingApiController::update
- * @see app/Http/Controllers/Api/BookingApiController.php:1739
+ * @see app/Http/Controllers/Api/BookingApiController.php:1811
  * @route '/api/bookings/update'
  */
     const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -930,7 +930,7 @@ update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\BookingApiController::update
- * @see app/Http/Controllers/Api/BookingApiController.php:1739
+ * @see app/Http/Controllers/Api/BookingApiController.php:1811
  * @route '/api/bookings/update'
  */
         updateForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -941,7 +941,7 @@ update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::cancel
- * @see app/Http/Controllers/Api/BookingApiController.php:2067
+ * @see app/Http/Controllers/Api/BookingApiController.php:2139
  * @route '/api/bookings/cancel'
  */
 export const cancel = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -956,7 +956,7 @@ cancel.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::cancel
- * @see app/Http/Controllers/Api/BookingApiController.php:2067
+ * @see app/Http/Controllers/Api/BookingApiController.php:2139
  * @route '/api/bookings/cancel'
  */
 cancel.url = (options?: RouteQueryOptions) => {
@@ -965,7 +965,7 @@ cancel.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::cancel
- * @see app/Http/Controllers/Api/BookingApiController.php:2067
+ * @see app/Http/Controllers/Api/BookingApiController.php:2139
  * @route '/api/bookings/cancel'
  */
 cancel.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -975,7 +975,7 @@ cancel.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\BookingApiController::cancel
- * @see app/Http/Controllers/Api/BookingApiController.php:2067
+ * @see app/Http/Controllers/Api/BookingApiController.php:2139
  * @route '/api/bookings/cancel'
  */
     const cancelForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -985,7 +985,7 @@ cancel.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\BookingApiController::cancel
- * @see app/Http/Controllers/Api/BookingApiController.php:2067
+ * @see app/Http/Controllers/Api/BookingApiController.php:2139
  * @route '/api/bookings/cancel'
  */
         cancelForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

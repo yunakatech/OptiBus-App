@@ -252,6 +252,17 @@
         final_price: number;
     };
 
+    type PassengerDraft = {
+        seat: string;
+        name: string;
+        phone: string;
+        pickup_point: string;
+        address: string;
+        segment_id: number;
+        pembayaran: string;
+        discount: number;
+    };
+
     type BookingSuccessSnapshot = {
         tanggal: string;
         jam: string;
@@ -521,6 +532,9 @@
     let formAddress = $state('');
     let formSeat = $state('');
     let selectedSeats = $state<string[]>([]);
+    let passengerDrafts = $state<Record<string, PassengerDraft>>({});
+    let activePassengerSeat = $state('');
+    let syncPassengerData = $state(false);
     let lastTappedSeat = $state('');
     let lastSelectedPulseSeat = $state('');
     let formSegmentId = $state(0);
@@ -901,11 +915,23 @@
             null
         );
     };
+    const segmentForPassengerDraft = (draft: PassengerDraft) =>
+        scheduleSegmentOptions().find(
+            (item) => item.id === Number(draft.segment_id),
+        ) ?? null;
     const selectedTotal = () => {
-        const price = Number(activeSegment()?.harga ?? 0);
-        const discount = parseCurrencyInput(formDiscount);
+        if (selectedSeats.length === 0) {
+            return 0;
+        }
 
-        return Math.max(price * selectedCount() - discount, 0);
+        return selectedSeats.reduce((total, seat) => {
+            const token = normalizeSeatToken(seat);
+            const draft =
+                passengerDrafts[token] ?? draftFromCurrentForm(token);
+            const price = Number(segmentForPassengerDraft(draft)?.harga ?? 0);
+
+            return total + Math.max(price - Number(draft.discount || 0), 0);
+        }, 0);
     };
     const rekapTotal = () =>
         rekapItems.reduce((sum, item) => sum + item.final_price, 0);
@@ -978,6 +1004,166 @@
                 .filter((seat) => seat !== ''),
         );
 
+    const emptyPassengerDraft = (seat: string): PassengerDraft => ({
+        seat,
+        name: '',
+        phone: '',
+        pickup_point: '',
+        address: '',
+        segment_id: 0,
+        pembayaran: 'Belum Lunas',
+        discount: 0,
+    });
+
+    const loadPassengerDraftIntoForm = (seat: string) => {
+        const draft = passengerDrafts[seat] ?? emptyPassengerDraft(seat);
+
+        formName = draft.name;
+        formPhone = draft.phone;
+        formPickupPoint = draft.pickup_point;
+        formAddress = draft.address;
+        formSegmentId = draft.segment_id;
+        formPayment = draft.pembayaran;
+        formDiscount = draft.discount;
+    };
+
+    const draftFromCurrentForm = (seat: string): PassengerDraft => ({
+        seat,
+        name: normalizeNameForBooking(formName),
+        phone: normalizePhoneForBooking(formPhone),
+        pickup_point: String(formPickupPoint || '').trim(),
+        address: String(formAddress || '').trim(),
+        segment_id: Number(formSegmentId) || 0,
+        pembayaran: String(formPayment || 'Belum Lunas'),
+        discount: parseCurrencyInput(formDiscount),
+    });
+
+    const syncActivePassengerDraft = () => {
+        const seat = normalizeSeatToken(activePassengerSeat);
+
+        if (seat === '') {
+            return;
+        }
+
+        const draft = draftFromCurrentForm(seat);
+        const nextDrafts = { ...passengerDrafts, [seat]: draft };
+
+        if (syncPassengerData) {
+            selectedSeats.forEach((selectedSeat) => {
+                const token = normalizeSeatToken(selectedSeat);
+
+                if (token !== '') {
+                    nextDrafts[token] = { ...draft, seat: token };
+                }
+            });
+        }
+
+        passengerDrafts = nextDrafts;
+    };
+
+    const ensurePassengerDrafts = (seats: string[]) => {
+        const normalizedSeats = Array.from(
+            new Set(
+                seats
+                    .map((seat) => normalizeSeatToken(seat))
+                    .filter((seat) => seat !== ''),
+            ),
+        );
+        const activeToken = normalizeSeatToken(activePassengerSeat);
+        const activeIsSelected = normalizedSeats.includes(activeToken);
+        const sourceDraft =
+            (activeIsSelected ? passengerDrafts[activeToken] : null) ??
+            draftFromCurrentForm(normalizedSeats[0] ?? '');
+        const nextDrafts: Record<string, PassengerDraft> = {};
+
+        normalizedSeats.forEach((seat) => {
+            nextDrafts[seat] = syncPassengerData
+                ? { ...sourceDraft, seat }
+                : (passengerDrafts[seat] ??
+                  (activeIsSelected
+                      ? emptyPassengerDraft(seat)
+                      : { ...sourceDraft, seat }));
+        });
+
+        passengerDrafts = nextDrafts;
+
+        if (
+            normalizedSeats.length > 0 &&
+            !normalizedSeats.includes(normalizeSeatToken(activePassengerSeat))
+        ) {
+            activePassengerSeat = normalizedSeats[0];
+            loadPassengerDraftIntoForm(normalizedSeats[0]);
+        }
+
+        if (normalizedSeats.length === 0) {
+            activePassengerSeat = '';
+        }
+    };
+
+    const selectPassengerTab = (seat: string) => {
+        syncActivePassengerDraft();
+        const token = normalizeSeatToken(seat);
+
+        if (token === '' || !selectedSeats.includes(token)) {
+            return;
+        }
+
+        activePassengerSeat = token;
+        loadPassengerDraftIntoForm(token);
+        formError = '';
+    };
+
+    const passengerDraftIsComplete = (seat: string): boolean => {
+        const draft = passengerDrafts[normalizeSeatToken(seat)];
+
+        return Boolean(
+            draft?.name.trim() &&
+                draft.phone.trim() &&
+                (segments.length === 0 || Number(draft.segment_id) > 0),
+        );
+    };
+
+    const allPassengerDraftsComplete = (): boolean =>
+        selectedSeats.length > 0 &&
+        selectedSeats.every((seat) => passengerDraftIsComplete(seat));
+
+    const togglePassengerSync = (checked: boolean) => {
+        syncActivePassengerDraft();
+
+        if (!checked) {
+            syncPassengerData = false;
+
+            return;
+        }
+
+        const activeSeat = normalizeSeatToken(activePassengerSeat);
+        const source = passengerDrafts[activeSeat];
+        const hasDifferentData = selectedSeats.some((seat) => {
+            const target = passengerDrafts[normalizeSeatToken(seat)];
+
+            return (
+                normalizeSeatToken(seat) !== activeSeat &&
+                JSON.stringify(target) !== JSON.stringify(source)
+            );
+        });
+
+        if (
+            hasDifferentData &&
+            typeof window !== 'undefined' &&
+            !window.confirm(
+                'Data penumpang pada kursi lain akan disamakan dengan tab aktif. Lanjutkan?',
+            )
+        ) {
+            syncPassengerData = false;
+
+            return;
+        }
+
+        syncPassengerData = true;
+        ensurePassengerDrafts(selectedSeats);
+        loadPassengerDraftIntoForm(activeSeat);
+    };
+
     const parseSeatInput = (value: string) =>
         Array.from(
             new Set(
@@ -1032,6 +1218,7 @@
             return;
         }
 
+        ensurePassengerDrafts(requestedSeats);
         mobileBookingStep = 3;
     };
 
@@ -1468,6 +1655,7 @@
         }
 
         syncFormSeatFromSelected();
+        ensurePassengerDrafts(selectedSeats);
         formError = '';
     };
 
@@ -2214,6 +2402,8 @@
             (seat) => !bookedSeatSet().has(seat),
         );
         selectedSeats = selected;
+        ensurePassengerDrafts(selected);
+        syncFormSeatFromSelected();
     };
 
     const toSeatTokenList = (value: unknown): string[] => {
@@ -2232,6 +2422,9 @@
     const clearSeatSelection = () => {
         selectedSeats = [];
         formSeat = '';
+        passengerDrafts = {};
+        activePassengerSeat = '';
+        syncPassengerData = false;
         formError = '';
     };
 
@@ -2253,14 +2446,17 @@
         customerLookupMessage = '';
         loadingCustomerLookup = false;
         formError = '';
+        syncActivePassengerDraft();
     };
 
     const onFormNameInput = () => {
         formName = normalizeNameForBooking(formName);
+        syncActivePassengerDraft();
     };
 
     const onFormPhoneInput = () => {
         formPhone = normalizePhoneForBooking(formPhone);
+        syncActivePassengerDraft();
     };
 
     const searchCustomers = async (query: string, requestId: number) => {
@@ -5583,6 +5779,9 @@
         formDiscount = '';
         selectedSeats = [];
         formSeat = '';
+        passengerDrafts = {};
+        activePassengerSeat = '';
+        syncPassengerData = false;
         scheduleError = '';
         detailError = '';
     };
@@ -5597,6 +5796,9 @@
 
         selectedSeats = [];
         formSeat = '';
+        passengerDrafts = {};
+        activePassengerSeat = '';
+        syncPassengerData = false;
         formName = '';
         formPhone = '';
         formPickupPoint = '';
@@ -5651,6 +5853,9 @@
         formDiscount = '';
         selectedSeats = [];
         formSeat = '';
+        passengerDrafts = {};
+        activePassengerSeat = '';
+        syncPassengerData = false;
 
         try {
             const json = await apiGet('/api/bookings/schedules', {
@@ -5720,6 +5925,7 @@
                 selectedSeats = selectedSeats.filter(
                     (seat) => !isSeatBooked(seat),
                 );
+                ensurePassengerDrafts(selectedSeats);
                 syncFormSeatFromSelected();
             } else if (formSeat) {
                 syncSelectedSeatsFromInput();
@@ -5767,8 +5973,7 @@
     const submitBooking = async () => {
         formError = '';
         formSuccess = '';
-        formName = normalizeNameForBooking(formName);
-        formPhone = normalizePhoneForBooking(formPhone);
+        syncActivePassengerDraft();
 
         if (tenantWriteDisabled) {
             formError = tenantReadOnlyMessage;
@@ -5782,24 +5987,6 @@
             return;
         }
 
-        if (!formName.trim() || !formPhone.trim()) {
-            formError = 'Nama dan telepon wajib diisi.';
-
-            return;
-        }
-
-        if (formPhone.length > 13) {
-            formError = 'Nomor HP maksimal 13 digit.';
-
-            return;
-        }
-
-        if (segments.length > 0 && Number(formSegmentId) <= 0) {
-            formError = 'Pilih segment rute terlebih dahulu.';
-
-            return;
-        }
-
         const requestedSeats =
             selectedSeats.length > 0 ? selectedSeats : parseSeatInput(formSeat);
 
@@ -5808,6 +5995,8 @@
 
             return;
         }
+
+        ensurePassengerDrafts(requestedSeats);
 
         const unavailableSeats = requestedSeats.filter((seat) =>
             isSeatBooked(seat),
@@ -5822,6 +6011,37 @@
             return;
         }
 
+        const passengerCandidates = seatCandidates.map((seat) => {
+            const token = normalizeSeatToken(seat);
+
+            return (
+                passengerDrafts[token] ??
+                draftFromCurrentForm(token)
+            );
+        });
+        const incompletePassenger = passengerCandidates.find(
+            (draft) =>
+                !draft.name.trim() ||
+                !draft.phone.trim() ||
+                (segments.length > 0 && Number(draft.segment_id) <= 0),
+        );
+
+        if (incompletePassenger) {
+            formError = `Lengkapi nama, telepon, dan segment untuk kursi ${incompletePassenger.seat}.`;
+
+            return;
+        }
+
+        const invalidPhonePassenger = passengerCandidates.find(
+            (draft) => draft.phone.length > 13,
+        );
+
+        if (invalidPhonePassenger) {
+            formError = `Nomor HP kursi ${invalidPhonePassenger.seat} maksimal 13 digit.`;
+
+            return;
+        }
+
         submittingBooking = true;
 
         try {
@@ -5830,17 +6050,20 @@
                 tanggal: bookingDate,
                 jam: selectedJam,
                 unit: Number(selectedUnit) || 1,
-                name: formName,
-                phone: formPhone,
-                pickup_point: formPickupPoint,
-                address: formAddress,
-                pembayaran: formPayment,
-                segment_id:
-                    Number(formSegmentId) > 0
-                        ? Number(formSegmentId)
-                        : undefined,
-                discount: parseCurrencyInput(formDiscount),
                 seats: seatCandidates,
+                passengers: passengerCandidates.map((draft) => ({
+                    seat: draft.seat,
+                    name: draft.name,
+                    phone: draft.phone,
+                    pickup_point: draft.pickup_point,
+                    address: draft.address,
+                    pembayaran: draft.pembayaran,
+                    segment_id:
+                        Number(draft.segment_id) > 0
+                            ? Number(draft.segment_id)
+                            : undefined,
+                    discount: Number(draft.discount || 0),
+                })),
             };
             const json = await runWithFeedback(
                 async () => {
@@ -5882,68 +6105,63 @@
             const recordBySeat = new Map<string, CreatedBookingRecord>(
                 createdRecords.map((item) => [item.seat, item]),
             );
-            const seatPrice = Math.max(Number(activeSegment()?.harga ?? 0), 0);
-            const totalDiscount = parseCurrencyInput(formDiscount);
-            const seatDiscount =
-                seatCandidates.length > 0
-                    ? totalDiscount / seatCandidates.length
-                    : 0;
-            const activeSegmentJamPickups = segmentJamList(
-                activeSegment()?.jam_pickups,
-            );
-            const segmentJamPickups =
-                activeSegmentJamPickups.length > 0
-                    ? activeSegmentJamPickups
-                    : segmentJamList(activeSegment()?.jam);
+            const successItems = passengerCandidates.map((draft) => {
+                const segment = segmentForPassengerDraft(draft);
+                const pickups = segmentJamList(segment?.jam_pickups);
+                const segmentJamPickups =
+                    pickups.length > 0 ? pickups : segmentJamList(segment?.jam);
+                const price = Math.max(Number(segment?.harga ?? 0), 0);
+
+                return {
+                    seat: draft.seat,
+                    name: draft.name,
+                    phone: draft.phone,
+                    pickup_point: draft.pickup_point,
+                    segment_name: segment?.rute || selectedRoute || '-',
+                    segment_jam:
+                        segmentJamSummary(segmentJamPickups) ||
+                        segmentJamLabel(segment?.jam) ||
+                        '',
+                    segment_jam_pickups: segmentJamPickups,
+                    pembayaran: draft.pembayaran,
+                    final_price: Math.max(price - draft.discount, 0),
+                } satisfies BookingSuccessItem;
+            });
             const successSnapshot: BookingSuccessSnapshot = {
                 tanggal: bookingDate,
                 jam: selectedJam,
-                segment_jam:
-                    segmentJamSummary(segmentJamPickups) ||
-                    segmentJamLabel(activeSegment()?.jam) ||
-                    '',
-                segment_jam_pickups: segmentJamPickups,
+                segment_jam: successItems[0]?.segment_jam || '',
+                segment_jam_pickups: successItems[0]?.segment_jam_pickups || [],
                 rute: selectedRoute,
                 unit: Number(selectedUnit) || 1,
-                total: Math.max(
-                    seatPrice * seatCandidates.length - totalDiscount,
+                total: successItems.reduce(
+                    (total, item) => total + item.final_price,
                     0,
                 ),
-                items: seatCandidates.map((seat) => ({
-                    seat,
-                    name: formName,
-                    phone: formPhone,
-                    pickup_point: formPickupPoint,
-                    segment_name: activeSegment()?.rute || selectedRoute || '-',
-                    segment_jam:
-                        segmentJamSummary(segmentJamPickups) ||
-                        segmentJamLabel(activeSegment()?.jam) ||
-                        '',
-                    segment_jam_pickups: segmentJamPickups,
-                    pembayaran: formPayment,
-                    final_price: Math.max(seatPrice - seatDiscount, 0),
-                })),
+                items: successItems,
             };
-            const newRows = seatCandidates.map((seat, index) => ({
+            const newRows = passengerCandidates.map((draft, index) => ({
                 id: Number.isFinite(createdIds[index])
                     ? createdIds[index]
                     : Date.now() + index,
                 group_key: '',
-                name: formName.toUpperCase(),
-                phone: formPhone,
+                name: draft.name.toUpperCase(),
+                phone: draft.phone,
                 rute: selectedRoute,
                 tanggal: bookingDate,
                 jam: selectedJam,
                 unit: Number(selectedUnit) || 1,
-                seat,
+                seat: draft.seat,
                 status: 'active',
-                pembayaran: formPayment,
+                pembayaran: draft.pembayaran,
                 departure_code: String(
-                    recordBySeat.get(seat)?.departure_code ??
+                    recordBySeat.get(draft.seat)?.departure_code ??
                         json.departure_code ??
                         '',
                 ),
-                ticket_code: String(recordBySeat.get(seat)?.ticket_code ?? ''),
+                ticket_code: String(
+                    recordBySeat.get(draft.seat)?.ticket_code ?? '',
+                ),
             }));
 
             localLatestBookings = [...newRows, ...localLatestBookings].slice(
@@ -6718,11 +6936,74 @@
                     <div
                         class={`space-y-3 ${mobileBookingStep === 3 ? 'block' : 'hidden md:block'}`}
                     >
+                        {#if selectedSeats.length > 1}
+                            <div
+                                class="space-y-3 rounded-xl border bg-background/80 p-4 shadow-sm"
+                            >
+                                <div
+                                    class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                                >
+                                    <div>
+                                        <h3 class="text-sm font-semibold">
+                                            Data Penumpang per Kursi
+                                        </h3>
+                                        <p class="text-xs text-muted-foreground">
+                                            Isi data berbeda untuk setiap kursi.
+                                        </p>
+                                    </div>
+                                    <label
+                                        class="flex cursor-pointer items-center gap-2 text-xs font-medium"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            class="h-4 w-4 rounded border-input accent-primary"
+                                            checked={syncPassengerData}
+                                            onchange={(event) =>
+                                                togglePassengerSync(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).checked,
+                                                )}
+                                        />
+                                        Samakan semua data penumpang
+                                    </label>
+                                </div>
+                                <div
+                                    class="flex gap-2 overflow-x-auto pb-1"
+                                    role="tablist"
+                                    aria-label="Data penumpang per kursi"
+                                >
+                                    {#each selectedSeats as seat (`passenger-tab-${seat}`)}
+                                        {@const complete = passengerDraftIsComplete(seat)}
+                                        <button
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={activePassengerSeat === seat}
+                                            class={`min-w-[132px] shrink-0 rounded-xl border px-3 py-2 text-left transition ${activePassengerSeat === seat ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-muted/60'}`}
+                                            onclick={() => selectPassengerTab(seat)}
+                                        >
+                                            <span class="block text-sm font-semibold">
+                                                Kursi {seat}
+                                            </span>
+                                            <span
+                                                class={`mt-1 block text-[11px] ${complete ? 'text-emerald-600' : 'text-muted-foreground'}`}
+                                            >
+                                                {complete
+                                                    ? 'Siap disimpan'
+                                                    : 'Belum lengkap'}
+                                            </span>
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
                         <div
                             class="space-y-3 rounded-lg border bg-background/80 p-4 shadow-sm"
                         >
                             <h3 class="text-sm font-semibold">
-                                Tambah Booking Cepat
+                                Tambah Booking Cepat{activePassengerSeat
+                                    ? ` - Kursi ${activePassengerSeat}`
+                                    : ''}
                             </h3>
                             <div class="grid gap-3 md:grid-cols-2">
                                 <div class="md:col-span-2">
@@ -6861,6 +7142,7 @@
                                         class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formSegmentId}
                                         disabled={loadingSegments}
+                                        onchange={syncActivePassengerDraft}
                                     >
                                         <option value={0}
                                             >{loadingSegments
@@ -6890,6 +7172,7 @@
                                         id="booking-form-payment"
                                         class="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm text-foreground"
                                         bind:value={formPayment}
+                                        onchange={syncActivePassengerDraft}
                                     >
                                         {#each paymentOptions as option, index (`payment-opt-${index}-${option}`)}
                                             <option value={option}
@@ -6919,6 +7202,7 @@
                                                     event.currentTarget as HTMLInputElement
                                                 ).value,
                                             );
+                                            syncActivePassengerDraft();
                                         }}
                                     />
                                 </div>
@@ -6933,6 +7217,7 @@
                                         class="h-11 rounded-xl"
                                         placeholder="Cth: Depan Indomaret"
                                         bind:value={formPickupPoint}
+                                        oninput={syncActivePassengerDraft}
                                     />
                                 </div>
                                 <div class="md:col-span-2">
@@ -6946,6 +7231,7 @@
                                         class="h-11 rounded-xl"
                                         placeholder="URL Google Map (opsional)"
                                         bind:value={formAddress}
+                                        oninput={syncActivePassengerDraft}
                                     />
                                 </div>
                                 <div
@@ -6977,7 +7263,8 @@
                                         disabled={submittingBooking ||
                                             tenantWriteDisabled ||
                                             !selectedRoute ||
-                                            !selectedJam}
+                                            !selectedJam ||
+                                            !allPassengerDraftsComplete()}
                                         loading={submittingBooking}
                                         loadingText="Menyimpan..."
                                     >
@@ -7650,8 +7937,54 @@
                             <p class="mt-1 font-semibold">
                                 {bookingSuccessSnapshot.items
                                     .map((item) => item.seat)
-                                    .join(', ')}
+                                .join(', ')}
                             </p>
+                        </div>
+                        <div class="mt-3 overflow-x-auto rounded-xl border">
+                            <table class="w-full min-w-[560px] text-sm">
+                                <thead class="border-b bg-muted/40 text-left">
+                                    <tr>
+                                        <th class="px-3 py-2">Kursi</th>
+                                        <th class="px-3 py-2">Penumpang</th>
+                                        <th class="px-3 py-2">Segment</th>
+                                        <th class="px-3 py-2">Pembayaran</th>
+                                        <th class="px-3 py-2 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#each bookingSuccessSnapshot.items as item (`booking-success-${item.seat}`)}
+                                        <tr class="border-b last:border-0">
+                                            <td class="px-3 py-2 font-semibold">
+                                                {item.seat}
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                <div class="font-medium">
+                                                    {item.name}
+                                                </div>
+                                                <div class="text-xs text-muted-foreground">
+                                                    {item.phone}
+                                                </div>
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                <div>{item.segment_name}</div>
+                                                {#if item.segment_jam}
+                                                    <div class="text-xs text-muted-foreground">
+                                                        {item.segment_jam}
+                                                    </div>
+                                                {/if}
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                {item.pembayaran}
+                                            </td>
+                                            <td class="px-3 py-2 text-right font-semibold">
+                                                Rp {item.final_price.toLocaleString(
+                                                    'id-ID',
+                                                )}
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 

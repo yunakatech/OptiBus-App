@@ -193,6 +193,115 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('error', 'conflict');
     }
 
+    public function test_submit_booking_accepts_distinct_passenger_data_per_seat(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'POOL MULTI KURSI',
+            'code' => 'MKS',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('pool_route')->insert([
+            'pool_id' => $poolId,
+            'route_id' => $routeId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $segmentOneId = DB::table('segments')->insertGetId([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'jam' => '09:00:00',
+            'harga' => 150000,
+            'created_at' => now(),
+        ]);
+        $segmentTwoId = DB::table('segments')->insertGetId([
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - PAREPARE',
+            'origin' => 'PINRANG',
+            'destination' => 'PAREPARE',
+            'jam' => '09:30:00',
+            'harga' => 100000,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->postJson(route('api.bookings.submit'), [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00',
+            'unit' => 1,
+            'passengers' => [
+                [
+                    'seat' => '2',
+                    'name' => 'BUDI',
+                    'phone' => '081111111111',
+                    'pickup_point' => 'Terminal Pinrang',
+                    'address' => 'Pinrang',
+                    'segment_id' => $segmentOneId,
+                    'pembayaran' => 'Belum Lunas',
+                    'discount' => 10000,
+                ],
+                [
+                    'seat' => '3',
+                    'name' => 'SITI',
+                    'phone' => '082222222222',
+                    'pickup_point' => 'Hotel',
+                    'address' => 'Makassar',
+                    'segment_id' => $segmentTwoId,
+                    'pembayaran' => 'Lunas',
+                    'discount' => 5000,
+                ],
+            ],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('added', 2)
+            ->assertJsonPath('booking_records.0.seat', '2')
+            ->assertJsonPath('booking_records.1.seat', '3');
+
+        $this->assertDatabaseHas('bookings', [
+            'route_id' => $routeId,
+            'seat' => '2',
+            'name' => 'BUDI',
+            'phone' => '081111111111',
+            'segment_id' => $segmentOneId,
+            'pembayaran' => 'Belum Lunas',
+            'discount' => 10000,
+        ]);
+        $this->assertDatabaseHas('bookings', [
+            'route_id' => $routeId,
+            'seat' => '3',
+            'name' => 'SITI',
+            'phone' => '082222222222',
+            'segment_id' => $segmentTwoId,
+            'pembayaran' => 'Lunas',
+            'discount' => 5000,
+        ]);
+        $this->assertDatabaseHas('customers', [
+            'pool_id' => $poolId,
+            'phone' => '081111111111',
+        ]);
+        $this->assertDatabaseHas('customers', [
+            'pool_id' => $poolId,
+            'phone' => '082222222222',
+        ]);
+    }
+
     public function test_update_booking_uses_route_id_for_normalized_route_variants(): void
     {
         $this->actingAsSuperAdmin();

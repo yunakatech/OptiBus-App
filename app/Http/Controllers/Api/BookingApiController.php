@@ -1551,8 +1551,8 @@ class BookingApiController extends Controller
             'tanggal' => ['required', 'date_format:Y-m-d'],
             'jam' => ['required', 'regex:/^\d{2}:\d{2}$/'],
             'unit' => ['nullable', 'integer', 'min:1'],
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:50'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
             'pickup_point' => ['nullable', 'string', 'max:255'],
             'gmaps' => ['nullable', 'string'],
             'address' => ['nullable', 'string'],
@@ -1562,20 +1562,29 @@ class BookingApiController extends Controller
             'seat' => ['nullable', 'string', 'max:20'],
             'seats' => ['nullable', 'array'],
             'seats.*' => ['nullable', 'string', 'max:20'],
+            'passengers' => ['nullable', 'array', 'min:1'],
+            'passengers.*.seat' => ['required', 'string', 'max:20'],
+            'passengers.*.name' => ['nullable', 'string', 'max:255'],
+            'passengers.*.phone' => ['nullable', 'string', 'max:50'],
+            'passengers.*.pickup_point' => ['nullable', 'string', 'max:255'],
+            'passengers.*.address' => ['nullable', 'string'],
+            'passengers.*.gmaps' => ['nullable', 'string'],
+            'passengers.*.pembayaran' => ['nullable', 'string', 'max:50'],
+            'passengers.*.segment_id' => ['nullable', 'integer', 'min:0'],
+            'passengers.*.discount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $rute = trim((string) $data['rute']);
         $tanggal = $data['tanggal'];
         $jamSql = $this->normalizeTime((string) $data['jam']);
         $unit = max(1, (int) ($data['unit'] ?? 1));
-        $name = strtoupper(trim((string) $data['name']));
-        $phone = $this->normalizePhone((string) $data['phone']);
+        $name = strtoupper(trim((string) ($data['name'] ?? '')));
+        $phone = $this->normalizePhone((string) ($data['phone'] ?? ''));
         $pickupPoint = trim((string) ($data['pickup_point'] ?? ''));
         $address = trim((string) ($data['gmaps'] ?? $data['address'] ?? ''));
         $payment = $this->normalizePayment((string) ($data['pembayaran'] ?? 'Belum Lunas'));
         $segmentId = (int) ($data['segment_id'] ?? 0);
         $discount = max(0, (float) ($data['discount'] ?? 0));
-        $price = $this->segmentPrice($segmentId);
 
         if (! PoolScope::canAccessRouteName($rute)) {
             return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
@@ -1594,12 +1603,63 @@ class BookingApiController extends Controller
             return $this->error('Manifest sudah ditutup. Booking baru tidak bisa ditambahkan lagi.', 409);
         }
 
-        $seats = $data['seats'] ?? null;
-        if (! is_array($seats)) {
-            $single = $this->normalizeSeat((string) ($data['seat'] ?? ''));
-            $seats = $single !== '' ? [$single] : [];
+        $passengerRows = [];
+        $rawPassengers = $data['passengers'] ?? null;
+
+        if (is_array($rawPassengers) && count($rawPassengers) > 0) {
+            foreach ($rawPassengers as $passenger) {
+                $passenger = is_array($passenger) ? $passenger : [];
+                $passengerName = strtoupper(trim((string) ($passenger['name'] ?? '')));
+                $passengerPhone = $this->normalizePhone((string) ($passenger['phone'] ?? ''));
+                $passengerSegmentId = (int) ($passenger['segment_id'] ?? 0);
+
+                if ($passengerName === '' || $passengerPhone === '') {
+                    return $this->error('Nama dan telepon setiap penumpang wajib diisi.', 422);
+                }
+
+                $passengerRows[] = [
+                    'seat' => $this->normalizeSeat((string) ($passenger['seat'] ?? '')),
+                    'name' => $passengerName,
+                    'phone' => $passengerPhone,
+                    'pickup_point' => trim((string) ($passenger['pickup_point'] ?? '')),
+                    'address' => trim((string) ($passenger['gmaps'] ?? $passenger['address'] ?? '')),
+                    'payment' => $this->normalizePayment((string) ($passenger['pembayaran'] ?? 'Belum Lunas')),
+                    'segment_id' => $passengerSegmentId,
+                    'price' => $this->segmentPrice($passengerSegmentId),
+                    'discount' => max(0, (float) ($passenger['discount'] ?? 0)),
+                ];
+            }
+        } elseif ($name !== '' && $phone !== '') {
+            $seats = $data['seats'] ?? null;
+            if (! is_array($seats)) {
+                $single = $this->normalizeSeat((string) ($data['seat'] ?? ''));
+                $seats = $single !== '' ? [$single] : [];
+            }
+            $seats = array_values(array_unique(array_filter(array_map(fn ($seat) => $this->normalizeSeat((string) $seat), $seats))));
+
+            foreach ($seats as $seat) {
+                $passengerRows[] = [
+                    'seat' => $seat,
+                    'name' => $name,
+                    'phone' => $phone,
+                    'pickup_point' => $pickupPoint,
+                    'address' => $address,
+                    'payment' => $payment,
+                    'segment_id' => $segmentId,
+                    'price' => $this->segmentPrice($segmentId),
+                    'discount' => $discount,
+                ];
+            }
         }
-        $seats = array_values(array_unique(array_filter(array_map(fn ($seat) => $this->normalizeSeat((string) $seat), $seats))));
+
+        $seats = array_values(array_unique(array_map(
+            static fn (array $passenger): string => $passenger['seat'],
+            $passengerRows,
+        )));
+
+        if (count($seats) !== count($passengerRows)) {
+            return $this->error('Setiap kursi penumpang harus unik.', 422);
+        }
 
         if (empty($seats)) {
             return $this->error('no_seats', 422);
@@ -1610,7 +1670,10 @@ class BookingApiController extends Controller
             }
         }
 
-        $discountPerSeat = count($seats) > 0 ? ($discount / count($seats)) : 0;
+        if (empty($passengerRows) || in_array('', $seats, true)) {
+            return $this->error('Data kursi dan penumpang wajib diisi.', 422);
+        }
+
         $createdByUserId = $request->user()?->id;
         $createdByUsername = $request->user()?->name ?: $request->user()?->email ?: 'System';
 
@@ -1621,14 +1684,7 @@ class BookingApiController extends Controller
                 $jamSql,
                 $unit,
                 $seats,
-                $name,
-                $phone,
-                $pickupPoint,
-                $address,
-                $payment,
-                $segmentId,
-                $price,
-                $discountPerSeat,
+                $passengerRows,
                 $createdByUserId,
                 $createdByUsername,
                 $routeId,
@@ -1656,21 +1712,22 @@ class BookingApiController extends Controller
 
                 $ids = [];
                 $records = [];
-                foreach ($seats as $seat) {
+                foreach ($passengerRows as $passenger) {
+                    $seat = $passenger['seat'];
                     $insert = [
                         'rute' => $rute,
                         'tanggal' => $tanggal,
                         'jam' => $jamSql,
                         'unit' => $unit,
                         'departure_code' => $supportsDepartureCode ? $departureCode : null,
-                        'name' => $name,
-                        'phone' => $phone,
-                        'pickup_point' => $pickupPoint,
-                        'pembayaran' => $payment,
+                        'name' => $passenger['name'],
+                        'phone' => $passenger['phone'],
+                        'pickup_point' => $passenger['pickup_point'],
+                        'pembayaran' => $passenger['payment'],
                         'status' => 'active',
-                        'segment_id' => $segmentId > 0 ? $segmentId : null,
-                        'price' => $segmentId > 0 ? $price : 0,
-                        'discount' => $discountPerSeat,
+                        'segment_id' => $passenger['segment_id'] > 0 ? $passenger['segment_id'] : null,
+                        'price' => $passenger['segment_id'] > 0 ? $passenger['price'] : 0,
+                        'discount' => $passenger['discount'],
                         'created_by_user_id' => $createdByUserId,
                         'created_by_username' => $createdByUsername,
                         'created_at' => now(),
@@ -1699,12 +1756,24 @@ class BookingApiController extends Controller
                     $records[] = [
                         'id' => $id,
                         'seat' => $seat,
+                        'name' => $passenger['name'],
+                        'phone' => $passenger['phone'],
+                        'pickup_point' => $passenger['pickup_point'],
+                        'pembayaran' => $passenger['payment'],
+                        'segment_id' => $passenger['segment_id'],
+                        'discount' => $passenger['discount'],
                         'departure_code' => $departureCode,
                         'ticket_code' => $ticketCode,
                     ];
-                }
 
-                $this->upsertCustomer($name, $phone, $pickupPoint, $address, $routeId);
+                    $this->upsertCustomer(
+                        $passenger['name'],
+                        $passenger['phone'],
+                        $passenger['pickup_point'],
+                        $passenger['address'],
+                        $routeId,
+                    );
+                }
 
                 return ['ids' => $ids, 'records' => $records, 'departure_code' => $departureCode];
             }, 3);
@@ -1718,7 +1787,10 @@ class BookingApiController extends Controller
 
         ActivityLog::write(
             'BOOKING',
-            'Booking baru: '.$name.' ('.count($seats).' kursi)',
+            'Booking baru: '.implode(', ', array_unique(array_map(
+                static fn (array $passenger): string => $passenger['name'],
+                $passengerRows,
+            ))).' ('.count($seats).' kursi)',
             'Rute '.$rute.' | '.substr($jamSql, 0, 5).' | Unit '.$unit,
             (string) $createdByUsername,
             ['booking_ids' => $result['ids']],
