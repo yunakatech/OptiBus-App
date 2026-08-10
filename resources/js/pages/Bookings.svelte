@@ -1113,6 +1113,40 @@
         formError = '';
     };
 
+    const closePassengerTab = (seat: string) => {
+        const token = normalizeSeatToken(seat);
+
+        if (token === '' || !selectedSeats.includes(token)) {
+            return;
+        }
+
+        if (selectedSeats.length <= 1) {
+            formError = 'Minimal satu kursi harus dipilih.';
+
+            return;
+        }
+
+        syncActivePassengerDraft();
+        const remainingSeats = selectedSeats.filter((item) => item !== token);
+        const nextDrafts = { ...passengerDrafts };
+        delete nextDrafts[token];
+        passengerDrafts = nextDrafts;
+        selectedSeats = remainingSeats;
+        formSeat = remainingSeats.join(', ');
+
+        if (normalizeSeatToken(activePassengerSeat) === token) {
+            activePassengerSeat = remainingSeats[0] ?? '';
+        }
+
+        ensurePassengerDrafts(remainingSeats);
+
+        if (activePassengerSeat !== '') {
+            loadPassengerDraftIntoForm(activePassengerSeat);
+        }
+
+        formError = '';
+    };
+
     const passengerDraftIsComplete = (seat: string): boolean => {
         const draft = passengerDrafts[normalizeSeatToken(seat)];
 
@@ -6975,24 +7009,40 @@
                                 >
                                     {#each selectedSeats as seat (`passenger-tab-${seat}`)}
                                         {@const complete = passengerDraftIsComplete(seat)}
-                                        <button
-                                            type="button"
-                                            role="tab"
-                                            aria-selected={activePassengerSeat === seat}
-                                            class={`min-w-[132px] shrink-0 rounded-xl border px-3 py-2 text-left transition ${activePassengerSeat === seat ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-muted/60'}`}
-                                            onclick={() => selectPassengerTab(seat)}
+                                        <div
+                                            class={`flex min-w-[156px] shrink-0 items-stretch rounded-xl border transition ${activePassengerSeat === seat ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-muted/60'}`}
                                         >
-                                            <span class="block text-sm font-semibold">
-                                                Kursi {seat}
-                                            </span>
-                                            <span
-                                                class={`mt-1 block text-[11px] ${complete ? 'text-emerald-600' : 'text-muted-foreground'}`}
+                                            <button
+                                                type="button"
+                                                role="tab"
+                                                aria-selected={activePassengerSeat === seat}
+                                                class="min-w-0 flex-1 rounded-l-xl px-3 py-2 text-left transition"
+                                                onclick={() => selectPassengerTab(seat)}
                                             >
-                                                {complete
-                                                    ? 'Siap disimpan'
-                                                    : 'Belum lengkap'}
-                                            </span>
-                                        </button>
+                                                <span class="block text-sm font-semibold">
+                                                    Kursi {seat}
+                                                </span>
+                                                <span
+                                                    class={`mt-1 block text-[11px] ${complete ? 'text-emerald-600' : 'text-muted-foreground'}`}
+                                                >
+                                                    {complete
+                                                        ? 'Siap disimpan'
+                                                        : 'Belum lengkap'}
+                                                </span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="rounded-r-xl px-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                                                aria-label={`Tutup tab kursi ${seat}`}
+                                                title={`Tutup kursi ${seat}`}
+                                                onclick={(event) => {
+                                                    event.stopPropagation();
+                                                    closePassengerTab(seat);
+                                                }}
+                                            >
+                                                <X class="h-4 w-4" />
+                                            </button>
+                                        </div>
                                     {/each}
                                 </div>
                             </div>
@@ -7116,15 +7166,17 @@
                                     <label
                                         for="booking-form-seat"
                                         class="mb-1.5 block text-xs font-medium text-muted-foreground"
-                                        >Pilih Kursi</label
+                                        >Kursi Penumpang</label
                                     >
                                     <div class="relative">
                                         <Input
                                             id="booking-form-seat"
-                                            class="h-11 rounded-xl !pl-10"
-                                            placeholder="Cth: 1, 2, 3"
-                                            bind:value={formSeat}
-                                            oninput={syncSelectedSeatsFromInput}
+                                            class="h-11 rounded-xl bg-muted/50 !pl-10"
+                                            value={activePassengerSeat || selectedSeats.join(', ')}
+                                            disabled
+                                            readonly
+                                            aria-readonly="true"
+                                            aria-disabled="true"
                                         />
                                         <Armchair
                                             class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
