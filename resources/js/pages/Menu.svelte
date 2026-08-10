@@ -33,7 +33,7 @@
 
     const url = currentUrlState();
     const dashboardHref = toUrl(dashboard());
-    const supportHref = $derived(getSupportWhatsappHref(page.url || '/menu'));
+    const supportHref = getSupportWhatsappHref();
     const canPrefetchDashboard = shouldPrefetchNavigationHref(dashboardHref);
     const permissions = $derived(page.props.auth?.permissions ?? []);
     const isSuperAdmin = $derived(
