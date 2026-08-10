@@ -530,6 +530,8 @@
     let detailSeat = $state<BookedSeatRow | null>(null);
     let detailEditMode = $state(false);
     let savingDetailEdit = $state(false);
+    let loadingDetailEditSeats = $state(false);
+    let detailEditSeatOptions = $state<string[]>([]);
     let detailEditSeat = $state('');
     let detailEditName = $state('');
     let detailEditPhone = $state('');
@@ -1469,6 +1471,52 @@
         formError = '';
     };
 
+    const loadDetailEditSeatOptions = async (
+        bookingId: number,
+        currentSeat: string,
+    ) => {
+        const fallbackSeat = normalizeSeatToken(currentSeat);
+        detailEditSeatOptions = fallbackSeat !== '' ? [fallbackSeat] : [];
+        loadingDetailEditSeats = true;
+
+        try {
+            const seatOptionsJson = await apiGet(
+                '/api/bookings/edit-seat-options',
+                {
+                    rute: selectedRoute,
+                    tanggal: bookingDate,
+                    jam: normalizeJamToken(selectedJam),
+                    unit: selectedUnit,
+                    booking_id: bookingId,
+                    current_seat: fallbackSeat,
+                },
+            );
+            const availableSeats = uniqueSortedSeatTokens(
+                toSeatTokenList(seatOptionsJson.available_seats),
+            );
+            const options = Array.from(
+                new Set(
+                    fallbackSeat !== ''
+                        ? [fallbackSeat, ...availableSeats]
+                        : availableSeats,
+                ),
+            ).sort(compareSeatTokens);
+
+            detailEditSeatOptions = options;
+
+            if (
+                options.length > 0 &&
+                !options.includes(normalizeSeatToken(detailEditSeat))
+            ) {
+                detailEditSeat = fallbackSeat || options[0];
+            }
+        } catch {
+            detailEditSeatOptions = fallbackSeat !== '' ? [fallbackSeat] : [];
+        } finally {
+            loadingDetailEditSeats = false;
+        }
+    };
+
     const openSeatDetail = (seat: string) => {
         const token = normalizeSeatToken(seat);
         const detail = seatDetailsMap[token];
@@ -1489,7 +1537,9 @@
         detailEditPayment = detail.pembayaran || 'Belum Lunas';
         detailEditSegmentId = Number(detail.segment_id || 0);
         detailEditDiscount = Number(detail.discount || 0);
+        detailEditSeatOptions = token !== '' ? [token] : [];
         detailModalOpen = true;
+        void loadDetailEditSeatOptions(detail.id, token);
     };
 
     const closeSeatDetail = () => {
@@ -1497,6 +1547,8 @@
         detailSeat = null;
         detailEditMode = false;
         savingDetailEdit = false;
+        loadingDetailEditSeats = false;
+        detailEditSeatOptions = [];
     };
 
     const startDetailEdit = () => {
@@ -1724,8 +1776,8 @@
         }
 
         if (
-            groupEditSeatOptions.length > 0 &&
-            !groupEditSeatOptions.includes(seat)
+            detailEditSeatOptions.length > 0 &&
+            !detailEditSeatOptions.includes(seat)
         ) {
             formError =
                 'Seat yang dipilih tidak tersedia. Pilih dari daftar seat kosong.';
@@ -7221,11 +7273,28 @@
                         </div>
                     {:else}
                         <div class="grid gap-2.5 sm:grid-cols-2">
-                            <Input
-                                class="h-10 rounded-xl sm:h-11"
-                                placeholder="Seat"
+                            <select
+                                class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
                                 bind:value={detailEditSeat}
-                            />
+                                disabled={loadingDetailEditSeats ||
+                                    savingDetailEdit}
+                                aria-label="Pilih kursi"
+                            >
+                                {#if detailEditSeatOptions.length === 0}
+                                    <option value=""
+                                        >Tidak ada kursi tersedia</option
+                                    >
+                                {:else}
+                                    {#each detailEditSeatOptions as seat (`detail-seat-option-${seat}`)}
+                                        <option value={seat}>
+                                            Kursi {seat}{seat ===
+                                            detailSeat?.seat
+                                                ? ' (saat ini)'
+                                                : ''}
+                                        </option>
+                                    {/each}
+                                {/if}
+                            </select>
                             <Input
                                 class="h-10 rounded-xl sm:h-11"
                                 placeholder="Nama"
@@ -7286,6 +7355,16 @@
                                 {/each}
                             </select>
                         </div>
+                        {#if loadingDetailEditSeats}
+                            <p class="mt-2 text-xs text-muted-foreground">
+                                Memuat kursi kosong pada jadwal ini...
+                            </p>
+                        {:else if detailEditSeatOptions.length > 0}
+                            <p class="mt-2 text-xs text-muted-foreground">
+                                Kursi yang tersedia pada jadwal dan unit ini
+                                ditampilkan di daftar.
+                            </p>
+                        {/if}
                     {/if}
 
                     {#if formSuccess}
