@@ -410,6 +410,13 @@
         { key: luggageArrivedStatus, label: luggageArrivedStatus },
         { key: 'canceled', label: 'Canceled' },
     ];
+    const luggageConditionOptions = [
+        { key: '', label: 'Semua kondisi' },
+        { key: 'normal', label: 'Normal' },
+        { key: 'damaged', label: 'Rusak' },
+        { key: 'lost', label: 'Hilang' },
+        { key: 'damaged_and_lost', label: 'Rusak & Hilang' },
+    ];
     const newCharterForm = () => ({
         id: 0,
         pool_id: 0,
@@ -2749,6 +2756,8 @@
         filterFrom = '';
         filterTo = '';
         filterQuery = '';
+        luggageStatusFilter = '';
+        luggageConditionFilter = '';
         luggageMeta.page = 1;
         luggageFilterDatePicker?.clear();
 
@@ -2757,6 +2766,22 @@
         }
 
         await loadActiveTab();
+    };
+
+    const luggageFilterActiveCount = () =>
+        [
+            filterFrom || filterTo,
+            filterQuery.trim(),
+            luggageStatusFilter,
+            luggageConditionFilter,
+        ].filter(Boolean).length;
+
+    const luggageFilterDateLabel = () => {
+        if (filterFrom && filterTo && filterFrom !== filterTo) {
+            return `${filterFrom} - ${filterTo}`;
+        }
+
+        return filterFrom || filterTo;
     };
 
     const setTab = async (tab: TabName) => {
@@ -4044,35 +4069,156 @@
                             </div>
                         {:else if activeTab === 'luggages'}
                             <div
-                                class="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto_auto]"
+                                class="rounded-2xl border border-border/70 bg-muted/10 p-4"
                             >
-                                <input
-                                    bind:this={luggageFilterDateInput}
-                                    type="text"
-                                    value={filterFrom}
-                                    readonly
-                                    autocomplete="off"
-                                    placeholder="Tanggal bagasi"
-                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                />
-                                <Input
-                                    placeholder="Cari pengirim, penerima, resi, layanan, atau rute"
-                                    bind:value={filterQuery}
-                                    onkeydown={(event) =>
-                                        event.key === 'Enter' &&
-                                        void applyFilters()}
-                                />
-                                <Button
-                                    type="button"
-                                    onclick={() => void applyFilters()}
-                                    >Cari Data</Button
+                                <div
+                                    class="flex flex-wrap items-start justify-between gap-3"
                                 >
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onclick={() => void resetLuggageFilters()}
-                                    >Reset</Button
+                                    <div>
+                                        <p class="text-sm font-semibold text-foreground">
+                                            Filter data bagasi
+                                        </p>
+                                        <p class="mt-1 text-xs text-muted-foreground">
+                                            Pilih satu atau beberapa filter, lalu
+                                            tekan Terapkan Filter.
+                                        </p>
+                                    </div>
+                                    {#if luggageFilterActiveCount() > 0}
+                                        <span
+                                            class="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700"
+                                        >
+                                            {luggageFilterActiveCount()}
+                                            filter aktif
+                                        </span>
+                                    {/if}
+                                </div>
+
+                                <div
+                                    class="mt-4 grid items-end gap-4 lg:grid-cols-[190px_minmax(250px,1fr)_190px_190px_auto]"
                                 >
+                                    <label class="grid gap-1.5">
+                                        <span
+                                            class="text-xs font-semibold text-foreground"
+                                            >Tanggal kirim</span
+                                        >
+                                        <input
+                                            bind:this={luggageFilterDateInput}
+                                            type="text"
+                                            value={filterFrom}
+                                            readonly
+                                            autocomplete="off"
+                                            placeholder="Semua tanggal"
+                                            aria-label="Filter tanggal kirim bagasi"
+                                            class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                        />
+                                    </label>
+                                    <label class="grid min-w-0 gap-1.5">
+                                        <span
+                                            class="text-xs font-semibold text-foreground"
+                                            >Cari bagasi</span
+                                        >
+                                        <Input
+                                            placeholder="Pengirim, penerima, resi, layanan, atau rute"
+                                            aria-label="Cari data bagasi"
+                                            bind:value={filterQuery}
+                                            onkeydown={(event) =>
+                                                event.key === 'Enter' &&
+                                                void applyFilters()}
+                                        />
+                                    </label>
+                                    <label class="grid gap-1.5">
+                                        <span
+                                            class="text-xs font-semibold text-foreground"
+                                            >Status pengiriman</span
+                                        >
+                                        <select
+                                            class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                            bind:value={luggageStatusFilter}
+                                            aria-label="Filter status pengiriman"
+                                        >
+                                            {#each luggageStatusTabs() as tab (tab.key)}
+                                                <option value={tab.key}
+                                                    >{tab.key === ''
+                                                        ? 'Semua status'
+                                                        : tab.label}</option
+                                                >
+                                            {/each}
+                                        </select>
+                                    </label>
+                                    <label class="grid gap-1.5">
+                                        <span
+                                            class="text-xs font-semibold text-foreground"
+                                            >Kondisi barang</span
+                                        >
+                                        <select
+                                            class="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                            bind:value={luggageConditionFilter}
+                                            aria-label="Filter kondisi barang"
+                                        >
+                                            {#each luggageConditionOptions as condition (condition.key)}
+                                                <option value={condition.key}
+                                                    >{condition.label}</option
+                                                >
+                                            {/each}
+                                        </select>
+                                    </label>
+                                    <div class="flex gap-2 lg:justify-end">
+                                        <Button
+                                            type="button"
+                                            onclick={() => void applyFilters()}
+                                            >Terapkan Filter</Button
+                                        >
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={() =>
+                                                void resetLuggageFilters()}
+                                            >Reset</Button
+                                        >
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="mt-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3 text-xs"
+                                >
+                                    <span class="font-semibold text-muted-foreground"
+                                        >Filter aktif:</span
+                                    >
+                                    {#if luggageFilterActiveCount() === 0}
+                                        <span class="text-muted-foreground"
+                                            >Belum ada. Menampilkan semua data.</span
+                                        >
+                                    {:else}
+                                        {#if luggageFilterDateLabel()}
+                                            <span
+                                                class="rounded-full bg-background px-2.5 py-1 text-foreground shadow-sm"
+                                                >Tanggal: {luggageFilterDateLabel()}</span
+                                            >
+                                        {/if}
+                                        {#if filterQuery.trim()}
+                                            <span
+                                                class="max-w-full truncate rounded-full bg-background px-2.5 py-1 text-foreground shadow-sm"
+                                                >Pencarian: {filterQuery.trim()}</span
+                                            >
+                                        {/if}
+                                        {#if luggageStatusFilter}
+                                            <span
+                                                class="rounded-full bg-background px-2.5 py-1 text-foreground shadow-sm"
+                                                >Status: {luggageStatusLabel(
+                                                    luggageStatusFilter,
+                                                )}</span
+                                            >
+                                        {/if}
+                                        {#if luggageConditionFilter}
+                                            <span
+                                                class="rounded-full bg-background px-2.5 py-1 text-foreground shadow-sm"
+                                                >Kondisi: {luggageConditionLabel(
+                                                    luggageConditionFilter,
+                                                )}</span
+                                            >
+                                        {/if}
+                                    {/if}
+                                </div>
                             </div>
                         {:else}
                             <div class="grid gap-3 md:grid-cols-5">
@@ -5700,56 +5846,6 @@
                             </dialog>
                         </div>
                     {/if}
-                    <!-- Status tabs -->
-                    <div
-                        class="flex flex-wrap gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-1"
-                    >
-                        {#each luggageStatusTabs() as tab (tab.key)}
-                            <button
-                                type="button"
-                                class={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
-                                    luggageStatusFilter === tab.key
-                                        ? 'bg-white text-foreground shadow-sm dark:bg-slate-800 dark:text-slate-100'
-                                        : 'text-muted-foreground hover:bg-white/60 hover:text-foreground dark:hover:bg-slate-800/60'
-                                }`}
-                                onclick={() => {
-                                    luggageStatusFilter = tab.key;
-                                    void loadLuggages(1);
-                                }}
-                            >
-                                {tab.label}
-                            </button>
-                            {/each}
-                    </div>
-                    <div
-                        class="flex flex-wrap items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 p-1"
-                    >
-                        <span class="px-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Kondisi
-                        </span>
-                        {#each [
-                            { key: '', label: 'Semua' },
-                            { key: 'normal', label: 'Normal' },
-                            { key: 'damaged', label: 'Rusak' },
-                            { key: 'lost', label: 'Hilang' },
-                            { key: 'damaged_and_lost', label: 'Rusak & Hilang' },
-                        ] as condition (condition.key)}
-                            <button
-                                type="button"
-                                class={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
-                                    luggageConditionFilter === condition.key
-                                        ? 'bg-white text-foreground shadow-sm dark:bg-slate-800 dark:text-slate-100'
-                                        : 'text-muted-foreground hover:bg-white/60 hover:text-foreground dark:hover:bg-slate-800/60'
-                                }`}
-                                onclick={() => {
-                                    luggageConditionFilter = condition.key;
-                                    void loadLuggages(1);
-                                }}
-                            >
-                                {condition.label}
-                            </button>
-                        {/each}
-                    </div>
                     <div class="grid gap-3 md:hidden">
                         {#if luggages.length === 0}
                             <div
