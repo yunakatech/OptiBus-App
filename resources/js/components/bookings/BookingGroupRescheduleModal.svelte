@@ -69,15 +69,15 @@
 </script>
 
 <div
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+    class="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto overscroll-contain bg-black/60 p-3 sm:p-4"
     role="dialog"
     aria-modal="true"
 >
     <div
-        class="w-full max-w-2xl rounded-lg border border-border/80 bg-background p-4 shadow-lg md:p-5"
+        class="my-auto max-h-[calc(100dvh-1.5rem)] min-w-0 w-full max-w-2xl overflow-y-auto overflow-x-hidden rounded-2xl border border-border/80 bg-background p-3 shadow-xl sm:max-h-[calc(100dvh-2rem)] sm:p-5"
     >
         <div class="mb-3 flex items-start justify-between gap-3">
-            <div>
+            <div class="min-w-0">
                 <p
                     class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300"
                 >
@@ -104,10 +104,10 @@
 
         <div class="space-y-4">
             <div
-                class="grid gap-3 rounded-lg border border-border/70 bg-background/80 p-3 md:grid-cols-2"
+                class="grid min-w-0 gap-3 rounded-lg border border-border/70 bg-background/80 p-3 md:grid-cols-2"
             >
                 <div
-                    class="rounded-xl border border-cyan-200/60 bg-cyan-50/70 px-3 py-2 dark:border-cyan-500/20 dark:bg-cyan-950/20"
+                    class="min-w-0 rounded-xl border border-cyan-200/60 bg-cyan-50/70 px-3 py-2 dark:border-cyan-500/20 dark:bg-cyan-950/20"
                 >
                     <p
                         class="text-[10px] uppercase tracking-[0.12em] text-cyan-700 dark:text-cyan-300"
@@ -124,7 +124,7 @@
                     </p>
                 </div>
                 <div
-                    class="rounded-xl border border-emerald-200/60 bg-emerald-50/70 px-3 py-2 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                    class="min-w-0 rounded-xl border border-emerald-200/60 bg-emerald-50/70 px-3 py-2 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                 >
                     <p
                         class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
@@ -147,8 +147,8 @@
                 </div>
             </div>
 
-            <div class="grid gap-3 md:grid-cols-2">
-                <div>
+            <div class="grid min-w-0 gap-3 md:grid-cols-2">
+                <div class="min-w-0">
                     <label
                         for="group-reschedule-date"
                         class="mb-1 block text-xs font-medium text-muted-foreground"
@@ -158,13 +158,13 @@
                     <Input
                         id="group-reschedule-date"
                         type="date"
-                        class="h-9 rounded-xl"
+                        class="box-border min-w-0 max-w-full rounded-xl"
                         bind:value={groupRescheduleDate}
                         onchange={() => void onGroupRescheduleDateChange()}
                         disabled={savingGroupReschedule}
                     />
                 </div>
-                <div>
+                <div class="min-w-0">
                     <label
                         for="group-reschedule-jam"
                         class="mb-1 block text-xs font-medium text-muted-foreground"
@@ -173,7 +173,7 @@
                     </label>
                     <select
                         id="group-reschedule-jam"
-                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                        class="box-border flex h-9 min-w-0 max-w-full w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
                         bind:value={groupRescheduleJam}
                         onchange={() => void onGroupRescheduleScheduleChange()}
                         disabled={savingGroupReschedule ||
@@ -193,7 +193,7 @@
                         {/if}
                     </select>
                 </div>
-                <div>
+                <div class="min-w-0">
                     <label
                         for="group-reschedule-unit"
                         class="mb-1 block text-xs font-medium text-muted-foreground"
@@ -202,7 +202,7 @@
                     </label>
                     <select
                         id="group-reschedule-unit"
-                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                        class="box-border flex h-9 min-w-0 max-w-full w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
                         bind:value={groupRescheduleUnit}
                         onchange={() => void loadGroupRescheduleSeatOptions()}
                         disabled={savingGroupReschedule ||
@@ -216,7 +216,7 @@
                         {/each}
                     </select>
                 </div>
-                <div>
+                <div class="min-w-0">
                     <label
                         for="group-reschedule-seat"
                         class="mb-1 block text-xs font-medium text-muted-foreground"
@@ -225,7 +225,7 @@
                     </label>
                     <select
                         id="group-reschedule-seat"
-                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
+                        class="box-border flex h-9 min-w-0 max-w-full w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
                         bind:value={groupRescheduleSeat}
                         disabled={savingGroupReschedule ||
                             loadingGroupRescheduleSeats ||
