@@ -511,9 +511,9 @@
     let bookingSuccessFeedback = $state('');
     let bookingSuccessSnapshot = $state<BookingSuccessSnapshot | null>(null);
     let bookingSuccessWhatsappPickerOpen = $state(false);
-    let bookingSuccessWhatsappChoices = $state<
-        BookingSuccessWhatsappChoice[]
-    >([]);
+    let bookingSuccessWhatsappChoices = $state<BookingSuccessWhatsappChoice[]>(
+        [],
+    );
 
     let formName = $state('');
     let formPhone = $state('');
@@ -2009,7 +2009,10 @@
     };
 
     const sanitizeWhatsappText = (text: string) =>
-        text.replace(/\uFFFD/g, '').replace(/\r\n?/g, '\n').trim();
+        text
+            .replace(/\uFFFD/g, '')
+            .replace(/\r\n?/g, '\n')
+            .trim();
 
     const copyBookingSuccessDetail = async () => {
         if (!bookingSuccessSnapshot) {
@@ -2084,7 +2087,9 @@
         snapshot: BookingSuccessSnapshot,
         phone = '',
     ) => {
-        const text = sanitizeWhatsappText(buildBookingSuccessCopyText(snapshot));
+        const text = sanitizeWhatsappText(
+            buildBookingSuccessCopyText(snapshot),
+        );
 
         if (text === '') {
             bookingSuccessFeedback = 'Detail booking belum tersedia.';
@@ -2123,7 +2128,10 @@
         }
 
         if (choices.length === 1) {
-            openBookingSuccessWhatsapp(bookingSuccessSnapshot, choices[0].phone);
+            openBookingSuccessWhatsapp(
+                bookingSuccessSnapshot,
+                choices[0].phone,
+            );
             return;
         }
 
@@ -7035,12 +7043,12 @@
 
     {#if !listOnly && detailModalOpen && detailSeat}
         <div
-            class="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-4"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-3 sm:p-4"
             role="dialog"
             aria-modal="true"
         >
             <div
-                class="flex max-h-[calc(100svh-0.75rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-md sm:max-h-[calc(100svh-2rem)] sm:rounded-lg"
+                class="flex max-h-[calc(100svh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border bg-background shadow-xl sm:max-h-[calc(100svh-2rem)] sm:rounded-xl"
             >
                 <div
                     class="flex shrink-0 items-start justify-between gap-3 border-b bg-background/95 px-3 py-3 backdrop-blur md:px-5"
@@ -7322,49 +7330,17 @@
                         </div>
                     {:else}
                         <div
-                            class="flex flex-wrap gap-2 justify-end sm:justify-start"
+                            class="grid gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end"
                         >
-                            <div class="flex flex-1 sm:flex-none gap-2">
-                                <Button
-                                    type="button"
-                                    class="h-10 flex-1 sm:flex-none whitespace-nowrap"
-                                    onclick={() => void copyCurrentDetail()}
-                                >
-                                    <Copy class="mr-1.5 h-3.5 w-3.5" />
-                                    Salin Detail
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="h-10 flex-1 sm:flex-none whitespace-nowrap"
-                                    onclick={addCurrentDetailToRekap}
-                                >
-                                    <Plus class="mr-1.5 h-3.5 w-3.5" />
-                                    Msk Rekap
-                                </Button>
-                                {#if !isSelectedTripManifestClosed()}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        class="h-10 sm:flex-none"
-                                        onclick={startDetailEdit}
-                                        aria-label="Edit detail"
-                                        size="icon"
-                                    >
-                                        <Pencil
-                                            class="h-3.5 w-3.5 text-muted-foreground"
-                                        />
-                                    </Button>
-                                {/if}
-                            </div>
-
                             {#if !isSelectedTripManifestClosed()}
-                                <div class="flex w-full sm:w-auto gap-2">
+                                <div
+                                    class="grid grid-cols-2 gap-2 sm:order-1 sm:flex"
+                                >
                                     {#if !isLunasPayment(detailSeat.pembayaran)}
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            class="h-10 flex-1 sm:flex-none border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                                            class="col-span-2 h-11 border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30 sm:col-span-1 sm:h-10"
                                             onclick={() =>
                                                 void markDetailAsPaid()}
                                             disabled={markingPaidSeatId ===
@@ -7384,31 +7360,55 @@
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        class="h-10 sm:flex-none border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 {isLunasPayment(
-                                            detailSeat.pembayaran,
-                                        )
-                                            ? 'flex-1 sm:flex-none'
-                                            : 'px-3'}"
+                                        class="h-11 border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 sm:h-10"
                                         onclick={() =>
                                             void cancelSeat(detailSeat!.id)}
                                         disabled={cancelingSeatId ===
                                             detailSeat!.id ||
                                             markingPaidSeatId === detailSeat.id}
-                                        aria-label="Cancel seat"
+                                        aria-label="Batalkan kursi"
                                     >
-                                        <X
-                                            class="h-3.5 w-3.5 {isLunasPayment(
-                                                detailSeat.pembayaran,
-                                            )
-                                                ? 'mr-1.5'
-                                                : ''}"
-                                        />
-                                        {isLunasPayment(detailSeat.pembayaran)
-                                            ? 'Cancel Kursi'
-                                            : ''}
+                                        <X class="mr-1.5 h-3.5 w-3.5" />
+                                        Batalkan Kursi
                                     </Button>
                                 </div>
                             {/if}
+
+                            <div
+                                class="grid grid-cols-2 gap-2 sm:order-2 sm:flex"
+                            >
+                                <Button
+                                    type="button"
+                                    class="h-10 whitespace-nowrap"
+                                    onclick={() => void copyCurrentDetail()}
+                                >
+                                    <Copy class="mr-1.5 h-3.5 w-3.5" />
+                                    Salin Detail
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-10 whitespace-nowrap"
+                                    onclick={addCurrentDetailToRekap}
+                                >
+                                    <Plus class="mr-1.5 h-3.5 w-3.5" />
+                                    Masuk Rekap
+                                </Button>
+                                {#if !isSelectedTripManifestClosed()}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="col-span-2 h-10 gap-1.5 sm:col-span-1"
+                                        onclick={startDetailEdit}
+                                        aria-label="Edit detail"
+                                    >
+                                        <Pencil
+                                            class="h-3.5 w-3.5 text-muted-foreground"
+                                        />
+                                        Edit Detail
+                                    </Button>
+                                {/if}
+                            </div>
                         </div>
                         {#if isSelectedTripManifestClosed()}
                             <p
@@ -7658,7 +7658,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                        {#each rekapItems as item, index (`rekap-modal-${index}-${item.booking_id}`)}
+                                {#each rekapItems as item, index (`rekap-modal-${index}-${item.booking_id}`)}
                                     <tr class="border-b/70">
                                         <td class="px-3 py-2 font-medium"
                                             >{item.seat}</td
@@ -8011,8 +8011,7 @@
                                                 oninput={queueGroupDriverSearch}
                                                 onfocus={() => {
                                                     if (groupMappingEditMode) {
-                                                        groupDriverLookupOpen =
-                                                            true;
+                                                        groupDriverLookupOpen = true;
                                                     }
                                                 }}
                                                 onblur={onGroupDriverBlur}
@@ -8685,7 +8684,6 @@
                                         Rute + Tanggal
                                     </Button>
                                 </div>
-
                             </div>
 
                             {#if filteredAvailableRiturs().length === 0}
@@ -8773,7 +8771,9 @@
                                                         size="sm"
                                                         class="rounded-full"
                                                         onclick={() =>
-                                                            void mapGroupRitur(row)}
+                                                            void mapGroupRitur(
+                                                                row,
+                                                            )}
                                                         disabled={savingGroupRiturId ===
                                                             row.id}
                                                     >
@@ -9524,9 +9524,7 @@
     {#if !consoleOnly && !groupDetailPage}
         <Card class="border-sidebar-border/70 dark:border-sidebar-border">
             <CardHeader>
-                <div
-                    class="flex flex-wrap items-center justify-between gap-3"
-                >
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <CardTitle
                         >{listOnly
                             ? 'Keberangkatan'
@@ -10044,7 +10042,8 @@
                                                                                     variant="secondary"
                                                                                     class="rounded-md border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
                                                                                 >
-                                                                                    Manifest Close
+                                                                                    Manifest
+                                                                                    Close
                                                                                 </Badge>
                                                                             {/if}
                                                                         </div>
@@ -10501,12 +10500,12 @@
                                                                 </Button>
                                                             {/snippet}
                                                         </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        side="top"
-                                                        sideOffset={6}
-                                                        class="z-[120] w-44 text-[11px] shadow-lg"
-                                                    >
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            side="top"
+                                                            sideOffset={6}
+                                                            class="z-[120] w-44 text-[11px] shadow-lg"
+                                                        >
                                                             <DropdownMenuItem
                                                                 onclick={() =>
                                                                     navigateToGroupDetail(
@@ -10559,12 +10558,12 @@
                                                                         : 'Armada Sudah Tiba'}
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                                {#if isArrivedDeparture(group) && !isManifestLocked(group)}
-                                                                    <DropdownMenuItem
-                                                                        class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
-                                                                        onclick={() =>
-                                                                            void closeManifest(
-                                                                                group,
+                                                            {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                                <DropdownMenuItem
+                                                                    class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
+                                                                    onclick={() =>
+                                                                        void closeManifest(
+                                                                            group,
                                                                         )}
                                                                 >
                                                                     Close

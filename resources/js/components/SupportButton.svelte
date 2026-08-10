@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { page } from '@inertiajs/svelte';
     import MessageCircle from 'lucide-svelte/icons/message-circle';
     import { getSupportWhatsappHref } from '@/lib/support';
 
-    const supportHref = $derived(getSupportWhatsappHref(page.url || '/'));
+    const supportHref = getSupportWhatsappHref();
 </script>
 
 <a

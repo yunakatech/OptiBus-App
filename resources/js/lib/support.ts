@@ -14,23 +14,12 @@ function normalizeWhatsappNumber(value: string): string {
     return digits;
 }
 
-function normalizePathname(value: string): string {
-    try {
-        return new URL(value, 'http://localhost').pathname || '/';
-    } catch {
-        return value.split('?')[0] || '/';
-    }
-}
-
-export function getSupportWhatsappHref(pathname = '/'): string {
+export function getSupportWhatsappHref(): string {
     const configuredNumber = import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER;
     const phone = normalizeWhatsappNumber(
         configuredNumber || DEFAULT_SUPPORT_WHATSAPP_NUMBER,
     );
-    const message = [
-        'Halo tim OptiBus, saya membutuhkan bantuan.',
-        `Halaman: ${normalizePathname(pathname)}`,
-    ].join('\n');
+    const message = 'Halo tim OptiBus, saya membutuhkan bantuan.';
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }

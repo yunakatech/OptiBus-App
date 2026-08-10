@@ -34,7 +34,7 @@
         billingLocked ? '/subscription' : toUrl(dashboard()),
     );
     const canPrefetchHome = $derived(shouldPrefetchNavigationHref(homeHref));
-    const supportHref = $derived(getSupportWhatsappHref(page.url || '/'));
+    const supportHref = getSupportWhatsappHref();
     const visibleSections = $derived.by(() =>
         getVisibleNavSections(page.props.auth)
             .map((section) => ({
