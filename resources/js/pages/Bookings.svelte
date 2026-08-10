@@ -4342,6 +4342,45 @@
         await loadGroupRescheduleSchedules();
     };
 
+    const openDetailReschedule = async () => {
+        if (!detailSeat) {
+            return;
+        }
+
+        if (isSelectedTripManifestClosed()) {
+            formError =
+                'Manifest sudah ditutup. Penumpang tidak bisa di-reschedule.';
+            formSuccess = '';
+
+            return;
+        }
+
+        const currentSeat = normalizeSeatToken(detailSeat.seat || '');
+
+        groupRescheduleBookingId = detailSeat.id;
+        groupRescheduleBookingName = String(detailSeat.name || '');
+        groupRescheduleRoute = selectedRoute;
+        groupRescheduleCurrentDate = bookingDate;
+        groupRescheduleCurrentJam = normalizeJamToken(selectedJam);
+        groupRescheduleCurrentUnit = Number(selectedUnit) || 1;
+        groupRescheduleCurrentSeat = currentSeat;
+        groupRescheduleDate = bookingDate;
+        groupRescheduleJam = normalizeJamToken(selectedJam);
+        groupRescheduleUnit = Number(selectedUnit) || 1;
+        groupRescheduleSeat = currentSeat;
+        groupRescheduleSchedules = [];
+        groupRescheduleSeatOptions = [];
+        groupRescheduleBookedSeatTokens = [];
+        groupRescheduleLayoutSeatTokens = [];
+        groupRescheduleLayoutRows = [];
+        groupRescheduleSeatWarning = '';
+        groupRescheduleModalOpen = true;
+        formError = '';
+        void ensureGroupRescheduleModalLoaded();
+
+        await loadGroupRescheduleSchedules();
+    };
+
     const saveGroupRowEdit = async () => {
         if (!groupEditModalOpen || !groupEditBookingId || savingGroupRowEdit) {
             return;
@@ -4457,39 +4496,49 @@
                 seat,
             });
 
-            moveBookingRowToAnotherGroup(
-                groupRescheduleBookingId,
-                {
-                    rute: String(response.rute ?? groupRescheduleRoute),
-                    tanggal: String(response.tanggal ?? groupRescheduleDate),
-                    jam: String(response.jam ?? jam),
-                    unit: Number(response.unit ?? unit) || unit,
-                    departure_code: String(response.departure_code ?? ''),
-                },
-                {
-                    seat,
-                },
-            );
+            if (listOnly) {
+                moveBookingRowToAnotherGroup(
+                    groupRescheduleBookingId,
+                    {
+                        rute: String(response.rute ?? groupRescheduleRoute),
+                        tanggal: String(
+                            response.tanggal ?? groupRescheduleDate,
+                        ),
+                        jam: String(response.jam ?? jam),
+                        unit: Number(response.unit ?? unit) || unit,
+                        departure_code: String(response.departure_code ?? ''),
+                    },
+                    {
+                        seat,
+                    },
+                );
 
-            localLatestBookings = localLatestBookings.map((row) =>
-                row.id === groupRescheduleBookingId
-                    ? {
-                          ...row,
-                          rute: String(response.rute ?? groupRescheduleRoute),
-                          tanggal: String(
-                              response.tanggal ?? groupRescheduleDate,
-                          ),
-                          jam: String(response.jam ?? jam),
-                          unit: Number(response.unit ?? unit) || unit,
-                          seat,
-                          departure_code: String(
-                              response.departure_code ??
-                                  row.departure_code ??
-                                  '',
-                          ),
-                      }
-                    : row,
-            );
+                localLatestBookings = localLatestBookings.map((row) =>
+                    row.id === groupRescheduleBookingId
+                        ? {
+                              ...row,
+                              rute: String(
+                                  response.rute ?? groupRescheduleRoute,
+                              ),
+                              tanggal: String(
+                                  response.tanggal ?? groupRescheduleDate,
+                              ),
+                              jam: String(response.jam ?? jam),
+                              unit: Number(response.unit ?? unit) || unit,
+                              seat,
+                              departure_code: String(
+                                  response.departure_code ??
+                                      row.departure_code ??
+                                      '',
+                              ),
+                          }
+                        : row,
+                );
+            } else {
+                await loadSeatDetails();
+                detailModalOpen = false;
+                detailSeat = null;
+            }
 
             savingGroupReschedule = false;
             formSuccess = `Penumpang ${groupRescheduleBookingName || ''} berhasil di-reschedule ke ${formatGroupDateLabel(String(response.tanggal ?? groupRescheduleDate))} • ${String(response.jam ?? jam)} • Slot ${Number(response.unit ?? unit) || unit} • Seat ${seat}.`;
@@ -7486,6 +7535,19 @@
                                         />
                                         Edit Detail
                                     </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="col-span-2 h-10 gap-1.5 sm:col-span-1"
+                                        onclick={() =>
+                                            void openDetailReschedule()}
+                                        aria-label="Reschedule penumpang"
+                                    >
+                                        <RefreshCw
+                                            class="h-3.5 w-3.5 text-muted-foreground"
+                                        />
+                                        Reschedule
+                                    </Button>
                                 {/if}
                             </div>
                         </div>
@@ -9533,7 +9595,7 @@
         {/if}
     {/if}
 
-    {#if listOnly && groupRescheduleModalOpen}
+    {#if groupRescheduleModalOpen}
         {#if GroupRescheduleModalComponent}
             <GroupRescheduleModalComponent
                 bind:groupRescheduleDate
