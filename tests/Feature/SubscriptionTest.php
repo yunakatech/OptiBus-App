@@ -72,7 +72,7 @@ class SubscriptionTest extends TestCase
             ->assertRedirect(route('subscription.index'));
     }
 
-    public function test_pending_subscription_creates_invoice_and_mayar_checkout_url(): void
+    public function test_pending_subscription_page_does_not_create_mayar_invoice(): void
     {
         config([
             'mayar.enabled' => true,
@@ -100,30 +100,14 @@ class SubscriptionTest extends TestCase
                 ->where('tenant_subscription.tenant_id', $tenantId)
                 ->where('tenant_subscription.subscription_id', $subscriptionId)
                 ->where('account_access.tenant_id', $tenantId)
-                ->where('invoices.0.payment_gateway', 'Mayar')
-                ->where('invoices.0.gateway_checkout_url', 'https://mayar.test/pay/pay_123')
+                ->where('invoices', [])
                 ->missing('payment_config'));
 
-        $this->assertDatabaseHas('invoice_subscriptions', [
-            'tenant_id' => $tenantId,
-            'subscription_id' => $subscriptionId,
-            'status' => 'pending',
-            'payment_gateway' => 'Mayar',
-            'gateway_reference' => 'txn_123',
-            'gateway_status' => 'pending',
-            'gateway_checkout_url' => 'https://mayar.test/pay/pay_123',
-        ]);
-
-        Http::assertSent(fn ($request) => $request->url() === 'https://api.mayar.id/hl/v1/invoice/create'
-            && $request['metadata']['invoice_id'] > 0
-            && $request['metadata']['tenant_id'] === $tenantId
-            && $request['redirectURL'] === route('subscription.index', absolute: true)
-            && $request['extraData']['invoice_id'] > 0
-            && $request['extraData']['tenant_id'] === $tenantId
-            && $request['items'][0]['rate'] === 99000);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.mayar.id'));
+        $this->assertDatabaseCount('invoice_subscriptions', 0);
     }
 
-    public function test_pending_subscription_uses_private_price_for_invoice_amount(): void
+    public function test_pending_subscription_page_does_not_create_invoice_for_private_price(): void
     {
         config([
             'mayar.enabled' => true,
@@ -155,20 +139,10 @@ class SubscriptionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Subscription')
                 ->where('tenant_subscription.subscription_id', $subscriptionId)
-                ->where('invoices.0.gateway_checkout_url', 'https://mayar.test/pay/pay_private_123'));
+                ->where('invoices', []));
 
-        $this->assertDatabaseHas('invoice_subscriptions', [
-            'tenant_id' => $tenantId,
-            'subscription_id' => $subscriptionId,
-            'status' => 'pending',
-            'payment_gateway' => 'Mayar',
-            'gateway_reference' => 'txn_private_123',
-            'gateway_checkout_url' => 'https://mayar.test/pay/pay_private_123',
-            'amount' => 123456,
-        ]);
-
-        Http::assertSent(fn ($request) => $request->url() === 'https://api.mayar.id/hl/v1/invoice/create'
-            && $request['items'][0]['rate'] === 123456);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.mayar.id'));
+        $this->assertDatabaseCount('invoice_subscriptions', 0);
     }
 
     public function test_create_invoice_marks_payment_link_error_when_mayar_fails(): void

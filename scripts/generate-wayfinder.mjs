@@ -54,6 +54,48 @@ const patchBookingControllerActions = () => {
     }
 };
 
+const patchRouteWayfinderImports = () => {
+    const routesRoot = path.join(repoRoot, 'resources/js/routes');
+    const wayfinderRoot = path.join(repoRoot, 'resources/js/wayfinder');
+
+    if (!existsSync(routesRoot) || !existsSync(wayfinderRoot)) {
+        return;
+    }
+
+    const visit = (directory) => {
+        for (const entry of readdirSync(directory, { withFileTypes: true })) {
+            const target = path.join(directory, entry.name);
+
+            if (entry.isDirectory()) {
+                visit(target);
+                continue;
+            }
+
+            if (!entry.name.endsWith('.ts')) {
+                continue;
+            }
+
+            const source = readFileSync(target, 'utf8');
+            const relativeHelper = path
+                .relative(path.dirname(target), wayfinderRoot)
+                .replaceAll('\\', '/');
+            const importPath = relativeHelper.startsWith('.')
+                ? relativeHelper
+                : `./${relativeHelper}`;
+            const next = source.replace(
+                /from ['"][^'"]*wayfinder['"]/g,
+                `from '${importPath}'`,
+            );
+
+            if (next !== source) {
+                writeFileSync(target, next, 'utf8');
+            }
+        }
+    };
+
+    visit(routesRoot);
+};
+
 const phpBinary = resolvePhpBinary();
 const result = spawnSync(phpBinary, ['artisan', 'wayfinder:generate', '--with-form'], {
     cwd: repoRoot,
@@ -71,3 +113,4 @@ if (result.status !== 0) {
 }
 
 patchBookingControllerActions();
+patchRouteWayfinderImports();

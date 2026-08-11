@@ -6477,6 +6477,14 @@ class AdminOpsApiController extends Controller
             return $this->error('Ada permission yang tidak ditemukan.', 422);
         }
 
+        $affectedUserIds = $id > 0 && SchemaCache::hasTable('user_role')
+            ? DB::table('user_role')
+                ->where('role_id', $id)
+                ->pluck('user_id')
+                ->map(static fn ($value): int => (int) $value)
+                ->all()
+            : [];
+
         $now = now();
         $payload = [
             'name' => trim((string) $data['name']),
@@ -6512,6 +6520,10 @@ class AdminOpsApiController extends Controller
 
             $newId = $roleId;
         });
+
+        foreach ($affectedUserIds as $affectedUserId) {
+            Cache::forget("inertia:permissions:user:{$affectedUserId}:v2");
+        }
 
         ActivityLog::write($id > 0 ? 'role.updated' : 'role.created', $id > 0 ? 'Role hak akses diperbarui' : 'Role hak akses dibuat', '', null, [
             'role_id' => (int) ($newId ?? $id),
@@ -7458,8 +7470,24 @@ class AdminOpsApiController extends Controller
             'updated_at' => now(),
         ]);
 
-        Cache::forget("inertia:pools:user:{$userId}:v2");
+        $this->forgetUserPoolCache($userId);
         PoolScope::flushRequestCache();
+    }
+
+    private function forgetUserPoolCache(int $userId): void
+    {
+        if ($userId <= 0) {
+            return;
+        }
+
+        $tenantIds = [(int) session('active_tenant_id', 0)];
+        if (SchemaCache::hasColumn('users', 'tenant_id')) {
+            $tenantIds[] = (int) DB::table('users')->where('id', $userId)->value('tenant_id');
+        }
+
+        foreach (array_unique(array_filter($tenantIds, static fn (int $tenantId): bool => $tenantId > 0)) as $tenantId) {
+            Cache::forget("inertia:pools:user:{$userId}:tenant:{$tenantId}:v2");
+        }
     }
 
     /**
@@ -7473,6 +7501,7 @@ class AdminOpsApiController extends Controller
 
         if ($poolIds === []) {
             DB::table('pool_user')->where('user_id', $userId)->delete();
+            $this->forgetUserPoolCache($userId);
 
             return;
         }
@@ -7499,6 +7528,8 @@ class AdminOpsApiController extends Controller
         if ($rows !== []) {
             DB::table('pool_user')->insert($rows);
         }
+
+        $this->forgetUserPoolCache($userId);
     }
 
     /**
@@ -7512,6 +7543,7 @@ class AdminOpsApiController extends Controller
 
         if ($roleIds === []) {
             DB::table('user_role')->where('user_id', $userId)->delete();
+            Cache::forget("inertia:permissions:user:{$userId}:v2");
 
             return;
         }
@@ -7538,6 +7570,8 @@ class AdminOpsApiController extends Controller
         if ($rows !== []) {
             DB::table('user_role')->insert($rows);
         }
+
+        Cache::forget("inertia:permissions:user:{$userId}:v2");
     }
 
     /**
@@ -11363,6 +11397,8 @@ XML;
                     'billing_interval' => 'monthly',
                 ]);
 
+                Cache::forget('inertia:saas:summary:v1');
+
                 return $this->ok([
                     'message' => 'Tenant created.',
                     'id' => (int) $result['tenant_id'],
@@ -11385,6 +11421,8 @@ XML;
         }
 
         DB::table('tenants')->where('id', $id)->update(array_merge($updatePayload, ['updated_at' => now()]));
+
+        Cache::forget('inertia:saas:summary:v1');
 
         return $this->ok([
             'message' => 'Tenant updated.',
@@ -11426,6 +11464,8 @@ XML;
                     ]);
             }
 
+            Cache::forget('inertia:saas:summary:v1');
+
             return $this->ok(['message' => "Tenant '{$tenant->name}' telah dicancel."]);
         });
     }
@@ -11448,7 +11488,24 @@ XML;
             ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->select(
-                'subscriptions.*',
+                'subscriptions.id',
+                'subscriptions.tenant_id',
+                'subscriptions.plan_id',
+                'subscriptions.status',
+                'subscriptions.trial_ends_at',
+                'subscriptions.starts_at',
+                'subscriptions.ends_at',
+                'subscriptions.billing_interval',
+                'subscriptions.canceled_at',
+                'subscriptions.grace_period_days',
+                'subscriptions.notes',
+                'subscriptions.custom_price_monthly',
+                'subscriptions.custom_price_yearly',
+                'subscriptions.custom_max_pools',
+                'subscriptions.custom_max_users',
+                'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_routes',
+                'subscriptions.created_at',
                 'tenants.name as tenant_name',
                 'tenants.slug as tenant_slug',
                 'plans.name as plan_name',
@@ -11637,6 +11694,8 @@ XML;
                 $message = 'Subscription created.';
             }
 
+            Cache::forget('inertia:saas:summary:v1');
+
             return $this->ok([
                 'message' => $message,
                 'id' => $id,
@@ -11655,9 +11714,37 @@ XML;
             return $this->ok(['plans' => []]);
         }
 
-        $plans = DB::table('plans')
-            ->orderBy('sort_order')
-            ->get();
+        $plans = Cache::remember(
+            'admin-ops:saas:plans:catalog:v1',
+            now()->addMinutes(10),
+            fn () => DB::table('plans')
+                ->orderBy('sort_order')
+                ->get([
+                    'id',
+                    'name',
+                    'slug',
+                    'description',
+                    'price_monthly',
+                    'price_yearly',
+                    'max_pools',
+                    'max_users',
+                    'max_armadas',
+                    'max_routes',
+                    'max_drivers',
+                    'max_charters_per_month',
+                    'has_seat_map',
+                    'has_pdf_export',
+                    'has_csv_export',
+                    'has_online_booking',
+                    'has_analytics',
+                    'has_whatsapp_api',
+                    'has_custom_domain',
+                    'has_custom_roles',
+                    'support_priority',
+                    'sort_order',
+                    'is_active',
+                ]),
+        );
 
         $featuresByPlan = collect();
         if ($plans->isNotEmpty() && SchemaCache::hasTable('plan_feature') && SchemaCache::hasTable('feature_gates')) {
@@ -11801,6 +11888,10 @@ XML;
                     }
                 }
             }
+
+            Cache::forget('admin-ops:saas:plans:catalog:v1');
+            Cache::forget('inertia:saas:active-plans:v1');
+            Cache::forget('inertia:saas:summary:v1');
 
             return $this->ok(['message' => 'Plan updated.', 'id' => $id]);
         });
@@ -11973,6 +12064,8 @@ XML;
         ]);
 
         PaymentGateway::markInvoicePaid($id, (string) ($this->nullable($data['payment_method'] ?? 'Admin Correction') ?? 'Admin Correction'));
+
+        Cache::forget('inertia:saas:summary:v1');
 
         return $this->ok(['message' => 'Invoice marked as paid.']);
     }

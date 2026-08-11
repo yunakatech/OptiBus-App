@@ -5,10 +5,11 @@ namespace App\Http\Middleware;
 use App\Support\AccessControl;
 use App\Support\PoolScope;
 use App\Support\TenantBillingAccess;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -59,14 +60,26 @@ class HandleInertiaRequests extends Middleware
         $userId = (int) ($user?->id ?? 0);
         $isSuperAdmin = $userId > 0 && AccessControl::userIsSuperAdmin($userId);
         $resolvedTenantId = $userId > 0 ? PoolScope::tenantId($userId) : 0;
-        $tenantSubscription = $userId > 0 ? PoolScope::tenantSubscription($userId) : null;
-        $billingAccess = $userId > 0 ? TenantBillingAccess::forUser($userId) : null;
+        $tenantSubscription = $userId > 0
+            ? Cache::remember(
+                "inertia:subscription:user:{$userId}:tenant:{$resolvedTenantId}:v1",
+                now()->addMinutes(2),
+                fn () => PoolScope::tenantSubscription(),
+            )
+            : null;
+        $billingAccess = $userId > 0 && $resolvedTenantId > 0
+            ? Cache::remember(
+                "inertia:billing-access:user:{$userId}:tenant:{$resolvedTenantId}:v1",
+                now()->addMinutes(2),
+                fn () => TenantBillingAccess::forUser($userId),
+            )
+            : null;
 
         $availableTenants = [];
         if ($isSuperAdmin && Schema::hasTable('tenants')) {
             $availableTenants = Cache::remember(
-                "inertia:tenants:user:{$userId}:v1",
-                now()->addSeconds(30),
+                "inertia:tenants:user:{$userId}:v2",
+                now()->addMinutes(5),
                 function (): array {
                     $hasUsersTenant = Schema::hasColumn('users', 'tenant_id');
                     $hasPoolsTenant = Schema::hasColumn('pools', 'tenant_id');
@@ -127,8 +140,8 @@ class HandleInertiaRequests extends Middleware
         $activeTenant = null;
         if ($resolvedTenantId > 0 && Schema::hasTable('tenants')) {
             $activeTenant = Cache::remember(
-                "inertia:tenant:user:{$userId}:tenant:{$resolvedTenantId}:v1",
-                now()->addSeconds(30),
+                "inertia:tenant:user:{$userId}:tenant:{$resolvedTenantId}:v2",
+                now()->addMinutes(5),
                 function () use ($resolvedTenantId): ?array {
                     $tenant = DB::table('tenants')
                         ->where('id', $resolvedTenantId)
@@ -158,8 +171,8 @@ class HandleInertiaRequests extends Middleware
         $availablePools = [];
         if ($userId > 0 && Schema::hasTable('pools') && $resolvedTenantId > 0) {
             $availablePools = Cache::remember(
-                "inertia:pools:user:{$userId}:tenant:{$resolvedTenantId}:v1",
-                now()->addSeconds(30),
+                "inertia:pools:user:{$userId}:tenant:{$resolvedTenantId}:v2",
+                now()->addMinutes(5),
                 function () use ($isSuperAdmin, $resolvedTenantId, $userId): array {
                     $query = DB::table('pools')
                         ->where('status', 'active')
@@ -212,11 +225,18 @@ class HandleInertiaRequests extends Middleware
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
                 'is_super_admin' => $isSuperAdmin,
-                'ui_preferences' => is_array($user->ui_preferences ?? null)
-                    ? $user->ui_preferences
-                    : [],
+                'ui_preferences' => Arr::only(
+                    is_array($user->ui_preferences ?? null) ? $user->ui_preferences : [],
+                    ['defaultViewMode', 'defaultDateRange', 'itemsPerPage', 'defaultPoolId'],
+                ),
             ] : null,
-            'permissions' => $userId > 0 ? AccessControl::userPermissions($userId) : [],
+            'permissions' => $userId > 0
+                ? Cache::remember(
+                    "inertia:permissions:user:{$userId}:v2",
+                    now()->addMinutes(5),
+                    fn () => AccessControl::userPermissions($userId),
+                )
+                : [],
             'tenants' => $availableTenants,
             'pools' => $availablePools,
             'active_tenant' => $activeTenant,
