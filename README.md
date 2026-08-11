@@ -117,8 +117,9 @@ Halaman lokal utama:
 ## Environment
 
 Jangan commit `.env`, API key, password database, secret OAuth, atau secret
-webhook. Untuk Vercel, isi variable melalui Project Settings > Environment
-Variables. Gunakan `.env.example` dan `vercel.env.example` sebagai referensi.
+webhook. Untuk server production, isi variable langsung pada `.env` di server
+Ubuntu dan batasi permission file tersebut. Gunakan `.env.example` sebagai
+referensi.
 
 ### Aplikasi dan database
 
@@ -281,7 +282,7 @@ Task terjadwal:
 - Generate invoice subscription setiap hari pukul 02:00.
 - Close manifest yang sudah lewat setiap 5 menit.
 
-Server non-serverless perlu menjalankan scheduler tiap menit:
+Server Ubuntu perlu menjalankan scheduler tiap menit:
 
 ```bash
 php artisan schedule:run
@@ -293,33 +294,172 @@ Worker database queue:
 php artisan queue:work --sleep=3 --tries=1 --timeout=0
 ```
 
-Vercel memakai konfigurasi cookie session dan queue sync. Database production
-tetap wajib memiliki semua tabel hasil migration.
+Database production wajib memiliki semua tabel hasil migration. Queue worker
+dan scheduler sebaiknya dijalankan sebagai service terpisah agar tidak berhenti
+saat proses web di-restart.
 
 ## Deployment
 
-### Vercel
+### Linux Ubuntu
 
-Vercel menjalankan Laravel melalui `api/index.php` dan `vercel.json`.
+Deployment utama OptiBus menggunakan Ubuntu 22.04/24.04 dengan Nginx,
+PHP-FPM, PostgreSQL, Supervisor, dan Node.js untuk build asset. Pastikan domain
+sudah mengarah ke IP server dan PHP 8.3+, Composer 2, Node.js 22, Nginx,
+Supervisor, serta ekstensi PHP PostgreSQL sudah terpasang.
 
-1. Isi environment variables di Vercel Project Settings.
-2. Pastikan `APP_URL`, database, Google callback, mailer, dan storage benar.
-3. Build dan deploy:
+#### 1. Siapkan folder aplikasi
 
 ```bash
-npm run build
-vercel --prod
+sudo mkdir -p /var/www
+sudo git clone <repository-url> /var/www/optibus
+sudo chown -R "$USER":www-data /var/www/optibus
+cd /var/www/optibus
 ```
 
-4. Jalankan migration pada environment yang memiliki akses database:
+#### 2. Install dependency dan environment
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+cp .env.example .env
+php artisan key:generate
+nano .env
+```
+
+Minimal production environment:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://domain-anda.com
+FORCE_HTTPS=true
+DB_CONNECTION=pgsql
+DB_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require
+SESSION_DRIVER=database
+QUEUE_CONNECTION=database
+```
+
+Isi juga Google OAuth, mailer, Supabase Storage, dan Mayar bila fitur tersebut
+digunakan. Callback Google production harus memakai:
+`https://domain-anda.com/auth/google/callback`.
+
+#### 3. Migration, storage, dan asset
 
 ```bash
 php artisan migrate --force
+php artisan storage:link
+npm run build
+php artisan optimize
+sudo chown -R www-data:www-data storage bootstrap/cache public/build
+sudo chmod -R ug+rwx storage bootstrap/cache
 ```
 
-5. Hard refresh browser bila bundle lama masih tersimpan.
+Jangan menjalankan `php artisan migrate:fresh` pada production.
 
-Gunakan [vercel.env.example](vercel.env.example) sebagai checklist variable.
+#### 4. Konfigurasi Nginx
+
+Buat `/etc/nginx/sites-available/optibus`:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name domain-anda.com www.domain-anda.com;
+    root /var/www/optibus/public;
+
+    index index.php;
+    client_max_body_size 10M;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+
+Aktifkan site dan uji konfigurasi:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/optibus /etc/nginx/sites-enabled/optibus
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Sesuaikan socket `php8.3-fpm.sock` bila server menggunakan versi PHP berbeda.
+
+#### 5. Queue worker dengan Supervisor
+
+Buat `/etc/supervisor/conf.d/optibus-worker.conf`:
+
+```ini
+[program:optibus-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/optibus/artisan queue:work --sleep=3 --tries=1 --timeout=0
+directory=/var/www/optibus
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/www/optibus/storage/logs/worker.log
+stopwaitsecs=3600
+```
+
+Aktifkan worker:
+
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl restart optibus-worker:*
+```
+
+#### 6. Scheduler cron
+
+Tambahkan cron untuk user `www-data`:
+
+```bash
+sudo crontab -u www-data -e
+```
+
+Isi:
+
+```cron
+* * * * * cd /var/www/optibus && php artisan schedule:run >> /dev/null 2>&1
+```
+
+#### 7. HTTPS dan deploy berikutnya
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d domain-anda.com -d www.domain-anda.com
+```
+
+Untuk update aplikasi berikutnya:
+
+```bash
+cd /var/www/optibus
+git pull origin main
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan migrate --force
+php artisan optimize
+sudo supervisorctl restart optibus-worker:*
+sudo systemctl reload nginx
+```
+
+Simpan backup database sebelum migration production dan cek log dengan:
+`storage/logs/laravel.log`, `journalctl -u nginx`, serta log Supervisor.
 
 ### Docker atau Coolify
 
@@ -334,7 +474,7 @@ docker run --env-file .env -p 10000:10000 optibus
 Baca [docs/coolify-deploy.md](docs/coolify-deploy.md) untuk web, worker,
 scheduler, database, dan persistent volume.
 
-### Cloudflare
+### Cloudflare sebagai proxy
 
 Laravel tidak dapat dijalankan langsung di Cloudflare Pages atau Workers tanpa
 rewrite arsitektur. Jalur saat ini: Laravel tetap di origin hosting, Cloudflare
@@ -409,7 +549,6 @@ dan laporan tetap dapat dilihat sesuai permission.
 - [Render dan Neon deployment](docs/render-neon-deploy.md)
 - [Mayar payment gateway](docs/mayar-payment-gateway.md)
 - [Production performance](docs/production-performance.md)
-- [Vercel environment baseline](vercel.env.example)
 
 ## Lisensi
 
