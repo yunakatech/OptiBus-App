@@ -11714,36 +11714,53 @@ XML;
             return $this->ok(['plans' => []]);
         }
 
+        $planColumns = [
+            'id',
+            'name',
+            'slug',
+            'description',
+            'price_monthly',
+            'price_yearly',
+            'max_pools',
+            'max_users',
+            'max_armadas',
+            'max_routes',
+            'max_drivers',
+            'max_charters_per_month',
+            'has_seat_map',
+            'has_pdf_export',
+            'has_csv_export',
+            'has_online_booking',
+            'has_analytics',
+            'has_whatsapp_api',
+            'has_custom_domain',
+            'has_custom_roles',
+            'support_priority',
+            'sort_order',
+            'is_active',
+        ];
+        $availablePlanColumns = array_values(array_filter(
+            $planColumns,
+            static fn (string $column): bool => $column === 'id'
+                || SchemaCache::hasColumn('plans', $column),
+        ));
+        $hasActiveColumn = in_array('is_active', $availablePlanColumns, true);
+        $hasSortOrderColumn = in_array('sort_order', $availablePlanColumns, true);
+
         $plans = Cache::remember(
-            'admin-ops:saas:plans:catalog:v1',
+            'admin-ops:saas:plans:catalog:v2',
             now()->addMinutes(10),
-            fn () => DB::table('plans')
-                ->orderBy('sort_order')
-                ->get([
-                    'id',
-                    'name',
-                    'slug',
-                    'description',
-                    'price_monthly',
-                    'price_yearly',
-                    'max_pools',
-                    'max_users',
-                    'max_armadas',
-                    'max_routes',
-                    'max_drivers',
-                    'max_charters_per_month',
-                    'has_seat_map',
-                    'has_pdf_export',
-                    'has_csv_export',
-                    'has_online_booking',
-                    'has_analytics',
-                    'has_whatsapp_api',
-                    'has_custom_domain',
-                    'has_custom_roles',
-                    'support_priority',
-                    'sort_order',
-                    'is_active',
-                ]),
+            function () use ($availablePlanColumns, $hasActiveColumn, $hasSortOrderColumn) {
+                $query = DB::table('plans');
+
+                if ($hasActiveColumn) {
+                    $query->where('is_active', true);
+                }
+
+                return $query
+                    ->orderBy($hasSortOrderColumn ? 'sort_order' : 'id')
+                    ->get($availablePlanColumns);
+            },
         );
 
         $featuresByPlan = collect();
@@ -11854,11 +11871,19 @@ XML;
             'features.*.max_value' => ['nullable', 'integer', 'min:0'],
         ]);
 
+        $planFields = ['name', 'description', 'price_monthly', 'price_yearly', 'max_pools', 'max_users', 'max_armadas', 'max_routes', 'max_drivers', 'max_charters_per_month'];
+        $planFields = array_values(array_filter(
+            $planFields,
+            static fn (string $field): bool => SchemaCache::hasColumn('plans', $field),
+        ));
         $booleanFields = ['has_seat_map', 'has_pdf_export', 'has_csv_export', 'has_online_booking', 'has_analytics', 'has_whatsapp_api', 'has_custom_domain', 'has_custom_roles', 'is_active'];
+        $booleanFields = array_values(array_filter(
+            $booleanFields,
+            static fn (string $field): bool => SchemaCache::hasColumn('plans', $field),
+        ));
 
-        return DB::transaction(function () use ($id, $data, $booleanFields): JsonResponse {
+        return DB::transaction(function () use ($id, $data, $planFields, $booleanFields): JsonResponse {
             $payload = [];
-            $planFields = ['name', 'description', 'price_monthly', 'price_yearly', 'max_pools', 'max_users', 'max_armadas', 'max_routes', 'max_drivers', 'max_charters_per_month'];
 
             foreach ($planFields as $field) {
                 if (isset($data[$field])) {
@@ -11890,6 +11915,7 @@ XML;
             }
 
             Cache::forget('admin-ops:saas:plans:catalog:v1');
+            Cache::forget('admin-ops:saas:plans:catalog:v2');
             Cache::forget('inertia:saas:active-plans:v1');
             Cache::forget('inertia:saas:summary:v1');
 
