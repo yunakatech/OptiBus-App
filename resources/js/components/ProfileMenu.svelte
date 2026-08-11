@@ -5,6 +5,7 @@
         AvatarImage,
     } from '@/components/ui/avatar';
     import { Button } from '@/components/ui/button';
+    import UserRound from 'lucide-svelte/icons/user-round';
     import {
         DropdownMenu,
         DropdownMenuContent,
@@ -12,7 +13,6 @@
     } from '@/components/ui/dropdown-menu';
     import UserMenuContent from '@/components/UserMenuContent.svelte';
     import { resolveAvatarUrl } from '@/lib/avatar';
-    import { getInitials } from '@/lib/initials';
     import type { User } from '@/types';
 
     let {
@@ -47,9 +47,10 @@
                             alt={user.name ?? 'User avatar'}
                         />
                         <AvatarFallback
-                            class="rounded-lg bg-slate-200 font-semibold text-slate-800 dark:bg-slate-200 dark:text-slate-800"
+                            class="rounded-full bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                         >
-                            {getInitials(user.name ?? '')}
+                            <UserRound class="size-4" aria-hidden="true" />
+                            <span class="sr-only">Foto profil belum tersedia</span>
                         </AvatarFallback>
                     </Avatar>
                 </Button>
