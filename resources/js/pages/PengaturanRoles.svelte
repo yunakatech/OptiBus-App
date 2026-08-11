@@ -511,6 +511,17 @@
 
     $effect(() => {
         if (isSuperAdminRole && allPermissionIds.length > 0) {
+            const alreadySynchronized =
+                form.permission_ids.length === allPermissionIds.length &&
+                form.permission_ids.every(
+                    (permissionId, index) =>
+                        permissionId === allPermissionIds[index],
+                );
+
+            if (alreadySynchronized) {
+                return;
+            }
+
             form = { ...form, permission_ids: [...allPermissionIds] };
         }
     });
@@ -530,13 +541,6 @@
 
         roles = Array.isArray(payload.roles) ? payload.roles : [];
         roleMeta = payload.pagination ?? roleMeta;
-
-        if (form.id > 0) {
-            const updatedRole = roles.find((role) => role.id === form.id);
-            if (updatedRole) {
-                editRole(updatedRole, false);
-            }
-        }
 
         loading = false;
     });
