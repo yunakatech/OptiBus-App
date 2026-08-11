@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\FeatureGate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
@@ -23,13 +24,26 @@ class AdminOpsSaasController extends Controller
             $tab = 'tenants';
         }
 
+        $saasTablesReady = FeatureGate::ready();
+
         $props = [
             'tab' => $tab,
-            'saasTablesReady' => FeatureGate::ready(),
+            'saasTablesReady' => $saasTablesReady,
+            'summary' => Inertia::defer(
+                fn () => $saasTablesReady ? $this->loadSummary() : null,
+                'saas-summary',
+            ),
         ];
 
-        // Pre-load summary counts for tab badges
-        if (FeatureGate::ready()) {
+        return Inertia::render('AdminOpsSaas', $props);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function loadSummary(): array
+    {
+        return Cache::remember('inertia:saas:summary:v1', now()->addSeconds(30), function (): array {
             $hasInvoices = Schema::hasTable('invoice_subscriptions');
             $invoiceSummary = [
                 'invoice_pending_count' => 0,
@@ -66,7 +80,7 @@ class AdminOpsSaasController extends Controller
                 $overdueQuery = DB::table('invoice_subscriptions')->where('status', 'overdue');
                 if ($hasDueDate) {
                     $overdueQuery->orWhere(function ($overdue): void {
-                            $overdue
+                        $overdue
                             ->whereIn('status', ['pending', 'verification'])
                             ->whereDate('due_date', '<', now()->toDateString());
                     });
@@ -80,7 +94,7 @@ class AdminOpsSaasController extends Controller
                     : 0;
             }
 
-            $props['summary'] = [
+            return [
                 'tenant_count' => (int) DB::table('tenants')->count(),
                 'active_subscription_count' => (int) DB::table('subscriptions')
                     ->whereIn('status', ['trial', 'active'])
@@ -88,8 +102,6 @@ class AdminOpsSaasController extends Controller
                 'plan_count' => (int) DB::table('plans')->where('is_active', true)->count(),
                 ...$invoiceSummary,
             ];
-        }
-
-        return Inertia::render('AdminOpsSaas', $props);
+        });
     }
 }

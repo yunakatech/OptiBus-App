@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\MayarGateway;
 use App\Services\PaymentGateway;
 use App\Support\PoolScope;
 use App\Support\TenantBillingAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
@@ -23,103 +23,180 @@ class SubscriptionPaymentController extends Controller
     public function index(): Response
     {
         $tenantSub = PoolScope::tenantSubscription();
-        $invoices = [];
-        $currentPlan = null;
-
-        $this->syncPendingPaymentInvoice($tenantSub);
-
-        if ($tenantSub && Schema::hasTable('invoice_subscriptions')) {
-            $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
-            $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
-            $hasGatewayColumns = Schema::hasColumn('invoice_subscriptions', 'gateway_checkout_url');
-            $invoices = DB::table('invoice_subscriptions')
-                ->where('tenant_id', $tenantSub['tenant_id'])
-                ->orderBy('created_at', 'desc')
-                ->limit(20)
-                ->get()
-                ->map(function ($inv) use ($hasDueDateColumn, $hasPaidAtColumn, $hasGatewayColumns) {
-                    return [
-                        'id' => (int) $inv->id,
-                        'invoice_number' => (string) $inv->invoice_number,
-                        'amount' => (float) $inv->amount,
-                        'status' => (string) $inv->status,
-                        'due_date' => $hasDueDateColumn ? ($inv->due_date ?? null) : null,
-                        'paid_at' => $hasPaidAtColumn ? ($inv->paid_at ?? null) : null,
-                        'payment_method' => (string) ($inv->payment_method ?? ''),
-                        'payment_gateway' => (string) ($inv->payment_gateway ?? 'Mayar'),
-                        'gateway_reference' => $hasGatewayColumns ? (string) ($inv->gateway_reference ?? '') : '',
-                        'gateway_checkout_url' => $hasGatewayColumns ? (string) ($inv->gateway_checkout_url ?? '') : '',
-                        'gateway_status' => $hasGatewayColumns ? (string) ($inv->gateway_status ?? '') : '',
-                        'gateway_paid_at' => $hasGatewayColumns ? ($inv->gateway_paid_at ?? null) : null,
-                        'created_at' => $inv->created_at,
-                    ];
-                })
-                ->all();
-
-            if (
-                Schema::hasTable('plans')
-                && Schema::hasTable('subscriptions')
-                && ($tenantSub['subscription_id'] ?? 0) > 0
-            ) {
-                $currentPlan = DB::table('subscriptions')
-                    ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
-                    ->where('subscriptions.id', (int) $tenantSub['subscription_id'])
-                    ->select(
-                        'plans.id',
-                        'plans.name',
-                        'plans.slug',
-                        'plans.description',
-                        'plans.price_monthly as base_price_monthly',
-                        'plans.price_yearly as base_price_yearly',
-                        'subscriptions.custom_price_monthly',
-                        'subscriptions.custom_price_yearly',
-                        'subscriptions.custom_max_pools',
-                        'subscriptions.custom_max_users',
-                        'subscriptions.custom_max_armadas',
-                        'subscriptions.custom_max_routes',
-                        DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
-                        DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
-                    )
-                    ->first();
-            } elseif (Schema::hasTable('plans')) {
-                $currentPlan = DB::table('plans')->where('id', $tenantSub['plan_id'])->first();
-            }
-        }
-
-        $plans = Schema::hasTable('plans')
-            ? DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get()
-            : collect();
 
         return Inertia::render('Subscription', [
             'tenant_subscription' => $tenantSub,
-            'invoices' => $invoices,
-            'current_plan' => $currentPlan ? [
-                'id' => (int) $currentPlan->id,
-                'name' => (string) $currentPlan->name,
-                'slug' => (string) $currentPlan->slug,
-                'price_monthly' => (float) ($currentPlan->price_monthly ?? $currentPlan->base_price_monthly ?? 0),
-                'price_yearly' => (float) ($currentPlan->price_yearly ?? $currentPlan->base_price_yearly ?? 0),
-                'base_price_monthly' => (float) ($currentPlan->base_price_monthly ?? $currentPlan->price_monthly ?? 0),
-                'base_price_yearly' => (float) ($currentPlan->base_price_yearly ?? $currentPlan->price_yearly ?? 0),
-                'custom_price_monthly' => $currentPlan->custom_price_monthly ?? null,
-                'custom_price_yearly' => $currentPlan->custom_price_yearly ?? null,
-                'custom_max_pools' => $currentPlan->custom_max_pools ?? null,
-                'custom_max_users' => $currentPlan->custom_max_users ?? null,
-                'custom_max_armadas' => $currentPlan->custom_max_armadas ?? null,
-                'custom_max_routes' => $currentPlan->custom_max_routes ?? null,
-                'description' => (string) ($currentPlan->description ?? ''),
-            ] : null,
-            'plans' => $plans->map(fn ($p) => [
-                'id' => (int) $p->id,
-                'name' => (string) $p->name,
-                'slug' => (string) $p->slug,
-                'price_monthly' => (float) $p->price_monthly,
-                'price_yearly' => (float) $p->price_yearly,
-                'description' => (string) ($p->description ?? ''),
-            ])->all(),
-            'account_access' => $this->accountAccess(),
-            'billing_access' => TenantBillingAccess::forUser(),
+            'invoices' => $this->loadInvoices($tenantSub),
+            'current_plan' => Inertia::defer(
+                fn () => $this->loadCurrentPlan($tenantSub),
+                'billing',
+            ),
+            'plans' => Inertia::defer(
+                fn () => $this->loadPlans(),
+                'saas',
+            ),
+            'account_access' => fn () => Cache::remember(
+                'inertia:subscription:account-access:user:'.(int) (auth()->id() ?? 0).':v1',
+                now()->addMinutes(2),
+                fn () => $this->accountAccess(),
+            ),
+            'billing_access' => fn () => TenantBillingAccess::forUser(),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $tenantSub
+     * @return array<int, array<string, mixed>>
+     */
+    private function loadInvoices(?array $tenantSub): array
+    {
+        if (! $tenantSub || ! Schema::hasTable('invoice_subscriptions')) {
+            return [];
+        }
+
+        $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
+        $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
+        $hasGatewayColumns = Schema::hasColumn('invoice_subscriptions', 'gateway_checkout_url');
+
+        $columns = [
+            'id',
+            'invoice_number',
+            'amount',
+            'status',
+            'payment_method',
+            'payment_gateway',
+            'created_at',
+        ];
+
+        if ($hasDueDateColumn) {
+            $columns[] = 'due_date';
+        }
+        if ($hasPaidAtColumn) {
+            $columns[] = 'paid_at';
+        }
+        if ($hasGatewayColumns) {
+            $columns = array_merge($columns, [
+                'gateway_reference',
+                'gateway_checkout_url',
+                'gateway_status',
+                'gateway_paid_at',
+            ]);
+        }
+
+        return DB::table('invoice_subscriptions')
+            ->where('tenant_id', (int) $tenantSub['tenant_id'])
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get($columns)
+            ->map(fn ($invoice): array => [
+                'id' => (int) $invoice->id,
+                'invoice_number' => (string) $invoice->invoice_number,
+                'amount' => (float) $invoice->amount,
+                'status' => (string) $invoice->status,
+                'due_date' => $hasDueDateColumn ? ($invoice->due_date ?? null) : null,
+                'paid_at' => $hasPaidAtColumn ? ($invoice->paid_at ?? null) : null,
+                'payment_method' => (string) ($invoice->payment_method ?? ''),
+                'payment_gateway' => (string) ($invoice->payment_gateway ?? 'Mayar'),
+                'gateway_reference' => $hasGatewayColumns ? (string) ($invoice->gateway_reference ?? '') : '',
+                'gateway_checkout_url' => $hasGatewayColumns ? (string) ($invoice->gateway_checkout_url ?? '') : '',
+                'gateway_status' => $hasGatewayColumns ? (string) ($invoice->gateway_status ?? '') : '',
+                'gateway_paid_at' => $hasGatewayColumns ? ($invoice->gateway_paid_at ?? null) : null,
+                'created_at' => $invoice->created_at,
+            ])
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $tenantSub
+     * @return array<string, mixed>|null
+     */
+    private function loadCurrentPlan(?array $tenantSub): ?array
+    {
+        if (! $tenantSub || ! Schema::hasTable('plans')) {
+            return null;
+        }
+
+        $currentPlan = null;
+        if (Schema::hasTable('subscriptions') && ($tenantSub['subscription_id'] ?? 0) > 0) {
+            $currentPlan = DB::table('subscriptions')
+                ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+                ->where('subscriptions.id', (int) $tenantSub['subscription_id'])
+                ->select(
+                    'plans.id',
+                    'plans.name',
+                    'plans.slug',
+                    'plans.description',
+                    'plans.price_monthly as base_price_monthly',
+                    'plans.price_yearly as base_price_yearly',
+                    'subscriptions.custom_price_monthly',
+                    'subscriptions.custom_price_yearly',
+                    'subscriptions.custom_max_pools',
+                    'subscriptions.custom_max_users',
+                    'subscriptions.custom_max_armadas',
+                    'subscriptions.custom_max_routes',
+                    DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
+                    DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
+                )
+                ->first();
+        } elseif (isset($tenantSub['plan_id'])) {
+            $currentPlan = DB::table('plans')
+                ->where('id', (int) $tenantSub['plan_id'])
+                ->select([
+                    'id',
+                    'name',
+                    'slug',
+                    'description',
+                    'price_monthly as base_price_monthly',
+                    'price_yearly as base_price_yearly',
+                ])
+                ->first();
+        }
+
+        if (! $currentPlan) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $currentPlan->id,
+            'name' => (string) $currentPlan->name,
+            'slug' => (string) $currentPlan->slug,
+            'price_monthly' => (float) ($currentPlan->price_monthly ?? $currentPlan->base_price_monthly ?? 0),
+            'price_yearly' => (float) ($currentPlan->price_yearly ?? $currentPlan->base_price_yearly ?? 0),
+            'base_price_monthly' => (float) ($currentPlan->base_price_monthly ?? $currentPlan->price_monthly ?? 0),
+            'base_price_yearly' => (float) ($currentPlan->base_price_yearly ?? $currentPlan->price_yearly ?? 0),
+            'custom_price_monthly' => $currentPlan->custom_price_monthly ?? null,
+            'custom_price_yearly' => $currentPlan->custom_price_yearly ?? null,
+            'custom_max_pools' => $currentPlan->custom_max_pools ?? null,
+            'custom_max_users' => $currentPlan->custom_max_users ?? null,
+            'custom_max_armadas' => $currentPlan->custom_max_armadas ?? null,
+            'custom_max_routes' => $currentPlan->custom_max_routes ?? null,
+            'description' => (string) ($currentPlan->description ?? ''),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function loadPlans(): array
+    {
+        if (! Schema::hasTable('plans')) {
+            return [];
+        }
+
+        return Cache::remember('inertia:saas:active-plans:v1', now()->addMinutes(10), fn () => DB::table('plans')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'slug', 'price_monthly', 'price_yearly', 'description'])
+            ->map(fn ($plan): array => [
+                'id' => (int) $plan->id,
+                'name' => (string) $plan->name,
+                'slug' => (string) $plan->slug,
+                'price_monthly' => (float) $plan->price_monthly,
+                'price_yearly' => (float) $plan->price_yearly,
+                'description' => (string) ($plan->description ?? ''),
+            ])
+            ->values()
+            ->all());
     }
 
     /**
@@ -223,70 +300,6 @@ class SubscriptionPaymentController extends Controller
         return redirect()
             ->route('subscription.index')
             ->with('status', 'payment_link_error');
-    }
-
-    /**
-     * @param  array<string, mixed>|null  $tenantSub
-     */
-    private function syncPendingPaymentInvoice(?array $tenantSub): void
-    {
-        if (! $tenantSub || ($tenantSub['subscription_status'] ?? '') !== 'pending_payment') {
-            return;
-        }
-
-        if (! Schema::hasTable('invoice_subscriptions') || ! Schema::hasTable('subscriptions') || ! Schema::hasTable('plans')) {
-            return;
-        }
-
-        $subscriptionId = (int) ($tenantSub['subscription_id'] ?? 0);
-        if ($subscriptionId <= 0) {
-            return;
-        }
-
-        $activeInvoice = DB::table('invoice_subscriptions')
-            ->where('subscription_id', $subscriptionId)
-            ->whereIn('status', ['pending', 'overdue'])
-            ->orderByDesc('created_at')
-            ->first();
-        if ($activeInvoice) {
-            if (
-                Schema::hasColumn('invoice_subscriptions', 'gateway_checkout_url')
-                && trim((string) ($activeInvoice->gateway_checkout_url ?? '')) === ''
-            ) {
-                app(MayarGateway::class)->createCheckoutForInvoice((int) $activeInvoice->id);
-            }
-
-            return;
-        }
-
-        $subscription = DB::table('subscriptions')
-            ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
-            ->where('subscriptions.id', $subscriptionId)
-            ->select(
-                'subscriptions.*',
-                'plans.price_monthly as base_price_monthly',
-                'plans.price_yearly as base_price_yearly',
-                DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
-                DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
-            )
-            ->first();
-        if (! $subscription) {
-            return;
-        }
-
-        $amount = ($subscription->billing_interval ?? 'monthly') === 'yearly'
-            ? (float) ($subscription->price_yearly ?? $subscription->base_price_yearly ?? 0)
-            : (float) ($subscription->price_monthly ?? $subscription->base_price_monthly ?? 0);
-        if ($amount <= 0) {
-            return;
-        }
-
-        PaymentGateway::createInvoice(
-            (int) $subscription->tenant_id,
-            (int) $subscription->id,
-            $amount,
-            now()->addDay()->toDateString(),
-        );
     }
 
     /**
