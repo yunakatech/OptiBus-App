@@ -1,0 +1,28 @@
+{
+    "version": 2,
+    "framework": null,
+    "functions": {
+        "api/index.php": {
+            "runtime": "vercel-php@0.9.0",
+            "maxDuration": 10
+        }
+    },
+    "routes": [
+        {
+            "src": "/(branding|landing|build)/(.*)",
+            "dest": "/public/$1/$2"
+        },
+        {
+            "src": "/(favicon\\.ico|favicon\\.svg|apple-touch-icon\\.png|apple-touch-icon-v2\\.png|pwa-icon-192\\.png|pwa-icon-192-v2\\.png|pwa-icon-512\\.png|pwa-icon-512-v2\\.png|robots\\.txt|manifest\\.json)",
+            "dest": "/public/$1"
+        },
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/index.php"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/api/index.php"
+        }
+    ]
+}
