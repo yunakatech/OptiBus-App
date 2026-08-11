@@ -474,13 +474,6 @@ docker run --env-file .env -p 10000:10000 optibus
 Baca [docs/coolify-deploy.md](docs/coolify-deploy.md) untuk web, worker,
 scheduler, database, dan persistent volume.
 
-### Cloudflare sebagai proxy
-
-Laravel tidak dapat dijalankan langsung di Cloudflare Pages atau Workers tanpa
-rewrite arsitektur. Jalur saat ini: Laravel tetap di origin hosting, Cloudflare
-dipakai sebagai DNS, CDN, WAF, dan proxy. Baca
-[docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
-
 ## Test dan Quality Check
 
 ```bash
@@ -544,11 +537,8 @@ dan laporan tetap dapat dilihat sesuai permission.
 
 ## Dokumentasi Tambahan
 
-- [Cloudflare deployment](docs/cloudflare-deploy.md)
 - [Coolify deployment](docs/coolify-deploy.md)
-- [Render dan Neon deployment](docs/render-neon-deploy.md)
 - [Mayar payment gateway](docs/mayar-payment-gateway.md)
-- [Production performance](docs/production-performance.md)
 
 ## Lisensi
 

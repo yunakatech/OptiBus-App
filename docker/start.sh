@@ -2,7 +2,7 @@
 set -eu
 
 if [ -z "${APP_KEY:-}" ]; then
-    echo "APP_KEY belum diisi. Isi APP_KEY di Render sebelum start." >&2
+    echo "APP_KEY belum diisi. Isi APP_KEY di environment server sebelum start." >&2
     exit 1
 fi
 
