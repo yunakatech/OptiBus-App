@@ -423,6 +423,24 @@
         form = { ...form, permission_ids: [] };
     };
 
+    const normalizedPermissionIds = () => {
+        const source = isSuperAdminRole
+            ? allPermissionIds
+            : form.permission_ids;
+
+        return Array.from(
+            new Set(
+                source
+                    .map((permissionId) => Number(permissionId))
+                    .filter(
+                        (permissionId) =>
+                            Number.isInteger(permissionId) &&
+                            permissionId > 0,
+                    ),
+            ),
+        );
+    };
+
     const saveRole = async (event: SubmitEvent) => {
         event.preventDefault();
         saving = true;
@@ -433,13 +451,11 @@
             await runWithFeedback(
                 async () => {
                     await api('POST', '/api/admin/roles', {
-                        id: form.id || undefined,
-                        name: form.name,
-                        slug: form.slug,
-                        description: form.description,
-                        permission_ids: isSuperAdminRole
-                            ? allPermissionIds
-                            : form.permission_ids,
+                        id: form.id > 0 ? form.id : undefined,
+                        name: form.name.trim(),
+                        slug: form.slug.trim() || undefined,
+                        description: form.description.trim(),
+                        permission_ids: normalizedPermissionIds(),
                     });
                 },
                 {
