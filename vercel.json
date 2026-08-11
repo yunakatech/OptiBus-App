@@ -7,6 +7,14 @@
             "maxDuration": 10
         }
     },
+<<<<<<< ours
+<<<<<<< ours
+=======
+
+>>>>>>> theirs
+=======
+
+>>>>>>> theirs
     "routes": [
         {
             "src": "/(branding|landing|build)/(.*)",
@@ -24,5 +32,40 @@
             "src": "/(.*)",
             "dest": "/api/index.php"
         }
+<<<<<<< ours
+<<<<<<< ours
     ]
 }
+=======
+=======
+>>>>>>> theirs
+    ],
+    "env": {
+        "APP_ENV": "production",
+        "APP_DEBUG": "false",
+        "APP_KEY": "base64:k6wOP1B1N0YpXzW4hY/m3wX7nQK6wOP1B1N0YpXzW4g=",
+        "LOG_CHANNEL": "stderr",
+        "CACHE_STORE": "file",
+        "SESSION_DRIVER": "cookie",
+        "QUEUE_CONNECTION": "sync",
+        "VERCEL": "1",
+        "DB_CONNECTION": "pgsql",
+        "DB_HOST": "aws-0-ap-southeast-1.pooler.supabase.com",
+        "DB_PORT": "5432",
+        "DB_DATABASE": "postgres",
+        "DB_USERNAME": "postgres.gpjusyvigwldclzlnsrm",
+        "DB_SSLMODE": "require",
+        "DB_PERSISTENT": "false",
+        "DB_APPLICATION_NAME": "optibus-vercel",
+        "APP_SERVICES_CACHE": "/tmp/storage/bootstrap/cache/services.php",
+        "APP_PACKAGES_CACHE": "/tmp/storage/bootstrap/cache/packages.php",
+        "APP_CONFIG_CACHE": "/tmp/storage/bootstrap/cache/config.php",
+        "APP_ROUTES_CACHE": "/tmp/storage/bootstrap/cache/routes-v7.php",
+        "APP_EVENTS_CACHE": "/tmp/storage/bootstrap/cache/events.php"
+    }
+}
+
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
