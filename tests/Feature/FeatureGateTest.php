@@ -90,6 +90,56 @@ class FeatureGateTest extends TestCase
         $this->assertTrue(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
     }
 
+    public function test_private_unlimited_override_applies_to_all_supported_resources(): void
+    {
+        config(['saas.feature_gating_enabled' => true]);
+        [$user, $tenantId] = $this->tenantUserWithPlan('starter', 'active');
+
+        DB::table('subscriptions')
+            ->where('tenant_id', $tenantId)
+            ->update([
+                'custom_max_pools' => 0,
+                'custom_max_users' => 0,
+                'custom_max_armadas' => 0,
+                'custom_max_routes' => 0,
+                'updated_at' => now(),
+            ]);
+
+        $this->actingAs($user);
+        FeatureGate::flushRequestCache();
+
+        $this->assertTrue(FeatureGate::canCreate('tenant.multiple_pools', 'pools', 'tenant_id'));
+        $this->assertTrue(FeatureGate::canCreate('user.management', 'users', 'tenant_id'));
+        $this->assertTrue(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
+        $this->assertTrue(FeatureGate::canCreate('master.routes', 'routes', 'tenant_id'));
+    }
+
+    public function test_private_override_uses_the_latest_active_subscription(): void
+    {
+        config(['saas.feature_gating_enabled' => true]);
+        [$user, $tenantId] = $this->tenantUserWithPlan('starter', 'active');
+        $planId = (int) DB::table('plans')->where('slug', 'starter')->value('id');
+
+        DB::table('subscriptions')->insert([
+            'tenant_id' => $tenantId,
+            'plan_id' => $planId,
+            'status' => 'active',
+            'starts_at' => now()->toDateString(),
+            'ends_at' => now()->addMonth()->toDateString(),
+            'billing_interval' => 'monthly',
+            'grace_period_days' => 7,
+            'custom_max_armadas' => 0,
+            'created_at' => now()->addSecond(),
+            'updated_at' => now()->addSecond(),
+        ]);
+
+        $this->actingAs($user);
+        FeatureGate::flushRequestCache();
+
+        $this->assertTrue(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
+        $this->assertSame(0, FeatureGate::currentPlan()?->custom_max_armadas);
+    }
+
     /**
      * @return array{0: User, 1: int}
      */
