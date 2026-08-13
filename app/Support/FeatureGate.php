@@ -2,9 +2,7 @@
 
 namespace App\Support;
 
-use App\Support\SchemaCache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class FeatureGate
 {
@@ -38,10 +36,10 @@ class FeatureGate
     public static function ready(): bool
     {
         SchemaCache::warm([
-            'feature_gates'  => [],
-            'plan_feature'   => [],
-            'subscriptions'  => [],
-            'plans'          => [],
+            'feature_gates' => [],
+            'plan_feature' => [],
+            'subscriptions' => [],
+            'plans' => [],
         ]);
 
         return SchemaCache::hasTable('feature_gates')
@@ -109,6 +107,8 @@ class FeatureGate
             ->where('subscriptions.tenant_id', $tenantId)
             ->whereIn('subscriptions.status', ['trial', 'active', 'past_due'])
             ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END")
+            ->orderByDesc('subscriptions.created_at')
+            ->orderByDesc('subscriptions.id')
             ->select(
                 'subscriptions.id as subscription_id',
                 'subscriptions.plan_id',
@@ -189,8 +189,8 @@ class FeatureGate
     /**
      * Check if the current tenant's plan includes a feature.
      *
-     * @param string $featureKey  e.g. 'booking.seat_map', 'report.export_csv'
-     * @param int    $increment   When checking before creating, pass 1 to account for the new item
+     * @param  string  $featureKey  e.g. 'booking.seat_map', 'report.export_csv'
+     * @param  int  $increment  When checking before creating, pass 1 to account for the new item
      */
     public static function can(string $featureKey, int $increment = 0, ?int $userId = null): bool
     {
@@ -254,10 +254,10 @@ class FeatureGate
     /**
      * Check if the current tenant can create one more of a resource.
      *
-     * @param string $resourceKey  Feature key that maps to a numeric limit (e.g. 'master.routes')
-     * @param string $tableName    Table to count from
-     * @param string $tenantColumn Column on the table that holds tenant_id
-     * @param int    $increment    How many more to check for (usually 1)
+     * @param  string  $resourceKey  Feature key that maps to a numeric limit (e.g. 'master.routes')
+     * @param  string  $tableName  Table to count from
+     * @param  string  $tenantColumn  Column on the table that holds tenant_id
+     * @param  int  $increment  How many more to check for (usually 1)
      */
     public static function canCreate(
         string $resourceKey,
