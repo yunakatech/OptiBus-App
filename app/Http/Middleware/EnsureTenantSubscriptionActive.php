@@ -6,6 +6,7 @@ use App\Support\AccessControl;
 use App\Support\TenantBillingAccess;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,7 +20,7 @@ class EnsureTenantSubscriptionActive
         $user = $request->user();
         $userId = (int) ($user?->id ?? 0);
 
-        if ($userId <= 0 || AccessControl::userIsSuperAdmin($userId) || $this->isAllowedBillingRoute($request)) {
+        if ($userId <= 0 || AccessControl::userIsSuperAdmin($userId)) {
             return $next($request);
         }
 
@@ -28,6 +29,27 @@ class EnsureTenantSubscriptionActive
         }
 
         $billingAccess = TenantBillingAccess::forUser($userId);
+
+        if (TenantBillingAccess::tenantUnavailable($billingAccess) && ! $request->routeIs('logout')) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => TenantBillingAccess::tenantUnavailableMessage($billingAccess),
+                    'action_required' => 'tenant_unavailable',
+                    'redirect_url' => route('login', absolute: false),
+                ], 410);
+            }
+
+            return redirect()->route('login')->with('status', TenantBillingAccess::tenantUnavailableMessage($billingAccess));
+        }
+
+        if ($this->isAllowedBillingRoute($request)) {
+            return $next($request);
+        }
 
         if (! ($billingAccess['locked'] ?? false)) {
             return $next($request);

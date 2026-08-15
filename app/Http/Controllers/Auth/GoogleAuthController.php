@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\PaymentGateway;
 use App\Services\TenantInvitationService;
 use App\Support\AccessControl;
+use App\Support\TenantBillingAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -82,11 +83,12 @@ class GoogleAuthController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        if (in_array(($invitationResult['status'] ?? ''), ['email_mismatch', 'tenant_conflict', 'limit_reached'], true)) {
+        if (in_array(($invitationResult['status'] ?? ''), ['email_mismatch', 'tenant_conflict', 'limit_reached', 'tenant_unavailable'], true)) {
             $message = match ($invitationResult['status']) {
                 'email_mismatch' => 'Email Google tidak sesuai dengan undangan tenant.',
                 'tenant_conflict' => 'Akun Google ini sudah terhubung ke tenant lain.',
                 'limit_reached' => 'Batas user paket tenant sudah tercapai.',
+                'tenant_unavailable' => 'Tenant sudah diarsipkan atau sedang dihapus.',
                 default => 'Undangan tenant tidak dapat digunakan.',
             };
 
@@ -122,6 +124,15 @@ class GoogleAuthController extends Controller
             if ($updates !== []) {
                 $user->forceFill($updates)->save();
             }
+        }
+
+        $billingAccess = TenantBillingAccess::forUser((int) $user->id);
+        if (TenantBillingAccess::tenantUnavailable($billingAccess)) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('status', 'tenant_unavailable');
         }
 
         Auth::login($user, true);

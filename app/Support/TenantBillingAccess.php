@@ -9,6 +9,27 @@ use Illuminate\Support\Facades\Schema;
 class TenantBillingAccess
 {
     /**
+     * Archived or deleting tenants cannot authenticate or access billing.
+     * Expired subscriptions remain recoverable when the tenant itself is active.
+     *
+     * @param  array<string, mixed>  $access
+     */
+    public static function tenantUnavailable(array $access): bool
+    {
+        return in_array((string) ($access['tenant_status'] ?? ''), ['canceled', 'deleting'], true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $access
+     */
+    public static function tenantUnavailableMessage(array $access): string
+    {
+        return (string) ($access['tenant_status'] ?? '') === 'deleting'
+            ? 'Tenant sedang dalam proses penghapusan dan tidak dapat digunakan.'
+            : 'Tenant sudah diarsipkan dan tidak dapat digunakan. Hubungi superadmin jika perlu dipulihkan.';
+    }
+
+    /**
      * Resolve billing access for a user.
      *
      * @return array<string, mixed>

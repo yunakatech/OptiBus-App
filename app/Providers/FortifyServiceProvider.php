@@ -46,6 +46,20 @@ class FortifyServiceProvider extends ServiceProvider
                         return redirect()->route('platform.dashboard');
                     }
 
+                    $tenantId = Schema::hasColumn('users', 'tenant_id')
+                        ? (int) DB::table('users')->where('id', $userId)->value('tenant_id')
+                        : 0;
+                    if ($tenantId > 0) {
+                        $billingAccess = TenantBillingAccess::forUser($userId);
+                        if (TenantBillingAccess::tenantUnavailable($billingAccess)) {
+                            auth()->logout();
+                            $request->session()->invalidate();
+                            $request->session()->regenerateToken();
+
+                            return redirect()->route('login')->with('status', TenantBillingAccess::tenantUnavailableMessage($billingAccess));
+                        }
+                    }
+
                     if ($userId > 0 && AccessControl::can($userId, 'dashboard.view')) {
                         return redirect()->intended(route('dashboard'));
                     }
