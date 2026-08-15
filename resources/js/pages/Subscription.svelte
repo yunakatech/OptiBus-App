@@ -106,9 +106,9 @@
         }) as AccountAccess,
     );
     const billingAccess = $derived(
-        (page.props.auth?.billing_access ?? page.props.billing_access ?? null) as
-            | BillingAccess
-            | null,
+        (page.props.auth?.billing_access ??
+            page.props.billing_access ??
+            null) as BillingAccess | null,
     );
     const currentPlanSlug = $derived(
         currentPlan?.slug ?? tenantSub?.plan_slug ?? '',
@@ -128,10 +128,23 @@
     const latestCanceledInvoice = $derived(
         invoices.find((invoice) => invoice.status === 'canceled') ?? null,
     );
-    const canRetryCheckout = $derived(
+    const subscriptionNeedsRenewal = $derived(
         Boolean(
-            latestCanceledInvoice &&
-                tenantSub?.subscription_status === 'pending_payment',
+            tenantSub &&
+            (['expired', 'past_due', 'suspended', 'canceled'].includes(
+                tenantSub.subscription_status ?? '',
+            ) ||
+                ['subscription_expired', 'trial_expired'].includes(
+                    billingAccess?.reason ?? '',
+                )),
+        ),
+    );
+    const canRenewCurrentPlan = $derived(
+        Boolean(
+            !payableInvoice &&
+            (subscriptionNeedsRenewal ||
+                (latestCanceledInvoice &&
+                    tenantSub?.subscription_status === 'pending_payment')),
         ),
     );
     const subscriptionMeta = $derived(
@@ -143,9 +156,7 @@
             ? 'Trial Starter'
             : subscriptionMeta.label,
     );
-    const canAccessDashboard = $derived(
-        Boolean(billingAccess?.allowed),
-    );
+    const canAccessDashboard = $derived(Boolean(billingAccess?.allowed));
     const paymentLinkReady = $derived(
         Boolean(payableInvoice?.gateway_checkout_url),
     );
@@ -159,21 +170,25 @@
             ? gatewayHasError
                 ? 'Tautan pembayaran belum siap'
                 : 'Pembayaran perlu diselesaikan'
-            : latestPaidInvoice
-              ? 'Langganan Anda sudah aktif'
-              : 'Belum ada tagihan aktif',
+            : subscriptionNeedsRenewal
+              ? 'Langganan perlu diperpanjang'
+              : latestPaidInvoice
+                ? 'Langganan Anda sudah aktif'
+                : 'Belum ada tagihan aktif',
     );
     const activeBillingDescription = $derived(
-            payableInvoice
+        payableInvoice
             ? gatewayHasError
                 ? payableInvoice.gateway_error_message ||
                   'Tagihan sudah dibuat, tetapi tautan pembayaran belum tersedia. Silakan hubungi admin untuk dibantu.'
                 : `Selesaikan pembayaran sebelum ${formatDate(payableInvoice.due_date)} agar paket dapat digunakan.`
-            : latestPaidInvoice
-              ? `Pembayaran terakhir diterima pada ${formatDate(latestPaidInvoice.paid_at)}.`
-              : latestCanceledInvoice
-                ? 'Tagihan sebelumnya sudah dibatalkan. Pilih paket untuk mengajukan pembayaran baru.'
-              : 'Pilih paket di bawah untuk memulai langganan.',
+            : subscriptionNeedsRenewal
+              ? 'Masa langganan sudah berakhir. Pilih paket untuk membuat tagihan perpanjangan.'
+              : latestPaidInvoice
+                ? `Pembayaran terakhir diterima pada ${formatDate(latestPaidInvoice.paid_at)}.`
+                : latestCanceledInvoice
+                  ? 'Tagihan sebelumnya sudah dibatalkan. Pilih paket untuk mengajukan pembayaran baru.'
+                  : 'Pilih paket di bawah untuk memulai langganan.',
     );
     let checkoutPlanSlug = $state('');
 
@@ -257,8 +272,8 @@
 
     function planStateLabel(plan: Plan): string {
         if (plan.slug === currentPlanSlug) {
-            if (canRetryCheckout) {
-                return 'Bayar paket ini lagi';
+            if (canRenewCurrentPlan) {
+                return 'Perpanjang paket ini';
             }
 
             return tenantSub?.subscription_status === 'trial'
@@ -274,7 +289,9 @@
             return 'Coba pilih paket ini lagi';
         }
 
-        return plan.price_monthly > currentPlanMonthly ? 'Pilih paket ini' : 'Pilih paket';
+        return plan.price_monthly > currentPlanMonthly
+            ? 'Pilih paket ini'
+            : 'Pilih paket';
     }
 
     function planButtonVariant(plan: Plan): 'default' | 'outline' {
@@ -285,12 +302,11 @@
         if (plan.slug === currentPlanSlug) {
             return {
                 variant: 'default',
-                label:
-                    canRetryCheckout
-                        ? 'Checkout ulang'
-                        : tenantSub?.subscription_status === 'trial'
-                        ? 'Aktif Trial'
-                        : 'Paket Aktif',
+                label: canRenewCurrentPlan
+                    ? 'Perpanjang'
+                    : tenantSub?.subscription_status === 'trial'
+                      ? 'Aktif Trial'
+                      : 'Paket Aktif',
             };
         }
 
@@ -330,8 +346,10 @@
 
     function planHint(plan: Plan): string {
         if (plan.slug === currentPlanSlug) {
-            if (canRetryCheckout) {
-                return 'Tagihan sebelumnya dibatalkan. Bayar lagi untuk mengaktifkan paket ini.';
+            if (canRenewCurrentPlan) {
+                return subscriptionNeedsRenewal
+                    ? 'Masa langganan berakhir. Buat tagihan baru untuk memperpanjang paket ini.'
+                    : 'Tagihan sebelumnya dibatalkan. Buat tagihan baru untuk mengaktifkan paket ini.';
             }
 
             return 'Paket yang sedang dipakai tenant ini.';
@@ -408,7 +426,9 @@
                 <h2 class="mt-4 text-lg font-semibold text-foreground">
                     Data langganan belum tersedia
                 </h2>
-                <p class="mx-auto mt-2 hidden max-w-md text-sm text-muted-foreground sm:block">
+                <p
+                    class="mx-auto mt-2 hidden max-w-md text-sm text-muted-foreground sm:block"
+                >
                     Tenant belum memiliki paket aktif. Pilih paket dari pricing
                     atau hubungi admin SaaS.
                 </p>
@@ -429,7 +449,9 @@
             <div
                 class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-cyan-200/10 blur-3xl"
             ></div>
-            <div class="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div
+                class="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+            >
                 <div class="flex items-start gap-3">
                     <span
                         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/20"
@@ -437,48 +459,83 @@
                         <Sparkles class="h-5 w-5 text-amber-200" />
                     </span>
                     <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">
+                        <p
+                            class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80"
+                        >
                             Langkah berikutnya
                         </p>
                         {#if payableInvoice && paymentLinkReady}
-                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                            <h2
+                                class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl"
+                            >
                                 Lanjutkan pembayaran paket Anda
                             </h2>
-                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
-                                Klik tombol pembayaran, selesaikan di halaman Mayar,
-                                lalu status paket akan diperbarui otomatis.
+                            <p
+                                class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85"
+                            >
+                                Klik tombol pembayaran, selesaikan di halaman
+                                Mayar, lalu status paket akan diperbarui
+                                otomatis.
                             </p>
                         {:else if payableInvoice}
-                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                            <h2
+                                class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl"
+                            >
                                 Tautan pembayaran sedang disiapkan
                             </h2>
-                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
-                                Tautan belum tersedia. Periksa bagian pembayaran di
-                                bawah atau hubungi admin SaaS.
+                            <p
+                                class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85"
+                            >
+                                Tautan belum tersedia. Periksa bagian pembayaran
+                                di bawah atau hubungi admin SaaS.
                             </p>
                         {:else if latestCanceledInvoice}
-                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                            <h2
+                                class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl"
+                            >
                                 Ajukan pembayaran baru
                             </h2>
-                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
-                                Tagihan sebelumnya sudah tidak berlaku. Pilih paket
-                                untuk membuat tagihan baru.
+                            <p
+                                class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85"
+                            >
+                                Tagihan sebelumnya sudah tidak berlaku. Pilih
+                                paket untuk membuat tagihan baru.
+                            </p>
+                        {:else if subscriptionNeedsRenewal}
+                            <h2
+                                class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl"
+                            >
+                                Langganan perlu diperpanjang
+                            </h2>
+                            <p
+                                class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85"
+                            >
+                                Masa langganan sudah berakhir. Pilih paket untuk
+                                membuat tagihan perpanjangan.
                             </p>
                         {:else if latestPaidInvoice}
-                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                            <h2
+                                class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl"
+                            >
                                 Paket Anda siap digunakan
                             </h2>
-                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
-                                Langganan aktif. Anda dapat melihat masa berlaku dan
-                                riwayat pembayaran di halaman ini.
+                            <p
+                                class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85"
+                            >
+                                Langganan aktif. Anda dapat melihat masa berlaku
+                                dan riwayat pembayaran di halaman ini.
                             </p>
                         {:else}
-                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                            <h2
+                                class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl"
+                            >
                                 Pilih paket untuk mulai
                             </h2>
-                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
-                                Bandingkan paket di bawah, pilih yang sesuai, lalu
-                                ikuti langkah pembayaran.
+                            <p
+                                class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85"
+                            >
+                                Bandingkan paket di bawah, pilih yang sesuai,
+                                lalu ikuti langkah pembayaran.
                             </p>
                         {/if}
                     </div>
@@ -534,7 +591,8 @@
                                     >
                                 </div>
                                 <CardTitle class="mt-2 text-xl lg:text-2xl">
-                                    Paket {currentPlan?.name ?? tenantSub.plan_name}
+                                    Paket {currentPlan?.name ??
+                                        tenantSub.plan_name}
                                 </CardTitle>
                                 <CardDescription class="mt-1">
                                     {currentPlan?.description ||
@@ -557,8 +615,12 @@
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent class="grid grid-cols-2 gap-2.5 p-3 md:grid-cols-3 lg:gap-3 lg:p-4">
-                        <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
+                    <CardContent
+                        class="grid grid-cols-2 gap-2.5 p-3 md:grid-cols-3 lg:gap-3 lg:p-4"
+                    >
+                        <div
+                            class="rounded-lg border border-border/70 p-2.5 lg:p-3"
+                        >
                             <p class="text-xs text-muted-foreground">
                                 Masa berlaku
                             </p>
@@ -568,26 +630,36 @@
                                     : formatDate(tenantSub.ends_at)}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
+                        <div
+                            class="rounded-lg border border-border/70 p-2.5 lg:p-3"
+                        >
                             <p class="text-xs text-muted-foreground">
                                 Tagihan saat ini
                             </p>
                             <p class="mt-1 font-semibold text-foreground">
                                 {payableInvoice
                                     ? payableInvoice.invoice_number
-                                    : latestPaidInvoice
-                                      ? 'Sudah dibayar'
-                                      : 'Belum ada'}
+                                    : subscriptionNeedsRenewal
+                                      ? 'Perlu diperpanjang'
+                                      : latestPaidInvoice
+                                        ? 'Sudah dibayar'
+                                        : 'Belum ada'}
                             </p>
                         </div>
-                        <div class="col-span-2 rounded-lg border border-border/70 p-2.5 md:col-span-1 lg:p-3">
-                            <p class="text-xs text-muted-foreground">Status pembayaran</p>
+                        <div
+                            class="col-span-2 rounded-lg border border-border/70 p-2.5 md:col-span-1 lg:p-3"
+                        >
+                            <p class="text-xs text-muted-foreground">
+                                Status pembayaran
+                            </p>
                             <p class="mt-1 font-semibold text-foreground">
                                 {payableInvoice
                                     ? 'Menunggu pembayaran'
-                                    : latestPaidInvoice
-                                      ? 'Lunas'
-                                      : 'Belum dimulai'}
+                                    : subscriptionNeedsRenewal
+                                      ? 'Perlu diperpanjang'
+                                      : latestPaidInvoice
+                                        ? 'Lunas'
+                                        : 'Belum dimulai'}
                             </p>
                         </div>
                     </CardContent>
@@ -609,12 +681,16 @@
                                             ? gatewayHasError
                                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-100'
                                                 : 'bg-sky-100 text-sky-700 dark:bg-sky-400/10 dark:text-sky-100'
-                                            : latestPaidInvoice
-                                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-100'
-                                              : 'bg-muted text-muted-foreground'
+                                            : subscriptionNeedsRenewal
+                                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-100'
+                                              : latestPaidInvoice
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-100'
+                                                : 'bg-muted text-muted-foreground'
                                     }`}
                                 >
                                     {#if payableInvoice && gatewayHasError}
+                                        <AlertTriangle class="h-5 w-5" />
+                                    {:else if subscriptionNeedsRenewal}
                                         <AlertTriangle class="h-5 w-5" />
                                     {:else if latestPaidInvoice}
                                         <CheckCircle2 class="h-5 w-5" />
@@ -652,7 +728,9 @@
                         <CardContent
                             class="grid gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_240px] lg:p-4"
                         >
-                            <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
+                            <div
+                                class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3"
+                            >
                                 <div
                                     class="col-span-2 rounded-lg border bg-background p-2.5 sm:col-span-1 lg:p-3"
                                 >
@@ -665,7 +743,9 @@
                                         {payableInvoice.invoice_number}
                                     </p>
                                 </div>
-                                <div class="rounded-lg border bg-background p-2.5 lg:p-3">
+                                <div
+                                    class="rounded-lg border bg-background p-2.5 lg:p-3"
+                                >
                                     <p class="text-xs text-muted-foreground">
                                         Batas pembayaran
                                     </p>
@@ -675,7 +755,9 @@
                                         {formatDate(payableInvoice.due_date)}
                                     </p>
                                 </div>
-                                <div class="rounded-lg border bg-background p-2.5 lg:p-3">
+                                <div
+                                    class="rounded-lg border bg-background p-2.5 lg:p-3"
+                                >
                                     <p class="text-xs text-muted-foreground">
                                         Status
                                     </p>
@@ -687,7 +769,9 @@
                                 </div>
                             </div>
 
-                            <div class="rounded-lg border bg-background p-2.5 lg:p-3">
+                            <div
+                                class="rounded-lg border bg-background p-2.5 lg:p-3"
+                            >
                                 {#if paymentLinkReady}
                                     <Button
                                         asChild
@@ -710,8 +794,8 @@
                                     <p
                                         class="mt-2 text-center text-xs text-muted-foreground"
                                     >
-                                        Setelah pembayaran berhasil, status paket
-                                        akan diperbarui otomatis.
+                                        Setelah pembayaran berhasil, status
+                                        paket akan diperbarui otomatis.
                                     </p>
                                 {:else}
                                     <div
@@ -723,7 +807,9 @@
                                             mendapatkan bantuan.
                                         </p>
                                         {#if payableInvoice.gateway_error_message}
-                                            <p class="mt-2 font-medium text-amber-700 dark:text-amber-300">
+                                            <p
+                                                class="mt-2 font-medium text-amber-700 dark:text-amber-300"
+                                            >
                                                 {payableInvoice.gateway_error_message}
                                             </p>
                                         {/if}
@@ -737,12 +823,12 @@
                                 class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground"
                             >
                                 {#if latestCanceledInvoice}
-                                    Tagihan sebelumnya dibatalkan karena melewati
-                                    batas waktu pembayaran. Pilih paket di bawah
-                                    untuk membuat tagihan baru.
+                                    Tagihan sebelumnya dibatalkan karena
+                                    melewati batas waktu pembayaran. Pilih paket
+                                    di bawah untuk membuat tagihan baru.
                                 {:else}
-                                    Belum ada tagihan. Pilih paket di bawah untuk
-                                    memulai pembayaran.
+                                    Belum ada tagihan. Pilih paket di bawah
+                                    untuk memulai pembayaran.
                                 {/if}
                             </div>
                         </CardContent>
@@ -776,27 +862,39 @@
                                     class={`relative overflow-hidden rounded-lg border p-2.5 transition-all duration-200 lg:p-3 ${planCardClass(plan)}`}
                                 >
                                     {#if plan.slug === currentPlanSlug}
-                                        <div class="absolute inset-x-0 top-0 h-1 bg-primary"></div>
-                                        <div class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-sky-400/12 blur-3xl"></div>
+                                        <div
+                                            class="absolute inset-x-0 top-0 h-1 bg-primary"
+                                        ></div>
+                                        <div
+                                            class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-sky-400/12 blur-3xl"
+                                        ></div>
                                     {/if}
                                     <div
                                         class="flex items-start justify-between gap-2"
                                     >
                                         <div class="min-w-0">
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                <p class="font-semibold text-foreground">
+                                            <div
+                                                class="flex flex-wrap items-center gap-2"
+                                            >
+                                                <p
+                                                    class="font-semibold text-foreground"
+                                                >
                                                     {plan.name}
                                                 </p>
                                                 <Badge
-                                                    variant={planCardBadge(plan).variant}
-                                                    class={plan.slug === currentPlanSlug
+                                                    variant={planCardBadge(plan)
+                                                        .variant}
+                                                    class={plan.slug ===
+                                                    currentPlanSlug
                                                         ? 'rounded-full border-primary/20 bg-primary text-primary-foreground shadow-sm'
                                                         : ''}
                                                 >
                                                     {planCardBadge(plan).label}
                                                 </Badge>
                                             </div>
-                                            <p class="mt-1 text-[11px] leading-5 text-muted-foreground">
+                                            <p
+                                                class="mt-1 text-[11px] leading-5 text-muted-foreground"
+                                            >
                                                 {planHint(plan)}
                                             </p>
                                         </div>
@@ -806,7 +904,9 @@
                                             />
                                         {/if}
                                     </div>
-                                    <p class="mt-2 text-base font-semibold text-foreground lg:text-lg">
+                                    <p
+                                        class="mt-2 text-base font-semibold text-foreground lg:text-lg"
+                                    >
                                         {formatRupiah(plan.price_monthly)}
                                         <span
                                             class="text-xs font-normal text-muted-foreground"
@@ -824,7 +924,7 @@
                                         class={`mt-3 h-8 w-full rounded-lg lg:h-9 ${plan.slug === currentPlanSlug ? 'shadow-sm shadow-primary/15' : ''}`}
                                         disabled={checkoutPlanSlug !== '' ||
                                             (plan.slug === currentPlanSlug &&
-                                                !canRetryCheckout) ||
+                                                !canRenewCurrentPlan) ||
                                             !canChoosePlan}
                                         onclick={() => startCheckout(plan)}
                                     >
@@ -855,16 +955,50 @@
                     <CardContent class="p-3 lg:p-4">
                         <ol class="space-y-3 text-sm">
                             <li class="flex gap-3">
-                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">1</span>
-                                <span><strong class="font-semibold text-foreground">Pilih paket</strong><br /><span class="text-xs text-muted-foreground">Sesuaikan dengan kebutuhan travel Anda.</span></span>
+                                <span
+                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                    >1</span
+                                >
+                                <span
+                                    ><strong
+                                        class="font-semibold text-foreground"
+                                        >Pilih paket</strong
+                                    ><br /><span
+                                        class="text-xs text-muted-foreground"
+                                        >Sesuaikan dengan kebutuhan travel Anda.</span
+                                    ></span
+                                >
                             </li>
                             <li class="flex gap-3">
-                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">2</span>
-                                <span><strong class="font-semibold text-foreground">Selesaikan pembayaran</strong><br /><span class="text-xs text-muted-foreground">Ikuti petunjuk pembayaran online.</span></span>
+                                <span
+                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                    >2</span
+                                >
+                                <span
+                                    ><strong
+                                        class="font-semibold text-foreground"
+                                        >Selesaikan pembayaran</strong
+                                    ><br /><span
+                                        class="text-xs text-muted-foreground"
+                                        >Ikuti petunjuk pembayaran online.</span
+                                    ></span
+                                >
                             </li>
                             <li class="flex gap-3">
-                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">3</span>
-                                <span><strong class="font-semibold text-foreground">Mulai gunakan</strong><br /><span class="text-xs text-muted-foreground">Akses paket aktif setelah pembayaran terverifikasi.</span></span>
+                                <span
+                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                                    >3</span
+                                >
+                                <span
+                                    ><strong
+                                        class="font-semibold text-foreground"
+                                        >Mulai gunakan</strong
+                                    ><br /><span
+                                        class="text-xs text-muted-foreground"
+                                        >Akses paket aktif setelah pembayaran
+                                        terverifikasi.</span
+                                    ></span
+                                >
                             </li>
                         </ol>
                     </CardContent>
@@ -881,64 +1015,92 @@
                             Riwayat pembayaran
                         </CardTitle>
                         <CardDescription>
-                            Semua tagihan dan status pembayaran Anda tersimpan di
-                            sini.
+                            Semua tagihan dan status pembayaran Anda tersimpan
+                            di sini.
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
                         {#if invoices.length > 0}
-                            <div
-                                class="table-container hidden md:block"
-                            >
-                                <table class="w-full table-fixed text-[12px] lg:text-sm">
+                            <div class="table-container hidden md:block">
+                                <table
+                                    class="w-full table-fixed text-[12px] lg:text-sm"
+                                >
                                     <thead
                                         class="bg-muted/70 text-left text-[11px] uppercase tracking-wide text-muted-foreground"
                                     >
                                         <tr>
-                                            <th class="w-[24%] px-3 py-2.5">Tagihan</th>
-                                            <th class="w-[14%] px-3 py-2.5">Cara bayar</th>
+                                            <th class="w-[24%] px-3 py-2.5"
+                                                >Tagihan</th
+                                            >
+                                            <th class="w-[14%] px-3 py-2.5"
+                                                >Cara bayar</th
+                                            >
                                             <th class="w-[16%] px-3 py-2.5"
                                                 >Batas bayar</th
                                             >
-                                            <th class="w-[18%] px-3 py-2.5 text-right"
+                                            <th
+                                                class="w-[18%] px-3 py-2.5 text-right"
                                                 >Nominal</th
                                             >
-                                            <th class="w-[16%] px-3 py-2.5">Status</th>
-                                            <th class="w-[12%] px-3 py-2.5 text-right"
+                                            <th class="w-[16%] px-3 py-2.5"
+                                                >Status</th
+                                            >
+                                            <th
+                                                class="w-[12%] px-3 py-2.5 text-right"
                                                 >Aksi</th
                                             >
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-border/70 text-[13px]">
+                                    <tbody
+                                        class="divide-y divide-border/70 text-[13px]"
+                                    >
                                         {#each invoices as invoice}
-                                            <tr class="transition-colors hover:bg-muted/30">
-                                                <td class="px-3 py-2.5 align-top">
-                                                    <p class="truncate font-semibold tracking-tight text-foreground">
+                                            <tr
+                                                class="transition-colors hover:bg-muted/30"
+                                            >
+                                                <td
+                                                    class="px-3 py-2.5 align-top"
+                                                >
+                                                    <p
+                                                        class="truncate font-semibold tracking-tight text-foreground"
+                                                    >
                                                         {invoice.invoice_number}
                                                     </p>
-                                                    <p class="mt-1 text-xs text-muted-foreground">
+                                                    <p
+                                                        class="mt-1 text-xs text-muted-foreground"
+                                                    >
                                                         Dibuat {formatDate(
                                                             invoice.created_at,
                                                         )}
                                                     </p>
                                                 </td>
-                                                <td class="px-3 py-2.5 align-top">
-                                                    <span class="inline-flex rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                                <td
+                                                    class="px-3 py-2.5 align-top"
+                                                >
+                                                    <span
+                                                        class="inline-flex rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                                                    >
                                                         {invoice.payment_gateway ||
                                                             'Mayar'}
                                                     </span>
                                                 </td>
-                                                <td class="px-3 py-2.5 align-top text-muted-foreground">
+                                                <td
+                                                    class="px-3 py-2.5 align-top text-muted-foreground"
+                                                >
                                                     {formatDate(
                                                         invoice.due_date,
                                                     )}
                                                 </td>
-                                                <td class="px-3 py-2.5 text-right font-semibold tracking-tight">
+                                                <td
+                                                    class="px-3 py-2.5 text-right font-semibold tracking-tight"
+                                                >
                                                     {formatRupiah(
                                                         invoice.amount,
                                                     )}
                                                 </td>
-                                                <td class="px-3 py-2.5 align-top">
+                                                <td
+                                                    class="px-3 py-2.5 align-top"
+                                                >
                                                     <Badge
                                                         variant={invoiceStatusBadge(
                                                             invoice,
@@ -950,7 +1112,9 @@
                                                         ).label}
                                                     </Badge>
                                                 </td>
-                                                <td class="px-3 py-2.5 text-right">
+                                                <td
+                                                    class="px-3 py-2.5 text-right"
+                                                >
                                                     {#if ['pending', 'overdue', 'failed'].includes(invoice.status) && invoice.gateway_checkout_url}
                                                         <a
                                                             href={invoice.gateway_checkout_url}
@@ -980,15 +1144,21 @@
 
                             <div class="space-y-3 p-4 md:hidden">
                                 {#each invoices as invoice}
-                                    <div class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm">
+                                    <div
+                                        class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
+                                    >
                                         <div
                                             class="flex items-start justify-between gap-3"
                                         >
                                             <div class="min-w-0">
-                                                <p class="truncate font-semibold tracking-tight text-foreground">
+                                                <p
+                                                    class="truncate font-semibold tracking-tight text-foreground"
+                                                >
                                                     {invoice.invoice_number}
                                                 </p>
-                                                <p class="mt-1 text-xs text-muted-foreground">
+                                                <p
+                                                    class="mt-1 text-xs text-muted-foreground"
+                                                >
                                                     Pembayaran - {formatDate(
                                                         invoice.due_date,
                                                     )}
@@ -1007,7 +1177,8 @@
                                         <div
                                             class="mt-3 flex items-center justify-between gap-3"
                                         >
-                                            <span class="font-semibold tracking-tight text-foreground"
+                                            <span
+                                                class="font-semibold tracking-tight text-foreground"
                                                 >{formatRupiah(
                                                     invoice.amount,
                                                 )}</span
@@ -1046,10 +1217,14 @@
                                     >
                                         <Receipt class="h-6 w-6" />
                                     </span>
-                                    <p class="mt-4 text-sm font-semibold text-foreground">
+                                    <p
+                                        class="mt-4 text-sm font-semibold text-foreground"
+                                    >
                                         Belum ada invoice.
                                     </p>
-                                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                                    <p
+                                        class="mt-1 text-xs leading-5 text-muted-foreground"
+                                    >
                                         Saat pembayaran dibuat, riwayatnya akan
                                         tampil di sini bersama status dan batas
                                         pembayarannya.
@@ -1081,20 +1256,28 @@
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
-                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            >
                                 Cara bayar
                             </p>
-                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                            <p
+                                class="mt-1 font-semibold tracking-tight text-foreground"
+                            >
                                 Pembayaran online
                             </p>
                         </div>
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
-                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            >
                                 Pembayaran berhasil
                             </p>
-                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                            <p
+                                class="mt-1 font-semibold tracking-tight text-foreground"
+                            >
                                 {invoices.filter(
                                     (invoice) => invoice.status === 'paid',
                                 ).length}
@@ -1103,11 +1286,15 @@
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
-                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            >
                                 Tagihan aktif
                             </p>
-                            <p class="mt-1 font-semibold tracking-tight text-foreground">
-                            {payableInvoice ? 'Perlu dibayar' : 'Tidak ada'}
+                            <p
+                                class="mt-1 font-semibold tracking-tight text-foreground"
+                            >
+                                {payableInvoice ? 'Perlu dibayar' : 'Tidak ada'}
                             </p>
                         </div>
                     </CardContent>
@@ -1131,27 +1318,37 @@
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
-                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            >
                                 Tenant
                             </p>
-                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                            <p
+                                class="mt-1 font-semibold tracking-tight text-foreground"
+                            >
                                 {tenantSub.tenant_name}
                             </p>
                         </div>
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
-                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            >
                                 Pool tersedia
                             </p>
-                            <p class="mt-1 font-semibold tracking-tight text-foreground">
+                            <p
+                                class="mt-1 font-semibold tracking-tight text-foreground"
+                            >
                                 {accountAccess.pool_count}
                             </p>
                         </div>
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
-                            <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <p
+                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            >
                                 Peran pengguna
                             </p>
                             <div class="mt-2 flex flex-wrap gap-1.5">
