@@ -77,10 +77,14 @@ class SubscriptionTest extends TestCase
         config([
             'mayar.enabled' => true,
             'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
+            'https://api.mayar.io/hl/v2/invoices/create' => Http::response([
+                'statusCode' => 200,
                 'data' => [
                     'id' => 'pay_123',
                     'transactionId' => 'txn_123',
@@ -112,10 +116,14 @@ class SubscriptionTest extends TestCase
         config([
             'mayar.enabled' => true,
             'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
+            'https://api.mayar.io/hl/v2/invoices/create' => Http::response([
+                'statusCode' => 200,
                 'data' => [
                     'id' => 'pay_private_123',
                     'transactionId' => 'txn_private_123',
@@ -150,10 +158,13 @@ class SubscriptionTest extends TestCase
         config([
             'mayar.enabled' => true,
             'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/invoice/create' => Http::response(['message' => 'Mayar unavailable'], 500),
+            'https://api.mayar.io/hl/v2/invoices/create' => Http::response(['statusCode' => 500, 'messages' => 'Mayar unavailable'], 500),
         ]);
 
         [$user, $tenantId, $subscriptionId] = $this->tenantWithPendingSubscription();
@@ -187,10 +198,14 @@ class SubscriptionTest extends TestCase
         config([
             'mayar.enabled' => true,
             'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
+            'https://api.mayar.io/hl/v2/invoices/create' => Http::response([
+                'statusCode' => 200,
                 'data' => [
                     'id' => 'pay_fleet_123',
                     'transactionId' => 'txn_fleet_123',
@@ -219,8 +234,11 @@ class SubscriptionTest extends TestCase
         Http::assertSent(function ($request): bool {
             $payload = $request->data();
 
-            return array_key_exists('redirectUrl', $payload)
-                && ! array_key_exists('redirectURL', $payload);
+            return ! array_key_exists('redirectUrl', $payload)
+                && ! array_key_exists('redirectURL', $payload)
+                && ! array_key_exists('amount', $payload)
+                && ! array_key_exists('metadata', $payload)
+                && array_key_exists('extraData', $payload);
         });
 
         $this->assertDatabaseHas('tenants', [
@@ -246,10 +264,14 @@ class SubscriptionTest extends TestCase
         config([
             'mayar.enabled' => true,
             'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
         ]);
 
         Http::fake([
-            'https://api.mayar.id/hl/v1/invoice/create' => Http::response([
+            'https://api.mayar.io/hl/v2/invoices/create' => Http::response([
+                'statusCode' => 200,
                 'data' => [
                     'id' => 'pay_upgrade_123',
                     'transactionId' => 'txn_upgrade_123',
@@ -313,16 +335,35 @@ class SubscriptionTest extends TestCase
 
     public function test_mayar_paid_webhook_activates_pending_tenant_and_subscription(): void
     {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
+        ]);
+        Http::fake([
+            'https://api.mayar.io/hl/v2/transactions/txn_123' => Http::response([
+                'statusCode' => 200,
+                'messages' => 'success',
+                'data' => [
+                    'id' => 'txn_123',
+                    'status' => 'paid',
+                ],
+            ]),
+        ]);
+
         [$user, $invoiceId, $tenantId, $subscriptionId] = $this->tenantWithPendingInvoice();
 
         $this->postJson(route('api.webhooks.mayar'), [
             'event_id' => 'evt_paid_1',
             'event' => 'payment.received',
-            'status' => true,
+            'status' => 'SUCCESS',
             'data' => [
                 'id' => 'pay_123',
                 'transactionId' => 'txn_123',
-                'status' => true,
+                'status' => 'SUCCESS',
+                'transactionStatus' => 'paid',
                 'extraData' => [
                     'invoice_id' => $invoiceId,
                     'invoice_number' => 'INV-TEST-001',
@@ -353,20 +394,43 @@ class SubscriptionTest extends TestCase
             'event_id' => 'evt_paid_1',
             'status' => 'processed',
         ]);
+        $this->assertDatabaseHas('mayar_fulfillments', [
+            'transaction_id' => 'txn_123',
+            'invoice_id' => $invoiceId,
+            'status' => 'completed',
+        ]);
         $this->assertSame($tenantId, (int) DB::table('users')->where('id', $user->id)->value('tenant_id'));
     }
 
     public function test_mayar_duplicate_webhook_does_not_extend_subscription_twice(): void
     {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+        ]);
+        Http::fake([
+            'https://api.mayar.io/hl/v2/transactions/txn_123' => Http::response([
+                'statusCode' => 200,
+                'messages' => 'success',
+                'data' => [
+                    'id' => 'txn_123',
+                    'status' => 'paid',
+                ],
+            ]),
+        ]);
+
         [, $invoiceId, , $subscriptionId] = $this->tenantWithPendingInvoice();
 
         $payload = [
             'event_id' => 'evt_paid_duplicate',
             'event' => 'payment.received',
-            'status' => true,
+            'status' => 'SUCCESS',
             'data' => [
                 'transactionId' => 'txn_123',
-                'status' => true,
+                'status' => 'SUCCESS',
+                'transactionStatus' => 'paid',
                 'extraData' => ['invoice_id' => $invoiceId],
             ],
         ];
@@ -380,6 +444,52 @@ class SubscriptionTest extends TestCase
 
         $this->assertSame($endsAt, (string) DB::table('subscriptions')->where('id', $subscriptionId)->value('ends_at'));
         $this->assertSame(1, DB::table('payment_webhook_events')->where('event_id', 'evt_paid_duplicate')->count());
+    }
+
+    public function test_mayar_webhook_does_not_fulfill_when_transaction_is_not_paid(): void
+    {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+        ]);
+        Http::fake([
+            'https://api.mayar.io/hl/v2/transactions/txn_unpaid' => Http::response([
+                'statusCode' => 200,
+                'messages' => 'success',
+                'data' => [
+                    'id' => 'txn_unpaid',
+                    'status' => 'unpaid',
+                ],
+            ]),
+        ]);
+
+        [, $invoiceId, , $subscriptionId] = $this->tenantWithPendingInvoice();
+
+        $this->postJson(route('api.webhooks.mayar'), [
+            'event_id' => 'evt_unpaid_1',
+            'event' => 'payment.received',
+            'data' => [
+                'transactionId' => 'txn_unpaid',
+                'status' => 'SUCCESS',
+                'transactionStatus' => 'paid',
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('status', 'ignored');
+
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'id' => $invoiceId,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscriptionId,
+            'status' => 'pending_payment',
+        ]);
+        $this->assertDatabaseMissing('mayar_fulfillments', [
+            'transaction_id' => 'txn_unpaid',
+        ]);
     }
 
     public function test_mark_invoice_paid_is_internal_admin_correction_only(): void
@@ -491,7 +601,7 @@ class SubscriptionTest extends TestCase
             'status' => 'pending',
             'due_date' => now()->addDay()->toDateString(),
             'payment_gateway' => 'Mayar',
-            'gateway_reference' => 'pay_123',
+            'gateway_reference' => 'txn_123',
             'gateway_checkout_url' => 'https://mayar.test/pay/pay_123',
             'gateway_status' => 'pending',
             'created_at' => now(),
