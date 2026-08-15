@@ -11772,8 +11772,35 @@ XML;
 
         try {
             $jobId = (int) $request->input('job_id', 0);
+            $startedAt = microtime(true);
+            $results = [];
+            $maxBatches = 25;
 
-            return $this->ok($this->tenantDeletionService->processNextBatch($jobId > 0 ? $jobId : null));
+            for ($batch = 0; $batch < $maxBatches; $batch++) {
+                // Leave headroom below Vercel's function timeout for the response.
+                if ($batch > 0 && (microtime(true) - $startedAt) >= 7.5) {
+                    break;
+                }
+
+                $result = $this->tenantDeletionService->processNextBatch($jobId > 0 ? $jobId : null);
+                $results[] = $result;
+
+                if (($result['processed'] ?? false) !== true
+                    || in_array((string) ($result['status'] ?? ''), ['completed', 'failed'], true)) {
+                    break;
+                }
+            }
+
+            $lastResult = $results !== [] ? $results[array_key_last($results)] : [
+                'processed' => false,
+                'message' => 'Tidak ada purge job yang perlu diproses.',
+            ];
+
+            return $this->ok([
+                ...$lastResult,
+                'batches_processed' => count($results),
+                'time_limited' => count($results) >= $maxBatches || (microtime(true) - $startedAt) >= 7.5,
+            ]);
         } catch (\Throwable $e) {
             return $this->error($e->getMessage(), 500);
         }

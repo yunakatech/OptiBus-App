@@ -29,7 +29,7 @@
     "crons": [
         {
             "path": "/api/internal/tenant-deletions/process",
-            "schedule": "*/1 * * * *"
+            "schedule": "0 2 * * *"
         }
     ],
     "env": {
