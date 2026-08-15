@@ -199,6 +199,51 @@ class OnboardingSetupTest extends TestCase
             ->count());
     }
 
+    public function test_onboarding_reuses_schedule_when_database_time_has_seconds(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->actingAs($user)->post(route('onboarding.store'), [
+            'travel_name' => 'Jam Presisi',
+            'phone' => '085211112222',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'plan' => 'starter',
+            'registration_intent' => 'trial',
+            'billing_interval' => 'monthly',
+        ])->assertRedirect(route('dashboard', absolute: false));
+
+        $tenantId = (int) DB::table('users')->where('id', $user->id)->value('tenant_id');
+        $route = DB::table('routes')->where('tenant_id', $tenantId)->first();
+
+        DB::table('schedules')->insert([
+            'tenant_id' => $tenantId,
+            'route_id' => $route->id,
+            'rute' => $route->name,
+            'dow' => 1,
+            'jam' => '09:00:00',
+            'units' => 1,
+            'unit_label' => 'Unit 1',
+            'created_at' => now(),
+        ]);
+
+        $before = DB::table('schedules')->where('tenant_id', $tenantId)->count();
+
+        $this->actingAs($user)->post(route('onboarding.store'), [
+            'travel_name' => 'Jam Presisi',
+            'phone' => '085211112222',
+            'origin' => 'Pinrang',
+            'destination' => 'Makassar',
+            'plan' => 'starter',
+            'registration_intent' => 'trial',
+            'billing_interval' => 'monthly',
+            'schedule_days' => [1],
+            'departure_time' => '09:00',
+        ])->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertSame($before, DB::table('schedules')->where('tenant_id', $tenantId)->count());
+    }
+
     public function test_onboarding_keeps_unit_template_unique_across_tenants(): void
     {
         $firstUser = User::factory()->create(['email_verified_at' => now()]);
