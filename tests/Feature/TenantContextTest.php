@@ -27,14 +27,14 @@ class TenantContextTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_super_admin_without_tenant_can_read_tenant_operational_lists(): void
+    public function test_super_admin_without_tenant_cannot_read_tenant_operational_lists(): void
     {
         $admin = User::factory()->create(['is_super_admin' => true]);
 
         $this->actingAs($admin)
             ->getJson(route('api.admin.users.index'))
-            ->assertOk()
-            ->assertJsonPath('success', true);
+            ->assertStatus(409)
+            ->assertJsonPath('action_required', TenantWriteContext::ACTION_REQUIRED);
     }
 
     public function test_super_admin_without_tenant_cannot_write_operational_data(): void
