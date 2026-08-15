@@ -1,5 +1,6 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../wayfinder'
 import webhooks from './webhooks'
+import internal from './internal'
 import build from './build'
 import adminOps from './admin-ops'
 import bookings from './bookings'
@@ -87,6 +88,7 @@ plans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 const api = {
     plans: Object.assign(plans, plans),
 webhooks: Object.assign(webhooks, webhooks),
+internal: Object.assign(internal, internal),
 build: Object.assign(build, build),
 adminOps: Object.assign(adminOps, adminOps),
 bookings: Object.assign(bookings, bookings),

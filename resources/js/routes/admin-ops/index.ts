@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../wayfinder'
 import unitsD09b1b from './units'
 import armadas172c7e from './armadas'
 import flowsF41fe0 from './flows'
@@ -1254,7 +1254,7 @@ master.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     master.form = masterForm
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 export const saas = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1269,7 +1269,7 @@ saas.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 saas.url = (options?: RouteQueryOptions) => {
@@ -1278,7 +1278,7 @@ saas.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 saas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1287,7 +1287,7 @@ saas.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 saas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1297,7 +1297,7 @@ saas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
     const saasForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1307,7 +1307,7 @@ saas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
         saasForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1316,7 +1316,7 @@ saas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
         saasForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

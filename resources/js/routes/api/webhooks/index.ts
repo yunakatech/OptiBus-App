@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PaymentWebhookController::mayar
  * @see app/Http/Controllers/Api/PaymentWebhookController.php:37

@@ -3,6 +3,7 @@ import routes from './routes'
 import schedules from './schedules'
 import drivers from './drivers'
 import luggageServices from './luggage-services'
+import luggageRates from './luggage-rates'
 import segments from './segments'
 import customers from './customers'
 import activityLogs from './activity-logs'
@@ -22,6 +23,7 @@ import pool from './pool'
 import users from './users'
 import roles from './roles'
 import tenants from './tenants'
+import tenantDeletions from './tenant-deletions'
 import subscriptions from './subscriptions'
 import plans from './plans'
 import invoices from './invoices'
@@ -32,6 +34,7 @@ routes: Object.assign(routes, routes),
 schedules: Object.assign(schedules, schedules),
 drivers: Object.assign(drivers, drivers),
 luggageServices: Object.assign(luggageServices, luggageServices),
+luggageRates: Object.assign(luggageRates, luggageRates),
 segments: Object.assign(segments, segments),
 customers: Object.assign(customers, customers),
 activityLogs: Object.assign(activityLogs, activityLogs),
@@ -51,6 +54,7 @@ pool: Object.assign(pool, pool),
 users: Object.assign(users, users),
 roles: Object.assign(roles, roles),
 tenants: Object.assign(tenants, tenants),
+tenantDeletions: Object.assign(tenantDeletions, tenantDeletions),
 subscriptions: Object.assign(subscriptions, subscriptions),
 plans: Object.assign(plans, plans),
 invoices: Object.assign(invoices, invoices),

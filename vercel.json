@@ -26,6 +26,12 @@
             "dest": "/api/index.php"
         }
     ],
+    "crons": [
+        {
+            "path": "/api/internal/tenant-deletions/process",
+            "schedule": "*/1 * * * *"
+        }
+    ],
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",
@@ -50,4 +56,3 @@
         "APP_EVENTS_CACHE": "/tmp/storage/bootstrap/cache/events.php"
     }
 }
-

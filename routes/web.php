@@ -47,6 +47,10 @@ Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
 Route::get('api/plans', [PublicApiController::class, 'plans'])->name('api.plans');
 Route::post('api/webhooks/mayar', [PaymentWebhookController::class, 'mayar'])->name('api.webhooks.mayar');
 
+// Vercel Cron worker for resumable tenant purge. Authentication is the shared secret.
+Route::match(['get', 'post'], 'api/internal/tenant-deletions/process', [AdminOpsApiController::class, 'tenantDeletionProcess'])
+    ->name('api.internal.tenant-deletions.process');
+
 Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/build/'.ltrim($path, '/'), 302))
     ->where('path', '.*')
     ->name('api.build.redirect');
@@ -391,7 +395,12 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         // SaaS Management API
         Route::get('tenants', [AdminOpsApiController::class, 'tenantsIndex'])->middleware('permission:platform.manage')->name('tenants.index');
         Route::post('tenants', [AdminOpsApiController::class, 'tenantsSave'])->middleware('permission:platform.manage')->name('tenants.save');
+        Route::get('tenants/{id}/deletion-preview', [AdminOpsApiController::class, 'tenantsDeletionPreview'])->middleware('permission:platform.manage')->name('tenants.deletion-preview');
+        Route::post('tenants/{id}/archive', [AdminOpsApiController::class, 'tenantsArchive'])->middleware('permission:platform.manage')->name('tenants.archive');
+        Route::post('tenants/{id}/purge', [AdminOpsApiController::class, 'tenantsPurge'])->middleware('permission:platform.manage')->name('tenants.purge');
         Route::delete('tenants/{id}', [AdminOpsApiController::class, 'tenantsDelete'])->middleware('permission:platform.manage')->name('tenants.delete');
+        Route::get('tenant-deletions/{jobId}', [AdminOpsApiController::class, 'tenantDeletionStatus'])->middleware('permission:platform.manage')->name('tenant-deletions.status');
+        Route::post('tenant-deletions/{jobId}/retry', [AdminOpsApiController::class, 'tenantDeletionRetry'])->middleware('permission:platform.manage')->name('tenant-deletions.retry');
         Route::get('subscriptions', [AdminOpsApiController::class, 'subscriptionsIndex'])->middleware('permission:platform.manage')->name('subscriptions.index');
         Route::post('subscriptions', [AdminOpsApiController::class, 'subscriptionsSave'])->middleware('permission:platform.manage')->name('subscriptions.save');
         Route::get('plans', [AdminOpsApiController::class, 'plansIndex'])->middleware('permission:platform.manage')->name('plans.index');

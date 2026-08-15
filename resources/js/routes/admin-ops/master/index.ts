@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsMasterController::__invoke
  * @see app/Http/Controllers/AdminOpsMasterController.php:21

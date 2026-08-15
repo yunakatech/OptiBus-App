@@ -13,6 +13,7 @@
     import { page } from '@inertiajs/svelte';
     import {
         AlertTriangle,
+        Archive,
         Ban,
         Building2,
         CheckCircle2,
@@ -27,10 +28,11 @@
         RotateCcw,
         Search,
         ShieldCheck,
+        Trash2,
         TrendingUp,
         XCircle,
     } from 'lucide-svelte';
-    import { onMount } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -49,6 +51,14 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
+    import {
+        Dialog,
+        DialogClose,
+        DialogContent,
+        DialogDescription,
+        DialogFooter,
+        DialogTitle,
+    } from '@/components/ui/dialog';
 
     type TabName =
         | 'tenants'
@@ -97,6 +107,14 @@
         plan_id: 1,
         trial_days: 14,
     });
+    let deletionModalOpen = $state(false);
+    let deletionTenant = $state<any>(null);
+    let deletionPreview = $state<any>(null);
+    let deletionConfirmation = $state('');
+    let deletionConfirmAll = $state(false);
+    let deletionBusy = $state(false);
+    let deletionJob = $state<any>(null);
+    let deletionPollTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Subscriptions state
     let subscriptions = $state<any[]>([]);
@@ -277,15 +295,10 @@
         }
     }
 
-    async function deleteTenant(id: number) {
-        if (
-            !confirm(
-                'Cancel tenant ini? Data akan disimpan 30 hari sebelum dihapus permanen.',
-            )
-        )
-            return;
-        const data = await apiFetch(`/api/admin/tenants/${id}`, {
-            method: 'DELETE',
+    async function archiveTenant(id: number) {
+        if (!confirm('Arsipkan tenant ini? Data tetap akan disimpan.')) return;
+        const data = await apiFetch(`/api/admin/tenants/${id}/archive`, {
+            method: 'POST',
             headers: { 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' },
         });
         if (data?.success) {
@@ -293,6 +306,98 @@
             loadTenants(tenantPagination?.page ?? 1);
         }
     }
+
+    async function openPurgeModal(tenant: any) {
+        clearTimeout(deletionPollTimer ?? undefined);
+        deletionTenant = tenant;
+        deletionPreview = null;
+        deletionConfirmation = '';
+        deletionConfirmAll = false;
+        deletionJob = null;
+        deletionModalOpen = true;
+        deletionBusy = true;
+
+        const data = await apiFetch(`/api/admin/tenants/${tenant.id}/deletion-preview`);
+        if (data?.success) {
+            deletionPreview = data;
+            if (data.active_job) {
+                deletionJob = data.active_job;
+                pollDeletion(data.active_job.id);
+            }
+        }
+        deletionBusy = false;
+    }
+
+    async function purgeTenant() {
+        if (!deletionTenant || !deletionConfirmAll) return;
+        const confirmation = deletionConfirmation.trim();
+        if (confirmation !== deletionTenant.name && confirmation !== deletionTenant.slug) {
+            error = 'Ketik nama atau slug tenant dengan tepat.';
+            return;
+        }
+
+        deletionBusy = true;
+        const data = await apiFetch(`/api/admin/tenants/${deletionTenant.id}/purge`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': (page.props as any).csrf_token || '',
+            },
+            body: JSON.stringify({
+                confirmation,
+                confirm_all: true,
+            }),
+        });
+        deletionBusy = false;
+        if (data?.success) {
+            deletionJob = data.job;
+            message = data.message;
+            pollDeletion(data.job.id);
+        }
+    }
+
+    async function pollDeletion(jobId: number) {
+        if (!jobId) return;
+        const data = await apiFetch(`/api/admin/tenant-deletions/${jobId}`);
+        if (!data?.success) return;
+
+        deletionJob = data.job;
+        if (['queued', 'running'].includes(data.job.status)) {
+            deletionPollTimer = setTimeout(() => pollDeletion(jobId), 2500);
+            return;
+        }
+
+        if (data.job.status === 'completed') {
+            message = 'Tenant dan seluruh datanya telah dihapus.';
+            await fetch('/admin/tenant/switch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (page.props as any).csrf_token || '',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ tenant_id: 0 }),
+            });
+            deletionModalOpen = false;
+            loadTenants(tenantPagination?.page ?? 1);
+        } else if (data.job.status === 'failed') {
+            error = data.job.error_message || 'Purge tenant gagal.';
+        }
+    }
+
+    async function retryDeletion() {
+        if (!deletionJob?.id) return;
+        const data = await apiFetch(`/api/admin/tenant-deletions/${deletionJob.id}/retry`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' },
+        });
+        if (data?.success) {
+            deletionJob = data.job;
+            pollDeletion(data.job.id);
+        }
+    }
+
+    onDestroy(() => clearTimeout(deletionPollTimer ?? undefined));
 
     function toggleTenantStatus(tenant: any) {
         const newStatus = tenant.status === 'active' ? 'suspended' : 'active';
@@ -536,6 +641,8 @@
             suspended: { variant: 'destructive', label: 'Suspended' },
             canceled: { variant: 'destructive', label: 'Canceled' },
             expired: { variant: 'outline', label: 'Expired' },
+            deleting: { variant: 'destructive', label: 'Menghapus' },
+            deleted: { variant: 'outline', label: 'Dihapus' },
         };
         return map[status] ?? { variant: 'outline', label: status };
     }
@@ -939,6 +1046,114 @@
                         </Card>
                     {/if}
 
+                    <Dialog bind:open={deletionModalOpen}>
+                        <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                            <DialogTitle>Hapus Permanen Tenant</DialogTitle>
+                            <DialogDescription>
+                                Tindakan ini tidak dapat dibatalkan. Periksa jumlah data,
+                                lalu ketik ulang nama atau slug tenant untuk melanjutkan.
+                            </DialogDescription>
+
+                            {#if deletionPreview}
+                                <div class="space-y-4">
+                                    <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/30 dark:text-red-200">
+                                        <p class="font-semibold">{deletionTenant?.name}</p>
+                                        <p class="mt-1 text-xs opacity-80">Slug: {deletionTenant?.slug}</p>
+                                        <p class="mt-2">
+                                            Seluruh data tenant, user, akses pool, transaksi,
+                                            master data, billing, dan log tenant akan dihapus.
+                                        </p>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                        {#each [
+                                            { key: 'users', label: 'User' },
+                                            { key: 'pools', label: 'Pool' },
+                                            { key: 'bookings', label: 'Booking' },
+                                            { key: 'luggages', label: 'Bagasi' },
+                                            { key: 'charters', label: 'Carter' },
+                                            { key: 'drivers', label: 'Driver' },
+                                            { key: 'armadas', label: 'Armada' },
+                                            { key: 'schedules', label: 'Jadwal' },
+                                            { key: 'routes', label: 'Rute' },
+                                            { key: 'customers', label: 'Customer' },
+                                            { key: 'invoice_subscriptions', label: 'Invoice' },
+                                            { key: 'activity_logs', label: 'Log' },
+                                        ] as item}
+                                            <div class="rounded-lg border bg-muted/30 p-3">
+                                                <p class="text-xs text-muted-foreground">{item.label}</p>
+                                                <p class="mt-1 text-lg font-semibold">{deletionPreview.counts?.[item.key] ?? 0}</p>
+                                            </div>
+                                        {/each}
+                                    </div>
+
+                                    {#if deletionJob}
+                                        <div class="rounded-xl border p-4">
+                                            <div class="flex items-center justify-between gap-3 text-sm">
+                                                <span class="font-medium">Progress penghapusan</span>
+                                                <span>{deletionJob.progress_percent ?? 0}%</span>
+                                            </div>
+                                            <div class="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                                                <div
+                                                    class="h-full rounded-full bg-red-600 transition-all"
+                                                    style={`width: ${deletionJob.progress_percent ?? 0}%`}
+                                                ></div>
+                                            </div>
+                                            <p class="mt-2 text-xs text-muted-foreground">
+                                                Tahap: {deletionJob.current_step || 'Menunggu'}
+                                            </p>
+                                            {#if deletionJob.status === 'failed'}
+                                                <p class="mt-2 text-sm text-red-600">{deletionJob.error_message}</p>
+                                            {/if}
+                                        </div>
+                                    {/if}
+
+                                    <div class="space-y-3">
+                                        <div class="space-y-1.5">
+                                            <Label for="deletion-confirmation">
+                                                Ketik nama atau slug tenant
+                                            </Label>
+                                            <Input
+                                                id="deletion-confirmation"
+                                                bind:value={deletionConfirmation}
+                                                placeholder={deletionTenant?.slug || ''}
+                                                disabled={Boolean(deletionJob)}
+                                            />
+                                        </div>
+                                        <label class="flex items-start gap-3 rounded-lg border p-3 text-sm">
+                                            <Checkbox bind:checked={deletionConfirmAll} disabled={Boolean(deletionJob)} />
+                                            <span>
+                                                Saya memahami bahwa seluruh data tenant akan dihapus permanen.
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            {:else}
+                                <div class="py-8 text-center text-sm text-muted-foreground">
+                                    Memuat ringkasan data tenant...
+                                </div>
+                            {/if}
+
+                            <DialogFooter class="gap-2">
+                                <DialogClose>
+                                    <Button variant="secondary">Batal</Button>
+                                </DialogClose>
+                                {#if deletionJob?.status === 'failed'}
+                                    <Button variant="outline" onclick={retryDeletion} disabled={deletionBusy}>
+                                        Coba Lagi
+                                    </Button>
+                                {/if}
+                                <Button
+                                    variant="destructive"
+                                    onclick={purgeTenant}
+                                    disabled={deletionBusy || !deletionPreview || Boolean(deletionJob) || !deletionConfirmAll || !deletionConfirmation.trim()}
+                                >
+                                    {deletionBusy ? 'Memproses...' : 'Hapus Semua Data'}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                     <!-- Tenant Table -->
                     <Card class={tableShellClass}>
                         <CardContent class="p-0">
@@ -997,12 +1212,21 @@
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         onclick={() =>
-                                                            deleteTenant(t.id)}
+                                                            archiveTenant(t.id)}
                                                         class="text-destructive"
                                                     >
-                                                        <XCircle
+                                                        <Archive
                                                             class="h-4 w-4 mr-2"
-                                                        />Cancel
+                                                        />Arsipkan Tenant
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            openPurgeModal(t)}
+                                                        class="text-destructive"
+                                                    >
+                                                        <Trash2
+                                                            class="h-4 w-4 mr-2"
+                                                        />Hapus Permanen
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -1035,11 +1259,11 @@
                                                 <div class="mt-1">
                                                     <Badge
                                                         variant={statusBadge(
-                                                            t.subscription_status,
+                                                            t.status,
                                                         ).variant}
                                                     >
                                                         {statusBadge(
-                                                            t.subscription_status,
+                                                            t.status,
                                                         ).label}
                                                     </Badge>
                                                 </div>
@@ -1143,11 +1367,11 @@
                                                 <td class="px-4 py-2.5">
                                                     <Badge
                                                         variant={statusBadge(
-                                                            t.subscription_status,
+                                                            t.status,
                                                         ).variant}
                                                     >
                                                         {statusBadge(
-                                                            t.subscription_status,
+                                                            t.status,
                                                         ).label}
                                                     </Badge>
                                                 </td>
@@ -1203,13 +1427,23 @@
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
                                                                 onclick={() =>
-                                                                    deleteTenant(
+                                                                    archiveTenant(
                                                                         t.id,
                                                                     )}
                                                                 class="text-destructive"
                                                                 ><XCircle
                                                                     class="h-4 w-4 mr-2"
-                                                                />Cancel</DropdownMenuItem
+                                                                />Arsipkan Tenant</DropdownMenuItem
+                                                            >
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openPurgeModal(
+                                                                        t,
+                                                                    )}
+                                                                class="text-destructive"
+                                                                ><Trash2
+                                                                    class="h-4 w-4 mr-2"
+                                                                />Hapus Permanen</DropdownMenuItem
                                                             >
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
