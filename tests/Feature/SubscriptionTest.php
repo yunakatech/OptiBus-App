@@ -216,6 +216,13 @@ class SubscriptionTest extends TestCase
             ])
             ->assertRedirect('https://mayar.test/pay/pay_fleet_123');
 
+        Http::assertSent(function ($request): bool {
+            $payload = $request->data();
+
+            return array_key_exists('redirectUrl', $payload)
+                && ! array_key_exists('redirectURL', $payload);
+        });
+
         $this->assertDatabaseHas('tenants', [
             'id' => $tenantId,
             'status' => 'active',

@@ -284,7 +284,6 @@ class MayarGateway
             'amount' => (int) round((float) $invoice->amount),
             'mobile' => $phone,
             'redirectUrl' => route('subscription.index', absolute: true),
-            'redirectURL' => route('subscription.index', absolute: true),
             'description' => $description,
             'expiredAt' => $dueDate->toISOString(),
             'items' => [[

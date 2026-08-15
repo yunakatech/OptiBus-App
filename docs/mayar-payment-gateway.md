@@ -18,6 +18,16 @@ MAYAR_WEBHOOK_SECRET=
 MAYAR_TIMEOUT=15
 ```
 
+### Vercel
+
+Gunakan [vercel.env.example](../vercel.env.example) sebagai daftar variabel,
+lalu tambahkan variabel tersebut di **Vercel Project -> Settings -> Environment
+Variables**. Isi minimal `MAYAR_API_KEY`, kemudian set `MAYAR_ENABLED=true`.
+Jangan memasukkan API key atau webhook secret ke Git atau ke `vercel.json`.
+
+Aktifkan untuk environment `Production` dan `Preview` sesuai kebutuhan. Setelah
+mengubah environment variable, lakukan redeploy agar konfigurasi baru terbaca.
+
 ### Catatan
 
 - `MAYAR_API_KEY` wajib diisi agar checkout bisa dibuat.
