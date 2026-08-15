@@ -133,7 +133,6 @@
     const canAccessDashboard = $derived(
         Boolean(billingAccess?.allowed),
     );
-    const canChoosePlan = $derived(Boolean(!payableInvoice));
     const paymentLinkReady = $derived(
         Boolean(payableInvoice?.gateway_checkout_url),
     );
@@ -141,6 +140,7 @@
         payableInvoice?.gateway_status === 'payment_link_error' ||
             (payableInvoice && !paymentLinkReady),
     );
+    const canChoosePlan = $derived(Boolean(!payableInvoice || gatewayHasError));
     const activeBillingTitle = $derived(
         payableInvoice
             ? gatewayHasError
@@ -245,8 +245,12 @@
                 : 'Paket aktif';
         }
 
-        if (payableInvoice) {
+        if (payableInvoice && !gatewayHasError) {
             return 'Selesaikan invoice aktif dulu';
+        }
+
+        if (gatewayHasError) {
+            return `Coba buat ulang checkout ${plan.name}`;
         }
 
         return plan.price_monthly > currentPlanMonthly
@@ -269,11 +273,15 @@
             };
         }
 
-        if (payableInvoice) {
+        if (payableInvoice && !gatewayHasError) {
             return {
                 variant: 'outline',
                 label: 'Tunggu Invoice',
             };
+        }
+
+        if (gatewayHasError) {
+            return { variant: 'outline', label: 'Coba Lagi' };
         }
 
         return plan.price_monthly > currentPlanMonthly
@@ -286,8 +294,12 @@
             return 'border-primary/70 bg-[linear-gradient(180deg,rgba(239,246,255,0.95),rgba(224,231,255,0.65))] shadow-[0_18px_45px_-28px_rgba(14,165,233,0.35)] ring-1 ring-primary/15 dark:border-sky-400/30 dark:bg-[linear-gradient(180deg,rgba(8,15,30,0.96),rgba(15,23,42,0.84))] dark:shadow-[0_18px_45px_-28px_rgba(2,132,199,0.28)]';
         }
 
-        if (payableInvoice) {
+        if (payableInvoice && !gatewayHasError) {
             return 'border-border/70 bg-muted/20';
+        }
+
+        if (gatewayHasError) {
+            return 'border-amber-300/70 bg-amber-50/60 dark:border-amber-400/25 dark:bg-amber-950/20';
         }
 
         return plan.price_monthly > currentPlanMonthly
@@ -300,8 +312,12 @@
             return 'Paket yang sedang dipakai tenant ini.';
         }
 
-        if (payableInvoice) {
+        if (payableInvoice && !gatewayHasError) {
             return 'Selesaikan invoice aktif sebelum checkout paket baru.';
+        }
+
+        if (gatewayHasError) {
+            return 'Payment link sebelumnya gagal dibuat. Perbaiki konfigurasi Mayar lalu coba lagi.';
         }
 
         return plan.price_monthly > currentPlanMonthly
