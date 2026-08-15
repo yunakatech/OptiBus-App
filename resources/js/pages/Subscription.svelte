@@ -8,11 +8,14 @@
     import { Link, page, router } from '@inertiajs/svelte';
     import {
         AlertTriangle,
+        ArrowRight,
         CheckCircle2,
+        CircleHelp,
         CreditCard,
         ExternalLink,
         Receipt,
         ShieldAlert,
+        Sparkles,
     } from 'lucide-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
@@ -154,23 +157,23 @@
     const activeBillingTitle = $derived(
         payableInvoice
             ? gatewayHasError
-                ? 'Payment link belum tersedia'
-                : 'Selesaikan pembayaran via Mayar'
+                ? 'Tautan pembayaran belum siap'
+                : 'Pembayaran perlu diselesaikan'
             : latestPaidInvoice
-              ? 'Langganan sudah lunas'
-              : 'Belum ada invoice aktif',
+              ? 'Langganan Anda sudah aktif'
+              : 'Belum ada tagihan aktif',
     );
     const activeBillingDescription = $derived(
-        payableInvoice
+            payableInvoice
             ? gatewayHasError
                 ? payableInvoice.gateway_error_message ||
-                  'Invoice sudah dibuat, tetapi sistem belum mendapatkan checkout URL Mayar. Hubungi admin untuk dibantu.'
-                : `${payableInvoice.invoice_number} jatuh tempo ${formatDate(payableInvoice.due_date)}.`
+                  'Tagihan sudah dibuat, tetapi tautan pembayaran belum tersedia. Silakan hubungi admin untuk dibantu.'
+                : `Selesaikan pembayaran sebelum ${formatDate(payableInvoice.due_date)} agar paket dapat digunakan.`
             : latestPaidInvoice
-              ? `${latestPaidInvoice.invoice_number} lunas pada ${formatDate(latestPaidInvoice.paid_at)}.`
+              ? `Pembayaran terakhir diterima pada ${formatDate(latestPaidInvoice.paid_at)}.`
               : latestCanceledInvoice
-                ? 'Invoice sebelumnya dibatalkan karena melewati batas waktu pembayaran. Pilih paket untuk mengajukan checkout baru.'
-              : 'Invoice akan muncul otomatis setelah memilih paket berbayar.',
+                ? 'Tagihan sebelumnya sudah dibatalkan. Pilih paket untuk mengajukan pembayaran baru.'
+              : 'Pilih paket di bawah untuk memulai langganan.',
     );
     let checkoutPlanSlug = $state('');
 
@@ -255,7 +258,7 @@
     function planStateLabel(plan: Plan): string {
         if (plan.slug === currentPlanSlug) {
             if (canRetryCheckout) {
-                return 'Ajukan checkout ulang';
+                return 'Bayar paket ini lagi';
             }
 
             return tenantSub?.subscription_status === 'trial'
@@ -264,16 +267,14 @@
         }
 
         if (payableInvoice && !gatewayHasError) {
-            return 'Selesaikan invoice aktif dulu';
+            return 'Selesaikan tagihan aktif dulu';
         }
 
         if (gatewayHasError) {
-            return `Coba buat ulang checkout ${plan.name}`;
+            return 'Coba pilih paket ini lagi';
         }
 
-        return plan.price_monthly > currentPlanMonthly
-            ? `Upgrade ke ${plan.name}`
-            : `Ganti ke ${plan.name}`;
+        return plan.price_monthly > currentPlanMonthly ? 'Pilih paket ini' : 'Pilih paket';
     }
 
     function planButtonVariant(plan: Plan): 'default' | 'outline' {
@@ -330,18 +331,18 @@
     function planHint(plan: Plan): string {
         if (plan.slug === currentPlanSlug) {
             if (canRetryCheckout) {
-                return 'Invoice sebelumnya dibatalkan. Ajukan checkout baru untuk mengaktifkan paket ini.';
+                return 'Tagihan sebelumnya dibatalkan. Bayar lagi untuk mengaktifkan paket ini.';
             }
 
             return 'Paket yang sedang dipakai tenant ini.';
         }
 
         if (payableInvoice && !gatewayHasError) {
-            return 'Selesaikan invoice aktif sebelum checkout paket baru.';
+            return 'Selesaikan tagihan aktif sebelum memilih paket baru.';
         }
 
         if (gatewayHasError) {
-            return 'Payment link sebelumnya gagal dibuat. Perbaiki konfigurasi Mayar lalu coba lagi.';
+            return 'Tautan pembayaran sebelumnya gagal dibuat. Coba lagi atau hubungi admin.';
         }
 
         return plan.price_monthly > currentPlanMonthly
@@ -385,7 +386,7 @@
                 Langganan
             </h1>
             <p class="hidden text-sm text-muted-foreground sm:block">
-                Kelola paket SaaS OptiBus, invoice, dan checkout Mayar tenant.
+                Kelola paket, pembayaran, dan akses operasional travel Anda.
             </p>
         </div>
         {#if canAccessDashboard}
@@ -419,6 +420,103 @@
             </CardContent>
         </Card>
     {:else}
+        <div
+            class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-[linear-gradient(120deg,#0f766e_0%,#155e75_58%,#164e63_100%)] p-4 text-white shadow-[0_24px_60px_-32px_rgba(15,118,110,0.7)] sm:p-5 lg:p-6"
+        >
+            <div
+                class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-amber-200/15 blur-3xl"
+            ></div>
+            <div
+                class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-cyan-200/10 blur-3xl"
+            ></div>
+            <div class="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div class="flex items-start gap-3">
+                    <span
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/20"
+                    >
+                        <Sparkles class="h-5 w-5 text-amber-200" />
+                    </span>
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">
+                            Langkah berikutnya
+                        </p>
+                        {#if payableInvoice && paymentLinkReady}
+                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                                Lanjutkan pembayaran paket Anda
+                            </h2>
+                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
+                                Klik tombol pembayaran, selesaikan di halaman Mayar,
+                                lalu status paket akan diperbarui otomatis.
+                            </p>
+                        {:else if payableInvoice}
+                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                                Tautan pembayaran sedang disiapkan
+                            </h2>
+                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
+                                Tautan belum tersedia. Periksa bagian pembayaran di
+                                bawah atau hubungi admin SaaS.
+                            </p>
+                        {:else if latestCanceledInvoice}
+                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                                Ajukan pembayaran baru
+                            </h2>
+                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
+                                Tagihan sebelumnya sudah tidak berlaku. Pilih paket
+                                untuk membuat tagihan baru.
+                            </p>
+                        {:else if latestPaidInvoice}
+                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                                Paket Anda siap digunakan
+                            </h2>
+                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
+                                Langganan aktif. Anda dapat melihat masa berlaku dan
+                                riwayat pembayaran di halaman ini.
+                            </p>
+                        {:else}
+                            <h2 class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
+                                Pilih paket untuk mulai
+                            </h2>
+                            <p class="mt-1 max-w-xl text-sm leading-6 text-cyan-50/85">
+                                Bandingkan paket di bawah, pilih yang sesuai, lalu
+                                ikuti langkah pembayaran.
+                            </p>
+                        {/if}
+                    </div>
+                </div>
+                {#if payableInvoice && paymentLinkReady}
+                    <Button
+                        asChild
+                        class="h-10 shrink-0 rounded-xl bg-white px-4 font-semibold text-cyan-900 shadow-lg shadow-cyan-950/15 hover:bg-cyan-50"
+                    >
+                        {#snippet children(props)}
+                            <a
+                                {...props}
+                                href={payableInvoice.gateway_checkout_url}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                Buka pembayaran
+                                <ArrowRight class="ml-2 h-4 w-4" />
+                            </a>
+                        {/snippet}
+                    </Button>
+                {:else if !latestPaidInvoice}
+                    <Button
+                        asChild
+                        variant="outline"
+                        class="h-10 shrink-0 rounded-xl border-white/30 bg-white/10 px-4 font-semibold text-white hover:bg-white/20 hover:text-white"
+                    >
+                        {#snippet children(props)}
+                            <a {...props} href="#available-plans">
+                                Lihat pilihan paket
+                                <ArrowRight class="ml-2 h-4 w-4" />
+                            </a>
+                        {/snippet}
+                    </Button>
+                {/if}
+            </div>
+        </div>
+
         <div class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div class="space-y-3 lg:space-y-4">
                 <Card class="overflow-hidden">
@@ -436,18 +534,18 @@
                                     >
                                 </div>
                                 <CardTitle class="mt-2 text-xl lg:text-2xl">
-                                    {currentPlan?.name ?? tenantSub.plan_name}
+                                    Paket {currentPlan?.name ?? tenantSub.plan_name}
                                 </CardTitle>
                                 <CardDescription class="mt-1">
                                     {currentPlan?.description ||
-                                        'Paket operasional OptiBus untuk tenant ini.'}
+                                        'Paket untuk membantu mengatur operasional travel Anda.'}
                                 </CardDescription>
                             </div>
                             <div
                                 class="rounded-lg border bg-background px-3 py-2 text-left md:text-right"
                             >
                                 <p class="text-xs text-muted-foreground">
-                                    Biaya bulanan
+                                    Harga per bulan
                                 </p>
                                 <p
                                     class="text-lg font-semibold text-foreground"
@@ -462,7 +560,7 @@
                     <CardContent class="grid gap-3 p-3 md:grid-cols-3 lg:p-4">
                         <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
                             <p class="text-xs text-muted-foreground">
-                                Periode / trial
+                                Masa berlaku
                             </p>
                             <p class="mt-1 font-semibold text-foreground">
                                 {tenantSub.subscription_status === 'trial'
@@ -472,18 +570,24 @@
                         </div>
                         <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
                             <p class="text-xs text-muted-foreground">
-                                Invoice aktif
+                                Tagihan saat ini
                             </p>
                             <p class="mt-1 font-semibold text-foreground">
                                 {payableInvoice
                                     ? payableInvoice.invoice_number
-                                    : '-'}
+                                    : latestPaidInvoice
+                                      ? 'Sudah dibayar'
+                                      : 'Belum ada'}
                             </p>
                         </div>
                         <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
-                            <p class="text-xs text-muted-foreground">Gateway</p>
+                            <p class="text-xs text-muted-foreground">Status pembayaran</p>
                             <p class="mt-1 font-semibold text-foreground">
-                                Mayar
+                                {payableInvoice
+                                    ? 'Menunggu pembayaran'
+                                    : latestPaidInvoice
+                                      ? 'Lunas'
+                                      : 'Belum dimulai'}
                             </p>
                         </div>
                     </CardContent>
@@ -532,7 +636,7 @@
                                     class="rounded-lg border bg-background px-4 py-3 text-left md:text-right"
                                 >
                                     <p class="text-xs text-muted-foreground">
-                                        Total invoice
+                                        Jumlah yang perlu dibayar
                                     </p>
                                     <p
                                         class="mt-1 text-2xl font-semibold text-foreground"
@@ -553,7 +657,7 @@
                                     class="rounded-lg border bg-background p-2.5 lg:p-3"
                                 >
                                     <p class="text-xs text-muted-foreground">
-                                        Invoice
+                                        Nomor tagihan
                                     </p>
                                     <p
                                         class="mt-1 font-semibold text-foreground"
@@ -563,7 +667,7 @@
                                 </div>
                                 <div class="rounded-lg border bg-background p-2.5 lg:p-3">
                                     <p class="text-xs text-muted-foreground">
-                                        Jatuh tempo
+                                        Batas pembayaran
                                     </p>
                                     <p
                                         class="mt-1 font-semibold text-foreground"
@@ -573,7 +677,7 @@
                                 </div>
                                 <div class="rounded-lg border bg-background p-2.5 lg:p-3">
                                     <p class="text-xs text-muted-foreground">
-                                        Status Mayar
+                                        Status
                                     </p>
                                     <p
                                         class="mt-1 font-semibold text-foreground"
@@ -599,24 +703,24 @@
                                                 <CreditCard
                                                     class="mr-2 h-4 w-4"
                                                 />
-                                                Bayar via Mayar
+                                                Lanjutkan pembayaran
                                             </a>
                                         {/snippet}
                                     </Button>
                                     <p
                                         class="mt-2 text-center text-xs text-muted-foreground"
                                     >
-                                        Setelah pembayaran berhasil, status akan
-                                        diperbarui otomatis oleh webhook.
+                                        Setelah pembayaran berhasil, status paket
+                                        akan diperbarui otomatis.
                                     </p>
                                 {:else}
                                     <div
                                         class="rounded-lg border border-dashed p-3 text-sm text-muted-foreground"
                                     >
                                         <p>
-                                            Payment link belum tersedia. Periksa
-                                            pesan gateway di atas atau hubungi
-                                            admin SaaS.
+                                            Tautan pembayaran belum tersedia.
+                                            Silakan hubungi admin SaaS untuk
+                                            mendapatkan bantuan.
                                         </p>
                                         {#if payableInvoice.gateway_error_message}
                                             <p class="mt-2 font-medium text-amber-700 dark:text-amber-300">
@@ -633,27 +737,27 @@
                                 class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground"
                             >
                                 {#if latestCanceledInvoice}
-                                    Invoice sebelumnya dibatalkan karena melewati
+                                    Tagihan sebelumnya dibatalkan karena melewati
                                     batas waktu pembayaran. Pilih paket di bawah
-                                    untuk mengajukan checkout baru.
+                                    untuk membuat tagihan baru.
                                 {:else}
-                                    Invoice belum tersedia. Pilih paket di bawah
-                                    untuk mengajukan checkout baru.
+                                    Belum ada tagihan. Pilih paket di bawah untuk
+                                    memulai pembayaran.
                                 {/if}
                             </div>
                         </CardContent>
                     {/if}
                 </Card>
 
-                <Card>
+                <Card id="available-plans">
                     <CardHeader>
                         <CardTitle class="text-lg lg:text-xl"
-                            >Paket Tersedia</CardTitle
+                            >Pilih paket Anda</CardTitle
                         >
                         <CardDescription
-                            >Trial memakai Starter selama 14 hari. Starter
-                            berbayar, Pro, dan Fleet aktif setelah checkout
-                            Mayar lunas.</CardDescription
+                            >Pilih paket berdasarkan kebutuhan operasional.
+                            Setelah memilih, Anda akan diarahkan ke halaman
+                            pembayaran yang aman.</CardDescription
                         >
                     </CardHeader>
                     <CardContent class="p-3 lg:p-4">
@@ -661,10 +765,10 @@
                             class="mb-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground"
                         >
                             {payableInvoice
-                                ? 'Ada invoice aktif yang perlu diselesaikan lebih dulu sebelum ganti paket.'
+                                ? 'Ada tagihan yang belum selesai. Selesaikan pembayaran itu terlebih dahulu.'
                                 : latestCanceledInvoice
-                                  ? 'Invoice sebelumnya sudah dibatalkan. Pilih paket untuk mengajukan checkout ulang.'
-                                  : 'Kamu bisa upgrade atau ganti paket kapan saja. Paket lama tetap berjalan sampai invoice upgrade lunas.'}
+                                  ? 'Tagihan sebelumnya sudah dibatalkan. Pilih paket untuk membuat tagihan baru.'
+                                  : 'Anda dapat mengganti paket kapan saja. Perubahan aktif setelah pembayaran berhasil.'}
                         </div>
                         <div class="grid gap-3 md:grid-cols-3">
                             {#each plans as plan}
@@ -724,10 +828,12 @@
                                         </span>
                                         <span class={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${plan.slug === currentPlanSlug ? 'border-primary/20 bg-white/80 text-primary dark:border-sky-400/20 dark:bg-slate-900/70 dark:text-sky-200' : 'border-border/70 bg-background text-muted-foreground'}`}>
                                             {plan.slug === currentPlanSlug
-                                                ? 'Tidak perlu checkout'
+                                                ? canRetryCheckout
+                                                    ? 'Siap dibayar lagi'
+                                                    : 'Paket saat ini'
                                                 : payableInvoice
-                                                  ? 'Checkout tertunda'
-                                                  : 'Siap checkout'}
+                                                  ? 'Menunggu pembayaran'
+                                                  : 'Bisa dipilih'}
                                         </span>
                                     </div>
                                     <Button
@@ -741,7 +847,7 @@
                                         onclick={() => startCheckout(plan)}
                                     >
                                         {checkoutPlanSlug === plan.slug
-                                            ? 'Membuat checkout...'
+                                            ? 'Membuat tagihan...'
                                             : planStateLabel(plan)}
                                     </Button>
                                 </div>
@@ -756,13 +862,45 @@
                             <span
                                 class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-background/80 text-primary shadow-sm"
                             >
+                                <CircleHelp class="h-5 w-5" />
+                            </span>
+                            Cara berlangganan
+                        </CardTitle>
+                        <CardDescription
+                            >Ikuti tiga langkah sederhana berikut.</CardDescription
+                        >
+                    </CardHeader>
+                    <CardContent class="p-3 lg:p-4">
+                        <ol class="space-y-3 text-sm">
+                            <li class="flex gap-3">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">1</span>
+                                <span><strong class="font-semibold text-foreground">Pilih paket</strong><br /><span class="text-xs text-muted-foreground">Sesuaikan dengan kebutuhan travel Anda.</span></span>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">2</span>
+                                <span><strong class="font-semibold text-foreground">Selesaikan pembayaran</strong><br /><span class="text-xs text-muted-foreground">Ikuti petunjuk pembayaran online.</span></span>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">3</span>
+                                <span><strong class="font-semibold text-foreground">Mulai gunakan</strong><br /><span class="text-xs text-muted-foreground">Akses paket aktif setelah pembayaran terverifikasi.</span></span>
+                            </li>
+                        </ol>
+                    </CardContent>
+                </Card>
+
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b border-border/60 bg-muted/20">
+                        <CardTitle class="flex items-center gap-2 text-lg">
+                            <span
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-background/80 text-primary shadow-sm"
+                            >
                                 <Receipt class="h-5 w-5" />
                             </span>
-                            Riwayat Invoice
+                            Riwayat pembayaran
                         </CardTitle>
                         <CardDescription>
-                            Rekap pembayaran, status, dan akses checkout yang
-                            masih aktif.
+                            Semua tagihan dan status pembayaran Anda tersimpan di
+                            sini.
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
@@ -775,10 +913,10 @@
                                         class="bg-muted/70 text-left text-[11px] uppercase tracking-wide text-muted-foreground"
                                     >
                                         <tr>
-                                            <th class="w-[24%] px-3 py-2.5">Invoice</th>
-                                            <th class="w-[14%] px-3 py-2.5">Gateway</th>
+                                            <th class="w-[24%] px-3 py-2.5">Tagihan</th>
+                                            <th class="w-[14%] px-3 py-2.5">Cara bayar</th>
                                             <th class="w-[16%] px-3 py-2.5"
-                                                >Jatuh Tempo</th
+                                                >Batas bayar</th
                                             >
                                             <th class="w-[18%] px-3 py-2.5 text-right"
                                                 >Nominal</th
@@ -838,7 +976,7 @@
                                                             rel="noreferrer"
                                                             class="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80 hover:underline"
                                                         >
-                                                            Bayar Mayar
+                                                            Lanjutkan pembayaran
                                                             <ExternalLink
                                                                 class="h-3.5 w-3.5"
                                                             />
@@ -869,8 +1007,7 @@
                                                     {invoice.invoice_number}
                                                 </p>
                                                 <p class="mt-1 text-xs text-muted-foreground">
-                                                    {invoice.payment_gateway ||
-                                                        'Mayar'} - {formatDate(
+                                                    Pembayaran - {formatDate(
                                                         invoice.due_date,
                                                     )}
                                                 </p>
@@ -900,7 +1037,7 @@
                                                     rel="noreferrer"
                                                     class="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80 hover:underline"
                                                 >
-                                                    Bayar Mayar
+                                                    Lanjutkan pembayaran
                                                     <ExternalLink
                                                         class="h-3.5 w-3.5"
                                                     />
@@ -931,9 +1068,9 @@
                                         Belum ada invoice.
                                     </p>
                                     <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                                        Saat tagihan dibuat, riwayat pembayaran
-                                        akan tampil di sini beserta tautan
-                                        checkout aktif.
+                                        Saat pembayaran dibuat, riwayatnya akan
+                                        tampil di sini bersama status dan batas
+                                        pembayarannya.
                                     </p>
                                 </div>
                             </div>
@@ -951,11 +1088,11 @@
                             >
                                 <CreditCard class="h-5 w-5" />
                             </span>
-                            Pembayaran SaaS
+                            Ringkasan pembayaran
                         </CardTitle>
                         <CardDescription
-                            >Mayar adalah satu-satunya checkout untuk invoice
-                            subscription.</CardDescription
+                            >Gunakan satu halaman pembayaran untuk menyelesaikan
+                            langganan Anda.</CardDescription
                         >
                     </CardHeader>
                     <CardContent class="space-y-2.5 p-3 text-sm lg:p-4">
@@ -963,17 +1100,17 @@
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                Gateway
+                                Cara bayar
                             </p>
                             <p class="mt-1 font-semibold tracking-tight text-foreground">
-                                Mayar
+                                Pembayaran online
                             </p>
                         </div>
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                Invoice paid
+                                Pembayaran berhasil
                             </p>
                             <p class="mt-1 font-semibold tracking-tight text-foreground">
                                 {invoices.filter(
@@ -985,10 +1122,10 @@
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                Invoice aktif
+                                Tagihan aktif
                             </p>
                             <p class="mt-1 font-semibold tracking-tight text-foreground">
-                                {payableInvoice ? 'Ada' : 'Tidak ada'}
+                            {payableInvoice ? 'Perlu dibayar' : 'Tidak ada'}
                             </p>
                         </div>
                     </CardContent>
@@ -1002,10 +1139,10 @@
                             >
                                 <ShieldAlert class="h-5 w-5" />
                             </span>
-                            Akses Akun
+                            Tentang akun
                         </CardTitle>
                         <CardDescription
-                            >Mapping tenant, pool, dan role aktif akun ini.</CardDescription
+                            >Informasi akun dan akses operasional Anda.</CardDescription
                         >
                     </CardHeader>
                     <CardContent class="space-y-2.5 p-3 text-sm lg:p-4">
@@ -1013,18 +1150,17 @@
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                Tenant ID
+                                Tenant
                             </p>
                             <p class="mt-1 font-semibold tracking-tight text-foreground">
-                                #{accountAccess.tenant_id ||
-                                    tenantSub.tenant_id}
+                                {tenantSub.tenant_name}
                             </p>
                         </div>
                         <div
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                Pool terhubung
+                                Pool tersedia
                             </p>
                             <p class="mt-1 font-semibold tracking-tight text-foreground">
                                 {accountAccess.pool_count}
@@ -1034,7 +1170,7 @@
                             class="rounded-xl border border-border/70 bg-background/80 p-2.5 shadow-sm lg:p-3"
                         >
                             <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                Role
+                                Peran pengguna
                             </p>
                             <div class="mt-2 flex flex-wrap gap-1.5">
                                 {#each accountAccess.role_names as role}
