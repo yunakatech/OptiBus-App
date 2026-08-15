@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\PaymentGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Schema;
 class CheckSubscriptionExpiry extends Command
 {
     protected $signature = 'subscription:check-expired';
+
     protected $description = 'Check and update subscription and tenant billing statuses';
 
     public function handle(): int
@@ -89,18 +91,10 @@ class CheckSubscriptionExpiry extends Command
             $this->info("{$canceled} subscriptions canceled.");
         }
 
-        if (Schema::hasTable('invoice_subscriptions') && Schema::hasColumn('invoice_subscriptions', 'due_date')) {
-            $overdueInvoices = DB::table('invoice_subscriptions')
-                ->where('status', 'pending')
-                ->whereDate('due_date', '<', $today)
-                ->update([
-                    'status' => 'overdue',
-                    'updated_at' => now(),
-                ]);
-            $updated += $overdueInvoices;
-            if ($overdueInvoices > 0) {
-                $this->info("{$overdueInvoices} invoices marked overdue.");
-            }
+        $canceledInvoices = PaymentGateway::cancelExpiredInvoices();
+        $updated += $canceledInvoices;
+        if ($canceledInvoices > 0) {
+            $this->info("{$canceledInvoices} expired invoices canceled.");
         }
 
         $this->syncTenantStatuses();

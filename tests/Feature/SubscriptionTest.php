@@ -153,6 +153,54 @@ class SubscriptionTest extends TestCase
         $this->assertDatabaseCount('invoice_subscriptions', 0);
     }
 
+    public function test_expired_pending_invoice_is_canceled_and_can_be_checked_out_again(): void
+    {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
+        ]);
+
+        Http::fake([
+            'https://api.mayar.io/hl/v2/invoices/create' => Http::response([
+                'statusCode' => 200,
+                'data' => [
+                    'id' => 'pay_retry_123',
+                    'transactionId' => 'txn_retry_123',
+                    'link' => 'https://mayar.test/pay/pay_retry_123',
+                    'status' => 'open',
+                ],
+            ]),
+        ]);
+
+        [$user, $invoiceId, $tenantId] = $this->tenantWithPendingInvoice();
+        DB::table('invoice_subscriptions')->where('id', $invoiceId)->update([
+            'due_date' => now()->subDay()->toDateString(),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('subscription.checkout'), [
+                'plan_slug' => 'pro',
+                'billing_interval' => 'monthly',
+            ])
+            ->assertRedirect('https://mayar.test/pay/pay_retry_123');
+
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'id' => $invoiceId,
+            'tenant_id' => $tenantId,
+            'status' => 'canceled',
+            'gateway_status' => 'canceled',
+        ]);
+        $this->assertSame(2, DB::table('invoice_subscriptions')->where('tenant_id', $tenantId)->count());
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'tenant_id' => $tenantId,
+            'status' => 'pending',
+            'gateway_reference' => 'txn_retry_123',
+        ]);
+    }
+
     public function test_create_invoice_marks_payment_link_error_when_mayar_fails(): void
     {
         config([
@@ -491,6 +539,61 @@ class SubscriptionTest extends TestCase
         ]);
         $this->assertDatabaseMissing('mayar_fulfillments', [
             'transaction_id' => 'txn_unpaid',
+        ]);
+    }
+
+    public function test_late_paid_webhook_does_not_reopen_canceled_invoice(): void
+    {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+        ]);
+        Http::fake([
+            'https://api.mayar.io/hl/v2/transactions/txn_late' => Http::response([
+                'statusCode' => 200,
+                'messages' => 'success',
+                'data' => [
+                    'id' => 'txn_late',
+                    'status' => 'paid',
+                ],
+            ]),
+        ]);
+
+        [, $invoiceId, , $subscriptionId] = $this->tenantWithPendingInvoice();
+        DB::table('invoice_subscriptions')->where('id', $invoiceId)->update([
+            'status' => 'canceled',
+            'gateway_status' => 'canceled',
+            'gateway_reference' => 'txn_late',
+        ]);
+
+        $this->postJson(route('api.webhooks.mayar'), [
+            'event_id' => 'evt_late_paid',
+            'event' => 'payment.received',
+            'status' => 'SUCCESS',
+            'data' => [
+                'transactionId' => 'txn_late',
+                'status' => 'SUCCESS',
+                'transactionStatus' => 'paid',
+                'extraData' => ['invoice_id' => $invoiceId],
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('status', 'ignored')
+            ->assertJsonPath('invoice_id', $invoiceId);
+
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'id' => $invoiceId,
+            'status' => 'canceled',
+            'gateway_status' => 'canceled',
+        ]);
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscriptionId,
+            'status' => 'pending_payment',
+        ]);
+        $this->assertDatabaseMissing('mayar_fulfillments', [
+            'transaction_id' => 'txn_late',
         ]);
     }
 

@@ -12014,7 +12014,7 @@ XML;
         return $this->ok([
             'invoices' => $invoices,
             'summary' => $this->invoiceSummary($hasDueDateColumn, $hasPaidAtColumn),
-            'status_options' => ['pending', 'paid', 'overdue', 'failed', 'refunded'],
+            'status_options' => ['pending', 'paid', 'overdue', 'failed', 'refunded', 'canceled'],
             'pagination' => $result['meta'],
         ]);
     }

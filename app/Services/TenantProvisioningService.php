@@ -85,7 +85,7 @@ class TenantProvisioningService
                     $tenantId,
                     $subscriptionId,
                     $amount,
-                    now()->addDay()->toDateString(),
+                    now()->addDays((int) config('saas.invoice_payment_days', 1))->toDateString(),
                 );
             }
 
@@ -220,7 +220,7 @@ class TenantProvisioningService
                     $tenantId,
                     $subscriptionId,
                     $amount,
-                    now()->addDay()->toDateString(),
+                    now()->addDays((int) config('saas.invoice_payment_days', 1))->toDateString(),
                 );
             }
 

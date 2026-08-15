@@ -222,7 +222,7 @@ class GoogleAuthController extends Controller
                         (int) $tenantId,
                         $subscriptionId,
                         (float) $plan->price_monthly,
-                        now()->addDay()->toDateString(),
+                        now()->addDays((int) config('saas.invoice_payment_days', 1))->toDateString(),
                     );
                 }
 
