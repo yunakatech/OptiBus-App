@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "mayar-v2": {
+      "source": "mayarid/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mayar-v2/SKILL.md",
+      "computedHash": "dfcb351e2cbb0d97093e2bc49eb9692a5079423c2d43af09f840b2fbeab7a9da"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

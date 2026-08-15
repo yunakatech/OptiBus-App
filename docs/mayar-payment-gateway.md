@@ -11,9 +11,10 @@ Tambahkan nilai berikut ke `.env`:
 
 ```env
 MAYAR_ENABLED=true
+MAYAR_ENV=production
 MAYAR_API_KEY=your_mayar_api_key
-MAYAR_API_URL=https://api.mayar.id
-MAYAR_PAYMENT_CREATE_PATH=/hl/v1/invoice/create
+MAYAR_API_URL=
+MAYAR_PAYMENT_CREATE_PATH=/invoices/create
 MAYAR_WEBHOOK_SECRET=
 MAYAR_TIMEOUT=15
 ```
@@ -31,7 +32,9 @@ mengubah environment variable, lakukan redeploy agar konfigurasi baru terbaca.
 ### Catatan
 
 - `MAYAR_API_KEY` wajib diisi agar checkout bisa dibuat.
-- `MAYAR_PAYMENT_CREATE_PATH` default memakai endpoint invoice/create sesuai docs Mayar terbaru.
+- `MAYAR_ENV=production` memakai API V2 `https://api.mayar.id/hl/v2`; gunakan
+  `sandbox` untuk `https://api.mayar.io/hl/v2`.
+- `MAYAR_PAYMENT_CREATE_PATH` default memakai `/invoices/create`.
 - `MAYAR_WEBHOOK_SECRET` disiapkan sebagai konfigurasi opsional jika workspace Mayar Anda memakainya.
 
 ## Webhook URL
@@ -42,7 +45,9 @@ Daftarkan webhook Mayar ke endpoint berikut:
 POST https://your-domain.example/api/webhooks/mayar
 ```
 
-Webhook ini dipakai untuk event pembayaran, terutama `payment.received`.
+Webhook ini dipakai untuk event pembayaran, terutama `payment.received`. Sistem
+memverifikasi `data.transactionId` ke endpoint detail transaksi Mayar sebelum
+menandai invoice lunas.
 
 ## Cara Kerja
 

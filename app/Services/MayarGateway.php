@@ -78,30 +78,41 @@ class MayarGateway
         $body = $response->json();
         $body = is_array($body) ? $body : ['raw' => $response->body()];
 
-        if (! $response->successful()) {
+        $statusCode = (int) ($body['statusCode'] ?? $response->status());
+        $message = (string) ($body['messages'] ?? $body['message'] ?? 'Mayar request failed.');
+
+        if (! $response->successful() || $statusCode >= 400) {
             Log::warning('Mayar checkout failed', [
                 'invoice_id' => $invoiceId,
                 'status' => $response->status(),
-                'body' => $body,
+                'message' => $message,
             ]);
 
             $this->markCheckoutError($invoiceId, [
                 'status' => $response->status(),
-                'response' => $body,
+                'status_code' => $statusCode,
+                'message' => $message,
                 'payload' => $payload,
             ]);
 
             return false;
         }
 
-        $checkoutUrl = $this->extractCheckoutUrl($body);
-        $reference = $this->extractReference($body) ?: (string) $invoice->invoice_number;
+        $checkoutUrl = $this->extractString($body, ['data.link']);
+        $reference = $this->extractString($body, ['data.transactionId']);
 
-        if ($checkoutUrl === '') {
+        if ($statusCode >= 400 || $checkoutUrl === '' || $reference === '') {
             $this->markCheckoutError($invoiceId, [
-                'message' => 'Mayar response did not include a checkout URL.',
-                'response' => $body,
-                'payload' => $payload,
+                'message' => 'Mayar response did not include the required checkout data.',
+                'status_code' => $statusCode,
+                'response' => [
+                    'statusCode' => $statusCode,
+                    'messages' => $message,
+                    'data' => [
+                        'link' => $checkoutUrl,
+                        'transactionId' => $reference,
+                    ],
+                ],
             ]);
 
             return false;
@@ -114,7 +125,11 @@ class MayarGateway
             'gateway_status' => 'pending',
             'gateway_payload' => $this->json([
                 'request' => $payload,
-                'response' => $body,
+                'response' => [
+                    'statusCode' => $statusCode,
+                    'messages' => $message,
+                    'data' => $body['data'] ?? [],
+                ],
             ]),
         ]);
 
@@ -167,25 +182,37 @@ class MayarGateway
                 ];
             }
 
-            if ($event['reference'] !== '') {
-                $this->stampInvoice((int) $invoice->id, [
-                    'payment_gateway' => 'Mayar',
-                    'gateway_reference' => $event['reference'],
-                ]);
-            }
-
             if ($this->isPaidStatus($event['status'], $event['event_type'])) {
-                if ((string) $invoice->status === 'paid') {
-                    $this->stampInvoice((int) $invoice->id, [
-                        'gateway_status' => 'paid',
-                        'gateway_paid_at' => $invoice->gateway_paid_at ?? now(),
-                        'gateway_payload' => $this->json($payload),
-                    ]);
+                if ($event['transaction_id'] === '') {
+                    $this->finishWebhookEvent($eventRowId, 'ignored', 'Transaction ID is required.');
+
+                    return [
+                        'status' => 'ignored',
+                        'message' => 'Transaction ID is required before payment verification.',
+                        'invoice_id' => (int) $invoice->id,
+                    ];
+                }
+
+                $verification = $this->verifyPaidTransaction($event['transaction_id']);
+                if (! $verification['paid']) {
+                    $this->finishWebhookEvent($eventRowId, 'ignored', 'Transaction is not paid.');
+
+                    return [
+                        'status' => 'ignored',
+                        'message' => 'Transaction is not paid.',
+                        'invoice_id' => (int) $invoice->id,
+                    ];
+                }
+
+                $claim = $this->claimFulfillment($event['transaction_id'], (int) $invoice->id);
+                if ($claim === 'completed' || $claim === 'busy') {
                     $this->finishWebhookEvent($eventRowId, 'duplicate_paid');
 
                     return [
                         'status' => 'duplicate',
-                        'message' => 'Invoice already paid.',
+                        'message' => $claim === 'busy'
+                            ? 'Payment fulfillment is already processing.'
+                            : 'Payment fulfillment already completed.',
                         'invoice_id' => (int) $invoice->id,
                     ];
                 }
@@ -195,8 +222,9 @@ class MayarGateway
                     'payment_gateway' => 'Mayar',
                     'gateway_status' => 'paid',
                     'gateway_paid_at' => now(),
-                    'gateway_payload' => $this->json($payload),
+                    'gateway_payload' => $this->json($this->safeWebhookPayload($payload)),
                 ]);
+                $this->completeFulfillment($event['transaction_id']);
                 $this->finishWebhookEvent($eventRowId, 'processed');
 
                 return [
@@ -210,7 +238,7 @@ class MayarGateway
                 $this->stampInvoice((int) $invoice->id, [
                     'payment_gateway' => 'Mayar',
                     'gateway_status' => $event['status'] ?: 'failed',
-                    'gateway_payload' => $this->json($payload),
+                    'gateway_payload' => $this->json($this->safeWebhookPayload($payload)),
                 ]);
                 $this->finishWebhookEvent($eventRowId, 'processed');
 
@@ -224,7 +252,7 @@ class MayarGateway
             $this->stampInvoice((int) $invoice->id, [
                 'payment_gateway' => 'Mayar',
                 'gateway_status' => $event['status'] ?: $event['event_type'] ?: 'received',
-                'gateway_payload' => $this->json($payload),
+                'gateway_payload' => $this->json($this->safeWebhookPayload($payload)),
             ]);
             $this->finishWebhookEvent($eventRowId, 'received');
 
@@ -234,6 +262,9 @@ class MayarGateway
                 'invoice_id' => (int) $invoice->id,
             ];
         } catch (\Throwable $exception) {
+            if ($event['transaction_id'] !== '') {
+                $this->failFulfillment($event['transaction_id'], $exception->getMessage());
+            }
             $this->finishWebhookEvent($eventRowId, 'failed', $exception->getMessage());
             Log::error('Mayar webhook failed', [
                 'error' => $exception->getMessage(),
@@ -281,9 +312,7 @@ class MayarGateway
         return [
             'name' => (string) ($invoice->tenant_name ?? 'Tenant OptiBus'),
             'email' => $email,
-            'amount' => (int) round((float) $invoice->amount),
             'mobile' => $phone,
-            'redirectUrl' => route('subscription.index', absolute: true),
             'description' => $description,
             'expiredAt' => $dueDate->toISOString(),
             'items' => [[
@@ -299,19 +328,12 @@ class MayarGateway
                 'tenant_id' => (int) $invoice->tenant_id,
                 'subscription_id' => (int) $invoice->subscription_id,
             ],
-            'metadata' => [
-                'invoice_id' => (int) $invoice->id,
-                'invoice_number' => (string) $invoice->invoice_number,
-                'tenant_id' => (int) $invoice->tenant_id,
-                'subscription_id' => (int) $invoice->subscription_id,
-            ],
         ];
     }
 
     private function endpoint(): string
     {
-        return rtrim((string) config('mayar.api_url', 'https://api.mayar.id'), '/')
-            .'/'.ltrim((string) config('mayar.payment_create_path', '/hl/v1/invoice/create'), '/');
+        return $this->apiBaseUrl().'/'.ltrim((string) config('mayar.payment_create_path', '/invoices/create'), '/');
     }
 
     private function markCheckoutError(int $invoiceId, array $payload): void
@@ -333,7 +355,7 @@ class MayarGateway
     }
 
     /**
-     * @return array{event_id: string, event_type: string, reference: string, invoice_id: int, status: string}
+     * @return array{event_id: string, event_type: string, reference: string, transaction_id: string, invoice_id: int, status: string}
      */
     private function parseWebhookPayload(array $payload): array
     {
@@ -358,10 +380,21 @@ class MayarGateway
             'status',
             'payment_status',
             'transaction_status',
+            'data.transactionStatus',
+            'data.transaction_status',
             'data.status',
             'data.paymentStatus',
             'data.payment_status',
             'data.transaction.status',
+        ]);
+
+        $transactionId = $this->extractString($payload, [
+            'data.transactionId',
+            'data.transaction_id',
+            'transactionId',
+            'transaction_id',
+            'paymentLinkTransactionId',
+            'data.paymentLinkTransactionId',
         ]);
 
         $invoiceId = (int) ($this->extractString($payload, [
@@ -416,6 +449,7 @@ class MayarGateway
             ]),
             'event_type' => Str::lower($eventType),
             'reference' => $reference,
+            'transaction_id' => $transactionId,
             'invoice_id' => $invoiceId,
             'status' => $this->normalizeWebhookStatus($statusValue, $eventType),
         ];
@@ -424,7 +458,7 @@ class MayarGateway
     private function recordWebhookEvent(string $eventId, array $event, array $payload): int
     {
         if (! Schema::hasTable('payment_webhook_events')) {
-            return 1;
+            throw new \RuntimeException('Webhook audit table is not available.');
         }
 
         $existing = DB::table('payment_webhook_events')
@@ -436,17 +470,55 @@ class MayarGateway
             return 0;
         }
 
+        $now = now();
+        $leaseUntil = $now->copy()->addMinutes(5);
+        if ($existing) {
+            if (
+                Schema::hasColumn('payment_webhook_events', 'locked_until')
+                && $existing->locked_until !== null
+                && CarbonImmutable::parse((string) $existing->locked_until)->isFuture()
+            ) {
+                return 0;
+            }
+
+            $updates = [
+                'status' => 'processing',
+                'updated_at' => $now,
+            ];
+            if (Schema::hasColumn('payment_webhook_events', 'attempt_count')) {
+                $updates['attempt_count'] = ((int) ($existing->attempt_count ?? 0)) + 1;
+            }
+            if (Schema::hasColumn('payment_webhook_events', 'locked_until')) {
+                $updates['locked_until'] = $leaseUntil;
+            }
+
+            DB::table('payment_webhook_events')->where('id', $existing->id)->update($updates);
+
+            return (int) $existing->id;
+        }
+
         try {
-            return (int) DB::table('payment_webhook_events')->insertGetId([
+            $values = [
                 'gateway' => 'mayar',
                 'event_id' => $eventId,
                 'reference' => $event['reference'] ?: null,
                 'event_type' => $event['event_type'] ?: null,
-                'payload' => $this->json($payload),
-                'status' => 'received',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                'payload' => $this->json($this->safeWebhookPayload($payload)),
+                'status' => 'processing',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            if (Schema::hasColumn('payment_webhook_events', 'transaction_id')) {
+                $values['transaction_id'] = $event['transaction_id'] ?: null;
+            }
+            if (Schema::hasColumn('payment_webhook_events', 'attempt_count')) {
+                $values['attempt_count'] = 1;
+            }
+            if (Schema::hasColumn('payment_webhook_events', 'locked_until')) {
+                $values['locked_until'] = $leaseUntil;
+            }
+
+            return (int) DB::table('payment_webhook_events')->insertGetId($values);
         } catch (QueryException) {
             return 0;
         }
@@ -458,14 +530,17 @@ class MayarGateway
             return;
         }
 
-        DB::table('payment_webhook_events')
-            ->where('id', $eventRowId)
-            ->update([
-                'status' => $status,
-                'error_message' => $errorMessage,
-                'processed_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $updates = [
+            'status' => $status,
+            'error_message' => $errorMessage,
+            'processed_at' => now(),
+            'updated_at' => now(),
+        ];
+        if (Schema::hasColumn('payment_webhook_events', 'locked_until')) {
+            $updates['locked_until'] = null;
+        }
+
+        DB::table('payment_webhook_events')->where('id', $eventRowId)->update($updates);
     }
 
     private function findInvoiceForWebhook(array $event): ?object
@@ -474,21 +549,175 @@ class MayarGateway
             return null;
         }
 
-        if ($event['invoice_id'] > 0) {
-            $invoice = DB::table('invoice_subscriptions')->where('id', $event['invoice_id'])->first();
+        if ($event['transaction_id'] !== '') {
+            $invoice = DB::table('invoice_subscriptions')
+                ->where('gateway_reference', $event['transaction_id'])
+                ->first();
             if ($invoice) {
                 return $invoice;
             }
         }
 
-        if ($event['reference'] === '') {
+        if ($event['invoice_id'] <= 0 || $event['transaction_id'] === '') {
             return null;
         }
 
-        return DB::table('invoice_subscriptions')
-            ->where('gateway_reference', $event['reference'])
-            ->orWhere('invoice_number', $event['reference'])
+        $invoice = DB::table('invoice_subscriptions')
+            ->where('id', $event['invoice_id'])
             ->first();
+
+        if (! $invoice || ($invoice->gateway_reference ?? '') !== $event['transaction_id']) {
+            return null;
+        }
+
+        return $invoice;
+    }
+
+    private function verifyPaidTransaction(string $transactionId): array
+    {
+        $response = Http::withToken((string) config('mayar.api_key'))
+            ->acceptJson()
+            ->timeout((int) config('mayar.timeout', 15))
+            ->get($this->apiBaseUrl().'/transactions/'.rawurlencode($transactionId));
+        $body = $response->json();
+        $body = is_array($body) ? $body : [];
+        $statusCode = (int) ($body['statusCode'] ?? $response->status());
+        $message = (string) ($body['messages'] ?? $body['message'] ?? 'Mayar transaction verification failed.');
+
+        if (! $response->successful() || $statusCode >= 400) {
+            throw new \RuntimeException($message);
+        }
+
+        $data = is_array($body['data'] ?? null) ? $body['data'] : [];
+        $verifiedId = $this->extractString($data, ['id']);
+        $status = Str::lower($this->extractString($data, ['status']));
+
+        return [
+            'paid' => $verifiedId === $transactionId && $status === 'paid',
+            'status' => $status,
+        ];
+    }
+
+    private function claimFulfillment(string $transactionId, int $invoiceId): string
+    {
+        if (! Schema::hasTable('mayar_fulfillments')) {
+            throw new \RuntimeException('Mayar fulfillment table is not available.');
+        }
+
+        return DB::transaction(function () use ($transactionId, $invoiceId): string {
+            $now = now();
+            $leaseUntil = $now->copy()->addMinutes(5);
+            $row = DB::table('mayar_fulfillments')
+                ->where('transaction_id', $transactionId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($row?->status === 'completed') {
+                return 'completed';
+            }
+
+            if (
+                $row?->status === 'processing'
+                && $row->locked_until !== null
+                && CarbonImmutable::parse((string) $row->locked_until)->isFuture()
+            ) {
+                return 'busy';
+            }
+
+            if ($row) {
+                DB::table('mayar_fulfillments')->where('id', $row->id)->update([
+                    'invoice_id' => $invoiceId,
+                    'status' => 'processing',
+                    'attempt_count' => ((int) $row->attempt_count) + 1,
+                    'last_error' => null,
+                    'locked_until' => $leaseUntil,
+                    'updated_at' => $now,
+                ]);
+            } else {
+                DB::table('mayar_fulfillments')->insert([
+                    'transaction_id' => $transactionId,
+                    'invoice_id' => $invoiceId,
+                    'status' => 'processing',
+                    'attempt_count' => 1,
+                    'locked_until' => $leaseUntil,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+
+            return 'claimed';
+        });
+    }
+
+    private function completeFulfillment(string $transactionId): void
+    {
+        DB::table('mayar_fulfillments')
+            ->where('transaction_id', $transactionId)
+            ->update([
+                'status' => 'completed',
+                'last_error' => null,
+                'locked_until' => null,
+                'completed_at' => now(),
+                'updated_at' => now(),
+            ]);
+    }
+
+    private function failFulfillment(string $transactionId, string $message): void
+    {
+        if (! Schema::hasTable('mayar_fulfillments')) {
+            return;
+        }
+
+        DB::table('mayar_fulfillments')
+            ->where('transaction_id', $transactionId)
+            ->where('status', 'processing')
+            ->update([
+                'status' => 'failed',
+                'last_error' => Str::limit($message, 2000),
+                'locked_until' => null,
+                'updated_at' => now(),
+            ]);
+    }
+
+    private function apiBaseUrl(): string
+    {
+        $configuredUrl = rtrim((string) config('mayar.api_url'), '/');
+        if ($configuredUrl !== '') {
+            return $configuredUrl;
+        }
+
+        return (string) config('mayar.environment', 'sandbox') === 'production'
+            ? 'https://api.mayar.id/hl/v2'
+            : 'https://api.mayar.io/hl/v2';
+    }
+
+    private function safeWebhookPayload(array $payload): array
+    {
+        $sensitiveKeys = [
+            'email',
+            'mobile',
+            'customerEmail',
+            'customerMobile',
+            'merchantEmail',
+            'paymentUrl',
+        ];
+
+        $redact = function (mixed $value) use (&$redact, $sensitiveKeys): mixed {
+            if (! is_array($value)) {
+                return $value;
+            }
+
+            $result = [];
+            foreach ($value as $key => $child) {
+                $result[$key] = in_array((string) $key, $sensitiveKeys, true)
+                    ? '[redacted]'
+                    : $redact($child);
+            }
+
+            return $result;
+        };
+
+        return $redact($payload);
     }
 
     private function isPaidStatus(string $status, string $eventType): bool
@@ -516,44 +745,6 @@ class MayarGateway
         ]);
     }
 
-    private function extractCheckoutUrl(array $body): string
-    {
-        return $this->extractString($body, [
-            'data.link',
-            'data.linkPayment',
-            'data.link_payment',
-            'data.checkoutUrl',
-            'data.checkout_url',
-            'data.paymentUrl',
-            'data.payment_url',
-            'data.url',
-            'link',
-            'linkPayment',
-            'link_payment',
-            'checkoutUrl',
-            'checkout_url',
-            'paymentUrl',
-            'payment_url',
-            'url',
-        ]);
-    }
-
-    private function extractReference(array $body): string
-    {
-        return $this->extractString($body, [
-            'data.transactionId',
-            'data.transaction_id',
-            'data.id',
-            'data.paymentId',
-            'data.reference',
-            'transactionId',
-            'transaction_id',
-            'id',
-            'paymentId',
-            'reference',
-        ]);
-    }
-
     private function extractString(array $payload, array $paths): string
     {
         foreach ($paths as $path) {
@@ -568,7 +759,6 @@ class MayarGateway
 
     /**
      * @param  array<int, string>  $paths
-     * @return mixed
      */
     private function extractValue(array $payload, array $paths): mixed
     {
@@ -583,9 +773,6 @@ class MayarGateway
         return null;
     }
 
-    /**
-     * @param  mixed  $rawStatus
-     */
     private function normalizeWebhookStatus(mixed $rawStatus, string $eventType): string
     {
         $eventType = Str::lower($eventType);

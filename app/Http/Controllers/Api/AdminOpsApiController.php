@@ -12122,14 +12122,21 @@ XML;
     private function loadPaymentSettings(): array
     {
         $apiKey = trim((string) config('mayar.api_key'));
-        $apiUrl = rtrim((string) config('mayar.api_url', 'https://api.mayar.id'), '/');
+        $environment = (string) config('mayar.environment', 'sandbox');
+        $apiUrl = rtrim((string) config('mayar.api_url'), '/');
+        if ($apiUrl === '') {
+            $apiUrl = $environment === 'production'
+                ? 'https://api.mayar.id/hl/v2'
+                : 'https://api.mayar.io/hl/v2';
+        }
 
         return [
             'gateway' => 'Mayar',
             'enabled' => (bool) config('mayar.enabled', false),
             'configured' => $apiKey !== '',
+            'environment' => $environment,
             'api_url' => $apiUrl,
-            'payment_create_path' => (string) config('mayar.payment_create_path', '/hl/v1/invoice/create'),
+            'payment_create_path' => (string) config('mayar.payment_create_path', '/invoices/create'),
             'webhook_url' => route('api.webhooks.mayar', absolute: true),
             'webhook_secret_configured' => trim((string) config('mayar.webhook_secret')) !== '',
         ];
