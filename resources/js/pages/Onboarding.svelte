@@ -12,8 +12,10 @@
         ArrowLeft,
         ArrowRight,
         Bus,
+        CalendarDays,
         CheckCircle2,
         Circle,
+        CircleDollarSign,
         Clock3,
         UserRound,
     } from 'lucide-svelte';
@@ -56,20 +58,21 @@
     const formAction = '/onboarding';
     const steps = [
         { label: 'Travel', icon: Bus },
-        { label: 'Jadwal', icon: Clock3 },
-        { label: 'Harga', icon: Clock3 },
+        { label: 'Jadwal', icon: CalendarDays },
+        { label: 'Harga', icon: CircleDollarSign },
         { label: 'Armada', icon: Bus },
         { label: 'Driver', icon: UserRound },
     ];
     const dayOptions = [
-        { value: 1, label: 'Sen' },
-        { value: 2, label: 'Sel' },
-        { value: 3, label: 'Rab' },
-        { value: 4, label: 'Kam' },
-        { value: 5, label: 'Jum' },
-        { value: 6, label: 'Sab' },
-        { value: 0, label: 'Min' },
+        { value: 1, shortLabel: 'Sen', label: 'Senin' },
+        { value: 2, shortLabel: 'Sel', label: 'Selasa' },
+        { value: 3, shortLabel: 'Rab', label: 'Rabu' },
+        { value: 4, shortLabel: 'Kam', label: 'Kamis' },
+        { value: 5, shortLabel: 'Jum', label: 'Jumat' },
+        { value: 6, shortLabel: 'Sab', label: 'Sabtu' },
+        { value: 0, shortLabel: 'Min', label: 'Minggu' },
     ];
+    const timeSuggestions = ['06:00', '08:00', '09:00', '12:00', '15:00', '18:00'];
 
     let currentStep = $state(0);
     let localError = $state('');
@@ -93,6 +96,11 @@
 
     const progressItems = $derived(setupProgress?.items ?? []);
     const progressPercent = $derived(Number(setupProgress?.percent ?? 0));
+    const selectedDayLabels = $derived(
+        dayOptions
+            .filter((day) => scheduleDays.includes(day.value))
+            .map((day) => day.label),
+    );
 
     function normalizedIntent(): 'trial' | 'paid' {
         return registrationIntent === 'payment' ? 'paid' : registrationIntent;
@@ -122,7 +130,22 @@
     }
 
     function addPickupTime(): void {
-        pickupTimes = [...pickupTimes, ''];
+        pickupTimes = [...filledPickupTimes(), ''];
+    }
+
+    function chooseDepartureTime(time: string): void {
+        departureTime = time;
+    }
+
+    function togglePickupTime(time: string): void {
+        const current = filledPickupTimes();
+        pickupTimes = current.includes(time)
+            ? current.filter((item) => item !== time)
+            : [...current, time];
+
+        if (pickupTimes.length === 0) {
+            pickupTimes = [''];
+        }
     }
 
     function removePickupTime(index: number): void {
@@ -329,11 +352,41 @@
                     </div>
                 {:else if currentStep === 1}
                     <div class="grid gap-3">
+                        <div class="rounded-xl border border-[#cfe3d4] bg-[#eef8f0] p-3">
+                            <div class="flex items-start gap-2.5">
+                                <div class="rounded-lg bg-white p-2 text-[#0d7066] shadow-sm">
+                                    <CalendarDays class="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-[#103d3a]">
+                                        Kapan kendaraan berangkat?
+                                    </p>
+                                    <p class="mt-0.5 text-xs leading-relaxed text-[#587066]">
+                                        Pilih hari operasi dan satu jam keberangkatan utama.
+                                        Jam bisa diubah lagi nanti.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid gap-1.5">
-                            <Label>Hari operasi</Label>
+                            <div class="flex items-end justify-between gap-3">
+                                <div>
+                                    <Label>Hari keberangkatan</Label>
+                                    <p class="mt-1 text-[11px] text-[#718079]">
+                                        Pilih satu atau beberapa hari dalam seminggu.
+                                    </p>
+                                </div>
+                                {#if scheduleDays.length > 0}
+                                    <span class="shrink-0 text-[11px] font-semibold text-[#0d7066]">
+                                        {scheduleDays.length} hari dipilih
+                                    </span>
+                                {/if}
+                            </div>
                             <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
                                 {#each dayOptions as day}
                                     <label
+                                        title={day.label}
                                         class={`cursor-pointer rounded-lg border px-2 py-1.5 text-center text-xs font-semibold transition ${
                                             scheduleDays.includes(day.value)
                                                 ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a]'
@@ -346,22 +399,69 @@
                                             bind:group={scheduleDays}
                                             value={day.value}
                                         />
-                                        {day.label}
+                                        {day.shortLabel}
                                     </label>
                                 {/each}
                             </div>
                             <InputError message={errors.schedule_days} />
                         </div>
-                        <div class="grid gap-1.5 sm:max-w-xs">
-                            <Label for="departure_time_view"
-                                >Jam berangkat</Label
-                            >
+
+                        <div class="grid gap-2 rounded-xl border border-[#d9ded4] bg-white p-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <Label for="departure_time_view">Jam berangkat</Label>
+                                    <p class="mt-1 text-[11px] text-[#718079]">
+                                        Pilih waktu yang umum atau isi sendiri.
+                                    </p>
+                                </div>
+                                {#if departureTime}
+                                    <span class="rounded-full bg-[#103d3a] px-2.5 py-1 text-xs font-bold text-white">
+                                        {departureTime}
+                                    </span>
+                                {/if}
+                            </div>
+                            <div class="flex flex-wrap gap-1.5" aria-label="Pilihan cepat jam berangkat">
+                                {#each timeSuggestions as time}
+                                    <button
+                                        type="button"
+                                        class={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                                            departureTime === time
+                                                ? 'border-[#103d3a] bg-[#103d3a] text-white shadow-sm'
+                                                : 'border-[#d9ded4] bg-[#fbfcf8] text-[#50645c] hover:border-[#0d7066] hover:text-[#0d7066]'
+                                        }`}
+                                        aria-pressed={departureTime === time}
+                                        onclick={() => chooseDepartureTime(time)}
+                                    >
+                                        {time}
+                                    </button>
+                                {/each}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="h-px flex-1 bg-[#e6ebe3]"></div>
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9aa69f]">atau isi manual</span>
+                                <div class="h-px flex-1 bg-[#e6ebe3]"></div>
+                            </div>
                             <Input
                                 id="departure_time_view"
                                 type="time"
                                 bind:value={departureTime}
+                                class="h-11 text-base font-semibold tracking-wide sm:max-w-xs"
+                                aria-describedby="departure_time_help"
                             />
+                            <p id="departure_time_help" class="text-[11px] leading-relaxed text-[#718079]">
+                                Format 24 jam. Contoh: 09:30 berarti berangkat pukul setengah sepuluh pagi.
+                            </p>
                             <InputError message={errors.departure_time} />
+                        </div>
+
+                        <div class="rounded-xl border border-dashed border-[#cbd8cc] bg-[#fbfcf8] px-3 py-2.5 text-xs text-[#587066]">
+                            <span class="font-semibold text-[#103d3a]">Ringkasan:</span>
+                            {#if selectedDayLabels.length > 0 || departureTime}
+                                {selectedDayLabels.length > 0 ? selectedDayLabels.join(', ') : 'hari belum dipilih'}
+                                {departureTime ? ` pukul ${departureTime}` : ', jam belum dipilih'}.
+                            {:else}
+                                Hari dan jam belum dipilih. Anda dapat melewati langkah ini dan mengaturnya nanti.
+                            {/if}
                         </div>
                     </div>
                 {:else if currentStep === 2}
@@ -398,18 +498,51 @@
                             <InputError message={errors.ticket_price} />
                         </div>
                         <div class="grid gap-1.5">
-                            <Label>Jam pickup</Label>
+                            <div class="flex items-end justify-between gap-3">
+                                <div>
+                                    <Label>Jam pickup</Label>
+                                    <p class="mt-1 text-[11px] text-[#718079]">
+                                        Opsional. Pilih semua jam layanan yang tersedia.
+                                    </p>
+                                </div>
+                                {#if filledPickupTimes().length > 0}
+                                    <span class="shrink-0 text-[11px] font-semibold text-[#0d7066]">
+                                        {filledPickupTimes().length} jam
+                                    </span>
+                                {/if}
+                            </div>
+                            <div class="flex flex-wrap gap-1.5" aria-label="Pilihan cepat jam pickup">
+                                {#each timeSuggestions as time}
+                                    <button
+                                        type="button"
+                                        class={`rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${
+                                            filledPickupTimes().includes(time)
+                                                ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a]'
+                                                : 'border-[#d9ded4] bg-[#fbfcf8] text-[#50645c] hover:border-[#0d7066] hover:text-[#0d7066]'
+                                        }`}
+                                        aria-pressed={filledPickupTimes().includes(time)}
+                                        onclick={() => togglePickupTime(time)}
+                                    >
+                                        {time}
+                                    </button>
+                                {/each}
+                            </div>
                             <div class="grid gap-1.5">
                                 {#each pickupTimes as time, index}
-                                    <div class="flex gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-16 shrink-0 text-[11px] font-semibold text-[#718079]">
+                                            Pickup {index + 1}
+                                        </span>
                                         <Input
                                             type="time"
                                             bind:value={pickupTimes[index]}
+                                            aria-label={`Jam pickup ${index + 1}`}
                                         />
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            class="shrink-0"
+                                            class="h-9 shrink-0 px-2.5 text-xs"
+                                            aria-label={`Hapus jam pickup ${index + 1}`}
                                             onclick={() =>
                                                 removePickupTime(index)}
                                             >Hapus</Button
@@ -419,8 +552,9 @@
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    class="w-fit"
-                                    onclick={addPickupTime}>Tambah jam</Button
+                                    class="w-fit rounded-lg text-xs"
+                                    onclick={addPickupTime}
+                                    >+ Tambah jam manual</Button
                                 >
                             </div>
                             <InputError message={errors.pickup_times} />
