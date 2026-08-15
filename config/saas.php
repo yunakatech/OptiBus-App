@@ -38,6 +38,9 @@ return [
     */
     'grace_period_days' => (int) env('SAAS_GRACE_PERIOD_DAYS', 7),
 
+    /* Payment links remain retryable until this many days after creation. */
+    'invoice_payment_days' => max(1, (int) env('SAAS_INVOICE_PAYMENT_DAYS', 1)),
+
     /*
     |--------------------------------------------------------------------------
     | Data Retention

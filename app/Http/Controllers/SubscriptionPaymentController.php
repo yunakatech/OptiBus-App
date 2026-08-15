@@ -23,6 +23,8 @@ class SubscriptionPaymentController extends Controller
      */
     public function index(): Response
     {
+        // Keep the payment state fresh even when the scheduler has not run yet.
+        PaymentGateway::cancelExpiredInvoices();
         $tenantSub = PoolScope::tenantSubscription();
 
         return Inertia::render('Subscription', [
@@ -223,6 +225,7 @@ class SubscriptionPaymentController extends Controller
      */
     public function checkout(Request $request): RedirectResponse|HttpResponse
     {
+        PaymentGateway::cancelExpiredInvoices();
         $tenantId = PoolScope::tenantId();
         if ($tenantId <= 0 || ! Schema::hasTable('plans') || ! Schema::hasTable('subscriptions')) {
             return back()->with('status', 'billing_missing_tenant');
@@ -295,7 +298,7 @@ class SubscriptionPaymentController extends Controller
                 $tenantId,
                 $subscriptionId,
                 $amount,
-                now()->addDay()->toDateString(),
+                now()->addDays((int) config('saas.invoice_payment_days', 1))->toDateString(),
             );
         });
 

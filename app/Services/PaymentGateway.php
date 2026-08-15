@@ -11,6 +11,47 @@ use Illuminate\Support\Facades\Schema;
 class PaymentGateway
 {
     /**
+     * Cancel unpaid invoices after their payment window has expired.
+     */
+    public static function cancelExpiredInvoices(): int
+    {
+        if (! Schema::hasTable('invoice_subscriptions')
+            || ! Schema::hasColumn('invoice_subscriptions', 'due_date')) {
+            return 0;
+        }
+
+        $invoiceIds = DB::table('invoice_subscriptions')
+            ->whereIn('status', ['pending', 'overdue'])
+            ->where('due_date', '<', now()->toDateString())
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+
+        if ($invoiceIds === []) {
+            return 0;
+        }
+
+        $values = [
+            'status' => 'canceled',
+            'updated_at' => now(),
+        ];
+        if (Schema::hasColumn('invoice_subscriptions', 'gateway_status')) {
+            $values['gateway_status'] = 'canceled';
+        }
+
+        $updated = DB::table('invoice_subscriptions')
+            ->whereIn('id', $invoiceIds)
+            ->whereIn('status', ['pending', 'overdue'])
+            ->update($values);
+
+        if ($updated > 0) {
+            Log::info('Expired payment invoices canceled', ['invoice_ids' => $invoiceIds]);
+        }
+
+        return $updated;
+    }
+
+    /**
      * Generate invoice number: INV-YYYYMMDD-XXXX
      */
     public static function generateInvoiceNumber(): string
@@ -76,7 +117,7 @@ class PaymentGateway
         }
 
         $invoice = DB::table('invoice_subscriptions')->where('id', $invoiceId)->first();
-        if (! $invoice || $invoice->status === 'paid') {
+        if (! $invoice || in_array((string) $invoice->status, ['paid', 'canceled', 'failed', 'refunded'], true)) {
             return false;
         }
 

@@ -563,6 +563,8 @@
             return { variant: 'destructive', label: 'Overdue' };
         if (invoice.status === 'pending')
             return { variant: 'outline', label: 'Pending' };
+        if (invoice.status === 'canceled')
+            return { variant: 'outline', label: 'Dibatalkan' };
         return { variant: 'outline', label: invoice.status || '-' };
     }
 
@@ -2306,6 +2308,7 @@
                             <option value="overdue">Overdue</option>
                             <option value="failed">Failed</option>
                             <option value="refunded">Refunded</option>
+                            <option value="canceled">Dibatalkan</option>
                         </select>
                         <Button
                             variant="outline"

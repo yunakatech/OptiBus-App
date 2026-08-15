@@ -122,6 +122,15 @@
     const latestPaidInvoice = $derived(
         invoices.find((invoice) => invoice.status === 'paid') ?? null,
     );
+    const latestCanceledInvoice = $derived(
+        invoices.find((invoice) => invoice.status === 'canceled') ?? null,
+    );
+    const canRetryCheckout = $derived(
+        Boolean(
+            latestCanceledInvoice &&
+                tenantSub?.subscription_status === 'pending_payment',
+        ),
+    );
     const subscriptionMeta = $derived(
         statusBadge(tenantSub?.subscription_status ?? ''),
     );
@@ -159,6 +168,8 @@
                 : `${payableInvoice.invoice_number} jatuh tempo ${formatDate(payableInvoice.due_date)}.`
             : latestPaidInvoice
               ? `${latestPaidInvoice.invoice_number} lunas pada ${formatDate(latestPaidInvoice.paid_at)}.`
+              : latestCanceledInvoice
+                ? 'Invoice sebelumnya dibatalkan karena melewati batas waktu pembayaran. Pilih paket untuk mengajukan checkout baru.'
               : 'Invoice akan muncul otomatis setelah memilih paket berbayar.',
     );
     let checkoutPlanSlug = $state('');
@@ -215,6 +226,7 @@
             overdue: { variant: 'destructive', label: 'Overdue' },
             failed: { variant: 'destructive', label: 'Failed' },
             refunded: { variant: 'outline', label: 'Refunded' },
+            canceled: { variant: 'outline', label: 'Dibatalkan' },
         };
 
         return (
@@ -242,6 +254,10 @@
 
     function planStateLabel(plan: Plan): string {
         if (plan.slug === currentPlanSlug) {
+            if (canRetryCheckout) {
+                return 'Ajukan checkout ulang';
+            }
+
             return tenantSub?.subscription_status === 'trial'
                 ? 'Trial Starter'
                 : 'Paket aktif';
@@ -269,7 +285,9 @@
             return {
                 variant: 'default',
                 label:
-                    tenantSub?.subscription_status === 'trial'
+                    canRetryCheckout
+                        ? 'Checkout ulang'
+                        : tenantSub?.subscription_status === 'trial'
                         ? 'Aktif Trial'
                         : 'Paket Aktif',
             };
@@ -311,6 +329,10 @@
 
     function planHint(plan: Plan): string {
         if (plan.slug === currentPlanSlug) {
+            if (canRetryCheckout) {
+                return 'Invoice sebelumnya dibatalkan. Ajukan checkout baru untuk mengaktifkan paket ini.';
+            }
+
             return 'Paket yang sedang dipakai tenant ini.';
         }
 
@@ -610,9 +632,14 @@
                             <div
                                 class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground"
                             >
-                                Invoice belum tersedia. Sistem akan mencoba
-                                membuat invoice otomatis dari subscription
-                                pending payment.
+                                {#if latestCanceledInvoice}
+                                    Invoice sebelumnya dibatalkan karena melewati
+                                    batas waktu pembayaran. Pilih paket di bawah
+                                    untuk mengajukan checkout baru.
+                                {:else}
+                                    Invoice belum tersedia. Pilih paket di bawah
+                                    untuk mengajukan checkout baru.
+                                {/if}
                             </div>
                         </CardContent>
                     {/if}
@@ -635,7 +662,9 @@
                         >
                             {payableInvoice
                                 ? 'Ada invoice aktif yang perlu diselesaikan lebih dulu sebelum ganti paket.'
-                                : 'Kamu bisa upgrade atau ganti paket kapan saja. Paket lama tetap berjalan sampai invoice upgrade lunas.'}
+                                : latestCanceledInvoice
+                                  ? 'Invoice sebelumnya sudah dibatalkan. Pilih paket untuk mengajukan checkout ulang.'
+                                  : 'Kamu bisa upgrade atau ganti paket kapan saja. Paket lama tetap berjalan sampai invoice upgrade lunas.'}
                         </div>
                         <div class="grid gap-3 md:grid-cols-3">
                             {#each plans as plan}
@@ -706,7 +735,8 @@
                                         variant={planButtonVariant(plan)}
                                         class={`mt-3 h-8 w-full rounded-lg lg:h-9 ${plan.slug === currentPlanSlug ? 'shadow-sm shadow-primary/15' : ''}`}
                                         disabled={checkoutPlanSlug !== '' ||
-                                            plan.slug === currentPlanSlug ||
+                                            (plan.slug === currentPlanSlug &&
+                                                !canRetryCheckout) ||
                                             !canChoosePlan}
                                         onclick={() => startCheckout(plan)}
                                     >

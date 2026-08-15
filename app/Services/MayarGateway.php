@@ -182,6 +182,16 @@ class MayarGateway
                 ];
             }
 
+            if (in_array((string) $invoice->status, ['canceled', 'failed', 'refunded'], true)) {
+                $this->finishWebhookEvent($eventRowId, 'ignored', 'Invoice is no longer payable.');
+
+                return [
+                    'status' => 'ignored',
+                    'message' => 'Invoice is no longer payable.',
+                    'invoice_id' => (int) $invoice->id,
+                ];
+            }
+
             if ($this->isPaidStatus($event['status'], $event['event_type'])) {
                 if ($event['transaction_id'] === '') {
                     $this->finishWebhookEvent($eventRowId, 'ignored', 'Transaction ID is required.');
@@ -217,7 +227,16 @@ class MayarGateway
                     ];
                 }
 
-                PaymentGateway::markInvoicePaid((int) $invoice->id, 'Mayar');
+                if (! PaymentGateway::markInvoicePaid((int) $invoice->id, 'Mayar')) {
+                    $this->finishWebhookEvent($eventRowId, 'ignored', 'Invoice is no longer payable.');
+
+                    return [
+                        'status' => 'ignored',
+                        'message' => 'Invoice is no longer payable.',
+                        'invoice_id' => (int) $invoice->id,
+                    ];
+                }
+
                 $this->stampInvoice((int) $invoice->id, [
                     'payment_gateway' => 'Mayar',
                     'gateway_status' => 'paid',
