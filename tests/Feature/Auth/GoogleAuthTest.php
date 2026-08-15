@@ -12,6 +12,23 @@ class GoogleAuthTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_ordinary_google_sign_in_resets_stale_registration_flow_to_trial(): void
+    {
+        $driver = Mockery::mock();
+        $driver->shouldReceive('redirect')->once()->andReturn(redirect('/oauth/google'));
+        Socialite::shouldReceive('driver')->once()->with('google')->andReturn($driver);
+
+        $this->withSession([
+            'registration_intent' => 'paid',
+            'registration_plan' => 'pro',
+        ])
+            ->get(route('google.redirect'))
+            ->assertRedirect('/oauth/google');
+
+        $this->assertSame('trial', session('registration_intent'));
+        $this->assertSame('starter', session('registration_plan'));
+    }
+
     public function test_new_google_user_is_verified_and_redirected_to_onboarding(): void
     {
         $this->mockGoogleUser('new-google-user@example.com');
