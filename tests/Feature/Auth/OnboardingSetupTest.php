@@ -270,6 +270,10 @@ class OnboardingSetupTest extends TestCase
 
         $progress = app(TenantProvisioningService::class)->setupProgressForTenant($tenantId);
 
+        $this->assertSame(
+            ['route', 'schedule', 'segment', 'unit', 'armada', 'driver'],
+            array_column($progress['items'], 'key'),
+        );
         $this->assertTrue($progress['unit']);
         $this->assertContains(
             ['key' => 'unit', 'label' => 'Kategori armada sudah dibuat', 'done' => true],

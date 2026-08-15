@@ -56,8 +56,8 @@
     const formAction = '/onboarding';
     const steps = [
         { label: 'Travel', icon: Bus },
-        { label: 'Harga', icon: Clock3 },
         { label: 'Jadwal', icon: Clock3 },
+        { label: 'Harga', icon: Clock3 },
         { label: 'Armada', icon: Bus },
         { label: 'Driver', icon: UserRound },
     ];
@@ -328,6 +328,43 @@
                         </div>
                     </div>
                 {:else if currentStep === 1}
+                    <div class="grid gap-3">
+                        <div class="grid gap-1.5">
+                            <Label>Hari operasi</Label>
+                            <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
+                                {#each dayOptions as day}
+                                    <label
+                                        class={`cursor-pointer rounded-lg border px-2 py-1.5 text-center text-xs font-semibold transition ${
+                                            scheduleDays.includes(day.value)
+                                                ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a]'
+                                                : 'border-[#d9ded4] bg-white text-[#67726c]'
+                                        }`}
+                                    >
+                                        <input
+                                            class="sr-only"
+                                            type="checkbox"
+                                            bind:group={scheduleDays}
+                                            value={day.value}
+                                        />
+                                        {day.label}
+                                    </label>
+                                {/each}
+                            </div>
+                            <InputError message={errors.schedule_days} />
+                        </div>
+                        <div class="grid gap-1.5 sm:max-w-xs">
+                            <Label for="departure_time_view"
+                                >Jam berangkat</Label
+                            >
+                            <Input
+                                id="departure_time_view"
+                                type="time"
+                                bind:value={departureTime}
+                            />
+                            <InputError message={errors.departure_time} />
+                        </div>
+                    </div>
+                {:else if currentStep === 2}
                     <div class="grid gap-3 sm:grid-cols-2">
                         <div class="grid gap-1.5">
                             <Label for="segment_origin_view">Titik awal</Label>
@@ -387,43 +424,6 @@
                                 >
                             </div>
                             <InputError message={errors.pickup_times} />
-                        </div>
-                    </div>
-                {:else if currentStep === 2}
-                    <div class="grid gap-3">
-                        <div class="grid gap-1.5">
-                            <Label>Hari operasi</Label>
-                            <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
-                                {#each dayOptions as day}
-                                    <label
-                                        class={`cursor-pointer rounded-lg border px-2 py-1.5 text-center text-xs font-semibold transition ${
-                                            scheduleDays.includes(day.value)
-                                                ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a]'
-                                                : 'border-[#d9ded4] bg-white text-[#67726c]'
-                                        }`}
-                                    >
-                                        <input
-                                            class="sr-only"
-                                            type="checkbox"
-                                            bind:group={scheduleDays}
-                                            value={day.value}
-                                        />
-                                        {day.label}
-                                    </label>
-                                {/each}
-                            </div>
-                            <InputError message={errors.schedule_days} />
-                        </div>
-                        <div class="grid gap-1.5 sm:max-w-xs">
-                            <Label for="departure_time_view"
-                                >Jam berangkat</Label
-                            >
-                            <Input
-                                id="departure_time_view"
-                                type="time"
-                                bind:value={departureTime}
-                            />
-                            <InputError message={errors.departure_time} />
                         </div>
                     </div>
                 {:else if currentStep === 3}

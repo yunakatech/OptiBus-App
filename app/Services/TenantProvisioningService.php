@@ -337,8 +337,8 @@ class TenantProvisioningService
     {
         $items = [
             ['key' => 'route', 'label' => 'Rute sudah dibuat', 'done' => $this->tenantRowExists('routes', $tenantId)],
-            ['key' => 'segment', 'label' => 'Harga sudah dibuat', 'done' => $this->tenantRowExists('segments', $tenantId)],
             ['key' => 'schedule', 'label' => 'Jadwal sudah dibuat', 'done' => $this->tenantRowExists('schedules', $tenantId)],
+            ['key' => 'segment', 'label' => 'Harga sudah dibuat', 'done' => $this->tenantRowExists('segments', $tenantId)],
             ['key' => 'unit', 'label' => 'Kategori armada sudah dibuat', 'done' => $this->tenantRowExists('category_armada', $tenantId)],
             ['key' => 'armada', 'label' => 'Armada sudah dibuat', 'done' => $this->tenantRowExists('armadas', $tenantId)],
             ['key' => 'driver', 'label' => 'Driver sudah dibuat', 'done' => $this->tenantRowExists('drivers', $tenantId)],
@@ -349,8 +349,8 @@ class TenantProvisioningService
 
         return [
             'route' => (bool) $items[0]['done'],
-            'segment' => (bool) $items[1]['done'],
-            'schedule' => (bool) $items[2]['done'],
+            'schedule' => (bool) $items[1]['done'],
+            'segment' => (bool) $items[2]['done'],
             'unit' => (bool) $items[3]['done'],
             'armada' => (bool) $items[4]['done'],
             'driver' => (bool) $items[5]['done'],
@@ -759,13 +759,15 @@ class TenantProvisioningService
                     $this->upsertScheduleSegmentRow($tenantId, $scheduleId, $segmentId, $input);
                 });
             } catch (QueryException $e) {
-                Log::warning('onboarding.schedule_skipped', [
+                Log::error('onboarding.schedule_failed', [
                     'tenant_id' => $tenantId,
                     'route' => $routeName,
                     'day' => $day,
                     'jam' => $departureTime,
                     'error' => $e->getMessage(),
                 ]);
+
+                throw $e;
             }
         }
     }
