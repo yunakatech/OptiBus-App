@@ -26,7 +26,7 @@ class EnsureSuperAdminTenantContext
             return $next($request);
         }
 
-        if ($request->isMethodSafe()) {
+        if ($request->isMethodSafe() && ! $this->requiresOperationalTenantContext($request)) {
             return $next($request);
         }
 
@@ -49,14 +49,18 @@ class EnsureSuperAdminTenantContext
             'platform.dashboard',
             'admin-ops.saas',
             'admin-ops.saas.*',
+            'admin-ops.roles',
             'api.admin.tenants.*',
             'api.admin.subscriptions.*',
             'api.admin.plans.*',
             'api.admin.invoices.*',
             'api.admin.payment-settings.*',
+            'api.admin.roles.*',
+            'api.admin.reports.*',
             'api.admin.tenant.switch',
             'admin/tenant/switch',
             'admin/pool/switch',
+            'report.*',
             'logout',
             'verification.*',
             'profile.*',
@@ -66,5 +70,14 @@ class EnsureSuperAdminTenantContext
             'onboarding',
             'onboarding.store',
         );
+    }
+
+    private function requiresOperationalTenantContext(Request $request): bool
+    {
+        $routeName = (string) ($request->route()?->getName() ?? '');
+
+        return $routeName === 'admin-ops.index'
+            || str_starts_with($routeName, 'admin-ops.')
+            || str_starts_with($routeName, 'api.admin.');
     }
 }
