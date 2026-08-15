@@ -239,7 +239,8 @@ class SubscriptionTest extends TestCase
                 && ! array_key_exists('redirectURL', $payload)
                 && ! array_key_exists('amount', $payload)
                 && ! array_key_exists('metadata', $payload)
-                && array_key_exists('extraData', $payload);
+                && array_key_exists('extraData', $payload)
+                && array_keys($payload['extraData']) === ['noCustomer', 'idProd'];
         });
 
         $this->assertDatabaseHas('tenants', [

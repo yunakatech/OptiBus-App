@@ -323,10 +323,6 @@ class MayarGateway
             'extraData' => [
                 'noCustomer' => $invoiceNumber !== '' ? $invoiceNumber : 'optibus-'.(int) $invoice->tenant_id,
                 'idProd' => $planSlug !== '' ? $planSlug : $planName,
-                'invoice_id' => (int) $invoice->id,
-                'invoice_number' => $invoiceNumber,
-                'tenant_id' => (int) $invoice->tenant_id,
-                'subscription_id' => (int) $invoice->subscription_id,
             ],
         ];
     }
