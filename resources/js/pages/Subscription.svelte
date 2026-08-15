@@ -486,7 +486,7 @@
                 {#if payableInvoice && paymentLinkReady}
                     <Button
                         asChild
-                        class="h-10 shrink-0 rounded-xl bg-white px-4 font-semibold text-cyan-900 shadow-lg shadow-cyan-950/15 hover:bg-cyan-50"
+                        class="h-10 w-full shrink-0 justify-center rounded-xl bg-white px-4 font-semibold text-cyan-900 shadow-lg shadow-cyan-950/15 hover:bg-cyan-50 md:w-auto"
                     >
                         {#snippet children(props)}
                             <a
@@ -504,7 +504,7 @@
                     <Button
                         asChild
                         variant="outline"
-                        class="h-10 shrink-0 rounded-xl border-white/30 bg-white/10 px-4 font-semibold text-white hover:bg-white/20 hover:text-white"
+                        class="h-10 w-full shrink-0 justify-center rounded-xl border-white/30 bg-white/10 px-4 font-semibold text-white hover:bg-white/20 hover:text-white md:w-auto"
                     >
                         {#snippet children(props)}
                             <a {...props} href="#available-plans">
@@ -557,7 +557,7 @@
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent class="grid gap-3 p-3 md:grid-cols-3 lg:p-4">
+                    <CardContent class="grid grid-cols-2 gap-2.5 p-3 md:grid-cols-3 lg:gap-3 lg:p-4">
                         <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
                             <p class="text-xs text-muted-foreground">
                                 Masa berlaku
@@ -580,7 +580,7 @@
                                       : 'Belum ada'}
                             </p>
                         </div>
-                        <div class="rounded-lg border border-border/70 p-2.5 lg:p-3">
+                        <div class="col-span-2 rounded-lg border border-border/70 p-2.5 md:col-span-1 lg:p-3">
                             <p class="text-xs text-muted-foreground">Status pembayaran</p>
                             <p class="mt-1 font-semibold text-foreground">
                                 {payableInvoice
@@ -652,9 +652,9 @@
                         <CardContent
                             class="grid gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_240px] lg:p-4"
                         >
-                            <div class="grid gap-3 sm:grid-cols-3">
+                            <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
                                 <div
-                                    class="rounded-lg border bg-background p-2.5 lg:p-3"
+                                    class="col-span-2 rounded-lg border bg-background p-2.5 sm:col-span-1 lg:p-3"
                                 >
                                     <p class="text-xs text-muted-foreground">
                                         Nomor tagihan
@@ -818,24 +818,6 @@
                                     >
                                         {plan.description}
                                     </p>
-                                    <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${plan.slug === currentPlanSlug ? 'border-primary/20 bg-white/80 text-primary dark:border-sky-400/20 dark:bg-slate-900/70 dark:text-sky-200' : 'border-border/70 bg-background text-muted-foreground'}`}>
-                                            {plan.price_monthly > currentPlanMonthly
-                                                ? `+${formatRupiah(plan.price_monthly - currentPlanMonthly)}`
-                                                : currentPlanSlug === plan.slug
-                                                  ? 'Sedang aktif'
-                                                  : 'Setara atau lebih rendah'}
-                                        </span>
-                                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${plan.slug === currentPlanSlug ? 'border-primary/20 bg-white/80 text-primary dark:border-sky-400/20 dark:bg-slate-900/70 dark:text-sky-200' : 'border-border/70 bg-background text-muted-foreground'}`}>
-                                            {plan.slug === currentPlanSlug
-                                                ? canRetryCheckout
-                                                    ? 'Siap dibayar lagi'
-                                                    : 'Paket saat ini'
-                                                : payableInvoice
-                                                  ? 'Menunggu pembayaran'
-                                                  : 'Bisa dipilih'}
-                                        </span>
-                                    </div>
                                     <Button
                                         type="button"
                                         variant={planButtonVariant(plan)}
@@ -856,7 +838,7 @@
                     </CardContent>
                 </Card>
 
-                <Card class="overflow-hidden">
+                <Card class="hidden overflow-hidden md:flex">
                     <CardHeader class="border-b border-border/60 bg-muted/20">
                         <CardTitle class="flex items-center gap-2 text-lg">
                             <span
@@ -1079,7 +1061,7 @@
                 </Card>
             </div>
 
-            <div class="space-y-4">
+            <div class="hidden space-y-4 xl:block">
                 <Card class="overflow-hidden">
                     <CardHeader class="border-b border-border/60 bg-muted/20">
                         <CardTitle class="flex items-center gap-2 text-lg">
