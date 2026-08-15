@@ -51,6 +51,7 @@
         gateway_checkout_url: string;
         gateway_status: string;
         gateway_paid_at: string | null;
+        gateway_error_message?: string;
         created_at: string;
     };
 
@@ -153,7 +154,8 @@
     const activeBillingDescription = $derived(
         payableInvoice
             ? gatewayHasError
-                ? 'Invoice sudah dibuat, tetapi sistem belum mendapatkan checkout URL Mayar. Hubungi admin untuk dibantu.'
+                ? payableInvoice.gateway_error_message ||
+                  'Invoice sudah dibuat, tetapi sistem belum mendapatkan checkout URL Mayar. Hubungi admin untuk dibantu.'
                 : `${payableInvoice.invoice_number} jatuh tempo ${formatDate(payableInvoice.due_date)}.`
             : latestPaidInvoice
               ? `${latestPaidInvoice.invoice_number} lunas pada ${formatDate(latestPaidInvoice.paid_at)}.`
@@ -589,9 +591,16 @@
                                     <div
                                         class="rounded-lg border border-dashed p-3 text-sm text-muted-foreground"
                                     >
-                                        Payment link belum tersedia. Hubungi
-                                        admin SaaS untuk pengecekan gateway
-                                        Mayar.
+                                        <p>
+                                            Payment link belum tersedia. Periksa
+                                            pesan gateway di atas atau hubungi
+                                            admin SaaS.
+                                        </p>
+                                        {#if payableInvoice.gateway_error_message}
+                                            <p class="mt-2 font-medium text-amber-700 dark:text-amber-300">
+                                                {payableInvoice.gateway_error_message}
+                                            </p>
+                                        {/if}
                                     </div>
                                 {/if}
                             </div>
