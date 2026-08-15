@@ -158,6 +158,20 @@
     function filledPickupTimes(): string[] {
         return pickupTimes.map((item) => item.trim()).filter(Boolean);
     }
+
+    function firstFormError(errors: Record<string, unknown>): string {
+        for (const value of Object.values(errors)) {
+            if (Array.isArray(value) && value.length > 0) {
+                return String(value[0] ?? '').trim();
+            }
+
+            if (typeof value === 'string' && value.trim() !== '') {
+                return value.trim();
+            }
+        }
+
+        return '';
+    }
 </script>
 
 <AppHead title="Lengkapi Data Travel" />
@@ -295,6 +309,15 @@
                     class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
                 >
                     {localError}
+                </div>
+            {/if}
+            {#if firstFormError(errors)}
+                <div
+                    role="alert"
+                    class="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs leading-relaxed text-red-800"
+                >
+                    <p class="font-semibold">Data belum dapat disimpan</p>
+                    <p class="mt-0.5">{firstFormError(errors)}</p>
                 </div>
             {/if}
 
@@ -686,9 +709,14 @@
                         type="submit"
                         class="h-9 rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
                         disabled={processing}
+                        aria-busy={processing}
                     >
-                        {#if processing}<Spinner />{/if}
-                        Simpan dan Buka Dasbor
+                        {#if processing}
+                            <Spinner />
+                            Menyimpan...
+                        {:else}
+                            Simpan dan Buka Dasbor
+                        {/if}
                         {#if !processing}<ArrowRight
                                 class="ml-2 h-4 w-4"
                             />{/if}

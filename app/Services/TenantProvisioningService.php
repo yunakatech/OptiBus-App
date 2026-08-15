@@ -782,14 +782,16 @@ class TenantProvisioningService
     ): int {
         $query = DB::table('schedules')
             ->where('rute', $routeName)
-            ->where('dow', $day)
-            ->where('jam', $departureTime);
+            ->where('dow', $day);
 
         if (Schema::hasColumn('schedules', 'tenant_id')) {
             $query->where('tenant_id', $tenantId);
         }
 
-        $existingId = (int) ($query->value('id') ?? 0);
+        $existing = $query->get(['id', 'jam'])->first(
+            fn (object $row): bool => $this->normalizeTime($row->jam ?? null) === $departureTime,
+        );
+        $existingId = (int) ($existing->id ?? 0);
         if ($existingId > 0) {
             return $existingId;
         }
