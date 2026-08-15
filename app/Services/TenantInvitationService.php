@@ -184,6 +184,11 @@ class TenantInvitationService
             }
 
             $tenantId = (int) $invitation->tenant_id;
+            $tenantStatus = (string) (DB::table('tenants')->where('id', $tenantId)->value('status') ?? '');
+            if (in_array($tenantStatus, ['canceled', 'deleting'], true)) {
+                return ['status' => 'tenant_unavailable', 'user' => null, 'invitation' => $invitation];
+            }
+
             $user = User::where('email', $email)->lockForUpdate()->first();
             $existingTenantId = (int) ($user?->tenant_id ?? 0);
 

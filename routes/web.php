@@ -236,8 +236,8 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('solo/dashboard', [SoloDriverController::class, 'dashboard'])->middleware('permission:dashboard.view')->name('solo.dashboard');
 
     // Subscription & Payment (tenant self-service)
-    Route::get('subscription', [SubscriptionPaymentController::class, 'index'])->name('subscription.index');
-    Route::post('subscription/checkout', [SubscriptionPaymentController::class, 'checkout'])->name('subscription.checkout');
+    Route::get('subscription', [SubscriptionPaymentController::class, 'index'])->middleware('subscription.active')->name('subscription.index');
+    Route::post('subscription/checkout', [SubscriptionPaymentController::class, 'checkout'])->middleware('subscription.active')->name('subscription.checkout');
 
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');

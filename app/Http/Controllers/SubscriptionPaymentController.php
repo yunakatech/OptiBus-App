@@ -231,6 +231,11 @@ class SubscriptionPaymentController extends Controller
             return back()->with('status', 'billing_missing_tenant');
         }
 
+        $billingAccess = TenantBillingAccess::forUser();
+        if (TenantBillingAccess::tenantUnavailable($billingAccess)) {
+            return back()->with('status', TenantBillingAccess::tenantUnavailableMessage($billingAccess));
+        }
+
         $tenantSub = PoolScope::tenantSubscription();
         $data = $request->validate([
             'plan_slug' => ['required', 'string', 'in:starter,pro,fleet'],
