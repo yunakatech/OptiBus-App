@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\LuggagePricingService;
+use App\Support\AccessControl;
 use App\Support\ActivityLog;
 use App\Support\PoolScope;
+use App\Support\SchemaCache;
 use App\Support\SegmentName;
 use App\Support\TenantWriteContext;
 use Illuminate\Database\Query\Builder;
@@ -13,11 +16,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use App\Support\SchemaCache;
 
 class OperationsApiController extends Controller
 {
+    public function __construct(private readonly LuggagePricingService $luggagePricing) {}
+
     public function charterRoutes(): JsonResponse
     {
         if (! SchemaCache::hasTable('master_carter')) {
@@ -223,10 +226,74 @@ class OperationsApiController extends Controller
         if (SchemaCache::hasColumn('luggage_services', 'tenant_id')) {
             PoolScope::applyTenantScope($query, 'tenant_id');
         }
+        if (SchemaCache::hasColumn('luggage_services', 'is_active')) {
+            $query->where('is_active', true);
+        }
 
         $services = $query->get(['id', 'name']);
 
         return $this->ok(['services' => $services]);
+    }
+
+    public function luggageOptions(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'route_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $this->luggagePricing->assertReady();
+        $tenantId = $this->requireTenantContext();
+        $route = DB::table('routes')->where('id', (int) $data['route_id'])->where('tenant_id', $tenantId);
+        PoolScope::applyRouteScope($route, 'routes.id', 'routes.name');
+        $route = $route->first(['id', 'name']);
+        if (! $route) {
+            return $this->error('Rute induk tidak ditemukan atau tidak dapat diakses.', 404);
+        }
+
+        $segments = DB::table('segments')
+            ->where('tenant_id', $tenantId)
+            ->where('route_id', $route->id)
+            ->orderBy('rute')
+            ->get(['id', 'route_id', 'rute', 'origin', 'destination']);
+        $segmentIds = $segments->pluck('id')->map(fn ($id) => (int) $id)->all();
+        foreach ($segmentIds as $segmentId) {
+            $this->luggagePricing->syncSegmentRates($tenantId, $segmentId, (int) auth()->id());
+        }
+
+        $rates = $segmentIds === []
+            ? collect()
+            : DB::table('luggage_segment_rates as lsr')
+                ->join('luggage_services as ls', 'ls.id', '=', 'lsr.service_id')
+                ->where('lsr.tenant_id', $tenantId)
+                ->whereIn('lsr.segment_id', $segmentIds)
+                ->where('lsr.is_active', true)
+                ->where('ls.is_active', true)
+                ->orderBy('ls.name')
+                ->get([
+                    'lsr.id as rate_id',
+                    'lsr.segment_id',
+                    'lsr.service_id',
+                    'lsr.unit_price',
+                    'lsr.configured_at',
+                    'ls.name',
+                    'ls.description',
+                ])
+                ->groupBy(fn (object $rate) => (int) $rate->segment_id);
+
+        $segments = $segments->map(function (object $segment) use ($rates): object {
+            $segment->id = (int) $segment->id;
+            $segment->categories = collect($rates->get($segment->id, []))->map(function (object $rate): object {
+                $rate->rate_id = (int) $rate->rate_id;
+                $rate->service_id = (int) $rate->service_id;
+                $rate->unit_price = (float) $rate->unit_price;
+                $rate->configured = $rate->configured_at !== null;
+
+                return $rate;
+            })->values();
+
+            return $segment;
+        })->values();
+
+        return $this->ok(['route' => $route, 'segments' => $segments]);
     }
 
     public function searchCustomers(Request $request): JsonResponse
@@ -420,22 +487,46 @@ class OperationsApiController extends Controller
             'service_id' => ['nullable', 'integer', 'min:1'],
             'layanan_id' => ['nullable', 'integer', 'min:1'],
             'rute_id' => ['nullable', 'integer', 'min:1'],
+            'segment_id' => ['required', 'integer', 'min:1'],
             'tanggal' => ['nullable', 'date_format:Y-m-d'],
             'unit_id' => ['nullable', 'integer', 'min:1'],
             'quantity' => ['nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string'],
             'price' => ['nullable', 'numeric', 'min:0'],
+            'unit_price_override' => ['nullable', 'numeric', 'min:0'],
+            'price_override_reason' => ['nullable', 'string', 'max:1000'],
             'payment_status' => ['nullable', 'string', 'max:30'],
         ]);
 
         $serviceId = (int) ($data['service_id'] ?? $data['layanan_id'] ?? 0);
         $routeId = (int) ($data['rute_id'] ?? 0);
+        $segmentId = (int) $data['segment_id'];
         $senderName = strtoupper(trim((string) $data['sender_name']));
         $receiverName = strtoupper(trim((string) $data['receiver_name']));
         $senderPhone = $this->normalizePhone((string) $data['sender_phone']);
         $receiverPhone = $this->normalizePhone((string) $data['receiver_phone']);
         $senderAddress = $this->nullableString($data['sender_address'] ?? null);
         $receiverAddress = $this->nullableString($data['receiver_address'] ?? null);
+        $tenantId = $this->requireTenantContext();
+        try {
+            $pricing = $this->luggagePricing->snapshot(
+                $tenantId,
+                $routeId,
+                $segmentId,
+                $serviceId,
+                max(1, (int) ($data['quantity'] ?? 1)),
+                $data['unit_price_override'] ?? null,
+                $data['price_override_reason'] ?? null,
+                (int) auth()->id(),
+                AccessControl::can((int) auth()->id(), 'luggage.tariff.override'),
+            );
+        } catch (\RuntimeException $exception) {
+            return $this->error($exception->getMessage(), 422);
+        }
+        if (! PoolScope::canAccessRouteName($pricing['route_name'])) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
         $customerPoolId = PoolScope::customerPoolId($routeId);
         $unitId = (int) ($data['unit_id'] ?? 0);
         if ($unitId > 0 && SchemaCache::hasTable('category_armada')) {
@@ -449,10 +540,7 @@ class OperationsApiController extends Controller
         }
         $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim', $customerPoolId);
         $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima', $customerPoolId);
-        $mappedPrice = $this->resolveMappedLuggagePrice($routeId, $serviceId);
-        $inputPrice = (float) ($data['price'] ?? 0);
-        $resolvedPrice = $inputPrice > 0 ? $inputPrice : $mappedPrice;
-        $routeName = $routeId > 0 ? (string) (DB::table('routes')->where('id', $routeId)->value('name') ?? '') : '';
+        $routeName = $pricing['route_name'];
 
         $payload = [
             'sender_name' => $senderName,
@@ -471,7 +559,13 @@ class OperationsApiController extends Controller
             'penerima_id' => $penerimaId > 0 ? $penerimaId : null,
             'quantity' => max(1, (int) ($data['quantity'] ?? 1)),
             'notes' => $this->nullableString($data['notes'] ?? null),
-            'price' => $resolvedPrice,
+            'price' => $pricing['price'],
+            'segment_id' => $pricing['segment_id'],
+            'luggage_segment_rate_id' => $pricing['luggage_segment_rate_id'],
+            'unit_price' => $pricing['unit_price'],
+            'pricing_source' => $pricing['pricing_source'],
+            'price_override_reason' => $pricing['price_override_reason'],
+            'price_overridden_by_user_id' => $pricing['price_overridden_by_user_id'],
             'status' => $this->luggageReceivedStatus(),
             'payment_status' => $this->nullableString($data['payment_status'] ?? null) ?? 'Belum Bayar',
             'kode_resi' => $this->nextLuggageResi(),
@@ -500,13 +594,20 @@ class OperationsApiController extends Controller
             'Bagasi '.$resi.' - '.$this->luggageReceivedStatus(),
             $this->luggageReceivedStatus(),
             (string) (auth()->user()?->email ?? auth()->user()?->name ?? 'system'),
-            ['kode_resi' => $resi, 'status' => $this->luggageReceivedStatus()],
+            [
+                'kode_resi' => $resi,
+                'status' => $this->luggageReceivedStatus(),
+                'segment_id' => $segmentId,
+                'unit_price' => $pricing['unit_price'],
+                'pricing_source' => $pricing['pricing_source'],
+            ],
         );
 
         return $this->ok([
             'message' => 'Luggage shipment saved successfully',
             'luggage_id' => $id,
             'kode_resi' => $resi,
+            'pricing_configured' => $pricing['configured'],
         ], 201);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\LuggagePricingService;
 use App\Services\PaymentGateway;
 use App\Services\TenantInvitationService;
 use App\Services\TenantProvisioningService;
@@ -37,6 +38,7 @@ class AdminOpsApiController extends Controller
     public function __construct(
         private readonly RoleAccessData $roleAccessData,
         private readonly TenantInvitationService $tenantInvitationService,
+        private readonly LuggagePricingService $luggagePricing,
     ) {}
 
     private ?bool $schedulesHasRouteId = null;
@@ -877,12 +879,27 @@ class AdminOpsApiController extends Controller
 
     public function luggageServicesIndex(): JsonResponse
     {
+        $columns = ['id', 'name'];
+        if (SchemaCache::hasColumn('luggage_services', 'description')) {
+            $columns[] = 'description';
+        }
+        if (SchemaCache::hasColumn('luggage_services', 'is_active')) {
+            $columns[] = 'is_active';
+        }
+
         $rows = DB::table('luggage_services')
+            ->orderByDesc(SchemaCache::hasColumn('luggage_services', 'is_active') ? 'is_active' : 'id')
             ->orderBy('name')
             ->when(SchemaCache::hasColumn('luggage_services', 'tenant_id'), function (Builder $q) {
                 PoolScope::applyTenantScope($q, 'luggage_services.tenant_id');
             })
-            ->get(['id', 'name']);
+            ->get($columns)
+            ->map(function (object $row): object {
+                $row->description = $row->description ?? null;
+                $row->is_active = property_exists($row, 'is_active') ? (bool) $row->is_active : true;
+
+                return $row;
+            });
 
         return $this->ok(['services' => $rows]);
     }
@@ -892,40 +909,140 @@ class AdminOpsApiController extends Controller
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
             'name' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $tenantId = TenantWriteContext::requireTenant();
+        $this->luggagePricing->assertReady();
         $id = (int) ($data['id'] ?? 0);
         $payload = [
             'name' => trim((string) $data['name']),
+            'description' => $this->nullable($data['description'] ?? null),
+            'is_active' => (bool) ($data['is_active'] ?? true),
+            'pool_id' => null,
+            'updated_at' => now(),
         ];
+
+        $duplicate = DB::table('luggage_services')
+            ->where('tenant_id', $tenantId)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($payload['name'])])
+            ->when($id > 0, fn (Builder $query) => $query->where('id', '<>', $id))
+            ->exists();
+        if ($duplicate) {
+            return $this->error('Kategori barang dengan nama tersebut sudah tersedia.', 422);
+        }
 
         if ($id > 0) {
             $query = DB::table('luggage_services')->where('id', $id);
             $this->applyWriteTenantScopeIfExists($query, 'luggage_services');
+            if (! $query->exists()) {
+                return $this->error('Kategori barang tidak ditemukan.', 404);
+            }
             $query->update($payload);
+            DB::table('luggage_segment_rates')
+                ->where('tenant_id', $tenantId)
+                ->where('service_id', $id)
+                ->update(['is_active' => $payload['is_active'], 'updated_at' => now()]);
 
-            return $this->ok(['message' => 'Luggage service updated.', 'id' => $id]);
+            return $this->ok(['message' => 'Kategori barang diperbarui.', 'id' => $id]);
         }
 
-        $poolId = $this->resolveWritablePoolIdFromRequest($request, 'luggage_services', 0, true);
-        if ($poolId < 0) {
-            return $this->error($this->poolResolveErrorMessage($poolId), $poolId === -1 ? 403 : 422);
-        }
+        $newId = DB::transaction(function () use ($payload, $tenantId): int {
+            $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, [
+                'tenant_id' => $tenantId,
+                'pool_id' => null,
+                'created_at' => now(),
+            ]));
+            $this->luggagePricing->syncServiceRates($tenantId, $newId, (int) auth()->id());
 
-        $newId = DB::table('luggage_services')->insertGetId(array_merge($payload, $this->tenantPayload('luggage_services'), $this->poolPayload('luggage_services', $poolId > 0 ? $poolId : null), [
-            'created_at' => now(),
-        ]));
+            return $newId;
+        });
 
-        return $this->ok(['message' => 'Luggage service created.', 'id' => $newId], 201);
+        return $this->ok(['message' => 'Kategori barang dibuat untuk seluruh segment.', 'id' => $newId], 201);
     }
 
     public function luggageServicesDelete(int $id): JsonResponse
     {
+        $tenantId = TenantWriteContext::requireTenant();
+        $this->luggagePricing->assertReady();
         $query = DB::table('luggage_services')->where('id', $id);
         $this->applyWriteTenantScopeIfExists($query, 'luggage_services');
-        $query->delete();
+        if (! $query->exists()) {
+            return $this->error('Kategori barang tidak ditemukan.', 404);
+        }
 
-        return $this->ok(['message' => 'Luggage service deleted.']);
+        DB::transaction(function () use ($query, $tenantId, $id): void {
+            $query->update(['is_active' => false, 'updated_at' => now()]);
+            DB::table('luggage_segment_rates')
+                ->where('tenant_id', $tenantId)
+                ->where('service_id', $id)
+                ->update(['is_active' => false, 'updated_at' => now()]);
+        });
+
+        return $this->ok(['message' => 'Kategori barang diarsipkan.']);
+    }
+
+    public function luggageRatesIndex(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'route_id' => ['required', 'integer', 'min:1'],
+            'segment_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $tenantId = TenantWriteContext::requireTenant();
+
+        $this->luggagePricing->assertReady();
+        $routeQuery = DB::table('routes')->where('id', $data['route_id'])->where('tenant_id', $tenantId);
+        PoolScope::applyRouteScope($routeQuery, 'routes.id', 'routes.name');
+        $route = $routeQuery->first(['id', 'name']);
+        $segment = DB::table('segments')->where('id', $data['segment_id'])->where('route_id', $data['route_id'])->where('tenant_id', $tenantId)->first(['id', 'rute']);
+        if (! $route || ! $segment) {
+            return $this->error('Rute atau segment tidak ditemukan.', 422);
+        }
+
+        $this->luggagePricing->syncSegmentRates($tenantId, (int) $data['segment_id'], (int) auth()->id());
+
+        return $this->ok([
+            'route' => $route,
+            'segment' => $segment,
+            'rates' => $this->luggagePricing->ratesForSegment($tenantId, (int) $data['segment_id']),
+        ]);
+    }
+
+    public function luggageRatesSave(Request $request, int $segmentId): JsonResponse
+    {
+        $data = $request->validate([
+            'route_id' => ['required', 'integer', 'min:1'],
+            'rates' => ['required', 'array', 'max:500'],
+            'rates.*.service_id' => ['required', 'integer', 'min:1', 'distinct'],
+            'rates.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'rates.*.is_active' => ['nullable', 'boolean'],
+        ]);
+        $tenantId = TenantWriteContext::requireTenant();
+        $segmentQuery = DB::table('segments as s')
+            ->join('routes as r', 's.route_id', '=', 'r.id')
+            ->where('s.id', $segmentId)
+            ->where('s.route_id', (int) $data['route_id'])
+            ->where('s.tenant_id', $tenantId)
+            ->where('r.tenant_id', $tenantId);
+        PoolScope::applyRouteScope($segmentQuery, 'r.id', 'r.name');
+        $segment = $segmentQuery->first(['s.id', 's.rute', 'r.name as route_name']);
+        if (! $segment) {
+            return $this->error('Segment tidak sesuai dengan rute induk yang dipilih.', 422);
+        }
+        try {
+            $this->luggagePricing->saveSegmentRates($tenantId, $segmentId, $data['rates'], (int) auth()->id());
+        } catch (\RuntimeException $exception) {
+            return $this->error($exception->getMessage(), 422);
+        }
+
+        ActivityLog::write('BAGASI', 'Tarif bagasi segment diperbarui', (string) $segment->rute, $this->activityActor(), [
+            'tenant_id' => $tenantId,
+            'segment_id' => $segmentId,
+            'rate_count' => count($data['rates']),
+        ]);
+
+        return $this->ok(['message' => 'Seluruh tarif segment berhasil disimpan.']);
     }
 
     public function segmentsIndex(Request $request): JsonResponse
@@ -1075,10 +1192,18 @@ class AdminOpsApiController extends Controller
             return $this->ok(['message' => 'Segment updated.', 'id' => $id]);
         }
 
-        $newId = DB::table('segments')->insertGetId(array_merge($payload, [
-            ...$this->tenantPayload('segments'),
-            'created_at' => now(),
-        ]));
+        $tenantId = TenantWriteContext::requireTenant();
+        $newId = DB::transaction(function () use ($payload, $tenantId): int {
+            $newId = DB::table('segments')->insertGetId(array_merge($payload, [
+                'tenant_id' => $tenantId,
+                'created_at' => now(),
+            ]));
+            if ($this->luggagePricing->ready()) {
+                $this->luggagePricing->syncSegmentRates($tenantId, $newId, (int) auth()->id());
+            }
+
+            return $newId;
+        });
 
         return $this->ok(['message' => 'Segment created.', 'id' => $newId], 201);
     }
@@ -2959,6 +3084,7 @@ class AdminOpsApiController extends Controller
         $routeColumns = $hasRoutesTable ? array_flip(Schema::getColumnListing('routes')) : [];
         $hasRouteIdColumn = isset($luggageColumns['rute_id']);
         $hasRouteLabelColumn = isset($luggageColumns['rute']);
+        $hasSegmentIdColumn = isset($luggageColumns['segment_id']) && SchemaCache::hasTable('segments');
         $hasCreatedAtColumn = isset($luggageColumns['created_at']);
         $hasStatusColumn = isset($luggageColumns['status']);
         $hasPaymentStatusColumn = isset($luggageColumns['payment_status']);
@@ -2988,6 +3114,9 @@ class AdminOpsApiController extends Controller
         if ($hasRoutesTable && $hasRouteIdColumn) {
             $query->leftJoin('routes as r', 'l.rute_id', '=', 'r.id');
         }
+        if ($hasSegmentIdColumn) {
+            $query->leftJoin('segments as sg', 'l.segment_id', '=', 'sg.id');
+        }
 
         if ($hasTripAssignmentLink) {
             $query->leftJoin('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id');
@@ -3013,6 +3142,11 @@ class AdminOpsApiController extends Controller
                 $selectColumn($luggageColumns, 'receiver_address', 'receiver_address'),
                 $serviceForeignKey !== null ? DB::raw('l.'.$serviceForeignKey.' as service_id') : DB::raw('NULL as service_id'),
                 $hasRouteIdColumn ? 'l.rute_id' : DB::raw('NULL as rute_id'),
+                $selectColumn($luggageColumns, 'segment_id', 'segment_id'),
+                $selectColumn($luggageColumns, 'luggage_segment_rate_id', 'luggage_segment_rate_id'),
+                $selectColumn($luggageColumns, 'unit_price', 'unit_price'),
+                $selectColumn($luggageColumns, 'pricing_source', 'pricing_source'),
+                $selectColumn($luggageColumns, 'price_override_reason', 'price_override_reason'),
                 $selectColumn($luggageColumns, 'rute', 'rute'),
                 $selectColumn($luggageColumns, 'tanggal', 'tanggal'),
                 $selectColumn($luggageColumns, 'unit_id', 'unit_id'),
@@ -3031,6 +3165,7 @@ class AdminOpsApiController extends Controller
                 $selectColumn($luggageColumns, 'created_at', 'created_at'),
                 $hasLuggageServicesTable && $serviceForeignKey !== null && isset($serviceColumns['name']) ? DB::raw('s.name as service_name') : DB::raw('NULL as service_name'),
                 $hasRoutesTable && $hasRouteIdColumn && isset($routeColumns['name']) ? DB::raw('r.name as route_name') : DB::raw('NULL as route_name'),
+                $hasSegmentIdColumn ? DB::raw('sg.rute as segment_name') : DB::raw('NULL as segment_name'),
                 $hasTripAssignmentLink && isset($tripAssignmentColumns['tanggal']) ? DB::raw('t.tanggal as departure_date') : DB::raw('NULL as departure_date'),
                 $hasTripAssignmentLink && isset($tripAssignmentColumns['jam']) ? DB::raw('t.jam as departure_time') : DB::raw('NULL as departure_time'),
                 $hasTripAssignmentLink && isset($tripAssignmentColumns['unit']) ? DB::raw('t.unit as departure_unit') : DB::raw('NULL as departure_unit'),
@@ -3264,11 +3399,14 @@ class AdminOpsApiController extends Controller
             'service_id' => ['nullable', 'integer', 'min:1'],
             'layanan_id' => ['nullable', 'integer', 'min:1'],
             'rute_id' => ['nullable', 'integer', 'min:1'],
+            'segment_id' => ['nullable', 'integer', 'min:1'],
             'tanggal' => ['nullable', 'date_format:Y-m-d'],
             'unit_id' => ['nullable', 'integer', 'min:1'],
             'quantity' => ['nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string'],
             'price' => ['nullable', 'numeric', 'min:0'],
+            'unit_price_override' => ['nullable', 'numeric', 'min:0'],
+            'price_override_reason' => ['nullable', 'string', 'max:1000'],
             'status' => ['nullable', 'string', 'max:40'],
             'payment_status' => ['nullable', 'string', 'max:30'],
         ]);
@@ -3276,6 +3414,7 @@ class AdminOpsApiController extends Controller
         $id = (int) ($data['id'] ?? 0);
         $serviceId = (int) ($data['service_id'] ?? $data['layanan_id'] ?? 0);
         $routeId = (int) ($data['rute_id'] ?? 0);
+        $segmentId = (int) ($data['segment_id'] ?? 0);
         $before = [];
         if ($id > 0) {
             $luggageQuery = DB::table('luggages')->where('id', $id);
@@ -3333,12 +3472,57 @@ class AdminOpsApiController extends Controller
             }
         }
 
+        $legacyEdit = $id > 0
+            && (int) ($before['segment_id'] ?? 0) <= 0
+            && $segmentId <= 0;
+        $pricing = null;
+        $pricingDimensionsUnchanged = $id > 0
+            && $segmentId > 0
+            && (int) ($before['rute_id'] ?? 0) === $routeId
+            && (int) ($before['segment_id'] ?? 0) === $segmentId
+            && (int) ($before['service_id'] ?? $before['layanan_id'] ?? 0) === $serviceId;
+        $hasOverrideInput = $request->filled('unit_price_override');
+        if ($pricingDimensionsUnchanged && ! $hasOverrideInput) {
+            $unitPrice = (float) ($before['unit_price'] ?? 0);
+            if ($unitPrice <= 0 && (float) ($before['price'] ?? 0) > 0) {
+                $unitPrice = round(
+                    (float) $before['price'] / max(1, (int) ($before['quantity'] ?? 1)),
+                    2,
+                );
+            }
+            $pricing = [
+                'segment_id' => $segmentId,
+                'luggage_segment_rate_id' => (int) ($before['luggage_segment_rate_id'] ?? 0) ?: null,
+                'unit_price' => $unitPrice,
+                'price' => round($unitPrice * max(1, (int) ($data['quantity'] ?? 1)), 2),
+                'pricing_source' => (string) ($before['pricing_source'] ?? 'rate'),
+                'price_override_reason' => $before['price_override_reason'] ?? null,
+                'price_overridden_by_user_id' => $before['price_overridden_by_user_id'] ?? null,
+            ];
+        } elseif (! $legacyEdit) {
+            if ($segmentId <= 0 || $routeId <= 0 || $serviceId <= 0) {
+                return $this->error('Rute induk, segment, dan kategori barang wajib dipilih.', 422);
+            }
+
+            try {
+                $pricing = $this->luggagePricing->snapshot(
+                    TenantWriteContext::requireTenant(),
+                    $routeId,
+                    $segmentId,
+                    $serviceId,
+                    max(1, (int) ($data['quantity'] ?? 1)),
+                    $data['unit_price_override'] ?? null,
+                    $data['price_override_reason'] ?? null,
+                    (int) auth()->id(),
+                    AccessControl::can((int) auth()->id(), 'luggage.tariff.override'),
+                );
+            } catch (\RuntimeException $exception) {
+                return $this->error($exception->getMessage(), 422);
+            }
+        }
+
         $pengirimId = $this->upsertCustomerBagasi($senderName, $senderPhone, $senderAddress, 'pengirim', $customerPoolId);
         $penerimaId = $this->upsertCustomerBagasi($receiverName, $receiverPhone, $receiverAddress, 'penerima', $customerPoolId);
-
-        $inputPrice = (float) ($data['price'] ?? 0);
-        $mappedPrice = $this->resolveMappedLuggagePrice($routeId, $serviceId);
-        $resolvedPrice = $inputPrice > 0 ? $inputPrice : $mappedPrice;
 
         $payload = [
             'sender_name' => $senderName,
@@ -3351,7 +3535,7 @@ class AdminOpsApiController extends Controller
             'layanan_id' => $serviceId > 0 ? $serviceId : null,
             'quantity' => max(1, (int) ($data['quantity'] ?? 1)),
             'notes' => $this->nullable($data['notes'] ?? null),
-            'price' => $resolvedPrice,
+            'price' => $pricing['price'] ?? (float) ($before['price'] ?? 0),
             'status' => $this->normalizeLuggageStatus($data['status'] ?? null),
             'payment_status' => $this->nullable($data['payment_status'] ?? null) ?? 'Belum Bayar',
             'rute_id' => $routeId > 0 ? $routeId : null,
@@ -3361,6 +3545,16 @@ class AdminOpsApiController extends Controller
             'pengirim_id' => $pengirimId > 0 ? $pengirimId : null,
             'penerima_id' => $penerimaId > 0 ? $penerimaId : null,
         ];
+        if ($pricing !== null) {
+            $payload = array_merge($payload, [
+                'segment_id' => $pricing['segment_id'],
+                'luggage_segment_rate_id' => $pricing['luggage_segment_rate_id'],
+                'unit_price' => $pricing['unit_price'],
+                'pricing_source' => $pricing['pricing_source'],
+                'price_override_reason' => $pricing['price_override_reason'],
+                'price_overridden_by_user_id' => $pricing['price_overridden_by_user_id'],
+            ]);
+        }
 
         if ($this->luggagesHasPoolIdColumn()) {
             $payload['pool_id'] = $poolId > 0 ? $poolId : null;
@@ -3379,6 +3573,13 @@ class AdminOpsApiController extends Controller
                     $this->luggageChangeSummary((array) $previous, $payload + (array) $previous),
                 );
             }
+            if (($pricing['pricing_source'] ?? '') === 'override') {
+                $this->appendLuggageLogByResi(
+                    $this->ensureLuggageResi($id),
+                    (string) $payload['status'],
+                    'Tarif diubah menjadi Rp '.number_format((float) $pricing['unit_price'], 0, ',', '.').' per barang. Alasan: '.$pricing['price_override_reason'],
+                );
+            }
 
             return $this->ok(['message' => 'Luggage updated.', 'id' => $id]);
         }
@@ -3389,6 +3590,13 @@ class AdminOpsApiController extends Controller
         ]));
         $resi = $this->ensureLuggageResi($newId);
         $this->appendLuggageLogByResi($resi, (string) $payload['status'], $this->luggageCreateSummary($payload));
+        if (($pricing['pricing_source'] ?? '') === 'override') {
+            $this->appendLuggageLogByResi(
+                $resi,
+                (string) $payload['status'],
+                'Tarif diubah menjadi Rp '.number_format((float) $pricing['unit_price'], 0, ',', '.').' per barang. Alasan: '.$pricing['price_override_reason'],
+            );
+        }
 
         return $this->ok(['message' => 'Luggage created.', 'id' => $newId], 201);
     }

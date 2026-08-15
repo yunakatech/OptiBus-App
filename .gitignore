@@ -60,3 +60,6 @@ Homestead.yaml
 /.vscode
 /.zed
 /docs
+
+.env*
+.vercel

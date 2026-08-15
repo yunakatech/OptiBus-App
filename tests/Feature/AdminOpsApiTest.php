@@ -1692,6 +1692,24 @@ class AdminOpsApiTest extends TestCase
             'created_at' => now(),
         ]);
         $this->mapRouteToPool($poolId, $routeId);
+        $segmentId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'jam' => '09:00:00',
+            'harga' => 0,
+            'created_at' => now(),
+        ]);
+        DB::table('luggage_segment_rates')->insert([
+            'tenant_id' => $tenantId,
+            'segment_id' => $segmentId,
+            'service_id' => $serviceId,
+            'unit_price' => 25000,
+            'is_active' => true,
+            'configured_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $charter = $this->postJson(route('api.admin.charters.save'), [
             'pool_id' => $poolId,
@@ -1764,6 +1782,7 @@ class AdminOpsApiTest extends TestCase
             'receiver_address' => 'Makassar',
             'service_id' => $serviceId,
             'rute_id' => $routeId,
+            'segment_id' => $segmentId,
             'quantity' => 2,
             'notes' => 'Handle with care',
             'price' => 50000,
@@ -2106,6 +2125,24 @@ class AdminOpsApiTest extends TestCase
             'name' => 'Kilat',
             'created_at' => now(),
         ]);
+        $segmentId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - PAREPARE',
+            'jam' => '09:00:00',
+            'harga' => 0,
+            'created_at' => now(),
+        ]);
+        DB::table('luggage_segment_rates')->insert([
+            'tenant_id' => $tenantId,
+            'segment_id' => $segmentId,
+            'service_id' => $serviceId,
+            'unit_price' => 0,
+            'is_active' => true,
+            'configured_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         $save = $this->postJson(route('api.admin.luggages.save-raw'), [
             'sender_name' => 'Pengirim Raw',
             'sender_phone' => '0812-111',
@@ -2114,6 +2151,7 @@ class AdminOpsApiTest extends TestCase
             'receiver_phone' => '0813-222',
             'receiver_address' => 'Parepare',
             'rute_id' => $routeId,
+            'segment_id' => $segmentId,
             'service_id' => $serviceId,
             'quantity' => 1,
             'price' => 0,
