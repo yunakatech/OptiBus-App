@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -57,6 +58,7 @@ class SubscriptionPaymentController extends Controller
         $hasDueDateColumn = Schema::hasColumn('invoice_subscriptions', 'due_date');
         $hasPaidAtColumn = Schema::hasColumn('invoice_subscriptions', 'paid_at');
         $hasGatewayColumns = Schema::hasColumn('invoice_subscriptions', 'gateway_checkout_url');
+        $hasGatewayPayloadColumn = Schema::hasColumn('invoice_subscriptions', 'gateway_payload');
 
         $columns = [
             'id',
@@ -82,27 +84,43 @@ class SubscriptionPaymentController extends Controller
                 'gateway_paid_at',
             ]);
         }
+        if ($hasGatewayPayloadColumn) {
+            $columns[] = 'gateway_payload';
+        }
 
         return DB::table('invoice_subscriptions')
             ->where('tenant_id', (int) $tenantSub['tenant_id'])
             ->orderByDesc('created_at')
             ->limit(20)
             ->get($columns)
-            ->map(fn ($invoice): array => [
-                'id' => (int) $invoice->id,
-                'invoice_number' => (string) $invoice->invoice_number,
-                'amount' => (float) $invoice->amount,
-                'status' => (string) $invoice->status,
-                'due_date' => $hasDueDateColumn ? ($invoice->due_date ?? null) : null,
-                'paid_at' => $hasPaidAtColumn ? ($invoice->paid_at ?? null) : null,
-                'payment_method' => (string) ($invoice->payment_method ?? ''),
-                'payment_gateway' => (string) ($invoice->payment_gateway ?? 'Mayar'),
-                'gateway_reference' => $hasGatewayColumns ? (string) ($invoice->gateway_reference ?? '') : '',
-                'gateway_checkout_url' => $hasGatewayColumns ? (string) ($invoice->gateway_checkout_url ?? '') : '',
-                'gateway_status' => $hasGatewayColumns ? (string) ($invoice->gateway_status ?? '') : '',
-                'gateway_paid_at' => $hasGatewayColumns ? ($invoice->gateway_paid_at ?? null) : null,
-                'created_at' => $invoice->created_at,
-            ])
+            ->map(function ($invoice) use ($hasDueDateColumn, $hasPaidAtColumn, $hasGatewayColumns, $hasGatewayPayloadColumn): array {
+                $gatewayPayload = $hasGatewayPayloadColumn
+                    ? json_decode((string) ($invoice->gateway_payload ?? ''), true)
+                    : [];
+                $gatewayPayload = is_array($gatewayPayload) ? $gatewayPayload : [];
+                $gatewayErrorMessage = $gatewayPayload['message']
+                    ?? ($gatewayPayload['response']['messages'] ?? '');
+                if (is_array($gatewayErrorMessage)) {
+                    $gatewayErrorMessage = implode(' ', array_map('strval', $gatewayErrorMessage));
+                }
+
+                return [
+                    'id' => (int) $invoice->id,
+                    'invoice_number' => (string) $invoice->invoice_number,
+                    'amount' => (float) $invoice->amount,
+                    'status' => (string) $invoice->status,
+                    'due_date' => $hasDueDateColumn ? ($invoice->due_date ?? null) : null,
+                    'paid_at' => $hasPaidAtColumn ? ($invoice->paid_at ?? null) : null,
+                    'payment_method' => (string) ($invoice->payment_method ?? ''),
+                    'payment_gateway' => (string) ($invoice->payment_gateway ?? 'Mayar'),
+                    'gateway_reference' => $hasGatewayColumns ? (string) ($invoice->gateway_reference ?? '') : '',
+                    'gateway_checkout_url' => $hasGatewayColumns ? (string) ($invoice->gateway_checkout_url ?? '') : '',
+                    'gateway_status' => $hasGatewayColumns ? (string) ($invoice->gateway_status ?? '') : '',
+                    'gateway_paid_at' => $hasGatewayColumns ? ($invoice->gateway_paid_at ?? null) : null,
+                    'gateway_error_message' => Str::limit(trim((string) $gatewayErrorMessage), 240, '...'),
+                    'created_at' => $invoice->created_at,
+                ];
+            })
             ->all();
     }
 

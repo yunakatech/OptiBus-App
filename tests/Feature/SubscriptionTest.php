@@ -190,7 +190,8 @@ class SubscriptionTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('invoices.0.gateway_status', 'payment_link_error')
-                ->where('invoices.0.gateway_checkout_url', ''));
+                ->where('invoices.0.gateway_checkout_url', '')
+                ->where('invoices.0.gateway_error_message', 'Mayar unavailable'));
     }
 
     public function test_subscription_checkout_creates_mayar_invoice_for_selected_plan(): void

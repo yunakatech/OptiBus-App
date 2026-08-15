@@ -288,7 +288,7 @@ class MayarGateway
     {
         $email = trim((string) ($invoice->tenant_email ?? ''));
         if ($email === '') {
-            $email = 'billing+'.((int) $invoice->tenant_id).'@optibus.local';
+            $email = 'billing+'.((int) $invoice->tenant_id).'@optibus.app';
         }
 
         $phone = preg_replace('/\D+/', '', (string) ($invoice->tenant_phone ?? ''));
