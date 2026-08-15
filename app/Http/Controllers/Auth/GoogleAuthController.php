@@ -95,9 +95,15 @@ class GoogleAuthController extends Controller
 
             Log::info("New user created via Google OAuth: #{$user->id} {$email}");
         } else {
-            // Update avatar if null
+            $updates = [];
+            if (! $user->email_verified_at) {
+                $updates['email_verified_at'] = now();
+            }
             if (! $user->avatar && $avatar) {
-                $user->update(['avatar' => $avatar]);
+                $updates['avatar'] = $avatar;
+            }
+            if ($updates !== []) {
+                $user->forceFill($updates)->save();
             }
         }
 
@@ -116,10 +122,14 @@ class GoogleAuthController extends Controller
             return redirect()->intended(route('platform.dashboard'));
         }
 
-        // New tenant users must complete onboarding before accessing dashboard.
-        if ($isNewUser) {
+        // Any Google account without a tenant must complete onboarding first.
+        if ((int) ($user->tenant_id ?? 0) <= 0) {
+            $request->session()->put('registration_onboarding_pending', true);
+
             return redirect()->route('onboarding');
         }
+
+        $request->session()->forget('registration_onboarding_pending');
 
         return redirect()->intended(route('dashboard'));
     }

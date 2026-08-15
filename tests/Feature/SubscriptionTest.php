@@ -309,6 +309,62 @@ class SubscriptionTest extends TestCase
         ]);
     }
 
+    public function test_expired_subscription_can_renew_same_plan(): void
+    {
+        config([
+            'mayar.enabled' => true,
+            'mayar.api_key' => 'test-mayar-key',
+            'mayar.environment' => 'sandbox',
+            'mayar.api_url' => 'https://api.mayar.io/hl/v2',
+            'mayar.payment_create_path' => '/invoices/create',
+        ]);
+
+        Http::fake([
+            'https://api.mayar.io/hl/v2/invoices/create' => Http::response([
+                'statusCode' => 200,
+                'data' => [
+                    'id' => 'pay_renew_123',
+                    'transactionId' => 'txn_renew_123',
+                    'link' => 'https://mayar.test/pay/pay_renew_123',
+                    'status' => 'open',
+                ],
+            ]),
+        ]);
+
+        [$user, $tenantId, $expiredSubscriptionId] = $this->tenantWithSubscription(
+            planSlug: 'starter',
+            tenantStatus: 'active',
+            subscriptionStatus: 'active',
+            trialEndsAt: null,
+            endsAt: now()->subDay()->toDateString(),
+        );
+        $starterPlanId = (int) DB::table('plans')->where('slug', 'starter')->value('id');
+
+        $this->actingAs($user)
+            ->post(route('subscription.checkout'), [
+                'plan_slug' => 'starter',
+                'billing_interval' => 'monthly',
+            ])
+            ->assertRedirect('https://mayar.test/pay/pay_renew_123');
+
+        $renewalSubscriptionId = (int) DB::table('subscriptions')
+            ->where('tenant_id', $tenantId)
+            ->where('id', '!=', $expiredSubscriptionId)
+            ->value('id');
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $renewalSubscriptionId,
+            'tenant_id' => $tenantId,
+            'plan_id' => $starterPlanId,
+            'status' => 'pending_payment',
+        ]);
+        $this->assertDatabaseHas('invoice_subscriptions', [
+            'tenant_id' => $tenantId,
+            'subscription_id' => $renewalSubscriptionId,
+            'gateway_checkout_url' => 'https://mayar.test/pay/pay_renew_123',
+        ]);
+    }
+
     public function test_subscription_upgrade_keeps_existing_access_until_invoice_is_paid(): void
     {
         config([
