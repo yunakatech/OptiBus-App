@@ -24,22 +24,11 @@
     const isBookingConsolePage = $derived(
         url.isCurrentUrl('/booking-console', url.currentUrl),
     );
-    const isSubscriptionPage = $derived(
-        url.isCurrentUrl('/subscription', url.currentUrl),
-    );
 </script>
 
-<AppShell
-    variant="sidebar"
-    class={isSubscriptionPage ? 'h-svh overflow-hidden' : ''}
->
+<AppShell variant="sidebar">
     <AppSidebar />
-    <AppContent
-        variant="sidebar"
-        class={isSubscriptionPage
-            ? 'h-svh overflow-y-auto overflow-x-clip pb-20 md:pb-0'
-            : 'overflow-x-clip pb-20 md:pb-0'}
-    >
+    <AppContent variant="sidebar" class="overflow-x-clip pb-20 md:pb-0">
         <AppSidebarHeader {breadcrumbs} />
         {#if !isBookingConsolePage}
             <div
