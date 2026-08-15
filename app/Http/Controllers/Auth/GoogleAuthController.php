@@ -30,9 +30,26 @@ class GoogleAuthController extends Controller
             session(['google_invitation_token' => trim((string) $request->query('invite'))]);
         }
 
-        if ($request->has('intent')) {
-            session(['registration_intent' => $request->intent]);
-            session(['registration_plan' => $request->plan]);
+        $intent = trim((string) $request->query('intent', ''));
+        $plan = trim((string) $request->query('plan', ''));
+        if ($intent !== '' || $plan !== '') {
+            if ($intent === 'payment') {
+                $intent = 'paid';
+            }
+            $intent = in_array($intent, ['trial', 'paid'], true)
+                ? $intent
+                : ($plan !== '' ? 'paid' : 'trial');
+
+            session([
+                'registration_intent' => $intent,
+                'registration_plan' => $intent === 'trial' ? 'starter' : ($plan !== '' ? $plan : 'starter'),
+            ]);
+        } elseif (! $request->filled('invite')) {
+            // Ordinary Google sign-in must not inherit a previous paid checkout flow.
+            session([
+                'registration_intent' => 'trial',
+                'registration_plan' => 'starter',
+            ]);
         }
 
         return Socialite::driver('google')->redirect();
