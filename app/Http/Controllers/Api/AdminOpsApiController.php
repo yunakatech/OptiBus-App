@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\LuggagePricingService;
 use App\Services\PaymentGateway;
+use App\Services\TenantDeletionService;
 use App\Services\TenantInvitationService;
 use App\Services\TenantProvisioningService;
 use App\Support\AccessControl;
@@ -39,6 +40,7 @@ class AdminOpsApiController extends Controller
         private readonly RoleAccessData $roleAccessData,
         private readonly TenantInvitationService $tenantInvitationService,
         private readonly LuggagePricingService $luggagePricing,
+        private readonly TenantDeletionService $tenantDeletionService,
     ) {}
 
     private ?bool $schedulesHasRouteId = null;
@@ -5830,7 +5832,7 @@ class AdminOpsApiController extends Controller
 
             $tenant = DB::table('tenants')
                 ->where('id', $tenantId)
-                ->where('status', '!=', 'canceled')
+                ->whereNotIn('status', ['canceled', 'deleting'])
                 ->first(['id', 'name', 'slug', 'status']);
 
             if (! $tenant) {
@@ -11618,6 +11620,10 @@ XML;
             }
         }
 
+        if ($id > 0 && DB::table('tenants')->where('id', $id)->where('status', 'deleting')->exists()) {
+            return $this->error('Tenant sedang dalam proses penghapusan.', 409);
+        }
+
         $updatePayload = [
             'name' => $payload['name'],
             'slug' => $payload['slug'],
@@ -11640,42 +11646,137 @@ XML;
 
     public function tenantsDelete(int $id): JsonResponse
     {
-        if ($response = $this->requirePermission('platform.manage')) {
+        return $this->tenantsArchive($id);
+    }
+
+    public function tenantsDeletionPreview(int $id): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
             return $response;
         }
 
-        if (! SchemaCache::hasTable('tenants')) {
-            return $this->error('Tabel tenants belum tersedia.', 409);
+        try {
+            return $this->ok($this->tenantDeletionService->preview($id));
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 404);
+        }
+    }
+
+    public function tenantsArchive(int $id): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
         }
 
-        $tenant = DB::table('tenants')->where('id', $id)->first();
+        try {
+            $tenant = $this->tenantDeletionService->archive((int) $id, (int) auth()->id());
+            Cache::forget('inertia:saas:summary:v1');
+
+            return $this->ok(['message' => "Tenant '{$tenant->name}' telah diarsipkan."]);
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 409);
+        }
+    }
+
+    public function tenantsPurge(Request $request, int $id): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        $data = $request->validate([
+            'confirmation' => ['required', 'string', 'max:200'],
+            'confirm_all' => ['accepted'],
+        ]);
+
+        $tenant = SchemaCache::hasTable('tenants')
+            ? DB::table('tenants')->where('id', $id)->first()
+            : null;
         if (! $tenant) {
             return $this->error('Tenant tidak ditemukan.', 404);
         }
 
-        return DB::transaction(function () use ($id, $tenant): JsonResponse {
-            // Instead of hard-deleting, mark as canceled (data retention period)
-            DB::table('tenants')->where('id', $id)->update([
-                'status' => 'canceled',
-                'updated_at' => now(),
-            ]);
+        $confirmation = trim((string) $data['confirmation']);
+        if (! hash_equals((string) $tenant->name, $confirmation) && ! hash_equals((string) $tenant->slug, $confirmation)) {
+            return $this->error('Ketik nama atau slug tenant dengan tepat untuk melanjutkan.', 422);
+        }
 
-            // Cancel the subscription
-            if (SchemaCache::hasTable('subscriptions')) {
-                DB::table('subscriptions')
-                    ->where('tenant_id', $id)
-                    ->whereIn('status', ['pending_payment', 'trial', 'active', 'past_due'])
-                    ->update([
-                        'status' => 'canceled',
-                        'canceled_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-            }
+        $actorId = (int) auth()->id();
+        if (SchemaCache::hasTable('users') && SchemaCache::hasColumn('users', 'tenant_id') && DB::table('users')
+            ->where('id', $actorId)
+            ->where('tenant_id', $id)
+            ->exists()) {
+            return $this->error('Akun yang sedang login tidak boleh ikut terhapus.', 409);
+        }
 
+        try {
+            $job = $this->tenantDeletionService->createPurgeJob($id, $actorId);
             Cache::forget('inertia:saas:summary:v1');
 
-            return $this->ok(['message' => "Tenant '{$tenant->name}' telah dicancel."]);
-        });
+            return $this->ok([
+                'message' => "Purge tenant '{$tenant->name}' telah dijadwalkan.",
+                'job' => $this->tenantDeletionService->jobPayload($job),
+            ], 202);
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 409);
+        }
+    }
+
+    public function tenantDeletionStatus(int $jobId): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        $job = $this->tenantDeletionService->job($jobId);
+        if (! $job) {
+            return $this->error('Purge job tidak ditemukan.', 404);
+        }
+
+        return $this->ok(['job' => $this->tenantDeletionService->jobPayload($job)]);
+    }
+
+    public function tenantDeletionRetry(int $jobId): JsonResponse
+    {
+        if ($response = $this->requireSuperAdmin()) {
+            return $response;
+        }
+
+        $job = $this->tenantDeletionService->retry($jobId);
+        if (! $job) {
+            return $this->error('Purge job tidak ditemukan.', 404);
+        }
+
+        return $this->ok([
+            'message' => 'Purge job dimasukkan kembali ke antrian.',
+            'job' => $this->tenantDeletionService->jobPayload($job),
+        ]);
+    }
+
+    public function tenantDeletionProcess(Request $request): JsonResponse
+    {
+        $configuredSecrets = array_values(array_filter([
+            trim((string) env('TENANT_PURGE_CRON_SECRET', '')),
+            trim((string) env('CRON_SECRET', '')),
+        ]));
+        $providedSecret = trim((string) $request->header('X-Tenant-Purge-Secret', ''));
+        if ($providedSecret === '') {
+            $authorization = trim((string) $request->header('Authorization', ''));
+            $providedSecret = preg_replace('/^Bearer\s+/i', '', $authorization) ?? '';
+        }
+        $secretMatches = $providedSecret !== '' && collect($configuredSecrets)
+            ->contains(fn (string $secret): bool => hash_equals($secret, $providedSecret));
+        if ($configuredSecrets === [] || ! $secretMatches) {
+            return $this->error('Unauthorized.', 401);
+        }
+
+        try {
+            $jobId = (int) $request->input('job_id', 0);
+
+            return $this->ok($this->tenantDeletionService->processNextBatch($jobId > 0 ? $jobId : null));
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 500);
+        }
     }
 
     // ──────────────────────────────────────────────

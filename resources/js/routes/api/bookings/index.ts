@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../../wayfinder'
 import departureRiturs4d7ec9 from './departure-riturs'
 /**
 * @see \App\Http\Controllers\Api\BookingApiController::routesByDate

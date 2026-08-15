@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../wayfinder'
 /**
 * @see \App\Http\Controllers\SoloDriverController::dashboard
  * @see app/Http/Controllers/SoloDriverController.php:17

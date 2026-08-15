@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../wayfinder'
 /**
 * @see \App\Http\Controllers\PaymentController::__invoke
  * @see app/Http/Controllers/PaymentController.php:34

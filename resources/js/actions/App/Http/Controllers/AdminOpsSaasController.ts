@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 const AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.url = (options?: RouteQue
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.get = (options?: RouteQue
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
 AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.head = (options?: RouteQu
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
     const AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86bForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.head = (options?: RouteQu
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
         AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86bForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.head = (options?: RouteQu
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas'
  */
         AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86bForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.head = (options?: RouteQu
     AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86b.form = AdminOpsSaasControllere9be78b868bfc1c76cb38c3fbe68c86bForm
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 const AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.url = (options?: RouteQue
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.get = (options?: RouteQue
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.head = (options?: RouteQu
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
     const AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556ecaForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.head = (options?: RouteQu
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
         AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556ecaForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.head = (options?: RouteQu
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
         AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556ecaForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.head = (options?: RouteQu
     AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556eca.form = AdminOpsSaasControlleraae2366b5e22041816d5a39d8b556ecaForm
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 const AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.url = (options?: RouteQue
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.get = (options?: RouteQue
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.head = (options?: RouteQu
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
     const AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.head = (options?: RouteQu
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
         AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.head = (options?: RouteQu
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
         AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,7 +235,7 @@ AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.head = (options?: RouteQu
     AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9.form = AdminOpsSaasControllereb0a1fe7621136537fb0ef1eade501a9Form
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 const AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -250,7 +250,7 @@ AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.url = (options?: RouteQueryOptions) => {
@@ -259,7 +259,7 @@ AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.url = (options?: RouteQue
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -268,7 +268,7 @@ AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.get = (options?: RouteQue
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -278,7 +278,7 @@ AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.head = (options?: RouteQu
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
     const AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2dForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -288,7 +288,7 @@ AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.head = (options?: RouteQu
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
         AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2dForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -297,7 +297,7 @@ AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.head = (options?: RouteQu
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
         AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2dForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -313,7 +313,7 @@ AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.head = (options?: RouteQu
     AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2d.form = AdminOpsSaasController0c3db54cbdb1307b83370f1e172d3a2dForm
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 const AdminOpsSaasController594c5c73392af84566a43ab28e656222 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -328,7 +328,7 @@ AdminOpsSaasController594c5c73392af84566a43ab28e656222.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 AdminOpsSaasController594c5c73392af84566a43ab28e656222.url = (options?: RouteQueryOptions) => {
@@ -337,7 +337,7 @@ AdminOpsSaasController594c5c73392af84566a43ab28e656222.url = (options?: RouteQue
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 AdminOpsSaasController594c5c73392af84566a43ab28e656222.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -346,7 +346,7 @@ AdminOpsSaasController594c5c73392af84566a43ab28e656222.get = (options?: RouteQue
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 AdminOpsSaasController594c5c73392af84566a43ab28e656222.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -356,7 +356,7 @@ AdminOpsSaasController594c5c73392af84566a43ab28e656222.head = (options?: RouteQu
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
     const AdminOpsSaasController594c5c73392af84566a43ab28e656222Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -366,7 +366,7 @@ AdminOpsSaasController594c5c73392af84566a43ab28e656222.head = (options?: RouteQu
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
         AdminOpsSaasController594c5c73392af84566a43ab28e656222Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -375,7 +375,7 @@ AdminOpsSaasController594c5c73392af84566a43ab28e656222.head = (options?: RouteQu
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
         AdminOpsSaasController594c5c73392af84566a43ab28e656222Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -391,7 +391,7 @@ AdminOpsSaasController594c5c73392af84566a43ab28e656222.head = (options?: RouteQu
     AdminOpsSaasController594c5c73392af84566a43ab28e656222.form = AdminOpsSaasController594c5c73392af84566a43ab28e656222Form
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 const AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -406,7 +406,7 @@ AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.url = (options?: RouteQueryOptions) => {
@@ -415,7 +415,7 @@ AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.url = (options?: RouteQue
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -424,7 +424,7 @@ AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.get = (options?: RouteQue
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -434,7 +434,7 @@ AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.head = (options?: RouteQu
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
     const AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55fForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -444,7 +444,7 @@ AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.head = (options?: RouteQu
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
         AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55fForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -453,7 +453,7 @@ AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55f.head = (options?: RouteQu
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
         AdminOpsSaasController3e3d19ae608d61784ecaaafae3dfc55fForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

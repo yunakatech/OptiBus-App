@@ -1,7 +1,7 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 export const tenants = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ tenants.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 tenants.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ tenants.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 tenants.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ tenants.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
 tenants.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ tenants.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
     const tenantsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ tenants.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
         tenantsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ tenants.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/tenants'
  */
         tenantsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ tenants.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     tenants.form = tenantsForm
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 export const subscriptions = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ subscriptions.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 subscriptions.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ subscriptions.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 subscriptions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ subscriptions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
 subscriptions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ subscriptions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
     const subscriptionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ subscriptions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
         subscriptionsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ subscriptions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/subscriptions'
  */
         subscriptionsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ subscriptions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     subscriptions.form = subscriptionsForm
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 export const plans = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ plans.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 plans.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ plans.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 plans.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -190,7 +190,7 @@ plans.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
 plans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -200,7 +200,7 @@ plans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
     const plansForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -210,7 +210,7 @@ plans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
         plansForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ plans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/plans'
  */
         plansForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,7 +235,7 @@ plans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     plans.form = plansForm
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 export const invoices = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -250,7 +250,7 @@ invoices.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 invoices.url = (options?: RouteQueryOptions) => {
@@ -259,7 +259,7 @@ invoices.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 invoices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -268,7 +268,7 @@ invoices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
 invoices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -278,7 +278,7 @@ invoices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
     const invoicesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -288,7 +288,7 @@ invoices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
         invoicesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -297,7 +297,7 @@ invoices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/invoices'
  */
         invoicesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -313,7 +313,7 @@ invoices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     invoices.form = invoicesForm
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 export const payment = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -328,7 +328,7 @@ payment.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 payment.url = (options?: RouteQueryOptions) => {
@@ -337,7 +337,7 @@ payment.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 payment.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -346,7 +346,7 @@ payment.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
 payment.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -356,7 +356,7 @@ payment.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
     const paymentForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -366,7 +366,7 @@ payment.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
         paymentForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -375,7 +375,7 @@ payment.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
- * @see app/Http/Controllers/AdminOpsSaasController.php:19
+ * @see app/Http/Controllers/AdminOpsSaasController.php:20
  * @route '/admin-ops/saas/payment'
  */
         paymentForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
