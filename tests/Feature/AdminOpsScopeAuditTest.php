@@ -4,11 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Support\AccessControl;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Tests\TestCase;
 
 class AdminOpsScopeAuditTest extends TestCase
@@ -316,7 +316,7 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertOk();
     }
 
-    public function test_admin_master_lookup_shares_operational_data_but_writes_to_active_pool(): void
+    public function test_admin_master_lookup_shares_categories_tenant_wide_and_writes_other_masters_to_active_pool(): void
     {
         AccessControl::syncDefaults();
 
@@ -379,7 +379,7 @@ class AdminOpsScopeAuditTest extends TestCase
 
         $newServiceId = (int) (DB::table('luggage_services')->where('name', 'Ekspres A')->value('id') ?? 0);
         $this->assertTrue($newServiceId > 0);
-        $this->assertSame($poolA, (int) (DB::table('luggage_services')->where('id', $newServiceId)->value('pool_id') ?? 0));
+        $this->assertNull(DB::table('luggage_services')->where('id', $newServiceId)->value('pool_id'));
 
         $this->actingAs($admin)
             ->withSession(['active_pool_id' => $poolA])
@@ -423,7 +423,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->assertDatabaseHas('luggage_services', [
             'id' => $serviceAId,
             'name' => 'Dokumen A Updated',
-            'pool_id' => $poolA,
+            'pool_id' => null,
         ]);
         $this->assertDatabaseHas('luggage_services', [
             'id' => $serviceBId,
@@ -455,7 +455,8 @@ class AdminOpsScopeAuditTest extends TestCase
             ->actingAs($admin)
             ->getJson(route('api.admin.luggage-services.index'))
             ->assertOk()
-            ->assertJsonCount(2, 'services')
+            ->assertJsonCount(3, 'services')
+            ->assertJsonFragment(['name' => 'Ekspres A', 'is_active' => false])
             ->assertJsonFragment(['name' => 'Dokumen A Updated'])
             ->assertJsonFragment(['name' => 'Dokumen B']);
 
@@ -1218,7 +1219,7 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertRedirect('/admin-ops/kategori-armada');
     }
 
-    public function test_pool_scoped_master_create_is_rejected_when_user_has_no_writable_pool_scope(): void
+    public function test_tenant_category_create_does_not_require_pool_but_pool_master_still_does(): void
     {
         AccessControl::syncDefaults();
 
@@ -1241,8 +1242,7 @@ class AdminOpsScopeAuditTest extends TestCase
             ->postJson(route('api.admin.luggage-services.save'), [
                 'name' => 'Tarif Tanpa Pool',
             ])
-            ->assertStatus(422)
-            ->assertJsonPath('error', 'Belum ada pool yang bisa diakses untuk menyimpan data ini.');
+            ->assertCreated();
 
         $this->actingAs($operator)
             ->withSession(['active_tenant_id' => $tenantId])
@@ -1257,9 +1257,10 @@ class AdminOpsScopeAuditTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('error', 'Belum ada pool yang bisa diakses untuk menyimpan data ini.');
 
-        $this->assertDatabaseMissing('luggage_services', [
+        $this->assertDatabaseHas('luggage_services', [
             'name' => 'Tarif Tanpa Pool',
             'tenant_id' => $tenantId,
+            'pool_id' => null,
         ]);
         $this->assertDatabaseMissing('master_carter', [
             'name' => 'RUTE TANPA POOL',

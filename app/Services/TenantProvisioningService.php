@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Schema;
 
 class TenantProvisioningService
 {
+    public function __construct(private readonly LuggagePricingService $luggagePricing) {}
+
     /**
      * Provision a tenant from the platform SaaS admin, without an owner user.
      *
@@ -539,6 +541,10 @@ class TenantProvisioningService
         }
         $existing = $existingQuery->value('id');
         if ($existing) {
+            if ($this->luggagePricing->ready()) {
+                $this->luggagePricing->syncSegmentRates($tenantId, (int) $existing);
+            }
+
             return (int) $existing;
         }
 
@@ -558,7 +564,12 @@ class TenantProvisioningService
             $payload['jam_pickups'] = json_encode($pickupTimes !== [] ? $pickupTimes : ['08:00']);
         }
 
-        return (int) DB::table('segments')->insertGetId($this->filterPayloadForTable('segments', $payload));
+        $segmentId = (int) DB::table('segments')->insertGetId($this->filterPayloadForTable('segments', $payload));
+        if ($this->luggagePricing->ready()) {
+            $this->luggagePricing->syncSegmentRates($tenantId, $segmentId);
+        }
+
+        return $segmentId;
     }
 
     /**

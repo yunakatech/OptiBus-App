@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Support\SchemaCache;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -33,6 +33,9 @@ class AccessControl
             'luggage.tracking' => ['name' => 'Update Tracking Bagasi', 'group' => 'Bagasi'],
             'luggage.incident' => ['name' => 'Laporkan Insiden Bagasi', 'group' => 'Bagasi'],
             'luggage.claim' => ['name' => 'Kelola Klaim Bagasi', 'group' => 'Bagasi'],
+            'luggage.category.manage' => ['name' => 'Kelola Kategori Barang', 'group' => 'Bagasi'],
+            'luggage.tariff.manage' => ['name' => 'Kelola Tarif Bagasi', 'group' => 'Bagasi'],
+            'luggage.tariff.override' => ['name' => 'Override Tarif Bagasi', 'group' => 'Bagasi'],
             'customer.view' => ['name' => 'Lihat Customer', 'group' => 'Customer'],
             'customer.create' => ['name' => 'Tambah Customer', 'group' => 'Customer'],
             'customer.update' => ['name' => 'Edit Customer', 'group' => 'Customer'],
@@ -79,7 +82,7 @@ class AccessControl
                 'permissions' => [
                     'dashboard.view', 'booking.view', 'booking.create', 'booking.update', 'booking.print',
                     'charter.view', 'charter.create', 'charter.update', 'charter.print',
-                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking', 'luggage.incident',
+                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking', 'luggage.incident', 'luggage.tariff.manage', 'luggage.tariff.override',
                     'customer.view', 'customer.create', 'customer.update', 'report.view', 'payment.update',
                     'master.view', 'driver.view', 'armada.view', 'logs.view',
                 ],
@@ -91,7 +94,7 @@ class AccessControl
                     'dashboard.view',
                     'booking.view', 'booking.create', 'booking.update', 'booking.delete', 'booking.print',
                     'charter.view', 'charter.create', 'charter.update', 'charter.delete', 'charter.print',
-                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.delete', 'luggage.print', 'luggage.tracking', 'luggage.incident', 'luggage.claim',
+                    'luggage.view', 'luggage.create', 'luggage.update', 'luggage.delete', 'luggage.print', 'luggage.tracking', 'luggage.incident', 'luggage.claim', 'luggage.category.manage', 'luggage.tariff.manage', 'luggage.tariff.override',
                     'customer.view', 'customer.create', 'customer.update', 'customer.delete', 'customer.import',
                     'report.view', 'report.export', 'payment.update',
                     'master.view', 'master.manage',
@@ -132,11 +135,11 @@ class AccessControl
     public static function tablesReady(): bool
     {
         SchemaCache::warm([
-            'roles'           => [],
-            'permissions'     => [],
+            'roles' => [],
+            'permissions' => [],
             'role_permission' => [],
-            'user_role'       => [],
-            'users'           => ['is_super_admin'],
+            'user_role' => [],
+            'users' => ['is_super_admin'],
         ]);
 
         return SchemaCache::hasTable('roles')
@@ -440,7 +443,7 @@ class AccessControl
     /**
      * Keep platform/global roles out of tenant-level user mapping.
      */
-    private static function applyAssignableRoleScope(\Illuminate\Database\Query\Builder $query, int $userId): void
+    private static function applyAssignableRoleScope(Builder $query, int $userId): void
     {
         if (self::userIsSuperAdmin($userId)) {
             $query->where('slug', '!=', 'super-admin');

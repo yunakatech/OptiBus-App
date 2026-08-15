@@ -3,10 +3,14 @@
 use App\Http\Controllers\AdminOpsController;
 use App\Http\Controllers\AdminOpsFlowsController;
 use App\Http\Controllers\AdminOpsMasterController;
+use App\Http\Controllers\AdminOpsSaasController;
 use App\Http\Controllers\Api\AdminOpsApiController;
 use App\Http\Controllers\Api\BookingApiController;
 use App\Http\Controllers\Api\OperationsApiController;
 use App\Http\Controllers\Api\PaymentWebhookController;
+use App\Http\Controllers\Api\PublicApiController;
+use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CharterDocumentController;
 use App\Http\Controllers\DashboardController;
@@ -14,20 +18,23 @@ use App\Http\Controllers\LuggageDocumentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlatformDashboardController;
 use App\Http\Controllers\PublicController;
-use App\Http\Controllers\UserPreferenceController;
+use App\Http\Controllers\SoloDriverController;
 use App\Http\Controllers\StaticAssetController;
+use App\Http\Controllers\SubscriptionPaymentController;
+use App\Http\Controllers\UserPreferenceController;
 use App\Http\Middleware\RedirectBrowserApiRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // Google OAuth
-Route::get('auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('google.redirect');
-Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('google.callback');
+Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
+Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
 
 // Onboarding for Google OAuth users
 Route::middleware(['auth'])->group(function () {
-    Route::get('onboarding', [\App\Http\Controllers\Auth\OnboardingController::class, 'show'])->name('onboarding');
-    Route::post('onboarding', [\App\Http\Controllers\Auth\OnboardingController::class, 'store'])->name('onboarding.store');
+    Route::get('onboarding', [OnboardingController::class, 'show'])->name('onboarding');
+    Route::post('onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 });
 
 // Public landing page — no auth required
@@ -37,7 +44,7 @@ Route::get('/', [PublicController::class, 'welcome'])->name('home');
 Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
 
 // Public API — no auth required
-Route::get('api/plans', [\App\Http\Controllers\Api\PublicApiController::class, 'plans'])->name('api.plans');
+Route::get('api/plans', [PublicApiController::class, 'plans'])->name('api.plans');
 Route::post('api/webhooks/mayar', [PaymentWebhookController::class, 'mayar'])->name('api.webhooks.mayar');
 
 Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/build/'.ltrim($path, '/'), 302))
@@ -60,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'subscription.active'])->group(function () {
     Route::patch('api/user/ui-preferences', [UserPreferenceController::class, 'update'])->name('user.ui_preferences.update');
     Route::get('dashboard', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
-    Route::get('menu', fn () => \Inertia\Inertia::render('Menu'))->name('menu.index');
+    Route::get('menu', fn () => Inertia::render('Menu'))->name('menu.index');
     Route::get('bookings', BookingController::class)->middleware('permission:booking.view')->name('bookings.index');
     Route::get('bookings/detail/{groupKey}', BookingController::class)->middleware('permission:booking.view')->name('bookings.detail');
     Route::get('bookings/manifest/{groupKey}/print', [BookingController::class, 'printManifest'])->middleware('permission:booking.print')->middleware('feature:booking.manifest')->name('bookings.manifest.print');
@@ -97,10 +104,10 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         return redirect()->to('/admin-ops/tarif-bagasi');
     })->middleware('permission:master.view')->name('admin/luggage-services');
     Route::post('admin/luggage-services', [AdminOpsApiController::class, 'luggageServicesSave'])
-        ->middleware('permission:master.manage')
+        ->middleware('permission:luggage.category.manage')
         ->name('admin/luggage-services.save');
     Route::delete('admin/luggage-services/{id}', [AdminOpsApiController::class, 'luggageServicesDelete'])
-        ->middleware('permission:master.manage')
+        ->middleware('permission:luggage.category.manage')
         ->name('admin/luggage-services.delete');
     Route::redirect('admin/customers', 'admin-ops/customers');
     Route::redirect('admin/admin-ops/customers', 'admin-ops/customers');
@@ -214,19 +221,19 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin-ops/rute-carter', AdminOpsMasterController::class)->middleware('permission:master.view')->defaults('tab', 'rute-carter')->defaults('locked', true)->name('admin-ops.master.rute-carter');
 
     // SaaS Management
-    Route::get('admin-ops/saas', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:platform.manage')->name('admin-ops.saas');
-    Route::get('admin-ops/saas/tenants', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'tenants')->name('admin-ops.saas.tenants');
-    Route::get('admin-ops/saas/subscriptions', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'subscriptions')->name('admin-ops.saas.subscriptions');
-    Route::get('admin-ops/saas/plans', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'plans')->name('admin-ops.saas.plans');
-    Route::get('admin-ops/saas/invoices', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'billing')->name('admin-ops.saas.invoices');
-    Route::get('admin-ops/saas/payment', \App\Http\Controllers\AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'payment')->name('admin-ops.saas.payment');
+    Route::get('admin-ops/saas', AdminOpsSaasController::class)->middleware('permission:platform.manage')->name('admin-ops.saas');
+    Route::get('admin-ops/saas/tenants', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'tenants')->name('admin-ops.saas.tenants');
+    Route::get('admin-ops/saas/subscriptions', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'subscriptions')->name('admin-ops.saas.subscriptions');
+    Route::get('admin-ops/saas/plans', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'plans')->name('admin-ops.saas.plans');
+    Route::get('admin-ops/saas/invoices', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'billing')->name('admin-ops.saas.invoices');
+    Route::get('admin-ops/saas/payment', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'payment')->name('admin-ops.saas.payment');
 
     // Solo Driver mode
-    Route::get('solo/dashboard', [\App\Http\Controllers\SoloDriverController::class, 'dashboard'])->middleware('permission:dashboard.view')->name('solo.dashboard');
+    Route::get('solo/dashboard', [SoloDriverController::class, 'dashboard'])->middleware('permission:dashboard.view')->name('solo.dashboard');
 
     // Subscription & Payment (tenant self-service)
-    Route::get('subscription', [\App\Http\Controllers\SubscriptionPaymentController::class, 'index'])->name('subscription.index');
-    Route::post('subscription/checkout', [\App\Http\Controllers\SubscriptionPaymentController::class, 'checkout'])->name('subscription.checkout');
+    Route::get('subscription', [SubscriptionPaymentController::class, 'index'])->name('subscription.index');
+    Route::post('subscription/checkout', [SubscriptionPaymentController::class, 'checkout'])->name('subscription.checkout');
 
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
@@ -255,6 +262,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::get('armadas', [OperationsApiController::class, 'armadas'])->middleware('permission:charter.view,armada.view,master.view')->name('armadas');
         Route::get('drivers', [OperationsApiController::class, 'drivers'])->middleware('permission:charter.view,driver.view')->name('drivers');
         Route::get('luggage-services', [OperationsApiController::class, 'luggageServices'])->middleware('permission:luggage.view,master.view')->name('luggage-services');
+        Route::get('luggage-options', [OperationsApiController::class, 'luggageOptions'])->middleware('permission:luggage.view,luggage.create')->name('luggage-options');
         Route::get('customers/search', [OperationsApiController::class, 'searchCustomers'])->middleware('permission:customer.view,booking.view,charter.view,luggage.view')->name('customers.search');
     });
 
@@ -281,8 +289,10 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::delete('drivers/{id}', [AdminOpsApiController::class, 'driversDelete'])->middleware('permission:driver.manage')->name('drivers.delete');
 
         Route::get('luggage-services', [AdminOpsApiController::class, 'luggageServicesIndex'])->middleware('permission:master.view')->name('luggage-services.index');
-        Route::post('luggage-services', [AdminOpsApiController::class, 'luggageServicesSave'])->middleware('permission:master.manage')->name('luggage-services.save');
-        Route::delete('luggage-services/{id}', [AdminOpsApiController::class, 'luggageServicesDelete'])->middleware('permission:master.manage')->name('luggage-services.delete');
+        Route::post('luggage-services', [AdminOpsApiController::class, 'luggageServicesSave'])->middleware('permission:luggage.category.manage')->name('luggage-services.save');
+        Route::delete('luggage-services/{id}', [AdminOpsApiController::class, 'luggageServicesDelete'])->middleware('permission:luggage.category.manage')->name('luggage-services.delete');
+        Route::get('luggage-rates', [AdminOpsApiController::class, 'luggageRatesIndex'])->middleware('permission:luggage.tariff.manage')->name('luggage-rates.index');
+        Route::put('luggage-rates/{segmentId}', [AdminOpsApiController::class, 'luggageRatesSave'])->middleware('permission:luggage.tariff.manage')->name('luggage-rates.save');
 
         Route::get('segments', [AdminOpsApiController::class, 'segmentsIndex'])->middleware('permission:master.view')->name('segments.index');
         Route::post('segments', [AdminOpsApiController::class, 'segmentsSave'])->middleware('permission:master.manage')->name('segments.save');

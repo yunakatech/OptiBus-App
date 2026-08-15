@@ -593,6 +593,7 @@ class OperationsApiTest extends TestCase
     public function test_submit_charter_and_luggage(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $unitId = DB::table('category_armada')->insertGetId([
             'nama_kategori' => 'DD 5566 QQ',
@@ -602,8 +603,35 @@ class OperationsApiTest extends TestCase
         ]);
 
         $serviceId = DB::table('luggage_services')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'Paket Sedang',
+            'is_active' => true,
             'created_at' => now(),
+        ]);
+        $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR OPS',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+        $segmentId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'PINRANG - MAKASSAR',
+            'jam' => '09:00:00',
+            'harga' => 100000,
+            'created_at' => now(),
+        ]);
+        DB::table('luggage_segment_rates')->insert([
+            'tenant_id' => $tenantId,
+            'segment_id' => $segmentId,
+            'service_id' => $serviceId,
+            'unit_price' => 50000,
+            'is_active' => true,
+            'configured_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->postJson(route('api.ops.charters.submit'), [
@@ -633,6 +661,8 @@ class OperationsApiTest extends TestCase
             'receiver_phone' => '0822',
             'receiver_address' => 'Makassar',
             'service_id' => $serviceId,
+            'rute_id' => $routeId,
+            'segment_id' => $segmentId,
             'quantity' => 2,
             'notes' => 'Fragile',
             'price' => 100000,
@@ -645,16 +675,38 @@ class OperationsApiTest extends TestCase
     public function test_submit_luggage_raw_endpoint_upserts_customers(): void
     {
         $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
 
         $routeId = DB::table('routes')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'RUTE RAW OPS',
             'origin' => 'A',
             'destination' => 'B',
             'created_at' => now(),
         ]);
         $serviceId = DB::table('luggage_services')->insertGetId([
+            'tenant_id' => $tenantId,
             'name' => 'Service Raw Ops',
+            'is_active' => true,
             'created_at' => now(),
+        ]);
+        $segmentId = DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'RUTE RAW OPS',
+            'jam' => '09:00:00',
+            'harga' => 0,
+            'created_at' => now(),
+        ]);
+        DB::table('luggage_segment_rates')->insert([
+            'tenant_id' => $tenantId,
+            'segment_id' => $segmentId,
+            'service_id' => $serviceId,
+            'unit_price' => 0,
+            'is_active' => true,
+            'configured_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
         $this->postJson(route('api.ops.luggages.submit-raw'), [
             'sender_name' => 'Raw Ops Sender',
@@ -664,6 +716,7 @@ class OperationsApiTest extends TestCase
             'receiver_phone' => '0813 456',
             'receiver_address' => 'Alamat B',
             'rute_id' => $routeId,
+            'segment_id' => $segmentId,
             'layanan_id' => $serviceId,
             'price' => 0,
             'quantity' => 1,
