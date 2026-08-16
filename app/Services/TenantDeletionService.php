@@ -133,6 +133,12 @@ class TenantDeletionService
 
     public function createPurgeJob(int $tenantId, int $actorId): object
     {
+        if (! $this->table('tenant_deletion_jobs')) {
+            throw new \RuntimeException(
+                'Tabel tenant_deletion_jobs belum tersedia. Jalankan php artisan migrate --force pada database production lalu coba lagi.',
+            );
+        }
+
         return DB::transaction(function () use ($tenantId, $actorId): object {
             $tenant = $this->tenant($tenantId, true);
             if (! $tenant) {

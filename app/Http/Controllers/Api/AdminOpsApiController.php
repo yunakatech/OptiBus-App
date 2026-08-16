@@ -11733,6 +11733,20 @@ XML;
             return $this->error('Purge job tidak ditemukan.', 404);
         }
 
+        // Vercel Hobby cron may run only once per day. Let the authenticated
+        // admin polling the status endpoint advance one bounded batch so an
+        // interactive purge does not remain queued until the next cron run.
+        if (in_array((string) ($job->status ?? ''), ['queued', 'running'], true)) {
+            try {
+                $this->tenantDeletionService->processNextBatch($jobId);
+            } catch (\Throwable) {
+                // The service records the failure on the job; return that state
+                // to the UI instead of turning a status poll into a 500.
+            }
+
+            $job = $this->tenantDeletionService->job($jobId);
+        }
+
         return $this->ok(['job' => $this->tenantDeletionService->jobPayload($job)]);
     }
 
