@@ -182,6 +182,12 @@ class TenantDeletionTest extends TestCase
             'confirm_all' => true,
         ])->assertAccepted()->json('job');
 
+        // Status polling must advance a batch when Vercel cron is not due yet.
+        $this->getJson(route('api.admin.tenant-deletions.status', ['jobId' => $job['id']]))
+            ->assertOk()
+            ->assertJsonPath('job.id', $job['id'])
+            ->assertJsonPath('job.status', 'running');
+
         $service = app(TenantDeletionService::class);
         for ($i = 0; $i < 100; $i++) {
             $service->processNextBatch((int) $job['id']);

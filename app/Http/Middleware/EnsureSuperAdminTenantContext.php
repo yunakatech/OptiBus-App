@@ -51,6 +51,7 @@ class EnsureSuperAdminTenantContext
             'platform.saas.*',
             'settings.roles',
             'api.admin.tenants.*',
+            'api.admin.tenant-deletions.*',
             'api.admin.subscriptions.*',
             'api.admin.plans.*',
             'api.admin.invoices.*',
