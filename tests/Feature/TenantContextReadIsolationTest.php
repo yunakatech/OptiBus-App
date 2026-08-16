@@ -13,7 +13,7 @@ class TenantContextReadIsolationTest extends TestCase
     {
         $this->actingAsSuperAdminWithTenantContext(null);
 
-        $this->get(route('admin-ops.index'))
+        $this->get(route('settings.routes'))
             ->assertRedirect(route('platform.dashboard', absolute: false));
     }
 
@@ -30,7 +30,7 @@ class TenantContextReadIsolationTest extends TestCase
     {
         $this->actingAsSuperAdminWithTenantContext(null);
 
-        $this->get(route('admin-ops.roles'))
+        $this->get(route('settings.roles'))
             ->assertOk();
     }
 }

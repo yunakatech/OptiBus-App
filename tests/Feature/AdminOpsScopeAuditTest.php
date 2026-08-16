@@ -726,19 +726,19 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->get(route('dashboard'))
             ->assertRedirect(route('platform.dashboard'));
 
-        $this->get(route('admin-ops.schedules'))
+        $this->get(route('settings.schedules'))
             ->assertRedirect(route('platform.dashboard'));
 
         $this->get(route('report.index'))
-            ->assertRedirect(route('platform.dashboard'));
+            ->assertOk();
 
         $this->get(route('subscription.index'))
             ->assertRedirect(route('platform.dashboard'));
 
-        $this->get(route('admin-ops.users'))
+        $this->get(route('settings.users'))
             ->assertRedirect(route('platform.dashboard'));
 
-        $this->get(route('admin-ops.logs'))
+        $this->get(route('settings.logs'))
             ->assertRedirect(route('platform.dashboard'));
 
         $this->get('/admin-ops/cancellations')
@@ -746,11 +746,11 @@ class AdminOpsScopeAuditTest extends TestCase
 
         $this->getJson(route('api.admin.routes.index'))
             ->assertStatus(409)
-            ->assertJsonPath('error', 'Pilih tenant dulu.');
+            ->assertJsonPath('error', 'Pilih tenant terlebih dahulu sebelum membuat atau mengubah data.');
 
         $this->getJson(route('api.admin.users.index'))
             ->assertStatus(409)
-            ->assertJsonPath('error', 'Pilih tenant dulu.');
+            ->assertJsonPath('error', 'Pilih tenant terlebih dahulu sebelum membuat atau mengubah data.');
     }
 
     public function test_legacy_admin_context_switch_aliases_continue_to_work(): void
@@ -878,7 +878,7 @@ class AdminOpsScopeAuditTest extends TestCase
             'password' => 'password123',
         ])
             ->assertStatus(409)
-            ->assertJsonPath('error', 'Pilih tenant dulu.');
+            ->assertJsonPath('error', 'Pilih tenant terlebih dahulu sebelum membuat atau mengubah data.');
 
         $this->postJson(route('api.admin.users.save'), [
             'id' => $newUserId,
@@ -886,11 +886,11 @@ class AdminOpsScopeAuditTest extends TestCase
             'email' => 'tenant-a-new@example.com',
         ])
             ->assertStatus(409)
-            ->assertJsonPath('error', 'Pilih tenant dulu.');
+            ->assertJsonPath('error', 'Pilih tenant terlebih dahulu sebelum membuat atau mengubah data.');
 
         $this->deleteJson(route('api.admin.users.delete', ['id' => $newUserId]))
             ->assertStatus(409)
-            ->assertJsonPath('error', 'Pilih tenant dulu.');
+            ->assertJsonPath('error', 'Pilih tenant terlebih dahulu sebelum membuat atau mengubah data.');
     }
 
     public function test_non_super_admin_users_cannot_see_or_assign_platform_roles(): void
@@ -1095,7 +1095,7 @@ class AdminOpsScopeAuditTest extends TestCase
         $this->actingAs($admin)
             ->withSession(['active_tenant_id' => $tenantId])
             ->get(route('api.admin.units.index'))
-            ->assertRedirect('/admin-ops/kategori-armada');
+            ->assertRedirect('/settings/kategori-armada');
 
         $this->actingAs($admin)
             ->withSession(['active_tenant_id' => $tenantId])
@@ -1216,7 +1216,7 @@ class AdminOpsScopeAuditTest extends TestCase
     public function test_api_prefixed_admin_ops_paths_redirect_to_real_admin_ops_paths(): void
     {
         $this->get('/api/admin-ops/kategori-armada')
-            ->assertRedirect('/admin-ops/kategori-armada');
+            ->assertNotFound();
     }
 
     public function test_tenant_category_create_does_not_require_pool_but_pool_master_still_does(): void

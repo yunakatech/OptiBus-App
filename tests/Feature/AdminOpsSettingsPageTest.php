@@ -29,16 +29,16 @@ class AdminOpsSettingsPageTest extends TestCase
         $this->actingAsSuperAdmin();
 
         $pages = [
-            ['admin-ops.routes', 'PengaturanRuteReguler', 'routes', []],
-            ['admin-ops.pools', 'PengaturanPool', 'pools', ['routes']],
-            ['admin-ops.users', 'PengaturanUsers', 'users', ['pools', 'roles']],
-            ['admin-ops.drivers', 'PengaturanDriver', 'drivers', ['armadas']],
-            ['admin-ops.services', 'PengaturanBagasi', 'services', []],
-            ['admin-ops.customers', 'CustomerReguler', 'customers', ['pools']],
-            ['admin-ops.units', 'PengaturanKategoriArmada', 'units', ['pools']],
-            ['admin-ops.armadas', 'PengaturanArmada', 'armadas', ['categories', 'units']],
-            ['admin-ops.schedules', 'PengaturanJadwal', 'schedules', ['routes', 'units']],
-            ['admin-ops.segments', 'PengaturanSegment', 'segments', ['routes']],
+            ['settings.routes', 'PengaturanRuteReguler', 'routes', []],
+            ['settings.pools', 'PengaturanPool', 'pools', ['routes']],
+            ['settings.users', 'PengaturanUsers', 'users', ['pools', 'roles']],
+            ['settings.drivers', 'PengaturanDriver', 'drivers', ['armadas']],
+            ['settings.services', 'PengaturanBagasi', 'services', []],
+            ['settings.customers', 'CustomerReguler', 'customers', ['pools']],
+            ['settings.units', 'PengaturanKategoriArmada', 'units', ['pools']],
+            ['settings.armadas', 'PengaturanArmada', 'armadas', ['categories', 'units']],
+            ['settings.schedules', 'PengaturanJadwal', 'schedules', ['routes', 'units']],
+            ['settings.segments', 'PengaturanSegment', 'segments', ['routes']],
         ];
 
         foreach ($pages as [$routeName, $component, $tab, $masterKeys]) {
@@ -77,7 +77,7 @@ class AdminOpsSettingsPageTest extends TestCase
             ]);
         }
 
-        $this->get(route('admin-ops.drivers', ['q' => 'khusus filter', 'per_page' => 10]))
+        $this->get(route('settings.drivers', ['q' => 'khusus filter', 'per_page' => 10]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('settingsQuery.q', 'khusus filter')
                 ->loadDeferredProps('settings-data', fn (Assert $reload) => $reload
@@ -122,7 +122,7 @@ class AdminOpsSettingsPageTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $this->get(route('admin-ops.units'))
+        $this->get(route('settings.units'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('PengaturanKategoriArmada')
                 ->where('initialTab', 'units')
@@ -150,7 +150,7 @@ class AdminOpsSettingsPageTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->get(route('admin-ops.armadas', [
+        $this->get(route('settings.armadas', [
             'pool_id' => $poolId,
             'period' => '2026-07',
             'q' => 'filter armada',
@@ -200,7 +200,7 @@ class AdminOpsSettingsPageTest extends TestCase
         ]);
         $this->actingAs($operator);
 
-        $this->get(route('admin-ops.drivers'))
+        $this->get(route('settings.drivers'))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.permissions', fn ($permissions): bool => collect($permissions)->contains('driver.view')
                     && collect($permissions)->contains('armada.view')
@@ -210,11 +210,11 @@ class AdminOpsSettingsPageTest extends TestCase
                     && ! collect($permissions)->contains('master.manage')),
             );
 
-        $this->get(route('admin-ops.armadas'))->assertOk();
-        $this->get(route('admin-ops.schedules'))->assertOk();
-        $this->get(route('admin-ops.segments'))->assertOk();
-        $this->get(route('admin-ops.pools'))->assertForbidden();
-        $this->get(route('admin-ops.users'))->assertForbidden();
+        $this->get(route('settings.armadas'))->assertOk();
+        $this->get(route('settings.schedules'))->assertOk();
+        $this->get(route('settings.segments'))->assertOk();
+        $this->get(route('settings.pools'))->assertForbidden();
+        $this->get(route('settings.users'))->assertForbidden();
 
         $this->postJson(route('api.admin.drivers.save'), ['nama' => 'TIDAK BOLEH'])
             ->assertForbidden()
@@ -236,7 +236,7 @@ class AdminOpsSettingsPageTest extends TestCase
 
         Schema::dropIfExists('drivers');
 
-        $this->get(route('admin-ops.drivers'))
+        $this->get(route('settings.drivers'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('PengaturanDriver')
                 ->where('initialTab', 'drivers')

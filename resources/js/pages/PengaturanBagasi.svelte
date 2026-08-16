@@ -1,7 +1,7 @@
 <script module lang="ts">
     export const layout = {
         breadcrumbs: [
-            { title: 'Tarif Bagasi', href: '/admin-ops/tarif-bagasi' },
+            { title: 'Tarif Bagasi', href: '/settings/tarif-bagasi' },
         ],
     };
 </script>

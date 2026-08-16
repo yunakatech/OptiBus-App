@@ -53,7 +53,7 @@
             </p>
         </div>
         <a
-            href="/admin-ops/drivers"
+            href="/settings/driver"
             class="shrink-0 rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground transition hover:border-border hover:bg-background hover:text-foreground dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:bg-slate-800/90 dark:hover:text-foreground"
         >
             Lihat Detail →

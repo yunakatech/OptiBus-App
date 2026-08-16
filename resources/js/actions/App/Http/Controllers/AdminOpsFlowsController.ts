@@ -411,72 +411,72 @@ AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2.head = (options?: RouteQ
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows'
+ * @route '/settings/flows'
  */
-const AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url(options),
+const AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.url(options),
     method: 'get',
 })
 
-AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.definition = {
+AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows',
+    url: '/settings/flows',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows'
+ * @route '/settings/flows'
  */
-AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url = (options?: RouteQueryOptions) => {
-    return AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.definition.url + queryParams(options)
+AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.url = (options?: RouteQueryOptions) => {
+    return AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows'
+ * @route '/settings/flows'
  */
-AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url(options),
+AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.url(options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows'
+ * @route '/settings/flows'
  */
-AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url(options),
+AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.url(options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows'
+ * @route '/settings/flows'
  */
-    const AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url(options),
+    const AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06aForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.url(options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows'
+ * @route '/settings/flows'
  */
-        AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url(options),
+        AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06aForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.url(options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows'
+ * @route '/settings/flows'
  */
-        AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.url({
+        AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06aForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.url({
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -485,76 +485,76 @@ AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.head = (options?: RouteQ
             method: 'get',
         })
     
-    AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44.form = AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44Form
+    AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a.form = AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06aForm
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
-const AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url(options),
+const AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.url(options),
     method: 'get',
 })
 
-AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.definition = {
+AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/charters',
+    url: '/settings/flows/charters',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
-AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url = (options?: RouteQueryOptions) => {
-    return AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.definition.url + queryParams(options)
+AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.url = (options?: RouteQueryOptions) => {
+    return AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
-AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url(options),
+AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.url(options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
-AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url(options),
+AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.url(options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
-    const AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url(options),
+    const AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.url(options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
-        AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url(options),
+        AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.url(options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
-        AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.url({
+        AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.url({
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -563,76 +563,76 @@ AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.head = (options?: RouteQ
             method: 'get',
         })
     
-    AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5.form = AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5Form
+    AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1.form = AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
-const AdminOpsFlowsController1da64293d59593b05138346920a88c58 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController1da64293d59593b05138346920a88c58.url(options),
+const AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.url(options),
     method: 'get',
 })
 
-AdminOpsFlowsController1da64293d59593b05138346920a88c58.definition = {
+AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/luggages',
+    url: '/settings/flows/luggages',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
-AdminOpsFlowsController1da64293d59593b05138346920a88c58.url = (options?: RouteQueryOptions) => {
-    return AdminOpsFlowsController1da64293d59593b05138346920a88c58.definition.url + queryParams(options)
+AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.url = (options?: RouteQueryOptions) => {
+    return AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
-AdminOpsFlowsController1da64293d59593b05138346920a88c58.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController1da64293d59593b05138346920a88c58.url(options),
+AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.url(options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
-AdminOpsFlowsController1da64293d59593b05138346920a88c58.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: AdminOpsFlowsController1da64293d59593b05138346920a88c58.url(options),
+AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.url(options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
-    const AdminOpsFlowsController1da64293d59593b05138346920a88c58Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: AdminOpsFlowsController1da64293d59593b05138346920a88c58.url(options),
+    const AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.url(options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
-        AdminOpsFlowsController1da64293d59593b05138346920a88c58Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController1da64293d59593b05138346920a88c58.url(options),
+        AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.url(options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
-        AdminOpsFlowsController1da64293d59593b05138346920a88c58Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController1da64293d59593b05138346920a88c58.url({
+        AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.url({
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -641,76 +641,76 @@ AdminOpsFlowsController1da64293d59593b05138346920a88c58.head = (options?: RouteQ
             method: 'get',
         })
     
-    AdminOpsFlowsController1da64293d59593b05138346920a88c58.form = AdminOpsFlowsController1da64293d59593b05138346920a88c58Form
+    AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75.form = AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
-const AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url(options),
+const AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.url(options),
     method: 'get',
 })
 
-AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.definition = {
+AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/assignments',
+    url: '/settings/flows/assignments',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
-AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url = (options?: RouteQueryOptions) => {
-    return AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.definition.url + queryParams(options)
+AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.url = (options?: RouteQueryOptions) => {
+    return AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
-AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url(options),
+AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.url(options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
-AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url(options),
+AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.url(options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
-    const AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url(options),
+    const AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.url(options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
-        AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url(options),
+        AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.url(options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
-        AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.url({
+        AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.url({
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -719,76 +719,76 @@ AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.head = (options?: RouteQ
             method: 'get',
         })
     
-    AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22.form = AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22Form
+    AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503.form = AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503Form
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
-const AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url(options),
+const AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.url(options),
     method: 'get',
 })
 
-AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.definition = {
+AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/export',
+    url: '/settings/flows/export',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
-AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url = (options?: RouteQueryOptions) => {
-    return AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.definition.url + queryParams(options)
+AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.url = (options?: RouteQueryOptions) => {
+    return AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
-AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url(options),
+AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.url(options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
-AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url(options),
+AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.url(options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
-    const AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93bForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url(options),
+    const AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.url(options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
-        AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93bForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url(options),
+        AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.url(options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
-        AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93bForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.url({
+        AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.url({
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -797,7 +797,7 @@ AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.head = (options?: RouteQ
             method: 'get',
         })
     
-    AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b.form = AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93bForm
+    AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672.form = AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672Form
 
 /**
 * Multiple routes resolve to \App\Http\Controllers\AdminOpsFlowsController::AdminOpsFlowsController, so this export is a
@@ -810,11 +810,11 @@ const AdminOpsFlowsController = {
     '/charters/view/{id}': AdminOpsFlowsControllerbcf2e188fc497345f4ad1e39aa1443dc,
     '/luggages': AdminOpsFlowsController5043c3252061633e62c90fc32ed31a79,
     '/luggages/form': AdminOpsFlowsController9e4951b621f42e438847c3880fdd57a2,
-    '/admin-ops/flows': AdminOpsFlowsController855ed1ac914d1230d231dbb9cd953e44,
-    '/admin-ops/flows/charters': AdminOpsFlowsControllerc97994798d51c68e567c458b89e12de5,
-    '/admin-ops/flows/luggages': AdminOpsFlowsController1da64293d59593b05138346920a88c58,
-    '/admin-ops/flows/assignments': AdminOpsFlowsController3e0732d06a87c58d6246acfb77c9cb22,
-    '/admin-ops/flows/export': AdminOpsFlowsController8a257d0eb7ab56021b864dfd64b0b93b,
+    '/settings/flows': AdminOpsFlowsControllerdb64617641f23a5d48abb43670c2a06a,
+    '/settings/flows/charters': AdminOpsFlowsController4c8a1f2f8e2c0af1ed903f533e1ddcc1,
+    '/settings/flows/luggages': AdminOpsFlowsController2c4956cf44351842c8cc74a68ef54c75,
+    '/settings/flows/assignments': AdminOpsFlowsController18a918ca6cfdacc0ad693d1fe9436503,
+    '/settings/flows/export': AdminOpsFlowsController883f95c424f0e8c29ea9c98a6ec08672,
 }
 
 export default AdminOpsFlowsController

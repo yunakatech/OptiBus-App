@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Pool',
-                href: '/admin-ops/pool',
+                href: '/settings/pool',
             },
         ],
     };

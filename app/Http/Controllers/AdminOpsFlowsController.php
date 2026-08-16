@@ -28,8 +28,8 @@ class AdminOpsFlowsController extends Controller
             $legacyRoutes = [
                 'charters' => 'charters.index',
                 'luggages' => 'luggages.index',
-                'assignments' => 'admin-ops.flows.assignments',
-                'export' => 'admin-ops.flows.export',
+                'assignments' => 'settings.flows.assignments',
+                'export' => 'settings.flows.export',
             ];
 
             $legacyTab = trim((string) $request->query('tab', ''));

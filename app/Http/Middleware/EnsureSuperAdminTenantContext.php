@@ -47,9 +47,9 @@ class EnsureSuperAdminTenantContext
     {
         return $request->routeIs(
             'platform.dashboard',
-            'admin-ops.saas',
-            'admin-ops.saas.*',
-            'admin-ops.roles',
+            'platform.saas',
+            'platform.saas.*',
+            'settings.roles',
             'api.admin.tenants.*',
             'api.admin.subscriptions.*',
             'api.admin.plans.*',
@@ -76,8 +76,17 @@ class EnsureSuperAdminTenantContext
     {
         $routeName = (string) ($request->route()?->getName() ?? '');
 
-        return $routeName === 'admin-ops.index'
-            || str_starts_with($routeName, 'admin-ops.')
+        return in_array($routeName, [
+            'dashboard',
+            'booking-console.index',
+            'bookings.index',
+            'payments.index',
+            'charters.index',
+            'luggages.index',
+            'subscription.index',
+            'subscription.checkout',
+        ], true)
+            || str_starts_with($routeName, 'settings.')
             || str_starts_with($routeName, 'api.admin.');
     }
 }

@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Jadwal',
-                href: '/admin-ops/jadwal',
+                href: '/settings/jadwal',
             },
         ],
     };

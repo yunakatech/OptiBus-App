@@ -1117,7 +1117,7 @@
                             </div>
                             {#if recentActivityOverflow > 0}
                                 <a
-                                    href="/admin-ops/logs"
+                                    href="/settings/logs"
                                     class="mt-2.5 flex items-center justify-between rounded-xl border border-dashed border-border/70 bg-muted/25 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted/40"
                                 >
                                     <span
@@ -1187,7 +1187,7 @@
                         {/each}
                         {#if recentActivityOverflow > 0}
                             <a
-                                href="/admin-ops/logs"
+                                href="/settings/logs"
                                 class="flex flex-col gap-1 rounded-xl border border-dashed border-border/70 bg-muted/25 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <span

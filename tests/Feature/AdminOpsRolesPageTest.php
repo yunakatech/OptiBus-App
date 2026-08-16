@@ -44,7 +44,7 @@ class AdminOpsRolesPageTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $this->get(route('admin-ops.roles'))
+        $this->get(route('settings.roles'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('PengaturanRoles')
                 ->where('initialTab', 'roles')
@@ -72,7 +72,7 @@ class AdminOpsRolesPageTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->get(route('admin-ops.roles', ['q' => 'uji filter', 'per_page' => 10]))
+        $this->get(route('settings.roles', ['q' => 'uji filter', 'per_page' => 10]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('roleQuery', 'uji filter')
                 ->loadDeferredProps('role-data', fn (Assert $reload) => $reload
@@ -102,7 +102,7 @@ class AdminOpsRolesPageTest extends TestCase
         $this->deleteJson(route('api.admin.charters.delete', ['id' => 999999]))
             ->assertForbidden()
             ->assertJsonPath('error', 'Anda tidak memiliki akses untuk aksi ini.');
-        $this->get(route('admin-ops.roles'))->assertForbidden();
+        $this->get(route('settings.roles'))->assertForbidden();
     }
 
     public function test_role_crud_and_permission_updates_remain_on_api(): void
