@@ -24,9 +24,9 @@ class AdminOpsMasterController extends Controller
 
         if (! $lockedMenuView) {
             $legacyRoutes = [
-                'customer-bagasi' => 'admin-ops.master.customer-bagasi',
-                'customer-charter' => 'admin-ops.master.customer-charter',
-                'rute-carter' => 'admin-ops.master.rute-carter',
+                'customer-bagasi' => 'settings.master.customer-bagasi',
+                'customer-charter' => 'settings.master.customer-charter',
+                'rute-carter' => 'settings.master.rute-carter',
             ];
 
             $legacyTab = trim((string) $request->query('tab', ''));

@@ -26,7 +26,7 @@ class AdminOpsMasterPageTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $this->get(route('admin-ops.master.customer-bagasi'))
+        $this->get(route('settings.master.customer-bagasi'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('CustomerBagasi')
                 ->where('initialTab', 'customer-bagasi')
@@ -42,7 +42,7 @@ class AdminOpsMasterPageTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $this->get(route('admin-ops.master.customer-charter'))
+        $this->get(route('settings.master.customer-charter'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('CustomerCarter')
                 ->where('initialTab', 'customer-charter')
@@ -58,7 +58,7 @@ class AdminOpsMasterPageTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $this->get(route('admin-ops.master.rute-carter'))
+        $this->get(route('settings.master.rute-carter'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('PengaturanRuteCarter')
                 ->where('initialTab', 'rute-carter')
@@ -78,7 +78,7 @@ class AdminOpsMasterPageTest extends TestCase
         Schema::dropIfExists('customer_charter');
         Schema::dropIfExists('master_carter');
 
-        $this->get(route('admin-ops.master.customer-bagasi'))
+        $this->get(route('settings.master.customer-bagasi'))
             ->assertInertia(fn (Assert $page) => $page
                 ->loadDeferredProps('master-data', fn (Assert $reload) => $reload
                     ->where('masterData.tab', 'customer-bagasi')
@@ -86,7 +86,7 @@ class AdminOpsMasterPageTest extends TestCase
                     ->where('masterData.pagination.total', 0)),
             );
 
-        $this->get(route('admin-ops.master.customer-charter'))
+        $this->get(route('settings.master.customer-charter'))
             ->assertInertia(fn (Assert $page) => $page
                 ->loadDeferredProps('master-data', fn (Assert $reload) => $reload
                     ->where('masterData.tab', 'customer-charter')
@@ -94,7 +94,7 @@ class AdminOpsMasterPageTest extends TestCase
                     ->where('masterData.pagination.total', 0)),
             );
 
-        $this->get(route('admin-ops.master.rute-carter'))
+        $this->get(route('settings.master.rute-carter'))
             ->assertInertia(fn (Assert $page) => $page
                 ->loadDeferredProps('master-data', fn (Assert $reload) => $reload
                     ->where('masterData.tab', 'rute-carter')

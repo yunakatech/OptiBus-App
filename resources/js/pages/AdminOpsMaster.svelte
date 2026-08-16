@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Ops Master',
-                href: '/admin-ops/customer-bagasi',
+                href: '/settings/customer-bagasi',
             },
         ],
     };

@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Master Carter',
-                href: '/admin-ops/rute-carter',
+                href: '/settings/rute-carter',
             },
         ],
     };

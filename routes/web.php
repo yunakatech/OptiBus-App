@@ -55,10 +55,6 @@ Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/buil
     ->where('path', '.*')
     ->name('api.build.redirect');
 
-Route::get('api/admin-ops/{path}', static fn (string $path) => redirect()->to('/admin-ops/'.ltrim($path, '/'), 302))
-    ->where('path', '.*')
-    ->name('api.admin-ops.redirect');
-
 Route::get('style.css', [StaticAssetController::class, 'style'])->name('style.css');
 
 // Platform Admin Dashboard (SaaS metrics — super admin only)
@@ -92,12 +88,11 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('luggages/{id}/pdf', [LuggageDocumentController::class, 'pdf'])->middleware('permission:luggage.print')->middleware('feature:luggage.resi_print')->name('luggages.pdf');
     Route::get('report', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('report.index');
     Route::get('reports', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('reports.index');
-    Route::get('admin-ops', AdminOpsController::class)->middleware('permission:master.view,driver.view,armada.view,user.manage,pool.manage,logs.view,report.view')->name('admin-ops.index');
-    Route::get('admin-ops/rute-induk', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'routes')->defaults('locked', true)->name('admin-ops.routes');
-    Route::get('admin-ops/jadwal', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'schedules')->defaults('locked', true)->name('admin-ops.schedules');
-    Route::get('admin-ops/driver', AdminOpsController::class)->middleware('permission:driver.view')->defaults('tab', 'drivers')->defaults('locked', true)->name('admin-ops.drivers');
-    Route::get('admin-ops/tarif-bagasi', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'services')->defaults('locked', true)->name('admin-ops.services');
-    Route::get('admin-ops/segments', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'segments')->defaults('locked', true)->name('admin-ops.segments');
+    Route::get('settings/rute-induk', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'routes')->defaults('locked', true)->name('settings.routes');
+    Route::get('settings/jadwal', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'schedules')->defaults('locked', true)->name('settings.schedules');
+    Route::get('settings/driver', AdminOpsController::class)->middleware('permission:driver.view')->defaults('tab', 'drivers')->defaults('locked', true)->name('settings.drivers');
+    Route::get('settings/tarif-bagasi', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'services')->defaults('locked', true)->name('settings.services');
+    Route::get('settings/segments', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'segments')->defaults('locked', true)->name('settings.segments');
     Route::redirect('admin/charters', 'charters');
     Route::redirect('admin/luggages', 'luggages');
     Route::get('admin/luggage-services', static function (Request $request, AdminOpsApiController $controller) {
@@ -105,7 +100,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
             return $controller->luggageServicesIndex();
         }
 
-        return redirect()->to('/admin-ops/tarif-bagasi');
+        return redirect()->to('/settings/tarif-bagasi');
     })->middleware('permission:master.view')->name('admin/luggage-services');
     Route::post('admin/luggage-services', [AdminOpsApiController::class, 'luggageServicesSave'])
         ->middleware('permission:luggage.category.manage')
@@ -113,14 +108,14 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::delete('admin/luggage-services/{id}', [AdminOpsApiController::class, 'luggageServicesDelete'])
         ->middleware('permission:luggage.category.manage')
         ->name('admin/luggage-services.delete');
-    Route::redirect('admin/customers', 'admin-ops/customers');
-    Route::redirect('admin/admin-ops/customers', 'admin-ops/customers');
+    Route::redirect('admin/customers', 'settings/customers');
+    Route::redirect('admin/admin-ops/customers', 'settings/customers');
     Route::get('admin/routes', static function (Request $request, AdminOpsApiController $controller) {
         if ($request->expectsJson() || $request->ajax()) {
             return $controller->routesIndex();
         }
 
-        return redirect()->to('/admin-ops/rute-induk');
+        return redirect()->to('/settings/rute-induk');
     })->middleware('permission:master.view')->name('admin/routes');
     Route::post('admin/routes', [AdminOpsApiController::class, 'routesSave'])
         ->middleware('permission:master.manage')
@@ -133,7 +128,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
             return $controller->schedulesIndex($request);
         }
 
-        return redirect()->to('/admin-ops/jadwal');
+        return redirect()->to('/settings/jadwal');
     })->middleware('permission:master.view')->name('admin/schedules');
     Route::post('admin/schedules', [AdminOpsApiController::class, 'schedulesSave'])
         ->middleware('permission:master.manage')
@@ -141,14 +136,14 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::delete('admin/schedules/{id}', [AdminOpsApiController::class, 'schedulesDelete'])
         ->middleware('permission:master.manage')
         ->name('admin/schedules.delete');
-    Route::redirect('admin/drivers', 'admin-ops/driver');
-    Route::redirect('admin/services', 'admin-ops/tarif-bagasi');
+    Route::redirect('admin/drivers', 'settings/driver');
+    Route::redirect('admin/services', 'settings/tarif-bagasi');
     Route::get('admin/segments', static function (Request $request, AdminOpsApiController $controller) {
         if ($request->expectsJson() || $request->ajax()) {
             return $controller->segmentsIndex($request);
         }
 
-        return redirect()->to('/admin-ops/segments');
+        return redirect()->to('/settings/segments');
     })->middleware('permission:master.view')->name('admin/segments');
     Route::post('admin/segments', [AdminOpsApiController::class, 'segmentsSave'])
         ->middleware('permission:master.manage')
@@ -161,7 +156,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
             return $controller->unitsIndex();
         }
 
-        return redirect()->to('/admin-ops/kategori-armada');
+        return redirect()->to('/settings/kategori-armada');
     })->middleware('permission:master.view')->name('admin/units');
     Route::post('admin/units', [AdminOpsApiController::class, 'unitsSave'])
         ->middleware('permission:master.manage')
@@ -172,15 +167,15 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('admin/armada-categories', [AdminOpsApiController::class, 'armadaCategoriesIndex'])
         ->middleware('permission:armada.view,master.view')
         ->name('admin/armada-categories');
-    Route::redirect('admin/armadas', 'admin-ops/armada');
+    Route::redirect('admin/armadas', 'settings/armada');
     Route::get('admin/pools', static function (Request $request, AdminOpsApiController $controller) {
         if ($request->expectsJson() || $request->ajax()) {
             return $controller->poolsIndex($request);
         }
 
-        return redirect()->to(route('admin-ops.pools'));
+        return redirect()->to(route('settings.pools'));
     });
-    Route::redirect('admin/admin-ops/pool', 'admin-ops/pool');
+    Route::redirect('admin/admin-ops/pool', 'settings/pool');
     Route::get('admin/admin-ops/{path}', static function (string $path) {
         $normalized = ltrim($path, '/');
 
@@ -188,49 +183,49 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
             $normalized = substr($normalized, strlen('admin-ops/'));
         }
 
-        return redirect()->to('/admin-ops/'.$normalized);
+        return redirect()->to('/settings/'.$normalized);
     })->where('path', '.*');
-    Route::redirect('admin/users', 'admin-ops/users');
-    Route::redirect('admin/reports', 'admin-ops/reports');
+    Route::redirect('admin/users', 'settings/users');
+    Route::redirect('admin/reports', 'settings/reports');
     Route::get('admin/reports/summary', [AdminOpsApiController::class, 'reportsSummary'])->middleware('permission:report.view');
     Route::get('admin/reports/bookings-csv', [AdminOpsApiController::class, 'reportsBookingsCsv'])->middleware('permission:report.export');
     Route::get('admin/reports/revenue-csv', [AdminOpsApiController::class, 'reportsRevenueCsv'])->middleware('permission:report.export');
-    Route::redirect('admin/flows', 'admin-ops/flows');
-    Route::redirect('admin/master', 'admin-ops/master');
-    Route::redirect('admin/customer-bagasi', 'admin-ops/customer-bagasi');
-    Route::redirect('admin/customer-charter', 'admin-ops/customer-charter');
-    Route::redirect('admin/rute-carter', 'admin-ops/rute-carter');
-    Route::redirect('admin/logs', 'admin-ops/logs');
+    Route::redirect('admin/flows', 'settings/flows');
+    Route::redirect('admin/master', 'settings/master');
+    Route::redirect('admin/customer-bagasi', 'settings/customer-bagasi');
+    Route::redirect('admin/customer-charter', 'settings/customer-charter');
+    Route::redirect('admin/rute-carter', 'settings/rute-carter');
+    Route::redirect('admin/logs', 'settings/logs');
     Route::get('admin/activity-logs', [AdminOpsApiController::class, 'activityLogsIndex'])->middleware('permission:logs.view')->name('admin/activity-logs');
-    Route::get('admin-ops/customers', AdminOpsController::class)->middleware('permission:customer.view')->defaults('tab', 'customers')->defaults('locked', true)->name('admin-ops.customers');
-    Route::get('admin-ops/kategori-armada', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'units')->defaults('locked', true)->name('admin-ops.units');
-    Route::get('admin-ops/kategori-armada/layout/{id}', AdminOpsController::class)->middleware('permission:master.manage')->defaults('tab', 'units')->defaults('mode', 'layout')->defaults('locked', true)->name('admin-ops.units.layout');
-    Route::get('admin-ops/armada', AdminOpsController::class)->middleware('permission:armada.view')->defaults('tab', 'armadas')->defaults('locked', true)->name('admin-ops.armadas');
-    Route::get('admin-ops/armada/view/{id}', AdminOpsController::class)->middleware('permission:armada.view')->defaults('tab', 'armadas')->defaults('mode', 'view')->defaults('locked', true)->name('admin-ops.armadas.view');
-    Route::get('admin-ops/pool', AdminOpsController::class)->middleware('permission:pool.manage')->defaults('tab', 'pools')->defaults('locked', true)->name('admin-ops.pools');
-    Route::get('admin-ops/users', AdminOpsController::class)->middleware('permission:user.manage')->defaults('tab', 'users')->defaults('locked', true)->name('admin-ops.users');
-    Route::get('admin-ops/roles', AdminOpsController::class)->middleware('permission:role.manage')->defaults('tab', 'roles')->defaults('locked', true)->name('admin-ops.roles');
-    Route::get('admin-ops/logs', AdminOpsController::class)->middleware('permission:logs.view')->defaults('tab', 'logs')->defaults('locked', true)->name('admin-ops.logs');
-    Route::get('admin-ops/reports', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('admin-ops.reports');
+    Route::get('settings/customers', AdminOpsController::class)->middleware('permission:customer.view')->defaults('tab', 'customers')->defaults('locked', true)->name('settings.customers');
+    Route::get('settings/kategori-armada', AdminOpsController::class)->middleware('permission:master.view')->defaults('tab', 'units')->defaults('locked', true)->name('settings.units');
+    Route::get('settings/kategori-armada/layout/{id}', AdminOpsController::class)->middleware('permission:master.manage')->defaults('tab', 'units')->defaults('mode', 'layout')->defaults('locked', true)->name('settings.units.layout');
+    Route::get('settings/armada', AdminOpsController::class)->middleware('permission:armada.view')->defaults('tab', 'armadas')->defaults('locked', true)->name('settings.armadas');
+    Route::get('settings/armada/view/{id}', AdminOpsController::class)->middleware('permission:armada.view')->defaults('tab', 'armadas')->defaults('mode', 'view')->defaults('locked', true)->name('settings.armadas.view');
+    Route::get('settings/pool', AdminOpsController::class)->middleware('permission:pool.manage')->defaults('tab', 'pools')->defaults('locked', true)->name('settings.pools');
+    Route::get('settings/users', AdminOpsController::class)->middleware('permission:user.manage')->defaults('tab', 'users')->defaults('locked', true)->name('settings.users');
+    Route::get('settings/roles', AdminOpsController::class)->middleware('permission:role.manage')->defaults('tab', 'roles')->defaults('locked', true)->name('settings.roles');
+    Route::get('settings/logs', AdminOpsController::class)->middleware('permission:logs.view')->defaults('tab', 'logs')->defaults('locked', true)->name('settings.logs');
+    Route::get('settings/reports', AdminOpsController::class)->middleware('permission:report.view')->defaults('tab', 'reports')->defaults('locked', true)->name('settings.reports');
 
-    Route::get('admin-ops/flows', AdminOpsFlowsController::class)->middleware('permission:booking.view,charter.view,luggage.view,report.view')->name('admin-ops.flows');
-    Route::get('admin-ops/flows/charters', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('locked', true)->name('admin-ops.flows.charters');
-    Route::get('admin-ops/flows/luggages', AdminOpsFlowsController::class)->middleware('permission:luggage.view')->defaults('tab', 'luggages')->defaults('locked', true)->name('admin-ops.flows.luggages');
-    Route::get('admin-ops/flows/assignments', AdminOpsFlowsController::class)->middleware('permission:booking.view')->defaults('tab', 'assignments')->defaults('locked', true)->name('admin-ops.flows.assignments');
-    Route::get('admin-ops/flows/export', AdminOpsFlowsController::class)->middleware('permission:report.view')->defaults('tab', 'export')->defaults('locked', true)->name('admin-ops.flows.export');
+    Route::get('settings/flows', AdminOpsFlowsController::class)->middleware('permission:booking.view,charter.view,luggage.view,report.view')->name('settings.flows');
+    Route::get('settings/flows/charters', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('locked', true)->name('settings.flows.charters');
+    Route::get('settings/flows/luggages', AdminOpsFlowsController::class)->middleware('permission:luggage.view')->defaults('tab', 'luggages')->defaults('locked', true)->name('settings.flows.luggages');
+    Route::get('settings/flows/assignments', AdminOpsFlowsController::class)->middleware('permission:booking.view')->defaults('tab', 'assignments')->defaults('locked', true)->name('settings.flows.assignments');
+    Route::get('settings/flows/export', AdminOpsFlowsController::class)->middleware('permission:report.view')->defaults('tab', 'export')->defaults('locked', true)->name('settings.flows.export');
 
-    Route::get('admin-ops/master', AdminOpsMasterController::class)->middleware('permission:customer.view,master.view')->name('admin-ops.master');
-    Route::get('admin-ops/customer-bagasi', AdminOpsMasterController::class)->middleware('permission:customer.view')->defaults('tab', 'customer-bagasi')->defaults('locked', true)->name('admin-ops.master.customer-bagasi');
-    Route::get('admin-ops/customer-charter', AdminOpsMasterController::class)->middleware('permission:customer.view')->defaults('tab', 'customer-charter')->defaults('locked', true)->name('admin-ops.master.customer-charter');
-    Route::get('admin-ops/rute-carter', AdminOpsMasterController::class)->middleware('permission:master.view')->defaults('tab', 'rute-carter')->defaults('locked', true)->name('admin-ops.master.rute-carter');
+    Route::get('settings/master', AdminOpsMasterController::class)->middleware('permission:customer.view,master.view')->name('settings.master');
+    Route::get('settings/customer-bagasi', AdminOpsMasterController::class)->middleware('permission:customer.view')->defaults('tab', 'customer-bagasi')->defaults('locked', true)->name('settings.master.customer-bagasi');
+    Route::get('settings/customer-charter', AdminOpsMasterController::class)->middleware('permission:customer.view')->defaults('tab', 'customer-charter')->defaults('locked', true)->name('settings.master.customer-charter');
+    Route::get('settings/rute-carter', AdminOpsMasterController::class)->middleware('permission:master.view')->defaults('tab', 'rute-carter')->defaults('locked', true)->name('settings.master.rute-carter');
 
     // SaaS Management
-    Route::get('admin-ops/saas', AdminOpsSaasController::class)->middleware('permission:platform.manage')->name('admin-ops.saas');
-    Route::get('admin-ops/saas/tenants', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'tenants')->name('admin-ops.saas.tenants');
-    Route::get('admin-ops/saas/subscriptions', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'subscriptions')->name('admin-ops.saas.subscriptions');
-    Route::get('admin-ops/saas/plans', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'plans')->name('admin-ops.saas.plans');
-    Route::get('admin-ops/saas/invoices', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'billing')->name('admin-ops.saas.invoices');
-    Route::get('admin-ops/saas/payment', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'payment')->name('admin-ops.saas.payment');
+    Route::get('platform/saas', AdminOpsSaasController::class)->middleware('permission:platform.manage')->name('platform.saas');
+    Route::get('platform/saas/tenants', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'tenants')->name('platform.saas.tenants');
+    Route::get('platform/saas/subscriptions', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'subscriptions')->name('platform.saas.subscriptions');
+    Route::get('platform/saas/plans', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'plans')->name('platform.saas.plans');
+    Route::get('platform/saas/invoices', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'billing')->name('platform.saas.invoices');
+    Route::get('platform/saas/payment', AdminOpsSaasController::class)->middleware('permission:platform.manage')->defaults('tab', 'payment')->name('platform.saas.payment');
 
     // Solo Driver mode
     Route::get('solo/dashboard', [SoloDriverController::class, 'dashboard'])->middleware('permission:dashboard.view')->name('solo.dashboard');

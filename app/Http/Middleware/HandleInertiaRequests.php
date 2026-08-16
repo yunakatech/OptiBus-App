@@ -271,8 +271,8 @@ class HandleInertiaRequests extends Middleware
 
         $allowedPatterns = [
             'platform.dashboard',
-            'admin-ops.saas',
-            'admin-ops.saas.*',
+            'platform.saas',
+            'platform.saas.*',
             'logout',
             'verification.*',
             'profile.*',

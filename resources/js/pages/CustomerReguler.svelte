@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Reguler',
-                href: '/admin-ops/customers',
+                href: '/settings/customers',
             },
         ],
     };

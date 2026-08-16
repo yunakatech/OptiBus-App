@@ -35,18 +35,18 @@ class AdminOpsController extends Controller
 
         if (! $lockedMenuView) {
             $legacyRoutes = [
-                'routes' => 'admin-ops.routes',
-                'schedules' => 'admin-ops.schedules',
-                'drivers' => 'admin-ops.drivers',
-                'services' => 'admin-ops.services',
-                'segments' => 'admin-ops.segments',
-                'customers' => 'admin-ops.customers',
-                'units' => 'admin-ops.units',
-                'armadas' => 'admin-ops.armadas',
-                'pools' => 'admin-ops.pools',
-                'users' => 'admin-ops.users',
-                'roles' => 'admin-ops.roles',
-                'logs' => 'admin-ops.logs',
+                'routes' => 'settings.routes',
+                'schedules' => 'settings.schedules',
+                'drivers' => 'settings.drivers',
+                'services' => 'settings.services',
+                'segments' => 'settings.segments',
+                'customers' => 'settings.customers',
+                'units' => 'settings.units',
+                'armadas' => 'settings.armadas',
+                'pools' => 'settings.pools',
+                'users' => 'settings.users',
+                'roles' => 'settings.roles',
+                'logs' => 'settings.logs',
                 'reports' => 'report.index',
             ];
 

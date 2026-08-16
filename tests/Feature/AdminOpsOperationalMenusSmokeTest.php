@@ -29,20 +29,20 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
             'luggages.index',
             'report.index',
             'reports.index',
-            'admin-ops.customers',
-            'admin-ops.master.customer-bagasi',
-            'admin-ops.master.customer-charter',
-            'admin-ops.master.rute-carter',
-            'admin-ops.routes',
-            'admin-ops.schedules',
-            'admin-ops.drivers',
-            'admin-ops.services',
-            'admin-ops.segments',
-            'admin-ops.units',
-            'admin-ops.armadas',
-            'admin-ops.pools',
-            'admin-ops.users',
-            'admin-ops.logs',
+            'settings.customers',
+            'settings.master.customer-bagasi',
+            'settings.master.customer-charter',
+            'settings.master.rute-carter',
+            'settings.routes',
+            'settings.schedules',
+            'settings.drivers',
+            'settings.services',
+            'settings.segments',
+            'settings.units',
+            'settings.armadas',
+            'settings.pools',
+            'settings.users',
+            'settings.logs',
         ];
 
         foreach ($routes as $routeName) {
@@ -55,7 +55,7 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
         $this->actingAsSuperAdmin();
 
         $this->get('/admin/segments')
-            ->assertRedirect(route('admin-ops.segments'));
+            ->assertRedirect(route('settings.segments'));
     }
 
     public function test_legacy_admin_menu_paths_redirect_to_new_operational_routes(): void
@@ -65,18 +65,18 @@ class AdminOpsOperationalMenusSmokeTest extends TestCase
         $redirects = [
             '/admin/charters' => route('charters.index'),
             '/admin/luggages' => route('luggages.index'),
-            '/admin/luggage-services' => route('admin-ops.services'),
-            '/admin/customers' => route('admin-ops.customers'),
-            '/admin/admin-ops/customers' => route('admin-ops.customers'),
-            '/admin/admin-ops/admin-ops/customers' => route('admin-ops.customers'),
-            '/admin/customer-bagasi' => route('admin-ops.master.customer-bagasi'),
-            '/admin/customer-charter' => route('admin-ops.master.customer-charter'),
-            '/admin/rute-carter' => route('admin-ops.master.rute-carter'),
-            '/admin/logs' => route('admin-ops.logs'),
-            '/admin/master' => route('admin-ops.master'),
-            '/admin/admin-ops/pool' => route('admin-ops.pools'),
-            '/admin/admin-ops/admin-ops/pool' => route('admin-ops.pools'),
-            '/admin/admin-ops/admin-ops/reports' => route('admin-ops.reports'),
+            '/admin/luggage-services' => route('settings.services'),
+            '/admin/customers' => route('settings.customers'),
+            '/admin/admin-ops/customers' => route('settings.customers'),
+            '/admin/admin-ops/admin-ops/customers' => route('settings.customers'),
+            '/admin/customer-bagasi' => route('settings.master.customer-bagasi'),
+            '/admin/customer-charter' => route('settings.master.customer-charter'),
+            '/admin/rute-carter' => route('settings.master.rute-carter'),
+            '/admin/logs' => route('settings.logs'),
+            '/admin/master' => route('settings.master'),
+            '/admin/admin-ops/pool' => route('settings.pools'),
+            '/admin/admin-ops/admin-ops/pool' => route('settings.pools'),
+            '/admin/admin-ops/admin-ops/reports' => route('settings.reports'),
         ];
 
         foreach ($redirects as $legacyPath => $target) {

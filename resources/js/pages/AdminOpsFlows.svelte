@@ -673,10 +673,10 @@
         }
 
         if (tab === 'assignments') {
-            return '/admin-ops/flows/assignments';
+            return '/settings/flows/assignments';
         }
 
-        return '/admin-ops/flows/export';
+        return '/settings/flows/export';
     };
 
     const setFormMode = (mode: ViewMode) => {

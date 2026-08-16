@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
 export const charters = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: charters.url(options),
@@ -11,13 +11,13 @@ export const charters = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 
 charters.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/charters',
+    url: '/settings/flows/charters',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
 charters.url = (options?: RouteQueryOptions) => {
     return charters.definition.url + queryParams(options)
@@ -26,7 +26,7 @@ charters.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
 charters.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: charters.url(options),
@@ -35,7 +35,7 @@ charters.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
 charters.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: charters.url(options),
@@ -45,7 +45,7 @@ charters.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
     const chartersForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: charters.url(options),
@@ -55,7 +55,7 @@ charters.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
         chartersForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: charters.url(options),
@@ -64,7 +64,7 @@ charters.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/charters'
+ * @route '/settings/flows/charters'
  */
         chartersForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: charters.url({
@@ -80,7 +80,7 @@ charters.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
 export const luggages = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: luggages.url(options),
@@ -89,13 +89,13 @@ export const luggages = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 
 luggages.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/luggages',
+    url: '/settings/flows/luggages',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
 luggages.url = (options?: RouteQueryOptions) => {
     return luggages.definition.url + queryParams(options)
@@ -104,7 +104,7 @@ luggages.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
 luggages.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: luggages.url(options),
@@ -113,7 +113,7 @@ luggages.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
 luggages.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: luggages.url(options),
@@ -123,7 +123,7 @@ luggages.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
     const luggagesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: luggages.url(options),
@@ -133,7 +133,7 @@ luggages.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
         luggagesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: luggages.url(options),
@@ -142,7 +142,7 @@ luggages.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/luggages'
+ * @route '/settings/flows/luggages'
  */
         luggagesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: luggages.url({
@@ -158,7 +158,7 @@ luggages.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
 export const assignments = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: assignments.url(options),
@@ -167,13 +167,13 @@ export const assignments = (options?: RouteQueryOptions): RouteDefinition<'get'>
 
 assignments.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/assignments',
+    url: '/settings/flows/assignments',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
 assignments.url = (options?: RouteQueryOptions) => {
     return assignments.definition.url + queryParams(options)
@@ -182,7 +182,7 @@ assignments.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
 assignments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: assignments.url(options),
@@ -191,7 +191,7 @@ assignments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
 assignments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: assignments.url(options),
@@ -201,7 +201,7 @@ assignments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
     const assignmentsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: assignments.url(options),
@@ -211,7 +211,7 @@ assignments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
         assignmentsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: assignments.url(options),
@@ -220,7 +220,7 @@ assignments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/assignments'
+ * @route '/settings/flows/assignments'
  */
         assignmentsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: assignments.url({
@@ -236,7 +236,7 @@ assignments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: exportMethod.url(options),
@@ -245,13 +245,13 @@ export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'
 
 exportMethod.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/flows/export',
+    url: '/settings/flows/export',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
     return exportMethod.definition.url + queryParams(options)
@@ -260,7 +260,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: exportMethod.url(options),
@@ -269,7 +269,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: exportMethod.url(options),
@@ -279,7 +279,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: exportMethod.url(options),
@@ -289,7 +289,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: exportMethod.url(options),
@@ -298,7 +298,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             /**
 * @see \App\Http\Controllers\AdminOpsFlowsController::__invoke
  * @see app/Http/Controllers/AdminOpsFlowsController.php:23
- * @route '/admin-ops/flows/export'
+ * @route '/settings/flows/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: exportMethod.url({

@@ -2,8 +2,8 @@
     export const layout = {
         breadcrumbs: [
             {
-                title: 'Admin Ops',
-                href: '/admin-ops',
+                title: 'Pengaturan Operasional',
+                href: '/settings/rute-induk',
             },
         ],
     };
@@ -2573,7 +2573,7 @@
             activeMode === 'view' &&
             mode === 'data'
         ) {
-            router.visit('/admin-ops/armada', {
+            router.visit('/settings/armada', {
                 preserveScroll: true,
                 preserveState: false,
             });
@@ -2586,7 +2586,7 @@
             activeMode === 'layout' &&
             mode === 'data'
         ) {
-            router.visit('/admin-ops/kategori-armada', {
+            router.visit('/settings/kategori-armada', {
                 preserveScroll: true,
                 preserveState: false,
             });
@@ -3315,7 +3315,7 @@
     };
 
     const openLayoutEditor = (row: UnitRow) => {
-        router.visit(`/admin-ops/kategori-armada/layout/${row.id}`, {
+        router.visit(`/settings/kategori-armada/layout/${row.id}`, {
             preserveScroll: true,
             preserveState: false,
         });
@@ -4713,7 +4713,7 @@
         }
 
         router.visit(
-            `/admin-ops/armada/view/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`,
+            `/settings/armada/view/${id}${params.toString() === '' ? '' : `?${params.toString()}`}`,
             {
                 preserveScroll: true,
                 preserveState: false,

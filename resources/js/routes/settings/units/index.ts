@@ -2,24 +2,24 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
- * @route '/admin-ops/armada/view/{id}'
+ * @route '/settings/kategori-armada/layout/{id}'
  */
-export const view = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: view.url(args, options),
+export const layout = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: layout.url(args, options),
     method: 'get',
 })
 
-view.definition = {
+layout.definition = {
     methods: ["get","head"],
-    url: '/admin-ops/armada/view/{id}',
+    url: '/settings/kategori-armada/layout/{id}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
- * @route '/admin-ops/armada/view/{id}'
+ * @route '/settings/kategori-armada/layout/{id}'
  */
-view.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+layout.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
@@ -37,7 +37,7 @@ view.url = (args: { id: string | number } | [id: string | number ] | string | nu
                         id: args.id,
                 }
 
-    return view.definition.url
+    return layout.definition.url
             .replace('{id}', parsedArgs.id.toString())
             .replace(/\/+$/, '') + queryParams(options)
 }
@@ -45,48 +45,48 @@ view.url = (args: { id: string | number } | [id: string | number ] | string | nu
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
- * @route '/admin-ops/armada/view/{id}'
+ * @route '/settings/kategori-armada/layout/{id}'
  */
-view.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: view.url(args, options),
+layout.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: layout.url(args, options),
     method: 'get',
 })
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
- * @route '/admin-ops/armada/view/{id}'
+ * @route '/settings/kategori-armada/layout/{id}'
  */
-view.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: view.url(args, options),
+layout.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: layout.url(args, options),
     method: 'head',
 })
 
     /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
- * @route '/admin-ops/armada/view/{id}'
+ * @route '/settings/kategori-armada/layout/{id}'
  */
-    const viewForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: view.url(args, options),
+    const layoutForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: layout.url(args, options),
         method: 'get',
     })
 
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
- * @route '/admin-ops/armada/view/{id}'
+ * @route '/settings/kategori-armada/layout/{id}'
  */
-        viewForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: view.url(args, options),
+        layoutForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: layout.url(args, options),
             method: 'get',
         })
             /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
- * @route '/admin-ops/armada/view/{id}'
+ * @route '/settings/kategori-armada/layout/{id}'
  */
-        viewForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: view.url(args, {
+        layoutForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: layout.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'HEAD',
                             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -95,9 +95,9 @@ view.head = (args: { id: string | number } | [id: string | number ] | string | n
             method: 'get',
         })
     
-    view.form = viewForm
-const armadas = {
-    view: Object.assign(view, view),
+    layout.form = layoutForm
+const units = {
+    layout: Object.assign(layout, layout),
 }
 
-export default armadas
+export default units

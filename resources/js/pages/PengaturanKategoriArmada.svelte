@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Kategori Armada',
-                href: '/admin-ops/kategori-armada',
+                href: '/settings/kategori-armada',
             },
         ],
     };

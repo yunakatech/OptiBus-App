@@ -59,7 +59,7 @@ const nonPrefetchExactPaths = new Set([
     '/report',
 ]);
 
-const nonPrefetchPathPrefixes = ['/admin-ops', '/platform/dashboard'];
+const nonPrefetchPathPrefixes = ['/settings', '/platform/dashboard', '/platform/saas'];
 
 const normalizeNavigationPath = (href: string | null | undefined): string => {
     if (!href) {
@@ -145,19 +145,19 @@ const operasionalNavItems: NavItem[] = [
 const pelangganNavItems: NavItem[] = [
     {
         title: 'Pelanggan Reguler',
-        href: '/admin-ops/customers',
+        href: '/settings/customers',
         icon: Users,
         permission: 'customer.view',
     },
     {
         title: 'Pelanggan Bagasi',
-        href: '/admin-ops/customer-bagasi',
+        href: '/settings/customer-bagasi',
         icon: Briefcase,
         permission: 'customer.view',
     },
     {
         title: 'Pelanggan Carter',
-        href: '/admin-ops/customer-charter',
+        href: '/settings/customer-charter',
         icon: BusFront,
         permission: 'customer.view',
     },
@@ -166,49 +166,49 @@ const pelangganNavItems: NavItem[] = [
 const dataMasterNavItems: NavItem[] = [
     {
         title: 'Jadwal',
-        href: '/admin-ops/jadwal',
+        href: '/settings/jadwal',
         icon: CalendarDays,
         permission: 'master.view',
     },
     {
         title: 'Rute Induk',
-        href: '/admin-ops/rute-induk',
+        href: '/settings/rute-induk',
         icon: Route,
         permission: 'master.view',
     },
     {
         title: 'Master Carter',
-        href: '/admin-ops/rute-carter',
+        href: '/settings/rute-carter',
         icon: BusFront,
         permission: 'master.view',
     },
     {
         title: 'Tarif Bagasi',
-        href: '/admin-ops/tarif-bagasi',
+        href: '/settings/tarif-bagasi',
         icon: Package,
         permission: 'master.view',
     },
     {
         title: 'Pool',
-        href: '/admin-ops/pool',
+        href: '/settings/pool',
         icon: Building2,
         permission: 'pool.manage',
     },
     {
         title: 'Driver',
-        href: '/admin-ops/driver',
+        href: '/settings/driver',
         icon: IdCard,
         permission: 'driver.view',
     },
     {
         title: 'Kategori Armada',
-        href: '/admin-ops/kategori-armada',
+        href: '/settings/kategori-armada',
         icon: Truck,
         permission: 'master.view',
     },
     {
         title: 'Armada',
-        href: '/admin-ops/armada',
+        href: '/settings/armada',
         icon: CarFront,
         permission: 'armada.view',
     },
@@ -228,13 +228,13 @@ const tenantNavItems: NavItem[] = [
     },
     {
         title: 'Users',
-        href: '/admin-ops/users',
+        href: '/settings/users',
         icon: UserCog,
         permission: 'user.manage',
     },
     {
         title: 'Logs',
-        href: '/admin-ops/logs',
+        href: '/settings/logs',
         icon: History,
         permission: 'logs.view',
     },
@@ -250,14 +250,14 @@ const sistemNavItems: NavItem[] = [
     },
     {
         title: 'SaaS',
-        href: '/admin-ops/saas',
+        href: '/platform/saas',
         icon: Building2,
         permission: 'platform.manage',
         superAdminOnly: true,
     },
     {
         title: 'Role & Hak Akses',
-        href: '/admin-ops/roles',
+        href: '/settings/roles',
         icon: ShieldCheck,
         permission: 'role.manage',
         superAdminOnly: true,
@@ -367,7 +367,7 @@ export function getVisibleNavSections(auth: AuthLike): NavSection[] {
                           const href = toUrl(item.href);
                           return (
                               href === '/platform/dashboard' ||
-                              href === '/admin-ops/saas'
+                              href === '/platform/saas'
                           );
                       }),
                   },

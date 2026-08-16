@@ -39,13 +39,13 @@ class DashboardTest extends TestCase
         $console = $this->get(route('booking-console.index'));
         $console->assertRedirect(route('login'));
 
-        $ops = $this->get(route('admin-ops.index'));
+        $ops = $this->get(route('settings.routes'));
         $ops->assertRedirect(route('login'));
 
-        $opsFlows = $this->get(route('admin-ops.flows'));
+        $opsFlows = $this->get(route('settings.flows'));
         $opsFlows->assertRedirect(route('login'));
 
-        $opsMaster = $this->get(route('admin-ops.master'));
+        $opsMaster = $this->get(route('settings.master'));
         $opsMaster->assertRedirect(route('login'));
     }
 
@@ -59,13 +59,13 @@ class DashboardTest extends TestCase
         $console = $this->get(route('booking-console.index'));
         $console->assertOk();
 
-        $ops = $this->get(route('admin-ops.index'));
+        $ops = $this->get(route('settings.routes'));
         $ops->assertOk();
 
-        $opsFlows = $this->get(route('admin-ops.flows'));
+        $opsFlows = $this->get(route('settings.flows'));
         $opsFlows->assertOk();
 
-        $opsMaster = $this->get(route('admin-ops.master'));
+        $opsMaster = $this->get(route('settings.master'));
         $opsMaster->assertOk();
     }
 
@@ -231,7 +231,7 @@ class DashboardTest extends TestCase
         $this->actingAsSuperAdmin();
 
         $this->get('/admin-ops?tab=units')
-            ->assertRedirect(route('admin-ops.units'));
+            ->assertNotFound();
 
         $this->get('/admin-ops?tab=reports&from=2026-05-01&to=2026-05-15')
             ->assertRedirect(route('report.index', [
@@ -240,10 +240,10 @@ class DashboardTest extends TestCase
             ]));
 
         $this->get('/admin-ops/flows?tab=assignments')
-            ->assertRedirect(route('admin-ops.flows.assignments'));
+            ->assertNotFound();
 
         $this->get('/admin-ops/master?tab=rute-carter')
-            ->assertRedirect(route('admin-ops.master.rute-carter'));
+            ->assertNotFound();
     }
 
     /**

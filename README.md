@@ -228,19 +228,19 @@ write.
 
 - `/dashboard`, `/booking-console`, `/bookings`, `/payments`
 - `/charters`, `/luggages`, `/report`
-- `/admin-ops/flows`
+- `/settings/flows`
 
 ### Master data
 
-- `/admin-ops/rute-induk`, `/admin-ops/jadwal`, `/admin-ops/segments`
-- `/admin-ops/tarif-bagasi`, `/admin-ops/kategori-armada`
-- `/admin-ops/armada`, `/admin-ops/driver`, `/admin-ops/pool`
-- `/admin-ops/customers`
+- `/settings/rute-induk`, `/settings/jadwal`, `/settings/segments`
+- `/settings/tarif-bagasi`, `/settings/kategori-armada`
+- `/settings/armada`, `/settings/driver`, `/settings/pool`
+- `/settings/customers`
 
 ### Akses dan platform
 
-- `/admin-ops/users`, `/admin-ops/roles`, `/admin-ops/logs`
-- `/admin-ops/reports`, `/platform/dashboard`, `/admin-ops/saas`
+- `/settings/users`, `/settings/roles`, `/settings/logs`
+- `/settings/reports`, `/platform/dashboard`, `/platform/saas`
 - `/subscription`
 
 Route private memakai session auth, verification, permission, subscription,

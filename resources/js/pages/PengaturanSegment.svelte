@@ -3,7 +3,7 @@
         breadcrumbs: [
             {
                 title: 'Segment',
-                href: '/admin-ops/segments',
+                href: '/settings/segments',
             },
         ],
     };
