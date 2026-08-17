@@ -1,0 +1,101 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (! Schema::hasTable('luggage_services') || ! Schema::hasTable('segments')) {
+            return;
+        }
+
+        Schema::table('luggage_services', function (Blueprint $table): void {
+            if (! Schema::hasColumn('luggage_services', 'description')) {
+                $table->text('description')->nullable();
+            }
+            if (! Schema::hasColumn('luggage_services', 'is_active')) {
+                $table->boolean('is_active')->default(true)->index();
+            }
+            if (! Schema::hasColumn('luggage_services', 'updated_at')) {
+                $table->timestamp('updated_at')->nullable();
+            }
+        });
+
+        if (Schema::hasTable('luggages') && ! Schema::hasColumn('luggages', 'segment_id')) {
+            Schema::table('luggages', function (Blueprint $table): void {
+                $table->unsignedBigInteger('segment_id')->nullable()->index();
+            });
+        }
+
+        if (! Schema::hasTable('luggage_segment_rates')) {
+            Schema::create('luggage_segment_rates', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('tenant_id');
+                $table->unsignedBigInteger('segment_id');
+                $table->unsignedBigInteger('service_id');
+                $table->decimal('unit_price', 15, 2)->default(0);
+                $table->boolean('is_active')->default(true);
+                $table->timestamp('configured_at')->nullable();
+                $table->unsignedBigInteger('created_by_user_id')->nullable();
+                $table->unsignedBigInteger('updated_by_user_id')->nullable();
+                $table->timestamps();
+
+                $table->unique(
+                    ['tenant_id', 'segment_id', 'service_id'],
+                    'uniq_luggage_rate_tenant_segment_service',
+                );
+                $table->index(
+                    ['tenant_id', 'segment_id', 'is_active'],
+                    'idx_luggage_rates_segment_active',
+                );
+                $table->index('service_id', 'idx_luggage_rates_service');
+            });
+        } else {
+            Schema::table('luggage_segment_rates', function (Blueprint $table): void {
+                if (! Schema::hasColumn('luggage_segment_rates', 'tenant_id')) {
+                    $table->unsignedBigInteger('tenant_id')->nullable();
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'segment_id')) {
+                    $table->unsignedBigInteger('segment_id')->nullable();
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'service_id')) {
+                    $table->unsignedBigInteger('service_id')->nullable();
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'unit_price')) {
+                    $table->decimal('unit_price', 15, 2)->default(0);
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'is_active')) {
+                    $table->boolean('is_active')->default(true);
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'configured_at')) {
+                    $table->timestamp('configured_at')->nullable();
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'created_by_user_id')) {
+                    $table->unsignedBigInteger('created_by_user_id')->nullable();
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'updated_by_user_id')) {
+                    $table->unsignedBigInteger('updated_by_user_id')->nullable();
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'created_at')) {
+                    $table->timestamp('created_at')->nullable();
+                }
+                if (! Schema::hasColumn('luggage_segment_rates', 'updated_at')) {
+                    $table->timestamp('updated_at')->nullable();
+                }
+            });
+        }
+
+        if (Schema::getConnection()->getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE luggage_segment_rates ENABLE ROW LEVEL SECURITY');
+        }
+    }
+
+    public function down(): void
+    {
+        // Keep this repair migration non-destructive.
+    }
+};

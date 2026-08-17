@@ -993,7 +993,11 @@ class AdminOpsApiController extends Controller
         ]);
         $tenantId = TenantWriteContext::requireTenant();
 
-        $this->luggagePricing->assertReady();
+        try {
+            $this->luggagePricing->assertReady();
+        } catch (\RuntimeException $exception) {
+            return $this->error($exception->getMessage(), 409);
+        }
         $routeQuery = DB::table('routes')->where('id', $data['route_id'])->where('tenant_id', $tenantId);
         PoolScope::applyRouteScope($routeQuery, 'routes.id', 'routes.name');
         $route = $routeQuery->first(['id', 'name']);
