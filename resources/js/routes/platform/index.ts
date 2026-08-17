@@ -76,7 +76,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     dashboard.form = dashboardForm
 /**
 * @see \App\Http\Controllers\AdminOpsSaasController::__invoke
@@ -154,7 +154,7 @@ saas.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-
+    
     saas.form = saasForm
 const platform = {
     dashboard: Object.assign(dashboard, dashboard),

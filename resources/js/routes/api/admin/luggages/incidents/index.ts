@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from '../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3892
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3901
  * @route '/api/admin/luggages/{id}/incidents'
  */
 export const index = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3892
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3901
  * @route '/api/admin/luggages/{id}/incidents'
  */
 index.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ index.url = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3892
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3901
  * @route '/api/admin/luggages/{id}/incidents'
  */
 index.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ index.get = (args: { id: string | number } | [id: string | number ] | string | n
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3892
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3901
  * @route '/api/admin/luggages/{id}/incidents'
  */
 index.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ index.head = (args: { id: string | number } | [id: string | number ] | string | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3892
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3901
  * @route '/api/admin/luggages/{id}/incidents'
  */
     const indexForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ index.head = (args: { id: string | number } | [id: string | number ] | string | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3892
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3901
  * @route '/api/admin/luggages/{id}/incidents'
  */
         indexForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.head = (args: { id: string | number } | [id: string | number ] | string | 
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3892
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3901
  * @route '/api/admin/luggages/{id}/incidents'
  */
         indexForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -98,7 +98,7 @@ index.head = (args: { id: string | number } | [id: string | number ] | string | 
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::store
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3937
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3946
  * @route '/api/admin/luggages/{id}/incidents'
  */
 export const store = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::store
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3937
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3946
  * @route '/api/admin/luggages/{id}/incidents'
  */
 store.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -141,7 +141,7 @@ store.url = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::store
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3937
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3946
  * @route '/api/admin/luggages/{id}/incidents'
  */
 store.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -151,7 +151,7 @@ store.post = (args: { id: string | number } | [id: string | number ] | string | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::store
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3937
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3946
  * @route '/api/admin/luggages/{id}/incidents'
  */
     const storeForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -161,7 +161,7 @@ store.post = (args: { id: string | number } | [id: string | number ] | string | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::store
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:3937
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:3946
  * @route '/api/admin/luggages/{id}/incidents'
  */
         storeForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -172,7 +172,7 @@ store.post = (args: { id: string | number } | [id: string | number ] | string | 
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::update
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4072
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4081
  * @route '/api/admin/luggages/incidents/{incidentId}'
  */
 export const update = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -187,7 +187,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::update
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4072
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4081
  * @route '/api/admin/luggages/incidents/{incidentId}'
  */
 update.url = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -215,7 +215,7 @@ update.url = (args: { incidentId: string | number } | [incidentId: string | numb
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::update
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4072
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4081
  * @route '/api/admin/luggages/incidents/{incidentId}'
  */
 update.patch = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -225,7 +225,7 @@ update.patch = (args: { incidentId: string | number } | [incidentId: string | nu
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::update
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4072
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4081
  * @route '/api/admin/luggages/incidents/{incidentId}'
  */
     const updateForm = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -240,7 +240,7 @@ update.patch = (args: { incidentId: string | number } | [incidentId: string | nu
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::update
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4072
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4081
  * @route '/api/admin/luggages/incidents/{incidentId}'
  */
         updateForm.patch = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -256,7 +256,7 @@ update.patch = (args: { incidentId: string | number } | [incidentId: string | nu
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::claim
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4175
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4188
  * @route '/api/admin/luggages/incidents/{incidentId}/claim'
  */
 export const claim = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -271,7 +271,7 @@ claim.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::claim
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4175
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4188
  * @route '/api/admin/luggages/incidents/{incidentId}/claim'
  */
 claim.url = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -299,7 +299,7 @@ claim.url = (args: { incidentId: string | number } | [incidentId: string | numbe
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::claim
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4175
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4188
  * @route '/api/admin/luggages/incidents/{incidentId}/claim'
  */
 claim.post = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -309,7 +309,7 @@ claim.post = (args: { incidentId: string | number } | [incidentId: string | numb
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::claim
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4175
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4188
  * @route '/api/admin/luggages/incidents/{incidentId}/claim'
  */
     const claimForm = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -319,7 +319,7 @@ claim.post = (args: { incidentId: string | number } | [incidentId: string | numb
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::claim
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:4175
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:4188
  * @route '/api/admin/luggages/incidents/{incidentId}/claim'
  */
         claimForm.post = (args: { incidentId: string | number } | [incidentId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

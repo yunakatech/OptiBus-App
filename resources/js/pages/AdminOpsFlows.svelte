@@ -2826,15 +2826,22 @@
             `/api/admin/luggages?${luggageQueryString(page)}`,
         );
         luggages = Array.isArray(r.luggages)
-            ? r.luggages.map((row: Luggage) => ({
-                  ...row,
-                  status: normalizeLuggageStatus(row.status),
-                  condition_status: normalizeLuggageCondition(
-                      row.condition_status,
-                      row.damaged_quantity,
-                      row.lost_quantity,
-                  ),
-              }))
+            ? r.luggages.map((row: Luggage) => {
+                  const normalizedStatus = normalizeLuggageStatus(row.status);
+                  const claimFinalized = isFinalLuggageClaimStatus(
+                      row.latest_claim_status,
+                  );
+
+                  return {
+                      ...row,
+                      status: claimFinalized ? 'canceled' : normalizedStatus,
+                      condition_status: normalizeLuggageCondition(
+                          row.condition_status,
+                          row.damaged_quantity,
+                          row.lost_quantity,
+                      ),
+                  };
+              })
             : [];
         luggageMeta = r.pagination ?? luggageMeta;
     };
@@ -3467,12 +3474,35 @@
             rejected: 'Klaim Ditolak',
         })[String(status ?? '')] ?? null;
 
+    const isFinalLuggageClaimStatus = (status: string | null | undefined) =>
+        ['paid', 'rejected'].includes(String(status ?? '').toLowerCase());
+
+    const luggageIncidentActionsClosed = (
+        row: Luggage,
+        normalizedStatus: string,
+    ) =>
+        normalizedStatus === 'canceled' ||
+        isFinalLuggageClaimStatus(row.latest_claim_status);
+
     const closeLuggageIncidentModal = () => {
         luggageIncidentModalOpen = false;
         luggageIncidentLuggage = null;
         luggageIncidentRows = [];
         luggageIncidentSelected = null;
         luggageIncidentBusy = false;
+    };
+
+    const markLuggageCanceledInView = (luggageId: number) => {
+        luggages = luggages.map((row) =>
+            row.id === luggageId ? { ...row, status: 'canceled' } : row,
+        );
+
+        if (luggageIncidentLuggage?.id === luggageId) {
+            luggageIncidentLuggage = {
+                ...luggageIncidentLuggage,
+                status: 'canceled',
+            };
+        }
     };
 
     const openLuggageIncidentReport = (
@@ -3560,11 +3590,18 @@
         error = '';
 
         try {
-            await api('PATCH', `/api/admin/luggages/incidents/${incident.id}`, {
-                status,
-                resolution_note: luggageIncidentResolutionNote,
-            });
+            const response = await api(
+                'PATCH',
+                `/api/admin/luggages/incidents/${incident.id}`,
+                {
+                    status,
+                    resolution_note: luggageIncidentResolutionNote,
+                },
+            );
             message = 'Status insiden berhasil diperbarui.';
+            if (response.incident?.luggage_status === 'canceled') {
+                markLuggageCanceledInView(luggageIncidentLuggage?.id ?? 0);
+            }
             if (luggageIncidentLuggage) {
                 await reloadActiveFlowList(luggageMeta.page, false);
                 await loadLuggageIncidents(luggageIncidentLuggage, 'history');
@@ -3602,7 +3639,7 @@
         error = '';
 
         try {
-            await api(
+            const response = await api(
                 'POST',
                 `/api/admin/luggages/incidents/${luggageIncidentSelected.id}/claim`,
                 {
@@ -3613,6 +3650,9 @@
                 },
             );
             message = 'Klaim bagasi berhasil diperbarui.';
+            if (response.claim?.luggage_status === 'canceled') {
+                markLuggageCanceledInView(luggageIncidentLuggage?.id ?? 0);
+            }
             if (luggageIncidentLuggage) {
                 await reloadActiveFlowList(luggageMeta.page, false);
                 await loadLuggageIncidents(luggageIncidentLuggage, 'history');
@@ -6224,7 +6264,7 @@
                                                         <div
                                                             class="flex flex-wrap justify-end gap-1.5"
                                                         >
-                                                            {#if canLuggageIncident && incident.status === 'reported'}
+                                                            {#if canLuggageIncident && !isFinalLuggageClaimStatus(incident.claim_status) && incident.status === 'reported'}
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
@@ -6239,7 +6279,7 @@
                                                                     Periksa
                                                                 </Button>
                                                             {/if}
-                                                            {#if canLuggageIncident && incident.status === 'investigating'}
+                                                            {#if canLuggageIncident && !isFinalLuggageClaimStatus(incident.claim_status) && incident.status === 'investigating'}
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
@@ -6254,7 +6294,7 @@
                                                                     Insiden
                                                                 </Button>
                                                             {/if}
-                                                            {#if canLuggageIncident && ['reported', 'investigating', 'approved'].includes(incident.status)}
+                                                            {#if canLuggageIncident && !isFinalLuggageClaimStatus(incident.claim_status) && ['reported', 'investigating', 'approved'].includes(incident.status)}
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
@@ -6268,7 +6308,7 @@
                                                                     Tolak
                                                                 </Button>
                                                             {/if}
-                                                            {#if canLuggageIncident && incident.status === 'approved'}
+                                                            {#if canLuggageIncident && !isFinalLuggageClaimStatus(incident.claim_status) && incident.status === 'approved'}
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
@@ -6283,7 +6323,7 @@
                                                                     Selesai
                                                                 </Button>
                                                             {/if}
-                                                            {#if canLuggageClaim && ['approved', 'resolved'].includes(incident.status) && incident.claim_status !== 'paid'}
+                                                            {#if canLuggageClaim && ['approved', 'resolved'].includes(incident.status) && !isFinalLuggageClaimStatus(incident.claim_status)}
                                                                 <Button
                                                                     type="button"
                                                                     class="h-7 rounded-lg px-2 text-[10px]"
@@ -6467,7 +6507,7 @@
                                                     >
                                                         Lihat Insiden
                                                     </DropdownMenuItem>
-                                                    {#if canLuggageIncident && normalizedLuggageStatus !== 'canceled'}
+                                                    {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
                                                         <DropdownMenuItem
                                                             onclick={() =>
                                                                 openLuggageIncidentReport(
@@ -6487,7 +6527,7 @@
                                                             Laporkan Hilang
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    {#if canLuggageClaim && normalizedLuggageCondition !== 'normal'}
+                                                    {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
                                                         <DropdownMenuItem
                                                             onclick={() =>
                                                                 void loadLuggageIncidents(
@@ -7027,7 +7067,7 @@
                                                             >
                                                                 Lihat Insiden
                                                             </DropdownMenuItem>
-                                                            {#if canLuggageIncident && normalizedLuggageStatus !== 'canceled'}
+                                                            {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
                                                                         openLuggageIncidentReport(
@@ -7049,7 +7089,7 @@
                                                                     Hilang
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            {#if canLuggageClaim && normalizedLuggageCondition !== 'normal'}
+                                                            {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
                                                                         void loadLuggageIncidents(
