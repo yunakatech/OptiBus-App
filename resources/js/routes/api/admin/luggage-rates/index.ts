@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from '../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:988
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:993
  * @route '/api/admin/luggage-rates'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:988
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:993
  * @route '/api/admin/luggage-rates'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:988
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:993
  * @route '/api/admin/luggage-rates'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:988
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:993
  * @route '/api/admin/luggage-rates'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:988
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:993
  * @route '/api/admin/luggage-rates'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:988
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:993
  * @route '/api/admin/luggage-rates'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:988
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:993
  * @route '/api/admin/luggage-rates'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1014
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1023
  * @route '/api/admin/luggage-rates/{segmentId}'
  */
 export const save = (args: { segmentId: string | number } | [segmentId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -94,7 +94,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1014
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1023
  * @route '/api/admin/luggage-rates/{segmentId}'
  */
 save.url = (args: { segmentId: string | number } | [segmentId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -122,7 +122,7 @@ save.url = (args: { segmentId: string | number } | [segmentId: string | number ]
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1014
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1023
  * @route '/api/admin/luggage-rates/{segmentId}'
  */
 save.put = (args: { segmentId: string | number } | [segmentId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -132,7 +132,7 @@ save.put = (args: { segmentId: string | number } | [segmentId: string | number ]
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1014
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1023
  * @route '/api/admin/luggage-rates/{segmentId}'
  */
     const saveForm = (args: { segmentId: string | number } | [segmentId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -147,7 +147,7 @@ save.put = (args: { segmentId: string | number } | [segmentId: string | number ]
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1014
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1023
  * @route '/api/admin/luggage-rates/{segmentId}'
  */
         saveForm.put = (args: { segmentId: string | number } | [segmentId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
