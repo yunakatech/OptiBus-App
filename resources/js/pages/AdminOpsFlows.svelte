@@ -2981,26 +2981,6 @@
 
             return;
         }
-        if (
-            !luggageForm.id &&
-            (!Number(luggageForm.rute_id) ||
-                !Number(luggageForm.segment_id) ||
-                !Number(luggageForm.service_id))
-        ) {
-            error =
-                'Pilih rute induk, segment, dan kategori barang terlebih dahulu.';
-
-            return;
-        }
-        if (
-            luggagePriceOverrideEnabled &&
-            !String(luggageForm.price_override_reason ?? '').trim()
-        ) {
-            error = 'Alasan perubahan tarif wajib diisi.';
-
-            return;
-        }
-
         savingCharter = true;
 
         try {
