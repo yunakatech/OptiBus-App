@@ -170,6 +170,50 @@ class LuggageIncidentTest extends TestCase
             ->assertJsonPath('luggages.0.incident_history_label', 'Rusak - Klaim Dibayar');
     }
 
+    public function test_final_claim_cancels_delivery_and_keeps_condition_history(): void
+    {
+        [$tenantId, $poolId] = $this->tenantAndPool('incident-final-claim');
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->withSession(['active_pool_id' => $poolId]);
+        $luggageId = $this->luggage($tenantId, $poolId, 1, 'Lunas');
+
+        $incident = $this->postJson(route('api.admin.luggages.incidents.store', ['id' => $luggageId]), [
+            'type' => 'lost',
+            'quantity' => 1,
+            'description' => 'Barang tidak ditemukan setelah pemeriksaan.',
+        ])->assertCreated()->json('incident');
+
+        foreach (['investigating', 'approved'] as $status) {
+            $this->patchJson(route('api.admin.luggages.incidents.update', [
+                'incidentId' => $incident['id'],
+            ]), ['status' => $status])->assertOk();
+        }
+
+        $this->postJson(route('api.admin.luggages.incidents.claim', [
+            'incidentId' => $incident['id'],
+        ]), [
+            'claim_status' => 'paid',
+            'claim_amount' => 250000,
+            'approved_amount' => 200000,
+        ])->assertOk()->assertJsonPath('claim.luggage_status', 'canceled');
+
+        $this->assertDatabaseHas('luggages', [
+            'id' => $luggageId,
+            'status' => 'canceled',
+            'condition_status' => 'lost',
+            'lost_quantity' => 1,
+            'payment_status' => 'Lunas',
+        ]);
+
+        $this->getJson(route('api.admin.luggages.index', ['condition' => 'lost']))
+            ->assertOk()
+            ->assertJsonPath('luggages.0.id', $luggageId)
+            ->assertJsonPath('luggages.0.status', 'canceled')
+            ->assertJsonPath('luggages.0.condition_status', 'lost')
+            ->assertJsonPath('luggages.0.latest_claim_status', 'paid')
+            ->assertJsonPath('luggages.0.incident_history_label', 'Hilang - Klaim Dibayar');
+    }
+
     public function test_new_incident_validation_uses_active_incidents_not_closed_history(): void
     {
         [$tenantId, $poolId] = $this->tenantAndPool('incident-active-history');
