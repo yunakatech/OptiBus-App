@@ -11,7 +11,21 @@ class LuggagePricingService
 {
     public function ready(): bool
     {
-        return SchemaCache::hasTable('luggage_segment_rates')
+        foreach ([
+            'id',
+            'tenant_id',
+            'segment_id',
+            'service_id',
+            'unit_price',
+            'is_active',
+            'configured_at',
+        ] as $column) {
+            if (! SchemaCache::hasColumn('luggage_segment_rates', $column)) {
+                return false;
+            }
+        }
+
+        return SchemaCache::hasColumn('luggage_services', 'tenant_id')
             && SchemaCache::hasColumn('luggage_services', 'is_active')
             && SchemaCache::hasColumn('luggages', 'segment_id');
     }
