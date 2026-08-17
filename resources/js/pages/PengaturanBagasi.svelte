@@ -261,7 +261,14 @@
         event.preventDefault();
         savingCategory = true;
         try {
-            await api('POST', '/api/admin/luggage-services', categoryForm);
+            const payload: Record<string, unknown> = {
+                name: categoryForm.name,
+                description: categoryForm.description,
+                is_active: categoryForm.is_active,
+            };
+            if (categoryForm.id > 0) payload.id = categoryForm.id;
+
+            await api('POST', '/api/admin/luggage-services', payload);
             showCategoryForm = false;
             message = categoryForm.id
                 ? 'Kategori barang diperbarui.'

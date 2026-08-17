@@ -18,6 +18,7 @@ class LuggageTariffTest extends TestCase
 
         $firstSegmentId = $this->createSegment($tenantId, $routeId, 'PINRANG - PAREPARE');
         $category = $this->postJson(route('api.admin.luggage-services.save'), [
+            'id' => 0,
             'name' => 'Koper',
             'description' => 'Bagasi penumpang',
         ])->assertCreated()->json();
