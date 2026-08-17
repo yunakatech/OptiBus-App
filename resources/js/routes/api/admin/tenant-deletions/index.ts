@@ -98,7 +98,7 @@ status.head = (args: { jobId: string | number } | [jobId: string | number ] | st
     status.form = statusForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 export const retry = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ retry.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 retry.url = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -141,7 +141,7 @@ retry.url = (args: { jobId: string | number } | [jobId: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 retry.post = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -151,7 +151,7 @@ retry.post = (args: { jobId: string | number } | [jobId: string | number ] | str
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
     const retryForm = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -161,7 +161,7 @@ retry.post = (args: { jobId: string | number } | [jobId: string | number ] | str
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
         retryForm.post = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

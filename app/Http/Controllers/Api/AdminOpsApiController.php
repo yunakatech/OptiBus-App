@@ -11767,59 +11767,6 @@ XML;
         ]);
     }
 
-    public function tenantDeletionProcess(Request $request): JsonResponse
-    {
-        $configuredSecrets = array_values(array_filter([
-            trim((string) env('TENANT_PURGE_CRON_SECRET', '')),
-            trim((string) env('CRON_SECRET', '')),
-        ]));
-        $providedSecret = trim((string) $request->header('X-Tenant-Purge-Secret', ''));
-        if ($providedSecret === '') {
-            $authorization = trim((string) $request->header('Authorization', ''));
-            $providedSecret = preg_replace('/^Bearer\s+/i', '', $authorization) ?? '';
-        }
-        $secretMatches = $providedSecret !== '' && collect($configuredSecrets)
-            ->contains(fn (string $secret): bool => hash_equals($secret, $providedSecret));
-        if ($configuredSecrets === [] || ! $secretMatches) {
-            return $this->error('Unauthorized.', 401);
-        }
-
-        try {
-            $jobId = (int) $request->input('job_id', 0);
-            $startedAt = microtime(true);
-            $results = [];
-            $maxBatches = 25;
-
-            for ($batch = 0; $batch < $maxBatches; $batch++) {
-                // Leave headroom below Vercel's function timeout for the response.
-                if ($batch > 0 && (microtime(true) - $startedAt) >= 7.5) {
-                    break;
-                }
-
-                $result = $this->tenantDeletionService->processNextBatch($jobId > 0 ? $jobId : null);
-                $results[] = $result;
-
-                if (($result['processed'] ?? false) !== true
-                    || in_array((string) ($result['status'] ?? ''), ['completed', 'failed'], true)) {
-                    break;
-                }
-            }
-
-            $lastResult = $results !== [] ? $results[array_key_last($results)] : [
-                'processed' => false,
-                'message' => 'Tidak ada purge job yang perlu diproses.',
-            ];
-
-            return $this->ok([
-                ...$lastResult,
-                'batches_processed' => count($results),
-                'time_limited' => count($results) >= $maxBatches || (microtime(true) - $startedAt) >= 7.5,
-            ]);
-        } catch (\Throwable $e) {
-            return $this->error($e->getMessage(), 500);
-        }
-    }
-
     // ──────────────────────────────────────────────
     // SaaS: Subscriptions
     // ──────────────────────────────────────────────

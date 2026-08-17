@@ -1,101 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-export const tenantDeletionProcess = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: tenantDeletionProcess.url(options),
-    method: 'get',
-})
-
-tenantDeletionProcess.definition = {
-    methods: ["get","post","head"],
-    url: '/api/internal/tenant-deletions/process',
-} satisfies RouteDefinition<["get","post","head"]>
-
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-tenantDeletionProcess.url = (options?: RouteQueryOptions) => {
-    return tenantDeletionProcess.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-tenantDeletionProcess.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: tenantDeletionProcess.url(options),
-    method: 'get',
-})
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-tenantDeletionProcess.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
-    url: tenantDeletionProcess.url(options),
-    method: 'post',
-})
-/**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-tenantDeletionProcess.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: tenantDeletionProcess.url(options),
-    method: 'head',
-})
-
-    /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-    const tenantDeletionProcessForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: tenantDeletionProcess.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-        tenantDeletionProcessForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: tenantDeletionProcess.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-        tenantDeletionProcessForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: tenantDeletionProcess.url(options),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionProcess
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11756
- * @route '/api/internal/tenant-deletions/process'
- */
-        tenantDeletionProcessForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: tenantDeletionProcess.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    tenantDeletionProcess.form = tenantDeletionProcessForm
-/**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::luggageServicesSave
  * @see app/Http/Controllers/Api/AdminOpsApiController.php:909
  * @route '/admin/luggage-services'
@@ -8900,7 +8804,7 @@ tenantDeletionStatus.head = (args: { jobId: string | number } | [jobId: string |
     tenantDeletionStatus.form = tenantDeletionStatusForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionRetry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 export const tenantDeletionRetry = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -8915,7 +8819,7 @@ tenantDeletionRetry.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionRetry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 tenantDeletionRetry.url = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -8943,7 +8847,7 @@ tenantDeletionRetry.url = (args: { jobId: string | number } | [jobId: string | n
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionRetry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 tenantDeletionRetry.post = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -8953,7 +8857,7 @@ tenantDeletionRetry.post = (args: { jobId: string | number } | [jobId: string | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionRetry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
     const tenantDeletionRetryForm = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -8963,7 +8867,7 @@ tenantDeletionRetry.post = (args: { jobId: string | number } | [jobId: string | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::tenantDeletionRetry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11739
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11753
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
         tenantDeletionRetryForm.post = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -8974,7 +8878,7 @@ tenantDeletionRetry.post = (args: { jobId: string | number } | [jobId: string | 
     tenantDeletionRetry.form = tenantDeletionRetryForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11813
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11774
  * @route '/api/admin/subscriptions'
  */
 export const subscriptionsIndex = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -8989,7 +8893,7 @@ subscriptionsIndex.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11813
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11774
  * @route '/api/admin/subscriptions'
  */
 subscriptionsIndex.url = (options?: RouteQueryOptions) => {
@@ -8998,7 +8902,7 @@ subscriptionsIndex.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11813
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11774
  * @route '/api/admin/subscriptions'
  */
 subscriptionsIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -9007,7 +8911,7 @@ subscriptionsIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11813
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11774
  * @route '/api/admin/subscriptions'
  */
 subscriptionsIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -9017,7 +8921,7 @@ subscriptionsIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11813
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11774
  * @route '/api/admin/subscriptions'
  */
     const subscriptionsIndexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9027,7 +8931,7 @@ subscriptionsIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11813
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11774
  * @route '/api/admin/subscriptions'
  */
         subscriptionsIndexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9036,7 +8940,7 @@ subscriptionsIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11813
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11774
  * @route '/api/admin/subscriptions'
  */
         subscriptionsIndexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9052,7 +8956,7 @@ subscriptionsIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
     subscriptionsIndex.form = subscriptionsIndexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11911
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11872
  * @route '/api/admin/subscriptions'
  */
 export const subscriptionsSave = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9067,7 +8971,7 @@ subscriptionsSave.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11911
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11872
  * @route '/api/admin/subscriptions'
  */
 subscriptionsSave.url = (options?: RouteQueryOptions) => {
@@ -9076,7 +8980,7 @@ subscriptionsSave.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11911
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11872
  * @route '/api/admin/subscriptions'
  */
 subscriptionsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9086,7 +8990,7 @@ subscriptionsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11911
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11872
  * @route '/api/admin/subscriptions'
  */
     const subscriptionsSaveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9096,7 +9000,7 @@ subscriptionsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::subscriptionsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11911
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11872
  * @route '/api/admin/subscriptions'
  */
         subscriptionsSaveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9107,7 +9011,7 @@ subscriptionsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
     subscriptionsSave.form = subscriptionsSaveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12047
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12008
  * @route '/api/admin/plans'
  */
 export const plansIndex = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -9122,7 +9026,7 @@ plansIndex.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12047
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12008
  * @route '/api/admin/plans'
  */
 plansIndex.url = (options?: RouteQueryOptions) => {
@@ -9131,7 +9035,7 @@ plansIndex.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12047
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12008
  * @route '/api/admin/plans'
  */
 plansIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -9140,7 +9044,7 @@ plansIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12047
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12008
  * @route '/api/admin/plans'
  */
 plansIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -9150,7 +9054,7 @@ plansIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12047
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12008
  * @route '/api/admin/plans'
  */
     const plansIndexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9160,7 +9064,7 @@ plansIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12047
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12008
  * @route '/api/admin/plans'
  */
         plansIndexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9169,7 +9073,7 @@ plansIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12047
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12008
  * @route '/api/admin/plans'
  */
         plansIndexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9185,7 +9089,7 @@ plansIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     plansIndex.form = plansIndexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12168
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12129
  * @route '/api/admin/plans'
  */
 export const plansSave = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9200,7 +9104,7 @@ plansSave.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12168
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12129
  * @route '/api/admin/plans'
  */
 plansSave.url = (options?: RouteQueryOptions) => {
@@ -9209,7 +9113,7 @@ plansSave.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12168
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12129
  * @route '/api/admin/plans'
  */
 plansSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9219,7 +9123,7 @@ plansSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12168
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12129
  * @route '/api/admin/plans'
  */
     const plansSaveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9229,7 +9133,7 @@ plansSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::plansSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12168
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12129
  * @route '/api/admin/plans'
  */
         plansSaveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9240,7 +9144,7 @@ plansSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     plansSave.form = plansSaveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12266
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12227
  * @route '/api/admin/invoices'
  */
 export const invoicesIndex = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -9255,7 +9159,7 @@ invoicesIndex.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12266
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12227
  * @route '/api/admin/invoices'
  */
 invoicesIndex.url = (options?: RouteQueryOptions) => {
@@ -9264,7 +9168,7 @@ invoicesIndex.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12266
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12227
  * @route '/api/admin/invoices'
  */
 invoicesIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -9273,7 +9177,7 @@ invoicesIndex.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12266
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12227
  * @route '/api/admin/invoices'
  */
 invoicesIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -9283,7 +9187,7 @@ invoicesIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12266
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12227
  * @route '/api/admin/invoices'
  */
     const invoicesIndexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9293,7 +9197,7 @@ invoicesIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12266
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12227
  * @route '/api/admin/invoices'
  */
         invoicesIndexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9302,7 +9206,7 @@ invoicesIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesIndex
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12266
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12227
  * @route '/api/admin/invoices'
  */
         invoicesIndexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9318,7 +9222,7 @@ invoicesIndex.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     invoicesIndex.form = invoicesIndexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesMarkPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12409
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12370
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
 export const invoicesMarkPaid = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9333,7 +9237,7 @@ invoicesMarkPaid.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesMarkPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12409
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12370
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
 invoicesMarkPaid.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -9361,7 +9265,7 @@ invoicesMarkPaid.url = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesMarkPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12409
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12370
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
 invoicesMarkPaid.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9371,7 +9275,7 @@ invoicesMarkPaid.post = (args: { id: string | number } | [id: string | number ] 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesMarkPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12409
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12370
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
     const invoicesMarkPaidForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9381,7 +9285,7 @@ invoicesMarkPaid.post = (args: { id: string | number } | [id: string | number ] 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::invoicesMarkPaid
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12409
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12370
  * @route '/api/admin/invoices/{id}/mark-paid'
  */
         invoicesMarkPaidForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9392,7 +9296,7 @@ invoicesMarkPaid.post = (args: { id: string | number } | [id: string | number ] 
     invoicesMarkPaid.form = invoicesMarkPaidForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsGet
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12439
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12400
  * @route '/api/admin/payment-settings'
  */
 export const paymentSettingsGet = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -9407,7 +9311,7 @@ paymentSettingsGet.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsGet
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12439
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12400
  * @route '/api/admin/payment-settings'
  */
 paymentSettingsGet.url = (options?: RouteQueryOptions) => {
@@ -9416,7 +9320,7 @@ paymentSettingsGet.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsGet
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12439
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12400
  * @route '/api/admin/payment-settings'
  */
 paymentSettingsGet.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -9425,7 +9329,7 @@ paymentSettingsGet.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsGet
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12439
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12400
  * @route '/api/admin/payment-settings'
  */
 paymentSettingsGet.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -9435,7 +9339,7 @@ paymentSettingsGet.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsGet
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12439
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12400
  * @route '/api/admin/payment-settings'
  */
     const paymentSettingsGetForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9445,7 +9349,7 @@ paymentSettingsGet.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsGet
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12439
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12400
  * @route '/api/admin/payment-settings'
  */
         paymentSettingsGetForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9454,7 +9358,7 @@ paymentSettingsGet.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsGet
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12439
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12400
  * @route '/api/admin/payment-settings'
  */
         paymentSettingsGetForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -9470,7 +9374,7 @@ paymentSettingsGet.head = (options?: RouteQueryOptions): RouteDefinition<'head'>
     paymentSettingsGet.form = paymentSettingsGetForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12446
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12407
  * @route '/api/admin/payment-settings'
  */
 export const paymentSettingsSave = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9485,7 +9389,7 @@ paymentSettingsSave.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12446
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12407
  * @route '/api/admin/payment-settings'
  */
 paymentSettingsSave.url = (options?: RouteQueryOptions) => {
@@ -9494,7 +9398,7 @@ paymentSettingsSave.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12446
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12407
  * @route '/api/admin/payment-settings'
  */
 paymentSettingsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -9504,7 +9408,7 @@ paymentSettingsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12446
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12407
  * @route '/api/admin/payment-settings'
  */
     const paymentSettingsSaveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9514,7 +9418,7 @@ paymentSettingsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::paymentSettingsSave
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:12446
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:12407
  * @route '/api/admin/payment-settings'
  */
         paymentSettingsSaveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -9523,6 +9427,6 @@ paymentSettingsSave.post = (options?: RouteQueryOptions): RouteDefinition<'post'
         })
     
     paymentSettingsSave.form = paymentSettingsSaveForm
-const AdminOpsApiController = { tenantDeletionProcess, luggageServicesSave, luggageServicesDelete, routesSave, routesDelete, schedulesSave, schedulesDelete, segmentsSave, segmentsDelete, unitsSave, unitsDelete, armadaCategoriesIndex, reportsSummary, reportsBookingsCsv, reportsRevenueCsv, activityLogsIndex, routesIndex, schedulesIndex, driversIndex, driversSave, driversDelete, luggageServicesIndex, luggageRatesIndex, luggageRatesSave, segmentsIndex, customersTemplate, customersImport, customersIndex, customersSave, customersDelete, armadasExport, driversExport, chartersIndex, chartersShow, chartersSave, chartersBulkDelete, chartersMarkBopDone, chartersMarkPaid, chartersMarkDone, chartersDelete, luggagesIndex, luggagesSave, luggagesBulkDelete, luggagesBulkStatus, luggagesMarkPaid, luggagesMarkActive, luggagesMarkDone, luggagesMarkCanceled, luggagesTracking, luggagesTrackingAdd, luggageIncidentsIndex, luggageIncidentStore, luggageIncidentUpdate, luggageIncidentClaim, luggagesDelete, assignmentsIndex, assignmentsConflicts, assignmentsSave, assignmentsBulkDelete, assignmentsDelete, customerBagasiIndex, customerBagasiSave, customerBagasiDelete, customerCharterIndex, customerCharterSave, customerCharterDelete, charterRoutesMasterIndex, charterRoutesMasterSave, charterRoutesMasterDelete, unitsIndex, armadasIndex, armadasShow, armadasSave, armadasDelete, poolOptionsIndex, poolsIndex, poolsExport, poolsSave, poolsDelete, tenantSwitch, poolSwitch, usersIndex, usersSave, userInvitationsIndex, userInvitationsSave, userInvitationsResend, userInvitationsDelete, usersVerify, usersUnverify, usersSendVerification, usersDelete, rolesIndex, rolesSave, rolesDelete, tenantsIndex, tenantsSave, tenantsDeletionPreview, tenantsArchive, tenantsPurge, tenantsDelete, tenantDeletionStatus, tenantDeletionRetry, subscriptionsIndex, subscriptionsSave, plansIndex, plansSave, invoicesIndex, invoicesMarkPaid, paymentSettingsGet, paymentSettingsSave }
+const AdminOpsApiController = { luggageServicesSave, luggageServicesDelete, routesSave, routesDelete, schedulesSave, schedulesDelete, segmentsSave, segmentsDelete, unitsSave, unitsDelete, armadaCategoriesIndex, reportsSummary, reportsBookingsCsv, reportsRevenueCsv, activityLogsIndex, routesIndex, schedulesIndex, driversIndex, driversSave, driversDelete, luggageServicesIndex, luggageRatesIndex, luggageRatesSave, segmentsIndex, customersTemplate, customersImport, customersIndex, customersSave, customersDelete, armadasExport, driversExport, chartersIndex, chartersShow, chartersSave, chartersBulkDelete, chartersMarkBopDone, chartersMarkPaid, chartersMarkDone, chartersDelete, luggagesIndex, luggagesSave, luggagesBulkDelete, luggagesBulkStatus, luggagesMarkPaid, luggagesMarkActive, luggagesMarkDone, luggagesMarkCanceled, luggagesTracking, luggagesTrackingAdd, luggageIncidentsIndex, luggageIncidentStore, luggageIncidentUpdate, luggageIncidentClaim, luggagesDelete, assignmentsIndex, assignmentsConflicts, assignmentsSave, assignmentsBulkDelete, assignmentsDelete, customerBagasiIndex, customerBagasiSave, customerBagasiDelete, customerCharterIndex, customerCharterSave, customerCharterDelete, charterRoutesMasterIndex, charterRoutesMasterSave, charterRoutesMasterDelete, unitsIndex, armadasIndex, armadasShow, armadasSave, armadasDelete, poolOptionsIndex, poolsIndex, poolsExport, poolsSave, poolsDelete, tenantSwitch, poolSwitch, usersIndex, usersSave, userInvitationsIndex, userInvitationsSave, userInvitationsResend, userInvitationsDelete, usersVerify, usersUnverify, usersSendVerification, usersDelete, rolesIndex, rolesSave, rolesDelete, tenantsIndex, tenantsSave, tenantsDeletionPreview, tenantsArchive, tenantsPurge, tenantsDelete, tenantDeletionStatus, tenantDeletionRetry, subscriptionsIndex, subscriptionsSave, plansIndex, plansSave, invoicesIndex, invoicesMarkPaid, paymentSettingsGet, paymentSettingsSave }
 
 export default AdminOpsApiController

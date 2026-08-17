@@ -182,7 +182,8 @@ class TenantDeletionService
     }
 
     /**
-     * Process one bounded batch. Vercel Cron calls this method repeatedly.
+     * Process one bounded batch. The authenticated admin status poll calls
+     * this method repeatedly so purge does not depend on a scheduler.
      *
      * @return array<string, mixed>
      */

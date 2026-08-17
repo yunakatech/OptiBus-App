@@ -47,10 +47,6 @@ Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
 Route::get('api/plans', [PublicApiController::class, 'plans'])->name('api.plans');
 Route::post('api/webhooks/mayar', [PaymentWebhookController::class, 'mayar'])->name('api.webhooks.mayar');
 
-// Vercel Cron worker for resumable tenant purge. Authentication is the shared secret.
-Route::match(['get', 'post'], 'api/internal/tenant-deletions/process', [AdminOpsApiController::class, 'tenantDeletionProcess'])
-    ->name('api.internal.tenant-deletions.process');
-
 Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/build/'.ltrim($path, '/'), 302))
     ->where('path', '.*')
     ->name('api.build.redirect');

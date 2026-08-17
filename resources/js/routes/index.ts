@@ -523,7 +523,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     dashboard.form = dashboardForm
 /**
- * @see routes/web.php:98
+ * @see routes/web.php:94
  * @route '/admin/luggage-services'
  */
 export const adminLuggageServices = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -537,7 +537,7 @@ adminLuggageServices.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:98
+ * @see routes/web.php:94
  * @route '/admin/luggage-services'
  */
 adminLuggageServices.url = (options?: RouteQueryOptions) => {
@@ -545,7 +545,7 @@ adminLuggageServices.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:98
+ * @see routes/web.php:94
  * @route '/admin/luggage-services'
  */
 adminLuggageServices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -553,7 +553,7 @@ adminLuggageServices.get = (options?: RouteQueryOptions): RouteDefinition<'get'>
     method: 'get',
 })
 /**
- * @see routes/web.php:98
+ * @see routes/web.php:94
  * @route '/admin/luggage-services'
  */
 adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -562,7 +562,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
 })
 
     /**
- * @see routes/web.php:98
+ * @see routes/web.php:94
  * @route '/admin/luggage-services'
  */
     const adminLuggageServicesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -571,7 +571,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
     })
 
             /**
- * @see routes/web.php:98
+ * @see routes/web.php:94
  * @route '/admin/luggage-services'
  */
         adminLuggageServicesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -579,7 +579,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
             method: 'get',
         })
             /**
- * @see routes/web.php:98
+ * @see routes/web.php:94
  * @route '/admin/luggage-services'
  */
         adminLuggageServicesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -594,7 +594,7 @@ adminLuggageServices.head = (options?: RouteQueryOptions): RouteDefinition<'head
     
     adminLuggageServices.form = adminLuggageServicesForm
 /**
- * @see routes/web.php:113
+ * @see routes/web.php:109
  * @route '/admin/routes'
  */
 export const admin_routes = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -608,7 +608,7 @@ admin_routes.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:113
+ * @see routes/web.php:109
  * @route '/admin/routes'
  */
 admin_routes.url = (options?: RouteQueryOptions) => {
@@ -616,7 +616,7 @@ admin_routes.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:113
+ * @see routes/web.php:109
  * @route '/admin/routes'
  */
 admin_routes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -624,7 +624,7 @@ admin_routes.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:113
+ * @see routes/web.php:109
  * @route '/admin/routes'
  */
 admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -633,7 +633,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:113
+ * @see routes/web.php:109
  * @route '/admin/routes'
  */
     const admin_routesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -642,7 +642,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:113
+ * @see routes/web.php:109
  * @route '/admin/routes'
  */
         admin_routesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -650,7 +650,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:113
+ * @see routes/web.php:109
  * @route '/admin/routes'
  */
         admin_routesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -665,7 +665,7 @@ admin_routes.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     admin_routes.form = admin_routesForm
 /**
- * @see routes/web.php:126
+ * @see routes/web.php:122
  * @route '/admin/schedules'
  */
 export const admin_schedules = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -679,7 +679,7 @@ admin_schedules.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:126
+ * @see routes/web.php:122
  * @route '/admin/schedules'
  */
 admin_schedules.url = (options?: RouteQueryOptions) => {
@@ -687,7 +687,7 @@ admin_schedules.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:126
+ * @see routes/web.php:122
  * @route '/admin/schedules'
  */
 admin_schedules.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -695,7 +695,7 @@ admin_schedules.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
     method: 'get',
 })
 /**
- * @see routes/web.php:126
+ * @see routes/web.php:122
  * @route '/admin/schedules'
  */
 admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -704,7 +704,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 })
 
     /**
- * @see routes/web.php:126
+ * @see routes/web.php:122
  * @route '/admin/schedules'
  */
     const admin_schedulesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -713,7 +713,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     })
 
             /**
- * @see routes/web.php:126
+ * @see routes/web.php:122
  * @route '/admin/schedules'
  */
         admin_schedulesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -721,7 +721,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
             method: 'get',
         })
             /**
- * @see routes/web.php:126
+ * @see routes/web.php:122
  * @route '/admin/schedules'
  */
         admin_schedulesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -736,7 +736,7 @@ admin_schedules.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
     
     admin_schedules.form = admin_schedulesForm
 /**
- * @see routes/web.php:141
+ * @see routes/web.php:137
  * @route '/admin/segments'
  */
 export const admin_segments = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -750,7 +750,7 @@ admin_segments.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:141
+ * @see routes/web.php:137
  * @route '/admin/segments'
  */
 admin_segments.url = (options?: RouteQueryOptions) => {
@@ -758,7 +758,7 @@ admin_segments.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:141
+ * @see routes/web.php:137
  * @route '/admin/segments'
  */
 admin_segments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -766,7 +766,7 @@ admin_segments.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:141
+ * @see routes/web.php:137
  * @route '/admin/segments'
  */
 admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -775,7 +775,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 })
 
     /**
- * @see routes/web.php:141
+ * @see routes/web.php:137
  * @route '/admin/segments'
  */
     const admin_segmentsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -784,7 +784,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     })
 
             /**
- * @see routes/web.php:141
+ * @see routes/web.php:137
  * @route '/admin/segments'
  */
         admin_segmentsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -792,7 +792,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
             method: 'get',
         })
             /**
- * @see routes/web.php:141
+ * @see routes/web.php:137
  * @route '/admin/segments'
  */
         admin_segmentsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -807,7 +807,7 @@ admin_segments.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
     
     admin_segments.form = admin_segmentsForm
 /**
- * @see routes/web.php:154
+ * @see routes/web.php:150
  * @route '/admin/units'
  */
 export const admin_units = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -821,7 +821,7 @@ admin_units.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:154
+ * @see routes/web.php:150
  * @route '/admin/units'
  */
 admin_units.url = (options?: RouteQueryOptions) => {
@@ -829,7 +829,7 @@ admin_units.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see routes/web.php:154
+ * @see routes/web.php:150
  * @route '/admin/units'
  */
 admin_units.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -837,7 +837,7 @@ admin_units.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
- * @see routes/web.php:154
+ * @see routes/web.php:150
  * @route '/admin/units'
  */
 admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -846,7 +846,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:154
+ * @see routes/web.php:150
  * @route '/admin/units'
  */
     const admin_unitsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -855,7 +855,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:154
+ * @see routes/web.php:150
  * @route '/admin/units'
  */
         admin_unitsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -863,7 +863,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
- * @see routes/web.php:154
+ * @see routes/web.php:150
  * @route '/admin/units'
  */
         admin_unitsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
