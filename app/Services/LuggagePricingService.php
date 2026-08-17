@@ -25,9 +25,22 @@ class LuggagePricingService
             }
         }
 
+        foreach ([
+            'segment_id',
+            'luggage_segment_rate_id',
+            'unit_price',
+            'pricing_source',
+            'price_override_reason',
+            'price_overridden_by_user_id',
+        ] as $column) {
+            if (! SchemaCache::hasColumn('luggages', $column)) {
+                return false;
+            }
+        }
+
         return SchemaCache::hasColumn('luggage_services', 'tenant_id')
             && SchemaCache::hasColumn('luggage_services', 'is_active')
-            && SchemaCache::hasColumn('luggages', 'segment_id');
+            && SchemaCache::hasColumn('luggage_services', 'name');
     }
 
     public function assertReady(): void

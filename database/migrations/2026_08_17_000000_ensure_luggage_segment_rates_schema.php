@@ -25,9 +25,26 @@ return new class extends Migration
             }
         });
 
-        if (Schema::hasTable('luggages') && ! Schema::hasColumn('luggages', 'segment_id')) {
+        if (Schema::hasTable('luggages')) {
             Schema::table('luggages', function (Blueprint $table): void {
-                $table->unsignedBigInteger('segment_id')->nullable()->index();
+                if (! Schema::hasColumn('luggages', 'segment_id')) {
+                    $table->unsignedBigInteger('segment_id')->nullable()->index();
+                }
+                if (! Schema::hasColumn('luggages', 'luggage_segment_rate_id')) {
+                    $table->unsignedBigInteger('luggage_segment_rate_id')->nullable()->index();
+                }
+                if (! Schema::hasColumn('luggages', 'unit_price')) {
+                    $table->decimal('unit_price', 15, 2)->nullable();
+                }
+                if (! Schema::hasColumn('luggages', 'pricing_source')) {
+                    $table->string('pricing_source', 20)->default('legacy')->index();
+                }
+                if (! Schema::hasColumn('luggages', 'price_override_reason')) {
+                    $table->text('price_override_reason')->nullable();
+                }
+                if (! Schema::hasColumn('luggages', 'price_overridden_by_user_id')) {
+                    $table->unsignedBigInteger('price_overridden_by_user_id')->nullable()->index();
+                }
             });
         }
 
