@@ -11,42 +11,58 @@ class LuggagePricingService
 {
     public function ready(): bool
     {
+        return $this->missingSchemaParts() === [];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function missingSchemaParts(): array
+    {
+        $missing = [];
         foreach ([
-            'id',
-            'tenant_id',
-            'segment_id',
-            'service_id',
-            'unit_price',
-            'is_active',
-            'configured_at',
-        ] as $column) {
-            if (! SchemaCache::hasColumn('luggage_segment_rates', $column)) {
-                return false;
+            'luggage_segment_rates' => [
+                'id',
+                'tenant_id',
+                'segment_id',
+                'service_id',
+                'unit_price',
+                'is_active',
+                'configured_at',
+            ],
+            'luggages' => [
+                'segment_id',
+                'luggage_segment_rate_id',
+                'unit_price',
+                'pricing_source',
+                'price_override_reason',
+                'price_overridden_by_user_id',
+            ],
+            'luggage_services' => ['tenant_id', 'is_active', 'name'],
+        ] as $table => $columns) {
+            if (! SchemaCache::hasTable($table)) {
+                $missing[] = $table;
+
+                continue;
+            }
+
+            foreach ($columns as $column) {
+                if (! SchemaCache::hasColumn($table, $column)) {
+                    $missing[] = $table.'.'.$column;
+                }
             }
         }
 
-        foreach ([
-            'segment_id',
-            'luggage_segment_rate_id',
-            'unit_price',
-            'pricing_source',
-            'price_override_reason',
-            'price_overridden_by_user_id',
-        ] as $column) {
-            if (! SchemaCache::hasColumn('luggages', $column)) {
-                return false;
-            }
-        }
-
-        return SchemaCache::hasColumn('luggage_services', 'tenant_id')
-            && SchemaCache::hasColumn('luggage_services', 'is_active')
-            && SchemaCache::hasColumn('luggage_services', 'name');
+        return $missing;
     }
 
     public function assertReady(): void
     {
-        if (! $this->ready()) {
-            throw new RuntimeException('Tabel tarif bagasi belum tersedia. Jalankan migrasi database terlebih dahulu.');
+        $missing = $this->missingSchemaParts();
+        if ($missing !== []) {
+            throw new RuntimeException(
+                'Schema tarif bagasi belum lengkap. Kurang: '.implode(', ', $missing).'. Jalankan migrasi database terlebih dahulu.',
+            );
         }
     }
 

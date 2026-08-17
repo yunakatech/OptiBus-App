@@ -4175,6 +4175,10 @@ class AdminOpsApiController extends Controller
             ];
         });
 
+        $result['luggage_status'] = $this->cancelLuggageWhenClaimFinalized($incidentId)
+            ? 'canceled'
+            : null;
+
         return $this->ok([
             'message' => 'Insiden bagasi berhasil diperbarui.',
             'incident' => $result,
@@ -4286,6 +4290,10 @@ class AdminOpsApiController extends Controller
                 'approved_amount' => $approvedAmount,
             ];
         });
+
+        $result['luggage_status'] = $this->cancelLuggageWhenClaimFinalized($incidentId)
+            ? 'canceled'
+            : null;
 
         return $this->ok([
             'message' => 'Klaim bagasi berhasil diperbarui.',
@@ -8573,6 +8581,69 @@ class AdminOpsApiController extends Controller
             'l.rute',
             'l.kode_resi',
         ]);
+    }
+
+    /**
+     * A finalized claim closes the delivery, but never removes the incident
+     * history or its damaged/lost condition snapshot.
+     */
+    private function cancelLuggageWhenClaimFinalized(int $incidentId): bool
+    {
+        if (! SchemaCache::hasTable('luggage_incidents')) {
+            return false;
+        }
+
+        return DB::transaction(function () use ($incidentId): bool {
+            $query = DB::table('luggage_incidents as li')
+                ->join('luggages as l', 'l.id', '=', 'li.luggage_id')
+                ->where('li.id', $incidentId)
+                ->lockForUpdate();
+            $this->applyWriteTenantScopeIfExists($query, 'luggage_incidents', 'li');
+            $this->applyWriteTenantScopeIfExists($query, 'luggages', 'l');
+
+            $record = $query->first([
+                'li.status',
+                'li.claim_status',
+                'l.id as luggage_id',
+                'l.status as luggage_status',
+                'l.kode_resi',
+            ]);
+
+            if (! $record) {
+                return false;
+            }
+
+            $claimIsFinal = in_array((string) $record->claim_status, ['paid', 'rejected'], true);
+            $incidentCanCloseDelivery = in_array(
+                (string) $record->status,
+                ['approved', 'resolved', 'rejected'],
+                true,
+            );
+
+            if (! $claimIsFinal || ! $incidentCanCloseDelivery) {
+                return false;
+            }
+
+            if (strtolower(trim((string) $record->luggage_status)) === 'canceled') {
+                return false;
+            }
+
+            $updated = DB::table('luggages')
+                ->where('id', (int) $record->luggage_id);
+            $this->applyWriteTenantScopeIfExists($updated, 'luggages');
+
+            if ($updated->update(['status' => 'canceled']) === 0) {
+                return false;
+            }
+
+            $this->appendLuggageLogByResi(
+                $record->kode_resi ?: $this->ensureLuggageResi((int) $record->luggage_id),
+                'canceled',
+                'Pengiriman dibatalkan otomatis karena proses klaim insiden telah selesai.',
+            );
+
+            return true;
+        });
     }
 
     /**
