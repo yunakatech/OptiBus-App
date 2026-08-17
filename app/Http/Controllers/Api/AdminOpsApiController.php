@@ -908,6 +908,11 @@ class AdminOpsApiController extends Controller
 
     public function luggageServicesSave(Request $request): JsonResponse
     {
+        // Older bundles sent id=0 for a new category. Treat it as create.
+        if (in_array($request->input('id'), [0, '0', ''], true)) {
+            $request->merge(['id' => null]);
+        }
+
         $data = $request->validate([
             'id' => ['nullable', 'integer', 'min:1'],
             'name' => ['required', 'string', 'max:120'],
