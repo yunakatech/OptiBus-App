@@ -26,12 +26,6 @@
             "dest": "/api/index.php"
         }
     ],
-    "crons": [
-        {
-            "path": "/api/internal/tenant-deletions/process",
-            "schedule": "0 2 * * *"
-        }
-    ],
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",

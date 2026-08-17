@@ -182,7 +182,7 @@ class TenantDeletionTest extends TestCase
             'confirm_all' => true,
         ])->assertAccepted()->json('job');
 
-        // Status polling must advance a batch when Vercel cron is not due yet.
+        // Status polling must advance a batch without a background scheduler.
         $this->getJson(route('api.admin.tenant-deletions.status', ['jobId' => $job['id']]))
             ->assertOk()
             ->assertJsonPath('job.id', $job['id'])
@@ -223,12 +223,6 @@ class TenantDeletionTest extends TestCase
             'origin' => 'A',
             'destination' => 'B',
         ])->assertStatus(409)->assertJsonPath('action_required', 'tenant_deleting');
-    }
-
-    public function test_cron_worker_requires_secret(): void
-    {
-        $this->getJson(route('api.internal.tenant-deletions.process'))
-            ->assertUnauthorized();
     }
 
     private function createTenant(string $slug): int
