@@ -81,6 +81,7 @@ class AccessControl
                 'description' => 'Mengelola operasional pada pool yang dimapping.',
                 'permissions' => [
                     'dashboard.view', 'booking.view', 'booking.create', 'booking.update', 'booking.print',
+                    'booking.delete',
                     'charter.view', 'charter.create', 'charter.update', 'charter.print',
                     'luggage.view', 'luggage.create', 'luggage.update', 'luggage.print', 'luggage.tracking', 'luggage.incident', 'luggage.tariff.manage', 'luggage.tariff.override',
                     'customer.view', 'customer.create', 'customer.update', 'report.view', 'payment.update',

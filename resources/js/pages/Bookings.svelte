@@ -58,6 +58,7 @@
     import { LoadingButton } from '@/components/ui/loading-button';
     import { Skeleton } from '@/components/ui/skeleton';
     import { runWithFeedback } from '@/lib/action-feedback';
+    import { hasPermission } from '@/lib/access';
     import { extractApiErrorMessage } from '@/lib/api-errors';
     import {
         formatCurrencyDisplay,
@@ -325,6 +326,11 @@
 
     const tenantWriteDisabled = $derived(
         Boolean((page.props.auth as any)?.tenant_context_required),
+    );
+    const grantedPermissions = $derived(page.props.auth?.permissions ?? []);
+    const canBookingDelete = $derived(
+        !tenantWriteDisabled &&
+            hasPermission(grantedPermissions, 'booking.delete'),
     );
     const tenantReadOnlyMessage =
         'Mode Semua Tenant aktif. Pilih tenant untuk membuat atau mengubah data.';
@@ -926,8 +932,7 @@
 
         return selectedSeats.reduce((total, seat) => {
             const token = normalizeSeatToken(seat);
-            const draft =
-                passengerDrafts[token] ?? draftFromCurrentForm(token);
+            const draft = passengerDrafts[token] ?? draftFromCurrentForm(token);
             const price = Number(segmentForPassengerDraft(draft)?.harga ?? 0);
 
             return total + Math.max(price - Number(draft.discount || 0), 0);
@@ -1152,8 +1157,8 @@
 
         return Boolean(
             draft?.name.trim() &&
-                draft.phone.trim() &&
-                (segments.length === 0 || Number(draft.segment_id) > 0),
+            draft.phone.trim() &&
+            (segments.length === 0 || Number(draft.segment_id) > 0),
         );
     };
 
@@ -4033,7 +4038,7 @@
         seatToken: string,
         currentStatus: string,
     ) => {
-        if (!bookingId || cancelingSeatId !== null) {
+        if (!canBookingDelete || !bookingId || cancelingSeatId !== null) {
             return;
         }
 
@@ -6048,10 +6053,7 @@
         const passengerCandidates = seatCandidates.map((seat) => {
             const token = normalizeSeatToken(seat);
 
-            return (
-                passengerDrafts[token] ??
-                draftFromCurrentForm(token)
-            );
+            return passengerDrafts[token] ?? draftFromCurrentForm(token);
         });
         const incompletePassenger = passengerCandidates.find(
             (draft) =>
@@ -6220,7 +6222,7 @@
     };
 
     const cancelSeat = async (bookingId: number) => {
-        if (!bookingId || cancelingSeatId !== null) {
+        if (!canBookingDelete || !bookingId || cancelingSeatId !== null) {
             return;
         }
 
@@ -6981,7 +6983,9 @@
                                         <h3 class="text-sm font-semibold">
                                             Data Penumpang per Kursi
                                         </h3>
-                                        <p class="text-xs text-muted-foreground">
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
                                             Isi data berbeda untuk setiap kursi.
                                         </p>
                                     </div>
@@ -7008,18 +7012,23 @@
                                     aria-label="Data penumpang per kursi"
                                 >
                                     {#each selectedSeats as seat (`passenger-tab-${seat}`)}
-                                        {@const complete = passengerDraftIsComplete(seat)}
+                                        {@const complete =
+                                            passengerDraftIsComplete(seat)}
                                         <div
                                             class={`flex min-w-[156px] shrink-0 items-stretch rounded-xl border transition ${activePassengerSeat === seat ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-muted/60'}`}
                                         >
                                             <button
                                                 type="button"
                                                 role="tab"
-                                                aria-selected={activePassengerSeat === seat}
+                                                aria-selected={activePassengerSeat ===
+                                                    seat}
                                                 class="min-w-0 flex-1 rounded-l-xl px-3 py-2 text-left transition"
-                                                onclick={() => selectPassengerTab(seat)}
+                                                onclick={() =>
+                                                    selectPassengerTab(seat)}
                                             >
-                                                <span class="block text-sm font-semibold">
+                                                <span
+                                                    class="block text-sm font-semibold"
+                                                >
                                                     Kursi {seat}
                                                 </span>
                                                 <span
@@ -7172,7 +7181,8 @@
                                         <Input
                                             id="booking-form-seat"
                                             class="h-11 rounded-xl bg-muted/50 !pl-10"
-                                            value={activePassengerSeat || selectedSeats.join(', ')}
+                                            value={activePassengerSeat ||
+                                                selectedSeats.join(', ')}
                                             disabled
                                             readonly
                                             aria-readonly="true"
@@ -7824,20 +7834,23 @@
                                         </Button>
                                     {/if}
 
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        class="h-11 border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 sm:h-10"
-                                        onclick={() =>
-                                            void cancelSeat(detailSeat!.id)}
-                                        disabled={cancelingSeatId ===
-                                            detailSeat!.id ||
-                                            markingPaidSeatId === detailSeat.id}
-                                        aria-label="Batalkan kursi"
-                                    >
-                                        <X class="mr-1.5 h-3.5 w-3.5" />
-                                        Batalkan Kursi
-                                    </Button>
+                                    {#if canBookingDelete}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            class="h-11 border-rose-500/40 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30 sm:h-10"
+                                            onclick={() =>
+                                                void cancelSeat(detailSeat!.id)}
+                                            disabled={cancelingSeatId ===
+                                                detailSeat!.id ||
+                                                markingPaidSeatId ===
+                                                    detailSeat.id}
+                                            aria-label="Batalkan kursi"
+                                        >
+                                            <X class="mr-1.5 h-3.5 w-3.5" />
+                                            Batalkan Kursi
+                                        </Button>
+                                    {/if}
                                 </div>
                             {/if}
 
@@ -7989,7 +8002,7 @@
                             <p class="mt-1 font-semibold">
                                 {bookingSuccessSnapshot.items
                                     .map((item) => item.seat)
-                                .join(', ')}
+                                    .join(', ')}
                             </p>
                         </div>
                         <div class="mt-3 overflow-x-auto rounded-xl border">
@@ -8000,7 +8013,9 @@
                                         <th class="px-3 py-2">Penumpang</th>
                                         <th class="px-3 py-2">Segment</th>
                                         <th class="px-3 py-2">Pembayaran</th>
-                                        <th class="px-3 py-2 text-right">Total</th>
+                                        <th class="px-3 py-2 text-right"
+                                            >Total</th
+                                        >
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -8013,14 +8028,18 @@
                                                 <div class="font-medium">
                                                     {item.name}
                                                 </div>
-                                                <div class="text-xs text-muted-foreground">
+                                                <div
+                                                    class="text-xs text-muted-foreground"
+                                                >
                                                     {item.phone}
                                                 </div>
                                             </td>
                                             <td class="px-3 py-2">
                                                 <div>{item.segment_name}</div>
                                                 {#if item.segment_jam}
-                                                    <div class="text-xs text-muted-foreground">
+                                                    <div
+                                                        class="text-xs text-muted-foreground"
+                                                    >
                                                         {item.segment_jam}
                                                     </div>
                                                 {/if}
@@ -8028,7 +8047,9 @@
                                             <td class="px-3 py-2">
                                                 {item.pembayaran}
                                             </td>
-                                            <td class="px-3 py-2 text-right font-semibold">
+                                            <td
+                                                class="px-3 py-2 text-right font-semibold"
+                                            >
                                                 Rp {item.final_price.toLocaleString(
                                                     'id-ID',
                                                 )}
@@ -9508,7 +9529,7 @@
                                                 >
                                                     Print Tiket
                                                 </DropdownMenuItem>
-                                                {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
+                                                {#if canBookingDelete && !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void cancelBookingRow(
@@ -9720,16 +9741,18 @@
                                                                     Lunas
                                                                 </DropdownMenuItem>
                                                             {/if}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void cancelBookingRow(
-                                                                        row.id,
-                                                                        row.seat,
-                                                                        row.status,
-                                                                    )}
-                                                            >
-                                                                Cancel
-                                                            </DropdownMenuItem>
+                                                            {#if canBookingDelete}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void cancelBookingRow(
+                                                                            row.id,
+                                                                            row.seat,
+                                                                            row.status,
+                                                                        )}
+                                                                >
+                                                                    Cancel
+                                                                </DropdownMenuItem>
+                                                            {/if}
                                                         {/if}
                                                         {#if !isManifestLocked(openGroupDetail) && canRefundCanceledBooking(row)}
                                                             <DropdownMenuItem

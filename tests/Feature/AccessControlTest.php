@@ -30,6 +30,22 @@ class AccessControlTest extends TestCase
         $this->assertFalse(AccessControl::can((int) $user->id, 'platform.manage'));
     }
 
+    public function test_admin_pool_can_cancel_passengers(): void
+    {
+        AccessControl::syncDefaults();
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $roleId = (int) DB::table('roles')->where('slug', 'admin-pool')->value('id');
+
+        DB::table('user_role')->insert([
+            'user_id' => $user->id,
+            'role_id' => $roleId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->assertTrue(AccessControl::can((int) $user->id, 'booking.delete'));
+    }
+
     public function test_platform_manage_is_super_admin_only_even_for_custom_roles(): void
     {
         AccessControl::syncDefaults();
