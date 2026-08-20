@@ -704,6 +704,9 @@
     ];
 
     const permissions = $derived(page.props.auth?.permissions ?? []);
+    const currentUserIsSuperAdmin = $derived(
+        Boolean(page.props.auth?.user?.is_super_admin),
+    );
     const poolManagementOverride = $derived(
         hasPermission(permissions, 'pool.manage'),
     );
@@ -2168,7 +2171,9 @@
                     : true,
             )
             .filter((unit) => {
-                const namaKategori = String(unit.nama_kategori ?? '').toLowerCase();
+                const namaKategori = String(
+                    unit.nama_kategori ?? '',
+                ).toLowerCase();
                 const category = String(unit.category ?? '').toLowerCase();
                 const merek = String(unit.merek ?? '').toLowerCase();
                 const type = String(unit.type ?? '').toLowerCase();
@@ -2194,7 +2199,9 @@
 
         return rows
             .filter((unit) => {
-                const namaKategori = String(unit.nama_kategori ?? '').toLowerCase();
+                const namaKategori = String(
+                    unit.nama_kategori ?? '',
+                ).toLowerCase();
                 const category = String(unit.category ?? '').toLowerCase();
                 const merek = String(unit.merek ?? '').toLowerCase();
                 const type = String(unit.type ?? '').toLowerCase();
@@ -2545,8 +2552,7 @@
         await loadActiveTab();
     };
 
-    const hasFormTab = (tab: TabName) =>
-        !['logs', 'reports'].includes(tab);
+    const hasFormTab = (tab: TabName) => !['logs', 'reports'].includes(tab);
     const showHeaderCreateAction = (tab: TabName) =>
         hasFormTab(tab) && canWriteTab(tab) && activeMode === 'data';
     const showHeaderBackAction = (tab: TabName) =>
@@ -2566,7 +2572,8 @@
         reports: null,
     };
     const canWriteTab = (tab: TabName) =>
-        !tenantWriteDisabled && hasPermission(permissions, tabWritePermission[tab]);
+        !tenantWriteDisabled &&
+        hasPermission(permissions, tabWritePermission[tab]);
     const setFormMode = (mode: ViewMode) => {
         if (
             activeTab === 'armadas' &&
@@ -2606,7 +2613,8 @@
 
         if (activeTab === 'schedules') {
             if (selectedScheduleRouteId <= 0 && selectedScheduleRoute === '') {
-                error = 'Pilih rute perjalanan terlebih dahulu sebelum membuat jadwal.';
+                error =
+                    'Pilih rute perjalanan terlebih dahulu sebelum membuat jadwal.';
 
                 return;
             }
@@ -4117,10 +4125,10 @@
                     : `/api/admin/users?q=${encodeURIComponent(query)}`;
             const [userResponse, poolResponse, invitationResponse] =
                 await Promise.all([
-                api('GET', url),
-                api('GET', '/api/admin/pools/options'),
-                api('GET', '/api/admin/users/invitations'),
-            ]);
+                    api('GET', url),
+                    api('GET', '/api/admin/pools/options'),
+                    api('GET', '/api/admin/users/invitations'),
+                ]);
             users = userResponse.users ?? [];
             roles = userResponse.roles ?? [];
             userInvitations = invitationResponse.invitations ?? [];
@@ -4482,7 +4490,9 @@
         return scheduleSegmentsForRoute().filter((segment) => {
             const pickupJams = segmentJamList(segment.jam_pickups);
 
-            return pickupJams.includes(jam) || segmentJamLabel(segment.jam) === jam;
+            return (
+                pickupJams.includes(jam) || segmentJamLabel(segment.jam) === jam
+            );
         });
     };
     const scheduleConfiguredSegmentCount = () =>
@@ -4944,7 +4954,8 @@
             '';
 
         if (routeName === '') {
-            error = 'Pilih rute perjalanan terlebih dahulu sebelum membuat jadwal.';
+            error =
+                'Pilih rute perjalanan terlebih dahulu sebelum membuat jadwal.';
 
             return;
         }
@@ -5307,7 +5318,10 @@
             await loadActiveTab(false);
             activeMode = 'data';
         } catch (e) {
-            error = e instanceof Error ? e.message : 'Gagal simpan kategori armada.';
+            error =
+                e instanceof Error
+                    ? e.message
+                    : 'Gagal simpan kategori armada.';
         } finally {
             clearSubmitKey('unit');
         }
@@ -5436,7 +5450,8 @@
                         name: userForm.name,
                         email: userForm.email,
                         password: userForm.password,
-                        is_super_admin: userForm.is_super_admin,
+                        // Super Admin is managed only from the Roles menu.
+                        is_super_admin: false,
                         pool_ids: userForm.pool_ids,
                         default_pool_id: Number(userForm.default_pool_id || 0),
                         role_ids: userForm.role_ids,
@@ -5488,8 +5503,7 @@
             message = 'Invitation sent.';
             resetInvitationForm();
         } catch (e) {
-            error =
-                e instanceof Error ? e.message : 'Gagal mengirim undangan.';
+            error = e instanceof Error ? e.message : 'Gagal mengirim undangan.';
         } finally {
             clearSubmitKey('invitation');
         }
@@ -5719,9 +5733,9 @@
         }
 
         if (typeof window !== 'undefined') {
-            const initialQueryTab = new URLSearchParams(window.location.search).get(
-                'tab',
-            );
+            const initialQueryTab = new URLSearchParams(
+                window.location.search,
+            ).get('tab');
 
             const normalizedQueryTab = normalizeTabName(initialQueryTab);
             if (normalizedQueryTab) {
@@ -7177,8 +7191,11 @@
                                                 >
                                             {/each}
                                         </select>
-                                        <p class="text-[11px] text-muted-foreground">
-                                            Jadwal ini akan berulang setiap minggu pada hari yang dipilih.
+                                        <p
+                                            class="text-[11px] text-muted-foreground"
+                                        >
+                                            Jadwal ini akan berulang setiap
+                                            minggu pada hari yang dipilih.
                                         </p>
                                     </label>
                                 </div>
@@ -7208,24 +7225,38 @@
                                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                                     >
                                         <div>
-                                            <p class="text-xs font-semibold text-foreground">
+                                            <p
+                                                class="text-xs font-semibold text-foreground"
+                                            >
                                                 Langkah {scheduleFormStep} dari 3
                                             </p>
-                                            <p class="text-[11px] text-muted-foreground">
-                                                Ikuti langkah berikut untuk menyiapkan jadwal dengan mudah.
+                                            <p
+                                                class="text-[11px] text-muted-foreground"
+                                            >
+                                                Ikuti langkah berikut untuk
+                                                menyiapkan jadwal dengan mudah.
                                             </p>
                                         </div>
-                                        <div class="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5">
+                                        <div
+                                            class="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5"
+                                        >
                                             {#each scheduleWizardSteps as step (step.number)}
                                                 <button
                                                     type="button"
                                                     class={`min-w-[118px] rounded-lg border px-3 py-2 text-left transition ${scheduleFormStep === step.number ? 'border-primary bg-primary/10 text-primary' : scheduleFormStep > step.number ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-border/70 bg-background text-muted-foreground'}`}
-                                                    onclick={() => goToScheduleStep(step.number)}
+                                                    onclick={() =>
+                                                        goToScheduleStep(
+                                                            step.number,
+                                                        )}
                                                 >
-                                                    <span class="block text-[11px] font-semibold">
+                                                    <span
+                                                        class="block text-[11px] font-semibold"
+                                                    >
                                                         {step.number}. {step.title}
                                                     </span>
-                                                    <span class="mt-0.5 block text-[10px]">
+                                                    <span
+                                                        class="mt-0.5 block text-[10px]"
+                                                    >
                                                         {step.description}
                                                     </span>
                                                 </button>
@@ -7234,128 +7265,144 @@
                                     </div>
                                 </div>
                                 {#if scheduleFormStep === 1}
-                                <div
-                                    class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-                                >
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Hari keberangkatan</span
-                                        >
-                                        <select
-                                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                            bind:value={scheduleForm.dow}
-                                        >
-                                            {#each days as day, idx (idx)}
-                                                <option value={idx}
-                                                    >{day}</option
-                                                >
-                                            {/each}
-                                        </select>
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Jam berangkat</span
-                                        >
-                                        <input
-                                            bind:this={scheduleTimeInput}
-                                            type="text"
-                                            value={scheduleForm.jam}
-                                            readonly
-                                            autocomplete="off"
-                                            placeholder="Jam"
-                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                        />
-                                        <p
-                                            class="mt-1 text-[11px] text-muted-foreground"
-                                        >
-                                            Jam berangkat dapat diisi bebas. Pilihan cepat hanya membantu mencocokkan jam segment.
-                                        </p>
-                                        <div class="mt-2 flex flex-wrap gap-2">
-                                            {#if scheduleRouteJamOptions().length > 0}
-                                                {#each scheduleRouteJamOptions() as jamOption (jamOption)}
-                                                    <button
-                                                        type="button"
-                                                        class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                                                            scheduleForm.jam ===
-                                                            jamOption
-                                                                ? 'border-sky-500 bg-sky-50 text-sky-700'
-                                                                : 'border-border/70 bg-background text-muted-foreground hover:border-sky-300 hover:text-sky-700'
-                                                        }`}
-                                                        onclick={() =>
-                                                            applyScheduleJam(
-                                                                jamOption,
-                                                            )}
+                                    <div
+                                        class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+                                    >
+                                        <label class="space-y-1.5">
+                                            <span
+                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >Hari keberangkatan</span
+                                            >
+                                            <select
+                                                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                bind:value={scheduleForm.dow}
+                                            >
+                                                {#each days as day, idx (idx)}
+                                                    <option value={idx}
+                                                        >{day}</option
                                                     >
-                                                        {jamOption}
-                                                    </button>
                                                 {/each}
-                                            {:else}
-                                                <span
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Jam tetap bisa diisi manual
-                                                    bila route ini belum punya
-                                                    segment.
-                                                </span>
-                                            {/if}
-                                        </div>
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Jumlah kendaraan</span
+                                            </select>
+                                        </label>
+                                        <label class="space-y-1.5">
+                                            <span
+                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >Jam berangkat</span
+                                            >
+                                            <input
+                                                bind:this={scheduleTimeInput}
+                                                type="text"
+                                                value={scheduleForm.jam}
+                                                readonly
+                                                autocomplete="off"
+                                                placeholder="Jam"
+                                                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                            />
+                                            <p
+                                                class="mt-1 text-[11px] text-muted-foreground"
+                                            >
+                                                Jam berangkat dapat diisi bebas.
+                                                Pilihan cepat hanya membantu
+                                                mencocokkan jam segment.
+                                            </p>
+                                            <div
+                                                class="mt-2 flex flex-wrap gap-2"
+                                            >
+                                                {#if scheduleRouteJamOptions().length > 0}
+                                                    {#each scheduleRouteJamOptions() as jamOption (jamOption)}
+                                                        <button
+                                                            type="button"
+                                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                                                                scheduleForm.jam ===
+                                                                jamOption
+                                                                    ? 'border-sky-500 bg-sky-50 text-sky-700'
+                                                                    : 'border-border/70 bg-background text-muted-foreground hover:border-sky-300 hover:text-sky-700'
+                                                            }`}
+                                                            onclick={() =>
+                                                                applyScheduleJam(
+                                                                    jamOption,
+                                                                )}
+                                                        >
+                                                            {jamOption}
+                                                        </button>
+                                                    {/each}
+                                                {:else}
+                                                    <span
+                                                        class="text-[11px] text-muted-foreground"
+                                                    >
+                                                        Jam tetap bisa diisi
+                                                        manual bila route ini
+                                                        belum punya segment.
+                                                    </span>
+                                                {/if}
+                                            </div>
+                                        </label>
+                                        <label class="space-y-1.5">
+                                            <span
+                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >Jumlah kendaraan</span
+                                            >
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                placeholder="Jumlah slot"
+                                                value={scheduleForm.units}
+                                                oninput={(event) =>
+                                                    updateScheduleUnitCount(
+                                                        Number(
+                                                            (
+                                                                event.currentTarget as HTMLInputElement
+                                                            ).value || 1,
+                                                        ),
+                                                    )}
+                                            />
+                                        </label>
+                                        <label class="space-y-1.5">
+                                            <span
+                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >Biaya operasional (BOP)</span
+                                            >
+                                            <Input
+                                                type="text"
+                                                inputmode="numeric"
+                                                placeholder="BOP"
+                                                value={scheduleForm.bop}
+                                                oninput={(event) => {
+                                                    scheduleForm = {
+                                                        ...scheduleForm,
+                                                        bop: formatRupiahInput(
+                                                            (
+                                                                event.currentTarget as HTMLInputElement
+                                                            ).value,
+                                                        ),
+                                                    };
+                                                }}
+                                            />
+                                            <p
+                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                title="BOP adalah biaya operasional perjalanan."
+                                            >
+                                                Biaya ini dipakai untuk
+                                                menghitung operasional
+                                                keberangkatan.
+                                            </p>
+                                        </label>
+                                    </div>
+                                    <div class="flex justify-between gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={cancelScheduleForm}
                                         >
-                                        <Input
-                                            type="number"
-                                            min="1"
-                                            placeholder="Jumlah slot"
-                                            value={scheduleForm.units}
-                                            oninput={(event) =>
-                                                updateScheduleUnitCount(
-                                                    Number(
-                                                        (
-                                                            event.currentTarget as HTMLInputElement
-                                                        ).value || 1,
-                                                    ),
-                                                )}
-                                        />
-                                    </label>
-                                    <label class="space-y-1.5">
-                                        <span
-                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >Biaya operasional (BOP)</span
+                                            Batal
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            onclick={nextScheduleStep}
                                         >
-                                        <Input
-                                            type="text"
-                                            inputmode="numeric"
-                                            placeholder="BOP"
-                                            value={scheduleForm.bop}
-                                            oninput={(event) => {
-                                                scheduleForm = {
-                                                    ...scheduleForm,
-                                                    bop: formatRupiahInput(
-                                                        (
-                                                            event.currentTarget as HTMLInputElement
-                                                        ).value,
-                                                    ),
-                                                };
-                                            }}
-                                        />
-                                        <p class="mt-1 text-[11px] text-muted-foreground" title="BOP adalah biaya operasional perjalanan.">
-                                            Biaya ini dipakai untuk menghitung operasional keberangkatan.
-                                        </p>
-                                    </label>
-                                </div>
-                                <div class="flex justify-between gap-2">
-                                    <Button type="button" variant="outline" onclick={cancelScheduleForm}>
-                                        Batal
-                                    </Button>
-                                    <Button type="button" onclick={nextScheduleStep}>
-                                        Lanjut: Kendaraan
-                                    </Button>
-                                </div>
+                                            Lanjut: Kendaraan
+                                        </Button>
+                                    </div>
                                 {/if}
 
                                 {#if scheduleFormStep === 3}
@@ -7369,19 +7416,25 @@
                                                 <p
                                                     class="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700"
                                                 >
-                                                    Layanan atau Segment Perjalanan
+                                                    Layanan atau Segment
+                                                    Perjalanan
                                                 </p>
                                                 <p
                                                     class="mt-1 text-xs text-muted-foreground"
                                                 >
-                                                    Sistem mencocokkan segment berdasarkan jam berangkat. Atur manual jika diperlukan.
+                                                    Sistem mencocokkan segment
+                                                    berdasarkan jam berangkat.
+                                                    Atur manual jika diperlukan.
                                                 </p>
                                             </div>
-                                            <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                                            <div
+                                                class="flex shrink-0 flex-wrap items-center justify-end gap-2"
+                                            >
                                                 <span
                                                     class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-700"
                                                 >
-                                                    {scheduleConfiguredSegmentCount()} layanan cocok
+                                                    {scheduleConfiguredSegmentCount()}
+                                                    layanan cocok
                                                 </span>
                                                 <Button
                                                     type="button"
@@ -7390,152 +7443,193 @@
                                                     class="h-8 rounded-lg px-2.5 text-[11px]"
                                                     onclick={toggleScheduleManualSegments}
                                                 >
-                                                    {scheduleManualSegments ? 'Tutup pengaturan' : 'Atur manual'}
+                                                    {scheduleManualSegments
+                                                        ? 'Tutup pengaturan'
+                                                        : 'Atur manual'}
                                                 </Button>
                                             </div>
                                         </div>
                                         {#if scheduleManualSegments}
-                                        <div class="grid gap-2.5">
-                                            {#each scheduleSegmentsForRoute() as seg (seg.id)}
-                                                {@const isChecked =
-                                                    scheduleForm.segment_configs.some(
-                                                        (c) =>
-                                                            c.segment_id ===
-                                                            Number(seg.id),
-                                                    )}
-                                                {@const configEntry =
-                                                    scheduleForm.segment_configs.find(
-                                                        (c) =>
-                                                            c.segment_id ===
-                                                            Number(seg.id),
-                                                    )}
-                                                {@const pickupOptions =
-                                                    segmentJamList(
-                                                        seg.jam_pickups,
-                                                    ).length > 0
-                                                        ? segmentJamList(
-                                                              seg.jam_pickups,
-                                                          )
-                                                        : segmentJamLabel(
-                                                                seg.jam,
-                                                            )
-                                                          ? [
-                                                                segmentJamLabel(
+                                            <div class="grid gap-2.5">
+                                                {#each scheduleSegmentsForRoute() as seg (seg.id)}
+                                                    {@const isChecked =
+                                                        scheduleForm.segment_configs.some(
+                                                            (c) =>
+                                                                c.segment_id ===
+                                                                Number(seg.id),
+                                                        )}
+                                                    {@const configEntry =
+                                                        scheduleForm.segment_configs.find(
+                                                            (c) =>
+                                                                c.segment_id ===
+                                                                Number(seg.id),
+                                                        )}
+                                                    {@const pickupOptions =
+                                                        segmentJamList(
+                                                            seg.jam_pickups,
+                                                        ).length > 0
+                                                            ? segmentJamList(
+                                                                  seg.jam_pickups,
+                                                              )
+                                                            : segmentJamLabel(
                                                                     seg.jam,
-                                                                ),
-                                                            ]
-                                                          : []}
-                                                <div
-                                                    class={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5 transition ${isChecked ? 'border-sky-400/60 bg-white shadow-sm dark:border-sky-500/35 dark:bg-slate-950/55' : 'border-border/50 bg-background/60 dark:border-border/60 dark:bg-slate-950/35'}`}
-                                                >
-                                                    <label
-                                                        class="flex flex-1 cursor-pointer items-center gap-2.5"
+                                                                )
+                                                              ? [
+                                                                    segmentJamLabel(
+                                                                        seg.jam,
+                                                                    ),
+                                                                ]
+                                                              : []}
+                                                    <div
+                                                        class={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5 transition ${isChecked ? 'border-sky-400/60 bg-white shadow-sm dark:border-sky-500/35 dark:bg-slate-950/55' : 'border-border/50 bg-background/60 dark:border-border/60 dark:bg-slate-950/35'}`}
                                                     >
-                                                        <input
-                                                            type="checkbox"
-                                                            class="h-4 w-4 rounded border-border accent-sky-600"
-                                                            checked={isChecked}
-                                                            onchange={(e) => {
-                                                                if (
-                                                                    (
-                                                                        e.currentTarget as HTMLInputElement
-                                                                    ).checked
-                                                                ) {
-                                                                    addScheduleSegmentConfig(
+                                                        <label
+                                                            class="flex flex-1 cursor-pointer items-center gap-2.5"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                class="h-4 w-4 rounded border-border accent-sky-600"
+                                                                checked={isChecked}
+                                                                onchange={(
+                                                                    e,
+                                                                ) => {
+                                                                    if (
+                                                                        (
+                                                                            e.currentTarget as HTMLInputElement
+                                                                        )
+                                                                            .checked
+                                                                    ) {
+                                                                        addScheduleSegmentConfig(
+                                                                            Number(
+                                                                                seg.id,
+                                                                            ),
+                                                                        );
+                                                                    } else {
+                                                                        removeScheduleSegmentConfig(
+                                                                            Number(
+                                                                                seg.id,
+                                                                            ),
+                                                                        );
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <div>
+                                                                <p
+                                                                    class="text-xs font-medium text-foreground"
+                                                                >
+                                                                    {seg.rute ||
+                                                                        segmentDisplayName(
+                                                                            seg.origin ??
+                                                                                '',
+                                                                            seg.destination ??
+                                                                                '',
+                                                                            seg.rute,
+                                                                        )}
+                                                                </p>
+                                                                <p
+                                                                    class="text-[11px] text-muted-foreground"
+                                                                >
+                                                                    Pickup
+                                                                    tersedia: {pickupOptions.join(
+                                                                        ', ',
+                                                                    ) || '-'} · Rp
+                                                                    {formatCurrency(
                                                                         Number(
-                                                                            seg.id,
+                                                                            seg.harga ||
+                                                                                0,
                                                                         ),
-                                                                    );
-                                                                } else {
-                                                                    removeScheduleSegmentConfig(
-                                                                        Number(
-                                                                            seg.id,
-                                                                        ),
-                                                                    );
-                                                                }
-                                                            }}
-                                                        />
-                                                        <div>
-                                                            <p
-                                                                class="text-xs font-medium text-foreground"
-                                                            >
-                                                                {seg.rute ||
-                                                                    segmentDisplayName(
-                                                                        seg.origin ??
-                                                                            '',
-                                                                        seg.destination ??
-                                                                            '',
-                                                                        seg.rute,
                                                                     )}
-                                                            </p>
-                                                            <p
-                                                                class="text-[11px] text-muted-foreground"
+                                                                </p>
+                                                            </div>
+                                                        </label>
+                                                        {#if isChecked && pickupOptions.length > 0}
+                                                            <select
+                                                                class="h-8 rounded-md border border-sky-300/70 bg-white px-2 text-[12px] font-semibold text-sky-800 shadow-sm dark:border-sky-500/30 dark:bg-slate-950/70 dark:text-sky-100"
+                                                                value={configEntry?.jam_pickup ??
+                                                                    pickupOptions[0]}
+                                                                onchange={(e) =>
+                                                                    updateScheduleSegmentJam(
+                                                                        Number(
+                                                                            seg.id,
+                                                                        ),
+                                                                        (
+                                                                            e.currentTarget as HTMLSelectElement
+                                                                        ).value,
+                                                                    )}
                                                             >
-                                                                Pickup tersedia: {pickupOptions.join(
-                                                                    ', ',
-                                                                ) || '-'} · Rp {formatCurrency(
+                                                                {#each pickupOptions as pickupJam (pickupJam)}
+                                                                    <option
+                                                                        value={pickupJam}
+                                                                        >{pickupJam}</option
+                                                                    >
+                                                                {/each}
+                                                            </select>
+                                                        {:else if isChecked}
+                                                            <span
+                                                                class="rounded bg-sky-100 px-2 py-1 text-[11px] text-sky-600 dark:bg-sky-950/35 dark:text-sky-200"
+                                                            >
+                                                                {configEntry?.jam_pickup ??
+                                                                    '-'}
+                                                            </span>
+                                                        {/if}
+                                                    </div>
+                                                {/each}
+                                            </div>
+                                        {:else}
+                                            <div class="grid gap-2">
+                                                {#if scheduleAutomaticSegments().length > 0}
+                                                    {#each scheduleAutomaticSegments() as seg (seg.id)}
+                                                        <div
+                                                            class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200/70 bg-emerald-50/50 px-3 py-2.5"
+                                                        >
+                                                            <div
+                                                                class="min-w-0"
+                                                            >
+                                                                <p
+                                                                    class="truncate text-xs font-medium text-foreground"
+                                                                >
+                                                                    {seg.rute ||
+                                                                        segmentDisplayName(
+                                                                            seg.origin ??
+                                                                                '',
+                                                                            seg.destination ??
+                                                                                '',
+                                                                            seg.rute,
+                                                                        )}
+                                                                </p>
+                                                                <p
+                                                                    class="text-[11px] text-muted-foreground"
+                                                                >
+                                                                    Pickup {segmentJamSummary(
+                                                                        seg.jam_pickups,
+                                                                    ) ||
+                                                                        segmentJamLabel(
+                                                                            seg.jam,
+                                                                        ) ||
+                                                                        '-'}
+                                                                </p>
+                                                            </div>
+                                                            <span
+                                                                class="shrink-0 text-xs font-semibold text-emerald-700"
+                                                            >
+                                                                Rp {formatCurrency(
                                                                     Number(
                                                                         seg.harga ||
                                                                             0,
                                                                     ),
                                                                 )}
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                    {#if isChecked && pickupOptions.length > 0}
-                                                        <select
-                                                            class="h-8 rounded-md border border-sky-300/70 bg-white px-2 text-[12px] font-semibold text-sky-800 shadow-sm dark:border-sky-500/30 dark:bg-slate-950/70 dark:text-sky-100"
-                                                            value={configEntry?.jam_pickup ??
-                                                                pickupOptions[0]}
-                                                            onchange={(e) =>
-                                                                updateScheduleSegmentJam(
-                                                                    Number(
-                                                                        seg.id,
-                                                                    ),
-                                                                    (
-                                                                        e.currentTarget as HTMLSelectElement
-                                                                    ).value,
-                                                                )}
-                                                        >
-                                                            {#each pickupOptions as pickupJam (pickupJam)}
-                                                                <option
-                                                                    value={pickupJam}
-                                                                    >{pickupJam}</option
-                                                                >
-                                                            {/each}
-                                                        </select>
-                                                    {:else if isChecked}
-                                                        <span
-                                                            class="rounded bg-sky-100 px-2 py-1 text-[11px] text-sky-600 dark:bg-sky-950/35 dark:text-sky-200"
-                                                        >
-                                                            {configEntry?.jam_pickup ??
-                                                                '-'}
-                                                        </span>
-                                                    {/if}
-                                                </div>
-                                            {/each}
-                                        </div>
-                                        {:else}
-                                            <div class="grid gap-2">
-                                                {#if scheduleAutomaticSegments().length > 0}
-                                                    {#each scheduleAutomaticSegments() as seg (seg.id)}
-                                                        <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200/70 bg-emerald-50/50 px-3 py-2.5">
-                                                            <div class="min-w-0">
-                                                                <p class="truncate text-xs font-medium text-foreground">
-                                                                    {seg.rute || segmentDisplayName(seg.origin ?? '', seg.destination ?? '', seg.rute)}
-                                                                </p>
-                                                                <p class="text-[11px] text-muted-foreground">
-                                                                    Pickup {segmentJamSummary(seg.jam_pickups) || segmentJamLabel(seg.jam) || '-'}
-                                                                </p>
-                                                            </div>
-                                                            <span class="shrink-0 text-xs font-semibold text-emerald-700">
-                                                                Rp {formatCurrency(Number(seg.harga || 0))}
                                                             </span>
                                                         </div>
                                                     {/each}
                                                 {:else}
-                                                    <p class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-[11px] text-amber-700">
-                                                        Belum ada segment untuk rute ini. Jadwal tetap dapat disimpan dan segment dapat ditambahkan nanti.
+                                                    <p
+                                                        class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-[11px] text-amber-700"
+                                                    >
+                                                        Belum ada segment untuk
+                                                        rute ini. Jadwal tetap
+                                                        dapat disimpan dan
+                                                        segment dapat
+                                                        ditambahkan nanti.
                                                     </p>
                                                 {/if}
                                             </div>
@@ -7544,7 +7638,9 @@
                                             <p
                                                 class="mt-2.5 text-[11px] text-amber-600"
                                             >
-                                                Belum ada segment manual dipilih. Sistem tetap dapat menggunakan pencocokan otomatis.
+                                                Belum ada segment manual
+                                                dipilih. Sistem tetap dapat
+                                                menggunakan pencocokan otomatis.
                                             </p>
                                         {/if}
                                         <div class="mt-4 flex justify-start">
@@ -7560,169 +7656,251 @@
                                 {/if}
 
                                 {#if scheduleFormStep === 2}
-                                <div
-                                    class="rounded-lg border border-input/70 bg-muted/10 p-4"
-                                >
-                                    <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                    <div
+                                        class="rounded-lg border border-input/70 bg-muted/10 p-4"
                                     >
-                                        Kendaraan yang Berangkat
-                                    </p>
-                                    <p
-                                        class="mt-1 text-xs text-muted-foreground"
-                                    >
-                                        Atur label kendaraan dan layout kursi yang akan dipakai saat booking.
-                                    </p>
-                                    <div class="mt-4 grid gap-3">
-                                        {#each scheduleForm.unit_labels as label, idx (`unit-label-${idx}`)}
-                                            {@const selectedUnitId = Number(scheduleForm.unit_ids[idx] ?? 0)}
-                                            {@const selectedUnit = units.find((unit) => unit.id === selectedUnitId)}
-                                            <div
-                                                class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]"
-                                            >
-                                                <label class="space-y-1.5">
-                                                    <span
-                                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >Kendaraan {idx +
-                                                            1} · Label</span
-                                                    >
-                                                    <Input
-                                                        placeholder={`Label Slot ${idx + 1}`}
-                                                        value={label}
-                                                        oninput={(event) =>
-                                                            updateScheduleUnitLabel(
-                                                                idx,
-                                                                (
-                                                                    event.currentTarget as HTMLInputElement
-                                                                ).value,
-                                                            )}
-                                                    />
-                                                    <p class="text-[11px] text-muted-foreground">
-                                                        {selectedUnit?.kapasitas
-                                                            ? `${selectedUnit.kapasitas} kursi tersedia`
-                                                            : 'Kapasitas mengikuti layout yang dipilih'}
-                                                    </p>
-                                                </label>
-                                                <label class="space-y-1.5">
-                                                    <span
-                                                        class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >Kategori armada dan layout kursi</span
-                                                    >
-                                                    <select
-                                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                        value={scheduleForm
-                                                            .unit_ids[idx] ?? 0}
-                                                        onchange={(event) =>
-                                                            updateScheduleUnitId(
-                                                                idx,
-                                                                Number(
-                                                                    (
-                                                                        event.currentTarget as HTMLSelectElement
-                                                                    ).value ||
-                                                                        0,
-                                                                ),
-                                                            )}
-                                                    >
-                                                        <option value={0}
-                                                            >Pilih kendaraan/layout</option
+                                        <p
+                                            class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                        >
+                                            Kendaraan yang Berangkat
+                                        </p>
+                                        <p
+                                            class="mt-1 text-xs text-muted-foreground"
+                                        >
+                                            Atur label kendaraan dan layout
+                                            kursi yang akan dipakai saat
+                                            booking.
+                                        </p>
+                                        <div class="mt-4 grid gap-3">
+                                            {#each scheduleForm.unit_labels as label, idx (`unit-label-${idx}`)}
+                                                {@const selectedUnitId = Number(
+                                                    scheduleForm.unit_ids[
+                                                        idx
+                                                    ] ?? 0,
+                                                )}
+                                                {@const selectedUnit =
+                                                    units.find(
+                                                        (unit) =>
+                                                            unit.id ===
+                                                            selectedUnitId,
+                                                    )}
+                                                <div
+                                                    class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]"
+                                                >
+                                                    <label class="space-y-1.5">
+                                                        <span
+                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            >Kendaraan {idx + 1} ·
+                                                            Label</span
                                                         >
-                                                        {#each units as unit (unit.id)}
-                                                            <option
-                                                                value={unit.id}
-                                                                >{unit.nama_kategori}{unit.category
-                                                                    ? ` • ${normalizeUnitCategory(unit.category)}`
-                                                                    : ''}</option
+                                                        <Input
+                                                            placeholder={`Label Slot ${idx + 1}`}
+                                                            value={label}
+                                                            oninput={(event) =>
+                                                                updateScheduleUnitLabel(
+                                                                    idx,
+                                                                    (
+                                                                        event.currentTarget as HTMLInputElement
+                                                                    ).value,
+                                                                )}
+                                                        />
+                                                        <p
+                                                            class="text-[11px] text-muted-foreground"
+                                                        >
+                                                            {selectedUnit?.kapasitas
+                                                                ? `${selectedUnit.kapasitas} kursi tersedia`
+                                                                : 'Kapasitas mengikuti layout yang dipilih'}
+                                                        </p>
+                                                    </label>
+                                                    <label class="space-y-1.5">
+                                                        <span
+                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            >Kategori armada dan
+                                                            layout kursi</span
+                                                        >
+                                                        <select
+                                                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                            value={scheduleForm
+                                                                .unit_ids[
+                                                                idx
+                                                            ] ?? 0}
+                                                            onchange={(event) =>
+                                                                updateScheduleUnitId(
+                                                                    idx,
+                                                                    Number(
+                                                                        (
+                                                                            event.currentTarget as HTMLSelectElement
+                                                                        )
+                                                                            .value ||
+                                                                            0,
+                                                                    ),
+                                                                )}
+                                                        >
+                                                            <option value={0}
+                                                                >Pilih
+                                                                kendaraan/layout</option
                                                             >
-                                                        {/each}
-                                                    </select>
-                                                </label>
-                                            </div>
-                                        {/each}
+                                                            {#each units as unit (unit.id)}
+                                                                <option
+                                                                    value={unit.id}
+                                                                    >{unit.nama_kategori}{unit.category
+                                                                        ? ` • ${normalizeUnitCategory(unit.category)}`
+                                                                        : ''}</option
+                                                                >
+                                                            {/each}
+                                                        </select>
+                                                    </label>
+                                                </div>
+                                            {/each}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div
-                                    class="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-xs text-muted-foreground"
-                                >
-                                    {#if !scheduleLayoutIsReady()}
-                                        Kendaraan masih menggunakan layout dasar. Anda dapat mengaturnya nanti.
-                                    {:else}
-                                        Semua kendaraan sudah memiliki layout kursi.
-                                    {/if}
-                                    Jika jumlah kendaraan berubah, label dan pilihan layout akan ikut menyesuaikan.
-                                </div>
-                                <div class="flex justify-between gap-2">
-                                    <div class="flex gap-2">
-                                        <Button type="button" variant="outline" onclick={cancelScheduleForm}>
-                                            Batal
-                                        </Button>
-                                        <Button type="button" variant="outline" onclick={previousScheduleStep}>
-                                            Kembali
+                                    <div
+                                        class="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-xs text-muted-foreground"
+                                    >
+                                        {#if !scheduleLayoutIsReady()}
+                                            Kendaraan masih menggunakan layout
+                                            dasar. Anda dapat mengaturnya nanti.
+                                        {:else}
+                                            Semua kendaraan sudah memiliki
+                                            layout kursi.
+                                        {/if}
+                                        Jika jumlah kendaraan berubah, label dan pilihan
+                                        layout akan ikut menyesuaikan.
+                                    </div>
+                                    <div class="flex justify-between gap-2">
+                                        <div class="flex gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onclick={cancelScheduleForm}
+                                            >
+                                                Batal
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onclick={previousScheduleStep}
+                                            >
+                                                Kembali
+                                            </Button>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            onclick={nextScheduleStep}
+                                        >
+                                            Lanjut: Segment
                                         </Button>
                                     </div>
-                                    <Button type="button" onclick={nextScheduleStep}>
-                                        Lanjut: Segment
-                                    </Button>
-                                </div>
                                 {/if}
 
                                 {#if scheduleFormStep === 3}
-                                <div
-                                    class="rounded-xl border border-border/70 bg-muted/20 p-4"
-                                >
-                                    <p class="text-xs font-semibold text-foreground">
-                                        Pemeriksaan jadwal
-                                    </p>
-                                    <div class="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                                        <div class="rounded-lg bg-background px-3 py-2">
-                                            <span class="text-muted-foreground">Rute</span>
-                                            <p class="font-semibold">{scheduleForm.rute || selectedScheduleRoute || '-'}</p>
-                                        </div>
-                                        <div class="rounded-lg bg-background px-3 py-2">
-                                            <span class="text-muted-foreground">Keberangkatan</span>
-                                            <p class="font-semibold">{days[Number(scheduleForm.dow)]} · {scheduleForm.jam}</p>
-                                        </div>
-                                        <div class="rounded-lg bg-background px-3 py-2">
-                                            <span class="text-muted-foreground">Kendaraan</span>
-                                            <p class="font-semibold">{scheduleForm.units} kendaraan · {scheduleLayoutReadyCount()}/{scheduleForm.units} layout</p>
-                                        </div>
-                                        <div class="rounded-lg bg-background px-3 py-2">
-                                            <span class="text-muted-foreground">Segment</span>
-                                            <p class="font-semibold">{scheduleConfiguredSegmentCount()} layanan cocok</p>
-                                        </div>
-                                        <div class="rounded-lg bg-background px-3 py-2 sm:col-span-2">
-                                            <span class="text-muted-foreground">Biaya operasional</span>
-                                            <p class="font-semibold">Rp {formatCurrency(parseRupiahInput(scheduleForm.bop))}</p>
+                                    <div
+                                        class="rounded-xl border border-border/70 bg-muted/20 p-4"
+                                    >
+                                        <p
+                                            class="text-xs font-semibold text-foreground"
+                                        >
+                                            Pemeriksaan jadwal
+                                        </p>
+                                        <div
+                                            class="mt-3 grid gap-2 text-xs sm:grid-cols-2"
+                                        >
+                                            <div
+                                                class="rounded-lg bg-background px-3 py-2"
+                                            >
+                                                <span
+                                                    class="text-muted-foreground"
+                                                    >Rute</span
+                                                >
+                                                <p class="font-semibold">
+                                                    {scheduleForm.rute ||
+                                                        selectedScheduleRoute ||
+                                                        '-'}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-lg bg-background px-3 py-2"
+                                            >
+                                                <span
+                                                    class="text-muted-foreground"
+                                                    >Keberangkatan</span
+                                                >
+                                                <p class="font-semibold">
+                                                    {days[
+                                                        Number(scheduleForm.dow)
+                                                    ]} · {scheduleForm.jam}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-lg bg-background px-3 py-2"
+                                            >
+                                                <span
+                                                    class="text-muted-foreground"
+                                                    >Kendaraan</span
+                                                >
+                                                <p class="font-semibold">
+                                                    {scheduleForm.units} kendaraan
+                                                    · {scheduleLayoutReadyCount()}/{scheduleForm.units}
+                                                    layout
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-lg bg-background px-3 py-2"
+                                            >
+                                                <span
+                                                    class="text-muted-foreground"
+                                                    >Segment</span
+                                                >
+                                                <p class="font-semibold">
+                                                    {scheduleConfiguredSegmentCount()}
+                                                    layanan cocok
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-lg bg-background px-3 py-2 sm:col-span-2"
+                                            >
+                                                <span
+                                                    class="text-muted-foreground"
+                                                    >Biaya operasional</span
+                                                >
+                                                <p class="font-semibold">
+                                                    Rp {formatCurrency(
+                                                        parseRupiahInput(
+                                                            scheduleForm.bop,
+                                                        ),
+                                                    )}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div
-                                    class="flex flex-wrap gap-2 border-t border-border/70 pt-4"
-                                >
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onclick={previousScheduleStep}
+                                    <div
+                                        class="flex flex-wrap gap-2 border-t border-border/70 pt-4"
                                     >
-                                        Kembali
-                                    </Button>
-                                    <LoadingButton
-                                        type="submit"
-                                        loading={isSubmitActive('schedule')}
-                                        loadingText={scheduleForm.id
-                                            ? 'Menyimpan jadwal...'
-                                            : 'Menambah jadwal...'}
-                                        >{scheduleForm.id
-                                            ? 'Update Jadwal'
-                                            : 'Tambah Jadwal'}</LoadingButton
-                                    >
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onclick={cancelScheduleForm}
-                                        >Batal</Button
-                                    >
-                                </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={previousScheduleStep}
+                                        >
+                                            Kembali
+                                        </Button>
+                                        <LoadingButton
+                                            type="submit"
+                                            loading={isSubmitActive('schedule')}
+                                            loadingText={scheduleForm.id
+                                                ? 'Menyimpan jadwal...'
+                                                : 'Menambah jadwal...'}
+                                            >{scheduleForm.id
+                                                ? 'Update Jadwal'
+                                                : 'Tambah Jadwal'}</LoadingButton
+                                        >
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onclick={cancelScheduleForm}
+                                            >Batal</Button
+                                        >
+                                    </div>
                                 {/if}
                             </AdminOpsSection>
                         </form>
@@ -7856,12 +8034,16 @@
                                                     <p
                                                         class="text-sm font-medium text-foreground"
                                                     >
-                                                        Belum ada jadwal pada hari ini
+                                                        Belum ada jadwal pada
+                                                        hari ini
                                                     </p>
                                                     <p
                                                         class="mt-1 text-xs text-muted-foreground"
                                                     >
-                                                        Tambahkan jam keberangkatan untuk mulai mengatur operasional.
+                                                        Tambahkan jam
+                                                        keberangkatan untuk
+                                                        mulai mengatur
+                                                        operasional.
                                                     </p>
                                                 </div>
                                             </div>
@@ -7998,12 +8180,14 @@
                                                                 <p
                                                                     class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                                                                 >
-                                                                    Kendaraan yang Berangkat
+                                                                    Kendaraan
+                                                                    yang
+                                                                    Berangkat
                                                                 </p>
                                                                 <span
                                                                     class="text-[11px] text-muted-foreground"
                                                                 >
-                                                    {row.unit_label ||
+                                                                    {row.unit_label ||
                                                                         row.unit_nama_kategori ||
                                                                         'Belum ada label'}
                                                                 </span>
@@ -11235,27 +11419,26 @@
                                     bind:value={userForm.password}
                                 />
                             </label>
-                            <label
-                                class="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/10 p-4"
-                            >
-                                <input
-                                    type="checkbox"
-                                    class="mt-1"
-                                    bind:checked={userForm.is_super_admin}
-                                    disabled={!canManagePools}
-                                />
-                                <span>
-                                    <span class="block text-sm font-semibold">
-                                        Super Admin
+                            {#if currentUserIsSuperAdmin}
+                                <div
+                                    class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-500/30 dark:bg-amber-950/20"
+                                >
+                                    <span>
+                                        <span
+                                            class="block text-sm font-semibold text-amber-900 dark:text-amber-200"
+                                        >
+                                            Role Super Admin
+                                        </span>
+                                        <span
+                                            class="mt-1 block text-xs leading-5 text-amber-800/80 dark:text-amber-200/80"
+                                        >
+                                            Pengaturan Super Admin hanya dapat
+                                            dilakukan dari menu Role, bukan dari
+                                            form User.
+                                        </span>
                                     </span>
-                                    <span
-                                        class="mt-1 block text-xs leading-5 text-muted-foreground"
-                                    >
-                                        Bisa melihat semua pool dan mengelola
-                                        akses user.
-                                    </span>
-                                </span>
-                            </label>
+                                </div>
+                            {/if}
                             <div
                                 class="space-y-2 rounded-lg border border-border/70 bg-muted/10 p-4 md:col-span-2"
                             >
@@ -11385,7 +11568,7 @@
                                             userForm.pool_ids.length === 0}
                                     >
                                         <option value={0}>Belum dipilih</option>
-                                        {#each poolOptions.filter((pool) => userForm.pool_ids.includes(pool.id)) as pool (pool.id)}
+                                        {#each poolOptions.filter( (pool) => userForm.pool_ids.includes(pool.id), ) as pool (pool.id)}
                                             <option value={pool.id}
                                                 >{pool.name}</option
                                             >
@@ -11632,9 +11815,7 @@
                                         >
                                             Invitation
                                         </p>
-                                        <h3
-                                            class="mt-1 text-sm font-semibold"
-                                        >
+                                        <h3 class="mt-1 text-sm font-semibold">
                                             Pending dan riwayat undangan
                                         </h3>
                                     </div>
