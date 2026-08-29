@@ -139,6 +139,12 @@ class PoolScope
                 'subscriptions.plan_id',
                 'plans.name as plan_name',
                 'plans.slug as plan_slug',
+                'subscriptions.custom_price_monthly',
+                'subscriptions.custom_price_yearly',
+                'subscriptions.custom_max_pools',
+                'subscriptions.custom_max_users',
+                'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_routes',
                 'subscriptions.status as subscription_status',
                 'subscriptions.trial_ends_at',
                 'subscriptions.ends_at',
@@ -149,14 +155,19 @@ class PoolScope
             return null;
         }
 
+        $isPrivatePricing = FeatureGate::isPrivatePricing($sub);
+
         return [
             'subscription_id' => (int) $sub->subscription_id,
             'tenant_id' => (int) $sub->tenant_id,
             'tenant_name' => (string) $sub->tenant_name,
             'tenant_status' => (string) ($sub->tenant_status ?? ''),
             'plan_id' => (int) $sub->plan_id,
-            'plan_name' => (string) $sub->plan_name,
+            'plan_name' => $isPrivatePricing ? 'Private Pricing' : (string) $sub->plan_name,
             'plan_slug' => (string) $sub->plan_slug,
+            'base_plan_name' => (string) $sub->plan_name,
+            'base_plan_slug' => (string) $sub->plan_slug,
+            'is_private_pricing' => $isPrivatePricing,
             'subscription_status' => (string) $sub->subscription_status,
             'trial_ends_at' => $sub->trial_ends_at,
             'ends_at' => $sub->ends_at,

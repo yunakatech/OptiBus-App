@@ -7161,18 +7161,22 @@
                     <section
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div class="space-y-5 px-5 py-5">
+                        <div
+                            class="space-y-4 px-4 py-4 sm:space-y-5 sm:px-5 sm:py-5"
+                        >
                             <div
                                 class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
                             >
-                                <div class="grid gap-3 md:min-w-[420px]">
-                                    <label class="space-y-1.5">
+                                <div
+                                    class="grid min-w-0 gap-2 md:min-w-[420px]"
+                                >
+                                    <label class="min-w-0 space-y-1">
                                         <span
-                                            class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px] sm:tracking-[0.22em]"
                                             >Rute perjalanan</span
                                         >
                                         <select
-                                            class="h-10 rounded-lg border border-input bg-background/95 px-3 text-sm shadow-sm"
+                                            class="h-10 w-full min-w-0 rounded-lg border border-input bg-background/95 px-3 text-sm shadow-sm"
                                             value={selectedScheduleRouteValue}
                                             disabled={scheduleRouteSelectOptions.length ===
                                                 0}
@@ -7192,7 +7196,7 @@
                                             {/each}
                                         </select>
                                         <p
-                                            class="text-[11px] text-muted-foreground"
+                                            class="hidden text-[11px] text-muted-foreground sm:block"
                                         >
                                             Jadwal ini akan berulang setiap
                                             minggu pada hari yang dipilih.
@@ -7219,7 +7223,7 @@
                                     bind:value={scheduleForm.rute}
                                 />
                                 <div
-                                    class="rounded-xl border border-border/70 bg-background/80 p-3"
+                                    class="rounded-xl border border-border/70 bg-background/80 p-2.5 sm:p-3"
                                 >
                                     <div
                                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
@@ -7231,7 +7235,7 @@
                                                 Langkah {scheduleFormStep} dari 3
                                             </p>
                                             <p
-                                                class="text-[11px] text-muted-foreground"
+                                                class="hidden text-[11px] text-muted-foreground sm:block"
                                             >
                                                 Ikuti langkah berikut untuk
                                                 menyiapkan jadwal dengan mudah.
@@ -7243,19 +7247,19 @@
                                             {#each scheduleWizardSteps as step (step.number)}
                                                 <button
                                                     type="button"
-                                                    class={`min-w-[118px] rounded-lg border px-3 py-2 text-left transition ${scheduleFormStep === step.number ? 'border-primary bg-primary/10 text-primary' : scheduleFormStep > step.number ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-border/70 bg-background text-muted-foreground'}`}
+                                                    class={`min-w-[92px] rounded-lg border px-2 py-2 text-left transition sm:min-w-[118px] sm:px-3 ${scheduleFormStep === step.number ? 'border-primary bg-primary/10 text-primary' : scheduleFormStep > step.number ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-border/70 bg-background text-muted-foreground'}`}
                                                     onclick={() =>
                                                         goToScheduleStep(
                                                             step.number,
                                                         )}
                                                 >
                                                     <span
-                                                        class="block text-[11px] font-semibold"
+                                                        class="block whitespace-nowrap text-[10px] font-semibold sm:text-[11px]"
                                                     >
                                                         {step.number}. {step.title}
                                                     </span>
                                                     <span
-                                                        class="mt-0.5 block text-[10px]"
+                                                        class="mt-0.5 hidden text-[10px] sm:block"
                                                     >
                                                         {step.description}
                                                     </span>
@@ -7266,15 +7270,15 @@
                                 </div>
                                 {#if scheduleFormStep === 1}
                                     <div
-                                        class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+                                        class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
                                     >
-                                        <label class="space-y-1.5">
+                                        <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                >Hari keberangkatan</span
+                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                >Hari</span
                                             >
                                             <select
-                                                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                class="h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm"
                                                 bind:value={scheduleForm.dow}
                                             >
                                                 {#each days as day, idx (idx)}
@@ -7284,10 +7288,10 @@
                                                 {/each}
                                             </select>
                                         </label>
-                                        <label class="space-y-1.5">
+                                        <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                >Jam berangkat</span
+                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                >Jam</span
                                             >
                                             <input
                                                 bind:this={scheduleTimeInput}
@@ -7299,14 +7303,14 @@
                                                 class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                             />
                                             <p
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-1 hidden text-[11px] text-muted-foreground sm:block"
                                             >
                                                 Jam berangkat dapat diisi bebas.
                                                 Pilihan cepat hanya membantu
                                                 mencocokkan jam segment.
                                             </p>
                                             <div
-                                                class="mt-2 flex flex-wrap gap-2"
+                                                class="mt-1 flex max-w-full flex-nowrap gap-1.5 overflow-x-auto pb-1 sm:mt-2 sm:flex-wrap sm:gap-2 sm:overflow-visible"
                                             >
                                                 {#if scheduleRouteJamOptions().length > 0}
                                                     {#each scheduleRouteJamOptions() as jamOption (jamOption)}
@@ -7328,7 +7332,7 @@
                                                     {/each}
                                                 {:else}
                                                     <span
-                                                        class="text-[11px] text-muted-foreground"
+                                                        class="hidden text-[11px] text-muted-foreground sm:block"
                                                     >
                                                         Jam tetap bisa diisi
                                                         manual bila route ini
@@ -7337,10 +7341,10 @@
                                                 {/if}
                                             </div>
                                         </label>
-                                        <label class="space-y-1.5">
+                                        <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                >Jumlah kendaraan</span
+                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                >Kendaraan</span
                                             >
                                             <Input
                                                 type="number"
@@ -7357,10 +7361,10 @@
                                                     )}
                                             />
                                         </label>
-                                        <label class="space-y-1.5">
+                                        <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                >Biaya operasional (BOP)</span
+                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                >BOP</span
                                             >
                                             <Input
                                                 type="text"
@@ -7379,7 +7383,7 @@
                                                 }}
                                             />
                                             <p
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-1 hidden text-[11px] text-muted-foreground sm:block"
                                                 title="BOP adalah biaya operasional perjalanan."
                                             >
                                                 Biaya ini dipakai untuk
@@ -7407,20 +7411,20 @@
 
                                 {#if scheduleFormStep === 3}
                                     <div
-                                        class="rounded-lg border border-sky-200/70 bg-sky-50/40 p-4"
+                                        class="rounded-lg border border-sky-200/70 bg-sky-50/40 p-3 sm:p-4"
                                     >
                                         <div
-                                            class="mb-3 flex items-start justify-between gap-3"
+                                            class="mb-2 flex items-start justify-between gap-2 sm:mb-3 sm:gap-3"
                                         >
                                             <div>
                                                 <p
-                                                    class="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700"
+                                                    class="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700 sm:text-[11px] sm:tracking-[0.22em]"
                                                 >
                                                     Layanan atau Segment
                                                     Perjalanan
                                                 </p>
                                                 <p
-                                                    class="mt-1 text-xs text-muted-foreground"
+                                                    class="mt-1 hidden text-xs text-muted-foreground sm:block"
                                                 >
                                                     Sistem mencocokkan segment
                                                     berdasarkan jam berangkat.
@@ -7428,7 +7432,7 @@
                                                 </p>
                                             </div>
                                             <div
-                                                class="flex shrink-0 flex-wrap items-center justify-end gap-2"
+                                                class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none"
                                             >
                                                 <span
                                                     class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-700"
@@ -7513,9 +7517,11 @@
                                                                     }
                                                                 }}
                                                             />
-                                                            <div>
+                                                            <div
+                                                                class="min-w-0"
+                                                            >
                                                                 <p
-                                                                    class="text-xs font-medium text-foreground"
+                                                                    class="truncate text-xs font-medium text-foreground"
                                                                 >
                                                                     {seg.rute ||
                                                                         segmentDisplayName(
@@ -7527,7 +7533,7 @@
                                                                         )}
                                                                 </p>
                                                                 <p
-                                                                    class="text-[11px] text-muted-foreground"
+                                                                    class="hidden text-[11px] text-muted-foreground sm:block"
                                                                 >
                                                                     Pickup
                                                                     tersedia: {pickupOptions.join(
@@ -7623,20 +7629,18 @@
                                                     {/each}
                                                 {:else}
                                                     <p
-                                                        class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-[11px] text-amber-700"
+                                                        class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-700"
                                                     >
                                                         Belum ada segment untuk
                                                         rute ini. Jadwal tetap
-                                                        dapat disimpan dan
-                                                        segment dapat
-                                                        ditambahkan nanti.
+                                                        dapat disimpan.
                                                     </p>
                                                 {/if}
                                             </div>
                                         {/if}
                                         {#if scheduleManualSegments && scheduleForm.segment_configs.length === 0}
                                             <p
-                                                class="mt-2.5 text-[11px] text-amber-600"
+                                                class="mt-2.5 hidden text-[11px] text-amber-600 sm:block"
                                             >
                                                 Belum ada segment manual
                                                 dipilih. Sistem tetap dapat
@@ -7657,21 +7661,21 @@
 
                                 {#if scheduleFormStep === 2}
                                     <div
-                                        class="rounded-lg border border-input/70 bg-muted/10 p-4"
+                                        class="rounded-lg border border-input/70 bg-muted/10 p-3 sm:p-4"
                                     >
                                         <p
-                                            class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px] sm:tracking-[0.22em]"
                                         >
                                             Kendaraan yang Berangkat
                                         </p>
                                         <p
-                                            class="mt-1 text-xs text-muted-foreground"
+                                            class="mt-1 hidden text-xs text-muted-foreground sm:block"
                                         >
                                             Atur label kendaraan dan layout
                                             kursi yang akan dipakai saat
                                             booking.
                                         </p>
-                                        <div class="mt-4 grid gap-3">
+                                        <div class="mt-3 grid gap-3 sm:mt-4">
                                             {#each scheduleForm.unit_labels as label, idx (`unit-label-${idx}`)}
                                                 {@const selectedUnitId = Number(
                                                     scheduleForm.unit_ids[
@@ -7689,9 +7693,8 @@
                                                 >
                                                     <label class="space-y-1.5">
                                                         <span
-                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                            >Kendaraan {idx + 1} ·
-                                                            Label</span
+                                                            class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                            >Slot {idx + 1} · Label</span
                                                         >
                                                         <Input
                                                             placeholder={`Label Slot ${idx + 1}`}
@@ -7705,7 +7708,7 @@
                                                                 )}
                                                         />
                                                         <p
-                                                            class="text-[11px] text-muted-foreground"
+                                                            class="hidden text-[11px] text-muted-foreground sm:block"
                                                         >
                                                             {selectedUnit?.kapasitas
                                                                 ? `${selectedUnit.kapasitas} kursi tersedia`
@@ -7714,9 +7717,8 @@
                                                     </label>
                                                     <label class="space-y-1.5">
                                                         <span
-                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                            >Kategori armada dan
-                                                            layout kursi</span
+                                                            class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                            >Layout kursi</span
                                                         >
                                                         <select
                                                             class="h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -7756,17 +7758,18 @@
                                     </div>
 
                                     <div
-                                        class="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-xs text-muted-foreground"
+                                        class="rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground sm:px-4 sm:py-3 sm:text-xs"
                                     >
                                         {#if !scheduleLayoutIsReady()}
-                                            Kendaraan masih menggunakan layout
-                                            dasar. Anda dapat mengaturnya nanti.
+                                            Layout belum lengkap.
                                         {:else}
-                                            Semua kendaraan sudah memiliki
-                                            layout kursi.
+                                            Semua layout siap.
                                         {/if}
-                                        Jika jumlah kendaraan berubah, label dan pilihan
-                                        layout akan ikut menyesuaikan.
+                                        <span class="hidden sm:inline">
+                                            Label dan pilihan layout akan ikut
+                                            menyesuaikan saat jumlah kendaraan
+                                            berubah.
+                                        </span>
                                     </div>
                                     <div class="flex justify-between gap-2">
                                         <div class="flex gap-2">
@@ -7796,7 +7799,7 @@
 
                                 {#if scheduleFormStep === 3}
                                     <div
-                                        class="rounded-xl border border-border/70 bg-muted/20 p-4"
+                                        class="rounded-xl border border-border/70 bg-muted/20 p-3 sm:p-4"
                                     >
                                         <p
                                             class="text-xs font-semibold text-foreground"
@@ -7804,16 +7807,18 @@
                                             Pemeriksaan jadwal
                                         </p>
                                         <div
-                                            class="mt-3 grid gap-2 text-xs sm:grid-cols-2"
+                                            class="mt-2 grid grid-cols-2 gap-2 text-[11px] sm:mt-3 sm:text-xs"
                                         >
                                             <div
-                                                class="rounded-lg bg-background px-3 py-2"
+                                                class="col-span-2 min-w-0 rounded-lg bg-background px-3 py-2 sm:col-span-1"
                                             >
                                                 <span
                                                     class="text-muted-foreground"
                                                     >Rute</span
                                                 >
-                                                <p class="font-semibold">
+                                                <p
+                                                    class="truncate font-semibold"
+                                                >
                                                     {scheduleForm.rute ||
                                                         selectedScheduleRoute ||
                                                         '-'}
@@ -7858,7 +7863,7 @@
                                                 </p>
                                             </div>
                                             <div
-                                                class="rounded-lg bg-background px-3 py-2 sm:col-span-2"
+                                                class="col-span-2 rounded-lg bg-background px-3 py-2"
                                             >
                                                 <span
                                                     class="text-muted-foreground"
