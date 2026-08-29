@@ -6670,7 +6670,7 @@
                                                 </span>
                                             </button>
                                             <div
-                                                class="flex items-center gap-2"
+                                                class="flex items-center gap-1.5 sm:gap-2"
                                             >
                                                 <div
                                                     class="font-semibold text-foreground"
@@ -7945,29 +7945,29 @@
                     {:else if activeMode === 'data'}
                         <div class="space-y-4">
                             <div
-                                class="flex flex-wrap items-center gap-2 text-xs"
+                                class="flex min-w-0 flex-wrap items-center gap-1.5 text-xs sm:gap-2"
                             >
                                 <Badge
                                     variant="secondary"
-                                    class="rounded-full px-3 py-1 font-semibold uppercase tracking-wide"
+                                    class="min-w-0 max-w-full truncate rounded-full px-2.5 py-1 font-semibold uppercase tracking-wide sm:px-3"
                                 >
                                     {selectedScheduleRoute}
                                 </Badge>
                                 <Badge
                                     variant="outline"
-                                    class="rounded-full px-3 py-1 text-muted-foreground"
+                                    class="rounded-full px-2.5 py-1 text-muted-foreground sm:px-3"
                                 >
                                     {activeScheduleGroup?.total ?? 0} jadwal
                                 </Badge>
                                 <Badge
                                     variant="outline"
-                                    class="rounded-full px-3 py-1 text-muted-foreground"
+                                    class="rounded-full px-2.5 py-1 text-muted-foreground sm:px-3"
                                 >
                                     {activeScheduleGroup?.totalUnits ?? 0} kendaraan
                                 </Badge>
                                 <Badge
                                     variant="outline"
-                                    class="rounded-full px-3 py-1 text-muted-foreground"
+                                    class="rounded-full px-2.5 py-1 text-muted-foreground sm:px-3"
                                 >
                                     <Clock3 class="mr-1.5 h-3.5 w-3.5" />
                                     {formatScheduleWindow(
@@ -7980,23 +7980,23 @@
                             </div>
 
                             <div
-                                class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                                class="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3 2xl:grid-cols-4"
                             >
                                 {#each activeScheduleGroup?.days ?? emptyScheduleDayGroups as day (day.dow)}
                                     <div
                                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                                     >
                                         <div
-                                            class="flex items-start justify-between gap-3 border-b border-border/60 bg-muted/10 px-4 py-3"
+                                            class="flex items-start justify-between gap-2 border-b border-border/60 bg-muted/10 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3"
                                         >
-                                            <div class="space-y-1">
+                                            <div class="min-w-0 space-y-1">
                                                 <p
                                                     class="text-sm font-semibold text-foreground"
                                                 >
                                                     {days[day.dow]}
                                                 </p>
                                                 <p
-                                                    class="text-[11px] text-muted-foreground"
+                                                    class="hidden text-[11px] text-muted-foreground sm:block"
                                                 >
                                                     {day.rows.length > 0
                                                         ? `${formatScheduleWindow(day.firstDeparture, day.lastDeparture)} • ${day.totalUnits} kendaraan`
@@ -8017,7 +8017,8 @@
                                                         type="button"
                                                         variant="outline"
                                                         size="sm"
-                                                        class="h-8 gap-1.5 rounded-full px-3"
+                                                        class="h-8 w-8 gap-1.5 rounded-full px-0 sm:w-auto sm:px-3"
+                                                        aria-label={`Tambah jadwal ${days[day.dow]}`}
                                                         onclick={() =>
                                                             openCreateSchedule(
                                                                 day.dow,
@@ -8026,24 +8027,28 @@
                                                         <Plus
                                                             class="h-3.5 w-3.5"
                                                         />
-                                                        Tambah
+                                                        <span
+                                                            class="hidden sm:inline"
+                                                            >Tambah</span
+                                                        >
                                                     </Button>
                                                 {/if}
                                             </div>
                                         </div>
                                         {#if day.rows.length === 0}
-                                            <div class="px-4 py-6">
+                                            <div
+                                                class="px-3 py-4 sm:px-4 sm:py-6"
+                                            >
                                                 <div
-                                                    class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-5 text-center"
+                                                    class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-3 py-4 text-center sm:px-4 sm:py-5"
                                                 >
                                                     <p
                                                         class="text-sm font-medium text-foreground"
                                                     >
-                                                        Belum ada jadwal pada
-                                                        hari ini
+                                                        Belum ada jadwal
                                                     </p>
                                                     <p
-                                                        class="mt-1 text-xs text-muted-foreground"
+                                                        class="mt-1 hidden text-xs text-muted-foreground sm:block"
                                                     >
                                                         Tambahkan jam
                                                         keberangkatan untuk
@@ -8053,21 +8058,23 @@
                                                 </div>
                                             </div>
                                         {:else}
-                                            <div class="space-y-3 p-4">
+                                            <div
+                                                class="space-y-2.5 p-3 sm:space-y-3 sm:p-4"
+                                            >
                                                 {#each day.rows as row (row.id)}
                                                     {@const rowOptions =
                                                         row.unit_options ?? []}
                                                     <article
-                                                        class="rounded-lg border border-border/70 bg-card/95 p-3 text-xs shadow-[0_18px_45px_-30px_rgba(15,23,42,0.16)]"
+                                                        class="rounded-lg border border-border/70 bg-card/95 p-2.5 text-xs shadow-[0_18px_45px_-30px_rgba(15,23,42,0.16)] sm:p-3"
                                                     >
                                                         <div
                                                             class="flex items-start justify-between gap-3"
                                                         >
                                                             <div
-                                                                class="space-y-2"
+                                                                class="min-w-0 space-y-1.5 sm:space-y-2"
                                                             >
                                                                 <div
-                                                                    class="flex items-center gap-2"
+                                                                    class="flex flex-wrap items-center gap-1.5 sm:gap-2"
                                                                 >
                                                                     <p
                                                                         class="text-lg font-semibold text-foreground"
@@ -8075,13 +8082,13 @@
                                                                         {row.jam}
                                                                     </p>
                                                                     <span
-                                                                        class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700"
+                                                                        class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         {row.units}
                                                                         kendaraan
                                                                     </span>
                                                                     <span
-                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
+                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         {Array.isArray(
                                                                             row.segment_matches,
@@ -8091,10 +8098,10 @@
                                                                     </span>
                                                                 </div>
                                                                 <div
-                                                                    class="flex flex-wrap gap-2"
+                                                                    class="flex flex-wrap gap-1.5 sm:gap-2"
                                                                 >
                                                                     <span
-                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
+                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         BOP {formatCurrency(
                                                                             Number(
@@ -8104,7 +8111,7 @@
                                                                         )}
                                                                     </span>
                                                                     <span
-                                                                        class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700"
+                                                                        class="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         {rowOptions.length >
                                                                         0
@@ -8113,9 +8120,13 @@
                                                                     </span>
                                                                 </div>
                                                                 <p
-                                                                    class="text-[11px] text-muted-foreground"
+                                                                    class="truncate text-[10px] text-muted-foreground sm:text-[11px]"
                                                                 >
-                                                                    Jam layanan:
+                                                                    <span
+                                                                        class="sr-only"
+                                                                        >Jam
+                                                                        layanan:
+                                                                    </span>
                                                                     {segmentJamSummary(
                                                                         row.segment_jam_pickups,
                                                                     ) ||
@@ -8177,20 +8188,18 @@
                                                             {/if}
                                                         </div>
                                                         <div
-                                                            class="mt-3 rounded-xl border border-border/60 bg-background/85 p-3"
+                                                            class="mt-2.5 rounded-xl border border-border/60 bg-background/85 p-2.5 sm:mt-3 sm:p-3"
                                                         >
                                                             <div
-                                                                class="flex items-center justify-between gap-3"
+                                                                class="flex min-w-0 items-center justify-between gap-2 sm:gap-3"
                                                             >
                                                                 <p
-                                                                    class="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                                                    class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-[11px] sm:tracking-[0.2em]"
                                                                 >
                                                                     Kendaraan
-                                                                    yang
-                                                                    Berangkat
                                                                 </p>
                                                                 <span
-                                                                    class="text-[11px] text-muted-foreground"
+                                                                    class="max-w-[48%] truncate text-[10px] text-muted-foreground sm:text-[11px]"
                                                                 >
                                                                     {row.unit_label ||
                                                                         row.unit_nama_kategori ||
@@ -8199,30 +8208,30 @@
                                                             </div>
                                                             {#if rowOptions.length > 0}
                                                                 <div
-                                                                    class="mt-3 space-y-2"
+                                                                    class="mt-2 space-y-1.5 sm:mt-3 sm:space-y-2"
                                                                 >
                                                                     {#each rowOptions as item (`schedule-unit-${row.id}-${item.unit_no}`)}
                                                                         <div
-                                                                            class="flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-muted/10 px-3 py-2"
+                                                                            class="flex items-start justify-between gap-2 rounded-xl border border-border/60 bg-muted/10 px-2.5 py-2 sm:gap-3 sm:px-3"
                                                                         >
                                                                             <div
-                                                                                class="space-y-0.5"
+                                                                                class="min-w-0 space-y-0.5"
                                                                             >
                                                                                 <p
-                                                                                    class="font-medium text-foreground"
+                                                                                    class="truncate font-medium text-foreground"
                                                                                 >
                                                                                     {item.unit_no}.
                                                                                     {item.label}
                                                                                 </p>
                                                                                 <p
-                                                                                    class="text-[11px] text-muted-foreground"
+                                                                                    class="hidden text-[11px] text-muted-foreground sm:block"
                                                                                 >
                                                                                     Layout
                                                                                     keberangkatan
                                                                                 </p>
                                                                             </div>
                                                                             <div
-                                                                                class="text-right text-[11px] text-muted-foreground"
+                                                                                class="max-w-[45%] truncate text-right text-[10px] text-muted-foreground sm:text-[11px]"
                                                                             >
                                                                                 {item.nama_kategori ||
                                                                                     'Layout belum dipilih'}
@@ -8232,15 +8241,11 @@
                                                                 </div>
                                                             {:else}
                                                                 <p
-                                                                    class="mt-2 text-[11px] text-muted-foreground"
+                                                                    class="mt-2 text-[10px] text-muted-foreground sm:text-[11px]"
                                                                 >
-                                                                    Slot ini
-                                                                    masih
-                                                                    memakai
-                                                                    label
-                                                                    default dan
-                                                                    belum
-                                                                    memilih
+                                                                    Layout
+                                                                    default;
+                                                                    belum ada
                                                                     layout
                                                                     khusus.
                                                                 </p>
