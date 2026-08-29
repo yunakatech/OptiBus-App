@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::index
- * @see app/Http/Controllers/SubscriptionPaymentController.php:24
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:25
  * @route '/subscription'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::index
- * @see app/Http/Controllers/SubscriptionPaymentController.php:24
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:25
  * @route '/subscription'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::index
- * @see app/Http/Controllers/SubscriptionPaymentController.php:24
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:25
  * @route '/subscription'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::index
- * @see app/Http/Controllers/SubscriptionPaymentController.php:24
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:25
  * @route '/subscription'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::index
- * @see app/Http/Controllers/SubscriptionPaymentController.php:24
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:25
  * @route '/subscription'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::index
- * @see app/Http/Controllers/SubscriptionPaymentController.php:24
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:25
  * @route '/subscription'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::index
- * @see app/Http/Controllers/SubscriptionPaymentController.php:24
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:25
  * @route '/subscription'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:226
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:232
  * @route '/subscription/checkout'
  */
 export const checkout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ checkout.definition = {
 
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:226
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:232
  * @route '/subscription/checkout'
  */
 checkout.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ checkout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:226
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:232
  * @route '/subscription/checkout'
  */
 checkout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ checkout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:226
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:232
  * @route '/subscription/checkout'
  */
     const checkoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ checkout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:226
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:232
  * @route '/subscription/checkout'
  */
         checkoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

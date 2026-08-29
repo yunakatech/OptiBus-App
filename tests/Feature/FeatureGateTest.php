@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Support\FeatureGate;
+use App\Support\PoolScope;
+use App\Support\TenantBillingAccess;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -138,6 +140,36 @@ class FeatureGateTest extends TestCase
 
         $this->assertTrue(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
         $this->assertSame(0, FeatureGate::currentPlan()?->custom_max_armadas);
+    }
+
+    public function test_private_pricing_is_exposed_without_losing_the_base_plan_reference(): void
+    {
+        config(['saas.feature_gating_enabled' => true]);
+        [$user, $tenantId] = $this->tenantUserWithPlan('fleet', 'active');
+
+        DB::table('subscriptions')
+            ->where('tenant_id', $tenantId)
+            ->update([
+                'custom_max_pools' => 0,
+                'custom_max_users' => 0,
+                'custom_max_armadas' => 0,
+                'custom_max_routes' => 0,
+                'updated_at' => now(),
+            ]);
+
+        $this->actingAs($user);
+        FeatureGate::flushRequestCache();
+
+        $plan = FeatureGate::currentPlan($user->id);
+        $tenantSubscription = PoolScope::tenantSubscription($user->id);
+        $billingAccess = TenantBillingAccess::forUser($user->id);
+
+        $this->assertTrue((bool) $plan?->is_private_pricing);
+        $this->assertSame('Private Pricing', $plan?->plan_name);
+        $this->assertSame('Private Pricing', $tenantSubscription['plan_name']);
+        $this->assertTrue((bool) $billingAccess['is_private_pricing']);
+        $this->assertSame('Private Pricing', $billingAccess['plan_name']);
+        $this->assertSame('fleet', $tenantSubscription['base_plan_slug']);
     }
 
     /**

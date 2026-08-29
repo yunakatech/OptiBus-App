@@ -61,6 +61,7 @@ export type TenantSubscription = {
     plan_id: number;
     plan_name: string;
     plan_slug: string;
+    is_private_pricing?: boolean;
     subscription_status: string;
     trial_ends_at: string | null;
     ends_at: string | null;
@@ -77,6 +78,7 @@ export type BillingAccess = {
     plan_id: number | null;
     plan_slug: string;
     plan_name: string;
+    is_private_pricing?: boolean;
     is_trial: boolean;
     trial_ends_at: string | null;
     ends_at: string | null;

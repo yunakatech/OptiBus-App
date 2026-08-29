@@ -36,6 +36,7 @@
         plan_id: number;
         plan_name: string;
         plan_slug: string;
+        is_private_pricing?: boolean;
         subscription_status: string;
         trial_ends_at: string | null;
         ends_at: string | null;
@@ -62,6 +63,9 @@
         id: number;
         name: string;
         slug: string;
+        base_name?: string;
+        base_slug?: string;
+        is_private_pricing?: boolean;
         price_monthly: number;
         price_yearly: number;
         description: string;
@@ -73,6 +77,7 @@
         reason: string;
         plan_slug: string;
         plan_name: string;
+        is_private_pricing?: boolean;
         is_trial: boolean;
         trial_ends_at: string | null;
         ends_at: string | null;

@@ -432,19 +432,36 @@ class TenantInvitationService
             return true;
         }
 
-        $plan = DB::table('subscriptions')
+        $subscriptionQuery = DB::table('subscriptions')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->where('subscriptions.tenant_id', $tenantId)
             ->whereIn('subscriptions.status', ['trial', 'active', 'past_due'])
-            ->orderByDesc('subscriptions.id')
-            ->first(['plans.max_users']);
+            ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END")
+            ->orderByDesc('subscriptions.created_at')
+            ->orderByDesc('subscriptions.id');
 
-        if (! $plan || (int) ($plan->max_users ?? 0) <= 0) {
+        $select = ['plans.max_users'];
+        if (SchemaCache::hasColumn('subscriptions', 'custom_max_users')) {
+            $select[] = 'subscriptions.custom_max_users';
+        }
+
+        $plan = $subscriptionQuery->first($select);
+
+        if (! $plan) {
+            return true;
+        }
+
+        $maxUsers = property_exists($plan, 'custom_max_users')
+            && $plan->custom_max_users !== null
+            ? (int) $plan->custom_max_users
+            : (int) ($plan->max_users ?? 0);
+
+        if ($maxUsers <= 0) {
             return true;
         }
 
         $count = DB::table('users')->where('tenant_id', $tenantId)->count();
 
-        return $count < (int) $plan->max_users;
+        return $count < $maxUsers;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\PaymentGateway;
+use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use App\Support\TenantBillingAccess;
 use Illuminate\Http\RedirectResponse;
@@ -176,10 +177,15 @@ class SubscriptionPaymentController extends Controller
             return null;
         }
 
+        $isPrivatePricing = FeatureGate::isPrivatePricing($currentPlan);
+
         return [
             'id' => (int) $currentPlan->id,
-            'name' => (string) $currentPlan->name,
+            'name' => $isPrivatePricing ? 'Private Pricing' : (string) $currentPlan->name,
             'slug' => (string) $currentPlan->slug,
+            'base_name' => (string) $currentPlan->name,
+            'base_slug' => (string) $currentPlan->slug,
+            'is_private_pricing' => $isPrivatePricing,
             'price_monthly' => (float) ($currentPlan->price_monthly ?? $currentPlan->base_price_monthly ?? 0),
             'price_yearly' => (float) ($currentPlan->price_yearly ?? $currentPlan->base_price_yearly ?? 0),
             'base_price_monthly' => (float) ($currentPlan->base_price_monthly ?? $currentPlan->price_monthly ?? 0),

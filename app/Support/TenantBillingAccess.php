@@ -84,8 +84,16 @@ class TenantBillingAccess
                 'subscriptions.ends_at',
                 'plans.slug as plan_slug',
                 'plans.name as plan_name',
+                'subscriptions.custom_price_monthly',
+                'subscriptions.custom_price_yearly',
+                'subscriptions.custom_max_pools',
+                'subscriptions.custom_max_users',
+                'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_routes',
             )
             ->first();
+
+        $isPrivatePricing = FeatureGate::isPrivatePricing($subscription);
 
         $access = [
             ...$base,
@@ -107,7 +115,12 @@ class TenantBillingAccess
             'subscription_status' => $status,
             'plan_id' => (int) ($subscription->plan_id ?? 0),
             'plan_slug' => (string) ($subscription->plan_slug ?? ''),
-            'plan_name' => (string) ($subscription->plan_name ?? ''),
+            'plan_name' => $isPrivatePricing
+                ? 'Private Pricing'
+                : (string) ($subscription->plan_name ?? ''),
+            'base_plan_slug' => (string) ($subscription->plan_slug ?? ''),
+            'base_plan_name' => (string) ($subscription->plan_name ?? ''),
+            'is_private_pricing' => $isPrivatePricing,
             'is_trial' => $status === 'trial',
             'trial_ends_at' => $trialEndsAt,
             'ends_at' => $endsAt,

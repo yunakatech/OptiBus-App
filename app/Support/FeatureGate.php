@@ -119,6 +119,7 @@ class FeatureGate
                 'subscriptions.custom_max_users',
                 'subscriptions.custom_max_armadas',
                 'subscriptions.custom_max_routes',
+                'plans.name as plan_name',
                 'plans.slug as plan_slug',
                 'plans.price_monthly as base_price_monthly',
                 'plans.price_yearly as base_price_yearly',
@@ -134,6 +135,8 @@ class FeatureGate
                 'subscription_id' => 0,
                 'plan_id' => 0,
                 'plan_slug' => '',
+                'plan_name' => '',
+                'is_private_pricing' => false,
                 'status' => 'inactive',
                 'custom_price_monthly' => null,
                 'custom_price_yearly' => null,
@@ -158,10 +161,16 @@ class FeatureGate
             return self::$currentPlanCache[$cacheKey];
         }
 
+        $isPrivatePricing = self::isPrivatePricing($sub);
+
         self::$currentPlanCache[$cacheKey] = (object) [
             'subscription_id' => (int) ($sub->subscription_id ?? 0),
             'plan_id' => (int) $sub->plan_id,
             'plan_slug' => (string) ($sub->plan_slug ?? ''),
+            'plan_name' => $isPrivatePricing
+                ? 'Private Pricing'
+                : (string) ($sub->plan_name ?? ''),
+            'is_private_pricing' => $isPrivatePricing,
             'status' => (string) $sub->status,
             'custom_price_monthly' => self::nullableFloat($sub->custom_price_monthly ?? null),
             'custom_price_yearly' => self::nullableFloat($sub->custom_price_yearly ?? null),
@@ -396,6 +405,34 @@ class FeatureGate
         }
 
         return self::$usageLimitsCache[$cacheKey] = $limits;
+    }
+
+    /**
+     * A subscription is private pricing when at least one private value is
+     * explicitly configured. A value of 0 is meaningful: it means unlimited.
+     */
+    public static function isPrivatePricing(?object $subscription): bool
+    {
+        if (! $subscription) {
+            return false;
+        }
+
+        foreach ([
+            'custom_price_monthly',
+            'custom_price_yearly',
+            'custom_max_pools',
+            'custom_max_users',
+            'custom_max_armadas',
+            'custom_max_routes',
+        ] as $field) {
+            if (property_exists($subscription, $field)
+                && $subscription->{$field} !== null
+                && $subscription->{$field} !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
