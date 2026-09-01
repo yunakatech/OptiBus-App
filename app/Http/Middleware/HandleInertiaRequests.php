@@ -232,7 +232,7 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'permissions' => $userId > 0
                 ? Cache::remember(
-                    "inertia:permissions:user:{$userId}:v2",
+                    "inertia:permissions:user:{$userId}:v3",
                     now()->addMinutes(5),
                     fn () => AccessControl::userPermissions($userId),
                 )
