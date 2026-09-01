@@ -31,10 +31,16 @@ class PublicBookingAdminController extends Controller
 
     public function updateSettings(Request $request): JsonResponse
     {
-        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'whatsapp' => ['nullable', 'string', 'max:50'],
+        ]);
 
         try {
-            return response()->json(['success' => true, 'settings' => $this->bookingService->updateSettings((bool) $data['enabled'])]);
+            return response()->json(['success' => true, 'settings' => $this->bookingService->updateSettings(
+                (bool) $data['enabled'],
+                array_key_exists('whatsapp', $data) ? (string) ($data['whatsapp'] ?? '') : null,
+            )]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
         }

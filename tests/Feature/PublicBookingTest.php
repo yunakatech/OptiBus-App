@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -81,6 +82,105 @@ class PublicBookingTest extends TestCase
 
         $availability->assertJsonPath('schedules.0.seats.0.status', 'held')
             ->assertJsonPath('schedules.0.seats.1.status', 'held');
+    }
+
+    public function test_public_booking_uses_segment_price_pickup_and_parent_route_schedule(): void
+    {
+        [$tenantId, $routeId, $scheduleId] = $this->fixture();
+        $segmentPayload = [
+            'route_id' => $routeId,
+            'rute' => 'MAKASSAR - PAREPARE',
+            'origin' => 'MAKASSAR',
+            'destination' => 'MAROS',
+            'jam' => '08:00:00',
+            'jam_pickups' => json_encode(['08:00']),
+            'harga' => 150000,
+            'created_at' => now(),
+        ];
+        if (Schema::hasColumn('segments', 'tenant_id')) {
+            $segmentPayload['tenant_id'] = $tenantId;
+        }
+        $segmentId = (int) DB::table('segments')->insertGetId($segmentPayload);
+        DB::table('schedule_segment')->insert([
+            'schedule_id' => $scheduleId,
+            'segment_id' => $segmentId,
+            'jam_pickup' => '08:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('tenants')->where('id', $tenantId)->update([
+            'public_booking_whatsapp' => '+62 811-2222-3333',
+        ]);
+
+        $availability = $this->getJson(route('api.public.booking.availability', [
+            'tenantSlug' => 'qbus-default',
+            'tanggal' => '2026-09-02',
+            'segment_id' => $segmentId,
+        ]));
+        $availability->assertOk()
+            ->assertJsonPath('segments.0.id', $segmentId)
+            ->assertJsonPath('segments.0.price', 150000)
+            ->assertJsonPath('segments.0.pickup_times.0', '08:00')
+            ->assertJsonPath('selected_route_id', $routeId)
+            ->assertJsonPath('schedules.0.id', $scheduleId)
+            ->assertJsonPath('schedules.0.segment.price', 150000)
+            ->assertJsonPath('schedules.0.segment.pickup_time', '08:00');
+
+        $response = $this->postJson(
+            route('api.public.booking.requests.store', ['tenantSlug' => 'qbus-default']),
+            [...$this->requestPayload($routeId, $scheduleId), 'segment_id' => $segmentId],
+        );
+
+        $response->assertCreated()
+            ->assertJsonPath('whatsapp_url', fn ($value) => str_starts_with((string) $value, 'https://wa.me/6281122223333?'));
+        $requestId = (int) $response->json('request_id');
+        $this->assertDatabaseHas('public_booking_requests', [
+            'id' => $requestId,
+            'segment_id' => $segmentId,
+            'price' => 150000,
+            'pickup_time' => '08:00',
+        ]);
+
+        DB::table('segments')->where('id', $segmentId)->update(['harga' => 200000]);
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->postJson(route('api.admin.public-booking-requests.approve', ['id' => $requestId]))
+            ->assertOk()
+            ->assertJsonPath('result.status', 'approved');
+
+        $this->assertDatabaseHas('bookings', [
+            'public_booking_request_id' => $requestId,
+            'segment_id' => $segmentId,
+            'price' => 150000,
+        ]);
+    }
+
+    public function test_public_booking_whatsapp_button_is_empty_without_tenant_whatsapp(): void
+    {
+        [$routeId, $scheduleId] = array_slice($this->fixture(), 1);
+
+        $response = $this->postJson(
+            route('api.public.booking.requests.store', ['tenantSlug' => 'qbus-default']),
+            $this->requestPayload($routeId, $scheduleId),
+        );
+
+        $response->assertCreated()->assertJsonPath('whatsapp_url', null);
+    }
+
+    public function test_admin_can_save_public_booking_whatsapp_number(): void
+    {
+        $tenantId = $this->defaultTestTenantId();
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+
+        $this->postJson(route('api.admin.public-booking-settings.update'), [
+            'enabled' => false,
+            'whatsapp' => '+62 811-2222-3333',
+        ])->assertOk()
+            ->assertJsonPath('settings.tenant.whatsapp', '6281122223333');
+
+        $this->assertDatabaseHas('tenants', [
+            'id' => $tenantId,
+            'public_booking_whatsapp' => '6281122223333',
+        ]);
     }
 
     public function test_tenant_admin_can_upload_public_booking_logo_to_supabase_storage(): void

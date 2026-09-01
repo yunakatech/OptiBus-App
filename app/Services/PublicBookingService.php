@@ -7,8 +7,10 @@ use App\Support\BookingCode;
 use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use App\Support\SchemaCache;
+use App\Support\SegmentName;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -39,6 +41,9 @@ class PublicBookingService
             SchemaCache::hasColumn('tenants', 'public_booking_enabled')
                 ? 'public_booking_enabled'
                 : DB::raw('false as public_booking_enabled'),
+            SchemaCache::hasColumn('tenants', 'public_booking_whatsapp')
+                ? 'public_booking_whatsapp'
+                : DB::raw('NULL as public_booking_whatsapp'),
         ]);
         $entitled = FeatureGate::can('saas.online_booking', 0, $userId);
 
@@ -48,6 +53,7 @@ class PublicBookingService
                 'name' => (string) $tenant->name,
                 'slug' => (string) $tenant->slug,
                 'phone' => (string) ($tenant->phone ?? ''),
+                'whatsapp' => (string) ($tenant->public_booking_whatsapp ?? ''),
                 'logo_url' => $tenant->logo_url ?? null,
                 'status' => (string) ($tenant->status ?? 'active'),
             ] : null,
@@ -57,7 +63,7 @@ class PublicBookingService
         ];
     }
 
-    public function updateSettings(bool $enabled, ?int $userId = null): array
+    public function updateSettings(bool $enabled, ?string $whatsapp = null, ?int $userId = null): array
     {
         $userId ??= (int) (auth()->id() ?? 0);
         $tenantId = PoolScope::tenantId($userId);
@@ -71,10 +77,15 @@ class PublicBookingService
             throw new RuntimeException('Schema booking publik belum dimigrasikan.');
         }
 
-        DB::table('tenants')->where('id', $tenantId)->update([
+        $payload = [
             'public_booking_enabled' => $enabled,
             'updated_at' => now(),
-        ]);
+        ];
+        if ($whatsapp !== null && SchemaCache::hasColumn('tenants', 'public_booking_whatsapp')) {
+            $payload['public_booking_whatsapp'] = $this->normalizeWhatsapp($whatsapp);
+        }
+
+        DB::table('tenants')->where('id', $tenantId)->update($payload);
 
         return $this->settings($userId);
     }
@@ -186,7 +197,7 @@ class PublicBookingService
     }
 
     /** @return array<string, mixed> */
-    public function availability(string $tenantSlug, string $date, int $routeId = 0): array
+    public function availability(string $tenantSlug, string $date, int $routeId = 0, int $segmentId = 0): array
     {
         $tenant = $this->publicTenant($tenantSlug, true);
         if (! $tenant) {
@@ -200,19 +211,37 @@ class PublicBookingService
 
         $tenantId = (int) $tenant->id;
         $routes = $this->publicRoutes($tenantId);
-        $selectedRoute = $routeId > 0
-            ? collect($routes)->firstWhere('id', $routeId)
+        $segments = $this->publicSegments($tenantId, $routes);
+        $selectedSegment = $segmentId > 0
+            ? collect($segments)->firstWhere('id', $segmentId)
             : null;
 
-        if ($routeId > 0 && ! $selectedRoute) {
+        if ($segmentId > 0 && ! $selectedSegment) {
+            abort(404);
+        }
+
+        $selectedRouteId = $selectedSegment
+            ? (int) $selectedSegment['route_id']
+            : $routeId;
+        $selectedRoute = $routeId > 0
+            ? collect($routes)->firstWhere('id', $selectedRouteId)
+            : null;
+
+        if ($selectedSegment) {
+            $selectedRoute = collect($routes)->firstWhere('id', $selectedRouteId);
+        }
+
+        if (($routeId > 0 || $segmentId > 0) && ! $selectedRoute) {
             abort(404);
         }
 
         return [
             'tenant' => $this->tenantPayload($tenant),
             'routes' => $routes,
-            'selected_route_id' => $routeId > 0 ? $routeId : null,
-            'schedules' => $selectedRoute ? $this->publicSchedules($tenantId, $selectedRoute, $date) : [],
+            'segments' => $segments,
+            'selected_segment_id' => $selectedSegment ? $segmentId : null,
+            'selected_route_id' => $selectedRoute ? (int) $selectedRoute['id'] : null,
+            'schedules' => $selectedRoute ? $this->publicSchedules($tenantId, $selectedRoute, $date, $selectedSegment) : [],
         ];
     }
 
@@ -236,13 +265,23 @@ class PublicBookingService
 
         $tenantId = (int) $tenant->id;
         $routeId = (int) ($data['route_id'] ?? 0);
+        $segmentId = (int) ($data['segment_id'] ?? 0);
         $scheduleId = (int) ($data['schedule_id'] ?? 0);
         $unit = max(1, (int) ($data['unit'] ?? 1));
-        $route = collect($this->publicRoutes($tenantId))->firstWhere('id', $routeId);
+        $routes = $this->publicRoutes($tenantId);
+        $segments = $this->publicSegments($tenantId, $routes);
+        $segment = $segmentId > 0 ? collect($segments)->firstWhere('id', $segmentId) : null;
+        if ($segmentId > 0 && ! $segment) {
+            throw ValidationException::withMessages(['segment_id' => 'Tujuan segment tidak tersedia.']);
+        }
+        if ($segment) {
+            $routeId = (int) $segment['route_id'];
+        }
+        $route = collect($routes)->firstWhere('id', $routeId);
         if (! $route) {
             throw ValidationException::withMessages(['route_id' => 'Rute tidak tersedia.']);
         }
-        $schedule = $this->findPublicSchedule($tenantId, $route, $scheduleId, $dateObject->dayOfWeek);
+        $schedule = $this->findPublicSchedule($tenantId, $route, $scheduleId, $dateObject->dayOfWeek, $segment);
         if (! $schedule) {
             throw ValidationException::withMessages(['schedule_id' => 'Jadwal tidak tersedia.']);
         }
@@ -264,10 +303,14 @@ class PublicBookingService
         }
 
         $poolId = (int) ($route['pool_id'] ?? 0);
+        $price = $segment ? (float) ($segment['price'] ?? 0) : 0;
+        $pickupTime = $segment
+            ? (string) ($this->segmentSchedulePayload($segment, $schedule)['pickup_time'] ?? '')
+            : null;
         $requestId = 0;
         $requestCode = '';
         $holdExpiresAt = now()->addMinutes(self::HOLD_MINUTES);
-        DB::transaction(function () use (&$requestId, &$requestCode, $tenantId, $route, $schedule, $date, $unit, $selectedSeats, $passengers, $data, $poolId, $holdExpiresAt): void {
+        DB::transaction(function () use (&$requestId, &$requestCode, $tenantId, $route, $segment, $schedule, $date, $unit, $price, $pickupTime, $selectedSeats, $passengers, $data, $poolId, $holdExpiresAt): void {
             $lockedSchedule = DB::table('schedules')->where('id', (int) $schedule->id)->lockForUpdate()->first();
             if (! $lockedSchedule) {
                 throw ValidationException::withMessages(['schedule_id' => 'Jadwal tidak tersedia.']);
@@ -286,10 +329,13 @@ class PublicBookingService
                 'tenant_id' => $tenantId,
                 'pool_id' => $poolId,
                 'route_id' => (int) $route['id'],
+                'segment_id' => $segment ? (int) $segment['id'] : null,
                 'schedule_id' => (int) $schedule->id,
                 'tanggal' => $date,
                 'jam' => $schedule->jam,
                 'unit' => $unit,
+                'price' => $price,
+                'pickup_time' => $pickupTime,
                 'contact_name' => trim((string) $data['contact_name']),
                 'phone' => trim((string) $data['phone']),
                 'pickup_address' => trim((string) $data['pickup_address']),
@@ -349,11 +395,40 @@ class PublicBookingService
             ->when($status !== '', fn (Builder $builder) => $builder->where('r.status', $status))
             ->orderByDesc('r.created_at');
 
-        $rows = $query->limit(100)->get([
+        if (SchemaCache::hasTable('segments') && SchemaCache::hasColumn('public_booking_requests', 'segment_id')) {
+            $query->leftJoin('segments as segment', function (JoinClause $join) {
+                $join->on('r.segment_id', '=', 'segment.id');
+                if (SchemaCache::hasColumn('segments', 'tenant_id')) {
+                    $join->whereColumn('segment.tenant_id', 'r.tenant_id');
+                }
+            });
+        }
+
+        $select = [
             'r.id', 'r.request_code', 'r.route_id', 'r.schedule_id', 'r.tanggal', 'r.jam', 'r.unit',
             'r.contact_name', 'r.phone', 'r.pickup_address', 'r.payment_method', 'r.notes', 'r.status',
             'r.hold_expires_at', 'r.rejection_reason', 'r.created_at', 'route.name as route_name', 'pool.name as pool_name',
-        ]);
+        ];
+        $select[] = SchemaCache::hasColumn('public_booking_requests', 'pickup_time')
+            ? 'r.pickup_time'
+            : DB::raw('NULL as pickup_time');
+        if (SchemaCache::hasTable('segments') && SchemaCache::hasColumn('public_booking_requests', 'segment_id')) {
+            $select = array_merge($select, [
+                'r.segment_id',
+                'r.price',
+                'segment.origin as segment_origin',
+                'segment.destination as segment_destination',
+                'segment.rute as segment_route_name',
+                SchemaCache::hasColumn('segments', 'jam')
+                    ? 'segment.jam as segment_jam'
+                    : DB::raw('NULL as segment_jam'),
+                SchemaCache::hasColumn('segments', 'jam_pickups')
+                    ? 'segment.jam_pickups as segment_jam_pickups'
+                    : DB::raw('NULL as segment_jam_pickups'),
+            ]);
+        }
+
+        $rows = $query->limit(100)->get($select);
         $requestIds = $rows->pluck('id')->map(fn ($id): int => (int) $id)->all();
         $seatMap = $requestIds === [] ? [] : DB::table('public_booking_request_seats')->whereIn('request_id', $requestIds)->get()->groupBy('request_id');
 
@@ -362,6 +437,18 @@ class PublicBookingService
             'request_code' => (string) $row->request_code,
             'route_name' => (string) $row->route_name,
             'pool_name' => (string) $row->pool_name,
+            'segment_id' => (int) ($row->segment_id ?? 0),
+            'segment_name' => SegmentName::display(
+                $row->segment_origin ?? null,
+                $row->segment_destination ?? null,
+                $row->segment_route_name ?? '',
+            ),
+            'segment_pickup_times' => SegmentName::jamList(
+                $row->segment_jam_pickups ?? null,
+                $row->segment_jam ?? null,
+            ),
+            'price' => (float) ($row->price ?? 0),
+            'pickup_time' => (string) ($row->pickup_time ?? ''),
             'schedule_id' => (int) $row->schedule_id,
             'tanggal' => (string) $row->tanggal,
             'jam' => substr((string) $row->jam, 0, 5),
@@ -413,6 +500,26 @@ class PublicBookingService
             if (! DB::table('pool_route')->where('pool_id', (int) $request->pool_id)->where('route_id', (int) $request->route_id)->exists()) {
                 throw new RuntimeException('Rute tidak terdaftar pada pool request.');
             }
+            $segment = null;
+            if ((int) ($request->segment_id ?? 0) > 0) {
+                $segmentQuery = DB::table('segments')
+                    ->where('id', (int) $request->segment_id)
+                    ->when(SchemaCache::hasColumn('segments', 'tenant_id'), fn (Builder $query) => $query->where('tenant_id', (int) $request->tenant_id));
+                if (SchemaCache::hasColumn('segments', 'route_id')) {
+                    $segmentQuery->where(function (Builder $query) use ($request, $route): void {
+                        $query->where('route_id', (int) $request->route_id)
+                            ->orWhere(function (Builder $legacy) use ($route): void {
+                                $legacy->where('route_id', 0)->where('rute', (string) $route->name);
+                            });
+                    });
+                } else {
+                    $segmentQuery->where('rute', (string) $route->name);
+                }
+                $segment = $segmentQuery->first();
+                if (! $segment) {
+                    throw new RuntimeException('Segment request tidak lagi tersedia pada rute ini.');
+                }
+            }
             $seats = DB::table('public_booking_request_seats')->where('request_id', $requestId)->get();
             $schedule = DB::table('schedules')->where('id', (int) $request->schedule_id)->lockForUpdate()->first();
             if (! $schedule) {
@@ -449,7 +556,7 @@ class PublicBookingService
                     'pickup_point' => (string) $request->pickup_address,
                     'pembayaran' => (string) $request->payment_method,
                     'status' => 'active',
-                    'price' => 0,
+                    'price' => (float) ($request->price ?? 0),
                     'discount' => 0,
                     'created_by_user_id' => $userId,
                     'created_by_username' => auth()->user()?->name ?: auth()->user()?->email ?: 'Admin Pool',
@@ -459,6 +566,11 @@ class PublicBookingService
                 ];
                 if (SchemaCache::hasColumn('bookings', 'route_id')) {
                     $payload['route_id'] = (int) $request->route_id;
+                }
+                if (SchemaCache::hasColumn('bookings', 'segment_id')) {
+                    $payload['segment_id'] = (int) ($request->segment_id ?? 0) > 0
+                        ? (int) $request->segment_id
+                        : null;
                 }
                 if (SchemaCache::hasColumn('bookings', 'tenant_id')) {
                     $payload['tenant_id'] = (int) $request->tenant_id;
@@ -615,25 +727,97 @@ class PublicBookingService
                 'destination' => (string) ($route->destination ?? ''),
                 'pool_id' => (int) $route->pool_id,
                 'pool_name' => (string) $route->pool_name,
-            ])->values()->all();
+            ])->unique('id')->values()->all();
+    }
+
+    /** @param array<int, array<string, mixed>> $routes */
+    private function publicSegments(int $tenantId, array $routes): array
+    {
+        if (! SchemaCache::hasTable('segments')) {
+            return [];
+        }
+
+        $hasRouteId = SchemaCache::hasColumn('segments', 'route_id');
+        $hasTenantId = SchemaCache::hasColumn('segments', 'tenant_id');
+        $hasJamPickups = SchemaCache::hasColumn('segments', 'jam_pickups');
+        $segments = collect();
+
+        foreach ($routes as $route) {
+            $query = DB::table('segments')->where(function (Builder $builder) use ($route, $hasRouteId): void {
+                if ($hasRouteId) {
+                    $builder->where('route_id', (int) $route['id'])
+                        ->orWhere(function (Builder $legacy) use ($route): void {
+                            $legacy->where('route_id', 0)->where('rute', (string) $route['name']);
+                        });
+                } else {
+                    $builder->where('rute', (string) $route['name']);
+                }
+            });
+            if ($hasTenantId) {
+                $query->where('tenant_id', $tenantId);
+            }
+
+            $select = ['id', 'origin', 'destination', 'harga'];
+            if (SchemaCache::hasColumn('segments', 'rute')) {
+                $select[] = 'rute';
+            }
+            if (SchemaCache::hasColumn('segments', 'jam')) {
+                $select[] = 'jam';
+            }
+            if ($hasJamPickups) {
+                $select[] = 'jam_pickups';
+            }
+
+            foreach ($query->orderBy('origin')->get($select) as $segment) {
+                $pickupTimes = SegmentName::jamList(
+                    $hasJamPickups ? ($segment->jam_pickups ?? null) : null,
+                    $segment->jam ?? null,
+                );
+                $segments->push([
+                    'id' => (int) $segment->id,
+                    'route_id' => (int) $route['id'],
+                    'label' => SegmentName::display(
+                        $segment->origin ?? null,
+                        $segment->destination ?? null,
+                        $segment->rute ?? $route['name'],
+                    ),
+                    'origin' => (string) ($segment->origin ?? ''),
+                    'destination' => (string) ($segment->destination ?? ''),
+                    'pickup_times' => $pickupTimes,
+                    'price' => (float) ($segment->harga ?? 0),
+                    'pool_id' => (int) $route['pool_id'],
+                    'pool_name' => (string) $route['pool_name'],
+                    'route_name' => (string) $route['name'],
+                ]);
+            }
+        }
+
+        return $segments->unique('id')->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)->values()->all();
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function publicSchedules(int $tenantId, array $route, string $date): array
+    private function publicSchedules(int $tenantId, array $route, string $date, ?array $segment = null): array
     {
         $query = DB::table('schedules as s')->where('s.tenant_id', $tenantId)->where('s.dow', Carbon::createFromFormat('Y-m-d', $date)->dayOfWeek);
         $this->scheduleRouteWhere($query, $route);
         $rows = $query->orderBy('s.jam')->get();
 
-        return $rows->flatMap(fn ($schedule): array => $this->schedulePayload($tenantId, $route, $schedule, $date))->values()->all();
+        return $rows
+            ->filter(fn ($schedule): bool => ! $segment || $this->scheduleSupportsSegment($schedule, $segment))
+            ->flatMap(fn ($schedule): array => $this->schedulePayload($tenantId, $route, $schedule, $date, $segment))
+            ->values()->all();
     }
 
-    private function findPublicSchedule(int $tenantId, array $route, int $scheduleId, int $dayOfWeek): ?object
+    private function findPublicSchedule(int $tenantId, array $route, int $scheduleId, int $dayOfWeek, ?array $segment = null): ?object
     {
         $query = DB::table('schedules as s')->where('s.id', $scheduleId)->where('s.tenant_id', $tenantId)->where('s.dow', $dayOfWeek);
         $this->scheduleRouteWhere($query, $route);
 
-        return $query->first();
+        $schedule = $query->first();
+
+        return $schedule && (! $segment || $this->scheduleSupportsSegment($schedule, $segment))
+            ? $schedule
+            : null;
     }
 
     private function scheduleRouteWhere(Builder $query, array $route): void
@@ -650,7 +834,7 @@ class PublicBookingService
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function schedulePayload(int $tenantId, array $route, object $schedule, string $date): array
+    private function schedulePayload(int $tenantId, array $route, object $schedule, string $date, ?array $segment = null): array
     {
         $seats = $this->seatTokens($schedule);
         $units = max(1, (int) ($schedule->units ?? 1));
@@ -667,11 +851,69 @@ class PublicBookingService
                 'layout' => $layout,
                 'seats' => array_map(fn (string $seat): array => ['code' => $seat, 'status' => in_array($seat, $booked, true) ? 'booked' : (in_array($seat, $held, true) ? 'held' : 'available')], $seats),
                 'total_seats' => count($seats),
-                'segments' => $this->segmentsForRoute($tenantId, $route),
+                'segment' => $segment ? $this->segmentSchedulePayload($segment, $schedule) : null,
             ];
         }
 
         return $payload;
+    }
+
+    private function scheduleSupportsSegment(object $schedule, array $segment): bool
+    {
+        $segmentId = (int) ($segment['id'] ?? 0);
+        if ($segmentId <= 0) {
+            return false;
+        }
+
+        if (SchemaCache::hasTable('schedule_segment')) {
+            $pivot = DB::table('schedule_segment')
+                ->where('schedule_id', (int) $schedule->id)
+                ->where('segment_id', $segmentId)
+                ->first(['jam_pickup']);
+            if ($pivot) {
+                return true;
+            }
+
+            if (DB::table('schedule_segment')->where('schedule_id', (int) $schedule->id)->exists()) {
+                return false;
+            }
+        }
+
+        return in_array(
+            substr((string) $schedule->jam, 0, 5),
+            $segment['pickup_times'] ?? [],
+            true,
+        );
+    }
+
+    /** @return array<string, mixed> */
+    private function segmentSchedulePayload(array $segment, object $schedule): array
+    {
+        $pickupTimes = $segment['pickup_times'] ?? [];
+
+        if (SchemaCache::hasTable('schedule_segment')) {
+            $pivotTimes = DB::table('schedule_segment')
+                ->where('schedule_id', (int) $schedule->id)
+                ->where('segment_id', (int) $segment['id'])
+                ->pluck('jam_pickup')
+                ->map(fn ($value): string => SegmentName::jam((string) $value))
+                ->filter()
+                ->values()
+                ->all();
+            if ($pivotTimes !== []) {
+                $pickupTimes = $pivotTimes;
+            }
+        }
+
+        return [
+            'id' => (int) $segment['id'],
+            'label' => (string) $segment['label'],
+            'pickup_time' => (string) ($pickupTimes[0] ?? ''),
+            'pickup_times' => array_values($pickupTimes),
+            'price' => (float) ($segment['price'] ?? 0),
+            'route_id' => (int) $segment['route_id'],
+            'route_name' => (string) $segment['route_name'],
+        ];
     }
 
     /** @return array<int, string> */
@@ -759,30 +1001,6 @@ class PublicBookingService
             ->select('seats.seat');
     }
 
-    /** @return array<int, array<string, mixed>> */
-    private function segmentsForRoute(int $tenantId, array $route): array
-    {
-        if (! SchemaCache::hasTable('segments')) {
-            return [];
-        }
-        $query = DB::table('segments')->where('tenant_id', $tenantId);
-        if (SchemaCache::hasColumn('segments', 'route_id')) {
-            $query->where(function (Builder $builder) use ($route): void {
-                $builder->where('route_id', (int) $route['id'])->orWhere(function (Builder $legacy) use ($route): void {
-                    $legacy->where('route_id', 0)->where('rute', (string) $route['name']);
-                });
-            });
-        } else {
-            $query->where('rute', (string) $route['name']);
-        }
-
-        return $query->orderBy('origin')->get(['id', 'origin', 'destination', 'harga'])->map(fn ($segment): array => [
-            'id' => (int) $segment->id,
-            'label' => trim((string) ($segment->origin ?? '').' - '.(string) ($segment->destination ?? ''), ' -'),
-            'price' => (float) ($segment->harga ?? 0),
-        ])->values()->all();
-    }
-
     /** @return array<int, string> */
     private function seatTokens(object $schedule): array
     {
@@ -853,16 +1071,29 @@ class PublicBookingService
 
     private function whatsappUrl(object $tenant, string $code, array $route, object $schedule, string $date, int $unit, array $seats, string $contactName): ?string
     {
-        $phone = preg_replace('/[^0-9]/', '', (string) ($tenant->phone ?? ''));
-        if ($phone === '') {
+        $phone = $this->normalizeWhatsapp((string) ($tenant->public_booking_whatsapp ?? ''));
+        if (! $phone) {
             return null;
-        }
-        if (str_starts_with($phone, '0')) {
-            $phone = '62'.substr($phone, 1);
         }
         $message = "Halo {$tenant->name}, saya mengirim request booking {$code}.\nNama: {$contactName}\nRute: {$route['name']}\nTanggal: {$date}\nJam: ".substr((string) $schedule->jam, 0, 5)."\nUnit: {$unit}\nKursi: ".implode(', ', $seats)."\nMohon dibantu konfirmasi.";
 
         return 'https://wa.me/'.$phone.'?text='.rawurlencode($message);
+    }
+
+    private function normalizeWhatsapp(string $value): ?string
+    {
+        $phone = preg_replace('/[^0-9]/', '', $value) ?? '';
+        if ($phone === '') {
+            return null;
+        }
+        if (str_starts_with($phone, '0')) {
+            return '62'.substr($phone, 1);
+        }
+        if (str_starts_with($phone, '8')) {
+            return '62'.$phone;
+        }
+
+        return $phone;
     }
 
     private function normalizeSeat(string $seat): string

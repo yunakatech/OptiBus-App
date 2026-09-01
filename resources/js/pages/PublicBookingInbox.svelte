@@ -21,6 +21,11 @@
         request_code: string;
         route_name: string;
         pool_name: string;
+        segment_id: number;
+        segment_name: string;
+        segment_pickup_times: string[];
+        pickup_time: string;
+        price: number;
         tanggal: string;
         jam: string;
         unit: number;
@@ -148,6 +153,9 @@
     function contactLabel(item: RequestRow): string {
         return `Hubungi ${item.contact_name} via WhatsApp`;
     }
+    function formatRupiah(value: number): string {
+        return `Rp ${Math.max(0, Number(value || 0)).toLocaleString('id-ID')}`;
+    }
     function whatsapp(phone: string, code: string) {
         const target = phone.replace(/\D/g, '').replace(/^0/, '62');
 
@@ -230,6 +238,30 @@
                             <Clock3 class="h-4 w-4 text-emerald-600" />
                             {formatDate(item.tanggal)} · {item.jam} · Unit {item.unit}
                         </p>
+                        {#if item.segment_id}
+                            <div
+                                class="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/50"
+                            >
+                                <p
+                                    class="font-bold text-emerald-900 dark:text-emerald-100"
+                                >
+                                    {item.segment_name}
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
+                                >
+                                    Pickup {item.pickup_time ||
+                                        item.segment_pickup_times.join(', ') ||
+                                        '-'}
+                                    Â· {formatRupiah(item.price)}
+                                </p>
+                                <p
+                                    class="mt-1 text-xs text-emerald-800/80 dark:text-emerald-200/80"
+                                >
+                                    Rute induk: {item.route_name}
+                                </p>
+                            </div>
+                        {/if}
                         <p class="font-bold">
                             {item.route_name}
                             <span class="font-normal text-slate-500"
