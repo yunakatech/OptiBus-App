@@ -44,6 +44,7 @@ class PublicBookingTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('routes.0.id', $routeId)
             ->assertJsonPath('schedules.0.id', $scheduleId)
+            ->assertJsonPath('schedules.0.layout.0.0', '1')
             ->assertJsonPath('schedules.0.seats.0.status', 'available');
     }
 

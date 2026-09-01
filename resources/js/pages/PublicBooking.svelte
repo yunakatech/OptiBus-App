@@ -26,6 +26,21 @@
         pool_name: string;
     };
     type Seat = { code: string; status: 'available' | 'held' | 'booked' };
+    type LayoutCell =
+        | string
+        | number
+        | null
+        | {
+              type?: string;
+              kind?: string;
+              label?: string | number;
+              seat?: string | number;
+              number?: string | number;
+              marker?: string;
+              hidden?: boolean;
+              seatStyle?: string;
+          };
+    type LayoutRow = LayoutCell[];
     type Schedule = {
         id: number;
         jam: string;
@@ -33,6 +48,7 @@
         unit_label: string;
         seats: Seat[];
         total_seats: number;
+        layout: LayoutRow[];
     };
     type RequestResult = {
         request_code: string;
@@ -146,6 +162,89 @@
         scheduleKey = `${schedule.id}-${schedule.unit}`;
         selectedSeats = [];
         passengerNames = {};
+    }
+
+    function chooseScheduleKey(value: string) {
+        const schedule = schedules.find(
+            (item) => `${item.id}-${item.unit}` === value,
+        );
+
+        if (schedule) {
+            chooseSchedule(schedule);
+        } else {
+            scheduleKey = '';
+            selectedSeats = [];
+        }
+    }
+
+    function availableSeatCount(schedule: Schedule): number {
+        return schedule.seats.filter((seat) => seat.status === 'available')
+            .length;
+    }
+
+    function layoutRows(schedule: Schedule): LayoutRow[] {
+        return schedule.layout?.length
+            ? schedule.layout
+            : [schedule.seats.map((seat) => seat.code)];
+    }
+
+    function cellType(cell: LayoutCell): string {
+        return typeof cell === 'object' && cell !== null
+            ? (cell.type ?? cell.kind ?? '').toLowerCase()
+            : '';
+    }
+
+    function cellCode(cell: LayoutCell): string {
+        if (typeof cell === 'object' && cell !== null) {
+            return String(cell.label ?? cell.seat ?? cell.number ?? '').trim();
+        }
+
+        return String(cell ?? '').trim();
+    }
+
+    function isHiddenCell(cell: LayoutCell): boolean {
+        return (
+            typeof cell === 'object' && cell !== null && cell.hidden === true
+        );
+    }
+
+    function isAisleCell(cell: LayoutCell): boolean {
+        return (
+            cellType(cell) === 'driver' ||
+            cellType(cell) === 'aisle' ||
+            (typeof cell === 'object' &&
+                cell?.marker?.toLowerCase() === 'aisle')
+        );
+    }
+
+    function isSeatCell(cell: LayoutCell): boolean {
+        if (isHiddenCell(cell) || isAisleCell(cell)) {
+            return false;
+        }
+
+        const type = cellType(cell);
+
+        if (type === 'empty' || type === 'blank') {
+            return false;
+        }
+
+        const code = cellCode(cell).toUpperCase();
+
+        return (
+            (type === '' || type === 'seat' || type === 'sleeper') &&
+            code !== '' &&
+            !['DRIVER', 'AISLE', '-', '_'].includes(code)
+        );
+    }
+
+    function seatForCell(cell: LayoutCell): Seat | null {
+        const code = cellCode(cell).toUpperCase();
+
+        return (
+            selectedSchedule?.seats.find(
+                (seat) => seat.code.toUpperCase() === code,
+            ) ?? null
+        );
     }
 
     function toggleSeat(seat: Seat) {
@@ -407,95 +506,168 @@
                         <RefreshCw class="h-4 w-4 animate-spin" /> Memuat jadwal...
                     </div>
                 {:else if routeId > 0}
-                    <div class="space-y-3">
-                        <p
-                            class="px-1 text-xs font-black uppercase tracking-[0.18em] text-slate-500"
+                    <div
+                        class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                        <label
+                            for="public-schedule"
+                            class="mb-3 flex items-center gap-2 text-sm font-black"
                         >
-                            Pilih jam dan kursi
-                        </p>
-                        {#each schedules as schedule (`${schedule.id}-${schedule.unit}`)}
-                            <div
-                                role="button"
-                                tabindex="0"
-                                onclick={() => chooseSchedule(schedule)}
-                                onkeydown={(event) => {
-                                    if (
-                                        event.key === 'Enter' ||
-                                        event.key === ' '
-                                    ) {
-                                        chooseSchedule(schedule);
-                                    }
-                                }}
-                                class:!border-emerald-500={scheduleKey ===
-                                    `${schedule.id}-${schedule.unit}`}
-                                class="w-full cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-emerald-300"
-                            >
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="text-xl font-black"
-                                            >{schedule.jam}</span
-                                        ><span
-                                            class="ml-2 text-xs font-semibold text-slate-500"
-                                            >{schedule.unit_label}</span
-                                        >
-                                    </div>
-                                    <span
-                                        class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700"
-                                        >{schedule.seats.filter(
-                                            (seat) =>
-                                                seat.status === 'available',
-                                        ).length} kursi</span
-                                    >
-                                </div>
-                                <div
-                                    class="mt-4 grid grid-cols-5 gap-2 sm:grid-cols-8"
+                            <Clock3 class="h-4 w-4 text-emerald-600" /> Jam keberangkatan
+                        </label>
+                        <select
+                            id="public-schedule"
+                            value={scheduleKey}
+                            onchange={(event) =>
+                                chooseScheduleKey(event.currentTarget.value)}
+                            disabled={schedules.length === 0}
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-60"
+                        >
+                            <option value="">Pilih jam keberangkatan</option>
+                            {#each schedules as schedule (`${schedule.id}-${schedule.unit}`)}
+                                <option
+                                    value={`${schedule.id}-${schedule.unit}`}
                                 >
-                                    {#each schedule.seats as seat (seat.code)}
-                                        <button
-                                            type="button"
-                                            onclick={(event) => {
-                                                event.stopPropagation();
+                                    {schedule.jam} · {schedule.unit_label} · {availableSeatCount(
+                                        schedule,
+                                    )} kursi tersedia
+                                </option>
+                            {/each}
+                        </select>
+                        {#if schedules.length === 0}
+                            <p
+                                class="mt-2 text-xs font-semibold text-slate-500"
+                            >
+                                Belum ada jadwal untuk tanggal dan rute ini.
+                            </p>
+                        {/if}
+                    </div>
 
-                                                if (
-                                                    scheduleKey !==
-                                                    `${schedule.id}-${schedule.unit}`
-                                                ) {
-                                                    chooseSchedule(schedule);
-                                                }
+                    {#if selectedSchedule}
+                        <div
+                            class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p
+                                        class="text-xs font-black uppercase tracking-[0.16em] text-emerald-700"
+                                    >
+                                        Pilih kursi
+                                    </p>
+                                    <h3 class="mt-1 text-lg font-black">
+                                        {selectedSchedule.jam} · {selectedSchedule.unit_label}
+                                    </h3>
+                                </div>
+                                <span
+                                    class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700"
+                                >
+                                    {availableSeatCount(selectedSchedule)} tersedia
+                                </span>
+                            </div>
 
-                                                toggleSeat(seat);
-                                            }}
-                                            disabled={seat.status !==
-                                                'available'}
-                                            aria-label={`Kursi ${seat.code} ${seat.status === 'booked' ? 'terisi' : seat.status === 'held' ? 'ditahan' : 'tersedia'}`}
-                                            class:!bg-slate-300={seat.status ===
-                                                'booked'}
-                                            class:!bg-amber-200={seat.status ===
-                                                'held'}
-                                            class:!bg-emerald-600={scheduleKey ===
-                                                `${schedule.id}-${schedule.unit}` &&
-                                                selectedSeats.includes(
-                                                    seat.code,
-                                                )}
-                                            class:!text-white={scheduleKey ===
-                                                `${schedule.id}-${schedule.unit}` &&
-                                                selectedSeats.includes(
-                                                    seat.code,
-                                                )}
-                                            class="grid h-10 w-full place-items-center rounded-xl bg-emerald-50 text-xs font-black text-emerald-700 disabled:cursor-not-allowed disabled:text-slate-500"
-                                            >{seat.code}</button
+                            <div
+                                class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-slate-500"
+                            >
+                                <span class="flex items-center gap-1.5"
+                                    ><i
+                                        class="h-3 w-3 rounded bg-emerald-100 ring-1 ring-emerald-300"
+                                    ></i>Tersedia</span
+                                >
+                                <span class="flex items-center gap-1.5"
+                                    ><i class="h-3 w-3 rounded bg-emerald-600"
+                                    ></i>Dipilih</span
+                                >
+                                <span class="flex items-center gap-1.5"
+                                    ><i
+                                        class="h-3 w-3 rounded bg-amber-200 ring-1 ring-amber-300"
+                                    ></i>Ditahan</span
+                                >
+                                <span class="flex items-center gap-1.5"
+                                    ><i class="h-3 w-3 rounded bg-slate-300"
+                                    ></i>Terisi</span
+                                >
+                            </div>
+
+                            <div
+                                class="mt-5 overflow-x-auto rounded-2xl bg-slate-50 p-3"
+                            >
+                                <div
+                                    class="mx-auto min-w-[280px] max-w-md space-y-2"
+                                >
+                                    {#each layoutRows(selectedSchedule) as row, rowIndex (`layout-row-${rowIndex}`)}
+                                        <div
+                                            class="grid gap-2"
+                                            style={`grid-template-columns: repeat(${Math.max(row.length, 1)}, minmax(0, 1fr));`}
                                         >
+                                            {#each row as cell, colIndex (`layout-cell-${rowIndex}-${colIndex}-${cellCode(cell)}`)}
+                                                {#if isHiddenCell(cell)}
+                                                    <div
+                                                        class="h-11"
+                                                        aria-hidden="true"
+                                                    ></div>
+                                                {:else if cellType(cell) === 'driver'}
+                                                    <div
+                                                        class="flex h-11 items-center justify-center rounded-xl bg-slate-900 px-1 text-[10px] font-black uppercase tracking-wider text-white"
+                                                    >
+                                                        Driver
+                                                    </div>
+                                                {:else if isAisleCell(cell)}
+                                                    <div
+                                                        class="flex h-11 items-center justify-center rounded-xl border border-dashed border-amber-300 bg-amber-50 px-1 text-[9px] font-black uppercase tracking-wider text-amber-700"
+                                                    >
+                                                        Lorong
+                                                    </div>
+                                                {:else if isSeatCell(cell)}
+                                                    {@const seat =
+                                                        seatForCell(cell)}
+                                                    {#if seat}
+                                                        <button
+                                                            type="button"
+                                                            onclick={() =>
+                                                                toggleSeat(
+                                                                    seat,
+                                                                )}
+                                                            disabled={seat.status !==
+                                                                'available'}
+                                                            aria-label={`Kursi ${seat.code} ${seat.status === 'booked' ? 'terisi' : seat.status === 'held' ? 'ditahan' : selectedSeats.includes(seat.code) ? 'dipilih' : 'tersedia'}`}
+                                                            class:!bg-slate-300={seat.status ===
+                                                                'booked'}
+                                                            class:!bg-amber-200={seat.status ===
+                                                                'held'}
+                                                            class:!bg-emerald-600={selectedSeats.includes(
+                                                                seat.code,
+                                                            )}
+                                                            class:!text-white={selectedSeats.includes(
+                                                                seat.code,
+                                                            )}
+                                                            class="grid h-11 w-full place-items-center rounded-xl bg-emerald-100 text-xs font-black text-emerald-800 ring-1 ring-inset ring-emerald-200 transition hover:-translate-y-0.5 hover:bg-emerald-200 disabled:cursor-not-allowed disabled:text-slate-500 disabled:hover:translate-y-0"
+                                                        >
+                                                            {seat.code}
+                                                        </button>
+                                                    {:else}
+                                                        <div
+                                                            class="h-11 rounded-xl bg-slate-100"
+                                                        ></div>
+                                                    {/if}
+                                                {:else}
+                                                    <div
+                                                        class="h-11 rounded-xl bg-slate-100"
+                                                        aria-hidden="true"
+                                                    ></div>
+                                                {/if}
+                                            {/each}
+                                        </div>
                                     {/each}
                                 </div>
                             </div>
-                        {:else}
-                            <div
-                                class="rounded-3xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm font-semibold text-slate-500"
+                            <p
+                                class="mt-3 text-xs font-semibold text-slate-500"
                             >
-                                Belum ada jadwal untuk tanggal ini.
-                            </div>
-                        {/each}
-                    </div>
+                                Pilih satu atau beberapa kursi. Kursi ditahan
+                                setelah request dikirim.
+                            </p>
+                        </div>
+                    {/if}
                 {/if}
             </section>
             {#if selectedSchedule}
