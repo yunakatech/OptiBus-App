@@ -61,7 +61,10 @@ export type TenantSubscription = {
     plan_id: number;
     plan_name: string;
     plan_slug: string;
+    base_plan_name?: string;
+    base_plan_slug?: string;
     is_private_pricing?: boolean;
+    custom_max_drivers?: number | null;
     subscription_status: string;
     trial_ends_at: string | null;
     ends_at: string | null;
@@ -78,7 +81,10 @@ export type BillingAccess = {
     plan_id: number | null;
     plan_slug: string;
     plan_name: string;
+    base_plan_name?: string;
+    base_plan_slug?: string;
     is_private_pricing?: boolean;
+    custom_max_drivers?: number | null;
     is_trial: boolean;
     trial_ends_at: string | null;
     ends_at: string | null;

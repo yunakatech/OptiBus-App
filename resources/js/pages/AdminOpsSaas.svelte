@@ -120,23 +120,27 @@
     let subscriptions = $state<any[]>([]);
     let subPlans = $state<any[]>([]);
     let subTenants = $state<any[]>([]);
+    let featureGates = $state<any[]>([]);
+    let privateFeatureEnabled = $state<Record<string, boolean>>({});
     let subPagination = $state<any>(null);
     let statusFilter = $state('');
     let showSubForm = $state(false);
     let editingSub = $state<any>(null);
-    let subForm = $state({
+    let subForm = $state<any>({
         tenant_id: 0,
         plan_id: 1,
         status: 'active',
         starts_at: '',
         ends_at: '',
         notes: '',
+        is_private_pricing: false,
         custom_price_monthly: '',
         custom_price_yearly: '',
-        unlimited_pools: false,
-        unlimited_users: false,
-        unlimited_armadas: false,
-        unlimited_routes: false,
+        custom_max_pools: '',
+        custom_max_users: '',
+        custom_max_armadas: '',
+        custom_max_drivers: '',
+        custom_max_routes: '',
     });
 
     // Plans state
@@ -317,7 +321,9 @@
         deletionModalOpen = true;
         deletionBusy = true;
 
-        const data = await apiFetch(`/api/admin/tenants/${tenant.id}/deletion-preview`);
+        const data = await apiFetch(
+            `/api/admin/tenants/${tenant.id}/deletion-preview`,
+        );
         if (data?.success) {
             deletionPreview = data;
             if (data.active_job) {
@@ -331,23 +337,29 @@
     async function purgeTenant() {
         if (!deletionTenant || !deletionConfirmAll) return;
         const confirmation = deletionConfirmation.trim();
-        if (confirmation !== deletionTenant.name && confirmation !== deletionTenant.slug) {
+        if (
+            confirmation !== deletionTenant.name &&
+            confirmation !== deletionTenant.slug
+        ) {
             error = 'Ketik nama atau slug tenant dengan tepat.';
             return;
         }
 
         deletionBusy = true;
-        const data = await apiFetch(`/api/admin/tenants/${deletionTenant.id}/purge`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': (page.props as any).csrf_token || '',
+        const data = await apiFetch(
+            `/api/admin/tenants/${deletionTenant.id}/purge`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (page.props as any).csrf_token || '',
+                },
+                body: JSON.stringify({
+                    confirmation,
+                    confirm_all: true,
+                }),
             },
-            body: JSON.stringify({
-                confirmation,
-                confirm_all: true,
-            }),
-        });
+        );
         deletionBusy = false;
         if (data?.success) {
             deletionJob = data.job;
@@ -387,10 +399,15 @@
 
     async function retryDeletion() {
         if (!deletionJob?.id) return;
-        const data = await apiFetch(`/api/admin/tenant-deletions/${deletionJob.id}/retry`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' },
-        });
+        const data = await apiFetch(
+            `/api/admin/tenant-deletions/${deletionJob.id}/retry`,
+            {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': (page.props as any).csrf_token || '',
+                },
+            },
+        );
         if (data?.success) {
             deletionJob = data.job;
             pollDeletion(data.job.id);
@@ -432,6 +449,7 @@
             subscriptions = data.subscriptions ?? [];
             subPlans = data.plans ?? [];
             subTenants = data.tenants ?? [];
+            featureGates = data.feature_gates ?? [];
             subPagination = data.pagination ?? null;
         }
     }
@@ -439,7 +457,6 @@
     function openSubForm(sub?: any) {
         if (sub) {
             editingSub = sub;
-            const hasUnlimited = (value: unknown) => Number(value ?? -1) === 0;
             subForm = {
                 tenant_id: sub.tenant_id,
                 plan_id: sub.plan_id,
@@ -447,12 +464,14 @@
                 starts_at: sub.starts_at ?? '',
                 ends_at: sub.ends_at ?? '',
                 notes: sub.notes ?? '',
+                is_private_pricing: Boolean(sub.is_private_pricing),
                 custom_price_monthly: sub.custom_price_monthly ?? '',
                 custom_price_yearly: sub.custom_price_yearly ?? '',
-                unlimited_pools: hasUnlimited(sub.custom_max_pools),
-                unlimited_users: hasUnlimited(sub.custom_max_users),
-                unlimited_armadas: hasUnlimited(sub.custom_max_armadas),
-                unlimited_routes: hasUnlimited(sub.custom_max_routes),
+                custom_max_pools: sub.custom_max_pools ?? '',
+                custom_max_users: sub.custom_max_users ?? '',
+                custom_max_armadas: sub.custom_max_armadas ?? '',
+                custom_max_drivers: sub.custom_max_drivers ?? '',
+                custom_max_routes: sub.custom_max_routes ?? '',
             };
         } else {
             editingSub = null;
@@ -463,14 +482,31 @@
                 starts_at: '',
                 ends_at: '',
                 notes: '',
+                is_private_pricing: false,
                 custom_price_monthly: '',
                 custom_price_yearly: '',
-                unlimited_pools: false,
-                unlimited_users: false,
-                unlimited_armadas: false,
-                unlimited_routes: false,
+                custom_max_pools: '',
+                custom_max_users: '',
+                custom_max_armadas: '',
+                custom_max_drivers: '',
+                custom_max_routes: '',
             };
         }
+
+        const existingOverrides = new Map(
+            (sub?.feature_overrides ?? []).map((override: any) => [
+                override.feature_key,
+                Number(override.max_value ?? 1) !== 0,
+            ]),
+        );
+        privateFeatureEnabled = Object.fromEntries(
+            featureGates.map((gate) => [
+                gate.feature_key,
+                existingOverrides.has(gate.feature_key)
+                    ? existingOverrides.get(gate.feature_key)
+                    : true,
+            ]),
+        ) as Record<string, boolean>;
         showSubForm = true;
     }
 
@@ -493,10 +529,20 @@
             custom_price_yearly: parseOptionalNumber(
                 subForm.custom_price_yearly,
             ),
-            custom_max_pools: subForm.unlimited_pools ? 0 : null,
-            custom_max_users: subForm.unlimited_users ? 0 : null,
-            custom_max_armadas: subForm.unlimited_armadas ? 0 : null,
-            custom_max_routes: subForm.unlimited_routes ? 0 : null,
+            is_private_pricing: subForm.is_private_pricing,
+            custom_max_pools: parseOptionalNumber(subForm.custom_max_pools),
+            custom_max_users: parseOptionalNumber(subForm.custom_max_users),
+            custom_max_armadas: parseOptionalNumber(subForm.custom_max_armadas),
+            custom_max_drivers: parseOptionalNumber(subForm.custom_max_drivers),
+            custom_max_routes: parseOptionalNumber(subForm.custom_max_routes),
+            feature_overrides: subForm.is_private_pricing
+                ? featureGates.map((gate) => ({
+                      feature_key: gate.feature_key,
+                      max_value: privateFeatureEnabled[gate.feature_key]
+                          ? null
+                          : 0,
+                  }))
+                : [],
         };
         if (editingSub) {
             body.id = editingSub.id;
@@ -648,12 +694,15 @@
     }
 
     function hasPrivateSubscriptionOverride(sub: any): boolean {
+        if (Boolean(sub.is_private_pricing)) return true;
+
         return [
             sub.custom_price_monthly,
             sub.custom_price_yearly,
             sub.custom_max_pools,
             sub.custom_max_users,
             sub.custom_max_armadas,
+            sub.custom_max_drivers,
             sub.custom_max_routes,
         ].some(
             (value) => value !== null && value !== undefined && value !== '',
@@ -1047,63 +1096,91 @@
                     {/if}
 
                     <Dialog bind:open={deletionModalOpen}>
-                        <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                        <DialogContent
+                            class="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+                        >
                             <DialogTitle>Hapus Permanen Tenant</DialogTitle>
                             <DialogDescription>
-                                Tindakan ini tidak dapat dibatalkan. Periksa jumlah data,
-                                lalu ketik ulang nama atau slug tenant untuk melanjutkan.
+                                Tindakan ini tidak dapat dibatalkan. Periksa
+                                jumlah data, lalu ketik ulang nama atau slug
+                                tenant untuk melanjutkan.
                             </DialogDescription>
 
                             {#if deletionPreview}
                                 <div class="space-y-4">
-                                    <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/30 dark:text-red-200">
-                                        <p class="font-semibold">{deletionTenant?.name}</p>
-                                        <p class="mt-1 text-xs opacity-80">Slug: {deletionTenant?.slug}</p>
+                                    <div
+                                        class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/30 dark:text-red-200"
+                                    >
+                                        <p class="font-semibold">
+                                            {deletionTenant?.name}
+                                        </p>
+                                        <p class="mt-1 text-xs opacity-80">
+                                            Slug: {deletionTenant?.slug}
+                                        </p>
                                         <p class="mt-2">
-                                            Seluruh data tenant, user, akses pool, transaksi,
-                                            master data, billing, dan log tenant akan dihapus.
+                                            Seluruh data tenant, user, akses
+                                            pool, transaksi, master data,
+                                            billing, dan log tenant akan
+                                            dihapus.
                                         </p>
                                     </div>
 
-                                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                        {#each [
-                                            { key: 'users', label: 'User' },
-                                            { key: 'pools', label: 'Pool' },
-                                            { key: 'bookings', label: 'Booking' },
-                                            { key: 'luggages', label: 'Bagasi' },
-                                            { key: 'charters', label: 'Carter' },
-                                            { key: 'drivers', label: 'Driver' },
-                                            { key: 'armadas', label: 'Armada' },
-                                            { key: 'schedules', label: 'Jadwal' },
-                                            { key: 'routes', label: 'Rute' },
-                                            { key: 'customers', label: 'Customer' },
-                                            { key: 'invoice_subscriptions', label: 'Invoice' },
-                                            { key: 'activity_logs', label: 'Log' },
-                                        ] as item}
-                                            <div class="rounded-lg border bg-muted/30 p-3">
-                                                <p class="text-xs text-muted-foreground">{item.label}</p>
-                                                <p class="mt-1 text-lg font-semibold">{deletionPreview.counts?.[item.key] ?? 0}</p>
+                                    <div
+                                        class="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                                    >
+                                        {#each [{ key: 'users', label: 'User' }, { key: 'pools', label: 'Pool' }, { key: 'bookings', label: 'Booking' }, { key: 'luggages', label: 'Bagasi' }, { key: 'charters', label: 'Carter' }, { key: 'drivers', label: 'Driver' }, { key: 'armadas', label: 'Armada' }, { key: 'schedules', label: 'Jadwal' }, { key: 'routes', label: 'Rute' }, { key: 'customers', label: 'Customer' }, { key: 'invoice_subscriptions', label: 'Invoice' }, { key: 'activity_logs', label: 'Log' }] as item}
+                                            <div
+                                                class="rounded-lg border bg-muted/30 p-3"
+                                            >
+                                                <p
+                                                    class="text-xs text-muted-foreground"
+                                                >
+                                                    {item.label}
+                                                </p>
+                                                <p
+                                                    class="mt-1 text-lg font-semibold"
+                                                >
+                                                    {deletionPreview.counts?.[
+                                                        item.key
+                                                    ] ?? 0}
+                                                </p>
                                             </div>
                                         {/each}
                                     </div>
 
                                     {#if deletionJob}
                                         <div class="rounded-xl border p-4">
-                                            <div class="flex items-center justify-between gap-3 text-sm">
-                                                <span class="font-medium">Progress penghapusan</span>
-                                                <span>{deletionJob.progress_percent ?? 0}%</span>
+                                            <div
+                                                class="flex items-center justify-between gap-3 text-sm"
+                                            >
+                                                <span class="font-medium"
+                                                    >Progress penghapusan</span
+                                                >
+                                                <span
+                                                    >{deletionJob.progress_percent ??
+                                                        0}%</span
+                                                >
                                             </div>
-                                            <div class="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                                            <div
+                                                class="mt-2 h-2 overflow-hidden rounded-full bg-muted"
+                                            >
                                                 <div
                                                     class="h-full rounded-full bg-red-600 transition-all"
                                                     style={`width: ${deletionJob.progress_percent ?? 0}%`}
                                                 ></div>
                                             </div>
-                                            <p class="mt-2 text-xs text-muted-foreground">
-                                                Tahap: {deletionJob.current_step || 'Menunggu'}
+                                            <p
+                                                class="mt-2 text-xs text-muted-foreground"
+                                            >
+                                                Tahap: {deletionJob.current_step ||
+                                                    'Menunggu'}
                                             </p>
                                             {#if deletionJob.status === 'failed'}
-                                                <p class="mt-2 text-sm text-red-600">{deletionJob.error_message}</p>
+                                                <p
+                                                    class="mt-2 text-sm text-red-600"
+                                                >
+                                                    {deletionJob.error_message}
+                                                </p>
                                             {/if}
                                         </div>
                                     {/if}
@@ -1115,21 +1192,34 @@
                                             </Label>
                                             <Input
                                                 id="deletion-confirmation"
-                                                bind:value={deletionConfirmation}
-                                                placeholder={deletionTenant?.slug || ''}
+                                                bind:value={
+                                                    deletionConfirmation
+                                                }
+                                                placeholder={deletionTenant?.slug ||
+                                                    ''}
                                                 disabled={Boolean(deletionJob)}
                                             />
                                         </div>
-                                        <label class="flex items-start gap-3 rounded-lg border p-3 text-sm">
-                                            <Checkbox bind:checked={deletionConfirmAll} disabled={Boolean(deletionJob)} />
+                                        <label
+                                            class="flex items-start gap-3 rounded-lg border p-3 text-sm"
+                                        >
+                                            <Checkbox
+                                                bind:checked={
+                                                    deletionConfirmAll
+                                                }
+                                                disabled={Boolean(deletionJob)}
+                                            />
                                             <span>
-                                                Saya memahami bahwa seluruh data tenant akan dihapus permanen.
+                                                Saya memahami bahwa seluruh data
+                                                tenant akan dihapus permanen.
                                             </span>
                                         </label>
                                     </div>
                                 </div>
                             {:else}
-                                <div class="py-8 text-center text-sm text-muted-foreground">
+                                <div
+                                    class="py-8 text-center text-sm text-muted-foreground"
+                                >
                                     Memuat ringkasan data tenant...
                                 </div>
                             {/if}
@@ -1139,16 +1229,26 @@
                                     <Button variant="secondary">Batal</Button>
                                 </DialogClose>
                                 {#if deletionJob?.status === 'failed'}
-                                    <Button variant="outline" onclick={retryDeletion} disabled={deletionBusy}>
+                                    <Button
+                                        variant="outline"
+                                        onclick={retryDeletion}
+                                        disabled={deletionBusy}
+                                    >
                                         Coba Lagi
                                     </Button>
                                 {/if}
                                 <Button
                                     variant="destructive"
                                     onclick={purgeTenant}
-                                    disabled={deletionBusy || !deletionPreview || Boolean(deletionJob) || !deletionConfirmAll || !deletionConfirmation.trim()}
+                                    disabled={deletionBusy ||
+                                        !deletionPreview ||
+                                        Boolean(deletionJob) ||
+                                        !deletionConfirmAll ||
+                                        !deletionConfirmation.trim()}
                                 >
-                                    {deletionBusy ? 'Memproses...' : 'Hapus Semua Data'}
+                                    {deletionBusy
+                                        ? 'Memproses...'
+                                        : 'Hapus Semua Data'}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -1262,9 +1362,8 @@
                                                             t.status,
                                                         ).variant}
                                                     >
-                                                        {statusBadge(
-                                                            t.status,
-                                                        ).label}
+                                                        {statusBadge(t.status)
+                                                            .label}
                                                     </Badge>
                                                 </div>
                                             </div>
@@ -1370,9 +1469,8 @@
                                                             t.status,
                                                         ).variant}
                                                     >
-                                                        {statusBadge(
-                                                            t.status,
-                                                        ).label}
+                                                        {statusBadge(t.status)
+                                                            .label}
                                                     </Badge>
                                                 </td>
                                                 <td
@@ -1433,7 +1531,8 @@
                                                                 class="text-destructive"
                                                                 ><XCircle
                                                                     class="h-4 w-4 mr-2"
-                                                                />Arsipkan Tenant</DropdownMenuItem
+                                                                />Arsipkan
+                                                                Tenant</DropdownMenuItem
                                                             >
                                                             <DropdownMenuItem
                                                                 onclick={() =>
@@ -1667,19 +1766,24 @@
                                                 <p
                                                     class="text-sm font-semibold text-foreground"
                                                 >
-                                                    Private pricing
+                                                    Private Pricing
                                                 </p>
                                                 <p
                                                     class="text-xs text-muted-foreground"
                                                 >
-                                                    Override harga dan limit
-                                                    tenant tanpa mengubah plan
-                                                    publik.
+                                                    Entitlement khusus tenant.
                                                 </p>
                                             </div>
-                                            <Badge variant="secondary"
-                                                >Private</Badge
+                                            <label
+                                                class="flex cursor-pointer items-center gap-2 text-sm font-medium"
                                             >
+                                                <Checkbox
+                                                    bind:checked={
+                                                        subForm.is_private_pricing
+                                                    }
+                                                />
+                                                Aktifkan
+                                            </label>
                                         </div>
                                         <div
                                             class="mt-4 grid gap-4 lg:grid-cols-2"
@@ -1716,107 +1820,96 @@
                                                 />
                                             </div>
                                         </div>
-                                        <div
-                                            class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"
-                                        >
-                                            <div
-                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
-                                            >
-                                                <Checkbox
-                                                    id="sub_unlimited_pools"
-                                                    bind:checked={
-                                                        subForm.unlimited_pools
-                                                    }
-                                                    class="mt-0.5"
-                                                />
-                                                <div class="space-y-1">
-                                                    <Label
-                                                        for="sub_unlimited_pools"
-                                                        class="cursor-pointer text-sm font-medium"
-                                                        >Unlimited Pool</Label
+                                        {#if subForm.is_private_pricing}
+                                            <div class="mt-4 space-y-3">
+                                                <div>
+                                                    <p
+                                                        class="text-sm font-semibold text-foreground"
                                                     >
+                                                        Limit private
+                                                    </p>
                                                     <p
                                                         class="text-xs text-muted-foreground"
                                                     >
-                                                        0 berarti tenant bisa
-                                                        menambah pool tanpa
-                                                        batas.
+                                                        Kosong atau 0 berarti
+                                                        unlimited.
                                                     </p>
                                                 </div>
-                                            </div>
-                                            <div
-                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
-                                            >
-                                                <Checkbox
-                                                    id="sub_unlimited_users"
-                                                    bind:checked={
-                                                        subForm.unlimited_users
-                                                    }
-                                                    class="mt-0.5"
-                                                />
-                                                <div class="space-y-1">
-                                                    <Label
-                                                        for="sub_unlimited_users"
-                                                        class="cursor-pointer text-sm font-medium"
-                                                        >Unlimited User</Label
-                                                    >
-                                                    <p
-                                                        class="text-xs text-muted-foreground"
-                                                    >
-                                                        Cocok untuk tenant
-                                                        dengan tim besar.
-                                                    </p>
+                                                <div
+                                                    class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                                                >
+                                                    {#each [['custom_max_pools', 'Pool'], ['custom_max_users', 'User'], ['custom_max_armadas', 'Armada'], ['custom_max_drivers', 'Driver'], ['custom_max_routes', 'Rute']] as [field, label]}
+                                                        <div class="grid gap-2">
+                                                            <Label for={field}
+                                                                >{label}</Label
+                                                            >
+                                                            <Input
+                                                                id={field}
+                                                                type="number"
+                                                                min="0"
+                                                                step="1"
+                                                                placeholder="Unlimited"
+                                                                bind:value={
+                                                                    subForm[
+                                                                        field
+                                                                    ]
+                                                                }
+                                                            />
+                                                        </div>
+                                                    {/each}
                                                 </div>
                                             </div>
-                                            <div
-                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
-                                            >
-                                                <Checkbox
-                                                    id="sub_unlimited_armadas"
-                                                    bind:checked={
-                                                        subForm.unlimited_armadas
-                                                    }
-                                                    class="mt-0.5"
-                                                />
-                                                <div class="space-y-1">
-                                                    <Label
-                                                        for="sub_unlimited_armadas"
-                                                        class="cursor-pointer text-sm font-medium"
-                                                        >Unlimited Armada</Label
+
+                                            {#if featureGates.length > 0}
+                                                <div class="mt-5 space-y-3">
+                                                    <div>
+                                                        <p
+                                                            class="text-sm font-semibold text-foreground"
+                                                        >
+                                                            Fitur private
+                                                        </p>
+                                                        <p
+                                                            class="text-xs text-muted-foreground"
+                                                        >
+                                                            Semua fitur aktif
+                                                            secara default.
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
                                                     >
-                                                    <p
-                                                        class="text-xs text-muted-foreground"
-                                                    >
-                                                        Armada tambahan tidak
-                                                        dihitung lagi ke limit.
-                                                    </p>
+                                                        {#each featureGates as gate}
+                                                            <label
+                                                                class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/70"
+                                                            >
+                                                                <Checkbox
+                                                                    checked={privateFeatureEnabled[
+                                                                        gate
+                                                                            .feature_key
+                                                                    ] ?? true}
+                                                                    onclick={() =>
+                                                                        (privateFeatureEnabled =
+                                                                            {
+                                                                                ...privateFeatureEnabled,
+                                                                                [gate.feature_key]:
+                                                                                    !(
+                                                                                        privateFeatureEnabled[
+                                                                                            gate
+                                                                                                .feature_key
+                                                                                        ] ??
+                                                                                        true
+                                                                                    ),
+                                                                            })}
+                                                                />
+                                                                <span
+                                                                    >{gate.feature_name}</span
+                                                                >
+                                                            </label>
+                                                        {/each}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div
-                                                class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/70"
-                                            >
-                                                <Checkbox
-                                                    id="sub_unlimited_routes"
-                                                    bind:checked={
-                                                        subForm.unlimited_routes
-                                                    }
-                                                    class="mt-0.5"
-                                                />
-                                                <div class="space-y-1">
-                                                    <Label
-                                                        for="sub_unlimited_routes"
-                                                        class="cursor-pointer text-sm font-medium"
-                                                        >Unlimited Rute</Label
-                                                    >
-                                                    <p
-                                                        class="text-xs text-muted-foreground"
-                                                    >
-                                                        Berguna untuk paket
-                                                        private yang fleksibel.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            {/if}
+                                        {/if}
                                     </div>
                                 </div>
                                 <div class="flex justify-end gap-2 mt-4">
@@ -1864,6 +1957,12 @@
                                                             variant="secondary"
                                                             >Private</Badge
                                                         >
+                                                        <span
+                                                            class="text-xs text-muted-foreground"
+                                                        >
+                                                            Base: {s.base_plan_name ??
+                                                                s.plan_name}
+                                                        </span>
                                                     {/if}
                                                 </div>
                                             </div>
@@ -2063,6 +2162,12 @@
                                                                 variant="secondary"
                                                                 >Private</Badge
                                                             >
+                                                            <span
+                                                                class="text-xs text-muted-foreground"
+                                                            >
+                                                                Base: {s.base_plan_name ??
+                                                                    s.plan_name}
+                                                            </span>
                                                         {/if}
                                                     </div>
                                                 </td>

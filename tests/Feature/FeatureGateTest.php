@@ -172,6 +172,75 @@ class FeatureGateTest extends TestCase
         $this->assertSame('fleet', $tenantSubscription['base_plan_slug']);
     }
 
+    public function test_private_fleet_does_not_fall_back_to_fleet_limits_or_features(): void
+    {
+        config(['saas.feature_gating_enabled' => true]);
+        [$user, $tenantId] = $this->tenantUserWithPlan('fleet', 'active');
+
+        $armadaPayload = [
+            'nopol' => 'PRIVATE-'.uniqid(),
+            'kategori' => 'EXECUTIVE',
+            'ac_type' => 'AC',
+            'tenant_id' => $tenantId,
+            'created_at' => now(),
+        ];
+        for ($i = 0; $i < 10; $i++) {
+            DB::table('armadas')->insert([
+                ...$armadaPayload,
+                'nopol' => 'PRIVATE-'.uniqid().'-'.$i,
+            ]);
+        }
+
+        DB::table('subscriptions')->where('tenant_id', $tenantId)->update([
+            'is_private_pricing' => true,
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+        FeatureGate::flushRequestCache();
+
+        $plan = FeatureGate::currentPlan($user->id);
+        $this->assertNull($plan?->max_armadas);
+        $this->assertTrue(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
+        $this->assertTrue(FeatureGate::can('role.custom'));
+    }
+
+    public function test_private_custom_limit_and_disabled_feature_are_enforced(): void
+    {
+        config(['saas.feature_gating_enabled' => true]);
+        [$user, $tenantId] = $this->tenantUserWithPlan('fleet', 'active');
+        $subscriptionId = (int) DB::table('subscriptions')->where('tenant_id', $tenantId)->value('id');
+        $featureGateId = (int) DB::table('feature_gates')->where('feature_key', 'role.custom')->value('id');
+
+        DB::table('armadas')->insert([
+            'nopol' => 'LIMIT-'.uniqid(),
+            'kategori' => 'EXECUTIVE',
+            'ac_type' => 'AC',
+            'tenant_id' => $tenantId,
+            'created_at' => now(),
+        ]);
+        DB::table('subscriptions')->where('id', $subscriptionId)->update([
+            'is_private_pricing' => true,
+            'custom_max_armadas' => 1,
+            'custom_max_drivers' => 0,
+            'updated_at' => now(),
+        ]);
+        DB::table('subscription_feature_overrides')->insert([
+            'subscription_id' => $subscriptionId,
+            'feature_gate_id' => $featureGateId,
+            'max_value' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+        FeatureGate::flushRequestCache();
+
+        $this->assertFalse(FeatureGate::canCreate('master.armadas', 'armadas', 'tenant_id'));
+        $this->assertTrue(FeatureGate::canCreate('master.drivers', 'drivers', 'tenant_id'));
+        $this->assertFalse(FeatureGate::can('role.custom'));
+    }
+
     /**
      * @return array{0: User, 1: int}
      */

@@ -40,7 +40,7 @@ class SubscriptionPaymentController extends Controller
                 'saas',
             ),
             'account_access' => fn () => Cache::remember(
-                'inertia:subscription:account-access:user:'.(int) (auth()->id() ?? 0).':v1',
+                'inertia:subscription:account-access:user:'.(int) (auth()->id() ?? 0).':v2',
                 now()->addMinutes(2),
                 fn () => $this->accountAccess(),
             ),
@@ -146,6 +146,7 @@ class SubscriptionPaymentController extends Controller
                     'plans.id',
                     'plans.name',
                     'plans.slug',
+                    'subscriptions.is_private_pricing',
                     'plans.description',
                     'plans.price_monthly as base_price_monthly',
                     'plans.price_yearly as base_price_yearly',
@@ -154,6 +155,7 @@ class SubscriptionPaymentController extends Controller
                     'subscriptions.custom_max_pools',
                     'subscriptions.custom_max_users',
                     'subscriptions.custom_max_armadas',
+                    'subscriptions.custom_max_drivers',
                     'subscriptions.custom_max_routes',
                     DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
                     DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
@@ -195,6 +197,7 @@ class SubscriptionPaymentController extends Controller
             'custom_max_pools' => $currentPlan->custom_max_pools ?? null,
             'custom_max_users' => $currentPlan->custom_max_users ?? null,
             'custom_max_armadas' => $currentPlan->custom_max_armadas ?? null,
+            'custom_max_drivers' => $currentPlan->custom_max_drivers ?? null,
             'custom_max_routes' => $currentPlan->custom_max_routes ?? null,
             'description' => (string) ($currentPlan->description ?? ''),
         ];

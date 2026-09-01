@@ -62,14 +62,14 @@ class HandleInertiaRequests extends Middleware
         $resolvedTenantId = $userId > 0 ? PoolScope::tenantId($userId) : 0;
         $tenantSubscription = $userId > 0
             ? Cache::remember(
-                "inertia:subscription:user:{$userId}:tenant:{$resolvedTenantId}:v1",
+                "inertia:subscription:user:{$userId}:tenant:{$resolvedTenantId}:v2",
                 now()->addMinutes(2),
                 fn () => PoolScope::tenantSubscription(),
             )
             : null;
         $billingAccess = $userId > 0 && $resolvedTenantId > 0
             ? Cache::remember(
-                "inertia:billing-access:user:{$userId}:tenant:{$resolvedTenantId}:v1",
+                "inertia:billing-access:user:{$userId}:tenant:{$resolvedTenantId}:v2",
                 now()->addMinutes(2),
                 fn () => TenantBillingAccess::forUser($userId),
             )

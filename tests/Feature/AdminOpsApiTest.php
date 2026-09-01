@@ -26,6 +26,56 @@ class AdminOpsApiTest extends TestCase
         return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
+    public function test_private_subscription_entitlements_are_saved_and_cleared_by_api(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = (int) DB::table('tenants')->insertGetId([
+            'name' => 'Private Pricing API Tenant',
+            'slug' => 'private-pricing-api-'.uniqid(),
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $fleetId = (int) DB::table('plans')->where('slug', 'fleet')->value('id');
+
+        $created = $this->postJson(route('api.admin.subscriptions.save'), [
+            'tenant_id' => $tenantId,
+            'plan_id' => $fleetId,
+            'status' => 'active',
+            'is_private_pricing' => true,
+            'custom_max_drivers' => 4,
+            'feature_overrides' => [[
+                'feature_key' => 'role.custom',
+                'max_value' => 0,
+            ]],
+        ])->assertOk()->json();
+
+        $subscriptionId = (int) ($created['id'] ?? 0);
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscriptionId,
+            'is_private_pricing' => 1,
+            'custom_max_drivers' => 4,
+        ]);
+        $this->assertDatabaseHas('subscription_feature_overrides', [
+            'subscription_id' => $subscriptionId,
+            'max_value' => 0,
+        ]);
+
+        $this->postJson(route('api.admin.subscriptions.save'), [
+            'id' => $subscriptionId,
+            'is_private_pricing' => false,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscriptionId,
+            'is_private_pricing' => 0,
+            'custom_max_drivers' => null,
+        ]);
+        $this->assertDatabaseMissing('subscription_feature_overrides', [
+            'subscription_id' => $subscriptionId,
+        ]);
+    }
+
     public function test_routes_crud_works(): void
     {
         $this->actingAsSuperAdmin();

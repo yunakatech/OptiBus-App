@@ -15,6 +15,9 @@ class FeatureGate
     /** @var array<string, object|null> */
     private static array $planFeatureCache = [];
 
+    /** @var array<string, int|null> */
+    private static array $privateFeatureOverrideCache = [];
+
     /** @var array<string, mixed> */
     private static array $featureMaxValueCache = [];
 
@@ -53,6 +56,7 @@ class FeatureGate
         self::$currentPlanCache = [];
         self::$featureGateIdCache = [];
         self::$planFeatureCache = [];
+        self::$privateFeatureOverrideCache = [];
         self::$featureMaxValueCache = [];
         self::$featureNameCache = [];
         self::$resourceCountCache = [];
@@ -112,12 +116,14 @@ class FeatureGate
             ->select(
                 'subscriptions.id as subscription_id',
                 'subscriptions.plan_id',
+                'subscriptions.is_private_pricing',
                 'subscriptions.status',
                 'subscriptions.custom_price_monthly',
                 'subscriptions.custom_price_yearly',
                 'subscriptions.custom_max_pools',
                 'subscriptions.custom_max_users',
                 'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_drivers',
                 'subscriptions.custom_max_routes',
                 'plans.name as plan_name',
                 'plans.slug as plan_slug',
@@ -126,6 +132,7 @@ class FeatureGate
                 'plans.max_pools as base_max_pools',
                 'plans.max_users as base_max_users',
                 'plans.max_armadas as base_max_armadas',
+                'plans.max_drivers as base_max_drivers',
                 'plans.max_routes as base_max_routes',
             )
             ->first();
@@ -143,18 +150,21 @@ class FeatureGate
                 'custom_max_pools' => null,
                 'custom_max_users' => null,
                 'custom_max_armadas' => null,
+                'custom_max_drivers' => null,
                 'custom_max_routes' => null,
                 'base_price_monthly' => null,
                 'base_price_yearly' => null,
                 'base_max_pools' => null,
                 'base_max_users' => null,
                 'base_max_armadas' => null,
+                'base_max_drivers' => null,
                 'base_max_routes' => null,
                 'price_monthly' => 0.0,
                 'price_yearly' => 0.0,
                 'max_pools' => null,
                 'max_users' => null,
                 'max_armadas' => null,
+                'max_drivers' => null,
                 'max_routes' => null,
             ];
 
@@ -167,29 +177,32 @@ class FeatureGate
             'subscription_id' => (int) ($sub->subscription_id ?? 0),
             'plan_id' => (int) $sub->plan_id,
             'plan_slug' => (string) ($sub->plan_slug ?? ''),
+            'is_private_pricing' => $isPrivatePricing,
             'plan_name' => $isPrivatePricing
                 ? 'Private Pricing'
                 : (string) ($sub->plan_name ?? ''),
-            'is_private_pricing' => $isPrivatePricing,
             'status' => (string) $sub->status,
             'custom_price_monthly' => self::nullableFloat($sub->custom_price_monthly ?? null),
             'custom_price_yearly' => self::nullableFloat($sub->custom_price_yearly ?? null),
             'custom_max_pools' => self::nullableInt($sub->custom_max_pools ?? null),
             'custom_max_users' => self::nullableInt($sub->custom_max_users ?? null),
             'custom_max_armadas' => self::nullableInt($sub->custom_max_armadas ?? null),
+            'custom_max_drivers' => self::nullableInt($sub->custom_max_drivers ?? null),
             'custom_max_routes' => self::nullableInt($sub->custom_max_routes ?? null),
             'base_price_monthly' => self::nullableFloat($sub->base_price_monthly ?? null),
             'base_price_yearly' => self::nullableFloat($sub->base_price_yearly ?? null),
             'base_max_pools' => self::nullableInt($sub->base_max_pools ?? null),
             'base_max_users' => self::nullableInt($sub->base_max_users ?? null),
             'base_max_armadas' => self::nullableInt($sub->base_max_armadas ?? null),
+            'base_max_drivers' => self::nullableInt($sub->base_max_drivers ?? null),
             'base_max_routes' => self::nullableInt($sub->base_max_routes ?? null),
             'price_monthly' => self::effectivePrice($sub->custom_price_monthly ?? null, $sub->base_price_monthly ?? null),
             'price_yearly' => self::effectivePrice($sub->custom_price_yearly ?? null, $sub->base_price_yearly ?? null),
-            'max_pools' => self::effectiveLimit($sub->custom_max_pools ?? null, $sub->base_max_pools ?? null),
-            'max_users' => self::effectiveLimit($sub->custom_max_users ?? null, $sub->base_max_users ?? null),
-            'max_armadas' => self::effectiveLimit($sub->custom_max_armadas ?? null, $sub->base_max_armadas ?? null),
-            'max_routes' => self::effectiveLimit($sub->custom_max_routes ?? null, $sub->base_max_routes ?? null),
+            'max_pools' => self::effectivePlanLimit($isPrivatePricing, $sub->custom_max_pools ?? null, $sub->base_max_pools ?? null),
+            'max_users' => self::effectivePlanLimit($isPrivatePricing, $sub->custom_max_users ?? null, $sub->base_max_users ?? null),
+            'max_armadas' => self::effectivePlanLimit($isPrivatePricing, $sub->custom_max_armadas ?? null, $sub->base_max_armadas ?? null),
+            'max_drivers' => self::effectivePlanLimit($isPrivatePricing, $sub->custom_max_drivers ?? null, $sub->base_max_drivers ?? null),
+            'max_routes' => self::effectivePlanLimit($isPrivatePricing, $sub->custom_max_routes ?? null, $sub->base_max_routes ?? null),
         ];
 
         return self::$currentPlanCache[$cacheKey];
@@ -236,6 +249,17 @@ class FeatureGate
         if (! $featureGateId) {
             // Feature gate not registered → assume core feature (allowed)
             return true;
+        }
+
+        if (self::isPrivatePricing($plan)) {
+            $privateMaxValue = self::privateFeatureOverrideValue(
+                (int) ($plan->subscription_id ?? 0),
+                $featureGateId,
+            );
+
+            // Private features are enabled by default. Only an explicit 0
+            // override disables a feature.
+            return $privateMaxValue === null || $privateMaxValue > 0;
         }
 
         $mapping = self::planFeatureMapping((int) $plan->plan_id, $featureGateId);
@@ -298,6 +322,14 @@ class FeatureGate
 
         if ($plan->status === 'suspended') {
             return false;
+        }
+
+        if (self::isPrivatePricing($plan)) {
+            $featureGateId = self::featureGateId($resourceKey);
+            if ($featureGateId > 0
+                && self::privateFeatureOverrideValue((int) ($plan->subscription_id ?? 0), $featureGateId) === 0) {
+                return false;
+            }
         }
 
         if (self::subscriptionOverrideUnlimited($plan, $resourceKey)) {
@@ -372,7 +404,9 @@ class FeatureGate
                 'custom_max_pools' => $plan->custom_max_pools ?? null,
                 'custom_max_users' => $plan->custom_max_users ?? null,
                 'custom_max_armadas' => $plan->custom_max_armadas ?? null,
+                'custom_max_drivers' => $plan->custom_max_drivers ?? null,
                 'custom_max_routes' => $plan->custom_max_routes ?? null,
+                'is_private_pricing' => (bool) ($plan->is_private_pricing ?? false),
             ]) ?: ''),
         );
         if (array_key_exists($cacheKey, self::$usageLimitsCache)) {
@@ -395,10 +429,19 @@ class FeatureGate
                 $current = self::resourceCount($info['table'], $info['column'], $tenantId);
             }
 
+            $privateFeatureDisabled = self::isPrivatePricing($plan)
+                && self::featureGateId($featureKey) > 0
+                && self::privateFeatureOverrideValue(
+                    (int) ($plan->subscription_id ?? 0),
+                    self::featureGateId($featureKey),
+                ) === 0;
+
             $limits[$featureKey] = [
-                'max' => self::subscriptionOverrideUnlimited($plan, $featureKey)
-                    ? null
-                    : self::maxValueForFeature((int) $plan->plan_id, $featureKey, $plan),
+                'max' => $privateFeatureDisabled
+                    ? 0
+                    : (self::subscriptionOverrideUnlimited($plan, $featureKey)
+                        ? null
+                        : self::maxValueForFeature((int) $plan->plan_id, $featureKey, $plan)),
                 'current' => $current,
                 'feature_name' => self::featureNameForKey($featureKey),
             ];
@@ -417,12 +460,18 @@ class FeatureGate
             return false;
         }
 
+        if (property_exists($subscription, 'is_private_pricing')
+            && (bool) $subscription->is_private_pricing) {
+            return true;
+        }
+
         foreach ([
             'custom_price_monthly',
             'custom_price_yearly',
             'custom_max_pools',
             'custom_max_users',
             'custom_max_armadas',
+            'custom_max_drivers',
             'custom_max_routes',
         ] as $field) {
             if (property_exists($subscription, $field)
@@ -459,7 +508,9 @@ class FeatureGate
             return null; // unlimited — no message needed
         }
 
-        $planName = self::planName((int) $plan->plan_id);
+        $planName = self::isPrivatePricing($plan)
+            ? 'Private Pricing'
+            : self::planName((int) $plan->plan_id);
 
         return "Batas maksimal tercapai untuk paket {$planName}. Silakan upgrade paket untuk menambah kapasitas.";
     }
@@ -490,6 +541,26 @@ class FeatureGate
             ->first();
     }
 
+    private static function privateFeatureOverrideValue(int $subscriptionId, int $featureGateId): ?int
+    {
+        if ($subscriptionId <= 0 || $featureGateId <= 0
+            || ! SchemaCache::hasTable('subscription_feature_overrides')) {
+            return null;
+        }
+
+        $cacheKey = self::requestCacheKey("private-feature:{$subscriptionId}:{$featureGateId}");
+        if (array_key_exists($cacheKey, self::$privateFeatureOverrideCache)) {
+            return self::$privateFeatureOverrideCache[$cacheKey];
+        }
+
+        $value = DB::table('subscription_feature_overrides')
+            ->where('subscription_id', $subscriptionId)
+            ->where('feature_gate_id', $featureGateId)
+            ->value('max_value');
+
+        return self::$privateFeatureOverrideCache[$cacheKey] = self::nullableInt($value);
+    }
+
     private static function maxValueForFeature(int $planId, string $featureKey, ?object $planContext = null): mixed
     {
         $featureKey = trim($featureKey);
@@ -498,11 +569,19 @@ class FeatureGate
             'custom_max_pools' => $planContext->custom_max_pools ?? null,
             'custom_max_users' => $planContext->custom_max_users ?? null,
             'custom_max_armadas' => $planContext->custom_max_armadas ?? null,
+            'custom_max_drivers' => $planContext->custom_max_drivers ?? null,
             'custom_max_routes' => $planContext->custom_max_routes ?? null,
+            'is_private_pricing' => (bool) ($planContext->is_private_pricing ?? false),
         ]) ?: '') : '0';
         $cacheKey = self::requestCacheKey("feature-max:{$planId}:{$featureKey}:{$overrideSignature}");
         if (array_key_exists($cacheKey, self::$featureMaxValueCache)) {
             return self::$featureMaxValueCache[$cacheKey];
+        }
+
+        if ($planContext && self::isPrivatePricing($planContext)) {
+            // A null private limit is intentionally unlimited and must not
+            // fall through to the commercial base plan.
+            return self::$featureMaxValueCache[$cacheKey] = self::subscriptionOverrideLimit($planContext, $featureKey);
         }
 
         $overrideValue = self::subscriptionOverrideLimit($planContext, $featureKey);
@@ -532,6 +611,7 @@ class FeatureGate
         $column = [
             'master.routes' => 'custom_max_routes',
             'master.armadas' => 'custom_max_armadas',
+            'master.drivers' => 'custom_max_drivers',
             'tenant.multiple_pools' => 'custom_max_pools',
             'user.management' => 'custom_max_users',
         ][$featureKey] ?? null;
@@ -588,6 +668,13 @@ class FeatureGate
         }
 
         return self::limitFromNullableValue($baseValue);
+    }
+
+    private static function effectivePlanLimit(bool $isPrivatePricing, mixed $overrideValue, mixed $baseValue): ?int
+    {
+        return $isPrivatePricing
+            ? self::limitFromNullableValue($overrideValue)
+            : self::effectiveLimit($overrideValue, $baseValue);
     }
 
     private static function limitFromNullableValue(mixed $value): ?int
