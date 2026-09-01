@@ -6749,7 +6749,7 @@ class AdminOpsApiController extends Controller
         });
 
         foreach ($affectedUserIds as $affectedUserId) {
-            Cache::forget("inertia:permissions:user:{$affectedUserId}:v2");
+            Cache::forget("inertia:permissions:user:{$affectedUserId}:v3");
         }
 
         ActivityLog::write($id > 0 ? 'role.updated' : 'role.created', $id > 0 ? 'Role hak akses diperbarui' : 'Role hak akses dibuat', '', null, [
@@ -7770,7 +7770,7 @@ class AdminOpsApiController extends Controller
 
         if ($roleIds === []) {
             DB::table('user_role')->where('user_id', $userId)->delete();
-            Cache::forget("inertia:permissions:user:{$userId}:v2");
+            Cache::forget("inertia:permissions:user:{$userId}:v3");
 
             return;
         }
@@ -7798,7 +7798,7 @@ class AdminOpsApiController extends Controller
             DB::table('user_role')->insert($rows);
         }
 
-        Cache::forget("inertia:permissions:user:{$userId}:v2");
+        Cache::forget("inertia:permissions:user:{$userId}:v3");
     }
 
     /**
