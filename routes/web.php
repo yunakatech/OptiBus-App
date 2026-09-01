@@ -292,6 +292,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::post('public-booking-requests/{id}/reject', [AdminPublicBookingApiController::class, 'reject'])->middleware('permission:booking.create')->name('public-booking-requests.reject');
         Route::get('public-booking-settings', [PublicBookingAdminController::class, 'settingsData'])->middleware('permission:booking.public.manage')->name('public-booking-settings.index');
         Route::post('public-booking-settings', [PublicBookingAdminController::class, 'updateSettings'])->middleware('permission:booking.public.manage')->name('public-booking-settings.update');
+        Route::post('public-booking-settings/logo', [PublicBookingAdminController::class, 'uploadLogo'])->middleware('permission:booking.public.manage')->name('public-booking-settings.logo');
         Route::post('payments/bulk', [PaymentController::class, 'bulkUpdate'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.bulk');
         Route::post('payments/{source}/{id}', [PaymentController::class, 'update'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.update');
 

@@ -9,7 +9,10 @@ use App\Support\PoolScope;
 use App\Support\SchemaCache;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -74,6 +77,96 @@ class PublicBookingService
         ]);
 
         return $this->settings($userId);
+    }
+
+    /**
+     * Store the tenant's public booking logo in Supabase Storage.
+     *
+     * The bucket must be public because this URL is rendered for guests.
+     */
+    public function uploadLogo(UploadedFile $file, ?int $userId = null): array
+    {
+        $userId ??= (int) (auth()->id() ?? 0);
+        $tenantId = PoolScope::tenantId($userId);
+        if ($tenantId <= 0) {
+            throw new RuntimeException('Tenant aktif belum dipilih.');
+        }
+        if (! SchemaCache::hasColumn('tenants', 'logo_url')) {
+            throw new RuntimeException('Kolom logo tenant belum tersedia. Jalankan migrasi database terlebih dahulu.');
+        }
+        if (! $this->hasSupabaseStorage()) {
+            throw new RuntimeException('Supabase Storage belum dikonfigurasi di server.');
+        }
+
+        $tenant = DB::table('tenants')->where('id', $tenantId)->first(['id', 'slug', 'logo_url']);
+        if (! $tenant) {
+            throw new RuntimeException('Tenant aktif tidak ditemukan.');
+        }
+
+        $extension = strtolower((string) ($file->guessExtension() ?: $file->getClientOriginalExtension() ?: 'jpg'));
+        $extension = preg_replace('/[^a-z0-9]+/', '', $extension) ?: 'jpg';
+        $path = 'public-booking/logos/'.Str::slug((string) $tenant->slug).'-'.Str::uuid()->toString().'.'.$extension;
+        $storedPath = $file->storeAs('', $path, 'supabase');
+
+        if (! is_string($storedPath) || $storedPath === '') {
+            throw new RuntimeException('Upload logo ke Supabase Storage mengembalikan path kosong.');
+        }
+
+        $logoUrl = $this->supabaseStorageUrl($storedPath);
+        DB::table('tenants')->where('id', $tenantId)->update([
+            'logo_url' => $logoUrl,
+            'updated_at' => now(),
+        ]);
+
+        $previousPath = $this->supabaseStoragePath($tenant->logo_url ?? null);
+        if ($previousPath !== null && $previousPath !== $storedPath) {
+            Storage::disk('supabase')->delete($previousPath);
+        }
+
+        return $this->settings($userId);
+    }
+
+    private function hasSupabaseStorage(): bool
+    {
+        return trim((string) config('filesystems.disks.supabase.key', '')) !== ''
+            && trim((string) config('filesystems.disks.supabase.secret', '')) !== ''
+            && trim((string) config('filesystems.disks.supabase.bucket', '')) !== ''
+            && trim((string) config('filesystems.disks.supabase.endpoint', '')) !== ''
+            && trim((string) config('filesystems.disks.supabase.url', '')) !== '';
+    }
+
+    private function supabaseStorageUrl(string $path): string
+    {
+        return rtrim((string) config('filesystems.disks.supabase.url'), '/').'/'.ltrim($path, '/');
+    }
+
+    private function supabaseStoragePath(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        $bucket = trim((string) config('filesystems.disks.supabase.bucket', ''));
+
+        if ($value === '' || $bucket === '') {
+            return null;
+        }
+
+        if (Str::startsWith($value, ['http://', 'https://'])) {
+            $parsedPath = parse_url($value, PHP_URL_PATH);
+            if (! is_string($parsedPath)) {
+                return null;
+            }
+            $value = $parsedPath;
+        }
+
+        $marker = '/storage/v1/object/public/'.$bucket.'/';
+        if (Str::contains($value, $marker)) {
+            return Str::after($value, $marker);
+        }
+
+        if (Str::startsWith($value, 'public-booking/logos/')) {
+            return $value;
+        }
+
+        return null;
     }
 
     /** @return array<string, mixed> */
