@@ -129,7 +129,7 @@
             altInput: true,
             altFormat: 'j F Y',
             altInputClass:
-                'h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20',
+                'h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100',
             ariaDateFormat: 'j F Y',
             defaultDate: dateMin,
             minDate: dateMin,
@@ -433,9 +433,11 @@
     />
 </svelte:head>
 
-<main class="min-h-screen bg-[#f5f7f2] text-slate-900 selection:bg-emerald-200">
+<main
+    class="min-h-screen bg-[#f5f7f2] text-slate-900 selection:bg-emerald-200 dark:bg-slate-950 dark:text-slate-100"
+>
     <div
-        class="mx-auto min-h-screen w-full max-w-xl bg-[#f5f7f2] px-4 pb-28 sm:px-6"
+        class="mx-auto min-h-screen w-full max-w-xl bg-[#f5f7f2] px-4 pb-28 pt-4 sm:px-6 sm:pt-6 dark:bg-slate-950"
     >
         {#if step < 5}
             <section
@@ -503,7 +505,7 @@
         {#if error}
             <div
                 role="alert"
-                class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200"
             >
                 {error}
             </div>
@@ -512,7 +514,7 @@
         {#if step === 1 || step === 2}
             <section class="space-y-4">
                 <div
-                    class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+                    class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                 >
                     <label
                         for="public-date"
@@ -531,15 +533,17 @@
                             autocomplete="off"
                             readonly
                             aria-label="Tanggal perjalanan"
-                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500"
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                         />
                     </div>
-                    <p class="mt-2 text-xs font-semibold text-slate-500">
+                    <p
+                        class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                    >
                         Pilih tanggal keberangkatan yang tersedia.
                     </p>
                 </div>
                 <div
-                    class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+                    class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                 >
                     <label
                         for="public-route"
@@ -551,7 +555,7 @@
                         value={routeId}
                         onchange={(event) =>
                             changeRoute(event.currentTarget.value)}
-                        class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500"
+                        class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     >
                         <option value={0}>Pilih rute</option>
                         {#each routes as route (route.id)}
@@ -565,13 +569,13 @@
                 </div>
                 {#if loading}
                     <div
-                        class="flex items-center justify-center gap-2 py-12 text-sm font-semibold text-slate-500"
+                        class="flex items-center justify-center gap-2 py-12 text-sm font-semibold text-slate-500 dark:text-slate-400"
                     >
                         <RefreshCw class="h-4 w-4 animate-spin" /> Memuat jadwal...
                     </div>
                 {:else if routeId > 0}
                     <div
-                        class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+                        class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                     >
                         <label
                             for="public-schedule"
@@ -585,7 +589,7 @@
                             onchange={(event) =>
                                 chooseScheduleKey(event.currentTarget.value)}
                             disabled={schedules.length === 0}
-                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-60"
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                         >
                             <option value="">Pilih jam keberangkatan</option>
                             {#each schedules as schedule (`${schedule.id}-${schedule.unit}`)}
@@ -600,7 +604,7 @@
                         </select>
                         {#if schedules.length === 0}
                             <p
-                                class="mt-2 text-xs font-semibold text-slate-500"
+                                class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400"
                             >
                                 Belum ada jadwal untuk tanggal dan rute ini.
                             </p>
@@ -609,12 +613,12 @@
 
                     {#if selectedSchedule}
                         <div
-                            class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+                            class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                         >
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p
-                                        class="text-xs font-black uppercase tracking-[0.16em] text-emerald-700"
+                                        class="text-xs font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
                                     >
                                         Pilih kursi
                                     </p>
@@ -623,14 +627,14 @@
                                     </h3>
                                 </div>
                                 <span
-                                    class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700"
+                                    class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
                                 >
                                     {availableSeatCount(selectedSchedule)} tersedia
                                 </span>
                             </div>
 
                             <div
-                                class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-slate-500"
+                                class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-slate-500 dark:text-slate-400"
                             >
                                 <span class="flex items-center gap-1.5"
                                     ><i
@@ -643,17 +647,18 @@
                                 >
                                 <span class="flex items-center gap-1.5"
                                     ><i
-                                        class="h-3 w-3 rounded bg-amber-200 ring-1 ring-amber-300"
+                                        class="h-3 w-3 rounded bg-amber-200 ring-1 ring-amber-300 dark:bg-amber-700 dark:ring-amber-600"
                                     ></i>Ditahan</span
                                 >
                                 <span class="flex items-center gap-1.5"
-                                    ><i class="h-3 w-3 rounded bg-slate-300"
+                                    ><i
+                                        class="h-3 w-3 rounded bg-slate-300 dark:bg-slate-600"
                                     ></i>Terisi</span
                                 >
                             </div>
 
                             <div
-                                class="mt-5 overflow-x-auto rounded-2xl bg-slate-50 p-3"
+                                class="mt-5 overflow-x-auto rounded-2xl bg-slate-50 p-3 dark:bg-slate-800"
                             >
                                 <div
                                     class="mx-auto min-w-[280px] max-w-md space-y-2"
@@ -677,7 +682,7 @@
                                                     </div>
                                                 {:else if isAisleCell(cell)}
                                                     <div
-                                                        class="flex h-11 items-center justify-center rounded-xl border border-dashed border-amber-300 bg-amber-50 px-1 text-[9px] font-black uppercase tracking-wider text-amber-700"
+                                                        class="flex h-11 items-center justify-center rounded-xl border border-dashed border-amber-300 bg-amber-50 px-1 text-[9px] font-black uppercase tracking-wider text-amber-700 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
                                                     >
                                                         Lorong
                                                     </div>
@@ -704,18 +709,18 @@
                                                             class:!text-white={selectedSeats.includes(
                                                                 seat.code,
                                                             )}
-                                                            class="grid h-11 w-full place-items-center rounded-xl bg-emerald-100 text-xs font-black text-emerald-800 ring-1 ring-inset ring-emerald-200 transition hover:-translate-y-0.5 hover:bg-emerald-200 disabled:cursor-not-allowed disabled:text-slate-500 disabled:hover:translate-y-0"
+                                                            class="grid h-11 w-full place-items-center rounded-xl bg-emerald-100 text-xs font-black text-emerald-800 ring-1 ring-inset ring-emerald-200 transition hover:-translate-y-0.5 hover:bg-emerald-200 disabled:cursor-not-allowed disabled:text-slate-500 disabled:hover:translate-y-0 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-emerald-800 dark:hover:bg-emerald-900 dark:disabled:text-slate-500"
                                                         >
                                                             {seat.code}
                                                         </button>
                                                     {:else}
                                                         <div
-                                                            class="h-11 rounded-xl bg-slate-100"
+                                                            class="h-11 rounded-xl bg-slate-100 dark:bg-slate-700"
                                                         ></div>
                                                     {/if}
                                                 {:else}
                                                     <div
-                                                        class="h-11 rounded-xl bg-slate-100"
+                                                        class="h-11 rounded-xl bg-slate-100 dark:bg-slate-700"
                                                         aria-hidden="true"
                                                     ></div>
                                                 {/if}
@@ -725,7 +730,7 @@
                                 </div>
                             </div>
                             <p
-                                class="mt-3 text-xs font-semibold text-slate-500"
+                                class="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400"
                             >
                                 Pilih satu atau beberapa kursi. Kursi ditahan
                                 setelah request dikirim.
@@ -736,13 +741,15 @@
             </section>
             {#if selectedSchedule}
                 <div
-                    class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur"
+                    class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
                 >
                     <div
                         class="mx-auto flex max-w-xl items-center justify-between gap-3"
                     >
                         <div>
-                            <p class="text-xs font-bold text-slate-500">
+                            <p
+                                class="text-xs font-bold text-slate-500 dark:text-slate-400"
+                            >
                                 {selectedSchedule.jam} · {selectedSchedule.unit_label}
                             </p>
                             <p class="font-black">
@@ -760,17 +767,19 @@
             {/if}
         {:else if step === 3}
             <section
-                class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
             >
                 <div class="mb-5 flex items-center justify-between">
                     <div>
                         <p
-                            class="text-xs font-bold uppercase tracking-widest text-emerald-700"
+                            class="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300"
                         >
                             Langkah 3 dari 4
                         </p>
                         <h2 class="text-2xl font-black">Lengkapi data</h2>
-                        <p class="mt-1 text-sm font-semibold text-slate-500">
+                        <p
+                            class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"
+                        >
                             Nama penumpang diisi sesuai kursi yang dipilih.
                         </p>
                     </div>
@@ -779,31 +788,33 @@
                 <div class="space-y-4">
                     {#each selectedSeats as seat, passengerIndex (seat)}
                         <div
-                            class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3"
+                            class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-800/70"
                         >
                             <div
                                 class="mb-3 flex items-center justify-between gap-3"
                             >
                                 <div class="min-w-0">
                                     <p
-                                        class="truncate text-sm font-black text-slate-900"
+                                        class="truncate text-sm font-black text-slate-900 dark:text-slate-100"
                                     >
                                         {passengerNames[seat]?.trim() ||
                                             `Penumpang ${passengerIndex + 1}`}
                                     </p>
-                                    <p class="text-xs font-bold text-slate-500">
+                                    <p
+                                        class="text-xs font-bold text-slate-500 dark:text-slate-400"
+                                    >
                                         Kursi {seat}
                                     </p>
                                 </div>
                                 <span
-                                    class="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-slate-200"
+                                    class="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-slate-200 dark:bg-slate-700 dark:text-emerald-200 dark:ring-slate-600"
                                 >
                                     Slot {passengerIndex + 1}
                                 </span>
                             </div>
                             <label
                                 for={`passenger-${seat}`}
-                                class="mb-1 block text-xs font-bold text-slate-500"
+                                class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400"
                                 >Nama penumpang</label
                             ><input
                                 id={`passenger-${seat}`}
@@ -814,57 +825,57 @@
                                         event.currentTarget.value,
                                     )}
                                 placeholder="Nama lengkap"
-                                class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                             />
                         </div>
                     {/each}
                     <div>
                         <label
                             for="contact-name"
-                            class="mb-1 block text-xs font-bold text-slate-500"
+                            class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400"
                             >Nama pemesan</label
                         ><input
                             id="contact-name"
                             bind:value={contactName}
                             placeholder="Nama yang bisa dihubungi"
-                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                         />
                     </div>
                     <div>
                         <label
                             for="contact-phone"
-                            class="mb-1 block text-xs font-bold text-slate-500"
+                            class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400"
                             >Nomor HP / WhatsApp</label
                         ><input
                             id="contact-phone"
                             bind:value={phone}
                             inputmode="tel"
                             placeholder="08xxxxxxxxxx"
-                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                         />
                     </div>
                     <div>
                         <label
                             for="pickup-address"
-                            class="mb-1 block text-xs font-bold text-slate-500"
+                            class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400"
                             >Alamat penjemputan</label
                         ><textarea
                             id="pickup-address"
                             bind:value={pickupAddress}
                             rows="3"
                             placeholder="Tulis alamat atau patokan"
-                            class="w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            class="w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                         ></textarea>
                     </div>
                     <div>
                         <label
                             for="payment-method"
-                            class="mb-1 block text-xs font-bold text-slate-500"
+                            class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400"
                             >Pembayaran</label
                         ><select
                             id="payment-method"
                             bind:value={paymentMethod}
-                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             >{#each paymentMethods as method (method)}<option
                                     value={method}>{method}</option
                                 >{/each}</select
@@ -873,7 +884,7 @@
                     <div>
                         <label
                             for="booking-notes"
-                            class="mb-1 block text-xs font-bold text-slate-500"
+                            class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400"
                             >Catatan <span class="font-normal">(opsional)</span
                             ></label
                         ><textarea
@@ -881,19 +892,19 @@
                             bind:value={notes}
                             rows="2"
                             placeholder="Contoh: turun di titik tertentu"
-                            class="w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            class="w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                         ></textarea>
                     </div>
                 </div>
             </section>
             <div
-                class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur"
+                class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
             >
                 <div class="mx-auto flex max-w-xl justify-between gap-3">
                     <button
                         type="button"
                         onclick={() => (step = 2)}
-                        class="flex h-12 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-black"
+                        class="flex h-12 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-black dark:border-slate-700"
                         ><ArrowLeft class="h-4 w-4" /> Kembali</button
                     ><button
                         type="button"
@@ -905,17 +916,19 @@
             </div>
         {:else if step === 4}
             <section
-                class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
             >
                 <div class="mb-5 flex items-start justify-between gap-4">
                     <div>
                         <p
-                            class="text-xs font-bold uppercase tracking-widest text-emerald-700"
+                            class="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300"
                         >
                             Langkah 4 dari 4
                         </p>
                         <h2 class="mt-1 text-2xl font-black">Review booking</h2>
-                        <p class="mt-1 text-sm font-semibold text-slate-500">
+                        <p
+                            class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"
+                        >
                             Pastikan data sudah benar sebelum dikirim.
                         </p>
                     </div>
@@ -924,49 +937,55 @@
 
                 <div class="space-y-3">
                     <div
-                        class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4"
+                        class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/60"
                     >
                         <p
-                            class="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700"
+                            class="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
                         >
                             Perjalanan
                         </p>
-                        <p class="mt-2 text-base font-black text-emerald-950">
+                        <p
+                            class="mt-2 text-base font-black text-emerald-950 dark:text-emerald-100"
+                        >
                             {selectedRoute?.origin} → {selectedRoute?.destination}
                         </p>
-                        <p class="mt-1 text-sm font-semibold text-emerald-800">
+                        <p
+                            class="mt-1 text-sm font-semibold text-emerald-800 dark:text-emerald-200"
+                        >
                             {formatDateLabel(dateValue)} ·
                             {selectedSchedule?.jam} ·
                             {selectedSchedule?.unit_label}
                         </p>
                     </div>
 
-                    <div class="rounded-2xl border border-slate-200 p-4">
+                    <div
+                        class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700"
+                    >
                         <p
-                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500"
+                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                         >
                             Penumpang & kursi
                         </p>
                         <div class="mt-3 space-y-2">
                             {#each selectedSeats as seat, passengerIndex (seat)}
                                 <div
-                                    class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5"
+                                    class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800"
                                 >
                                     <div class="min-w-0">
                                         <p
-                                            class="truncate text-sm font-black text-slate-900"
+                                            class="truncate text-sm font-black text-slate-900 dark:text-slate-100"
                                         >
                                             {passengerNames[seat] ||
                                                 `Penumpang ${passengerIndex + 1}`}
                                         </p>
                                         <p
-                                            class="text-xs font-semibold text-slate-500"
+                                            class="text-xs font-semibold text-slate-500 dark:text-slate-400"
                                         >
                                             Slot {passengerIndex + 1}
                                         </p>
                                     </div>
                                     <span
-                                        class="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-black text-emerald-700 ring-1 ring-slate-200"
+                                        class="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-black text-emerald-700 ring-1 ring-slate-200 dark:bg-slate-700 dark:text-emerald-200 dark:ring-slate-600"
                                         >Kursi {seat}</span
                                     >
                                 </div>
@@ -974,60 +993,76 @@
                         </div>
                     </div>
 
-                    <div class="rounded-2xl border border-slate-200 p-4">
+                    <div
+                        class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700"
+                    >
                         <p
-                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500"
+                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                         >
                             Data pemesan
                         </p>
                         <dl class="mt-3 space-y-2 text-sm">
                             <div class="flex justify-between gap-4">
-                                <dt class="font-semibold text-slate-500">
+                                <dt
+                                    class="font-semibold text-slate-500 dark:text-slate-400"
+                                >
                                     Nama
                                 </dt>
                                 <dd
-                                    class="text-right font-black text-slate-900"
+                                    class="text-right font-black text-slate-900 dark:text-slate-100"
                                 >
                                     {contactName}
                                 </dd>
                             </div>
                             <div class="flex justify-between gap-4">
-                                <dt class="font-semibold text-slate-500">
+                                <dt
+                                    class="font-semibold text-slate-500 dark:text-slate-400"
+                                >
                                     Nomor HP
                                 </dt>
                                 <dd
-                                    class="text-right font-black text-slate-900"
+                                    class="text-right font-black text-slate-900 dark:text-slate-100"
                                 >
                                     {phone}
                                 </dd>
                             </div>
                             <div class="flex justify-between gap-4">
-                                <dt class="font-semibold text-slate-500">
+                                <dt
+                                    class="font-semibold text-slate-500 dark:text-slate-400"
+                                >
                                     Pembayaran
                                 </dt>
                                 <dd
-                                    class="text-right font-black text-slate-900"
+                                    class="text-right font-black text-slate-900 dark:text-slate-100"
                                 >
                                     {paymentMethod}
                                 </dd>
                             </div>
-                            <div class="border-t border-slate-100 pt-2">
-                                <dt class="font-semibold text-slate-500">
+                            <div
+                                class="border-t border-slate-100 pt-2 dark:border-slate-700"
+                            >
+                                <dt
+                                    class="font-semibold text-slate-500 dark:text-slate-400"
+                                >
                                     Alamat penjemputan
                                 </dt>
                                 <dd
-                                    class="mt-1 font-bold leading-5 text-slate-900"
+                                    class="mt-1 font-bold leading-5 text-slate-900 dark:text-slate-100"
                                 >
                                     {pickupAddress}
                                 </dd>
                             </div>
                             {#if notes.trim()}
-                                <div class="border-t border-slate-100 pt-2">
-                                    <dt class="font-semibold text-slate-500">
+                                <div
+                                    class="border-t border-slate-100 pt-2 dark:border-slate-700"
+                                >
+                                    <dt
+                                        class="font-semibold text-slate-500 dark:text-slate-400"
+                                    >
                                         Catatan
                                     </dt>
                                     <dd
-                                        class="mt-1 font-bold leading-5 text-slate-900"
+                                        class="mt-1 font-bold leading-5 text-slate-900 dark:text-slate-100"
                                     >
                                         {notes}
                                     </dd>
@@ -1038,20 +1073,20 @@
                 </div>
 
                 <div
-                    class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-800"
+                    class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200"
                 >
                     Setelah dikirim, kursi ditahan selama 15 menit sambil
                     menunggu konfirmasi admin pool.
                 </div>
             </section>
             <div
-                class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur"
+                class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
             >
                 <div class="mx-auto flex max-w-xl justify-between gap-3">
                     <button
                         type="button"
                         onclick={() => (step = 3)}
-                        class="flex h-12 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-black"
+                        class="flex h-12 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-black dark:border-slate-700"
                         ><Pencil class="h-4 w-4" /> Edit data</button
                     >
                     <button
