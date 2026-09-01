@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:235
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:241
  * @route '/subscription/checkout'
  */
 export const checkout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ checkout.definition = {
 
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:235
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:241
  * @route '/subscription/checkout'
  */
 checkout.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ checkout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:235
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:241
  * @route '/subscription/checkout'
  */
 checkout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ checkout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:235
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:241
  * @route '/subscription/checkout'
  */
     const checkoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ checkout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\SubscriptionPaymentController::checkout
- * @see app/Http/Controllers/SubscriptionPaymentController.php:235
+ * @see app/Http/Controllers/SubscriptionPaymentController.php:241
  * @route '/subscription/checkout'
  */
         checkoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

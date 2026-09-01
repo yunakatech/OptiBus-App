@@ -1,11 +1,13 @@
 import Auth from './Auth'
 import PublicController from './PublicController'
+import PublicBookingController from './PublicBookingController'
 import Api from './Api'
 import StaticAssetController from './StaticAssetController'
 import PlatformDashboardController from './PlatformDashboardController'
 import UserPreferenceController from './UserPreferenceController'
 import DashboardController from './DashboardController'
 import BookingController from './BookingController'
+import PublicBookingAdminController from './PublicBookingAdminController'
 import PaymentController from './PaymentController'
 import AdminOpsFlowsController from './AdminOpsFlowsController'
 import CharterDocumentController from './CharterDocumentController'
@@ -19,12 +21,14 @@ import Settings from './Settings'
 const Controllers = {
     Auth: Object.assign(Auth, Auth),
 PublicController: Object.assign(PublicController, PublicController),
+PublicBookingController: Object.assign(PublicBookingController, PublicBookingController),
 Api: Object.assign(Api, Api),
 StaticAssetController: Object.assign(StaticAssetController, StaticAssetController),
 PlatformDashboardController: Object.assign(PlatformDashboardController, PlatformDashboardController),
 UserPreferenceController: Object.assign(UserPreferenceController, UserPreferenceController),
 DashboardController: Object.assign(DashboardController, DashboardController),
 BookingController: Object.assign(BookingController, BookingController),
+PublicBookingAdminController: Object.assign(PublicBookingAdminController, PublicBookingAdminController),
 PaymentController: Object.assign(PaymentController, PaymentController),
 AdminOpsFlowsController: Object.assign(AdminOpsFlowsController, AdminOpsFlowsController),
 CharterDocumentController: Object.assign(CharterDocumentController, CharterDocumentController),

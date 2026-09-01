@@ -4,6 +4,84 @@ import armadas172c7e from './armadas'
 import flowsF41fe0 from './flows'
 import master07b3d0 from './master'
 /**
+* @see \App\Http\Controllers\PublicBookingAdminController::bookingOnline
+ * @see app/Http/Controllers/PublicBookingAdminController.php:15
+ * @route '/settings/booking-online'
+ */
+export const bookingOnline = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: bookingOnline.url(options),
+    method: 'get',
+})
+
+bookingOnline.definition = {
+    methods: ["get","head"],
+    url: '/settings/booking-online',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::bookingOnline
+ * @see app/Http/Controllers/PublicBookingAdminController.php:15
+ * @route '/settings/booking-online'
+ */
+bookingOnline.url = (options?: RouteQueryOptions) => {
+    return bookingOnline.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::bookingOnline
+ * @see app/Http/Controllers/PublicBookingAdminController.php:15
+ * @route '/settings/booking-online'
+ */
+bookingOnline.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: bookingOnline.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::bookingOnline
+ * @see app/Http/Controllers/PublicBookingAdminController.php:15
+ * @route '/settings/booking-online'
+ */
+bookingOnline.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: bookingOnline.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\PublicBookingAdminController::bookingOnline
+ * @see app/Http/Controllers/PublicBookingAdminController.php:15
+ * @route '/settings/booking-online'
+ */
+    const bookingOnlineForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: bookingOnline.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PublicBookingAdminController::bookingOnline
+ * @see app/Http/Controllers/PublicBookingAdminController.php:15
+ * @route '/settings/booking-online'
+ */
+        bookingOnlineForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: bookingOnline.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PublicBookingAdminController::bookingOnline
+ * @see app/Http/Controllers/PublicBookingAdminController.php:15
+ * @route '/settings/booking-online'
+ */
+        bookingOnlineForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: bookingOnline.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+
+    bookingOnline.form = bookingOnlineForm
+/**
 * @see \App\Http\Controllers\AdminOpsController::__invoke
  * @see app/Http/Controllers/AdminOpsController.php:32
  * @route '/settings/rute-induk'
@@ -1174,7 +1252,8 @@ master.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     master.form = masterForm
 const settings = {
-    routes: Object.assign(routes, routes),
+    bookingOnline: Object.assign(bookingOnline, bookingOnline),
+routes: Object.assign(routes, routes),
 schedules: Object.assign(schedules, schedules),
 drivers: Object.assign(drivers, drivers),
 services: Object.assign(services, services),

@@ -20,6 +20,7 @@ class TenantDeletionService
         'luggage_incidents',
         'schedule_segment',
         'schedule_units',
+        'public_booking_request_seats',
         'pool_monthly_targets',
         'pool_user',
         'user_role',
@@ -36,6 +37,7 @@ class TenantDeletionService
         'luggage_segment_rates',
         'tenant_invitations',
         'invoice_subscriptions',
+        'public_booking_requests',
         'subscriptions',
         'bookings',
         'trip_assignments',
@@ -73,6 +75,7 @@ class TenantDeletionService
 
         $counts['schedule_units'] = $this->countRelated('schedule_units', 'schedule_id', 'schedules', $tenantId);
         $counts['schedule_segment'] = $this->countScheduleSegments($tenantId);
+        $counts['public_booking_request_seats'] = $this->countRelated('public_booking_request_seats', 'request_id', 'public_booking_requests', $tenantId);
         $counts['cancellations'] = $this->countRelated('cancellations', 'booking_id', 'bookings', $tenantId);
         $counts['bagasi_logs'] = $this->countRelated('bagasi_logs', 'kode_resi', 'luggages', $tenantId, 'kode_resi');
         $counts['pool_monthly_targets'] = $this->countRelated('pool_monthly_targets', 'pool_id', 'pools', $tenantId);
@@ -379,6 +382,8 @@ class TenantDeletionService
                 : null;
         } elseif ($step === 'schedule_units') {
             $query = $this->relationQuery('schedule_units', 'schedule_id', 'schedules', $tenantId, $lastId);
+        } elseif ($step === 'public_booking_request_seats') {
+            $query = $this->relationQuery('public_booking_request_seats', 'request_id', 'public_booking_requests', $tenantId, $lastId);
         } elseif ($step === 'pool_monthly_targets') {
             $query = $this->relationQuery('pool_monthly_targets', 'pool_id', 'pools', $tenantId, $lastId);
         } elseif ($step === 'pool_user') {
