@@ -76,12 +76,15 @@ class PublicBookingService
         if (! SchemaCache::hasColumn('tenants', 'public_booking_enabled')) {
             throw new RuntimeException('Schema booking publik belum dimigrasikan.');
         }
+        if (! SchemaCache::hasColumn('tenants', 'public_booking_whatsapp')) {
+            throw new RuntimeException('Kolom WhatsApp booking belum tersedia. Jalankan php artisan migrate --force terlebih dahulu.');
+        }
 
         $payload = [
             'public_booking_enabled' => $enabled,
             'updated_at' => now(),
         ];
-        if ($whatsapp !== null && SchemaCache::hasColumn('tenants', 'public_booking_whatsapp')) {
+        if ($whatsapp !== null) {
             $payload['public_booking_whatsapp'] = $this->normalizeWhatsapp($whatsapp);
         }
 
