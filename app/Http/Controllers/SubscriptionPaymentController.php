@@ -139,27 +139,33 @@ class SubscriptionPaymentController extends Controller
 
         $currentPlan = null;
         if (Schema::hasTable('subscriptions') && ($tenantSub['subscription_id'] ?? 0) > 0) {
+            $subscriptionSelect = [
+                'plans.id',
+                'plans.name',
+                'plans.slug',
+                'plans.description',
+                'plans.price_monthly as base_price_monthly',
+                'plans.price_yearly as base_price_yearly',
+                'subscriptions.custom_price_monthly',
+                'subscriptions.custom_price_yearly',
+                'subscriptions.custom_max_pools',
+                'subscriptions.custom_max_users',
+                'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_routes',
+                DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
+                DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
+            ];
+            if (Schema::hasColumn('subscriptions', 'is_private_pricing')) {
+                $subscriptionSelect[] = 'subscriptions.is_private_pricing';
+            }
+            if (Schema::hasColumn('subscriptions', 'custom_max_drivers')) {
+                $subscriptionSelect[] = 'subscriptions.custom_max_drivers';
+            }
+
             $currentPlan = DB::table('subscriptions')
                 ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
                 ->where('subscriptions.id', (int) $tenantSub['subscription_id'])
-                ->select(
-                    'plans.id',
-                    'plans.name',
-                    'plans.slug',
-                    'subscriptions.is_private_pricing',
-                    'plans.description',
-                    'plans.price_monthly as base_price_monthly',
-                    'plans.price_yearly as base_price_yearly',
-                    'subscriptions.custom_price_monthly',
-                    'subscriptions.custom_price_yearly',
-                    'subscriptions.custom_max_pools',
-                    'subscriptions.custom_max_users',
-                    'subscriptions.custom_max_armadas',
-                    'subscriptions.custom_max_drivers',
-                    'subscriptions.custom_max_routes',
-                    DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
-                    DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
-                )
+                ->select($subscriptionSelect)
                 ->first();
         } elseif (isset($tenantSub['plan_id'])) {
             $currentPlan = DB::table('plans')

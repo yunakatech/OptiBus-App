@@ -125,32 +125,38 @@ class PoolScope
             return null;
         }
 
+        $subscriptionSelect = [
+            'subscriptions.id as subscription_id',
+            'subscriptions.tenant_id',
+            'tenants.name as tenant_name',
+            'tenants.status as tenant_status',
+            'subscriptions.plan_id',
+            'plans.name as plan_name',
+            'plans.slug as plan_slug',
+            'subscriptions.custom_price_monthly',
+            'subscriptions.custom_price_yearly',
+            'subscriptions.custom_max_pools',
+            'subscriptions.custom_max_users',
+            'subscriptions.custom_max_armadas',
+            'subscriptions.custom_max_routes',
+            'subscriptions.status as subscription_status',
+            'subscriptions.trial_ends_at',
+            'subscriptions.ends_at',
+        ];
+        if (SchemaCache::hasColumn('subscriptions', 'is_private_pricing')) {
+            $subscriptionSelect[] = 'subscriptions.is_private_pricing';
+        }
+        if (SchemaCache::hasColumn('subscriptions', 'custom_max_drivers')) {
+            $subscriptionSelect[] = 'subscriptions.custom_max_drivers';
+        }
+
         $sub = DB::table('subscriptions')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
             ->where('subscriptions.tenant_id', $tenantId)
             ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'pending_payment' THEN 2 WHEN 'past_due' THEN 3 WHEN 'suspended' THEN 4 ELSE 5 END")
             ->orderByDesc('subscriptions.created_at')
-            ->select(
-                'subscriptions.id as subscription_id',
-                'subscriptions.tenant_id',
-                'tenants.name as tenant_name',
-                'tenants.status as tenant_status',
-                'subscriptions.plan_id',
-                'subscriptions.is_private_pricing',
-                'plans.name as plan_name',
-                'plans.slug as plan_slug',
-                'subscriptions.custom_price_monthly',
-                'subscriptions.custom_price_yearly',
-                'subscriptions.custom_max_pools',
-                'subscriptions.custom_max_users',
-                'subscriptions.custom_max_armadas',
-                'subscriptions.custom_max_drivers',
-                'subscriptions.custom_max_routes',
-                'subscriptions.status as subscription_status',
-                'subscriptions.trial_ends_at',
-                'subscriptions.ends_at',
-            )
+            ->select($subscriptionSelect)
             ->first();
 
         if (! $sub) {

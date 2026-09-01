@@ -11908,39 +11908,44 @@ XML;
         $tenantId = (int) $request->query('tenant_id', 0);
         $q = trim((string) $request->query('q', ''));
 
+        $subscriptionSelect = [
+            'subscriptions.id',
+            'subscriptions.tenant_id',
+            'subscriptions.plan_id',
+            'subscriptions.status',
+            'subscriptions.trial_ends_at',
+            'subscriptions.starts_at',
+            'subscriptions.ends_at',
+            'subscriptions.billing_interval',
+            'subscriptions.canceled_at',
+            'subscriptions.grace_period_days',
+            'subscriptions.notes',
+            'subscriptions.custom_price_monthly',
+            'subscriptions.custom_price_yearly',
+            'subscriptions.custom_max_pools',
+            'subscriptions.custom_max_users',
+            'subscriptions.custom_max_armadas',
+            'subscriptions.custom_max_routes',
+            'subscriptions.created_at',
+            'tenants.name as tenant_name',
+            'tenants.slug as tenant_slug',
+            'plans.name as plan_name',
+            'plans.slug as plan_slug',
+            'plans.price_monthly as plan_price_monthly',
+            'plans.price_yearly as plan_price_yearly',
+            DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
+            DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
+        ];
+        foreach (['is_private_pricing', 'custom_max_drivers'] as $column) {
+            if (SchemaCache::hasColumn('subscriptions', $column)) {
+                $subscriptionSelect[] = 'subscriptions.'.$column;
+            }
+        }
+
         $query = DB::table('subscriptions')
             ->join('tenants', 'subscriptions.tenant_id', '=', 'tenants.id')
             ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
-            ->select(
-                'subscriptions.id',
-                'subscriptions.tenant_id',
-                'subscriptions.plan_id',
-                'subscriptions.status',
-                'subscriptions.trial_ends_at',
-                'subscriptions.starts_at',
-                'subscriptions.ends_at',
-                'subscriptions.billing_interval',
-                'subscriptions.canceled_at',
-                'subscriptions.grace_period_days',
-                'subscriptions.notes',
-                'subscriptions.is_private_pricing',
-                'subscriptions.custom_price_monthly',
-                'subscriptions.custom_price_yearly',
-                'subscriptions.custom_max_pools',
-                'subscriptions.custom_max_users',
-                'subscriptions.custom_max_armadas',
-                'subscriptions.custom_max_drivers',
-                'subscriptions.custom_max_routes',
-                'subscriptions.created_at',
-                'tenants.name as tenant_name',
-                'tenants.slug as tenant_slug',
-                'plans.name as plan_name',
-                'plans.slug as plan_slug',
-                'plans.price_monthly as plan_price_monthly',
-                'plans.price_yearly as plan_price_yearly',
-                DB::raw('COALESCE(subscriptions.custom_price_monthly, plans.price_monthly) as price_monthly'),
-                DB::raw('COALESCE(subscriptions.custom_price_yearly, plans.price_yearly) as price_yearly'),
-            )
+            ->select($subscriptionSelect)
             ->orderBy('subscriptions.created_at', 'desc');
 
         if ($status !== '') {
