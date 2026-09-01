@@ -4,7 +4,10 @@ namespace Tests\Feature;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class PublicBookingTest extends TestCase
@@ -78,6 +81,51 @@ class PublicBookingTest extends TestCase
 
         $availability->assertJsonPath('schedules.0.seats.0.status', 'held')
             ->assertJsonPath('schedules.0.seats.1.status', 'held');
+    }
+
+    public function test_tenant_admin_can_upload_public_booking_logo_to_supabase_storage(): void
+    {
+        $tenantId = $this->defaultTestTenantId();
+        config()->set('filesystems.disks.supabase.key', 'test-key');
+        config()->set('filesystems.disks.supabase.secret', 'test-secret');
+        config()->set('filesystems.disks.supabase.region', 'us-east-1');
+        config()->set('filesystems.disks.supabase.bucket', 'avatars');
+        config()->set('filesystems.disks.supabase.endpoint', 'https://project.test/storage/v1/s3');
+        config()->set('filesystems.disks.supabase.url', 'https://project.test/storage/v1/object/public/avatars');
+        Storage::fake('supabase');
+
+        $oldPath = 'public-booking/logos/old-logo.png';
+        Storage::disk('supabase')->put($oldPath, 'old-logo');
+        DB::table('tenants')->where('id', $tenantId)->update([
+            'public_booking_enabled' => true,
+            'logo_url' => config('filesystems.disks.supabase.url').'/'.$oldPath,
+        ]);
+
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $response = $this->post(route('api.admin.public-booking-settings.logo'), [
+            'logo' => UploadedFile::fake()->image('new-logo.png'),
+        ]);
+
+        $response->assertOk()->assertJsonPath('success', true);
+
+        $logoUrl = (string) $response->json('settings.tenant.logo_url');
+        $this->assertStringContainsString('/storage/v1/object/public/avatars/', $logoUrl);
+        $newPath = Str::after($logoUrl, '/storage/v1/object/public/avatars/');
+        $this->assertNotSame('', $newPath);
+        Storage::disk('supabase')->assertExists($newPath);
+        Storage::disk('supabase')->assertMissing($oldPath);
+    }
+
+    public function test_public_booking_logo_upload_rejects_files_larger_than_two_mb(): void
+    {
+        $tenantId = $this->defaultTestTenantId();
+
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->post(route('api.admin.public-booking-settings.logo'), [
+            'logo' => UploadedFile::fake()->image('large-logo.png')->size(2049),
+        ], ['Accept' => 'application/json'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('logo');
     }
 
     public function test_pool_admin_can_approve_public_request_into_official_bookings(): void

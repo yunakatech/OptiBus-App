@@ -288,6 +288,61 @@ updateSettings.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
         })
     
     updateSettings.form = updateSettingsForm
-const PublicBookingAdminController = { inbox, settings, settingsData, updateSettings }
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+export const uploadLogo = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: uploadLogo.url(options),
+    method: 'post',
+})
+
+uploadLogo.definition = {
+    methods: ["post"],
+    url: '/api/admin/public-booking-settings/logo',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+uploadLogo.url = (options?: RouteQueryOptions) => {
+    return uploadLogo.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: uploadLogo.url(options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+    const uploadLogoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: uploadLogo.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+        uploadLogoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: uploadLogo.url(options),
+            method: 'post',
+        })
+    
+    uploadLogo.form = uploadLogoForm
+const PublicBookingAdminController = { inbox, settings, settingsData, updateSettings, uploadLogo }
 
 export default PublicBookingAdminController

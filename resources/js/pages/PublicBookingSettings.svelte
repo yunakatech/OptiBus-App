@@ -7,7 +7,14 @@
 </script>
 
 <script lang="ts">
-    import { Check, Copy, ExternalLink, MessageCircle } from 'lucide-svelte';
+    import {
+        Check,
+        Copy,
+        ExternalLink,
+        Image,
+        MessageCircle,
+        Upload,
+    } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
 
@@ -34,6 +41,10 @@
     let copied = $state(false);
     let message = $state('');
     let error = $state('');
+    let logoInput = $state<HTMLInputElement | null>(null);
+    let logoFile = $state<File | null>(null);
+    let logoFileName = $state('');
+    let uploadingLogo = $state(false);
 
     onMount(() => {
         settings = initialSettings;
@@ -93,6 +104,84 @@
         copied = true;
         setTimeout(() => (copied = false), 1800);
     }
+
+    function selectLogo(event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const file = input.files?.[0] ?? null;
+
+        if (!file) {
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            error = 'Ukuran logo maksimal 2 MB.';
+            logoFile = null;
+            logoFileName = '';
+            input.value = '';
+
+            return;
+        }
+
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            error = 'Format logo harus JPG, PNG, atau WebP.';
+            logoFile = null;
+            logoFileName = '';
+            input.value = '';
+
+            return;
+        }
+
+        error = '';
+        logoFile = file;
+        logoFileName = file.name;
+    }
+
+    async function uploadLogo() {
+        if (!logoFile || uploadingLogo) {
+            return;
+        }
+
+        uploadingLogo = true;
+        message = '';
+        error = '';
+
+        try {
+            const body = new FormData();
+            body.append('logo', logoFile);
+
+            const response = await fetch(
+                '/api/admin/public-booking-settings/logo',
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-XSRF-TOKEN': csrfToken(),
+                    },
+                    body,
+                },
+            );
+            const payload = await response.json();
+
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.error ?? 'Logo gagal diunggah.');
+            }
+
+            settings = payload.settings;
+            logoFile = null;
+            logoFileName = '';
+
+            if (logoInput) {
+                logoInput.value = '';
+            }
+
+            message = 'Logo booking berhasil diperbarui.';
+        } catch (cause) {
+            error =
+                cause instanceof Error ? cause.message : 'Logo gagal diunggah.';
+        } finally {
+            uploadingLogo = false;
+        }
+    }
 </script>
 
 <AppHead title="Booking Online" />
@@ -151,6 +240,74 @@
                 </p>
             </div>
             <div class="space-y-5 p-6">
+                <div
+                    class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                >
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                        >
+                            {#if settings.tenant.logo_url}
+                                <img
+                                    src={settings.tenant.logo_url}
+                                    alt={`Logo ${settings.tenant.name}`}
+                                    class="h-full w-full object-contain p-2"
+                                />
+                            {:else}
+                                <Image class="h-7 w-7 text-slate-400" />
+                            {/if}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="font-black">Logo halaman booking</p>
+                            <p
+                                class="mt-1 text-xs leading-5 text-muted-foreground"
+                            >
+                                Logo akan menggantikan nama tenant pada halaman
+                                publik.
+                            </p>
+                        </div>
+                    </div>
+                    <input
+                        id="booking-logo"
+                        bind:this={logoInput}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onchange={selectLogo}
+                        class="sr-only"
+                    />
+                    <div
+                        class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center"
+                    >
+                        <button
+                            type="button"
+                            onclick={() => logoInput?.click()}
+                            class="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold transition hover:border-emerald-300 hover:bg-emerald-50"
+                        >
+                            <Upload class="h-4 w-4" />
+                            {settings.tenant.logo_url
+                                ? 'Ganti logo'
+                                : 'Pilih logo'}
+                        </button>
+                        {#if logoFileName}
+                            <span
+                                class="truncate text-xs font-semibold text-slate-500"
+                            >
+                                {logoFileName}
+                            </span>
+                        {/if}
+                        <button
+                            type="button"
+                            onclick={uploadLogo}
+                            disabled={!logoFile || uploadingLogo}
+                            class="flex h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-black text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto"
+                        >
+                            {uploadingLogo ? 'Mengunggah...' : 'Simpan logo'}
+                        </button>
+                    </div>
+                    <p class="mt-2 text-xs font-semibold text-slate-500">
+                        JPG, PNG, atau WebP · maksimal 2 MB.
+                    </p>
+                </div>
                 <div
                     class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 p-4"
                 >

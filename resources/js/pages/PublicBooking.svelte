@@ -437,49 +437,45 @@
     <div
         class="mx-auto min-h-screen w-full max-w-xl bg-[#f5f7f2] px-4 pb-28 sm:px-6"
     >
-        <header class="flex items-center gap-3 py-5">
-            {#if tenant.logo_url}
-                <img
-                    src={tenant.logo_url}
-                    alt={tenant.name}
-                    class="h-11 w-11 rounded-2xl object-cover shadow-sm"
-                />
-            {:else}
-                <div
-                    class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-700 text-lg font-black text-white"
-                >
-                    {tenant.name.slice(0, 1).toUpperCase()}
-                </div>
-            {/if}
-            <div class="min-w-0">
-                <p
-                    class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700"
-                >
-                    Booking resmi
-                </p>
-                <h1 class="truncate text-xl font-black tracking-tight">
-                    {tenant.name}
-                </h1>
-            </div>
-        </header>
-
         {#if step < 5}
             <section
                 class="mb-5 rounded-[2rem] bg-slate-950 p-5 text-white shadow-xl shadow-slate-900/10"
             >
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <p class="text-sm text-emerald-300">
-                            Pesan perjalanan tanpa antre
+                <div
+                    class="mb-6 flex items-start justify-between gap-4 border-b border-slate-800 pb-5"
+                >
+                    <div class="min-w-0">
+                        <p
+                            class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300"
+                        >
+                            Booking resmi
                         </p>
-                        <h2 class="mt-1 text-2xl font-black leading-tight">
-                            Pilih kursi,<br />kami konfirmasi.
-                        </h2>
+                        {#if tenant.logo_url}
+                            <img
+                                src={tenant.logo_url}
+                                alt={tenant.name}
+                                class="mt-2 max-h-14 max-w-[12rem] object-contain object-left"
+                            />
+                        {:else}
+                            <h1
+                                class="mt-1 truncate text-xl font-black tracking-tight"
+                            >
+                                {tenant.name}
+                            </h1>
+                        {/if}
                     </div>
                     <Ticket
-                        class="h-9 w-9 text-emerald-300"
+                        class="h-9 w-9 shrink-0 text-emerald-300"
                         strokeWidth={1.5}
                     />
+                </div>
+                <div>
+                    <p class="text-sm text-emerald-300">
+                        Pesan perjalanan tanpa antre
+                    </p>
+                    <h2 class="mt-1 text-2xl font-black leading-tight">
+                        Pilih kursi,<br />kami konfirmasi.
+                    </h2>
                 </div>
                 <div
                     class="mt-6 flex items-center gap-2 text-[11px] font-bold text-slate-400"

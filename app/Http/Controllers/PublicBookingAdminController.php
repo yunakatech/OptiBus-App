@@ -39,4 +39,20 @@ class PublicBookingAdminController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
         }
     }
+
+    public function uploadLogo(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'logo' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        try {
+            return response()->json([
+                'success' => true,
+                'settings' => $this->bookingService->uploadLogo($data['logo']),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
+        }
+    }
 }

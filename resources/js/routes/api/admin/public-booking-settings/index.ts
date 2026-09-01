@@ -132,9 +132,65 @@ update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
         })
     
     update.form = updateForm
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::logo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+export const logo = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: logo.url(options),
+    method: 'post',
+})
+
+logo.definition = {
+    methods: ["post"],
+    url: '/api/admin/public-booking-settings/logo',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::logo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+logo.url = (options?: RouteQueryOptions) => {
+    return logo.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PublicBookingAdminController::logo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+logo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: logo.url(options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\PublicBookingAdminController::logo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+    const logoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: logo.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PublicBookingAdminController::logo
+ * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @route '/api/admin/public-booking-settings/logo'
+ */
+        logoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: logo.url(options),
+            method: 'post',
+        })
+    
+    logo.form = logoForm
 const publicBookingSettings = {
     index: Object.assign(index, index),
 update: Object.assign(update, update),
+logo: Object.assign(logo, logo),
 }
 
 export default publicBookingSettings
