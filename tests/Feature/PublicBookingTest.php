@@ -154,6 +154,57 @@ class PublicBookingTest extends TestCase
         ]);
     }
 
+    public function test_hidden_segment_is_excluded_from_public_booking_but_remains_operational(): void
+    {
+        [$tenantId, $routeId, $scheduleId] = $this->fixture();
+        $segmentId = (int) DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantId,
+            'route_id' => $routeId,
+            'rute' => 'MAKASSAR - MAROS',
+            'origin' => 'MAKASSAR',
+            'destination' => 'MAROS',
+            'jam' => '08:00:00',
+            'jam_pickups' => json_encode(['08:00']),
+            'harga' => 100000,
+            'created_at' => now(),
+        ]);
+        DB::table('schedule_segment')->insert([
+            'schedule_id' => $scheduleId,
+            'segment_id' => $segmentId,
+            'jam_pickup' => '08:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('segments')->where('id', $segmentId)->update([
+            'public_booking_enabled' => false,
+        ]);
+
+        $availability = $this->getJson(route('api.public.booking.availability', [
+            'tenantSlug' => 'qbus-default',
+            'tanggal' => '2026-09-02',
+        ]))->assertOk();
+
+        $this->assertFalse(
+            collect($availability->json('segments'))->contains('id', $segmentId),
+        );
+        $this->getJson(route('api.public.booking.availability', [
+            'tenantSlug' => 'qbus-default',
+            'tanggal' => '2026-09-02',
+            'segment_id' => $segmentId,
+        ]))->assertNotFound();
+
+        $this->assertDatabaseHas('segments', [
+            'id' => $segmentId,
+            'route_id' => $routeId,
+            'public_booking_enabled' => 0,
+        ]);
+        $this->assertDatabaseHas('schedule_segment', [
+            'schedule_id' => $scheduleId,
+            'segment_id' => $segmentId,
+        ]);
+    }
+
     public function test_public_booking_whatsapp_button_is_empty_without_tenant_whatsapp(): void
     {
         [$routeId, $scheduleId] = array_slice($this->fixture(), 1);

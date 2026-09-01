@@ -75,11 +75,11 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
                     }),
             method: 'get',
         })
-    
+
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1139
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1188
  * @route '/api/admin/segments'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1139
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1188
  * @route '/api/admin/segments'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1139
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1188
  * @route '/api/admin/segments'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1139
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1188
  * @route '/api/admin/segments'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,18 +123,92 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1139
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1188
  * @route '/api/admin/segments'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: save.url(options),
             method: 'post',
         })
-    
+
     save.form = saveForm
 /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::publicVisibility
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1142
+ * @route '/api/admin/segments/{id}/public-visibility'
+ */
+export const publicVisibility = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: publicVisibility.url(args, options),
+    method: 'post',
+})
+
+publicVisibility.definition = {
+    methods: ["post"],
+    url: '/api/admin/segments/{id}/public-visibility',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::publicVisibility
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1142
+ * @route '/api/admin/segments/{id}/public-visibility'
+ */
+publicVisibility.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    
+    if (Array.isArray(args)) {
+        args = {
+                    id: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        id: args.id,
+                }
+
+    return publicVisibility.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::publicVisibility
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1142
+ * @route '/api/admin/segments/{id}/public-visibility'
+ */
+publicVisibility.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: publicVisibility.url(args, options),
+    method: 'post',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::publicVisibility
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1142
+ * @route '/api/admin/segments/{id}/public-visibility'
+ */
+    const publicVisibilityForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: publicVisibility.url(args, options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::publicVisibility
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1142
+ * @route '/api/admin/segments/{id}/public-visibility'
+ */
+        publicVisibilityForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: publicVisibility.url(args, options),
+            method: 'post',
+        })
+    
+    publicVisibility.form = publicVisibilityForm
+/**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1222
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1271
  * @route '/api/admin/segments/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -149,7 +223,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1222
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1271
  * @route '/api/admin/segments/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -177,7 +251,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1222
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1271
  * @route '/api/admin/segments/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -187,7 +261,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1222
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1271
  * @route '/api/admin/segments/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -202,7 +276,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1222
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1271
  * @route '/api/admin/segments/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -219,6 +293,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 const segments = {
     index: Object.assign(index, index),
 save: Object.assign(save, save),
+publicVisibility: Object.assign(publicVisibility, publicVisibility),
 delete: Object.assign(deleteMethod, deleteMethod),
 }
 

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from '../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::status
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11852
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11901
  * @route '/api/admin/tenant-deletions/{jobId}'
  */
 export const status = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::status
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11852
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11901
  * @route '/api/admin/tenant-deletions/{jobId}'
  */
 status.url = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ status.url = (args: { jobId: string | number } | [jobId: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::status
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11852
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11901
  * @route '/api/admin/tenant-deletions/{jobId}'
  */
 status.get = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ status.get = (args: { jobId: string | number } | [jobId: string | number ] | str
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::status
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11852
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11901
  * @route '/api/admin/tenant-deletions/{jobId}'
  */
 status.head = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ status.head = (args: { jobId: string | number } | [jobId: string | number ] | st
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::status
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11852
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11901
  * @route '/api/admin/tenant-deletions/{jobId}'
  */
     const statusForm = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ status.head = (args: { jobId: string | number } | [jobId: string | number ] | st
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::status
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11852
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11901
  * @route '/api/admin/tenant-deletions/{jobId}'
  */
         statusForm.get = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ status.head = (args: { jobId: string | number } | [jobId: string | number ] | st
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::status
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11852
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11901
  * @route '/api/admin/tenant-deletions/{jobId}'
  */
         statusForm.head = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -98,7 +98,7 @@ status.head = (args: { jobId: string | number } | [jobId: string | number ] | st
     status.form = statusForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11880
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11929
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 export const retry = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ retry.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11880
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11929
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 retry.url = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -141,7 +141,7 @@ retry.url = (args: { jobId: string | number } | [jobId: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11880
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11929
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
 retry.post = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -151,7 +151,7 @@ retry.post = (args: { jobId: string | number } | [jobId: string | number ] | str
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11880
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11929
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
     const retryForm = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -161,7 +161,7 @@ retry.post = (args: { jobId: string | number } | [jobId: string | number ] | str
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::retry
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11880
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11929
  * @route '/api/admin/tenant-deletions/{jobId}/retry'
  */
         retryForm.post = (args: { jobId: string | number } | [jobId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

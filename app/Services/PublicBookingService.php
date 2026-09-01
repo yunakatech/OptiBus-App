@@ -743,6 +743,7 @@ class PublicBookingService
         $hasRouteId = SchemaCache::hasColumn('segments', 'route_id');
         $hasTenantId = SchemaCache::hasColumn('segments', 'tenant_id');
         $hasJamPickups = SchemaCache::hasColumn('segments', 'jam_pickups');
+        $hasPublicBookingEnabled = SchemaCache::hasColumn('segments', 'public_booking_enabled');
         $segments = collect();
 
         foreach ($routes as $route) {
@@ -758,6 +759,9 @@ class PublicBookingService
             });
             if ($hasTenantId) {
                 $query->where('tenant_id', $tenantId);
+            }
+            if ($hasPublicBookingEnabled) {
+                $query->where('public_booking_enabled', true);
             }
 
             $select = ['id', 'origin', 'destination', 'harga'];
