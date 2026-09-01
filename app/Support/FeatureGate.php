@@ -106,6 +106,24 @@ class FeatureGate
             return self::$currentPlanCache[$cacheKey];
         }
 
+        $subscriptionSelect = [
+            'subscriptions.id as subscription_id',
+            'subscriptions.plan_id',
+            'subscriptions.status',
+            'subscriptions.custom_price_monthly',
+            'subscriptions.custom_price_yearly',
+            'subscriptions.custom_max_pools',
+            'subscriptions.custom_max_users',
+            'subscriptions.custom_max_armadas',
+            'subscriptions.custom_max_routes',
+        ];
+        if (SchemaCache::hasColumn('subscriptions', 'is_private_pricing')) {
+            $subscriptionSelect[] = 'subscriptions.is_private_pricing';
+        }
+        if (SchemaCache::hasColumn('subscriptions', 'custom_max_drivers')) {
+            $subscriptionSelect[] = 'subscriptions.custom_max_drivers';
+        }
+
         $sub = DB::table('subscriptions')
             ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->where('subscriptions.tenant_id', $tenantId)
@@ -113,18 +131,7 @@ class FeatureGate
             ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END")
             ->orderByDesc('subscriptions.created_at')
             ->orderByDesc('subscriptions.id')
-            ->select(
-                'subscriptions.id as subscription_id',
-                'subscriptions.plan_id',
-                'subscriptions.is_private_pricing',
-                'subscriptions.status',
-                'subscriptions.custom_price_monthly',
-                'subscriptions.custom_price_yearly',
-                'subscriptions.custom_max_pools',
-                'subscriptions.custom_max_users',
-                'subscriptions.custom_max_armadas',
-                'subscriptions.custom_max_drivers',
-                'subscriptions.custom_max_routes',
+            ->select(array_merge($subscriptionSelect, [
                 'plans.name as plan_name',
                 'plans.slug as plan_slug',
                 'plans.price_monthly as base_price_monthly',
@@ -134,7 +141,7 @@ class FeatureGate
                 'plans.max_armadas as base_max_armadas',
                 'plans.max_drivers as base_max_drivers',
                 'plans.max_routes as base_max_routes',
-            )
+            ]))
             ->first();
 
         if (! $sub) {

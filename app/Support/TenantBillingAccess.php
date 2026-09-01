@@ -74,28 +74,34 @@ class TenantBillingAccess
         $tenant = DB::table('tenants')->where('id', $tenantId)->first(['id', 'status']);
         $tenantStatus = (string) ($tenant->status ?? '');
 
+        $subscriptionSelect = [
+            'subscriptions.id as subscription_id',
+            'subscriptions.status as subscription_status',
+            'subscriptions.plan_id',
+            'subscriptions.trial_ends_at',
+            'subscriptions.ends_at',
+            'plans.slug as plan_slug',
+            'plans.name as plan_name',
+            'subscriptions.custom_price_monthly',
+            'subscriptions.custom_price_yearly',
+            'subscriptions.custom_max_pools',
+            'subscriptions.custom_max_users',
+            'subscriptions.custom_max_armadas',
+            'subscriptions.custom_max_routes',
+        ];
+        if (Schema::hasColumn('subscriptions', 'is_private_pricing')) {
+            $subscriptionSelect[] = 'subscriptions.is_private_pricing';
+        }
+        if (Schema::hasColumn('subscriptions', 'custom_max_drivers')) {
+            $subscriptionSelect[] = 'subscriptions.custom_max_drivers';
+        }
+
         $subscription = DB::table('subscriptions')
             ->leftJoin('plans', 'subscriptions.plan_id', '=', 'plans.id')
             ->where('subscriptions.tenant_id', $tenantId)
             ->orderByRaw("CASE subscriptions.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'pending_payment' THEN 2 WHEN 'past_due' THEN 3 WHEN 'suspended' THEN 4 WHEN 'expired' THEN 5 WHEN 'canceled' THEN 6 ELSE 7 END")
             ->orderByDesc('subscriptions.created_at')
-            ->select(
-                'subscriptions.id as subscription_id',
-                'subscriptions.status as subscription_status',
-                'subscriptions.plan_id',
-                'subscriptions.is_private_pricing',
-                'subscriptions.trial_ends_at',
-                'subscriptions.ends_at',
-                'plans.slug as plan_slug',
-                'plans.name as plan_name',
-                'subscriptions.custom_price_monthly',
-                'subscriptions.custom_price_yearly',
-                'subscriptions.custom_max_pools',
-                'subscriptions.custom_max_users',
-                'subscriptions.custom_max_armadas',
-                'subscriptions.custom_max_drivers',
-                'subscriptions.custom_max_routes',
-            )
+            ->select($subscriptionSelect)
             ->first();
 
         $isPrivatePricing = FeatureGate::isPrivatePricing($subscription);
