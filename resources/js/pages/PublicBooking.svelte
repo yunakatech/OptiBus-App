@@ -2,15 +2,19 @@
     import {
         ArrowLeft,
         ArrowRight,
+        CalendarDays,
         Check,
         Clock3,
         MapPin,
         MessageCircle,
+        Pencil,
         RefreshCw,
         Ticket,
         UserRound,
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
+    import { loadFlatpickr } from '@/lib/flatpickr';
+    import type { FlatpickrInstance } from '@/lib/flatpickr';
 
     type Tenant = {
         name: string;
@@ -69,6 +73,8 @@
     } = $props();
 
     let dateValue = $state('');
+    let dateInput = $state<HTMLInputElement | null>(null);
+    let datePicker: FlatpickrInstance | null = null;
     let routes = $state<RouteOption[]>([]);
     let schedules = $state<Schedule[]>([]);
     let routeId = $state(0);
@@ -98,8 +104,42 @@
     onMount(() => {
         dateValue = dateMin;
         paymentMethod = paymentMethods[0] ?? 'Belum Lunas';
+        void initDatePicker();
         void loadAvailability();
+
+        return () => {
+            datePicker?.destroy();
+            datePicker = null;
+        };
     });
+
+    async function initDatePicker() {
+        if (typeof window === 'undefined' || !dateInput || datePicker) {
+            return;
+        }
+
+        const flatpickr = await loadFlatpickr();
+
+        if (!dateInput || datePicker) {
+            return;
+        }
+
+        datePicker = flatpickr(dateInput, {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'j F Y',
+            altInputClass:
+                'h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20',
+            ariaDateFormat: 'j F Y',
+            defaultDate: dateMin,
+            minDate: dateMin,
+            maxDate: dateMax,
+            disableMobile: true,
+            onChange: (_selectedDates, dateStr) => {
+                changeDate(dateStr || dateMin);
+            },
+        });
+    }
 
     function csrfToken(): string {
         const token =
@@ -156,6 +196,25 @@
     function changeRoute(value: string) {
         routeId = Number(value);
         void loadAvailability();
+    }
+
+    function updatePassengerName(seat: string, value: string) {
+        passengerNames = { ...passengerNames, [seat]: value };
+    }
+
+    function formatDateLabel(value: string): string {
+        const date = new Date(`${value}T00:00:00`);
+
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+        return date.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
     }
 
     function chooseSchedule(schedule: Schedule) {
@@ -459,20 +518,29 @@
                 <div
                     class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
-                    <div
+                    <label
+                        for="public-date"
                         class="mb-3 flex items-center gap-2 text-sm font-black"
                     >
-                        <Clock3 class="h-4 w-4 text-emerald-600" /> Kapan berangkat?
+                        <CalendarDays class="h-4 w-4 text-emerald-600" />
+                        Tanggal perjalanan
+                    </label>
+                    <div class="relative">
+                        <input
+                            id="public-date"
+                            bind:this={dateInput}
+                            value={dateValue}
+                            type="text"
+                            placeholder="Pilih tanggal"
+                            autocomplete="off"
+                            readonly
+                            aria-label="Tanggal perjalanan"
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500"
+                        />
                     </div>
-                    <input
-                        type="date"
-                        min={dateMin}
-                        max={dateMax}
-                        bind:value={dateValue}
-                        onchange={(event) =>
-                            changeDate(event.currentTarget.value)}
-                        class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500"
-                    />
+                    <p class="mt-2 text-xs font-semibold text-slate-500">
+                        Pilih tanggal keberangkatan yang tersedia.
+                    </p>
                 </div>
                 <div
                     class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -694,7 +762,7 @@
                     </div>
                 </div>
             {/if}
-        {:else if step === 3 || step === 4}
+        {:else if step === 3}
             <section
                 class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
             >
@@ -703,27 +771,54 @@
                         <p
                             class="text-xs font-bold uppercase tracking-widest text-emerald-700"
                         >
-                            Data pemesan
+                            Langkah 3 dari 4
                         </p>
                         <h2 class="text-2xl font-black">
-                            Siapa yang berangkat?
+                            Lengkapi data
                         </h2>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">
+                            Nama penumpang diisi sesuai kursi yang dipilih.
+                        </p>
                     </div>
                     <UserRound class="h-7 w-7 text-emerald-600" />
                 </div>
                 <div class="space-y-4">
-                    {#each selectedSeats as seat (seat)}
-                        <div>
+                    {#each selectedSeats as seat, passengerIndex (seat)}
+                        <div
+                            class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3"
+                        >
+                            <div
+                                class="mb-3 flex items-center justify-between gap-3"
+                            >
+                                <div class="min-w-0">
+                                    <p
+                                        class="truncate text-sm font-black text-slate-900"
+                                    >
+                                        {passengerNames[seat]?.trim() ||
+                                            `Penumpang ${passengerIndex + 1}`}
+                                    </p>
+                                    <p class="text-xs font-bold text-slate-500">
+                                        Kursi {seat}
+                                    </p>
+                                </div>
+                                <span
+                                    class="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-slate-200"
+                                >
+                                    Slot {passengerIndex + 1}
+                                </span>
+                            </div>
                             <label
                                 for={`passenger-${seat}`}
                                 class="mb-1 block text-xs font-bold text-slate-500"
-                                >Nama penumpang · Kursi {seat}</label
+                                >Nama penumpang</label
                             ><input
                                 id={`passenger-${seat}`}
                                 value={passengerNames[seat] ?? ''}
                                 oninput={(event) =>
-                                    (passengerNames[seat] =
-                                        event.currentTarget.value)}
+                                    updatePassengerName(
+                                        seat,
+                                        event.currentTarget.value,
+                                    )}
                                 placeholder="Nama lengkap"
                                 class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500"
                             />
