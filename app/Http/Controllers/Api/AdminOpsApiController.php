@@ -8298,6 +8298,53 @@ class AdminOpsApiController extends Controller
         $query->whereRaw('1 = 0');
     }
 
+    /**
+     * Replace the private feature configuration for a subscription.
+     *
+     * @param  array<int, array{feature_key: string, max_value?: int|null}>  $overrides
+     */
+    private function syncPrivateFeatureOverrides(int $subscriptionId, array $overrides): void
+    {
+        if ($subscriptionId <= 0 || ! SchemaCache::hasTable('subscription_feature_overrides')) {
+            return;
+        }
+
+        DB::table('subscription_feature_overrides')
+            ->where('subscription_id', $subscriptionId)
+            ->delete();
+
+        $rows = [];
+        $now = now();
+        foreach ($overrides as $override) {
+            $featureKey = trim((string) ($override['feature_key'] ?? ''));
+            if ($featureKey === '') {
+                continue;
+            }
+
+            $featureGateId = (int) DB::table('feature_gates')
+                ->where('feature_key', $featureKey)
+                ->value('id');
+            if ($featureGateId <= 0) {
+                continue;
+            }
+
+            $rows[] = [
+                'subscription_id' => $subscriptionId,
+                'feature_gate_id' => $featureGateId,
+                'max_value' => array_key_exists('max_value', $override)
+                    && $override['max_value'] !== null
+                    ? (int) $override['max_value']
+                    : null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($rows !== []) {
+            DB::table('subscription_feature_overrides')->insert($rows);
+        }
+    }
+
     private function nullable(?string $value): ?string
     {
         $v = trim((string) ($value ?? ''));
@@ -11876,11 +11923,13 @@ XML;
                 'subscriptions.canceled_at',
                 'subscriptions.grace_period_days',
                 'subscriptions.notes',
+                'subscriptions.is_private_pricing',
                 'subscriptions.custom_price_monthly',
                 'subscriptions.custom_price_yearly',
                 'subscriptions.custom_max_pools',
                 'subscriptions.custom_max_users',
                 'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_drivers',
                 'subscriptions.custom_max_routes',
                 'subscriptions.created_at',
                 'tenants.name as tenant_name',
@@ -11908,15 +11957,41 @@ XML;
         [$page, $perPage] = $this->paginationParams($request);
         $result = $this->paginateQuery($query, $page, $perPage);
 
-        $subscriptions = collect($result['data'])->map(function ($s) {
+        $subscriptionIds = collect($result['data'])->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $featureOverrides = [];
+        if ($subscriptionIds !== [] && SchemaCache::hasTable('subscription_feature_overrides') && SchemaCache::hasTable('feature_gates')) {
+            $featureOverrides = DB::table('subscription_feature_overrides')
+                ->join('feature_gates', 'subscription_feature_overrides.feature_gate_id', '=', 'feature_gates.id')
+                ->whereIn('subscription_feature_overrides.subscription_id', $subscriptionIds)
+                ->get([
+                    'subscription_feature_overrides.subscription_id',
+                    'feature_gates.feature_key',
+                    'feature_gates.feature_name',
+                    'subscription_feature_overrides.max_value',
+                ])
+                ->groupBy('subscription_id')
+                ->map(fn ($items) => $items->map(fn ($item) => [
+                    'feature_key' => (string) $item->feature_key,
+                    'feature_name' => (string) ($item->feature_name ?? $item->feature_key),
+                    'max_value' => $item->max_value === null ? null : (int) $item->max_value,
+                ])->values()->all())
+                ->all();
+        }
+
+        $subscriptions = collect($result['data'])->map(function ($s) use ($featureOverrides) {
+            $isPrivatePricing = FeatureGate::isPrivatePricing($s);
+
             return [
                 'id' => (int) $s->id,
                 'tenant_id' => (int) $s->tenant_id,
                 'tenant_name' => (string) $s->tenant_name,
                 'tenant_slug' => (string) $s->tenant_slug,
                 'plan_id' => (int) $s->plan_id,
-                'plan_name' => (string) $s->plan_name,
+                'plan_name' => $isPrivatePricing ? 'Private Pricing' : (string) $s->plan_name,
                 'plan_slug' => (string) $s->plan_slug,
+                'base_plan_name' => (string) $s->plan_name,
+                'base_plan_slug' => (string) $s->plan_slug,
+                'is_private_pricing' => $isPrivatePricing,
                 'price_monthly' => (float) ($s->price_monthly ?? $s->plan_price_monthly ?? 0),
                 'price_yearly' => (float) ($s->price_yearly ?? $s->plan_price_yearly ?? 0),
                 'status' => (string) $s->status,
@@ -11932,18 +12007,27 @@ XML;
                 'custom_max_pools' => $s->custom_max_pools ?? null,
                 'custom_max_users' => $s->custom_max_users ?? null,
                 'custom_max_armadas' => $s->custom_max_armadas ?? null,
+                'custom_max_drivers' => $s->custom_max_drivers ?? null,
                 'custom_max_routes' => $s->custom_max_routes ?? null,
+                'feature_overrides' => $featureOverrides[(int) $s->id] ?? [],
                 'created_at' => $s->created_at,
             ];
         })->all();
 
         $tenants = DB::table('tenants')->orderBy('name')->get(['id', 'name', 'slug']);
         $plans = DB::table('plans')->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'slug', 'price_monthly']);
+        $featureGates = SchemaCache::hasTable('feature_gates')
+            ? DB::table('feature_gates')
+                ->orderBy('feature_group')
+                ->orderBy('feature_name')
+                ->get(['id', 'feature_key', 'feature_name', 'feature_group', 'is_core'])
+            : collect();
 
         return $this->ok([
             'subscriptions' => $subscriptions,
             'tenants' => $tenants,
             'plans' => $plans,
+            'feature_gates' => $featureGates,
             'status_options' => ['pending_payment', 'trial', 'active', 'past_due', 'suspended', 'canceled', 'expired'],
             'pagination' => $result['meta'],
         ]);
@@ -11970,12 +12054,17 @@ XML;
             'billing_interval' => ['nullable', Rule::in(['monthly', 'yearly'])],
             'grace_period_days' => ['nullable', 'integer', 'min:0', 'max:90'],
             'notes' => ['nullable', 'string'],
+            'is_private_pricing' => ['nullable', 'boolean'],
             'custom_price_monthly' => ['nullable', 'numeric', 'min:0'],
             'custom_price_yearly' => ['nullable', 'numeric', 'min:0'],
             'custom_max_pools' => ['nullable', 'integer', 'min:0'],
             'custom_max_users' => ['nullable', 'integer', 'min:0'],
             'custom_max_armadas' => ['nullable', 'integer', 'min:0'],
+            'custom_max_drivers' => ['nullable', 'integer', 'min:0'],
             'custom_max_routes' => ['nullable', 'integer', 'min:0'],
+            'feature_overrides' => ['nullable', 'array'],
+            'feature_overrides.*.feature_key' => ['required', 'string', 'distinct', 'exists:feature_gates,feature_key'],
+            'feature_overrides.*.max_value' => ['nullable', 'integer', 'min:0'],
         ]);
 
         return DB::transaction(function () use ($id, $data): JsonResponse {
@@ -12005,12 +12094,16 @@ XML;
                 if (array_key_exists('notes', $data)) {
                     $payload['notes'] = $this->nullable($data['notes']);
                 }
+                if (array_key_exists('is_private_pricing', $data)) {
+                    $payload['is_private_pricing'] = (bool) $data['is_private_pricing'];
+                }
                 foreach ([
                     'custom_price_monthly',
                     'custom_price_yearly',
                     'custom_max_pools',
                     'custom_max_users',
                     'custom_max_armadas',
+                    'custom_max_drivers',
                     'custom_max_routes',
                 ] as $field) {
                     if (array_key_exists($field, $data)) {
@@ -12020,12 +12113,37 @@ XML;
                     }
                 }
 
+                $privatePricingDisabled = array_key_exists('is_private_pricing', $data)
+                    && ! (bool) $data['is_private_pricing'];
+                if ($privatePricingDisabled) {
+                    foreach ([
+                        'custom_price_monthly',
+                        'custom_price_yearly',
+                        'custom_max_pools',
+                        'custom_max_users',
+                        'custom_max_armadas',
+                        'custom_max_drivers',
+                        'custom_max_routes',
+                    ] as $field) {
+                        $payload[$field] = null;
+                    }
+                }
+
                 if ($payload !== []) {
                     $payload['updated_at'] = now();
                     DB::table('subscriptions')->where('id', $id)->update($payload);
                 }
 
                 $sub = DB::table('subscriptions')->where('id', $id)->first();
+                if (array_key_exists('feature_overrides', $data)
+                    || $privatePricingDisabled) {
+                    $privatePricingEnabled = ! $privatePricingDisabled
+                        && FeatureGate::isPrivatePricing($sub);
+                    $this->syncPrivateFeatureOverrides(
+                        $id,
+                        $privatePricingEnabled ? ($data['feature_overrides'] ?? []) : [],
+                    );
+                }
                 $message = 'Subscription updated.';
             } else {
                 $tenantId = (int) $data['tenant_id'];
@@ -12039,10 +12157,16 @@ XML;
                 $customPriceYearly = array_key_exists('custom_price_yearly', $data)
                     ? ($data['custom_price_yearly'] === null || $data['custom_price_yearly'] === '' ? null : $data['custom_price_yearly'])
                     : null;
+                $isPrivatePricing = (bool) ($data['is_private_pricing'] ?? false);
+                if (! $isPrivatePricing) {
+                    $customPriceMonthly = null;
+                    $customPriceYearly = null;
+                }
 
                 $subId = (int) DB::table('subscriptions')->insertGetId([
                     'tenant_id' => $tenantId,
                     'plan_id' => $planId,
+                    'is_private_pricing' => $isPrivatePricing,
                     'status' => $status,
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,
@@ -12052,15 +12176,23 @@ XML;
                     'custom_price_monthly' => $customPriceMonthly,
                     'custom_price_yearly' => $customPriceYearly,
                     'custom_max_pools' => array_key_exists('custom_max_pools', $data)
+                        && $isPrivatePricing
                         ? ($data['custom_max_pools'] === null || $data['custom_max_pools'] === '' ? null : (int) $data['custom_max_pools'])
                         : null,
                     'custom_max_users' => array_key_exists('custom_max_users', $data)
+                        && $isPrivatePricing
                         ? ($data['custom_max_users'] === null || $data['custom_max_users'] === '' ? null : (int) $data['custom_max_users'])
                         : null,
                     'custom_max_armadas' => array_key_exists('custom_max_armadas', $data)
+                        && $isPrivatePricing
                         ? ($data['custom_max_armadas'] === null || $data['custom_max_armadas'] === '' ? null : (int) $data['custom_max_armadas'])
                         : null,
+                    'custom_max_drivers' => array_key_exists('custom_max_drivers', $data)
+                        && $isPrivatePricing
+                        ? ($data['custom_max_drivers'] === null || $data['custom_max_drivers'] === '' ? null : (int) $data['custom_max_drivers'])
+                        : null,
                     'custom_max_routes' => array_key_exists('custom_max_routes', $data)
+                        && $isPrivatePricing
                         ? ($data['custom_max_routes'] === null || $data['custom_max_routes'] === '' ? null : (int) $data['custom_max_routes'])
                         : null,
                     'created_at' => now(),
@@ -12068,6 +12200,7 @@ XML;
                 ]);
                 $id = $subId;
                 $sub = DB::table('subscriptions')->where('id', $id)->first();
+                $this->syncPrivateFeatureOverrides($id, $isPrivatePricing ? ($data['feature_overrides'] ?? []) : []);
                 $message = 'Subscription created.';
             }
 

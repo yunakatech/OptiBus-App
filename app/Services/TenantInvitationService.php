@@ -441,6 +441,9 @@ class TenantInvitationService
             ->orderByDesc('subscriptions.id');
 
         $select = ['plans.max_users'];
+        if (SchemaCache::hasColumn('subscriptions', 'is_private_pricing')) {
+            $select[] = 'subscriptions.is_private_pricing';
+        }
         if (SchemaCache::hasColumn('subscriptions', 'custom_max_users')) {
             $select[] = 'subscriptions.custom_max_users';
         }
@@ -451,10 +454,13 @@ class TenantInvitationService
             return true;
         }
 
-        $maxUsers = property_exists($plan, 'custom_max_users')
-            && $plan->custom_max_users !== null
-            ? (int) $plan->custom_max_users
-            : (int) ($plan->max_users ?? 0);
+        $isPrivatePricing = FeatureGate::isPrivatePricing($plan);
+        $maxUsers = $isPrivatePricing
+            ? (int) ($plan->custom_max_users ?? 0)
+            : (property_exists($plan, 'custom_max_users')
+                && $plan->custom_max_users !== null
+                ? (int) $plan->custom_max_users
+                : (int) ($plan->max_users ?? 0));
 
         if ($maxUsers <= 0) {
             return true;

@@ -49,6 +49,9 @@ class TenantBillingAccess
             'plan_id' => null,
             'plan_slug' => '',
             'plan_name' => '',
+            'base_plan_slug' => '',
+            'base_plan_name' => '',
+            'is_private_pricing' => false,
             'is_trial' => false,
             'trial_ends_at' => null,
             'ends_at' => null,
@@ -80,6 +83,7 @@ class TenantBillingAccess
                 'subscriptions.id as subscription_id',
                 'subscriptions.status as subscription_status',
                 'subscriptions.plan_id',
+                'subscriptions.is_private_pricing',
                 'subscriptions.trial_ends_at',
                 'subscriptions.ends_at',
                 'plans.slug as plan_slug',
@@ -89,6 +93,7 @@ class TenantBillingAccess
                 'subscriptions.custom_max_pools',
                 'subscriptions.custom_max_users',
                 'subscriptions.custom_max_armadas',
+                'subscriptions.custom_max_drivers',
                 'subscriptions.custom_max_routes',
             )
             ->first();
