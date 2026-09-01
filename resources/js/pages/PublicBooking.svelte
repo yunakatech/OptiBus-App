@@ -29,6 +29,18 @@
         destination: string;
         pool_name: string;
     };
+    type SegmentOption = {
+        id: number;
+        route_id: number;
+        label: string;
+        origin: string;
+        destination: string;
+        pickup_times: string[];
+        price: number;
+        pool_id: number;
+        pool_name: string;
+        route_name: string;
+    };
     type Seat = { code: string; status: 'available' | 'held' | 'booked' };
     type LayoutCell =
         | string
@@ -53,6 +65,15 @@
         seats: Seat[];
         total_seats: number;
         layout: LayoutRow[];
+        segment: {
+            id: number;
+            label: string;
+            pickup_time: string;
+            pickup_times: string[];
+            price: number;
+            route_id: number;
+            route_name: string;
+        } | null;
     };
     type RequestResult = {
         request_code: string;
@@ -76,8 +97,10 @@
     let dateInput = $state<HTMLInputElement | null>(null);
     let datePicker: FlatpickrInstance | null = null;
     let routes = $state<RouteOption[]>([]);
+    let segments = $state<SegmentOption[]>([]);
     let schedules = $state<Schedule[]>([]);
     let routeId = $state(0);
+    let segmentId = $state(0);
     let scheduleKey = $state('');
     let selectedSeats = $state<string[]>([]);
     let passengerNames = $state<Record<string, string>>({});
@@ -97,8 +120,13 @@
         schedules.find((item) => `${item.id}-${item.unit}` === scheduleKey) ??
             null,
     );
+    const selectedSegment = $derived(
+        segments.find((item) => item.id === segmentId) ?? null,
+    );
     const selectedRoute = $derived(
-        routes.find((item) => item.id === routeId) ?? null,
+        routes.find(
+            (item) => item.id === (selectedSegment?.route_id ?? routeId),
+        ) ?? null,
     );
 
     onMount(() => {
@@ -165,6 +193,11 @@
                 query.set('route_id', String(routeId));
             }
 
+            if (segmentId > 0) {
+                query.set('segment_id', String(segmentId));
+                query.delete('route_id');
+            }
+
             const response = await fetch(
                 `/api/public/booking/${tenant.slug}/availability?${query.toString()}`,
                 { headers: { Accept: 'application/json' } },
@@ -176,7 +209,9 @@
             }
 
             routes = payload.routes ?? [];
+            segments = payload.segments ?? [];
             schedules = payload.schedules ?? [];
+            routeId = Number(payload.selected_route_id ?? routeId ?? 0);
         } catch (cause) {
             error =
                 cause instanceof Error
@@ -190,11 +225,14 @@
     function changeDate(value: string) {
         dateValue = value;
         routeId = 0;
+        segmentId = 0;
         void loadAvailability();
     }
 
-    function changeRoute(value: string) {
-        routeId = Number(value);
+    function changeSegment(value: string) {
+        segmentId = Number(value);
+        const segment = segments.find((item) => item.id === segmentId);
+        routeId = segment?.route_id ?? 0;
         void loadAvailability();
     }
 
@@ -239,6 +277,21 @@
     function availableSeatCount(schedule: Schedule): number {
         return schedule.seats.filter((seat) => seat.status === 'available')
             .length;
+    }
+
+    function formatRupiah(value: number): string {
+        return `Rp ${Math.max(0, Number(value || 0)).toLocaleString('id-ID')}`;
+    }
+
+    function pickupTimesLabel(times: string[]): string {
+        return times.filter(Boolean).join(', ');
+    }
+
+    function segmentOptionLabel(segment: SegmentOption): string {
+        const pickup = pickupTimesLabel(segment.pickup_times);
+        const price = formatRupiah(segment.price);
+
+        return `${segment.label}${pickup ? ` · Pickup ${pickup}` : ''} · ${price}`;
     }
 
     function layoutRows(schedule: Schedule): LayoutRow[] {
@@ -324,8 +377,12 @@
     function continueToDetails() {
         error = '';
 
-        if (!selectedSchedule || selectedSeats.length === 0) {
-            error = 'Pilih jadwal dan minimal satu kursi.';
+        if (
+            !selectedSegment ||
+            !selectedSchedule ||
+            selectedSeats.length === 0
+        ) {
+            error = 'Pilih tujuan, jadwal, dan minimal satu kursi.';
 
             return;
         }
@@ -371,6 +428,7 @@
                     },
                     body: JSON.stringify({
                         route_id: selectedRoute.id,
+                        segment_id: selectedSegment?.id,
                         schedule_id: selectedSchedule.id,
                         tanggal: dateValue,
                         unit: selectedSchedule.unit,
@@ -546,26 +604,31 @@
                     class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                 >
                     <label
-                        for="public-route"
+                        for="public-segment"
                         class="mb-3 flex items-center gap-2 text-sm font-black"
                         ><MapPin class="h-4 w-4 text-emerald-600" /> Mau ke mana?</label
                     >
                     <select
-                        id="public-route"
-                        value={routeId}
+                        id="public-segment"
+                        value={segmentId}
                         onchange={(event) =>
-                            changeRoute(event.currentTarget.value)}
+                            changeSegment(event.currentTarget.value)}
                         class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     >
-                        <option value={0}>Pilih rute</option>
-                        {#each routes as route (route.id)}
-                            <option value={route.id}
-                                >{route.origin && route.destination
-                                    ? `${route.origin} → ${route.destination}`
-                                    : route.name}</option
+                        <option value={0}>Pilih tujuan</option>
+                        {#each segments as segment (segment.id)}
+                            <option value={segment.id}
+                                >{segmentOptionLabel(segment)}</option
                             >
                         {/each}
                     </select>
+                    {#if segments.length === 0}
+                        <p
+                            class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                        >
+                            Belum ada tujuan segment yang tersedia.
+                        </p>
+                    {/if}
                 </div>
                 {#if loading}
                     <div
@@ -573,10 +636,31 @@
                     >
                         <RefreshCw class="h-4 w-4 animate-spin" /> Memuat jadwal...
                     </div>
-                {:else if routeId > 0}
+                {:else if selectedSegment}
                     <div
                         class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                     >
+                        <div
+                            class="mb-4 rounded-2xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800"
+                        >
+                            <p
+                                class="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
+                            >
+                                Tujuan dipilih
+                            </p>
+                            <p class="mt-1 text-sm font-black">
+                                {selectedSegment.label}
+                            </p>
+                            <p
+                                class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                            >
+                                Armada dari rute induk:
+                                {selectedRoute?.origin &&
+                                selectedRoute?.destination
+                                    ? `${selectedRoute.origin} → ${selectedRoute.destination}`
+                                    : selectedSegment.route_name}
+                            </p>
+                        </div>
                         <label
                             for="public-schedule"
                             class="mb-3 flex items-center gap-2 text-sm font-black"
@@ -625,6 +709,21 @@
                                     <h3 class="mt-1 text-lg font-black">
                                         {selectedSchedule.jam} · {selectedSchedule.unit_label}
                                     </h3>
+                                    <p
+                                        class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                    >
+                                        Pickup {selectedSchedule.segment
+                                            ?.pickup_time ||
+                                            pickupTimesLabel(
+                                                selectedSegment?.pickup_times ??
+                                                    [],
+                                            ) ||
+                                            '-'}
+                                        · {formatRupiah(
+                                            selectedSchedule.segment?.price ??
+                                                selectedSegment.price,
+                                        )}
+                                    </p>
                                 </div>
                                 <span
                                     class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
@@ -947,6 +1046,17 @@
                         <p
                             class="mt-2 text-base font-black text-emerald-950 dark:text-emerald-100"
                         >
+                            {selectedSegment?.label}
+                        </p>
+                        <p
+                            class="text-xs font-semibold text-emerald-700 dark:text-emerald-300"
+                        >
+                            Rute induk: {selectedRoute?.name ||
+                                selectedSegment?.route_name}
+                        </p>
+                        <p
+                            class="mt-1 text-sm font-black text-emerald-950 dark:text-emerald-100"
+                        >
                             {selectedRoute?.origin} → {selectedRoute?.destination}
                         </p>
                         <p
@@ -954,7 +1064,17 @@
                         >
                             {formatDateLabel(dateValue)} ·
                             {selectedSchedule?.jam} ·
-                            {selectedSchedule?.unit_label}
+                            {selectedSchedule?.unit_label} · Pickup
+                            {selectedSchedule?.segment?.pickup_time ||
+                                pickupTimesLabel(
+                                    selectedSegment?.pickup_times ?? [],
+                                ) ||
+                                '-'}
+                            · {formatRupiah(
+                                selectedSchedule?.segment?.price ??
+                                    selectedSegment?.price ??
+                                    0,
+                            )}
                         </p>
                     </div>
 

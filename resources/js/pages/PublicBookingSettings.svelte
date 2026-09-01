@@ -23,6 +23,7 @@
             name: string;
             slug: string;
             phone: string;
+            whatsapp: string;
             logo_url: string | null;
             status: string;
         } | null;
@@ -73,7 +74,10 @@
                     'Content-Type': 'application/json',
                     'X-XSRF-TOKEN': csrfToken(),
                 },
-                body: JSON.stringify({ enabled: !settings.enabled }),
+                body: JSON.stringify({
+                    enabled: !settings.enabled,
+                    whatsapp: settings.tenant?.whatsapp ?? '',
+                }),
             });
             const payload = await response.json();
 
@@ -85,6 +89,46 @@
             message = settings.enabled
                 ? 'Booking online aktif.'
                 : 'Booking online dinonaktifkan.';
+        } catch (cause) {
+            error =
+                cause instanceof Error
+                    ? cause.message
+                    : 'Pengaturan gagal disimpan.';
+        } finally {
+            saving = false;
+        }
+    }
+
+    async function saveWhatsapp() {
+        if (!settings.tenant || saving) {
+            return;
+        }
+
+        saving = true;
+        message = '';
+        error = '';
+
+        try {
+            const response = await fetch('/api/admin/public-booking-settings', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': csrfToken(),
+                },
+                body: JSON.stringify({
+                    enabled: settings.enabled,
+                    whatsapp: settings.tenant.whatsapp,
+                }),
+            });
+            const payload = await response.json();
+
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.error ?? 'Pengaturan gagal disimpan.');
+            }
+
+            settings = payload.settings;
+            message = 'Nomor WhatsApp booking berhasil disimpan.';
         } catch (cause) {
             error =
                 cause instanceof Error
@@ -331,6 +375,34 @@
                             class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow transition"
                         ></span></button
                     >
+                </div>
+                <div class="rounded-2xl border border-slate-200 p-4">
+                    <label
+                        for="booking-whatsapp"
+                        class="mb-2 block text-sm font-black"
+                        >Nomor WhatsApp penerima booking</label
+                    >
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <input
+                            id="booking-whatsapp"
+                            type="tel"
+                            bind:value={settings.tenant.whatsapp}
+                            placeholder="08xxxxxxxxxx"
+                            class="h-11 min-w-0 flex-1 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm"
+                        />
+                        <button
+                            type="button"
+                            onclick={saveWhatsapp}
+                            disabled={saving}
+                            class="flex h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {saving ? 'Menyimpan...' : 'Simpan nomor'}
+                        </button>
+                    </div>
+                    <p class="mt-2 text-xs text-muted-foreground">
+                        Nomor ini menerima detail request dari pelanggan publik.
+                        Kosongkan untuk menyembunyikan tombol WhatsApp.
+                    </p>
                 </div>
                 <div>
                     <label

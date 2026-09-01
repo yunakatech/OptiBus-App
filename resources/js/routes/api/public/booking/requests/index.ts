@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from '../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PublicBookingApiController::store
- * @see app/Http/Controllers/Api/PublicBookingApiController.php:27
+ * @see app/Http/Controllers/Api/PublicBookingApiController.php:33
  * @route '/api/public/booking/{tenantSlug}/requests'
  */
 export const store = (args: { tenantSlug: string | number } | [tenantSlug: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicBookingApiController::store
- * @see app/Http/Controllers/Api/PublicBookingApiController.php:27
+ * @see app/Http/Controllers/Api/PublicBookingApiController.php:33
  * @route '/api/public/booking/{tenantSlug}/requests'
  */
 store.url = (args: { tenantSlug: string | number } | [tenantSlug: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ store.url = (args: { tenantSlug: string | number } | [tenantSlug: string | numbe
 
 /**
 * @see \App\Http\Controllers\Api\PublicBookingApiController::store
- * @see app/Http/Controllers/Api/PublicBookingApiController.php:27
+ * @see app/Http/Controllers/Api/PublicBookingApiController.php:33
  * @route '/api/public/booking/{tenantSlug}/requests'
  */
 store.post = (args: { tenantSlug: string | number } | [tenantSlug: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -54,7 +54,7 @@ store.post = (args: { tenantSlug: string | number } | [tenantSlug: string | numb
 
     /**
 * @see \App\Http\Controllers\Api\PublicBookingApiController::store
- * @see app/Http/Controllers/Api/PublicBookingApiController.php:27
+ * @see app/Http/Controllers/Api/PublicBookingApiController.php:33
  * @route '/api/public/booking/{tenantSlug}/requests'
  */
     const storeForm = (args: { tenantSlug: string | number } | [tenantSlug: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -64,7 +64,7 @@ store.post = (args: { tenantSlug: string | number } | [tenantSlug: string | numb
 
             /**
 * @see \App\Http\Controllers\Api\PublicBookingApiController::store
- * @see app/Http/Controllers/Api/PublicBookingApiController.php:27
+ * @see app/Http/Controllers/Api/PublicBookingApiController.php:33
  * @route '/api/public/booking/{tenantSlug}/requests'
  */
         storeForm.post = (args: { tenantSlug: string | number } | [tenantSlug: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

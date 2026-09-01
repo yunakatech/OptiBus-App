@@ -134,7 +134,7 @@ update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\PublicBookingAdminController::logo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
 export const logo = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -149,7 +149,7 @@ logo.definition = {
 
 /**
 * @see \App\Http\Controllers\PublicBookingAdminController::logo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
 logo.url = (options?: RouteQueryOptions) => {
@@ -158,7 +158,7 @@ logo.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PublicBookingAdminController::logo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
 logo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -168,7 +168,7 @@ logo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\PublicBookingAdminController::logo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
     const logoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -178,7 +178,7 @@ logo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\PublicBookingAdminController::logo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
         logoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

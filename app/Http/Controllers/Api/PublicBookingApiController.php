@@ -16,11 +16,17 @@ class PublicBookingApiController extends Controller
         $data = $request->validate([
             'tanggal' => ['required', 'date_format:Y-m-d'],
             'route_id' => ['nullable', 'integer', 'min:0'],
+            'segment_id' => ['nullable', 'integer', 'min:0'],
         ]);
 
         return response()->json([
             'success' => true,
-            ...$this->bookingService->availability($tenantSlug, $data['tanggal'], (int) ($data['route_id'] ?? 0)),
+            ...$this->bookingService->availability(
+                $tenantSlug,
+                $data['tanggal'],
+                (int) ($data['route_id'] ?? 0),
+                (int) ($data['segment_id'] ?? 0),
+            ),
         ]);
     }
 
@@ -28,7 +34,8 @@ class PublicBookingApiController extends Controller
     {
         $data = $request->validate([
             'website' => ['nullable', 'string', 'max:255'],
-            'route_id' => ['required', 'integer', 'min:1'],
+            'route_id' => ['nullable', 'integer', 'min:0'],
+            'segment_id' => ['nullable', 'integer', 'min:1'],
             'schedule_id' => ['required', 'integer', 'min:1'],
             'tanggal' => ['required', 'date_format:Y-m-d'],
             'unit' => ['required', 'integer', 'min:1'],

@@ -290,7 +290,7 @@ updateSettings.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
     updateSettings.form = updateSettingsForm
 /**
 * @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
 export const uploadLogo = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -305,7 +305,7 @@ uploadLogo.definition = {
 
 /**
 * @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
 uploadLogo.url = (options?: RouteQueryOptions) => {
@@ -314,7 +314,7 @@ uploadLogo.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
 uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -324,7 +324,7 @@ uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
     const uploadLogoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -334,7 +334,7 @@ uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\PublicBookingAdminController::uploadLogo
- * @see app/Http/Controllers/PublicBookingAdminController.php:43
+ * @see app/Http/Controllers/PublicBookingAdminController.php:49
  * @route '/api/admin/public-booking-settings/logo'
  */
         uploadLogoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
