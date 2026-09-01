@@ -484,7 +484,7 @@
                 <div
                     class="mt-6 flex items-center gap-2 text-[11px] font-bold text-slate-400"
                 >
-                    {#each ['Tanggal', 'Kursi', 'Data', 'Kirim'] as label, index (label)}
+                    {#each ['Tanggal', 'Kursi', 'Data', 'Review'] as label, index (label)}
                         <div
                             class:flex-1={index < 3}
                             class="flex items-center gap-2"
@@ -773,9 +773,7 @@
                         >
                             Langkah 3 dari 4
                         </p>
-                        <h2 class="text-2xl font-black">
-                            Lengkapi data
-                        </h2>
+                        <h2 class="text-2xl font-black">Lengkapi data</h2>
                         <p class="mt-1 text-sm font-semibold text-slate-500">
                             Nama penumpang diisi sesuai kursi yang dipilih.
                         </p>
@@ -901,37 +899,174 @@
                         onclick={() => (step = 2)}
                         class="flex h-12 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-black"
                         ><ArrowLeft class="h-4 w-4" /> Kembali</button
-                    >{#if step === 3}<button
-                            type="button"
-                            onclick={continueToReview}
-                            class="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-700 text-sm font-black text-white"
-                            >Review <ArrowRight class="h-4 w-4" /></button
-                        >{:else}<button
-                            type="button"
-                            onclick={submitRequest}
-                            disabled={submitting}
-                            class="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-700 text-sm font-black text-white disabled:opacity-50"
-                            >{submitting
-                                ? 'Mengirim...'
-                                : 'Kirim request'}</button
-                        >{/if}
+                    ><button
+                        type="button"
+                        onclick={continueToReview}
+                        class="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-700 text-sm font-black text-white"
+                        >Review booking <ArrowRight class="h-4 w-4" /></button
+                    >
                 </div>
             </div>
-            {#if step === 4}<div
-                    class="mt-4 rounded-3xl border border-emerald-100 bg-emerald-50 p-4 text-sm"
+        {:else if step === 4}
+            <section
+                class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+                <div class="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                        <p
+                            class="text-xs font-bold uppercase tracking-widest text-emerald-700"
+                        >
+                            Langkah 4 dari 4
+                        </p>
+                        <h2 class="mt-1 text-2xl font-black">Review booking</h2>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">
+                            Pastikan data sudah benar sebelum dikirim.
+                        </p>
+                    </div>
+                    <Ticket class="h-7 w-7 text-emerald-600" />
+                </div>
+
+                <div class="space-y-3">
+                    <div
+                        class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4"
+                    >
+                        <p
+                            class="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700"
+                        >
+                            Perjalanan
+                        </p>
+                        <p class="mt-2 text-base font-black text-emerald-950">
+                            {selectedRoute?.origin} → {selectedRoute?.destination}
+                        </p>
+                        <p class="mt-1 text-sm font-semibold text-emerald-800">
+                            {formatDateLabel(dateValue)} ·
+                            {selectedSchedule?.jam} ·
+                            {selectedSchedule?.unit_label}
+                        </p>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 p-4">
+                        <p
+                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500"
+                        >
+                            Penumpang & kursi
+                        </p>
+                        <div class="mt-3 space-y-2">
+                            {#each selectedSeats as seat, passengerIndex (seat)}
+                                <div
+                                    class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5"
+                                >
+                                    <div class="min-w-0">
+                                        <p
+                                            class="truncate text-sm font-black text-slate-900"
+                                        >
+                                            {passengerNames[seat] ||
+                                                `Penumpang ${passengerIndex + 1}`}
+                                        </p>
+                                        <p
+                                            class="text-xs font-semibold text-slate-500"
+                                        >
+                                            Slot {passengerIndex + 1}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-black text-emerald-700 ring-1 ring-slate-200"
+                                        >Kursi {seat}</span
+                                    >
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 p-4">
+                        <p
+                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500"
+                        >
+                            Data pemesan
+                        </p>
+                        <dl class="mt-3 space-y-2 text-sm">
+                            <div class="flex justify-between gap-4">
+                                <dt class="font-semibold text-slate-500">
+                                    Nama
+                                </dt>
+                                <dd
+                                    class="text-right font-black text-slate-900"
+                                >
+                                    {contactName}
+                                </dd>
+                            </div>
+                            <div class="flex justify-between gap-4">
+                                <dt class="font-semibold text-slate-500">
+                                    Nomor HP
+                                </dt>
+                                <dd
+                                    class="text-right font-black text-slate-900"
+                                >
+                                    {phone}
+                                </dd>
+                            </div>
+                            <div class="flex justify-between gap-4">
+                                <dt class="font-semibold text-slate-500">
+                                    Pembayaran
+                                </dt>
+                                <dd
+                                    class="text-right font-black text-slate-900"
+                                >
+                                    {paymentMethod}
+                                </dd>
+                            </div>
+                            <div class="border-t border-slate-100 pt-2">
+                                <dt class="font-semibold text-slate-500">
+                                    Alamat penjemputan
+                                </dt>
+                                <dd
+                                    class="mt-1 font-bold leading-5 text-slate-900"
+                                >
+                                    {pickupAddress}
+                                </dd>
+                            </div>
+                            {#if notes.trim()}
+                                <div class="border-t border-slate-100 pt-2">
+                                    <dt class="font-semibold text-slate-500">
+                                        Catatan
+                                    </dt>
+                                    <dd
+                                        class="mt-1 font-bold leading-5 text-slate-900"
+                                    >
+                                        {notes}
+                                    </dd>
+                                </div>
+                            {/if}
+                        </dl>
+                    </div>
+                </div>
+
+                <div
+                    class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-800"
                 >
-                    <p class="font-black text-emerald-900">
-                        Periksa sebelum dikirim
-                    </p>
-                    <p class="mt-1 text-emerald-800">
-                        {selectedRoute?.name} · {dateValue} · {selectedSchedule?.jam}
-                        · Kursi {selectedSeats.join(', ')}
-                    </p>
-                    <p class="mt-1 text-emerald-800">
-                        Request akan ditahan 15 menit sambil menunggu konfirmasi
-                        admin.
-                    </p>
-                </div>{/if}
+                    Setelah dikirim, kursi ditahan selama 15 menit sambil
+                    menunggu konfirmasi admin pool.
+                </div>
+            </section>
+            <div
+                class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur"
+            >
+                <div class="mx-auto flex max-w-xl justify-between gap-3">
+                    <button
+                        type="button"
+                        onclick={() => (step = 3)}
+                        class="flex h-12 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-black"
+                        ><Pencil class="h-4 w-4" /> Edit data</button
+                    >
+                    <button
+                        type="button"
+                        onclick={submitRequest}
+                        disabled={submitting}
+                        class="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-700 text-sm font-black text-white disabled:opacity-50"
+                        >{submitting ? 'Mengirim...' : 'Kirim request'}</button
+                    >
+                </div>
+            </div>
         {:else}
             <section
                 class="rounded-[2rem] bg-slate-950 p-6 text-center text-white shadow-xl"
