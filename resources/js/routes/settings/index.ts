@@ -79,7 +79,7 @@ bookingOnline.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
                     }),
             method: 'get',
         })
-
+    
     bookingOnline.form = bookingOnlineForm
 /**
 * @see \App\Http\Controllers\AdminOpsController::__invoke

@@ -67,8 +67,8 @@
             const payload = await response.json();
 
             if (!response.ok || !payload.success) {
-throw new Error(payload.error ?? 'Pengaturan gagal disimpan.');
-}
+                throw new Error(payload.error ?? 'Pengaturan gagal disimpan.');
+            }
 
             settings = payload.settings;
             message = settings.enabled
@@ -86,8 +86,8 @@ throw new Error(payload.error ?? 'Pengaturan gagal disimpan.');
 
     async function copyUrl() {
         if (!settings.url) {
-return;
-}
+            return;
+        }
 
         await navigator.clipboard?.writeText(settings.url);
         copied = true;

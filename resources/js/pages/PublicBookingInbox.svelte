@@ -60,8 +60,8 @@
             const payload = await response.json();
 
             if (!response.ok || !payload.success) {
-throw new Error(payload.error ?? 'Inbox gagal dimuat.');
-}
+                throw new Error(payload.error ?? 'Inbox gagal dimuat.');
+            }
 
             requests = payload.requests ?? [];
         } catch (cause) {
@@ -78,8 +78,8 @@ throw new Error(payload.error ?? 'Inbox gagal dimuat.');
                 `Setujui request ${item.request_code} menjadi booking resmi?`,
             )
         ) {
-return;
-}
+            return;
+        }
 
         await action(
             `/api/admin/public-booking-requests/${item.id}/approve`,
@@ -92,8 +92,8 @@ return;
         const reason = prompt('Alasan penolakan:');
 
         if (!reason?.trim()) {
-return;
-}
+            return;
+        }
 
         await action(
             `/api/admin/public-booking-requests/${item.id}/reject`,

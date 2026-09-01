@@ -8,7 +8,9 @@ import ChartColumn from 'lucide-svelte/icons/chart-column';
 import CreditCard from 'lucide-svelte/icons/credit-card';
 import History from 'lucide-svelte/icons/history';
 import IdCard from 'lucide-svelte/icons/id-card';
+import Inbox from 'lucide-svelte/icons/inbox';
 import LayoutGrid from 'lucide-svelte/icons/layout-grid';
+import MessageCircle from 'lucide-svelte/icons/message-circle';
 import Package from 'lucide-svelte/icons/package';
 import Plus from 'lucide-svelte/icons/plus';
 import Route from 'lucide-svelte/icons/route';
@@ -67,6 +69,7 @@ const normalizeNavigationPath = (href: string | null | undefined): string => {
     }
 
     const value = toUrl(href).trim();
+
     if (value === '') {
         return '';
     }
@@ -84,6 +87,7 @@ export function shouldPrefetchNavigationHref(
     href: string | null | undefined,
 ): boolean {
     const path = normalizeNavigationPath(href);
+
     if (path === '' || path === '/') {
         return false;
     }
@@ -116,6 +120,12 @@ const operasionalNavItems: NavItem[] = [
         icon: Plus,
         permission: 'booking.view',
         hideInDesktopSidebar: true,
+    },
+    {
+        title: 'Inbox Booking',
+        href: '/booking-requests',
+        icon: Inbox,
+        permission: 'booking.view',
     },
     {
         title: 'Carter',
@@ -231,6 +241,12 @@ const tenantNavItems: NavItem[] = [
         href: '/settings/users',
         icon: UserCog,
         permission: 'user.manage',
+    },
+    {
+        title: 'Booking Online',
+        href: '/settings/booking-online',
+        icon: MessageCircle,
+        permission: 'booking.public.manage',
     },
     {
         title: 'Logs',
@@ -365,6 +381,7 @@ export function getVisibleNavSections(auth: AuthLike): NavSection[] {
                       ...section,
                       items: section.items.filter((item) => {
                           const href = toUrl(item.href);
+
                           return (
                               href === '/platform/dashboard' ||
                               href === '/platform/saas'
