@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../wayfinder'
+import publicMethod from './public'
 import webhooks from './webhooks'
 import build from './build'
 import bookings from './bookings'
@@ -84,7 +85,8 @@ plans.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     plans.form = plansForm
 const api = {
-    plans: Object.assign(plans, plans),
+    public: Object.assign(publicMethod, publicMethod),
+plans: Object.assign(plans, plans),
 webhooks: Object.assign(webhooks, webhooks),
 build: Object.assign(build, build),
 bookings: Object.assign(bookings, bookings),

@@ -1,3 +1,5 @@
+import publicBookingRequests from './public-booking-requests'
+import publicBookingSettings from './public-booking-settings'
 import payments from './payments'
 import routes from './routes'
 import schedules from './schedules'
@@ -29,7 +31,9 @@ import plans from './plans'
 import invoices from './invoices'
 import paymentSettings from './payment-settings'
 const admin = {
-    payments: Object.assign(payments, payments),
+    publicBookingRequests: Object.assign(publicBookingRequests, publicBookingRequests),
+publicBookingSettings: Object.assign(publicBookingSettings, publicBookingSettings),
+payments: Object.assign(payments, payments),
 routes: Object.assign(routes, routes),
 schedules: Object.assign(schedules, schedules),
 drivers: Object.assign(drivers, drivers),

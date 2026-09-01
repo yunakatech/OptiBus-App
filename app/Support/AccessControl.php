@@ -20,6 +20,7 @@ class AccessControl
             'booking.update' => ['name' => 'Edit Booking', 'group' => 'Booking'],
             'booking.delete' => ['name' => 'Hapus atau Cancel Booking', 'group' => 'Booking'],
             'booking.print' => ['name' => 'Cetak Tiket dan Manifest', 'group' => 'Booking'],
+            'booking.public.manage' => ['name' => 'Kelola Booking Publik', 'group' => 'Booking'],
             'charter.view' => ['name' => 'Lihat Carter', 'group' => 'Carter'],
             'charter.create' => ['name' => 'Tambah Carter', 'group' => 'Carter'],
             'charter.update' => ['name' => 'Edit Carter', 'group' => 'Carter'],
@@ -94,6 +95,7 @@ class AccessControl
                 'permissions' => [
                     'dashboard.view',
                     'booking.view', 'booking.create', 'booking.update', 'booking.delete', 'booking.print',
+                    'booking.public.manage',
                     'charter.view', 'charter.create', 'charter.update', 'charter.delete', 'charter.print',
                     'luggage.view', 'luggage.create', 'luggage.update', 'luggage.delete', 'luggage.print', 'luggage.tracking', 'luggage.incident', 'luggage.claim', 'luggage.category.manage', 'luggage.tariff.manage', 'luggage.tariff.override',
                     'customer.view', 'customer.create', 'customer.update', 'customer.delete', 'customer.import',

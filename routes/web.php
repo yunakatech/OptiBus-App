@@ -5,10 +5,12 @@ use App\Http\Controllers\AdminOpsFlowsController;
 use App\Http\Controllers\AdminOpsMasterController;
 use App\Http\Controllers\AdminOpsSaasController;
 use App\Http\Controllers\Api\AdminOpsApiController;
+use App\Http\Controllers\Api\AdminPublicBookingApiController;
 use App\Http\Controllers\Api\BookingApiController;
 use App\Http\Controllers\Api\OperationsApiController;
 use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\Api\PublicApiController;
+use App\Http\Controllers\Api\PublicBookingApiController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\BookingController;
@@ -17,6 +19,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LuggageDocumentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlatformDashboardController;
+use App\Http\Controllers\PublicBookingAdminController;
+use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SoloDriverController;
 use App\Http\Controllers\StaticAssetController;
@@ -42,6 +46,19 @@ Route::get('/', [PublicController::class, 'welcome'])->name('home');
 
 // Public pricing page — no auth required
 Route::get('pricing', [PublicController::class, 'pricing'])->name('pricing');
+
+// Public tenant booking — no authentication required.
+Route::get('book/{tenantSlug}', [PublicBookingController::class, 'show'])
+    ->where('tenantSlug', '[a-z0-9-]+')
+    ->name('public.booking.show');
+Route::get('api/public/booking/{tenantSlug}/availability', [PublicBookingApiController::class, 'availability'])
+    ->where('tenantSlug', '[a-z0-9-]+')
+    ->middleware('throttle:60,1')
+    ->name('api.public.booking.availability');
+Route::post('api/public/booking/{tenantSlug}/requests', [PublicBookingApiController::class, 'store'])
+    ->where('tenantSlug', '[a-z0-9-]+')
+    ->middleware('throttle:10,1')
+    ->name('api.public.booking.requests.store');
 
 // Public API — no auth required
 Route::get('api/plans', [PublicApiController::class, 'plans'])->name('api.plans');
@@ -71,6 +88,8 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('bookings/ticket/{bookingId}/print', [BookingController::class, 'printTicket'])->middleware('permission:booking.print')->middleware('feature:booking.ticket_print')->name('bookings.ticket.print');
     Route::get('bookings/ticket/{bookingId}/pdf', [BookingController::class, 'downloadTicketPdf'])->middleware('permission:booking.print')->middleware('feature:booking.ticket_print')->name('bookings.ticket.pdf');
     Route::get('booking-console', BookingController::class)->middleware('permission:booking.view')->name('booking-console.index');
+    Route::get('booking-requests', [PublicBookingAdminController::class, 'inbox'])->middleware('permission:booking.view')->name('booking-requests.index');
+    Route::get('settings/booking-online', [PublicBookingAdminController::class, 'settings'])->middleware('permission:booking.public.manage')->name('settings.booking-online');
     Route::get('payments', PaymentController::class)->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.index');
     Route::get('payments/export', [PaymentController::class, 'export'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->middleware('feature:report.export_csv')->name('payments.export');
     Route::get('charters', AdminOpsFlowsController::class)->middleware('permission:charter.view')->defaults('tab', 'charters')->defaults('locked', true)->name('charters.index');
@@ -268,6 +287,11 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     });
 
     Route::prefix('api/admin')->name('api.admin.')->middleware(RedirectBrowserApiRequests::class)->group(function () {
+        Route::get('public-booking-requests', [AdminPublicBookingApiController::class, 'index'])->middleware('permission:booking.view')->name('public-booking-requests.index');
+        Route::post('public-booking-requests/{id}/approve', [AdminPublicBookingApiController::class, 'approve'])->middleware('permission:booking.create')->name('public-booking-requests.approve');
+        Route::post('public-booking-requests/{id}/reject', [AdminPublicBookingApiController::class, 'reject'])->middleware('permission:booking.create')->name('public-booking-requests.reject');
+        Route::get('public-booking-settings', [PublicBookingAdminController::class, 'settingsData'])->middleware('permission:booking.public.manage')->name('public-booking-settings.index');
+        Route::post('public-booking-settings', [PublicBookingAdminController::class, 'updateSettings'])->middleware('permission:booking.public.manage')->name('public-booking-settings.update');
         Route::post('payments/bulk', [PaymentController::class, 'bulkUpdate'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.bulk');
         Route::post('payments/{source}/{id}', [PaymentController::class, 'update'])->middleware('permission:payment.update,booking.update,charter.update,luggage.update')->name('payments.update');
 

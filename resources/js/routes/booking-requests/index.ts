@@ -1,7 +1,8 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from '../../wayfinder'
 /**
- * @see routes/web.php:83
- * @route '/menu'
+* @see \App\Http\Controllers\PublicBookingAdminController::index
+ * @see app/Http/Controllers/PublicBookingAdminController.php:22
+ * @route '/booking-requests'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
@@ -10,28 +11,31 @@ export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 index.definition = {
     methods: ["get","head"],
-    url: '/menu',
+    url: '/booking-requests',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see routes/web.php:83
- * @route '/menu'
+* @see \App\Http\Controllers\PublicBookingAdminController::index
+ * @see app/Http/Controllers/PublicBookingAdminController.php:22
+ * @route '/booking-requests'
  */
 index.url = (options?: RouteQueryOptions) => {
     return index.definition.url + queryParams(options)
 }
 
 /**
- * @see routes/web.php:83
- * @route '/menu'
+* @see \App\Http\Controllers\PublicBookingAdminController::index
+ * @see app/Http/Controllers/PublicBookingAdminController.php:22
+ * @route '/booking-requests'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
     method: 'get',
 })
 /**
- * @see routes/web.php:83
- * @route '/menu'
+* @see \App\Http\Controllers\PublicBookingAdminController::index
+ * @see app/Http/Controllers/PublicBookingAdminController.php:22
+ * @route '/booking-requests'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
@@ -39,8 +43,9 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
- * @see routes/web.php:83
- * @route '/menu'
+* @see \App\Http\Controllers\PublicBookingAdminController::index
+ * @see app/Http/Controllers/PublicBookingAdminController.php:22
+ * @route '/booking-requests'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: index.url(options),
@@ -48,16 +53,18 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
- * @see routes/web.php:83
- * @route '/menu'
+* @see \App\Http\Controllers\PublicBookingAdminController::index
+ * @see app/Http/Controllers/PublicBookingAdminController.php:22
+ * @route '/booking-requests'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url(options),
             method: 'get',
         })
             /**
- * @see routes/web.php:83
- * @route '/menu'
+* @see \App\Http\Controllers\PublicBookingAdminController::index
+ * @see app/Http/Controllers/PublicBookingAdminController.php:22
+ * @route '/booking-requests'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url({
@@ -70,8 +77,8 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     index.form = indexForm
-const menu = {
+const bookingRequests = {
     index: Object.assign(index, index),
 }
 
-export default menu
+export default bookingRequests

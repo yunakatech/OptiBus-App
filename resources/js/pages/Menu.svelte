@@ -1,6 +1,5 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
-    import { onMount } from 'svelte';
     import Briefcase from 'lucide-svelte/icons/briefcase';
     import Building2 from 'lucide-svelte/icons/building-2';
     import BusFront from 'lucide-svelte/icons/bus-front';
@@ -11,22 +10,24 @@
     import CreditCard from 'lucide-svelte/icons/credit-card';
     import History from 'lucide-svelte/icons/history';
     import IdCard from 'lucide-svelte/icons/id-card';
+    import Inbox from 'lucide-svelte/icons/inbox';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
-    import MessageCircle from 'lucide-svelte/icons/message-circle';
     import MapPinned from 'lucide-svelte/icons/map-pinned';
-    import Plus from 'lucide-svelte/icons/plus';
+    import MessageCircle from 'lucide-svelte/icons/message-circle';
     import Package from 'lucide-svelte/icons/package';
+    import Plus from 'lucide-svelte/icons/plus';
     import Route from 'lucide-svelte/icons/route';
     import ShieldCheck from 'lucide-svelte/icons/shield-check';
     import Truck from 'lucide-svelte/icons/truck';
     import UserCog from 'lucide-svelte/icons/user-cog';
     import Users from 'lucide-svelte/icons/users';
+    import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
     import { hasPermission } from '@/lib/access';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
-    import { shouldPrefetchNavigationHref } from '@/lib/navigation';
     import { mobileHiddenMenuHrefs } from '@/lib/mobileNavigation';
+    import { shouldPrefetchNavigationHref } from '@/lib/navigation';
     import { getSupportWhatsappHref } from '@/lib/support';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
@@ -68,6 +69,12 @@
                     title: 'Console',
                     href: '/booking-console',
                     icon: Plus,
+                    permission: 'booking.view',
+                },
+                {
+                    title: 'Inbox Booking',
+                    href: '/booking-requests',
+                    icon: Inbox,
                     permission: 'booking.view',
                 },
                 {
@@ -188,6 +195,12 @@
                     permission: 'user.manage',
                 },
                 {
+                    title: 'Booking Online',
+                    href: '/settings/booking-online',
+                    icon: MessageCircle,
+                    permission: 'booking.public.manage',
+                },
+                {
                     title: 'Logs',
                     href: '/settings/logs',
                     icon: History,
@@ -282,6 +295,7 @@
                           ...section,
                           items: section.items.filter((item) => {
                               const href = toUrl(item.href);
+
                               return (
                                   href === '/platform/dashboard' ||
                                   href === '/platform/saas'
