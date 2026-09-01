@@ -565,7 +565,7 @@ class PublicBookingService
         for ($unit = 1; $unit <= $units; $unit++) {
             $booked = $this->bookingSeatsQuery($tenantId, (int) $route['id'], (string) $route['name'], $schedule, $date, $unit)->get()->map(fn ($row): string => $this->normalizeSeat((string) $row->seat))->unique()->all();
             $held = $this->heldSeatsQuery($tenantId, (int) $route['id'], $schedule, $date, $unit)->get()->map(fn ($row): string => $this->normalizeSeat((string) $row->seat))->unique()->all();
-            $layout = $this->decodeLayout($schedule->layout ?? null);
+            $layout = $this->scheduleLayout($schedule);
             $payload[] = [
                 'id' => (int) $schedule->id,
                 'jam' => substr((string) $schedule->jam, 0, 5),
@@ -693,10 +693,7 @@ class PublicBookingService
     /** @return array<int, string> */
     private function seatTokens(object $schedule): array
     {
-        $layout = $this->decodeLayout($schedule->layout ?? null);
-        if (empty($layout) && ! empty($schedule->unit_id) && SchemaCache::hasTable('category_armada')) {
-            $layout = $this->decodeLayout(DB::table('category_armada')->where('id', (int) $schedule->unit_id)->value('layout'));
-        }
+        $layout = $this->scheduleLayout($schedule);
         $tokens = [];
         foreach ($layout as $row) {
             if (! is_array($row)) {
@@ -728,6 +725,21 @@ class PublicBookingService
         usort($tokens, fn (string $a, string $b): int => (is_numeric($a) && is_numeric($b)) ? ((int) $a <=> (int) $b) : strcmp($a, $b));
 
         return $tokens;
+    }
+
+    /** @return array<int, mixed> */
+    private function scheduleLayout(object $schedule): array
+    {
+        $layout = $this->decodeLayout($schedule->layout ?? null);
+        if (empty($layout) && ! empty($schedule->unit_id) && SchemaCache::hasTable('category_armada')) {
+            $layout = $this->decodeLayout(
+                DB::table('category_armada')
+                    ->where('id', (int) $schedule->unit_id)
+                    ->value('layout'),
+            );
+        }
+
+        return $layout;
     }
 
     private function assertAdminRequestAccess(?object $request, int $userId): void
