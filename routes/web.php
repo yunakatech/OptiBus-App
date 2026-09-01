@@ -316,6 +316,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
 
         Route::get('segments', [AdminOpsApiController::class, 'segmentsIndex'])->middleware('permission:master.view')->name('segments.index');
         Route::post('segments', [AdminOpsApiController::class, 'segmentsSave'])->middleware('permission:master.manage')->name('segments.save');
+        Route::post('segments/{id}/public-visibility', [AdminOpsApiController::class, 'segmentsPublicBookingVisibility'])->middleware('permission:master.manage')->name('segments.public-visibility');
         Route::delete('segments/{id}', [AdminOpsApiController::class, 'segmentsDelete'])->middleware('permission:master.manage')->name('segments.delete');
 
         Route::get('customers/template', [AdminOpsApiController::class, 'customersTemplate'])->middleware('permission:customer.import')->name('customers.template');

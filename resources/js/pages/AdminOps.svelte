@@ -183,6 +183,7 @@
         jam: string | null;
         jam_pickups: string[] | null;
         harga: number;
+        public_booking_enabled: boolean;
         route_name: string | null;
     };
     type CustomerRow = {
@@ -997,6 +998,7 @@
     let scheduleTimeInput = $state<HTMLInputElement | null>(null);
     let scheduleTimePicker: FlatpickrInstance | null = null;
     let segmentTimePickers: FlatpickrInstance[] = [];
+    let segmentVisibilityUpdatingId = $state<number | null>(null);
     let reportFromInput = $state<HTMLInputElement | null>(null);
     let reportToInput = $state<HTMLInputElement | null>(null);
     let reportFromPicker: FlatpickrInstance | null = null;
@@ -5070,6 +5072,38 @@
         resetSegmentForm(normalizedRouteId);
     };
 
+    const toggleSegmentPublicBooking = async (
+        segment: SegmentRow,
+        enabled: boolean,
+    ) => {
+        if (segmentVisibilityUpdatingId !== null) {
+            return;
+        }
+
+        segmentVisibilityUpdatingId = segment.id;
+        message = '';
+        error = '';
+
+        try {
+            await api(
+                'POST',
+                `/api/admin/segments/${segment.id}/public-visibility`,
+                { enabled },
+            );
+            message = enabled
+                ? 'Segment ditampilkan di public booking.'
+                : 'Segment disembunyikan dari public booking.';
+            await loadRoutes(false);
+        } catch (cause) {
+            error =
+                cause instanceof Error
+                    ? cause.message
+                    : 'Visibilitas segment gagal diperbarui.';
+        } finally {
+            segmentVisibilityUpdatingId = null;
+        }
+    };
+
     const openRouteSegmentComposer = (routeId: number) => {
         const normalizedRouteId = Number(routeId || 0);
 
@@ -6400,6 +6434,61 @@
                                                                 {/if}
                                                             </div>
                                                             <div
+                                                                class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3"
+                                                            >
+                                                                {#if segment.public_booking_enabled}
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
+                                                                    >
+                                                                        Tampil
+                                                                        publik
+                                                                    </Badge>
+                                                                {:else}
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                                                                    >
+                                                                        Disembunyikan
+                                                                    </Badge>
+                                                                {/if}
+                                                                {#if canWriteTab('segments')}
+                                                                    <button
+                                                                        type="button"
+                                                                        role="switch"
+                                                                        aria-checked={segment.public_booking_enabled}
+                                                                        aria-label={`${segment.public_booking_enabled ? 'Sembunyikan' : 'Tampilkan'} ${segment.rute} dari public booking`}
+                                                                        title={segment.public_booking_enabled
+                                                                            ? 'Sembunyikan dari public booking'
+                                                                            : 'Tampilkan di public booking'}
+                                                                        disabled={segmentVisibilityUpdatingId ===
+                                                                            segment.id}
+                                                                        onclick={() =>
+                                                                            void toggleSegmentPublicBooking(
+                                                                                segment,
+                                                                                !segment.public_booking_enabled,
+                                                                            )}
+                                                                        class="inline-flex min-h-9 items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-xs font-semibold transition hover:bg-muted/50 disabled:cursor-wait disabled:opacity-60"
+                                                                    >
+                                                                        <span
+                                                                            class:justify-end={segment.public_booking_enabled}
+                                                                            class="flex h-5 w-9 items-center rounded-full bg-slate-300 p-0.5 transition dark:bg-slate-700"
+                                                                        >
+                                                                            <span
+                                                                                class="h-4 w-4 rounded-full bg-white shadow-sm transition"
+
+                                                                            ></span>
+                                                                        </span>
+                                                                        {segmentVisibilityUpdatingId ===
+                                                                        segment.id
+                                                                            ? 'Menyimpan...'
+                                                                            : segment.public_booking_enabled
+                                                                              ? 'Publik'
+                                                                              : 'Sembunyikan'}
+                                                                    </button>
+                                                                {/if}
+                                                            </div>
+                                                            <div
                                                                 class="mt-2 text-sm font-semibold text-amber-800 tabular-nums"
                                                             >
                                                                 {formatCurrency(
@@ -6926,6 +7015,60 @@
                                                                         </DropdownMenuItem>
                                                                     </DropdownMenuContent>
                                                                 </DropdownMenu>
+                                                            {/if}
+                                                        </div>
+                                                        <div
+                                                            class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3"
+                                                        >
+                                                            {#if segment.public_booking_enabled}
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
+                                                                >
+                                                                    Tampil
+                                                                    publik
+                                                                </Badge>
+                                                            {:else}
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                                                                >
+                                                                    Disembunyikan
+                                                                </Badge>
+                                                            {/if}
+                                                            {#if canWriteTab('segments')}
+                                                                <button
+                                                                    type="button"
+                                                                    role="switch"
+                                                                    aria-checked={segment.public_booking_enabled}
+                                                                    aria-label={`${segment.public_booking_enabled ? 'Sembunyikan' : 'Tampilkan'} ${segment.rute} dari public booking`}
+                                                                    title={segment.public_booking_enabled
+                                                                        ? 'Sembunyikan dari public booking'
+                                                                        : 'Tampilkan di public booking'}
+                                                                    disabled={segmentVisibilityUpdatingId ===
+                                                                        segment.id}
+                                                                    onclick={() =>
+                                                                        void toggleSegmentPublicBooking(
+                                                                            segment,
+                                                                            !segment.public_booking_enabled,
+                                                                        )}
+                                                                    class="inline-flex min-h-9 items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-xs font-semibold transition hover:bg-muted/50 disabled:cursor-wait disabled:opacity-60"
+                                                                >
+                                                                    <span
+                                                                        class:justify-end={segment.public_booking_enabled}
+                                                                        class="flex h-5 w-9 items-center rounded-full bg-slate-300 p-0.5 transition dark:bg-slate-700"
+                                                                    >
+                                                                        <span
+                                                                            class="h-4 w-4 rounded-full bg-white shadow-sm transition"
+                                                                        ></span>
+                                                                    </span>
+                                                                    {segmentVisibilityUpdatingId ===
+                                                                    segment.id
+                                                                        ? 'Menyimpan...'
+                                                                        : segment.public_booking_enabled
+                                                                          ? 'Publik'
+                                                                          : 'Sembunyikan'}
+                                                                </button>
                                                             {/if}
                                                         </div>
                                                         <div

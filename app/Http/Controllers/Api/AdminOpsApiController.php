@@ -1074,6 +1074,9 @@ class AdminOpsApiController extends Controller
                     ? 's.jam_pickups'
                     : DB::raw('NULL as jam_pickups'),
                 's.harga',
+                SchemaCache::hasColumn('segments', 'public_booking_enabled')
+                    ? 's.public_booking_enabled'
+                    : DB::raw('true as public_booking_enabled'),
                 DB::raw('r.name as route_name'),
             ])
             ->orderBy('s.rute');
@@ -1133,6 +1136,54 @@ class AdminOpsApiController extends Controller
         return $this->ok([
             'segments' => $result['data'],
             'pagination' => $result['meta'],
+        ]);
+    }
+
+    public function segmentsPublicBookingVisibility(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        if (! SchemaCache::hasColumn('segments', 'public_booking_enabled')) {
+            return $this->error('Kolom visibility public booking belum tersedia. Jalankan migration database terlebih dahulu.', 422);
+        }
+
+        $query = DB::table('segments as s')
+            ->leftJoin('routes as r', 's.route_id', '=', 'r.id')
+            ->where('s.id', $id);
+        $this->applyWriteTenantScopeIfExists($query, 'segments', 's');
+        $segment = $query->first([
+            's.id',
+            's.route_id',
+            's.rute',
+            'r.name as route_name',
+        ]);
+        if (! $segment) {
+            return $this->error('Segment not found.', 404);
+        }
+
+        if (! PoolScope::canAccessRouteName((string) ($segment->route_name ?: $segment->rute))) {
+            return $this->error('Anda tidak memiliki akses ke rute ini.', 403);
+        }
+
+        $update = DB::table('segments')->where('id', $id);
+        $this->applyWriteTenantScopeIfExists($update, 'segments');
+        $update->update([
+            'public_booking_enabled' => (bool) $data['enabled'],
+        ]);
+
+        ActivityLog::write(
+            'MASTER',
+            ((bool) $data['enabled'] ? 'Segment ditampilkan' : 'Segment disembunyikan').' dari public booking',
+            (string) $segment->rute,
+            $this->activityActor(),
+            ['segment_id' => $id, 'public_booking_enabled' => (bool) $data['enabled']],
+        );
+
+        return $this->ok([
+            'id' => $id,
+            'public_booking_enabled' => (bool) $data['enabled'],
         ]);
     }
 

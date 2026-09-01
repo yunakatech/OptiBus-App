@@ -100,6 +100,40 @@ class AdminOpsApiTest extends TestCase
         $this->assertDatabaseMissing('routes', ['id' => $id]);
     }
 
+    public function test_segment_public_visibility_is_scoped_by_tenant(): void
+    {
+        $tenantA = $this->defaultTenantId();
+        $tenantB = (int) DB::table('tenants')->insertGetId([
+            'name' => 'Tenant Visibility B',
+            'slug' => 'tenant-visibility-b',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $segmentId = (int) DB::table('segments')->insertGetId([
+            'tenant_id' => $tenantA,
+            'route_id' => 0,
+            'rute' => 'TENANT A - DESTINATION',
+            'origin' => 'TENANT A',
+            'destination' => 'DESTINATION',
+            'harga' => 50000,
+            'public_booking_enabled' => true,
+            'created_at' => now(),
+        ]);
+
+        $this->actingAsSuperAdminWithTenantContext($tenantB);
+        $this->postJson(
+            route('api.admin.segments.public-visibility', ['id' => $segmentId]),
+            ['enabled' => false],
+        )->assertNotFound();
+
+        $this->assertDatabaseHas('segments', [
+            'id' => $segmentId,
+            'tenant_id' => $tenantA,
+            'public_booking_enabled' => 1,
+        ]);
+    }
+
     public function test_routes_index_repairs_unmapped_routes_for_active_pool(): void
     {
         $tenantId = DB::table('tenants')->insertGetId([
@@ -829,11 +863,29 @@ class AdminOpsApiTest extends TestCase
         $this->assertSame('PINRANG - PAREPARE', (string) ($segmentRow['rute'] ?? ''));
         $this->assertSame('07:30', (string) ($segmentRow['jam'] ?? ''));
         $this->assertSame(['07:30', '09:15'], $segmentRow['jam_pickups'] ?? []);
+        $this->assertTrue((bool) ($segmentRow['public_booking_enabled'] ?? false));
         $this->assertTrue(
             collect($segments)->contains(
                 fn (array $row) => (int) ($row['id'] ?? 0) === $segmentId,
             ),
         );
+
+        $this->postJson(
+            route('api.admin.segments.public-visibility', ['id' => $segmentId]),
+            ['enabled' => false],
+        )->assertOk()
+            ->assertJsonPath('public_booking_enabled', false);
+
+        $hiddenSegment = collect(
+            $this->getJson(route('api.admin.segments.index'))->json('segments'),
+        )->firstWhere('id', $segmentId);
+        $this->assertFalse((bool) ($hiddenSegment['public_booking_enabled'] ?? true));
+
+        $this->postJson(
+            route('api.admin.segments.public-visibility', ['id' => $segmentId]),
+            ['enabled' => true],
+        )->assertOk()
+            ->assertJsonPath('public_booking_enabled', true);
 
         $customerCreate = $this->postJson(route('api.admin.customers.save'), [
             'name' => 'RIDWAN',
