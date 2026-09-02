@@ -184,7 +184,7 @@
             type="button"
             onclick={loadRequests}
             disabled={loading}
-            class="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold"
+            class="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
             >{#if loading}<RefreshCw
                     class="h-4 w-4 animate-spin"
                 />{:else}<RefreshCw class="h-4 w-4" />{/if} Refresh</button
@@ -215,7 +215,7 @@
             </p>
         </div>{:else}<div class="grid gap-4 lg:grid-cols-2">
             {#each requests as item (item.id)}<article
-                    class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                    class="rounded-3xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                 >
                     <div class="flex items-start justify-between gap-3">
                         <div>
@@ -284,23 +284,25 @@
                                 {item.notes}
                             </p>{/if}
                     </div>
-                    <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+                    <div
+                        class="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-row"
+                    >
                         <button
                             type="button"
                             onclick={() => approve(item)}
-                            class="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 text-sm font-black text-white"
+                            class="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-800 active:scale-[0.98]"
                             ><Check class="h-4 w-4" /> Approve</button
                         ><button
                             type="button"
                             onclick={() => reject(item)}
-                            class="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 text-sm font-black text-red-700"
+                            class="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-100 active:scale-[0.98] dark:border-red-900/80 dark:bg-red-950/30 dark:text-red-200 dark:hover:bg-red-950/50"
                             ><X class="h-4 w-4" /> Tolak</button
                         ><a
                             href={whatsapp(item.phone, item.request_code)}
                             target="_blank"
                             rel="noreferrer"
                             aria-label={contactLabel(item)}
-                            class="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-black"
+                            class="col-span-2 flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 active:scale-[0.98] sm:col-span-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
                             ><MessageCircle class="h-4 w-4" /> WA</a
                         >
                     </div>

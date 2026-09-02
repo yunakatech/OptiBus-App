@@ -879,7 +879,7 @@ admin_units.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     admin_units.form = admin_unitsForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5289
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5291
  * @route '/admin/armada-categories'
  */
 export const adminArmadaCategories = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -894,7 +894,7 @@ adminArmadaCategories.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5289
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5291
  * @route '/admin/armada-categories'
  */
 adminArmadaCategories.url = (options?: RouteQueryOptions) => {
@@ -903,7 +903,7 @@ adminArmadaCategories.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5289
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5291
  * @route '/admin/armada-categories'
  */
 adminArmadaCategories.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -912,7 +912,7 @@ adminArmadaCategories.get = (options?: RouteQueryOptions): RouteDefinition<'get'
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5289
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5291
  * @route '/admin/armada-categories'
  */
 adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -922,7 +922,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5289
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5291
  * @route '/admin/armada-categories'
  */
     const adminArmadaCategoriesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -932,7 +932,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5289
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5291
  * @route '/admin/armada-categories'
  */
         adminArmadaCategoriesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -941,7 +941,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminArmadaCategories
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5289
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5291
  * @route '/admin/armada-categories'
  */
         adminArmadaCategoriesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -957,7 +957,7 @@ adminArmadaCategories.head = (options?: RouteQueryOptions): RouteDefinition<'hea
     adminArmadaCategories.form = adminArmadaCategoriesForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1558
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1560
  * @route '/admin/activity-logs'
  */
 export const adminActivityLogs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -972,7 +972,7 @@ adminActivityLogs.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1558
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1560
  * @route '/admin/activity-logs'
  */
 adminActivityLogs.url = (options?: RouteQueryOptions) => {
@@ -981,7 +981,7 @@ adminActivityLogs.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1558
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1560
  * @route '/admin/activity-logs'
  */
 adminActivityLogs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -990,7 +990,7 @@ adminActivityLogs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1558
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1560
  * @route '/admin/activity-logs'
  */
 adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1000,7 +1000,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1558
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1560
  * @route '/admin/activity-logs'
  */
     const adminActivityLogsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1010,7 +1010,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1558
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1560
  * @route '/admin/activity-logs'
  */
         adminActivityLogsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1019,7 +1019,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::adminActivityLogs
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:1558
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:1560
  * @route '/admin/activity-logs'
  */
         adminActivityLogsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1035,7 +1035,7 @@ adminActivityLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
     adminActivityLogs.form = adminActivityLogsForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5883
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5885
  * @route '/admin/tenant/switch'
  */
 export const admin_tenant_switch = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1050,7 +1050,7 @@ admin_tenant_switch.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5883
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5885
  * @route '/admin/tenant/switch'
  */
 admin_tenant_switch.url = (options?: RouteQueryOptions) => {
@@ -1059,7 +1059,7 @@ admin_tenant_switch.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5883
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5885
  * @route '/admin/tenant/switch'
  */
 admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1069,7 +1069,7 @@ admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5883
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5885
  * @route '/admin/tenant/switch'
  */
     const admin_tenant_switchForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1079,7 +1079,7 @@ admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_tenant_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5883
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5885
  * @route '/admin/tenant/switch'
  */
         admin_tenant_switchForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1090,7 +1090,7 @@ admin_tenant_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'
     admin_tenant_switch.form = admin_tenant_switchForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5835
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5837
  * @route '/admin/pool/switch'
  */
 export const admin_pool_switch = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1105,7 +1105,7 @@ admin_pool_switch.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5835
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5837
  * @route '/admin/pool/switch'
  */
 admin_pool_switch.url = (options?: RouteQueryOptions) => {
@@ -1114,7 +1114,7 @@ admin_pool_switch.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5835
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5837
  * @route '/admin/pool/switch'
  */
 admin_pool_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1124,7 +1124,7 @@ admin_pool_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5835
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5837
  * @route '/admin/pool/switch'
  */
     const admin_pool_switchForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1134,7 +1134,7 @@ admin_pool_switch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::admin_pool_switch
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:5835
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:5837
  * @route '/admin/pool/switch'
  */
         admin_pool_switchForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

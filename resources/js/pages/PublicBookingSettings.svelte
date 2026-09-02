@@ -264,32 +264,36 @@
         </section>
     {:else if settings.tenant}
         <section
-            class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+            class="overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         >
-            <div class="bg-slate-950 p-6 text-white">
+            <div
+                class="border-b border-emerald-900/30 bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-950 p-6 text-white dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950"
+            >
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm text-emerald-300">
                             {settings.tenant.name}
                         </p>
-                        <h2 class="mt-1 text-2xl font-black">
+                        <h2 class="mt-1 text-2xl font-black text-white">
                             Terima booking dari publik
                         </h2>
                     </div>
                     <MessageCircle class="h-9 w-9 text-emerald-300" />
                 </div>
-                <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+                <p
+                    class="mt-3 max-w-xl text-sm leading-6 text-slate-200 dark:text-slate-300"
+                >
                     Pelanggan memilih kursi dan mengirim request. Admin pool
                     tetap menyetujui sebelum booking resmi dibuat.
                 </p>
             </div>
             <div class="space-y-5 p-6">
                 <div
-                    class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                    class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/70"
                 >
                     <div class="flex items-start gap-3">
                         <div
-                            class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                            class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
                         >
                             {#if settings.tenant.logo_url}
                                 <img
@@ -325,7 +329,7 @@
                         <button
                             type="button"
                             onclick={() => logoInput?.click()}
-                            class="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold transition hover:border-emerald-300 hover:bg-emerald-50"
+                            class="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 transition hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
                         >
                             <Upload class="h-4 w-4" />
                             {settings.tenant.logo_url
@@ -334,7 +338,7 @@
                         </button>
                         {#if logoFileName}
                             <span
-                                class="truncate text-xs font-semibold text-slate-500"
+                                class="truncate text-xs font-semibold text-slate-600 dark:text-slate-300"
                             >
                                 {logoFileName}
                             </span>
@@ -348,12 +352,14 @@
                             {uploadingLogo ? 'Mengunggah...' : 'Simpan logo'}
                         </button>
                     </div>
-                    <p class="mt-2 text-xs font-semibold text-slate-500">
+                    <p
+                        class="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300"
+                    >
                         JPG, PNG, atau WebP · maksimal 2 MB.
                     </p>
                 </div>
                 <div
-                    class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 p-4"
+                    class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-700 dark:bg-slate-800/40"
                 >
                     <div>
                         <p class="font-black">Status halaman</p>
@@ -376,7 +382,9 @@
                         ></span></button
                     >
                 </div>
-                <div class="rounded-2xl border border-slate-200 p-4">
+                <div
+                    class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700 dark:bg-slate-800/40"
+                >
                     <label
                         for="booking-whatsapp"
                         class="mb-2 block text-sm font-black"
@@ -388,7 +396,7 @@
                             type="tel"
                             bind:value={settings.tenant.whatsapp}
                             placeholder="08xxxxxxxxxx"
-                            class="h-11 min-w-0 flex-1 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm"
+                            class="h-11 min-w-0 flex-1 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                         />
                         <button
                             type="button"
@@ -415,14 +423,14 @@
                             id="booking-url"
                             readonly
                             value={settings.url ?? '-'}
-                            class="h-11 min-w-0 flex-1 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm"
+                            class="h-11 min-w-0 flex-1 rounded-xl border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                         />
                         <div class="flex gap-2">
                             <button
                                 type="button"
                                 onclick={copyUrl}
                                 disabled={!settings.url}
-                                class="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold sm:flex-none"
+                                class="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 sm:flex-none dark:border-slate-600 dark:text-slate-200"
                                 >{#if copied}<Check
                                         class="h-4 w-4 text-emerald-600"
                                     /> Tersalin{:else}<Copy class="h-4 w-4" /> Salin{/if}</button

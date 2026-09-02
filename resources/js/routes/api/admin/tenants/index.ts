@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from '../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11637
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11639
  * @route '/api/admin/tenants'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11637
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11639
  * @route '/api/admin/tenants'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11637
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11639
  * @route '/api/admin/tenants'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11637
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11639
  * @route '/api/admin/tenants'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11637
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11639
  * @route '/api/admin/tenants'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11637
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11639
  * @route '/api/admin/tenants'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::index
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11637
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11639
  * @route '/api/admin/tenants'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11740
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11742
  * @route '/api/admin/tenants'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11740
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11742
  * @route '/api/admin/tenants'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11740
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11742
  * @route '/api/admin/tenants'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11740
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11742
  * @route '/api/admin/tenants'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11740
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11742
  * @route '/api/admin/tenants'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     save.form = saveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deletionPreview
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11828
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11830
  * @route '/api/admin/tenants/{id}/deletion-preview'
  */
 export const deletionPreview = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ deletionPreview.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deletionPreview
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11828
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11830
  * @route '/api/admin/tenants/{id}/deletion-preview'
  */
 deletionPreview.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -177,7 +177,7 @@ deletionPreview.url = (args: { id: string | number } | [id: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deletionPreview
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11828
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11830
  * @route '/api/admin/tenants/{id}/deletion-preview'
  */
 deletionPreview.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -186,7 +186,7 @@ deletionPreview.get = (args: { id: string | number } | [id: string | number ] | 
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deletionPreview
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11828
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11830
  * @route '/api/admin/tenants/{id}/deletion-preview'
  */
 deletionPreview.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -196,7 +196,7 @@ deletionPreview.head = (args: { id: string | number } | [id: string | number ] |
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deletionPreview
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11828
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11830
  * @route '/api/admin/tenants/{id}/deletion-preview'
  */
     const deletionPreviewForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -206,7 +206,7 @@ deletionPreview.head = (args: { id: string | number } | [id: string | number ] |
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deletionPreview
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11828
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11830
  * @route '/api/admin/tenants/{id}/deletion-preview'
  */
         deletionPreviewForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -215,7 +215,7 @@ deletionPreview.head = (args: { id: string | number } | [id: string | number ] |
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deletionPreview
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11828
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11830
  * @route '/api/admin/tenants/{id}/deletion-preview'
  */
         deletionPreviewForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -231,7 +231,7 @@ deletionPreview.head = (args: { id: string | number } | [id: string | number ] |
     deletionPreview.form = deletionPreviewForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::archive
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11841
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11843
  * @route '/api/admin/tenants/{id}/archive'
  */
 export const archive = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -246,7 +246,7 @@ archive.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::archive
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11841
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11843
  * @route '/api/admin/tenants/{id}/archive'
  */
 archive.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -274,7 +274,7 @@ archive.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::archive
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11841
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11843
  * @route '/api/admin/tenants/{id}/archive'
  */
 archive.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -284,7 +284,7 @@ archive.post = (args: { id: string | number } | [id: string | number ] | string 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::archive
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11841
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11843
  * @route '/api/admin/tenants/{id}/archive'
  */
     const archiveForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -294,7 +294,7 @@ archive.post = (args: { id: string | number } | [id: string | number ] | string 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::archive
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11841
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11843
  * @route '/api/admin/tenants/{id}/archive'
  */
         archiveForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -305,7 +305,7 @@ archive.post = (args: { id: string | number } | [id: string | number ] | string 
     archive.form = archiveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::purge
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11857
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11859
  * @route '/api/admin/tenants/{id}/purge'
  */
 export const purge = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -320,7 +320,7 @@ purge.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::purge
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11857
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11859
  * @route '/api/admin/tenants/{id}/purge'
  */
 purge.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -348,7 +348,7 @@ purge.url = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::purge
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11857
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11859
  * @route '/api/admin/tenants/{id}/purge'
  */
 purge.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -358,7 +358,7 @@ purge.post = (args: { id: string | number } | [id: string | number ] | string | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::purge
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11857
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11859
  * @route '/api/admin/tenants/{id}/purge'
  */
     const purgeForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -368,7 +368,7 @@ purge.post = (args: { id: string | number } | [id: string | number ] | string | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::purge
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11857
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11859
  * @route '/api/admin/tenants/{id}/purge'
  */
         purgeForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -379,7 +379,7 @@ purge.post = (args: { id: string | number } | [id: string | number ] | string | 
     purge.form = purgeForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11825
  * @route '/api/admin/tenants/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -394,7 +394,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11825
  * @route '/api/admin/tenants/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -422,7 +422,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11825
  * @route '/api/admin/tenants/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -432,7 +432,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11825
  * @route '/api/admin/tenants/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -447,7 +447,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:11823
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:11825
  * @route '/api/admin/tenants/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
