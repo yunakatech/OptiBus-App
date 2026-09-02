@@ -736,11 +736,6 @@
                                                         )}
                                                     </span>
                                                 </span>
-                                                <span
-                                                    class="mt-1 block truncate text-[10px] font-semibold text-slate-400 dark:text-slate-500"
-                                                >
-                                                    Rute induk: {segment.route_name}
-                                                </span>
                                             </span>
                                         </button>
                                     {/each}
@@ -776,15 +771,6 @@
                             </p>
                             <p class="mt-1 text-sm font-black">
                                 {selectedSegment.label}
-                            </p>
-                            <p
-                                class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400"
-                            >
-                                Armada dari rute induk:
-                                {selectedRoute?.origin &&
-                                selectedRoute?.destination
-                                    ? `${selectedRoute.origin} → ${selectedRoute.destination}`
-                                    : selectedSegment.route_name}
                             </p>
                         </div>
                         <label
@@ -1173,17 +1159,6 @@
                             class="mt-2 text-base font-black text-emerald-950 dark:text-emerald-100"
                         >
                             {selectedSegment?.label}
-                        </p>
-                        <p
-                            class="text-xs font-semibold text-emerald-700 dark:text-emerald-300"
-                        >
-                            Rute induk: {selectedRoute?.name ||
-                                selectedSegment?.route_name}
-                        </p>
-                        <p
-                            class="mt-1 text-sm font-black text-emerald-950 dark:text-emerald-100"
-                        >
-                            {selectedRoute?.origin} → {selectedRoute?.destination}
                         </p>
                         <p
                             class="mt-1 text-sm font-semibold text-emerald-800 dark:text-emerald-200"
