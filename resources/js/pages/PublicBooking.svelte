@@ -4,6 +4,7 @@
         ArrowRight,
         CalendarDays,
         Check,
+        ChevronDown,
         Clock3,
         MapPin,
         MessageCircle,
@@ -101,6 +102,7 @@
     let schedules = $state<Schedule[]>([]);
     let routeId = $state(0);
     let segmentId = $state(0);
+    let segmentMenuOpen = $state(false);
     let scheduleKey = $state('');
     let selectedSeats = $state<string[]>([]);
     let passengerNames = $state<Record<string, string>>({});
@@ -226,6 +228,7 @@
         dateValue = value;
         routeId = 0;
         segmentId = 0;
+        segmentMenuOpen = false;
         void loadAvailability();
     }
 
@@ -233,6 +236,7 @@
         segmentId = Number(value);
         const segment = segments.find((item) => item.id === segmentId);
         routeId = segment?.route_id ?? 0;
+        segmentMenuOpen = false;
         void loadAvailability();
     }
 
@@ -609,20 +613,141 @@
                         class="mb-3 flex items-center gap-2 text-sm font-black"
                         ><MapPin class="h-4 w-4 text-emerald-600" /> Mau ke mana?</label
                     >
-                    <select
-                        id="public-segment"
-                        value={segmentId}
-                        onchange={(event) =>
-                            changeSegment(event.currentTarget.value)}
-                        class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                    >
-                        <option value={0}>Pilih tujuan</option>
-                        {#each segments as segment (segment.id)}
-                            <option value={segment.id}
-                                >{segmentOptionLabel(segment)}</option
+                    <div class="relative">
+                        <button
+                            id="public-segment"
+                            type="button"
+                            aria-haspopup="listbox"
+                            aria-expanded={segmentMenuOpen}
+                            aria-controls="public-segment-options"
+                            onclick={() => (segmentMenuOpen = !segmentMenuOpen)}
+                            class="flex min-h-16 w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-sm outline-none transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-500/15 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-slate-800/80"
+                        >
+                            <span
+                                class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300"
                             >
-                        {/each}
-                    </select>
+                                <MapPin class="h-5 w-5" />
+                            </span>
+                            <span class="min-w-0 flex-1">
+                                {#if selectedSegment}
+                                    <span
+                                        class="block truncate text-sm font-black text-slate-900 dark:text-slate-100"
+                                    >
+                                        {selectedSegment.label}
+                                    </span>
+                                    <span
+                                        class="mt-1 block truncate text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                    >
+                                        {pickupTimesLabel(
+                                            selectedSegment.pickup_times,
+                                        ) || 'Pickup sesuai jadwal'}
+                                        <span
+                                            class="px-1 text-slate-300 dark:text-slate-600"
+                                            >·</span
+                                        >
+                                        {formatRupiah(selectedSegment.price)}
+                                    </span>
+                                {:else}
+                                    <span
+                                        class="block text-sm font-black text-slate-900 dark:text-slate-100"
+                                    >
+                                        Pilih tujuan
+                                    </span>
+                                    <span
+                                        class="mt-1 block text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                    >
+                                        Pilih rute perjalananmu
+                                    </span>
+                                {/if}
+                            </span>
+                            <ChevronDown
+                                class={`h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400 ${segmentMenuOpen ? 'rotate-180' : ''}`}
+                            />
+                        </button>
+
+                        {#if segmentMenuOpen}
+                            <div
+                                id="public-segment-options"
+                                role="listbox"
+                                aria-label="Daftar tujuan segment"
+                                class="absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+                            >
+                                {#if segments.length === 0}
+                                    <p
+                                        class="px-3 py-6 text-center text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                    >
+                                        Belum ada tujuan yang tersedia.
+                                    </p>
+                                {:else}
+                                    {#each segments as segment (segment.id)}
+                                        <button
+                                            type="button"
+                                            role="option"
+                                            aria-selected={segment.id ===
+                                                segmentId}
+                                            aria-label={segmentOptionLabel(
+                                                segment,
+                                            )}
+                                            onclick={() =>
+                                                changeSegment(
+                                                    String(segment.id),
+                                                )}
+                                            class={`group flex min-h-20 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition active:scale-[0.99] ${segment.id === segmentId ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/35' : 'border-transparent hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800'}`}
+                                        >
+                                            <span
+                                                class={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${segment.id === segmentId ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}
+                                            >
+                                                {#if segment.id === segmentId}
+                                                    <Check class="h-4 w-4" />
+                                                {:else}
+                                                    <ArrowRight
+                                                        class="h-4 w-4"
+                                                    />
+                                                {/if}
+                                            </span>
+                                            <span class="min-w-0 flex-1">
+                                                <span
+                                                    class="block truncate text-sm font-black text-slate-900 dark:text-slate-100"
+                                                >
+                                                    {segment.label}
+                                                </span>
+                                                <span
+                                                    class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-slate-500 dark:text-slate-400"
+                                                >
+                                                    <span
+                                                        class="inline-flex items-center gap-1"
+                                                    >
+                                                        <Clock3
+                                                            class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+                                                        />
+                                                        {pickupTimesLabel(
+                                                            segment.pickup_times,
+                                                        ) || 'Pickup fleksibel'}
+                                                    </span>
+                                                    <span
+                                                        class="text-slate-300 dark:text-slate-600"
+                                                        >·</span
+                                                    >
+                                                    <span
+                                                        class="text-emerald-700 dark:text-emerald-300"
+                                                    >
+                                                        {formatRupiah(
+                                                            segment.price,
+                                                        )}
+                                                    </span>
+                                                </span>
+                                                <span
+                                                    class="mt-1 block truncate text-[10px] font-semibold text-slate-400 dark:text-slate-500"
+                                                >
+                                                    Rute induk: {segment.route_name}
+                                                </span>
+                                            </span>
+                                        </button>
+                                    {/each}
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
                     {#if segments.length === 0}
                         <p
                             class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400"
