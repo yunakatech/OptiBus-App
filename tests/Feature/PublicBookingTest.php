@@ -52,6 +52,47 @@ class PublicBookingTest extends TestCase
             ->assertJsonPath('schedules.0.seats.0.status', 'available');
     }
 
+    public function test_public_availability_uses_the_configured_label_for_each_unit_slot(): void
+    {
+        [$tenantId, $routeId, $scheduleId] = $this->fixture();
+        DB::table('schedules')->where('id', $scheduleId)->update([
+            'units' => 2,
+        ]);
+        DB::table('schedule_units')->where('schedule_id', $scheduleId)->delete();
+
+        $slotRows = [
+            [
+                'schedule_id' => $scheduleId,
+                'unit_no' => 1,
+                'label' => 'Armada Pagi',
+                'created_at' => now(),
+            ],
+            [
+                'schedule_id' => $scheduleId,
+                'unit_no' => 2,
+                'label' => 'Armada Siang',
+                'created_at' => now(),
+            ],
+        ];
+        if (Schema::hasColumn('schedule_units', 'tenant_id')) {
+            $slotRows = array_map(
+                fn (array $row): array => [...$row, 'tenant_id' => $tenantId],
+                $slotRows,
+            );
+        }
+        DB::table('schedule_units')->insert($slotRows);
+
+        $response = $this->getJson(route('api.public.booking.availability', [
+            'tenantSlug' => 'qbus-default',
+            'tanggal' => '2026-09-02',
+            'route_id' => $routeId,
+        ]));
+
+        $response->assertOk()
+            ->assertJsonPath('schedules.0.unit_label', 'Armada Pagi')
+            ->assertJsonPath('schedules.1.unit_label', 'Armada Siang');
+    }
+
     public function test_public_request_holds_multiple_seats_and_is_visible_as_held(): void
     {
         [$tenantId, $routeId, $scheduleId] = $this->fixture();

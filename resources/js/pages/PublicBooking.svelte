@@ -103,6 +103,7 @@
     let routeId = $state(0);
     let segmentId = $state(0);
     let segmentMenuOpen = $state(false);
+    let scheduleMenuOpen = $state(false);
     let scheduleKey = $state('');
     let selectedSeats = $state<string[]>([]);
     let passengerNames = $state<Record<string, string>>({});
@@ -186,6 +187,7 @@
         error = '';
         schedules = [];
         scheduleKey = '';
+        scheduleMenuOpen = false;
         selectedSeats = [];
 
         try {
@@ -229,6 +231,7 @@
         routeId = 0;
         segmentId = 0;
         segmentMenuOpen = false;
+        scheduleMenuOpen = false;
         void loadAvailability();
     }
 
@@ -237,6 +240,7 @@
         const segment = segments.find((item) => item.id === segmentId);
         routeId = segment?.route_id ?? 0;
         segmentMenuOpen = false;
+        scheduleMenuOpen = false;
         void loadAvailability();
     }
 
@@ -261,21 +265,17 @@
 
     function chooseSchedule(schedule: Schedule) {
         scheduleKey = `${schedule.id}-${schedule.unit}`;
+        scheduleMenuOpen = false;
         selectedSeats = [];
         passengerNames = {};
     }
 
-    function chooseScheduleKey(value: string) {
-        const schedule = schedules.find(
-            (item) => `${item.id}-${item.unit}` === value,
-        );
+    function scheduleOptionLabel(schedule: Schedule): string {
+        return `${schedule.jam} · ${schedule.unit_label} · ${availableSeatCount(schedule)} kursi tersedia`;
+    }
 
-        if (schedule) {
-            chooseSchedule(schedule);
-        } else {
-            scheduleKey = '';
-            selectedSeats = [];
-        }
+    function scheduleValue(schedule: Schedule): string {
+        return `${schedule.id}-${schedule.unit}`;
     }
 
     function availableSeatCount(schedule: Schedule): number {
@@ -779,25 +779,145 @@
                         >
                             <Clock3 class="h-4 w-4 text-emerald-600" /> Jam keberangkatan
                         </label>
-                        <select
-                            id="public-schedule"
-                            value={scheduleKey}
-                            onchange={(event) =>
-                                chooseScheduleKey(event.currentTarget.value)}
-                            disabled={schedules.length === 0}
-                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm font-bold focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                        >
-                            <option value="">Pilih jam keberangkatan</option>
-                            {#each schedules as schedule (`${schedule.id}-${schedule.unit}`)}
-                                <option
-                                    value={`${schedule.id}-${schedule.unit}`}
+                        <div class="relative">
+                            <button
+                                id="public-schedule"
+                                type="button"
+                                aria-haspopup="listbox"
+                                aria-expanded={scheduleMenuOpen}
+                                aria-controls="public-schedule-options"
+                                onclick={() => {
+                                    if (schedules.length > 0) {
+                                        scheduleMenuOpen = !scheduleMenuOpen;
+                                    }
+                                }}
+                                disabled={schedules.length === 0}
+                                class="flex min-h-[4.75rem] w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left shadow-sm outline-none transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-slate-800/80"
+                            >
+                                <span
+                                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300"
                                 >
-                                    {schedule.jam} · {schedule.unit_label} · {availableSeatCount(
-                                        schedule,
-                                    )} kursi tersedia
-                                </option>
-                            {/each}
-                        </select>
+                                    <Clock3 class="h-5 w-5" />
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    {#if selectedSchedule}
+                                        <span
+                                            class="block text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300"
+                                        >
+                                            Jam terpilih
+                                        </span>
+                                        <span
+                                            class="mt-0.5 block text-lg font-black leading-tight text-slate-900 dark:text-slate-100"
+                                        >
+                                            {selectedSchedule.jam}
+                                        </span>
+                                        <span
+                                            class="mt-0.5 block truncate text-xs font-bold text-slate-500 dark:text-slate-400"
+                                        >
+                                            {selectedSchedule.unit_label}
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="block text-sm font-black text-slate-900 dark:text-slate-100"
+                                        >
+                                            Pilih jam keberangkatan
+                                        </span>
+                                        <span
+                                            class="mt-1 block text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                        >
+                                            Pilih unit dan ketersediaan kursi
+                                        </span>
+                                    {/if}
+                                </span>
+                                {#if selectedSchedule}
+                                    <span
+                                        class="shrink-0 rounded-xl bg-emerald-100 px-2.5 py-2 text-center text-[10px] font-black leading-tight text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-200"
+                                    >
+                                        <span
+                                            class="block text-base leading-none"
+                                            >{availableSeatCount(
+                                                selectedSchedule,
+                                            )}</span
+                                        >
+                                        <span class="mt-1 block">kursi</span>
+                                    </span>
+                                {/if}
+                                <ChevronDown
+                                    class={`h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400 ${scheduleMenuOpen ? 'rotate-180' : ''}`}
+                                />
+                            </button>
+
+                            {#if scheduleMenuOpen}
+                                <div
+                                    id="public-schedule-options"
+                                    role="listbox"
+                                    aria-label="Daftar jam keberangkatan"
+                                    class="absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+                                >
+                                    {#each schedules as schedule (scheduleValue(schedule))}
+                                        {@const available =
+                                            availableSeatCount(schedule)}
+                                        <button
+                                            type="button"
+                                            role="option"
+                                            aria-selected={scheduleKey ===
+                                                scheduleValue(schedule)}
+                                            aria-label={scheduleOptionLabel(
+                                                schedule,
+                                            )}
+                                            onclick={() =>
+                                                chooseSchedule(schedule)}
+                                            class="flex min-h-[4.5rem] w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left transition hover:border-slate-200 hover:bg-slate-50 active:scale-[0.99] dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                            class:border-emerald-300={scheduleKey ===
+                                                scheduleValue(schedule)}
+                                            class:bg-emerald-50={scheduleKey ===
+                                                scheduleValue(schedule)}
+                                        >
+                                            <span
+                                                class="grid h-11 w-14 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                class:bg-emerald-600={scheduleKey ===
+                                                    scheduleValue(schedule)}
+                                                class:text-white={scheduleKey ===
+                                                    scheduleValue(schedule)}
+                                            >
+                                                <span
+                                                    class="text-base font-black leading-none"
+                                                    >{schedule.jam}</span
+                                                >
+                                            </span>
+                                            <span class="min-w-0 flex-1">
+                                                <span
+                                                    class="block truncate text-sm font-black text-slate-900 dark:text-slate-100"
+                                                >
+                                                    {schedule.unit_label}
+                                                </span>
+                                                <span
+                                                    class="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400"
+                                                >
+                                                    <Ticket
+                                                        class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+                                                    />
+                                                    {schedule.total_seats} kursi
+                                                </span>
+                                            </span>
+                                            <span
+                                                class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1.5 text-[10px] font-black text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                                class:bg-emerald-100={available >
+                                                    0}
+                                                class:text-emerald-800={available >
+                                                    0}
+                                            >
+                                                {#if available > 0}
+                                                    {available} tersedia
+                                                {:else}
+                                                    Penuh
+                                                {/if}
+                                            </span>
+                                        </button>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
                         {#if schedules.length === 0}
                             <p
                                 class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400"
