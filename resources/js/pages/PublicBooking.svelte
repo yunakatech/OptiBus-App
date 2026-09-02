@@ -499,10 +499,10 @@
     >
         {#if step < 5}
             <section
-                class="mb-5 rounded-[2rem] bg-slate-950 p-5 text-white shadow-xl shadow-slate-900/10"
+                class="mb-5 rounded-[2rem] border border-emerald-900/30 bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-950 p-5 text-white shadow-xl shadow-slate-900/10 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950"
             >
                 <div
-                    class="mb-6 flex items-start justify-between gap-4 border-b border-slate-800 pb-5"
+                    class="mb-6 flex items-start justify-between gap-4 border-b border-white/15 pb-5"
                 >
                     <div class="min-w-0">
                         <p
@@ -533,12 +533,14 @@
                     <p class="text-sm text-emerald-300">
                         Pesan perjalanan tanpa antre
                     </p>
-                    <h2 class="mt-1 text-2xl font-black leading-tight">
+                    <h2
+                        class="mt-1 text-2xl font-black leading-tight text-white"
+                    >
                         Pilih kursi,<br />kami konfirmasi.
                     </h2>
                 </div>
                 <div
-                    class="mt-6 flex items-center gap-2 text-[11px] font-bold text-slate-400"
+                    class="mt-6 flex items-center gap-2 text-[11px] font-bold text-slate-300"
                 >
                     {#each ['Tanggal', 'Kursi', 'Data', 'Review'] as label, index (label)}
                         <div
@@ -547,12 +549,11 @@
                         >
                             <span
                                 class:!bg-emerald-400={step > index + 1}
-                                class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-slate-700 text-white"
+                                class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/15 text-white"
                                 >{step > index + 1 ? '✓' : index + 1}</span
                             >
                             <span class="hidden sm:inline">{label}</span>
-                            {#if index < 3}<span
-                                    class="h-px flex-1 bg-slate-700"
+                            {#if index < 3}<span class="h-px flex-1 bg-white/15"
                                 ></span>{/if}
                         </div>
                     {/each}
