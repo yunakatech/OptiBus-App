@@ -845,16 +845,24 @@ class PublicBookingService
     {
         $seats = $this->seatTokens($schedule);
         $units = max(1, (int) ($schedule->units ?? 1));
+        $unitLabels = $this->scheduleUnitLabels($tenantId, (int) $schedule->id);
         $payload = [];
         for ($unit = 1; $unit <= $units; $unit++) {
             $booked = $this->bookingSeatsQuery($tenantId, (int) $route['id'], (string) $route['name'], $schedule, $date, $unit)->get()->map(fn ($row): string => $this->normalizeSeat((string) $row->seat))->unique()->all();
             $held = $this->heldSeatsQuery($tenantId, (int) $route['id'], $schedule, $date, $unit)->get()->map(fn ($row): string => $this->normalizeSeat((string) $row->seat))->unique()->all();
             $layout = $this->scheduleLayout($schedule);
+            $unitLabel = trim((string) ($unitLabels[$unit] ?? ''));
+            if ($unitLabel === '' && $unit === 1) {
+                $unitLabel = trim((string) ($schedule->unit_label ?? ''));
+            }
+            if ($unitLabel === '') {
+                $unitLabel = "Unit {$unit}";
+            }
             $payload[] = [
                 'id' => (int) $schedule->id,
                 'jam' => substr((string) $schedule->jam, 0, 5),
                 'unit' => $unit,
-                'unit_label' => $unit === 1 ? (string) ($schedule->unit_label ?? 'Unit 1') : 'Unit '.$unit,
+                'unit_label' => $unitLabel,
                 'layout' => $layout,
                 'seats' => array_map(fn (string $seat): array => ['code' => $seat, 'status' => in_array($seat, $booked, true) ? 'booked' : (in_array($seat, $held, true) ? 'held' : 'available')], $seats),
                 'total_seats' => count($seats),
@@ -863,6 +871,26 @@ class PublicBookingService
         }
 
         return $payload;
+    }
+
+    /** @return array<int, string> */
+    private function scheduleUnitLabels(int $tenantId, int $scheduleId): array
+    {
+        if ($scheduleId <= 0 || ! SchemaCache::hasTable('schedule_units')) {
+            return [];
+        }
+
+        $query = DB::table('schedule_units')
+            ->where('schedule_id', $scheduleId);
+        if (SchemaCache::hasColumn('schedule_units', 'tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        return $query->get(['unit_no', 'label'])
+            ->mapWithKeys(fn ($row): array => [
+                (int) $row->unit_no => trim((string) ($row->label ?? '')),
+            ])
+            ->all();
     }
 
     private function scheduleSupportsSegment(object $schedule, array $segment): bool
