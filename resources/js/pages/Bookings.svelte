@@ -2855,10 +2855,8 @@
             ),
         );
     const canceledGroupBookings = () =>
-        visibleGroupBookingRows(
-            (openGroupDetail?.bookings ?? []).filter((row) =>
-                isCanceledBooking(row.status),
-            ),
+        (openGroupDetail?.bookings ?? []).filter((row) =>
+            isCanceledBooking(row.status),
         );
     const refundedCanceledBookings = () =>
         canceledGroupBookings().filter((row) =>
