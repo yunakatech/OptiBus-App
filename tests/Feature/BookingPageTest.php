@@ -159,6 +159,66 @@ class BookingPageTest extends TestCase
             );
     }
 
+    public function test_canceled_unpaid_passenger_remains_in_booking_detail_history_payload(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+
+        DB::table('routes')->insert([
+            'tenant_id' => $tenantId,
+            'name' => 'PINRANG - MAKASSAR',
+            'origin' => 'PINRANG',
+            'destination' => 'MAKASSAR',
+            'created_at' => now(),
+        ]);
+
+        DB::table('bookings')->insert([
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-05-16',
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => '1',
+                'name' => 'PENUMPANG AKTIF',
+                'phone' => '081200000030',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Lunas',
+                'status' => 'active',
+                'price' => 150000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+            [
+                'tenant_id' => $tenantId,
+                'rute' => 'PINRANG - MAKASSAR',
+                'tanggal' => '2026-05-16',
+                'jam' => '09:00:00',
+                'unit' => 1,
+                'seat' => '2',
+                'name' => 'PENUMPANG CANCEL',
+                'phone' => '081200000031',
+                'pickup_point' => 'Terminal',
+                'pembayaran' => 'Belum Lunas',
+                'status' => 'canceled',
+                'price' => 150000,
+                'discount' => 0,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $groupKey = md5('PINRANG TO MAKASSAR|2026-05-16|09:00|1');
+
+        $this->get(route('bookings.detail', ['groupKey' => $groupKey]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Bookings')
+                ->has('bookingGroups', 1)
+                ->where('bookingGroups.0.bookings.1.name', 'PENUMPANG CANCEL')
+                ->where('bookingGroups.0.bookings.1.status', 'canceled')
+                ->where('bookingGroups.0.bookings.1.pembayaran', 'Belum Lunas'));
+    }
+
     public function test_booking_detail_page_ignores_invalid_booking_dates_without_failing(): void
     {
         $this->actingAsSuperAdmin();
