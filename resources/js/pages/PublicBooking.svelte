@@ -13,9 +13,13 @@
         Ticket,
         UserRound,
     } from 'lucide-svelte';
-    import { onMount } from 'svelte';
+    import { onMount, tick } from 'svelte';
+    import ExternalLinkFallback from '@/components/ExternalLinkFallback.svelte';
     import { loadFlatpickr } from '@/lib/flatpickr';
     import type { FlatpickrInstance } from '@/lib/flatpickr';
+    import { overlay } from '@/lib/mobile-overlay';
+    import { measureBar, registerBackHandler } from '@/lib/mobile-runtime';
+    import { copyText, externalLink } from '@/lib/webview';
 
     type Tenant = {
         name: string;
@@ -95,14 +99,17 @@
     } = $props();
 
     let dateValue = $state('');
-    let dateInput = $state<HTMLInputElement | null>(null);
     let datePicker: FlatpickrInstance | null = null;
+    let availabilityController: AbortController | null = null;
+    let availabilitySequence = 0;
+    let copyTimer: ReturnType<typeof setTimeout> | undefined;
     let routes = $state<RouteOption[]>([]);
     let segments = $state<SegmentOption[]>([]);
     let schedules = $state<Schedule[]>([]);
     let routeId = $state(0);
     let segmentId = $state(0);
     let segmentMenuOpen = $state(false);
+    let segmentSearch = $state('');
     let scheduleMenuOpen = $state(false);
     let scheduleKey = $state('');
     let selectedSeats = $state<string[]>([]);
@@ -118,6 +125,24 @@
     let error = $state('');
     let requestResult = $state<RequestResult | null>(null);
     let copied = $state(false);
+    let copyFailed = $state(false);
+    let submitUnknown = $state(false);
+    let availabilityFailed = $state(false);
+    let stepHeading = $state<HTMLElement | null>(null);
+    let errorPanel = $state<HTMLDivElement | null>(null);
+    const stepLabels = [
+        'Tanggal & tujuan',
+        'Pilih kursi',
+        'Data penumpang',
+        'Review booking',
+    ];
+    const filteredSegments = $derived(
+        segments.filter((segment) =>
+            `${segment.label} ${segment.origin} ${segment.destination} ${segment.pool_name}`
+                .toLocaleLowerCase('id-ID')
+                .includes(segmentSearch.trim().toLocaleLowerCase('id-ID')),
+        ),
+    );
 
     const selectedSchedule = $derived(
         schedules.find((item) => `${item.id}-${item.unit}` === scheduleKey) ??
@@ -135,41 +160,96 @@
     onMount(() => {
         dateValue = dateMin;
         paymentMethod = paymentMethods[0] ?? 'Belum Lunas';
-        void initDatePicker();
         void loadAvailability();
+        const unregisterBack = registerBackHandler(() => {
+            if (datePicker?.isOpen) {
+                datePicker.close();
+
+                return true;
+            }
+
+            if (submitting || submitUnknown) {
+                return true;
+            }
+
+            if (step <= 1 || step >= 5) {
+                return false;
+            }
+
+            void goToStep(step - 1);
+
+            return true;
+        }, 0);
 
         return () => {
-            datePicker?.destroy();
-            datePicker = null;
+            unregisterBack();
+            availabilitySequence += 1;
+            availabilityController?.abort();
+            clearTimeout(copyTimer);
         };
     });
 
-    async function initDatePicker() {
-        if (typeof window === 'undefined' || !dateInput || datePicker) {
-            return;
-        }
+    function bookingDatePicker(node: HTMLInputElement) {
+        let destroyed = false;
+        let instance: FlatpickrInstance | null = null;
+        void loadFlatpickr()
+            .then((flatpickr) => {
+                if (destroyed) {
+                    return;
+                }
 
-        const flatpickr = await loadFlatpickr();
+                instance = flatpickr(node, {
+                    dateFormat: 'Y-m-d',
+                    altInput: true,
+                    altFormat: 'j F Y',
+                    altInputClass:
+                        'h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100',
+                    ariaDateFormat: 'j F Y',
+                    defaultDate: dateValue || dateMin,
+                    minDate: dateMin,
+                    maxDate: dateMax,
+                    disableMobile: true,
+                    onChange: (_selectedDates, dateStr) => {
+                        changeDate(dateStr || dateMin);
+                    },
+                });
+                datePicker = instance;
+            })
+            .catch(() => {
+                if (!destroyed) {
+                    error =
+                        'Le calendrier gagal dimuat. Muat ulang halaman untuk memilih tanggal.';
+                }
+            });
 
-        if (!dateInput || datePicker) {
-            return;
-        }
+        return {
+            destroy() {
+                destroyed = true;
+                instance?.destroy();
 
-        datePicker = flatpickr(dateInput, {
-            dateFormat: 'Y-m-d',
-            altInput: true,
-            altFormat: 'j F Y',
-            altInputClass:
-                'h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100',
-            ariaDateFormat: 'j F Y',
-            defaultDate: dateMin,
-            minDate: dateMin,
-            maxDate: dateMax,
-            disableMobile: true,
-            onChange: (_selectedDates, dateStr) => {
-                changeDate(dateStr || dateMin);
+                if (datePicker === instance) {
+                    datePicker = null;
+                }
             },
-        });
+        };
+    }
+
+    async function goToStep(value: number) {
+        if (submitting || submitUnknown) {
+            return;
+        }
+
+        step = value;
+        segmentMenuOpen = false;
+        scheduleMenuOpen = false;
+        error = '';
+        await tick();
+        stepHeading?.focus();
+    }
+
+    async function focusError() {
+        await tick();
+        errorPanel?.focus();
     }
 
     function csrfToken(): string {
@@ -183,12 +263,14 @@
     }
 
     async function loadAvailability() {
+        const sequence = ++availabilitySequence;
+        availabilityController?.abort();
+        const controller = new AbortController();
+        availabilityController = controller;
         loading = true;
+        availabilityFailed = false;
         error = '';
-        schedules = [];
-        scheduleKey = '';
         scheduleMenuOpen = false;
-        selectedSeats = [];
 
         try {
             const query = new URLSearchParams({ tanggal: dateValue });
@@ -204,9 +286,19 @@
 
             const response = await fetch(
                 `/api/public/booking/${tenant.slug}/availability?${query.toString()}`,
-                { headers: { Accept: 'application/json' } },
+                {
+                    headers: { Accept: 'application/json' },
+                    signal: controller.signal,
+                },
             );
             const payload = await response.json();
+
+            if (
+                sequence !== availabilitySequence ||
+                controller.signal.aborted
+            ) {
+                return;
+            }
 
             if (!response.ok || !payload.success) {
                 throw new Error(payload.error ?? 'Jadwal belum dapat dimuat.');
@@ -216,31 +308,80 @@
             segments = payload.segments ?? [];
             schedules = payload.schedules ?? [];
             routeId = Number(payload.selected_route_id ?? routeId ?? 0);
+            const currentSchedule = schedules.find(
+                (item) => scheduleValue(item) === scheduleKey,
+            );
+            const retainedSeats = selectedSeats.filter((code) =>
+                currentSchedule?.seats.some(
+                    (seat) => seat.code === code && seat.status === 'available',
+                ),
+            );
+
+            if (retainedSeats.length !== selectedSeats.length) {
+                error =
+                    'Ketersediaan kursi berubah. Pilih kembali kursi yang tersedia; data penumpang tetap tersimpan.';
+            }
+
+            selectedSeats = retainedSeats;
+
+            if (!currentSchedule) {
+                scheduleKey = '';
+            }
         } catch (cause) {
+            if (
+                sequence !== availabilitySequence ||
+                controller.signal.aborted
+            ) {
+                return;
+            }
+
+            availabilityFailed = true;
             error =
                 cause instanceof Error
                     ? cause.message
                     : 'Jadwal belum dapat dimuat.';
         } finally {
-            loading = false;
+            if (sequence === availabilitySequence) {
+                loading = false;
+            }
         }
     }
 
+    function resetTripSelection() {
+        schedules = [];
+        scheduleKey = '';
+        selectedSeats = [];
+    }
+
     function changeDate(value: string) {
+        if (dateValue === value) {
+            return;
+        }
+
         dateValue = value;
         routeId = 0;
         segmentId = 0;
         segmentMenuOpen = false;
         scheduleMenuOpen = false;
+        resetTripSelection();
+        void goToStep(1);
         void loadAvailability();
     }
 
     function changeSegment(value: string) {
+        segmentMenuOpen = false;
+
+        if (segmentId === Number(value)) {
+            return;
+        }
+
         segmentId = Number(value);
         const segment = segments.find((item) => item.id === segmentId);
         routeId = segment?.route_id ?? 0;
         segmentMenuOpen = false;
         scheduleMenuOpen = false;
+        resetTripSelection();
+        void goToStep(1);
         void loadAvailability();
     }
 
@@ -264,10 +405,13 @@
     }
 
     function chooseSchedule(schedule: Schedule) {
+        if (scheduleKey !== scheduleValue(schedule)) {
+            selectedSeats = [];
+        }
+
         scheduleKey = `${schedule.id}-${schedule.unit}`;
         scheduleMenuOpen = false;
-        selectedSeats = [];
-        passengerNames = {};
+        void goToStep(2);
     }
 
     function scheduleOptionLabel(schedule: Schedule): string {
@@ -364,15 +508,17 @@
     }
 
     function toggleSeat(seat: Seat) {
-        if (seat.status === 'booked' || !selectedSchedule) {
+        if (
+            seat.status !== 'available' ||
+            !selectedSchedule ||
+            loading ||
+            availabilityFailed
+        ) {
             return;
         }
 
         if (selectedSeats.includes(seat.code)) {
             selectedSeats = selectedSeats.filter((item) => item !== seat.code);
-            const next = { ...passengerNames };
-            delete next[seat.code];
-            passengerNames = next;
         } else {
             selectedSeats = [...selectedSeats, seat.code];
         }
@@ -382,16 +528,19 @@
         error = '';
 
         if (
+            loading ||
+            availabilityFailed ||
             !selectedSegment ||
             !selectedSchedule ||
             selectedSeats.length === 0
         ) {
             error = 'Pilih tujuan, jadwal, dan minimal satu kursi.';
+            void focusError();
 
             return;
         }
 
-        step = 3;
+        void goToStep(3);
     }
 
     function continueToReview() {
@@ -399,26 +548,38 @@
 
         if (!contactName.trim() || !phone.trim() || !pickupAddress.trim()) {
             error = 'Lengkapi nama, nomor HP, dan alamat penjemputan.';
+            void focusError();
 
             return;
         }
 
         if (selectedSeats.some((seat) => !passengerNames[seat]?.trim())) {
             error = 'Isi nama setiap penumpang.';
+            void focusError();
 
             return;
         }
 
-        step = 4;
+        void goToStep(4);
     }
 
     async function submitRequest() {
-        if (!selectedSchedule || !selectedRoute || submitting) {
+        if (
+            step !== 4 ||
+            !selectedSchedule ||
+            !selectedRoute ||
+            !selectedSegment ||
+            !selectedSeats.length ||
+            submitting ||
+            submitUnknown ||
+            requestResult
+        ) {
             return;
         }
 
         submitting = true;
         error = '';
+        let definiteRejection = false;
 
         try {
             const response = await fetch(
@@ -452,18 +613,30 @@
             const payload = await response.json();
 
             if (!response.ok || !payload.success) {
+                definiteRejection =
+                    response.status >= 400 && response.status < 500;
+
                 throw new Error(
                     payload.error ?? 'Request booking gagal dikirim.',
                 );
             }
 
+            if (!payload.request_code || !payload.hold_expires_at) {
+                throw new Error('Respons booking tidak lengkap.');
+            }
+
             requestResult = payload;
             step = 5;
+            await tick();
+            stepHeading?.focus();
         } catch (cause) {
-            error =
-                cause instanceof Error
-                    ? cause.message
-                    : 'Request booking gagal dikirim.';
+            submitUnknown = !definiteRejection;
+            error = submitUnknown
+                ? 'Status pengiriman belum dapat dipastikan. Data booking tetap tersimpan di halaman ini. Hubungi admin pool untuk memeriksa booking sebelum mengirim ulang.'
+                : cause instanceof Error
+                  ? cause.message
+                  : 'Request booking gagal dikirim.';
+            void focusError();
         } finally {
             submitting = false;
         }
@@ -474,9 +647,21 @@
             return;
         }
 
-        await navigator.clipboard?.writeText(requestResult.request_code);
-        copied = true;
-        setTimeout(() => (copied = false), 1800);
+        clearTimeout(copyTimer);
+        copied = false;
+        copyFailed = false;
+
+        try {
+            copied = await copyText(requestResult.request_code);
+        } catch {
+            copied = false;
+        }
+
+        copyFailed = !copied;
+
+        if (copied) {
+            copyTimer = setTimeout(() => (copied = false), 1800);
+        }
     }
 
     function formatHold(value: string): string {
@@ -499,7 +684,7 @@
     class="min-h-screen bg-[#f5f7f2] text-slate-900 selection:bg-emerald-200 dark:bg-slate-950 dark:text-slate-100"
 >
     <div
-        class="mx-auto min-h-screen w-full max-w-xl bg-[#f5f7f2] px-4 pb-28 pt-4 sm:px-6 sm:pt-6 dark:bg-slate-950"
+        class="mobile-public-content mx-auto min-h-screen w-full max-w-xl bg-[#f5f7f2] px-4 pb-[calc(var(--mobile-public-action-height,5.5rem)+1rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 dark:bg-slate-950"
     >
         {#if step < 5}
             <section
@@ -565,8 +750,14 @@
             </section>
         {/if}
 
+        <h2 bind:this={stepHeading} tabindex="-1" class="sr-only">
+            {stepLabels[Math.min(Math.max(step - 1, 0), stepLabels.length - 1)]}
+        </h2>
+
         {#if error}
             <div
+                bind:this={errorPanel}
+                tabindex="-1"
                 role="alert"
                 class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200"
             >
@@ -589,7 +780,7 @@
                     <div class="relative">
                         <input
                             id="public-date"
-                            bind:this={dateInput}
+                            use:bookingDatePicker
                             value={dateValue}
                             type="text"
                             placeholder="Pilih tanggal"
@@ -669,8 +860,13 @@
                             <div
                                 id="public-segment-options"
                                 role="listbox"
+                                use:overlay={{
+                                    close: () => (segmentMenuOpen = false),
+                                    label: 'Pilih tujuan',
+                                    modal: 'mobile',
+                                }}
                                 aria-label="Daftar tujuan segment"
-                                class="absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+                                class="mobile-booking-picker absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
                             >
                                 {#if segments.length === 0}
                                     <p
@@ -679,7 +875,14 @@
                                         Belum ada tujuan yang tersedia.
                                     </p>
                                 {:else}
-                                    {#each segments as segment (segment.id)}
+                                    <input
+                                        type="search"
+                                        aria-label="Cari tujuan"
+                                        bind:value={segmentSearch}
+                                        placeholder="Cari asal atau tujuan"
+                                        class="mb-2 h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                    />
+                                    {#each filteredSegments as segment (segment.id)}
                                         <button
                                             type="button"
                                             role="option"
@@ -851,8 +1054,13 @@
                                 <div
                                     id="public-schedule-options"
                                     role="listbox"
+                                    use:overlay={{
+                                        close: () => (scheduleMenuOpen = false),
+                                        label: 'Pilih jam keberangkatan',
+                                        modal: 'mobile',
+                                    }}
                                     aria-label="Daftar jam keberangkatan"
-                                    class="absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+                                    class="mobile-booking-picker absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
                                 >
                                     {#each schedules as schedule (scheduleValue(schedule))}
                                         {@const available =
@@ -1072,7 +1280,8 @@
             </section>
             {#if selectedSchedule}
                 <div
-                    class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
+                    use:measureBar={'--mobile-public-action-height'}
+                    class="mobile-action-bar fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
                 >
                     <div
                         class="mx-auto flex max-w-xl items-center justify-between gap-3"
@@ -1229,7 +1438,8 @@
                 </div>
             </section>
             <div
-                class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
+                use:measureBar={'--mobile-public-action-height'}
+                class="mobile-action-bar fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
             >
                 <div class="mx-auto flex max-w-xl justify-between gap-3">
                     <button
@@ -1421,7 +1631,8 @@
                 </div>
             </section>
             <div
-                class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
+                use:measureBar={'--mobile-public-action-height'}
+                class="mobile-action-bar fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
             >
                 <div class="mx-auto flex max-w-xl justify-between gap-3">
                     <button
@@ -1464,6 +1675,7 @@
                 </p>
                 <div class="mt-6 grid gap-3">
                     {#if requestResult?.whatsapp_url}<a
+                            use:externalLink
                             href={requestResult.whatsapp_url}
                             target="_blank"
                             rel="noreferrer"
@@ -1477,8 +1689,21 @@
                             ? 'Kode tersalin'
                             : 'Salin kode request'}</button
                     >
+                    {#if copyFailed}
+                        <input
+                            readonly
+                            value={requestResult?.request_code ?? ''}
+                            aria-label="Kode request untuk disalin manual"
+                            onclick={(event) => event.currentTarget.select()}
+                            class="h-12 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 text-center text-sm font-black text-white"
+                        />
+                        <p class="text-xs text-slate-400">
+                            Salin kode secara manual dari kolom di atas.
+                        </p>
+                    {/if}
                 </div>
             </section>
         {/if}
     </div>
 </main>
+<ExternalLinkFallback />

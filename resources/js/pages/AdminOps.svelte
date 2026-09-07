@@ -7413,7 +7413,7 @@
                                 </div>
                                 {#if scheduleFormStep === 1}
                                     <div
-                                        class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
+                                        class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
                                     >
                                         <label class="min-w-0 space-y-1.5">
                                             <span
@@ -7832,7 +7832,7 @@
                                                             selectedUnitId,
                                                     )}
                                                 <div
-                                                    class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]"
+                                                    class="grid min-w-0 gap-3 rounded-xl border border-border/70 bg-background p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] md:rounded-none md:border-0 md:bg-transparent md:p-0"
                                                 >
                                                     <label class="space-y-1.5">
                                                         <span
@@ -7864,7 +7864,7 @@
                                                             >Layout kursi</span
                                                         >
                                                         <select
-                                                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                            class="h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm"
                                                             value={scheduleForm
                                                                 .unit_ids[
                                                                 idx

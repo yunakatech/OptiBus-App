@@ -5,6 +5,7 @@ import AuthLayout from '@/layouts/AuthLayout.svelte';
 import SettingsLayout from '@/layouts/settings/Layout.svelte';
 import { initializeFlashToast } from '@/lib/flash-toast';
 import { initializeInertiaLoading } from '@/lib/inertia-loading';
+import { initializeMobileRuntime } from '@/lib/mobile-runtime';
 import { initializeTheme } from '@/lib/theme.svelte';
 
 const appName = import.meta.env.VITE_APP_NAME || 'OptiBus';
@@ -50,3 +51,6 @@ initializeFlashToast();
 
 // This gives every Inertia page transition a visible loading response.
 initializeInertiaLoading();
+
+// Keep WebView viewport, keyboard, and back handling in sync with the app.
+initializeMobileRuntime();

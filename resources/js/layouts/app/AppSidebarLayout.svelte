@@ -4,6 +4,7 @@
     import AppShell from '@/components/AppShell.svelte';
     import AppSidebar from '@/components/AppSidebar.svelte';
     import AppSidebarHeader from '@/components/AppSidebarHeader.svelte';
+    import ExternalLinkFallback from '@/components/ExternalLinkFallback.svelte';
     import GlobalConfirmDialog from '@/components/GlobalConfirmDialog.svelte';
     import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay.svelte';
     import MobileBottomNav from '@/components/MobileBottomNav.svelte';
@@ -28,7 +29,10 @@
 
 <AppShell variant="sidebar">
     <AppSidebar />
-    <AppContent variant="sidebar" class="overflow-x-clip pb-20 md:pb-0">
+    <AppContent
+        variant="sidebar"
+        class="overflow-x-clip pb-[calc(var(--mobile-nav-height,5rem)+env(safe-area-inset-bottom))] md:pb-0"
+    >
         <AppSidebarHeader {breadcrumbs} />
         {#if !isBookingConsolePage}
             <div
@@ -43,4 +47,5 @@
     <GlobalLoadingOverlay />
     <GlobalConfirmDialog />
     <ToastContainer />
+    <ExternalLinkFallback />
 </AppShell>
