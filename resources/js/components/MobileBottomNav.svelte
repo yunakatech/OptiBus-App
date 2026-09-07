@@ -16,6 +16,37 @@
         getVisibleMobileNavItems(page.props.auth),
     );
     const navCount = $derived(Math.max(visibleMainItems.length, 1));
+    const consoleIndex = $derived(
+        visibleMainItems.findIndex(
+            (item) => toUrl(item.href) === '/booking-console',
+        ),
+    );
+    const hasConsole = $derived(consoleIndex >= 0);
+    const leftItems = $derived(
+        hasConsole ? visibleMainItems.slice(0, consoleIndex) : visibleMainItems,
+    );
+    const centerItem = $derived(
+        hasConsole ? visibleMainItems[consoleIndex] : undefined,
+    );
+    const rightItems = $derived(
+        hasConsole ? visibleMainItems.slice(consoleIndex + 1) : [],
+    );
+    const activeHref = $derived(
+        visibleMainItems.find((item) => isNavItemActive(item.href))?.href,
+    );
+    let surfaceWidth = $state(296);
+    let surfaceHeight = $state(76);
+    // Keep the cutout in CSS pixels as the surface grows with wrapped labels.
+    const surfacePath = $derived.by(() => {
+        const w = Math.max(surfaceWidth, 1);
+        const h = Math.max(surfaceHeight, 76);
+        const c = w / 2;
+        const top = hasConsole
+            ? `H ${c - 46} C ${c - 34} 1 ${c - 38} 12 ${c - 32} 27 C ${c - 26} 42 ${c - 15} 48 ${c} 48 C ${c + 15} 48 ${c + 26} 42 ${c + 32} 27 C ${c + 38} 12 ${c + 34} 1 ${c + 46} 1`
+            : '';
+
+        return `M 24 1 ${top} H ${w - 24} Q ${w - 1} 1 ${w - 1} 24 V ${h - 28} Q ${w - 1} ${h - 1} ${w - 28} ${h - 1} H 28 Q 1 ${h - 1} 1 ${h - 28} V 24 Q 1 1 24 1 Z`;
+    });
     let pendingHref = $state('');
     let prefetchedHrefs = new SvelteSet<string>();
 
@@ -90,7 +121,9 @@
     }
 
     function isNavItemActive(itemHref: NonNullable<NavItem['href']>): boolean {
-        return url.isCurrentOrParentUrl(itemHref, url.currentUrl);
+        const href = toUrl(itemHref);
+
+        return url.currentUrl === href || url.currentUrl.startsWith(`${href}/`);
     }
 
     function mobileLabel(title: string): string {
@@ -101,64 +134,263 @@
 {#if visibleMainItems.length > 0}
     <nav
         use:measureBar={'--mobile-nav-height'}
-        class="mobile-bottom-navigation fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 md:hidden"
-        aria-label="Mobile bottom navigation"
+        class="mobile-bottom-navigation fixed inset-x-0 bottom-0 z-40 pb-[calc(8px+env(safe-area-inset-bottom))] md:hidden"
+        class:has-console={hasConsole}
+        aria-label="Navigasi utama"
     >
         <div
-            class="mx-auto w-full max-w-md rounded-3xl border border-border/80 bg-background p-1.5 shadow-[0_12px_28px_-18px_hsl(215_25%_20%_/_0.38)]"
+            class="mobile-nav-surface"
+            bind:clientWidth={surfaceWidth}
+            bind:clientHeight={surfaceHeight}
         >
-            <div class="overflow-hidden rounded-2xl">
-                <ul
-                    class="grid"
-                    style={`grid-template-columns: repeat(${navCount}, minmax(0, 1fr));`}
-                >
+            <svg
+                class="mobile-nav-background"
+                viewBox={`0 0 ${Math.max(surfaceWidth, 1)} ${Math.max(surfaceHeight, 76)}`}
+                preserveAspectRatio="none"
+                aria-hidden="true"
+                focusable="false"
+            >
+                <path d={surfacePath} />
+            </svg>
+            <ul
+                class="mobile-nav-items"
+                style:grid-template-columns={hasConsole
+                    ? 'minmax(0, 1fr) 76px minmax(0, 1fr)'
+                    : `repeat(${navCount}, minmax(0, 1fr))`}
+            >
+                {#if hasConsole}
+                    <li class="mobile-nav-group">
+                        {#each leftItems as item (toUrl(item.href))}
+                            <div class="mobile-nav-item">
+                                {@render navItem(item)}
+                            </div>
+                        {/each}
+                    </li>
+                    <li class="mobile-nav-center-slot">
+                        {#if centerItem}
+                            {@render navItem(centerItem, true)}
+                        {/if}
+                    </li>
+                    <li class="mobile-nav-group">
+                        {#each rightItems as item (toUrl(item.href))}
+                            <div class="mobile-nav-item">
+                                {@render navItem(item)}
+                            </div>
+                        {/each}
+                    </li>
+                {:else}
                     {#each visibleMainItems as item (toUrl(item.href))}
-                        {@const itemHref = toUrl(item.href)}
-                        {@const itemActive = isNavItemActive(item.href)}
-                        <li>
-                            <a
-                                href={itemHref}
-                                aria-label={item.title}
-                                title={item.title}
-                                aria-busy={pendingHref === itemHref}
-                                onpointerenter={() => prefetchNavItem(itemHref)}
-                                onpointerdown={() => prepareNavPress(itemHref)}
-                                onfocus={() => prefetchNavItem(itemHref)}
-                                onclick={(event) =>
-                                    visitNavItem(event, itemHref)}
-                                aria-current={isNavItemActive(item.href)
-                                    ? 'page'
-                                    : undefined}
-                                class="group relative flex min-h-12 touch-manipulation select-none flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-xs font-semibold leading-4 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary {pendingHref ===
-                                itemHref
-                                    ? 'opacity-70'
-                                    : ''} {itemActive
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground'}"
-                            >
-                                {#if pendingHref === itemHref}
-                                    <span
-                                        class="absolute right-2 top-1 size-1.5 rounded-full bg-primary motion-safe:animate-pulse"
-                                    ></span>
-                                {/if}
-                                <span
-                                    class="flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-200 {itemActive
-                                        ? 'bg-primary/15'
-                                        : 'bg-transparent'}"
-                                >
-                                    {#if item.icon}
-                                        <item.icon class="size-6 shrink-0" />
-                                    {/if}
-                                </span>
-                                <span
-                                    class="max-w-full whitespace-normal break-words text-center"
-                                    >{mobileLabel(item.title)}</span
-                                >
-                            </a>
+                        <li class="mobile-nav-item">
+                            {@render navItem(item)}
                         </li>
                     {/each}
-                </ul>
-            </div>
+                {/if}
+            </ul>
         </div>
     </nav>
 {/if}
+
+{#snippet navItem(item: NavItem, isConsole = false)}
+    {@const itemHref = toUrl(item.href)}
+    {@const itemActive = item.href === activeHref}
+    <a
+        href={itemHref}
+        aria-label={isConsole ? 'Buka Booking Console' : item.title}
+        title={item.title}
+        aria-busy={pendingHref === itemHref}
+        onpointerenter={() => prefetchNavItem(itemHref)}
+        onpointerdown={() => prepareNavPress(itemHref)}
+        onfocus={() => prefetchNavItem(itemHref)}
+        onclick={(event) => visitNavItem(event, itemHref)}
+        aria-current={itemActive ? 'page' : undefined}
+        class="mobile-nav-link"
+        class:mobile-nav-link-center={isConsole}
+    >
+        <span class="mobile-nav-icon" class:mobile-nav-fab={isConsole}>
+            {#if item.icon}
+                <item.icon class={isConsole ? 'size-7' : 'size-6'} />
+            {/if}
+            {#if pendingHref === itemHref}
+                <span class="mobile-nav-loading" aria-hidden="true"></span>
+            {/if}
+        </span>
+        <span class="mobile-nav-label">{mobileLabel(item.title)}</span>
+    </a>
+{/snippet}
+
+<style>
+    .mobile-bottom-navigation {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 40;
+        width: 100%;
+        padding-top: 8px;
+        padding-inline: 12px;
+        pointer-events: none;
+    }
+
+    .mobile-bottom-navigation.has-console {
+        padding-top: 24px;
+    }
+
+    .mobile-nav-surface {
+        position: relative;
+        width: 100%;
+        max-width: 448px;
+        margin-inline: auto;
+    }
+
+    .mobile-nav-background {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        fill: var(--card);
+        stroke: var(--border);
+        stroke-width: 1;
+        filter: drop-shadow(0 6px 12px rgb(0 0 0 / 0.1));
+    }
+
+    .mobile-nav-items {
+        position: relative;
+        display: grid;
+        align-items: stretch;
+        min-height: 76px;
+        margin: 0;
+        padding: 0 4px 12px;
+        list-style: none;
+    }
+
+    .mobile-nav-item {
+        min-width: 0;
+        flex: 1 1 0%;
+    }
+
+    .mobile-nav-group {
+        display: flex;
+        grid-row: 1;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    .mobile-nav-center-slot {
+        grid-row: 1;
+        min-width: 0;
+        margin-top: -16px;
+        margin-bottom: 16px;
+    }
+
+    .mobile-nav-link {
+        display: flex;
+        position: relative;
+        height: 100%;
+        min-width: 48px;
+        min-height: 48px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 12px 2px 0;
+        border-radius: 14px;
+        color: var(--muted-foreground);
+        text-decoration: none;
+        font-size: 0.75rem;
+        line-height: 1rem;
+        font-weight: 500;
+        touch-action: manipulation;
+        pointer-events: auto;
+        transition:
+            color 180ms ease,
+            opacity 180ms ease;
+    }
+
+    .mobile-nav-link:hover,
+    .mobile-nav-link[aria-current='page'] {
+        color: var(--primary);
+    }
+
+    .mobile-nav-link[aria-current='page'] .mobile-nav-label {
+        font-weight: 600;
+    }
+
+    .mobile-nav-link:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+
+    .mobile-nav-icon {
+        display: flex;
+        position: relative;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+    }
+
+    .mobile-nav-link-center {
+        gap: 8px;
+        padding-top: 0;
+    }
+
+    .mobile-nav-fab {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        box-shadow: 0 4px 8px rgb(0 0 0 / 0.14);
+    }
+
+    .mobile-nav-link[aria-current='page'] .mobile-nav-fab {
+        outline: 2px solid var(--primary);
+        outline-offset: 3px;
+    }
+
+    .mobile-nav-label {
+        max-width: 100%;
+        text-align: center;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .mobile-nav-link[aria-busy='true'] .mobile-nav-label {
+        opacity: 0.65;
+    }
+
+    .mobile-nav-loading {
+        position: absolute;
+        top: -3px;
+        right: -4px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .mobile-nav-fab .mobile-nav-loading {
+        top: 8px;
+        right: 8px;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .mobile-nav-loading {
+            animation: nav-pending 1s ease-in-out infinite;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .mobile-nav-link {
+            transition: none;
+        }
+    }
+
+    @keyframes nav-pending {
+        50% {
+            opacity: 0.3;
+        }
+    }
+</style>
