@@ -31,7 +31,7 @@
     <AppSidebar />
     <AppContent
         variant="sidebar"
-        class="overflow-x-clip pb-[calc(var(--mobile-nav-height,5rem)+env(safe-area-inset-bottom))] md:pb-0"
+        class="mobile-app-content overflow-x-clip md:pb-0"
     >
         <AppSidebarHeader {breadcrumbs} />
         {#if !isBookingConsolePage}

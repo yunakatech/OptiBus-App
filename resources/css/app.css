@@ -374,6 +374,10 @@
     }
 
     @media (max-width: 767px) {
+        .mobile-app-content {
+            padding-bottom: calc(var(--mobile-nav-height, 0px) + 0.75rem);
+        }
+
         button,
         [role='button'],
         input:not([type='checkbox']):not([type='radio']),
@@ -401,6 +405,10 @@
             );
         }
 
+        [data-keyboard-open='true'] .mobile-app-content {
+            padding-bottom: 0.75rem;
+        }
+
         .mobile-dialog-panel,
         .mobile-sheet-panel {
             max-height: calc(var(--mobile-viewport-height, 100dvh) - 1rem);
@@ -416,6 +424,16 @@
             border-radius: 1.5rem 1.5rem 0 0;
             padding: 1rem;
             padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .mobile-bottom-navigation *,
+            .mobile-action-bar {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     }
 }
