@@ -17,6 +17,7 @@
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import { copyText, externalLink } from '@/lib/webview';
 
     type Settings = {
         tenant: {
@@ -46,6 +47,18 @@
     let logoFile = $state<File | null>(null);
     let logoFileName = $state('');
     let uploadingLogo = $state(false);
+
+    async function readPayload(response: Response, fallback: string) {
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok || !payload?.success) {
+            throw new Error(
+                typeof payload?.error === 'string' ? payload.error : fallback,
+            );
+        }
+
+        return payload;
+    }
 
     onMount(() => {
         settings = initialSettings;
@@ -79,11 +92,10 @@
                     whatsapp: settings.tenant?.whatsapp ?? '',
                 }),
             });
-            const payload = await response.json();
-
-            if (!response.ok || !payload.success) {
-                throw new Error(payload.error ?? 'Pengaturan gagal disimpan.');
-            }
+            const payload = await readPayload(
+                response,
+                'Pengaturan gagal disimpan.',
+            );
 
             settings = payload.settings;
             message = settings.enabled
@@ -121,11 +133,10 @@
                     whatsapp: settings.tenant.whatsapp,
                 }),
             });
-            const payload = await response.json();
-
-            if (!response.ok || !payload.success) {
-                throw new Error(payload.error ?? 'Pengaturan gagal disimpan.');
-            }
+            const payload = await readPayload(
+                response,
+                'Pengaturan gagal disimpan.',
+            );
 
             settings = payload.settings;
             message = 'Nomor WhatsApp booking berhasil disimpan.';
@@ -144,9 +155,11 @@
             return;
         }
 
-        await navigator.clipboard?.writeText(settings.url);
-        copied = true;
-        setTimeout(() => (copied = false), 1800);
+        copied = await copyText(settings.url);
+
+        if (copied) {
+            setTimeout(() => (copied = false), 1800);
+        }
     }
 
     function selectLogo(event: Event) {
@@ -374,6 +387,8 @@
                         onclick={toggle}
                         disabled={saving}
                         aria-label="Aktifkan atau nonaktifkan booking online"
+                        role="switch"
+                        aria-checked={settings.enabled}
                         class:!bg-emerald-700={settings.enabled}
                         class="relative h-8 w-14 rounded-full bg-slate-300 transition disabled:opacity-50"
                         ><span
@@ -435,6 +450,7 @@
                                         class="h-4 w-4 text-emerald-600"
                                     /> Tersalin{:else}<Copy class="h-4 w-4" /> Salin{/if}</button
                             >{#if settings.enabled && settings.url}<a
+                                    use:externalLink
                                     href={settings.url}
                                     target="_blank"
                                     rel="noreferrer"

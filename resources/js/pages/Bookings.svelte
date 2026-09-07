@@ -72,6 +72,7 @@
     } from '@/lib/data-invalidation';
     import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
     import { readUiPreferences, saveUiPreferences } from '@/lib/ui-preferences';
+    import { openExternal } from '@/lib/webview';
 
     type Totals = {
         bookings: number;
@@ -2380,18 +2381,16 @@
             phone !== ''
                 ? `https://wa.me/${phone}?text=${encodedText}`
                 : `https://wa.me/?text=${encodedText}`;
-        const opened = window.open(url, '_blank');
+        const opened = openExternal(url);
 
         bookingSuccessWhatsappPickerOpen = false;
         if (opened) {
-            opened.opener = null;
             bookingSuccessFeedback = 'WhatsApp dibuka dengan detail booking.';
 
             return;
         }
 
-        bookingSuccessFeedback =
-            'Gagal membuka WhatsApp. Izinkan popup browser lalu coba lagi.';
+        bookingSuccessFeedback = 'Gagal membuka WhatsApp. Coba lagi.';
     };
 
     const sendBookingSuccessToWhatsapp = () => {
@@ -5392,11 +5391,7 @@
     };
 
     const openManifestPrint = (group: BookingGroup) => {
-        window.open(
-            withAutoPrint(manifestPrintUrl(group.key)),
-            '_blank',
-            'noopener,noreferrer',
-        );
+        openExternal(withAutoPrint(manifestPrintUrl(group.key)));
     };
 
     const openManifestPrintByKey = (groupKey: string) => {
@@ -5404,11 +5399,7 @@
             return;
         }
 
-        window.open(
-            withAutoPrint(manifestPrintUrl(groupKey)),
-            '_blank',
-            'noopener,noreferrer',
-        );
+        openExternal(withAutoPrint(manifestPrintUrl(groupKey)));
     };
 
     const openManifestPdfByKey = (groupKey: string) => {
@@ -5416,7 +5407,7 @@
             return;
         }
 
-        window.open(manifestPdfUrl(groupKey), '_blank', 'noopener,noreferrer');
+        openExternal(manifestPdfUrl(groupKey));
     };
 
     const openTicketPrint = (bookingId: number) => {
@@ -5424,11 +5415,7 @@
             return;
         }
 
-        window.open(
-            withAutoPrint(ticketPrintUrl(bookingId)),
-            '_blank',
-            'noopener,noreferrer',
-        );
+        openExternal(withAutoPrint(ticketPrintUrl(bookingId)));
     };
 
     const openTicketPdf = (bookingId: number) => {
@@ -5436,7 +5423,7 @@
             return;
         }
 
-        window.open(ticketPdfUrl(bookingId), '_blank', 'noopener,noreferrer');
+        openExternal(ticketPdfUrl(bookingId));
     };
 
     const navigateToGroupDetail = (group: BookingGroup) => {
@@ -10190,6 +10177,7 @@
                                         (bookingListFiltersExpanded =
                                             !bookingListFiltersExpanded)}
                                     aria-expanded={bookingListFiltersExpanded}
+                                    aria-controls="booking-list-filters"
                                 >
                                     <ListFilter class="mr-1.5 h-3.5 w-3.5" />
                                     {bookingListFiltersExpanded
@@ -10199,6 +10187,7 @@
                             </div>
                         </div>
                         <div
+                            id="booking-list-filters"
                             class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-lg border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
                         >
                             <div
@@ -10207,6 +10196,7 @@
                                 <select
                                     class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
                                     bind:value={bookingListRoute}
+                                    aria-label="Filtrer par rute"
                                 >
                                     <option value="all">Semua Rute</option>
                                     {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
@@ -10215,6 +10205,7 @@
                                 </select>
                                 <input
                                     bind:this={bookingListDateInput}
+                                    aria-label="Tanggal keberangkatan"
                                     type="text"
                                     value={bookingListDateFrom}
                                     readonly
@@ -10225,6 +10216,7 @@
                                 <select
                                     class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
                                     bind:value={bookingListPayment}
+                                    aria-label="Status pembayaran"
                                 >
                                     <option value="all">Semua Pembayaran</option
                                     >

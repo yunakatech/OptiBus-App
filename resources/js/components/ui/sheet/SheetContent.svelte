@@ -4,6 +4,7 @@
     import X from 'lucide-svelte/icons/x';
     import { fly } from 'svelte/transition';
     import { cn } from '@/lib/utils';
+    import { overlay } from '@/lib/mobile-overlay';
     import { SHEET_CONTEXT, type SheetContext } from './context';
 
     let {
@@ -59,8 +60,9 @@
             onclick={close}
         ></button>
         <div
+            use:overlay={{ close, label: 'Panel', modal: true }}
             class={cn(
-                'fixed flex flex-col gap-4 overflow-y-auto border-border bg-background p-5 shadow-lg',
+                'mobile-sheet-panel fixed flex max-h-[var(--mobile-viewport-height,100dvh)] flex-col gap-4 overflow-y-auto border-border bg-background p-5 shadow-lg',
                 sideClasses[side] ?? sideClasses.right,
                 sizeClasses[side] ?? sizeClasses.right,
                 className,

@@ -2,6 +2,7 @@
     import type { Snippet } from 'svelte';
     import { getContext } from 'svelte';
     import { cn } from '@/lib/utils';
+    import { overlay } from '@/lib/mobile-overlay';
     import { DIALOG_CONTEXT, type DialogContext } from './context';
 
     let { class: className = '', children }: { class?: string; children?: Snippet } = $props();
@@ -20,8 +21,9 @@
             onclick={close}
         ></button>
         <div
+            use:overlay={{ close, label: 'Dialog', modal: true }}
             class={cn(
-                'relative z-10 w-full max-w-lg rounded-lg border border-border bg-background p-5 shadow-lg',
+                'mobile-dialog-panel relative z-10 flex max-h-[calc(var(--mobile-viewport-height,100dvh)-2rem)] w-full max-w-lg flex-col overflow-y-auto rounded-lg border border-border bg-background p-5 shadow-lg',
                 className,
             )}
             role="dialog"
