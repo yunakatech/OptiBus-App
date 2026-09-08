@@ -3,6 +3,7 @@
     import { SvelteSet } from 'svelte/reactivity';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { measureBar } from '@/lib/mobile-runtime';
+    import { preloadPageForHref } from '@/lib/page-preload';
     import {
         getVisibleMobileNavItems,
         shouldPrefetchNavigationHref,
@@ -35,14 +36,14 @@
         visibleMainItems.find((item) => isNavItemActive(item.href))?.href,
     );
     let surfaceWidth = $state(296);
-    let surfaceHeight = $state(76);
+    let surfaceHeight = $state(64);
     // Keep the cutout in CSS pixels as the surface grows with wrapped labels.
     const surfacePath = $derived.by(() => {
         const w = Math.max(surfaceWidth, 1);
-        const h = Math.max(surfaceHeight, 76);
+        const h = Math.max(surfaceHeight, 64);
         const c = w / 2;
         const top = hasConsole
-            ? `H ${c - 46} C ${c - 34} 1 ${c - 38} 12 ${c - 32} 27 C ${c - 26} 42 ${c - 15} 48 ${c} 48 C ${c + 15} 48 ${c + 26} 42 ${c + 32} 27 C ${c + 38} 12 ${c + 34} 1 ${c + 46} 1`
+            ? `H ${c - 38} C ${c - 28} 1 ${c - 31} 10 ${c - 26} 22 C ${c - 21} 34 ${c - 12} 40 ${c} 40 C ${c + 12} 40 ${c + 21} 34 ${c + 26} 22 C ${c + 31} 10 ${c + 28} 1 ${c + 38} 1`
             : '';
 
         return `M 24 1 ${top} H ${w - 24} Q ${w - 1} 1 ${w - 1} 24 V ${h} H 1 V 24 Q 1 1 24 1 Z`;
@@ -51,6 +52,7 @@
     let prefetchedHrefs = new SvelteSet<string>();
 
     function prepareNavPress(href: string): void {
+        preloadPageForHref(href);
         prefetchNavItem(href);
     }
 
@@ -145,7 +147,7 @@
         >
             <svg
                 class="mobile-nav-background"
-                viewBox={`0 0 ${Math.max(surfaceWidth, 1)} ${Math.max(surfaceHeight, 76)}`}
+                viewBox={`0 0 ${Math.max(surfaceWidth, 1)} ${Math.max(surfaceHeight, 64)}`}
                 preserveAspectRatio="none"
                 aria-hidden="true"
                 focusable="false"
@@ -208,7 +210,7 @@
     >
         <span class="mobile-nav-icon" class:mobile-nav-fab={isConsole}>
             {#if item.icon}
-                <item.icon class={isConsole ? 'size-7' : 'size-6'} />
+                <item.icon class="size-6" />
             {/if}
             {#if pendingHref === itemHref}
                 <span class="mobile-nav-loading" aria-hidden="true"></span>
@@ -243,7 +245,7 @@
     }
 
     .mobile-bottom-navigation.has-console {
-        padding-top: 24px;
+        padding-top: 12px;
     }
 
     .mobile-nav-surface {
@@ -269,9 +271,9 @@
         position: relative;
         display: grid;
         align-items: stretch;
-        min-height: 76px;
+        min-height: 64px;
         margin: 0;
-        padding: 0 12px 12px;
+        padding: 0 12px 8px;
         list-style: none;
     }
 
@@ -291,8 +293,8 @@
     .mobile-nav-center-slot {
         grid-row: 1;
         min-width: 0;
-        margin-top: -16px;
-        margin-bottom: 16px;
+        margin-top: -12px;
+        margin-bottom: 12px;
     }
 
     .mobile-nav-link {
@@ -304,8 +306,8 @@
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        gap: 12px;
-        padding: 12px 2px 0;
+        gap: 4px;
+        padding: 8px 2px 0;
         border-radius: 14px;
         color: var(--muted-foreground);
         text-decoration: none;
@@ -349,8 +351,8 @@
     }
 
     .mobile-nav-fab {
-        width: 56px;
-        height: 56px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         background: var(--primary);
         color: var(--primary-foreground);

@@ -14,6 +14,7 @@
     import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Button } from '@/components/ui/button';
     import { CardContent } from '@/components/ui/card';
     import {
@@ -141,6 +142,8 @@
 
     let bagasiQ = $state('');
     let charterQ = $state('');
+    let bagasiFilterDraft = $state('');
+    let charterFilterDraft = $state('');
     let carterRouteQ = $state('');
     let masterFiltersExpanded = $state(false);
 
@@ -415,6 +418,38 @@
         }
 
         await loadCarterRoutes(1);
+    };
+
+    const beginMasterFilterDraft = (
+        tab: 'customer-bagasi' | 'customer-charter',
+    ) => {
+        if (tab === 'customer-bagasi') {
+            bagasiFilterDraft = bagasiQ;
+        } else {
+            charterFilterDraft = charterQ;
+        }
+    };
+
+    const applyMasterFilterDraft = async (
+        tab: 'customer-bagasi' | 'customer-charter',
+    ) => {
+        if (tab === 'customer-bagasi') {
+            bagasiQ = bagasiFilterDraft;
+        } else {
+            charterQ = charterFilterDraft;
+        }
+
+        await applySearch(tab);
+    };
+
+    const resetMasterFilterDraft = (
+        tab: 'customer-bagasi' | 'customer-charter',
+    ) => {
+        if (tab === 'customer-bagasi') {
+            bagasiFilterDraft = '';
+        } else {
+            charterFilterDraft = '';
+        }
     };
 
     const setTab = async (tab: TabName) => {
@@ -864,22 +899,36 @@
                         </div>
                     </form>
                 {:else}
-                    <div class="flex justify-end md:hidden">
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            class="h-8 rounded-lg text-xs"
-                            onclick={() =>
-                                (masterFiltersExpanded =
-                                    !masterFiltersExpanded)}
-                            aria-expanded={masterFiltersExpanded}
-                        >
-                            {masterFiltersExpanded
-                                ? 'Sembunyikan Filter'
-                                : 'Tampilkan Filter'}
-                        </Button>
-                    </div>
+                    <ResponsiveFilterBar
+                        label="Bagasi"
+                        activeCount={bagasiQ.trim() ? 1 : 0}
+                        summary={bagasiQ.trim() || 'Semua customer'}
+                        onOpen={() => beginMasterFilterDraft('customer-bagasi')}
+                        onApply={() =>
+                            void applyMasterFilterDraft('customer-bagasi')}
+                        onReset={() =>
+                            resetMasterFilterDraft('customer-bagasi')}
+                        onCancel={() =>
+                            beginMasterFilterDraft('customer-bagasi')}
+                    >
+                        {#snippet primary()}
+                            <span
+                                class="text-xs text-muted-foreground md:hidden"
+                            >
+                                Cari customer bagasi
+                            </span>
+                        {/snippet}
+                        {#snippet filters()}
+                            <label class="grid gap-1.5 text-sm font-medium">
+                                Cari customer
+                                <Input
+                                    class="h-12 rounded-xl text-base"
+                                    placeholder="Nama, nomor HP, atau alamat"
+                                    bind:value={bagasiFilterDraft}
+                                />
+                            </label>
+                        {/snippet}
+                    </ResponsiveFilterBar>
                     <div
                         class={masterFiltersExpanded
                             ? 'mt-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
@@ -1093,7 +1142,9 @@
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <p class="hidden text-sm text-muted-foreground sm:block">
+                        <p
+                            class="hidden text-sm text-muted-foreground sm:block"
+                        >
                             Total: {bagasiMeta.total}
                         </p>
                         <div
@@ -1176,22 +1227,37 @@
                         </div>
                     </form>
                 {:else}
-                    <div class="flex justify-end md:hidden">
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            class="h-8 rounded-lg text-xs"
-                            onclick={() =>
-                                (masterFiltersExpanded =
-                                    !masterFiltersExpanded)}
-                            aria-expanded={masterFiltersExpanded}
-                        >
-                            {masterFiltersExpanded
-                                ? 'Sembunyikan Filter'
-                                : 'Tampilkan Filter'}
-                        </Button>
-                    </div>
+                    <ResponsiveFilterBar
+                        label="Carter"
+                        activeCount={charterQ.trim() ? 1 : 0}
+                        summary={charterQ.trim() || 'Semua customer'}
+                        onOpen={() =>
+                            beginMasterFilterDraft('customer-charter')}
+                        onApply={() =>
+                            void applyMasterFilterDraft('customer-charter')}
+                        onReset={() =>
+                            resetMasterFilterDraft('customer-charter')}
+                        onCancel={() =>
+                            beginMasterFilterDraft('customer-charter')}
+                    >
+                        {#snippet primary()}
+                            <span
+                                class="text-xs text-muted-foreground md:hidden"
+                            >
+                                Cari customer carter
+                            </span>
+                        {/snippet}
+                        {#snippet filters()}
+                            <label class="grid gap-1.5 text-sm font-medium">
+                                Cari customer
+                                <Input
+                                    class="h-12 rounded-xl text-base"
+                                    placeholder="Nama, nomor HP, atau company"
+                                    bind:value={charterFilterDraft}
+                                />
+                            </label>
+                        {/snippet}
+                    </ResponsiveFilterBar>
                     <div
                         class={masterFiltersExpanded
                             ? 'mt-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
@@ -1409,7 +1475,9 @@
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <p class="hidden text-sm text-muted-foreground sm:block">
+                        <p
+                            class="hidden text-sm text-muted-foreground sm:block"
+                        >
                             Total: {charterMeta.total}
                         </p>
                         <div
@@ -1881,7 +1949,9 @@
                             <div
                                 class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5"
                             >
-                                <p class="hidden text-sm text-muted-foreground sm:block">
+                                <p
+                                    class="hidden text-sm text-muted-foreground sm:block"
+                                >
                                     Menampilkan {carterRoutes.length} data pada halaman
                                     ini.
                                 </p>

@@ -21,13 +21,10 @@
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
-    import {
-        Card,
-        CardContent,
-        CardHeader,
-    } from '@/components/ui/card';
+    import { Card, CardContent, CardHeader } from '@/components/ui/card';
     import {
         DropdownMenu,
         DropdownMenuContent,
@@ -131,6 +128,13 @@
     let dateTo = $state('');
     let dateRangeMessage = $state('');
     let perPage = $state(20);
+    let paymentFilterDraft = $state({
+        source: 'all' as SourceKey,
+        search: '',
+        dateFrom: '',
+        dateTo: '',
+        perPage: 20,
+    });
     let localData = $state<PaymentData | null>(null);
     let loading = $state(false);
     let updatingKey = $state('');
@@ -149,6 +153,7 @@
     let selectAllInput = $state<HTMLInputElement | null>(null);
     let dateFromPicker: FlatpickrInstance | null = null;
     let dateToPicker: FlatpickrInstance | null = null;
+    let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const rows = $derived(localData?.rows ?? []);
     const selectedRows = $derived(
@@ -181,9 +186,7 @@
                   : '',
     );
     const bulkApplyDisabled = $derived(
-        selectedRowsCount === 0 ||
-            bulkLoading ||
-            bulkStatusWarning !== '',
+        selectedRowsCount === 0 || bulkLoading || bulkStatusWarning !== '',
     );
     const pagination = $derived(
         localData?.pagination ?? {
@@ -213,6 +216,25 @@
             ? Math.round((activePaidEstimate / activeAmount) * 100)
             : 0,
     );
+    const paymentFilterActiveCount = $derived(
+        [
+            activeSource !== 'all',
+            searchQuery.trim() !== '',
+            dateFrom !== '' || dateTo !== '',
+            perPage !== 20,
+        ].filter(Boolean).length,
+    );
+    const paymentFilterSummary = $derived.by(() => {
+        const source =
+            sourceTabs.find((tab) => tab.key === activeSource)?.label ??
+            'Semua';
+        const dates =
+            dateFrom || dateTo
+                ? `${dateFrom || 'Awal'} - ${dateTo || 'Hari ini'}`
+                : '';
+
+        return [source, dates, searchQuery.trim()].filter(Boolean).join(' · ');
+    });
 
     const formatDateValue = (date: Date) => {
         const year = date.getFullYear();
@@ -577,6 +599,17 @@
         );
     };
 
+    const schedulePaymentSearch = () => {
+        if (searchDebounceTimer) {
+            clearTimeout(searchDebounceTimer);
+        }
+
+        searchDebounceTimer = setTimeout(() => {
+            reloadData(1);
+            searchDebounceTimer = null;
+        }, 300);
+    };
+
     const reloadIfPaymentDataStale = () => {
         if (!initializedFromProps || !localData || loading) {
             return;
@@ -619,6 +652,35 @@
     const setSource = (source: SourceKey) => {
         activeSource = source;
         reloadData(1);
+    };
+
+    const beginPaymentFilterDraft = () => {
+        paymentFilterDraft = {
+            source: activeSource,
+            search: searchQuery,
+            dateFrom,
+            dateTo,
+            perPage,
+        };
+    };
+
+    const applyPaymentFilterDraft = () => {
+        activeSource = paymentFilterDraft.source;
+        searchQuery = paymentFilterDraft.search;
+        dateFrom = paymentFilterDraft.dateFrom;
+        dateTo = paymentFilterDraft.dateTo;
+        perPage = paymentFilterDraft.perPage;
+        reloadData(1);
+    };
+
+    const resetPaymentFilterDraft = () => {
+        paymentFilterDraft = {
+            source: 'all',
+            search: '',
+            dateFrom: '',
+            dateTo: '',
+            perPage: 20,
+        };
     };
 
     const clearBulkSelection = () => {
@@ -899,7 +961,7 @@
             <div
                 class="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/80 p-3 shadow-sm md:flex-row md:items-center md:justify-between"
             >
-                <div class="flex flex-wrap gap-2">
+                <div class="hidden flex-wrap gap-2 md:flex">
                     {#each sourceTabs as tab (tab.key)}
                         <Button
                             type="button"
@@ -913,8 +975,81 @@
                         </Button>
                     {/each}
                 </div>
+                <ResponsiveFilterBar
+                    label="Pembayaran"
+                    activeCount={paymentFilterActiveCount}
+                    summary={paymentFilterSummary || 'Semua transaksi'}
+                    onOpen={beginPaymentFilterDraft}
+                    onApply={applyPaymentFilterDraft}
+                    onReset={resetPaymentFilterDraft}
+                    onCancel={beginPaymentFilterDraft}
+                >
+                    {#snippet primary()}
+                        <div class="md:hidden">
+                            <span class="text-xs text-muted-foreground"
+                                >Status: {statusTabs.find(
+                                    (tab) => tab.key === activeStatus,
+                                )?.label}</span
+                            >
+                        </div>
+                    {/snippet}
+                    {#snippet filters()}
+                        <div class="grid gap-3">
+                            <label class="grid gap-1.5 text-sm font-medium">
+                                Sumber transaksi
+                                <select
+                                    class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                    bind:value={paymentFilterDraft.source}
+                                >
+                                    {#each sourceTabs as tab (tab.key)}
+                                        <option value={tab.key}
+                                            >{tab.label}</option
+                                        >
+                                    {/each}
+                                </select>
+                            </label>
+                            <label class="grid gap-1.5 text-sm font-medium">
+                                Cari transaksi
+                                <Input
+                                    class="h-12 rounded-xl text-base"
+                                    placeholder="Nama, kode, nomor HP, rute"
+                                    bind:value={paymentFilterDraft.search}
+                                />
+                            </label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="grid gap-1.5 text-sm font-medium">
+                                    Dari
+                                    <input
+                                        type="date"
+                                        class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                        bind:value={paymentFilterDraft.dateFrom}
+                                    />
+                                </label>
+                                <label class="grid gap-1.5 text-sm font-medium">
+                                    Sampai
+                                    <input
+                                        type="date"
+                                        class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                        bind:value={paymentFilterDraft.dateTo}
+                                    />
+                                </label>
+                            </div>
+                            <label class="grid gap-1.5 text-sm font-medium">
+                                Jumlah per halaman
+                                <select
+                                    class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                    bind:value={paymentFilterDraft.perPage}
+                                >
+                                    <option value={10}>10/baris</option>
+                                    <option value={20}>20/baris</option>
+                                    <option value={50}>50/baris</option>
+                                </select>
+                            </label>
+                        </div>
+                    {/snippet}
+                </ResponsiveFilterBar>
                 <div
-                    class="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-end"
+                    class="hidden flex-col gap-2 md:flex md:flex-row md:flex-wrap md:items-center md:justify-end"
                 >
                     <div
                         class="grid min-w-0 gap-2 rounded-full border border-border/70 bg-background/80 p-1.5 sm:grid-cols-2 md:w-[23rem]"
@@ -966,6 +1101,7 @@
                             class="h-9 rounded-full pl-9"
                             placeholder="Cari nama, kode, no HP, rute..."
                             bind:value={searchQuery}
+                            oninput={schedulePaymentSearch}
                             onkeydown={(event) =>
                                 event.key === 'Enter' && reloadData(1)}
                         />
@@ -1029,11 +1165,15 @@
                             >
                                 Bulk Payment
                             </p>
-                            <p class="text-sm font-semibold text-cyan-950 dark:text-cyan-50">
+                            <p
+                                class="text-sm font-semibold text-cyan-950 dark:text-cyan-50"
+                            >
                                 {selectedRowsCount} transaksi dipilih
                             </p>
                             {#if bulkStatusWarning}
-                                <p class="text-xs text-rose-700 dark:text-rose-300">
+                                <p
+                                    class="text-xs text-rose-700 dark:text-rose-300"
+                                >
                                     {bulkStatusWarning}
                                 </p>
                             {/if}
@@ -1069,9 +1209,9 @@
                                         class="h-9 rounded-full border-cyan-200 text-right shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/15 dark:border-cyan-500/20"
                                         value={bulkDownPayment}
                                         oninput={(event) =>
-                                            (bulkDownPayment =
-                                                (event.currentTarget as HTMLInputElement)
-                                                    .value)}
+                                            (bulkDownPayment = (
+                                                event.currentTarget as HTMLInputElement
+                                            ).value)}
                                     />
                                 </label>
                             {/if}
@@ -1132,7 +1272,9 @@
                     <p class="mt-3 font-semibold text-foreground">
                         Data pembayaran belum ada.
                     </p>
-                    <p class="mt-1 hidden text-sm text-muted-foreground sm:block">
+                    <p
+                        class="mt-1 hidden text-sm text-muted-foreground sm:block"
+                    >
                         Coba pindah tab status, ubah filter sumber data, atau
                         kosongkan pencarian.
                     </p>
@@ -1155,8 +1297,9 @@
                                         disabled={selectableRows.length === 0}
                                         onchange={(event) =>
                                             toggleSelectAllVisible(
-                                                (event.currentTarget as HTMLInputElement)
-                                                    .checked,
+                                                (
+                                                    event.currentTarget as HTMLInputElement
+                                                ).checked,
                                             )}
                                     />
                                 </th>
@@ -1281,7 +1424,9 @@
                                         >
                                             {row.customer_name || row.code}
                                         </p>
-                                        <p class="truncate text-xs text-muted-foreground">
+                                        <p
+                                            class="truncate text-xs text-muted-foreground"
+                                        >
                                             {row.code} | {row.date || '-'}
                                         </p>
                                     </div>
