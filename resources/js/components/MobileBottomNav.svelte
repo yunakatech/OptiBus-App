@@ -45,7 +45,7 @@
             ? `H ${c - 46} C ${c - 34} 1 ${c - 38} 12 ${c - 32} 27 C ${c - 26} 42 ${c - 15} 48 ${c} 48 C ${c + 15} 48 ${c + 26} 42 ${c + 32} 27 C ${c + 38} 12 ${c + 34} 1 ${c + 46} 1`
             : '';
 
-        return `M 24 1 ${top} H ${w - 24} Q ${w - 1} 1 ${w - 1} 24 V ${h - 28} Q ${w - 1} ${h - 1} ${w - 28} ${h - 1} H 28 Q 1 ${h - 1} 1 ${h - 28} V 24 Q 1 1 24 1 Z`;
+        return `M 24 1 ${top} H ${w - 24} Q ${w - 1} 1 ${w - 1} 24 V ${h} H 1 V 24 Q 1 1 24 1 Z`;
     });
     let pendingHref = $state('');
     let prefetchedHrefs = new SvelteSet<string>();
@@ -134,7 +134,7 @@
 {#if visibleMainItems.length > 0}
     <nav
         use:measureBar={'--mobile-nav-height'}
-        class="mobile-bottom-navigation fixed inset-x-0 bottom-0 z-40 pb-[calc(8px+env(safe-area-inset-bottom))] md:hidden"
+        class="mobile-bottom-navigation fixed inset-x-0 bottom-0 z-40 md:hidden"
         class:has-console={hasConsole}
         aria-label="Navigasi utama"
     >
@@ -214,7 +214,9 @@
                 <span class="mobile-nav-loading" aria-hidden="true"></span>
             {/if}
         </span>
-        <span class="mobile-nav-label">{mobileLabel(item.title)}</span>
+        {#if !isConsole}
+            <span class="mobile-nav-label">{mobileLabel(item.title)}</span>
+        {/if}
     </a>
 {/snippet}
 
@@ -226,7 +228,17 @@
         z-index: 40;
         width: 100%;
         padding-top: 8px;
-        padding-inline: 12px;
+        padding-bottom: env(safe-area-inset-bottom);
+        pointer-events: none;
+    }
+
+    .mobile-bottom-navigation::after {
+        position: absolute;
+        inset-inline: 0;
+        bottom: 0;
+        height: env(safe-area-inset-bottom);
+        background: var(--card);
+        content: '';
         pointer-events: none;
     }
 
@@ -237,7 +249,7 @@
     .mobile-nav-surface {
         position: relative;
         width: 100%;
-        max-width: 448px;
+        max-width: none;
         margin-inline: auto;
     }
 
@@ -250,7 +262,7 @@
         fill: var(--card);
         stroke: var(--border);
         stroke-width: 1;
-        filter: drop-shadow(0 6px 12px rgb(0 0 0 / 0.1));
+        filter: none;
     }
 
     .mobile-nav-items {
@@ -259,7 +271,7 @@
         align-items: stretch;
         min-height: 76px;
         margin: 0;
-        padding: 0 4px 12px;
+        padding: 0 12px 12px;
         list-style: none;
     }
 
@@ -332,7 +344,7 @@
     }
 
     .mobile-nav-link-center {
-        gap: 8px;
+        gap: 0;
         padding-top: 0;
     }
 
