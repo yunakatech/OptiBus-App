@@ -274,6 +274,8 @@
             right: auto !important;
             bottom: auto !important;
             left: 50% !important;
+            width: min(calc(100vw - 2rem), 32rem) !important;
+            max-width: calc(100vw - 2rem) !important;
             transform: translate(-50%, -50%) !important;
         }
 
