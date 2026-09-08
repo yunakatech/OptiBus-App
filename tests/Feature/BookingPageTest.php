@@ -216,7 +216,8 @@ class BookingPageTest extends TestCase
                 ->has('bookingGroups', 1)
                 ->where('bookingGroups.0.bookings.1.name', 'PENUMPANG CANCEL')
                 ->where('bookingGroups.0.bookings.1.status', 'canceled')
-                ->where('bookingGroups.0.bookings.1.pembayaran', 'Belum Lunas'));
+                ->where('bookingGroups.0.bookings.1.pembayaran', 'Belum Lunas')
+                ->where('bookingGroups.0.canceled', 1));
     }
 
     public function test_booking_detail_page_ignores_invalid_booking_dates_without_failing(): void

@@ -3652,7 +3652,9 @@
         const active = visibleRows.filter(
             (row) => String(row.status || '').toLowerCase() !== 'canceled',
         ).length;
-        const canceled = total - active;
+        const canceled = group.bookings.filter((row) =>
+            isCanceledBooking(row.status),
+        ).length;
         const lunas = visibleRows.filter((row) =>
             isLunasPayment(row.pembayaran),
         ).length;
@@ -3673,6 +3675,13 @@
             belum_lunas: belumLunas,
         };
     };
+
+    const canceledGroupCount = (group: BookingGroup) =>
+        Math.max(
+            Number(group.canceled || 0),
+            group.bookings.filter((row) => isCanceledBooking(row.status))
+                .length,
+        );
 
     const updateBookingRowInLocalGroups = (
         bookingId: number,
@@ -10722,12 +10731,12 @@
                                                                                 Refund
                                                                                 {group.refund}
                                                                             </span>
-                                                                            {#if group.canceled > 0}
+                                                                            {#if canceledGroupCount(group) > 0}
                                                                                 <span
                                                                                     class="rounded-md border border-rose-200/80 bg-rose-50 px-1.5 py-0.5 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-200"
                                                                                 >
                                                                                     Cancel
-                                                                                    {group.canceled}
+                                                                                    {canceledGroupCount(group)}
                                                                                 </span>
                                                                             {/if}
                                                                         </div>
@@ -11163,7 +11172,7 @@
                                                             class="rounded-xl border border-cyan-200/60 bg-background/90 px-3 py-2 text-center dark:border-cyan-500/20"
                                                         >
                                                             <p
-                                                                class="inline-flex items-center justify-center gap-1.5 text-lg font-extrabold leading-none tracking-tight text-foreground"
+                                                                class="inline-flex items-center justify-center gap-1.5 text-base font-bold leading-none tracking-tight text-foreground sm:text-lg"
                                                             >
                                                                 <Clock3
                                                                     class="h-3.5 w-3.5 text-primary"
@@ -11250,7 +11259,7 @@
                                                         <span
                                                             class="inline-flex items-center justify-center rounded-md border border-rose-300/70 bg-rose-50 px-1.5 py-1 font-medium text-rose-700 dark:border-rose-500/40 dark:bg-rose-950/30 dark:text-rose-300"
                                                             >Cancel
-                                                            {group.canceled}</span
+                                                            {canceledGroupCount(group)}</span
                                                         >
                                                         <span
                                                             class="inline-flex items-center justify-center rounded-md border border-emerald-300/70 bg-emerald-50 px-1.5 py-1 font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300"

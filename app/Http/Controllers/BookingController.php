@@ -607,9 +607,10 @@ class BookingController extends Controller
             ->first();
         $maxId = (int) ($signature->max_id ?? 0);
         $totalRows = (int) ($signature->total_rows ?? 0);
+        $bookingsSignature = $this->buildTableMutationSignature('bookings');
         $schedulesSignature = $this->buildTableMutationSignature('schedules');
         $assignmentsSignature = $this->buildTableMutationSignature('trip_assignments');
-        $cacheKey = "bookings:list-groups:v10:".PoolScope::cacheKey().":{$maxId}:{$totalRows}:{$schedulesSignature}:{$assignmentsSignature}";
+        $cacheKey = 'bookings:list-groups:v11:'.PoolScope::cacheKey().":{$maxId}:{$totalRows}:{$bookingsSignature}:{$schedulesSignature}:{$assignmentsSignature}";
 
         return Cache::remember($cacheKey, now()->addSeconds(20), function (): array {
             $select = [
@@ -697,11 +698,15 @@ class BookingController extends Controller
                 $payment = strtolower((string) $row->pembayaran);
                 $hideFromDepartureTotals = $this->shouldHideDeparturePassenger($status, $payment);
 
+                if ($status === 'canceled') {
+                    // Keep canceled passengers in the card's history total,
+                    // including canceled bookings that were never paid.
+                    $grouped[$tripKey]['canceled'] += 1;
+                }
+
                 if (! $hideFromDepartureTotals) {
                     $grouped[$tripKey]['total'] += 1;
-                    if ($status === 'canceled') {
-                        $grouped[$tripKey]['canceled'] += 1;
-                    } else {
+                    if ($status !== 'canceled') {
                         $grouped[$tripKey]['active'] += 1;
                     }
                     if ($payment === 'lunas') {
@@ -908,6 +913,7 @@ class BookingController extends Controller
             $grouped = array_filter(
                 $grouped,
                 static fn (array $item): bool => (int) ($item['total'] ?? 0) > 0
+                    || (int) ($item['canceled'] ?? 0) > 0
                     || (int) ($item['assignment_id'] ?? 0) > 0,
             );
 
