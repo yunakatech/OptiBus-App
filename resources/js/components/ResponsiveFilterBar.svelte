@@ -242,6 +242,27 @@
         padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
 
+    @media (max-width: 767px) {
+        .responsive-filter-sheet {
+            inset: 50% auto auto 50% !important;
+            width: min(calc(100% - 2rem), 32rem) !important;
+            max-height: min(
+                calc(var(--mobile-viewport-height, 100dvh) - 2rem),
+                42rem
+            ) !important;
+            border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+            border-radius: 1.5rem;
+            box-shadow:
+                0 24px 70px rgb(15 23 42 / 0.22),
+                0 8px 24px rgb(15 23 42 / 0.12);
+            transform: translate(-50%, -50%) !important;
+        }
+
+        .responsive-filter-sheet-footer {
+            padding-bottom: 0.75rem;
+        }
+    }
+
     @media (min-width: 768px) {
         .responsive-filter-bar {
             display: block;
