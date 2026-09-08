@@ -14,6 +14,7 @@
     import { MoreHorizontal } from 'lucide-svelte';
     import { onDestroy, onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Button } from '@/components/ui/button';
     import {
@@ -4151,26 +4152,14 @@
                             {/snippet}
                             {#snippet filters()}
                                 <div class="grid gap-3">
-                                    <label
-                                        class="grid gap-1.5 text-sm font-medium"
-                                    >
-                                        Dari tanggal
-                                        <input
-                                            type="date"
-                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                            bind:value={flowFilterDraft.from}
-                                        />
-                                    </label>
-                                    <label
-                                        class="grid gap-1.5 text-sm font-medium"
-                                    >
-                                        Sampai tanggal
-                                        <input
-                                            type="date"
-                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                            bind:value={flowFilterDraft.to}
-                                        />
-                                    </label>
+                                    <FilterDateInput
+                                        label="Dari tanggal"
+                                        bind:value={flowFilterDraft.from}
+                                    />
+                                    <FilterDateInput
+                                        label="Sampai tanggal"
+                                        bind:value={flowFilterDraft.to}
+                                    />
                                     <label
                                         class="grid gap-1.5 text-sm font-medium"
                                     >

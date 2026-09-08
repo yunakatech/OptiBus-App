@@ -1,6 +1,7 @@
 <script lang="ts">
-    import type { Snippet } from 'svelte';
     import { ListFilter, RotateCcw, X } from 'lucide-svelte';
+    import type { Snippet } from 'svelte';
+    import { Button } from '@/components/ui/button';
     import {
         Sheet,
         SheetContent,
@@ -9,7 +10,6 @@
         SheetHeader,
         SheetTitle,
     } from '@/components/ui/sheet';
-    import { Button } from '@/components/ui/button';
     import { cn } from '@/lib/utils';
 
     let {
@@ -88,7 +88,6 @@
 
     <div class="responsive-filter-mobile">
         <div class="responsive-filter-summary">
-            <span class="responsive-filter-summary-label">Filter</span>
             <span class="responsive-filter-summary-value"
                 >{summary || `Semua ${label.toLowerCase()}`}</span
             >
@@ -115,21 +114,26 @@
         <SheetContent
             side="center"
             showCloseButton={false}
-            class="responsive-filter-sheet gap-0 rounded-t-3xl p-0"
+            class="responsive-filter-sheet gap-0 rounded-3xl p-0"
         >
             <SheetHeader
-                class="border-b border-border/70 px-5 pt-5 pb-4 text-left"
+                class="border-b border-border/70 px-4 pt-4 pb-3 text-left"
             >
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex min-w-0 items-center gap-2">
                         <SheetTitle>Filter {label}</SheetTitle>
+                        {#if activeCount > 0}
+                            <span class="responsive-filter-header-count"
+                                >{activeCount}</span
+                            >
+                        {/if}
                         <SheetDescription class="sr-only">
                             Atur filter {label}, lalu terapkan perubahan.
                         </SheetDescription>
                     </div>
                     <button
                         type="button"
-                        class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-background text-muted-foreground shadow-sm transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-muted/40 text-muted-foreground transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         aria-label="Tutup filter"
                         onclick={cancelFilters}
                     >
@@ -138,28 +142,28 @@
                 </div>
             </SheetHeader>
 
-            <div class="responsive-filter-sheet-body px-5 py-5">
+            <div class="responsive-filter-sheet-body px-4 py-4">
                 {@render filters?.()}
             </div>
 
             <SheetFooter
-                class="responsive-filter-sheet-footer border-t border-border/70 bg-background/95 px-4 py-3"
+                class="responsive-filter-sheet-footer border-t border-border/70 bg-background px-4 py-3"
             >
                 <Button
                     type="button"
+                    class="h-12 rounded-xl text-sm"
+                    onclick={applyFilters}
+                >
+                    Terapkan
+                </Button>
+                <Button
+                    type="button"
                     variant="outline"
-                    class="h-11 rounded-xl"
+                    class="h-11 rounded-xl text-sm"
                     onclick={resetFilters}
                 >
                     <RotateCcw class="mr-2 h-4 w-4" />
                     Reset
-                </Button>
-                <Button
-                    type="button"
-                    class="h-11 rounded-xl"
-                    onclick={applyFilters}
-                >
-                    Terapkan
                 </Button>
             </SheetFooter>
         </SheetContent>
@@ -197,18 +201,8 @@
     .responsive-filter-summary {
         display: flex;
         min-width: 0;
-        flex-direction: column;
-        gap: 0.125rem;
+        justify-content: center;
         padding-inline: 0.5rem;
-    }
-
-    .responsive-filter-summary-label {
-        color: var(--muted-foreground);
-        font-size: 0.6875rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        line-height: 1rem;
-        text-transform: uppercase;
     }
 
     .responsive-filter-summary-value {
@@ -232,6 +226,21 @@
         line-height: 1rem;
     }
 
+    .responsive-filter-header-count {
+        display: inline-flex;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+        color: var(--primary);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
     :global(.responsive-filter-sheet) {
         overflow: hidden;
         max-height: min(
@@ -249,34 +258,18 @@
 
     :global(.responsive-filter-sheet-footer) {
         display: grid;
-        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+        grid-template-columns: minmax(0, 1fr);
         gap: 0.5rem;
         padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
 
     @media (max-width: 767px) {
         :global(.responsive-filter-sheet) {
-            width: min(calc(100% - 2rem), 32rem) !important;
-            max-height: min(
-                calc(var(--mobile-viewport-height, 100dvh) - 2rem),
-                42rem
-            ) !important;
             border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
             border-radius: 1.5rem;
             box-shadow:
                 0 24px 70px rgb(15 23 42 / 0.22),
                 0 8px 24px rgb(15 23 42 / 0.12);
-            transform: translate(-50%, -50%) !important;
-        }
-
-        :global(.mobile-sheet-panel.responsive-filter-sheet) {
-            top: 50% !important;
-            right: auto !important;
-            bottom: auto !important;
-            left: 50% !important;
-            width: min(calc(100vw - 2rem), 32rem) !important;
-            max-width: calc(100vw - 2rem) !important;
-            transform: translate(-50%, -50%) !important;
         }
 
         :global(.responsive-filter-sheet-footer) {

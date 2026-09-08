@@ -2,7 +2,7 @@
     import type { Snippet } from 'svelte';
     import { getContext } from 'svelte';
     import X from 'lucide-svelte/icons/x';
-    import { fly } from 'svelte/transition';
+    import { fade, fly } from 'svelte/transition';
     import { cn } from '@/lib/utils';
     import { overlay } from '@/lib/mobile-overlay';
     import { SHEET_CONTEXT, type SheetContext } from './context';
@@ -39,6 +39,15 @@
 
     const close = () => setOpen(false);
 
+    const panelClass = () =>
+        cn(
+            'mobile-sheet-panel fixed flex max-h-[var(--mobile-viewport-height,100dvh)] flex-col gap-4 overflow-y-auto border-border bg-background p-5 shadow-lg',
+            sideClasses[side] ?? sideClasses.right,
+            sizeClasses[side] ?? sizeClasses.right,
+            side === 'center' && 'mobile-sheet-panel--center',
+            className,
+        );
+
     const panelTransition = () => {
         const axis =
             side === 'center'
@@ -63,32 +72,65 @@
             aria-label="Close"
             onclick={close}
         ></button>
-        <div
-            use:overlay={{ close, label: 'Panel', modal: true }}
-            class={cn(
-                'mobile-sheet-panel fixed flex max-h-[var(--mobile-viewport-height,100dvh)] flex-col gap-4 overflow-y-auto border-border bg-background p-5 shadow-lg',
-                sideClasses[side] ?? sideClasses.right,
-                sizeClasses[side] ?? sizeClasses.right,
-                className,
-            )}
-            style={side === 'center'
-                ? 'top: 50% !important; right: auto !important; bottom: auto !important; left: 50% !important; width: min(calc(100vw - 2rem), 32rem) !important; max-width: calc(100vw - 2rem) !important; height: auto !important; max-height: calc(100dvh - 2rem) !important; box-sizing: border-box !important; transform: translate(-50%, -50%) !important;'
-                : undefined}
-            in:fly={panelTransition()}
-            out:fly={panelTransition()}
-        >
-            {#if showCloseButton}
-                <button
-                    type="button"
-                    class="ring-offset-background focus-visible:ring-ring absolute top-4 right-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-hidden disabled:pointer-events-none"
-                    aria-label="Close"
-                    onclick={close}
-                >
-                    <X class="size-4" />
-                    <span class="sr-only">Close</span>
-                </button>
-            {/if}
-            {@render children?.()}
-        </div>
+        {#if side === 'center'}
+            <div
+                use:overlay={{ close, label: 'Panel', modal: true }}
+                class={panelClass()}
+                data-sheet-side="center"
+                in:fade={{ duration: 160 }}
+                out:fade={{ duration: 120 }}
+            >
+                {#if showCloseButton}
+                    <button
+                        type="button"
+                        class="ring-offset-background focus-visible:ring-ring absolute top-4 right-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-hidden disabled:pointer-events-none"
+                        aria-label="Close"
+                        onclick={close}
+                    >
+                        <X class="size-4" />
+                        <span class="sr-only">Close</span>
+                    </button>
+                {/if}
+                {@render children?.()}
+            </div>
+        {:else}
+            <div
+                use:overlay={{ close, label: 'Panel', modal: true }}
+                class={panelClass()}
+                data-sheet-side={side}
+                in:fly={panelTransition()}
+                out:fly={panelTransition()}
+            >
+                {#if showCloseButton}
+                    <button
+                        type="button"
+                        class="ring-offset-background focus-visible:ring-ring absolute top-4 right-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-hidden disabled:pointer-events-none"
+                        aria-label="Close"
+                        onclick={close}
+                    >
+                        <X class="size-4" />
+                        <span class="sr-only">Close</span>
+                    </button>
+                {/if}
+                {@render children?.()}
+            </div>
+        {/if}
     </div>
 {/if}
+
+<style>
+    .mobile-sheet-panel--center {
+        top: 50%;
+        right: auto;
+        bottom: auto;
+        left: 50%;
+        width: min(calc(100vw - 2rem), 32rem);
+        max-width: calc(100vw - 2rem);
+        max-height: min(
+            calc(var(--mobile-viewport-height, 100dvh) - 2rem),
+            42rem
+        );
+        box-sizing: border-box;
+        transform: translate(-50%, -50%);
+    }
+</style>

@@ -145,6 +145,7 @@
     let bagasiFilterDraft = $state('');
     let charterFilterDraft = $state('');
     let carterRouteQ = $state('');
+    let carterRouteFilterDraft = $state('');
     let masterFiltersExpanded = $state(false);
 
     let bagasiForm = $state({
@@ -421,34 +422,40 @@
     };
 
     const beginMasterFilterDraft = (
-        tab: 'customer-bagasi' | 'customer-charter',
+        tab: 'customer-bagasi' | 'customer-charter' | 'rute-carter',
     ) => {
         if (tab === 'customer-bagasi') {
             bagasiFilterDraft = bagasiQ;
-        } else {
+        } else if (tab === 'customer-charter') {
             charterFilterDraft = charterQ;
+        } else {
+            carterRouteFilterDraft = carterRouteQ;
         }
     };
 
     const applyMasterFilterDraft = async (
-        tab: 'customer-bagasi' | 'customer-charter',
+        tab: 'customer-bagasi' | 'customer-charter' | 'rute-carter',
     ) => {
         if (tab === 'customer-bagasi') {
             bagasiQ = bagasiFilterDraft;
-        } else {
+        } else if (tab === 'customer-charter') {
             charterQ = charterFilterDraft;
+        } else {
+            carterRouteQ = carterRouteFilterDraft;
         }
 
         await applySearch(tab);
     };
 
     const resetMasterFilterDraft = (
-        tab: 'customer-bagasi' | 'customer-charter',
+        tab: 'customer-bagasi' | 'customer-charter' | 'rute-carter',
     ) => {
         if (tab === 'customer-bagasi') {
             bagasiFilterDraft = '';
-        } else {
+        } else if (tab === 'customer-charter') {
             charterFilterDraft = '';
+        } else {
+            carterRouteFilterDraft = '';
         }
     };
 
@@ -1699,44 +1706,30 @@
                                         Rute Carter
                                     </p>
                                 </div>
-                                <div class="space-y-2">
-                                    <div class="flex justify-end md:hidden">
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            class="h-8 rounded-lg text-xs"
-                                            onclick={() =>
-                                                (masterFiltersExpanded =
-                                                    !masterFiltersExpanded)}
-                                            aria-expanded={masterFiltersExpanded}
-                                        >
-                                            {masterFiltersExpanded
-                                                ? 'Sembunyikan Filter'
-                                                : 'Tampilkan Filter'}
-                                        </Button>
-                                    </div>
-                                    <div
-                                        class={masterFiltersExpanded
-                                            ? 'grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end'
-                                            : 'hidden md:grid md:gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end'}
-                                    >
-                                        <div class="space-y-1">
-                                            <label
-                                                class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-                                                for="carter-route-search"
-                                                >Cari data</label
-                                            >
+                                <ResponsiveFilterBar
+                                    label="Rute Carter"
+                                    activeCount={carterRouteQ.trim() ? 1 : 0}
+                                    summary={carterRouteQ.trim() ||
+                                        'Semua rute'}
+                                    onOpen={() =>
+                                        beginMasterFilterDraft('rute-carter')}
+                                    onApply={() =>
+                                        void applyMasterFilterDraft(
+                                            'rute-carter',
+                                        )}
+                                    onReset={() =>
+                                        resetMasterFilterDraft('rute-carter')}
+                                    onCancel={() =>
+                                        beginMasterFilterDraft('rute-carter')}
+                                    class="w-full md:w-auto md:min-w-[22rem]"
+                                >
+                                    {#snippet desktop()}
+                                        <div class="flex gap-2">
                                             <Input
-                                                id="carter-route-search"
                                                 class="h-9 w-full rounded-xl bg-background"
                                                 placeholder="Cari nama, asal, atau tujuan"
                                                 bind:value={carterRouteQ}
                                             />
-                                        </div>
-                                        <div
-                                            class="flex flex-wrap gap-2 sm:justify-end"
-                                        >
                                             <Button
                                                 type="button"
                                                 class="h-9 rounded-xl px-4"
@@ -1746,8 +1739,22 @@
                                                     )}>Cari</Button
                                             >
                                         </div>
-                                    </div>
-                                </div>
+                                    {/snippet}
+                                    {#snippet filters()}
+                                        <label
+                                            class="grid gap-1.5 text-sm font-medium"
+                                        >
+                                            Cari rute
+                                            <Input
+                                                class="h-12 rounded-xl text-base"
+                                                placeholder="Nama, asal, atau tujuan"
+                                                bind:value={
+                                                    carterRouteFilterDraft
+                                                }
+                                            />
+                                        </label>
+                                    {/snippet}
+                                </ResponsiveFilterBar>
                             </div>
 
                             {#if carterRoutes.length > 0}
