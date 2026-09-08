@@ -88,11 +88,16 @@
 
     <div class="responsive-filter-mobile">
         <div class="responsive-filter-summary">
-            <span class="responsive-filter-summary-label">{label}</span>
-            {#if summary}
-                <span class="responsive-filter-summary-value">{summary}</span>
-            {/if}
+            <span class="responsive-filter-summary-label">Filter</span>
+            <span class="responsive-filter-summary-value"
+                >{summary || `Semua ${label.toLowerCase()}`}</span
+            >
         </div>
+        {#if activeCount > 0}
+            <span class="responsive-filter-active-count"
+                >{activeCount} aktif</span
+            >
+        {/if}
         <Button
             type="button"
             variant={activeCount > 0 ? 'default' : 'outline'}
@@ -103,13 +108,6 @@
         >
             <ListFilter class="mr-2 h-4 w-4" />
             Filter
-            {#if activeCount > 0}
-                <span
-                    class="ml-1.5 rounded-full bg-background/20 px-1.5 py-0.5 text-xs"
-                >
-                    {activeCount}
-                </span>
-            {/if}
         </Button>
     </div>
 
@@ -120,18 +118,18 @@
             class="responsive-filter-sheet gap-0 rounded-t-3xl p-0"
         >
             <SheetHeader
-                class="border-b border-border/70 px-4 pt-4 pb-3 text-left"
+                class="border-b border-border/70 px-5 pt-5 pb-4 text-left"
             >
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <SheetTitle>Filter {label}</SheetTitle>
-                        <SheetDescription>
-                            Atur pilihan lalu tekan Terapkan.
+                        <SheetDescription class="sr-only">
+                            Atur filter {label}, lalu terapkan perubahan.
                         </SheetDescription>
                     </div>
                     <button
                         type="button"
-                        class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/70 text-muted-foreground transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-background text-muted-foreground shadow-sm transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         aria-label="Tutup filter"
                         onclick={cancelFilters}
                     >
@@ -140,7 +138,7 @@
                 </div>
             </SheetHeader>
 
-            <div class="responsive-filter-sheet-body px-4 py-4">
+            <div class="responsive-filter-sheet-body px-5 py-5">
                 {@render filters?.()}
             </div>
 
@@ -190,9 +188,10 @@
         justify-content: space-between;
         gap: 0.75rem;
         border: 1px solid var(--border);
-        border-radius: 0.875rem;
-        background: color-mix(in srgb, var(--card) 92%, transparent);
-        padding: 0.5rem;
+        border-radius: 1rem;
+        background: var(--card);
+        padding: 0.375rem;
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
     }
 
     .responsive-filter-summary {
@@ -205,9 +204,11 @@
 
     .responsive-filter-summary-label {
         color: var(--muted-foreground);
-        font-size: 0.75rem;
+        font-size: 0.6875rem;
         font-weight: 600;
+        letter-spacing: 0.04em;
         line-height: 1rem;
+        text-transform: uppercase;
     }
 
     .responsive-filter-summary-value {
@@ -218,6 +219,17 @@
         line-height: 1.125rem;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    .responsive-filter-active-count {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+        padding: 0.25rem 0.5rem;
+        color: var(--primary);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        line-height: 1rem;
     }
 
     :global(.responsive-filter-sheet) {
