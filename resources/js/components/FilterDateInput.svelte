@@ -32,10 +32,6 @@
                     return;
                 }
 
-                const calendarLayer = input
-                    .closest<HTMLElement>('[data-sheet-side="fullscreen"]')
-                    ?.querySelector<HTMLElement>('[data-sheet-calendar-layer]');
-
                 picker = flatpickr(input, {
                     dateFormat: 'Y-m-d',
                     altInput: true,
@@ -47,7 +43,6 @@
                     minDate,
                     maxDate,
                     disableMobile: true,
-                    appendTo: calendarLayer ?? undefined,
                     onChange: (_selectedDates, dateString) => {
                         value = dateString || '';
                     },

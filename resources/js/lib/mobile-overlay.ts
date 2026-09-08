@@ -139,11 +139,17 @@ export function overlay(node: HTMLElement, initial: Options) {
         }
     };
     const focusin = (event: FocusEvent) => {
+        const target = event.target;
+
         if (
             top() &&
             isModal() &&
-            event.target instanceof Node &&
-            !node.contains(event.target)
+            target instanceof Node &&
+            !node.contains(target) &&
+            !(
+                target instanceof Element &&
+                target.closest('.flatpickr-calendar')
+            )
         ) {
             (focusable()[0] ?? node).focus({ preventScroll: true });
         }
