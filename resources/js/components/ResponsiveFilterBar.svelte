@@ -220,7 +220,7 @@
         white-space: nowrap;
     }
 
-    .responsive-filter-sheet {
+    :global(.responsive-filter-sheet) {
         overflow: hidden;
         max-height: min(
             calc(var(--mobile-viewport-height, 100dvh) - 1rem),
@@ -228,14 +228,14 @@
         );
     }
 
-    .responsive-filter-sheet-body {
+    :global(.responsive-filter-sheet-body) {
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
         overscroll-behavior: contain;
     }
 
-    .responsive-filter-sheet-footer {
+    :global(.responsive-filter-sheet-footer) {
         display: grid;
         grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
         gap: 0.5rem;
@@ -243,7 +243,7 @@
     }
 
     @media (max-width: 767px) {
-        .responsive-filter-sheet {
+        :global(.responsive-filter-sheet) {
             inset: 50% auto auto 50% !important;
             width: min(calc(100% - 2rem), 32rem) !important;
             max-height: min(
@@ -258,7 +258,7 @@
             transform: translate(-50%, -50%) !important;
         }
 
-        .responsive-filter-sheet-footer {
+        :global(.responsive-filter-sheet-footer) {
             padding-bottom: 0.75rem;
         }
     }
