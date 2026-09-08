@@ -6,10 +6,12 @@ import SettingsLayout from '@/layouts/settings/Layout.svelte';
 import { initializeFlashToast } from '@/lib/flash-toast';
 import { initializeInertiaLoading } from '@/lib/inertia-loading';
 import { initializeMobileRuntime } from '@/lib/mobile-runtime';
+import { registerPageLoaders } from '@/lib/page-preload';
 import { initializeTheme } from '@/lib/theme.svelte';
 
 const appName = import.meta.env.VITE_APP_NAME || 'OptiBus';
 const pages = import.meta.glob<ResolvedComponent>('./pages/**/*.svelte');
+registerPageLoaders(pages);
 
 createInertiaApp({
     resolve: async (name) => {

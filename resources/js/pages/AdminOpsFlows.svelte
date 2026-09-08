@@ -14,6 +14,7 @@
     import { MoreHorizontal } from 'lucide-svelte';
     import { onDestroy, onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -411,6 +412,11 @@
     let filterFrom = $state('');
     let filterTo = $state('');
     let filterQuery = $state('');
+    let flowFilterDraft = $state({
+        from: '',
+        to: '',
+        query: '',
+    });
     let charterFilterUnitId = $state(0);
     let charterFilterUnitSearch = $state('');
     let charterFilterUnitLookupOpen = $state(false);
@@ -2891,6 +2897,40 @@
         await loadActiveTab();
     };
 
+    const beginFlowFilterDraft = () => {
+        flowFilterDraft = {
+            from: filterFrom,
+            to: filterTo,
+            query: filterQuery,
+        };
+    };
+
+    const applyFlowFilterDraft = async () => {
+        filterFrom = flowFilterDraft.from;
+        filterTo = flowFilterDraft.to;
+        filterQuery = flowFilterDraft.query;
+        await applyFilters();
+    };
+
+    const resetFlowFilterDraft = () => {
+        flowFilterDraft = { from: '', to: '', query: '' };
+    };
+
+    const flowFilterActiveCount = $derived(
+        [filterFrom || filterTo, filterQuery.trim()].filter(Boolean).length,
+    );
+    const flowFilterSummary = $derived.by(() => {
+        const date =
+            filterFrom && filterTo && filterFrom !== filterTo
+                ? `${filterFrom} - ${filterTo}`
+                : filterFrom || filterTo;
+
+        return (
+            [date, filterQuery.trim()].filter(Boolean).join(' · ') ||
+            'Semua data'
+        );
+    });
+
     const resetCharterFilters = async () => {
         filterFrom = '';
         filterTo = '';
@@ -4084,22 +4124,67 @@
                 class="sticky top-0 z-10 space-y-3 border-b bg-background pb-3"
             >
                 {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}
-                    <div class="flex justify-end md:hidden">
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            class="h-8 rounded-full px-3 text-xs"
-                            onclick={() =>
-                                (mobileFiltersExpanded =
-                                    !mobileFiltersExpanded)}
-                            aria-expanded={mobileFiltersExpanded}
+                    {#if activeTab === 'charters' || activeTab === 'luggages'}
+                        <ResponsiveFilterBar
+                            label={activeTab === 'luggages'
+                                ? 'Bagasi'
+                                : activeTab === 'charters'
+                                  ? 'Carter'
+                                  : 'Data'}
+                            activeCount={flowFilterActiveCount}
+                            summary={flowFilterSummary}
+                            onOpen={beginFlowFilterDraft}
+                            onApply={() => void applyFlowFilterDraft()}
+                            onReset={resetFlowFilterDraft}
+                            onCancel={beginFlowFilterDraft}
                         >
-                            {mobileFiltersExpanded
-                                ? 'Sembunyikan Filter'
-                                : 'Tampilkan Filter'}
-                        </Button>
-                    </div>
+                            {#snippet primary()}
+                                <div class="md:hidden">
+                                    <span class="text-xs text-muted-foreground">
+                                        {activeTab === 'luggages'
+                                            ? 'Filter bagasi'
+                                            : activeTab === 'charters'
+                                              ? 'Filter carter'
+                                              : 'Filter data'}
+                                    </span>
+                                </div>
+                            {/snippet}
+                            {#snippet filters()}
+                                <div class="grid gap-3">
+                                    <label
+                                        class="grid gap-1.5 text-sm font-medium"
+                                    >
+                                        Dari tanggal
+                                        <input
+                                            type="date"
+                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                            bind:value={flowFilterDraft.from}
+                                        />
+                                    </label>
+                                    <label
+                                        class="grid gap-1.5 text-sm font-medium"
+                                    >
+                                        Sampai tanggal
+                                        <input
+                                            type="date"
+                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                            bind:value={flowFilterDraft.to}
+                                        />
+                                    </label>
+                                    <label
+                                        class="grid gap-1.5 text-sm font-medium"
+                                    >
+                                        Cari
+                                        <Input
+                                            class="h-12 rounded-xl text-base"
+                                            placeholder="Nama, rute, driver, atau armada"
+                                            bind:value={flowFilterDraft.query}
+                                        />
+                                    </label>
+                                </div>
+                            {/snippet}
+                        </ResponsiveFilterBar>
+                    {/if}
                     <div
                         class={mobileFiltersExpanded
                             ? 'block'

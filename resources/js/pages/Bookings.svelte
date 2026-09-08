@@ -20,7 +20,6 @@
         Copy,
         CheckCircle2,
         LayoutGrid,
-        ListFilter,
         MessageCircle,
         MoreHorizontal,
         MoreVertical,
@@ -39,6 +38,7 @@
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -446,7 +446,11 @@
     let bookingListDateManuallyChanged = $state(false);
     let bookingListVisibleCount = $state(24);
     let lastBookingListFilterSignature = $state('');
-    let bookingListFiltersExpanded = $state(false);
+    let bookingListFilterDraft = $state({
+        route: 'all',
+        date: initialBookingListDate,
+        payment: 'all' as 'all' | 'lunas' | 'belum_lunas',
+    });
     let bookingListReloadTimer: ReturnType<typeof setTimeout> | null = null;
     let emptyDepartureOpen = $state(false);
     let emptyDepartureDate = $state(today);
@@ -619,7 +623,6 @@
             lastBookingListPageMode !== listOnly ||
             lastBookingListDetailMode !== groupDetailPage
         ) {
-            bookingListFiltersExpanded = false;
             lastBookingListPageMode = listOnly;
             lastBookingListDetailMode = groupDetailPage;
         }
@@ -3148,6 +3151,27 @@
             localBookingGroups.length,
         ].join('|'),
     );
+    const bookingListFilterActiveCount = $derived(
+        [
+            bookingListRoute !== 'all',
+            bookingListDateFrom !== today,
+            bookingListPayment !== 'all',
+        ].filter(Boolean).length,
+    );
+    const bookingListFilterSummary = $derived.by(() => {
+        const dateLabel =
+            bookingListDateFrom === bookingListDateTo
+                ? formatGroupDateLabel(bookingListDateFrom)
+                : formatGroupDateLabel(bookingListDateFrom) +
+                  ' - ' +
+                  formatGroupDateLabel(bookingListDateTo);
+
+        return (
+            dateLabel +
+            ' · ' +
+            (bookingListRoute === 'all' ? 'Semua rute' : bookingListRoute)
+        );
+    });
 
     $effect(() => {
         if (lastBookingListFilterSignature === bookingListFilterSignature) {
@@ -3233,6 +3257,30 @@
         bookingListPayment = 'all';
         bookingListDateManuallyChanged = false;
         bookingListDatePicker?.setDate(currentToday, false, 'Y-m-d');
+    };
+    const beginBookingListFilterDraft = () => {
+        bookingListFilterDraft = {
+            route: bookingListRoute,
+            date: bookingListDateFrom,
+            payment: bookingListPayment,
+        };
+    };
+    const applyBookingListFilterDraft = () => {
+        bookingListRoute = bookingListFilterDraft.route;
+        bookingListPayment = bookingListFilterDraft.payment;
+        setBookingListDate(bookingListFilterDraft.date || today);
+        bookingListDatePicker?.setDate(
+            bookingListFilterDraft.date || today,
+            false,
+            'Y-m-d',
+        );
+    };
+    const resetBookingListFilterDraft = () => {
+        bookingListFilterDraft = {
+            route: 'all',
+            date: today,
+            payment: 'all',
+        };
     };
 
     const loadEmptyDepartureSchedules = async () => {
@@ -10177,74 +10225,113 @@
                                         Card
                                     </Button>
                                 </div>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    class="h-8 rounded-full px-3 text-xs md:hidden"
-                                    onclick={() =>
-                                        (bookingListFiltersExpanded =
-                                            !bookingListFiltersExpanded)}
-                                    aria-expanded={bookingListFiltersExpanded}
-                                    aria-controls="booking-list-filters"
-                                >
-                                    <ListFilter class="mr-1.5 h-3.5 w-3.5" />
-                                    {bookingListFiltersExpanded
-                                        ? 'Sembunyikan Filter'
-                                        : 'Tampilkan Filter'}
-                                </Button>
                             </div>
                         </div>
-                        <div
-                            id="booking-list-filters"
-                            class={`${bookingListFiltersExpanded ? 'block' : 'hidden'} rounded-lg border border-border/70 bg-muted/10 p-2.5 shadow-sm md:block md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
+                        <ResponsiveFilterBar
+                            label="Keberangkatan"
+                            activeCount={bookingListFilterActiveCount}
+                            summary={bookingListFilterSummary}
+                            onOpen={beginBookingListFilterDraft}
+                            onApply={applyBookingListFilterDraft}
+                            onReset={resetBookingListFilterDraft}
+                            onCancel={beginBookingListFilterDraft}
                         >
-                            <div
-                                class="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
-                            >
-                                <select
-                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
-                                    bind:value={bookingListRoute}
-                                    aria-label="Filtrer par rute"
+                            {#snippet primary()}
+                                <div
+                                    class="flex items-center gap-2 md:hidden"
                                 >
-                                    <option value="all">Semua Rute</option>
-                                    {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
-                                        <option value={route}>{route}</option>
-                                    {/each}
-                                </select>
-                                <input
-                                    bind:this={bookingListDateInput}
-                                    aria-label="Tanggal keberangkatan"
-                                    type="text"
-                                    value={bookingListDateFrom}
-                                    readonly
-                                    autocomplete="off"
-                                    placeholder="Pilih tanggal"
-                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
-                                />
-                                <select
-                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
-                                    bind:value={bookingListPayment}
-                                    aria-label="Status pembayaran"
-                                >
-                                    <option value="all">Semua Pembayaran</option
+                                    <span
+                                        class="text-xs font-medium text-muted-foreground"
                                     >
-                                    <option value="lunas">Lunas Semua</option>
-                                    <option value="belum_lunas"
-                                        >Masih Belum Lunas</option
+                                        Tanggal
+                                    </span>
+                                    <span
+                                        class="truncate text-sm font-semibold text-foreground"
                                     >
-                                </select>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    class="h-10 rounded-xl px-3 text-xs md:h-9 md:rounded-full"
-                                    onclick={resetBookingListFilters}
+                                        {bookingListFilterSummary}
+                                    </span>
+                                </div>
+                            {/snippet}
+                            {#snippet desktop()}
+                                <div
+                                    class="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                                 >
-                                    Reset
-                                </Button>
-                            </div>
-                        </div>
+                                    <select
+                                        class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
+                                        bind:value={bookingListRoute}
+                                        aria-label="Filtrer berdasarkan rute"
+                                    >
+                                        <option value="all">Semua Rute</option>
+                                        {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
+                                            <option value={route}>{route}</option>
+                                        {/each}
+                                    </select>
+                                    <input
+                                        bind:this={bookingListDateInput}
+                                        aria-label="Tanggal keberangkatan"
+                                        type="text"
+                                        value={bookingListDateFrom}
+                                        readonly
+                                        autocomplete="off"
+                                        placeholder="Pilih tanggal"
+                                        class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
+                                    />
+                                    <select
+                                        class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
+                                        bind:value={bookingListPayment}
+                                        aria-label="Status pembayaran"
+                                    >
+                                        <option value="all">Semua Pembayaran</option>
+                                        <option value="lunas">Lunas Semua</option>
+                                        <option value="belum_lunas">Masih Belum Lunas</option>
+                                    </select>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        class="h-10 rounded-xl px-3 text-xs md:h-9 md:rounded-full"
+                                        onclick={resetBookingListFilters}
+                                    >
+                                        Reset
+                                    </Button>
+                                </div>
+                            {/snippet}
+                            {#snippet filters()}
+                                <div class="grid gap-3">
+                                    <label class="grid gap-1.5 text-sm font-medium">
+                                        Rute
+                                        <select
+                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                            bind:value={bookingListFilterDraft.route}
+                                        >
+                                            <option value="all">Semua Rute</option>
+                                            {#each bookingListRoutes() as route, index (`mobile-booking-route-filter-${index}-${route}`)}
+                                                <option value={route}>{route}</option>
+                                            {/each}
+                                        </select>
+                                    </label>
+                                    <label class="grid gap-1.5 text-sm font-medium">
+                                        Tanggal
+                                        <input
+                                            type="date"
+                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                            bind:value={bookingListFilterDraft.date}
+                                        />
+                                    </label>
+                                    <label class="grid gap-1.5 text-sm font-medium">
+                                        Pembayaran
+                                        <select
+                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                            bind:value={bookingListFilterDraft.payment}
+                                        >
+                                            <option value="all">Semua Pembayaran</option>
+                                            <option value="lunas">Lunas Semua</option>
+                                            <option value="belum_lunas">Masih Belum Lunas</option>
+                                        </select>
+                                    </label>
+                                </div>
+                            {/snippet}
+                        </ResponsiveFilterBar>
                         {#if emptyDepartureOpen}
                             <div
                                 class="mt-3 rounded-lg border border-cyan-200/70 bg-background/95 p-3 shadow-sm dark:border-cyan-500/20"
@@ -10964,11 +11051,8 @@
                                     {@const unpaidAmount =
                                         bookingGroupUnpaidAmount(group)}
                                     <div
-                                        class={`group relative overflow-hidden rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 hover:border-rose-300/90 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
+                                        class={`group relative rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
                                     >
-                                        <div
-                                            class="pointer-events-none absolute inset-x-0 top-0 h-14 bg-linear-to-r from-cyan-500/12 via-sky-500/10 to-transparent opacity-85 transition-opacity duration-200 group-hover:opacity-100"
-                                        ></div>
                                         <div class="relative">
                                             <div
                                                 class="mb-2 flex items-start justify-between gap-2"
@@ -11147,32 +11231,22 @@
                                             </div>
 
                                             <div class="space-y-2.5">
-                                                <div
-                                                    class="rounded-xl border border-cyan-200/45 bg-linear-to-r from-cyan-50/80 via-sky-50/70 to-transparent px-3 py-2.5 transition-colors duration-200 dark:border-cyan-500/20 dark:from-cyan-950/25 dark:via-sky-950/20"
-                                                >
+                                                <div class="space-y-2">
                                                     <div
                                                         class="flex items-center justify-between gap-3"
                                                     >
                                                         <div class="min-w-0">
                                                             <p
-                                                                class="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
-                                                            >
-                                                                <Route
-                                                                    class="h-3.5 w-3.5"
-                                                                />
-                                                                {group.departure_code}
-                                                            </p>
-                                                            <p
-                                                                class="mt-1 truncate text-sm font-semibold leading-snug text-foreground"
+                                                                class="line-clamp-2 text-sm font-semibold leading-snug text-foreground"
                                                             >
                                                                 {group.rute}
                                                             </p>
                                                         </div>
                                                         <div
-                                                            class="rounded-xl border border-cyan-200/60 bg-background/90 px-3 py-2 text-center dark:border-cyan-500/20"
+                                                            class="shrink-0 rounded-lg border border-border/70 bg-muted/30 px-2.5 py-1.5 text-center"
                                                         >
                                                             <p
-                                                                class="inline-flex items-center justify-center gap-1.5 text-base font-bold leading-none tracking-tight text-foreground sm:text-lg"
+                                                                class="inline-flex items-center justify-center gap-1.5 text-sm font-semibold leading-none tracking-tight text-foreground"
                                                             >
                                                                 <Clock3
                                                                     class="h-3.5 w-3.5 text-primary"
@@ -11186,7 +11260,7 @@
                                                         </div>
                                                     </div>
                                                     <div
-                                                        class="mt-2 grid gap-1 text-[11px] text-foreground sm:grid-cols-3"
+                                                        class="grid gap-1 text-xs text-muted-foreground sm:grid-cols-3"
                                                     >
                                                         <p
                                                             class={`inline-flex min-w-0 items-center gap-1.5 ${bookingAssignmentMissing(group.driver_name) ? 'text-amber-700 dark:text-amber-200' : ''}`}
@@ -11218,39 +11292,15 @@
                                                                 )}</span
                                                             >
                                                         </p>
-                                                        {#if !consoleOnly}
-                                                            <p
-                                                                class="inline-flex min-w-0 items-center gap-1.5"
-                                                            >
-                                                                <WalletCards
-                                                                    class="h-3.5 w-3.5 shrink-0 text-primary"
-                                                                />
-                                                                <span
-                                                                    class="truncate"
-                                                                    >BOP:
-                                                                    {formatCurrency(
-                                                                        Number(
-                                                                            group.bop ||
-                                                                                0,
-                                                                        ),
-                                                                    )}</span
-                                                                >
-                                                            </p>
-                                                        {/if}
                                                     </div>
                                                 </div>
 
                                                 <div
-                                                    class="rounded-xl border border-border/70 bg-background/82 px-3 py-2.5 transition-colors duration-200 group-hover:bg-background/92"
+                                                    class="border-t border-border/70 pt-2"
                                                 >
                                                     <div
-                                                        class="grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-3"
+                                                        class="grid grid-cols-3 gap-1.5 text-[11px]"
                                                     >
-                                                        <span
-                                                            class="inline-flex items-center justify-center rounded-md border border-border/70 bg-muted/45 px-1.5 py-1 font-medium text-foreground"
-                                                            >Total
-                                                            {group.total}</span
-                                                        >
                                                         <span
                                                             class="inline-flex items-center justify-center rounded-md border border-border/70 bg-muted/45 px-1.5 py-1 font-medium text-foreground"
                                                             >Aktif
@@ -11262,21 +11312,24 @@
                                                             {canceledGroupCount(group)}</span
                                                         >
                                                         <span
-                                                            class="inline-flex items-center justify-center rounded-md border border-emerald-300/70 bg-emerald-50 px-1.5 py-1 font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300"
-                                                            >Lunas
-                                                            {group.lunas}</span
-                                                        >
-                                                        <span
-                                                            class="inline-flex items-center justify-center rounded-md border border-sky-300/70 bg-sky-50 px-1.5 py-1 font-medium text-sky-700 dark:border-sky-500/40 dark:bg-sky-950/30 dark:text-sky-300"
-                                                            >Refund
-                                                            {group.refund}</span
-                                                        >
-                                                        <span
                                                             class="inline-flex items-center justify-center rounded-md border border-amber-300/70 bg-amber-50 px-1.5 py-1 font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
                                                             >Belum
                                                             {group.belum_lunas}</span
                                                         >
-                                                    </div>
+                                                        </div>
+                                                    <details class="mt-2 border-t border-border/60 pt-2">
+                                                        <summary class="cursor-pointer list-none text-xs font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                            Rincian
+                                                        </summary>
+                                                        <div class="mt-2 grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground sm:grid-cols-3">
+                                                            <span>Total {group.total}</span>
+                                                            <span>Lunas {group.lunas}</span>
+                                                            <span>Refund {group.refund}</span>
+                                                            {#if !consoleOnly}
+                                                                <span>BOP {formatCurrency(Number(group.bop || 0))}</span>
+                                                            {/if}
+                                                        </div>
+                                                    </details>
                                                     {#if unpaidAmount > 0}
                                                         <div
                                                             class="mt-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 text-[11px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
