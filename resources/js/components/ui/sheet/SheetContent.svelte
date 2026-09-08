@@ -13,7 +13,7 @@
         showCloseButton = true,
         children,
     }: {
-        side?: 'right' | 'left' | 'top' | 'bottom';
+        side?: 'right' | 'left' | 'top' | 'bottom' | 'center';
         class?: string;
         showCloseButton?: boolean;
         children?: Snippet;
@@ -26,6 +26,7 @@
         left: 'inset-y-0 left-0',
         top: 'inset-x-0 top-0',
         bottom: 'inset-x-0 bottom-0',
+        center: 'inset-1/2 -translate-x-1/2 -translate-y-1/2',
     };
 
     const sizeClasses: Record<string, string> = {
@@ -33,13 +34,16 @@
         left: 'h-full w-3/4 sm:max-w-sm',
         top: 'h-auto',
         bottom: 'h-auto',
+        center: 'h-auto w-[calc(100%-2rem)] max-w-lg',
     };
 
     const close = () => setOpen(false);
 
     const panelTransition = () => {
         const axis =
-            side === 'left'
+            side === 'center'
+                ? { x: 0, y: 18 }
+                : side === 'left'
                 ? { x: -320, y: 0 }
                 : side === 'right'
                   ? { x: 320, y: 0 }
