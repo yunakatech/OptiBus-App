@@ -13,7 +13,7 @@
         showCloseButton = true,
         children,
     }: {
-        side?: 'right' | 'left' | 'top' | 'bottom' | 'center';
+        side?: 'right' | 'left' | 'top' | 'bottom' | 'center' | 'fullscreen';
         class?: string;
         showCloseButton?: boolean;
         children?: Snippet;
@@ -27,6 +27,7 @@
         top: 'inset-x-0 top-0',
         bottom: 'inset-x-0 bottom-0',
         center: '',
+        fullscreen: 'inset-0',
     };
 
     const sizeClasses: Record<string, string> = {
@@ -35,6 +36,7 @@
         top: 'h-auto',
         bottom: 'h-auto',
         center: 'h-auto',
+        fullscreen: 'h-[var(--mobile-viewport-height,100dvh)] w-full',
     };
 
     const close = () => setOpen(false);
@@ -45,6 +47,7 @@
             sideClasses[side] ?? sideClasses.right,
             sizeClasses[side] ?? sizeClasses.right,
             side === 'center' && 'mobile-sheet-panel--center',
+            side === 'fullscreen' && 'mobile-sheet-panel--fullscreen',
             className,
         );
 
@@ -72,13 +75,15 @@
             aria-label="Close"
             onclick={close}
         ></button>
-        {#if side === 'center'}
+        {#if side === 'center' || side === 'fullscreen'}
             <div
                 use:overlay={{ close, label: 'Panel', modal: true }}
                 class={panelClass()}
-                data-sheet-side="center"
+                data-sheet-side={side}
                 in:fade={{ duration: 160 }}
                 out:fade={{ duration: 120 }}
+                role="dialog"
+                aria-modal="true"
             >
                 {#if showCloseButton}
                     <button
@@ -92,6 +97,12 @@
                     </button>
                 {/if}
                 {@render children?.()}
+                {#if side === 'fullscreen'}
+                    <div
+                        class="mobile-sheet-calendar-layer"
+                        data-sheet-calendar-layer
+                    ></div>
+                {/if}
             </div>
         {:else}
             <div
@@ -100,6 +111,8 @@
                 data-sheet-side={side}
                 in:fly={panelTransition()}
                 out:fly={panelTransition()}
+                role="dialog"
+                aria-modal="true"
             >
                 {#if showCloseButton}
                     <button
@@ -132,5 +145,26 @@
         );
         box-sizing: border-box;
         transform: translate(-50%, -50%);
+    }
+
+    .mobile-sheet-panel--fullscreen {
+        max-height: none;
+        min-height: var(--mobile-viewport-height, 100dvh);
+        overflow: hidden;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+    }
+
+    .mobile-sheet-calendar-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+    }
+
+    .mobile-sheet-calendar-layer :global(.flatpickr-calendar) {
+        pointer-events: auto;
     }
 </style>
