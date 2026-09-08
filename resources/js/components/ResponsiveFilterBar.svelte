@@ -117,7 +117,7 @@
             class="responsive-filter-screen gap-0 p-0"
         >
             <SheetHeader
-                class="m-0 flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-border/70 px-4 text-left"
+                class="responsive-filter-sheet-header m-0 flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-border/70 px-4 text-left"
             >
                 <div class="flex w-full items-center justify-between gap-3">
                     <div class="flex min-w-0 items-center gap-2">
@@ -147,7 +147,7 @@
             </div>
 
             <SheetFooter
-                class="responsive-filter-sheet-footer m-0 flex-none border-t border-border/70 bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+                class="responsive-filter-sheet-footer m-0 flex-none border-t border-border/70 bg-background px-4 pt-3"
             >
                 <Button
                     type="button"
@@ -245,17 +245,34 @@
         overflow: hidden;
     }
 
+    :global(.mobile-sheet-panel--fullscreen.responsive-filter-screen) {
+        display: grid;
+        grid-template-rows: 3.5rem minmax(0, 1fr) auto;
+        height: var(--mobile-viewport-height, 100dvh);
+        min-height: var(--mobile-viewport-height, 100dvh);
+    }
+
+    :global(.responsive-filter-sheet-header) {
+        grid-row: 1;
+        min-width: 0;
+        z-index: 1;
+    }
+
     :global(.responsive-filter-sheet-body) {
-        flex: 1 1 auto;
+        grid-row: 2;
         min-height: 0;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
     }
 
     :global(.responsive-filter-sheet-footer) {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
+        grid-row: 3;
         gap: 0.5rem;
+        z-index: 1;
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     }
 
     @media (min-width: 768px) {

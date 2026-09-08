@@ -97,12 +97,6 @@
                     </button>
                 {/if}
                 {@render children?.()}
-                {#if side === 'fullscreen'}
-                    <div
-                        class="mobile-sheet-calendar-layer"
-                        data-sheet-calendar-layer
-                    ></div>
-                {/if}
             </div>
         {:else}
             <div
@@ -157,14 +151,4 @@
         box-shadow: none;
     }
 
-    .mobile-sheet-calendar-layer {
-        position: absolute;
-        inset: 0;
-        z-index: 20;
-        pointer-events: none;
-    }
-
-    .mobile-sheet-calendar-layer :global(.flatpickr-calendar) {
-        pointer-events: auto;
-    }
 </style>
