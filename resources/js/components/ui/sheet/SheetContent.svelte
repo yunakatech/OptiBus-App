@@ -26,7 +26,7 @@
         left: 'inset-y-0 left-0',
         top: 'inset-x-0 top-0',
         bottom: 'inset-x-0 bottom-0',
-        center: 'inset-1/2 -translate-x-1/2 -translate-y-1/2',
+        center: '',
     };
 
     const sizeClasses: Record<string, string> = {
@@ -34,7 +34,7 @@
         left: 'h-full w-3/4 sm:max-w-sm',
         top: 'h-auto',
         bottom: 'h-auto',
-        center: 'h-auto w-[calc(100%-2rem)] max-w-lg',
+        center: 'h-auto',
     };
 
     const close = () => setOpen(false);
@@ -72,7 +72,7 @@
                 className,
             )}
             style={side === 'center'
-                ? 'top: 50% !important; right: auto !important; bottom: auto !important; left: 50% !important; transform: translate(-50%, -50%) !important;'
+                ? 'top: 50% !important; right: auto !important; bottom: auto !important; left: 50% !important; width: min(calc(100vw - 2rem), 32rem) !important; max-width: calc(100vw - 2rem) !important; height: auto !important; max-height: calc(100dvh - 2rem) !important; box-sizing: border-box !important; transform: translate(-50%, -50%) !important;'
                 : undefined}
             in:fly={panelTransition()}
             out:fly={panelTransition()}
