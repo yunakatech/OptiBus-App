@@ -21,6 +21,7 @@
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -1016,23 +1017,15 @@
                                     bind:value={paymentFilterDraft.search}
                                 />
                             </label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <label class="grid gap-1.5 text-sm font-medium">
-                                    Dari
-                                    <input
-                                        type="date"
-                                        class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                        bind:value={paymentFilterDraft.dateFrom}
-                                    />
-                                </label>
-                                <label class="grid gap-1.5 text-sm font-medium">
-                                    Sampai
-                                    <input
-                                        type="date"
-                                        class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                        bind:value={paymentFilterDraft.dateTo}
-                                    />
-                                </label>
+                            <div class="grid gap-3">
+                                <FilterDateInput
+                                    label="Dari tanggal"
+                                    bind:value={paymentFilterDraft.dateFrom}
+                                />
+                                <FilterDateInput
+                                    label="Sampai tanggal"
+                                    bind:value={paymentFilterDraft.dateTo}
+                                />
                             </div>
                             <label class="grid gap-1.5 text-sm font-medium">
                                 Jumlah per halaman

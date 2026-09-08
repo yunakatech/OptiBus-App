@@ -38,6 +38,7 @@
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -10237,9 +10238,7 @@
                             onCancel={beginBookingListFilterDraft}
                         >
                             {#snippet primary()}
-                                <div
-                                    class="flex items-center gap-2 md:hidden"
-                                >
+                                <div class="flex items-center gap-2 md:hidden">
                                     <span
                                         class="text-xs font-medium text-muted-foreground"
                                     >
@@ -10263,7 +10262,9 @@
                                     >
                                         <option value="all">Semua Rute</option>
                                         {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
-                                            <option value={route}>{route}</option>
+                                            <option value={route}
+                                                >{route}</option
+                                            >
                                         {/each}
                                     </select>
                                     <input
@@ -10281,9 +10282,15 @@
                                         bind:value={bookingListPayment}
                                         aria-label="Status pembayaran"
                                     >
-                                        <option value="all">Semua Pembayaran</option>
-                                        <option value="lunas">Lunas Semua</option>
-                                        <option value="belum_lunas">Masih Belum Lunas</option>
+                                        <option value="all"
+                                            >Semua Pembayaran</option
+                                        >
+                                        <option value="lunas"
+                                            >Lunas Semua</option
+                                        >
+                                        <option value="belum_lunas"
+                                            >Masih Belum Lunas</option
+                                        >
                                     </select>
                                     <Button
                                         type="button"
@@ -10298,35 +10305,49 @@
                             {/snippet}
                             {#snippet filters()}
                                 <div class="grid gap-3">
-                                    <label class="grid gap-1.5 text-sm font-medium">
+                                    <label
+                                        class="grid gap-1.5 text-sm font-medium"
+                                    >
                                         Rute
                                         <select
                                             class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                            bind:value={bookingListFilterDraft.route}
+                                            bind:value={
+                                                bookingListFilterDraft.route
+                                            }
                                         >
-                                            <option value="all">Semua Rute</option>
+                                            <option value="all"
+                                                >Semua Rute</option
+                                            >
                                             {#each bookingListRoutes() as route, index (`mobile-booking-route-filter-${index}-${route}`)}
-                                                <option value={route}>{route}</option>
+                                                <option value={route}
+                                                    >{route}</option
+                                                >
                                             {/each}
                                         </select>
                                     </label>
-                                    <label class="grid gap-1.5 text-sm font-medium">
-                                        Tanggal
-                                        <input
-                                            type="date"
-                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                            bind:value={bookingListFilterDraft.date}
-                                        />
-                                    </label>
-                                    <label class="grid gap-1.5 text-sm font-medium">
+                                    <FilterDateInput
+                                        label="Tanggal"
+                                        bind:value={bookingListFilterDraft.date}
+                                    />
+                                    <label
+                                        class="grid gap-1.5 text-sm font-medium"
+                                    >
                                         Pembayaran
                                         <select
                                             class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                            bind:value={bookingListFilterDraft.payment}
+                                            bind:value={
+                                                bookingListFilterDraft.payment
+                                            }
                                         >
-                                            <option value="all">Semua Pembayaran</option>
-                                            <option value="lunas">Lunas Semua</option>
-                                            <option value="belum_lunas">Masih Belum Lunas</option>
+                                            <option value="all"
+                                                >Semua Pembayaran</option
+                                            >
+                                            <option value="lunas"
+                                                >Lunas Semua</option
+                                            >
+                                            <option value="belum_lunas"
+                                                >Masih Belum Lunas</option
+                                            >
                                         </select>
                                     </label>
                                 </div>
@@ -10823,7 +10844,9 @@
                                                                                     class="rounded-md border border-rose-200/80 bg-rose-50 px-1.5 py-0.5 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-200"
                                                                                 >
                                                                                     Cancel
-                                                                                    {canceledGroupCount(group)}
+                                                                                    {canceledGroupCount(
+                                                                                        group,
+                                                                                    )}
                                                                                 </span>
                                                                             {/if}
                                                                         </div>
@@ -11309,24 +11332,45 @@
                                                         <span
                                                             class="inline-flex items-center justify-center rounded-md border border-rose-300/70 bg-rose-50 px-1.5 py-1 font-medium text-rose-700 dark:border-rose-500/40 dark:bg-rose-950/30 dark:text-rose-300"
                                                             >Cancel
-                                                            {canceledGroupCount(group)}</span
+                                                            {canceledGroupCount(
+                                                                group,
+                                                            )}</span
                                                         >
                                                         <span
                                                             class="inline-flex items-center justify-center rounded-md border border-amber-300/70 bg-amber-50 px-1.5 py-1 font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
                                                             >Belum
                                                             {group.belum_lunas}</span
                                                         >
-                                                        </div>
-                                                    <details class="mt-2 border-t border-border/60 pt-2">
-                                                        <summary class="cursor-pointer list-none text-xs font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                    </div>
+                                                    <details
+                                                        class="mt-2 border-t border-border/60 pt-2"
+                                                    >
+                                                        <summary
+                                                            class="cursor-pointer list-none text-xs font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                        >
                                                             Rincian
                                                         </summary>
-                                                        <div class="mt-2 grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground sm:grid-cols-3">
-                                                            <span>Total {group.total}</span>
-                                                            <span>Lunas {group.lunas}</span>
-                                                            <span>Refund {group.refund}</span>
+                                                        <div
+                                                            class="mt-2 grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground sm:grid-cols-3"
+                                                        >
+                                                            <span
+                                                                >Total {group.total}</span
+                                                            >
+                                                            <span
+                                                                >Lunas {group.lunas}</span
+                                                            >
+                                                            <span
+                                                                >Refund {group.refund}</span
+                                                            >
                                                             {#if !consoleOnly}
-                                                                <span>BOP {formatCurrency(Number(group.bop || 0))}</span>
+                                                                <span
+                                                                    >BOP {formatCurrency(
+                                                                        Number(
+                                                                            group.bop ||
+                                                                                0,
+                                                                        ),
+                                                                    )}</span
+                                                                >
                                                             {/if}
                                                         </div>
                                                     </details>
