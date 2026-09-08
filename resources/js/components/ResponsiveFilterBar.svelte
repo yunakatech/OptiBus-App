@@ -113,7 +113,7 @@
 
     <Sheet bind:open={sheetOpen}>
         <SheetContent
-            side="bottom"
+            side="center"
             showCloseButton={false}
             class="responsive-filter-sheet gap-0 rounded-t-3xl p-0"
         >
