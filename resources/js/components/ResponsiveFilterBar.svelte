@@ -256,7 +256,6 @@
 
     @media (max-width: 767px) {
         :global(.responsive-filter-sheet) {
-            inset: 50% auto auto 50% !important;
             width: min(calc(100% - 2rem), 32rem) !important;
             max-height: min(
                 calc(var(--mobile-viewport-height, 100dvh) - 2rem),
@@ -267,6 +266,14 @@
             box-shadow:
                 0 24px 70px rgb(15 23 42 / 0.22),
                 0 8px 24px rgb(15 23 42 / 0.12);
+            transform: translate(-50%, -50%) !important;
+        }
+
+        :global(.mobile-sheet-panel.responsive-filter-sheet) {
+            top: 50% !important;
+            right: auto !important;
+            bottom: auto !important;
+            left: 50% !important;
             transform: translate(-50%, -50%) !important;
         }
 

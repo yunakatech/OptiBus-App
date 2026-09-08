@@ -71,6 +71,9 @@
                 sizeClasses[side] ?? sizeClasses.right,
                 className,
             )}
+            style={side === 'center'
+                ? 'top: 50% !important; right: auto !important; bottom: auto !important; left: 50% !important; transform: translate(-50%, -50%) !important;'
+                : undefined}
             in:fly={panelTransition()}
             out:fly={panelTransition()}
         >
