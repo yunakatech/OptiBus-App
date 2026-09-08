@@ -112,14 +112,14 @@
 
     <Sheet bind:open={sheetOpen}>
         <SheetContent
-            side="center"
+            side="fullscreen"
             showCloseButton={false}
-            class="responsive-filter-sheet gap-0 rounded-3xl p-0"
+            class="responsive-filter-screen gap-0 p-0"
         >
             <SheetHeader
-                class="border-b border-border/70 px-4 pt-4 pb-3 text-left"
+                class="m-0 flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-border/70 px-4 text-left"
             >
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex w-full items-center justify-between gap-3">
                     <div class="flex min-w-0 items-center gap-2">
                         <SheetTitle>Filter {label}</SheetTitle>
                         {#if activeCount > 0}
@@ -142,12 +142,12 @@
                 </div>
             </SheetHeader>
 
-            <div class="responsive-filter-sheet-body px-4 py-4">
+            <div class="responsive-filter-sheet-body px-4 py-5">
                 {@render filters?.()}
             </div>
 
             <SheetFooter
-                class="responsive-filter-sheet-footer border-t border-border/70 bg-background px-4 py-3"
+                class="responsive-filter-sheet-footer m-0 flex-none border-t border-border/70 bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
             >
                 <Button
                     type="button"
@@ -241,12 +241,8 @@
         line-height: 1;
     }
 
-    :global(.responsive-filter-sheet) {
+    :global(.responsive-filter-screen) {
         overflow: hidden;
-        max-height: min(
-            calc(var(--mobile-viewport-height, 100dvh) - 1rem),
-            42rem
-        );
     }
 
     :global(.responsive-filter-sheet-body) {
@@ -260,21 +256,6 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: 0.5rem;
-        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-    }
-
-    @media (max-width: 767px) {
-        :global(.responsive-filter-sheet) {
-            border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
-            border-radius: 1.5rem;
-            box-shadow:
-                0 24px 70px rgb(15 23 42 / 0.22),
-                0 8px 24px rgb(15 23 42 / 0.12);
-        }
-
-        :global(.responsive-filter-sheet-footer) {
-            padding-bottom: 0.75rem;
-        }
     }
 
     @media (min-width: 768px) {
