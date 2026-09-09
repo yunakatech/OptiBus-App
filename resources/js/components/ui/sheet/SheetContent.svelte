@@ -5,6 +5,7 @@
     import { fade, fly } from 'svelte/transition';
     import { cn } from '@/lib/utils';
     import { overlay } from '@/lib/mobile-overlay';
+    import { portalToBody } from '@/lib/portal';
     import { SHEET_CONTEXT, type SheetContext } from './context';
 
     let {
@@ -68,7 +69,10 @@
 </script>
 
 {#if open()}
-    <div class="fixed inset-0 z-50">
+    <div
+        use:portalToBody={side === 'fullscreen'}
+        class={cn('fixed inset-0', side === 'fullscreen' ? 'z-[100]' : 'z-50')}
+    >
         <button
             type="button"
             class="fixed inset-0 border-0 bg-black/50"
