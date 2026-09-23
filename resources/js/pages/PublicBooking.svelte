@@ -10,8 +10,10 @@
         MessageCircle,
         Pencil,
         RefreshCw,
+        Search,
         Ticket,
         UserRound,
+        X,
     } from 'lucide-svelte';
     import { onMount, tick } from 'svelte';
     import ExternalLinkFallback from '@/components/ExternalLinkFallback.svelte';
@@ -111,6 +113,7 @@
     let segmentMenuOpen = $state(false);
     let segmentSearch = $state('');
     let scheduleMenuOpen = $state(false);
+    let scheduleSearch = $state('');
     let scheduleKey = $state('');
     let selectedSeats = $state<string[]>([]);
     let passengerNames = $state<Record<string, string>>({});
@@ -141,6 +144,13 @@
             `${segment.label} ${segment.origin} ${segment.destination} ${segment.pool_name}`
                 .toLocaleLowerCase('id-ID')
                 .includes(segmentSearch.trim().toLocaleLowerCase('id-ID')),
+        ),
+    );
+    const filteredSchedules = $derived(
+        schedules.filter((schedule) =>
+            `${schedule.jam} ${schedule.unit_label} ${schedule.unit}`
+                .toLocaleLowerCase('id-ID')
+                .includes(scheduleSearch.trim().toLocaleLowerCase('id-ID')),
         ),
     );
 
@@ -351,6 +361,7 @@
         schedules = [];
         scheduleKey = '';
         selectedSeats = [];
+        scheduleSearch = '';
     }
 
     function changeDate(value: string) {
@@ -378,6 +389,7 @@
         segmentId = Number(value);
         const segment = segments.find((item) => item.id === segmentId);
         routeId = segment?.route_id ?? 0;
+        segmentSearch = '';
         segmentMenuOpen = false;
         scheduleMenuOpen = false;
         resetTripSelection();
@@ -386,7 +398,34 @@
     }
 
     function updatePassengerName(seat: string, value: string) {
-        passengerNames = { ...passengerNames, [seat]: value };
+        passengerNames = {
+            ...passengerNames,
+            [seat]: normalizeNameForBooking(value),
+        };
+    }
+
+    function normalizeNameForBooking(value: string): string {
+        return String(value || '').toUpperCase();
+    }
+
+    function normalizePhoneForBooking(value: string): string {
+        let digits = String(value || '').replace(/\D+/g, '');
+
+        if (digits.startsWith('62')) {
+            digits = `0${digits.slice(2)}`;
+        } else if (digits.startsWith('8')) {
+            digits = `0${digits}`;
+        }
+
+        return digits.slice(0, 13);
+    }
+
+    function updateContactName(value: string) {
+        contactName = normalizeNameForBooking(value);
+    }
+
+    function updatePhone(value: string) {
+        phone = normalizePhoneForBooking(value);
     }
 
     function formatDateLabel(value: string): string {
@@ -410,6 +449,7 @@
         }
 
         scheduleKey = `${schedule.id}-${schedule.unit}`;
+        scheduleSearch = '';
         scheduleMenuOpen = false;
         void goToStep(2);
     }
@@ -545,6 +585,14 @@
 
     function continueToReview() {
         error = '';
+        contactName = normalizeNameForBooking(contactName);
+        phone = normalizePhoneForBooking(phone);
+        passengerNames = Object.fromEntries(
+            selectedSeats.map((seat) => [
+                seat,
+                normalizeNameForBooking(passengerNames[seat] ?? ''),
+            ]),
+        );
 
         if (!contactName.trim() || !phone.trim() || !pickupAddress.trim()) {
             error = 'Lengkapi nama, nomor HP, dan alamat penjemputan.';
@@ -694,20 +742,15 @@
                     class="mb-6 flex items-start justify-between gap-4 border-b border-white/15 pb-5"
                 >
                     <div class="min-w-0">
-                        <p
-                            class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300"
-                        >
-                            Booking resmi
-                        </p>
                         {#if tenant.logo_url}
                             <img
                                 src={tenant.logo_url}
                                 alt={tenant.name}
-                                class="mt-2 max-h-14 max-w-[12rem] object-contain object-left"
+                                class="max-h-14 max-w-[12rem] object-contain object-left"
                             />
                         {:else}
                             <h1
-                                class="mt-1 truncate text-xl font-black tracking-tight"
+                                class="truncate text-xl font-black tracking-tight"
                             >
                                 {tenant.name}
                             </h1>
@@ -811,7 +854,10 @@
                             aria-haspopup="listbox"
                             aria-expanded={segmentMenuOpen}
                             aria-controls="public-segment-options"
-                            onclick={() => (segmentMenuOpen = !segmentMenuOpen)}
+                            onclick={() => {
+                                segmentSearch = '';
+                                segmentMenuOpen = !segmentMenuOpen;
+                            }}
                             class="flex min-h-16 w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-sm outline-none transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-500/15 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-slate-800/80"
                         >
                             <span
@@ -866,7 +912,7 @@
                                     modal: 'mobile',
                                 }}
                                 aria-label="Daftar tujuan segment"
-                                class="mobile-booking-picker absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+                                class="mobile-booking-picker absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 flex max-h-80 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
                             >
                                 {#if segments.length === 0}
                                     <p
@@ -875,73 +921,125 @@
                                         Belum ada tujuan yang tersedia.
                                     </p>
                                 {:else}
-                                    <input
-                                        type="search"
-                                        aria-label="Cari tujuan"
-                                        bind:value={segmentSearch}
-                                        placeholder="Cari asal atau tujuan"
-                                        class="mb-2 h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    />
-                                    {#each filteredSegments as segment (segment.id)}
-                                        <button
-                                            type="button"
-                                            role="option"
-                                            aria-selected={segment.id ===
-                                                segmentId}
-                                            aria-label={segmentOptionLabel(
-                                                segment,
-                                            )}
-                                            onclick={() =>
-                                                changeSegment(
-                                                    String(segment.id),
-                                                )}
-                                            class={`group flex min-h-20 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition active:scale-[0.99] ${segment.id === segmentId ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/35' : 'border-transparent hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800'}`}
+                                    <div
+                                        class="shrink-0 border-b border-slate-100 px-1 pb-3 dark:border-slate-800"
+                                    >
+                                        <div
+                                            class="mb-3 flex items-center gap-3"
                                         >
-                                            <span
-                                                class={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${segment.id === segmentId ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}
+                                            <div class="min-w-0 flex-1">
+                                                <p
+                                                    class="text-sm font-black text-slate-900 dark:text-slate-100"
+                                                >
+                                                    Pilih tujuan
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                                >
+                                                    {filteredSegments.length} tujuan
+                                                    tersedia
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onclick={() =>
+                                                    (segmentMenuOpen = false)}
+                                                class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/15 dark:text-slate-400 dark:hover:bg-slate-800"
+                                                aria-label="Tutup daftar tujuan"
                                             >
-                                                {#if segment.id === segmentId}
-                                                    <Check class="h-4 w-4" />
-                                                {:else}
-                                                    <ArrowRight
-                                                        class="h-4 w-4"
-                                                    />
-                                                {/if}
-                                            </span>
-                                            <span class="min-w-0 flex-1">
-                                                <span
-                                                    class="block truncate text-sm font-black text-slate-900 dark:text-slate-100"
-                                                >
-                                                    {segment.label}
-                                                </span>
-                                                <span
-                                                    class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-slate-500 dark:text-slate-400"
-                                                >
-                                                    <span
-                                                        class="inline-flex items-center gap-1"
-                                                    >
-                                                        <Clock3
-                                                            class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
-                                                        />
-                                                        {pickupTimesLabel(
-                                                            segment.pickup_times,
-                                                        ) || 'Pickup fleksibel'}
-                                                    </span>
-                                                    <span
-                                                        class="text-slate-300 dark:text-slate-600"
-                                                        >·</span
-                                                    >
-                                                    <span
-                                                        class="text-emerald-700 dark:text-emerald-300"
-                                                    >
-                                                        {formatRupiah(
-                                                            segment.price,
+                                                <X class="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                        <label class="relative block">
+                                            <Search
+                                                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                            />
+                                            <input
+                                                type="search"
+                                                aria-label="Cari tujuan"
+                                                bind:value={segmentSearch}
+                                                placeholder="Cari asal atau tujuan"
+                                                class="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 py-0 pl-10 pr-3 text-base font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                            />
+                                        </label>
+                                    </div>
+                                    <div
+                                        class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-2"
+                                    >
+                                        {#if filteredSegments.length === 0}
+                                            <p
+                                                class="px-3 py-8 text-center text-sm font-semibold text-slate-500 dark:text-slate-400"
+                                            >
+                                                Tujuan tidak ditemukan.
+                                            </p>
+                                        {:else}
+                                            {#each filteredSegments as segment (segment.id)}
+                                                <button
+                                                    type="button"
+                                                    role="option"
+                                                    aria-selected={segment.id ===
+                                                        segmentId}
+                                                    aria-label={segmentOptionLabel(
+                                                        segment,
+                                                    )}
+                                                    onclick={() =>
+                                                        changeSegment(
+                                                            String(segment.id),
                                                         )}
+                                                    class={`group flex min-h-20 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition active:scale-[0.99] ${segment.id === segmentId ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/35' : 'border-transparent hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800'}`}
+                                                >
+                                                    <span
+                                                        class={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${segment.id === segmentId ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}
+                                                    >
+                                                        {#if segment.id === segmentId}
+                                                            <Check
+                                                                class="h-4 w-4"
+                                                            />
+                                                        {:else}
+                                                            <ArrowRight
+                                                                class="h-4 w-4"
+                                                            />
+                                                        {/if}
                                                     </span>
-                                                </span>
-                                            </span>
-                                        </button>
-                                    {/each}
+                                                    <span
+                                                        class="min-w-0 flex-1"
+                                                    >
+                                                        <span
+                                                            class="block truncate text-sm font-black text-slate-900 dark:text-slate-100"
+                                                        >
+                                                            {segment.label}
+                                                        </span>
+                                                        <span
+                                                            class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-slate-500 dark:text-slate-400"
+                                                        >
+                                                            <span
+                                                                class="inline-flex items-center gap-1"
+                                                            >
+                                                                <Clock3
+                                                                    class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+                                                                />
+                                                                {pickupTimesLabel(
+                                                                    segment.pickup_times,
+                                                                ) ||
+                                                                    'Pickup fleksibel'}
+                                                            </span>
+                                                            <span
+                                                                class="text-slate-300 dark:text-slate-600"
+                                                                >·</span
+                                                            >
+                                                            <span
+                                                                class="text-emerald-700 dark:text-emerald-300"
+                                                            >
+                                                                {formatRupiah(
+                                                                    segment.price,
+                                                                )}
+                                                            </span>
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            {/each}
+                                        {/if}
+                                    </div>
                                 {/if}
                             </div>
                         {/if}
@@ -991,6 +1089,7 @@
                                 aria-controls="public-schedule-options"
                                 onclick={() => {
                                     if (schedules.length > 0) {
+                                        scheduleSearch = '';
                                         scheduleMenuOpen = !scheduleMenuOpen;
                                     }
                                 }}
@@ -1060,69 +1159,134 @@
                                         modal: 'mobile',
                                     }}
                                     aria-label="Daftar jam keberangkatan"
-                                    class="mobile-booking-picker absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
+                                    class="mobile-booking-picker absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 flex max-h-80 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-900"
                                 >
-                                    {#each schedules as schedule (scheduleValue(schedule))}
-                                        {@const available =
-                                            availableSeatCount(schedule)}
-                                        <button
-                                            type="button"
-                                            role="option"
-                                            aria-selected={scheduleKey ===
-                                                scheduleValue(schedule)}
-                                            aria-label={scheduleOptionLabel(
-                                                schedule,
-                                            )}
-                                            onclick={() =>
-                                                chooseSchedule(schedule)}
-                                            class="flex min-h-[4.5rem] w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left transition hover:border-slate-200 hover:bg-slate-50 active:scale-[0.99] dark:hover:border-slate-700 dark:hover:bg-slate-800"
-                                            class:border-emerald-300={scheduleKey ===
-                                                scheduleValue(schedule)}
-                                            class:bg-emerald-50={scheduleKey ===
-                                                scheduleValue(schedule)}
+                                    <div
+                                        class="shrink-0 border-b border-slate-100 px-1 pb-3 dark:border-slate-800"
+                                    >
+                                        <div
+                                            class="mb-3 flex items-center gap-3"
                                         >
-                                            <span
-                                                class="grid h-11 w-14 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                                class:bg-emerald-600={scheduleKey ===
-                                                    scheduleValue(schedule)}
-                                                class:text-white={scheduleKey ===
-                                                    scheduleValue(schedule)}
+                                            <div class="min-w-0 flex-1">
+                                                <p
+                                                    class="text-sm font-black text-slate-900 dark:text-slate-100"
+                                                >
+                                                    Pilih jam keberangkatan
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                                >
+                                                    {filteredSchedules.length} jadwal
+                                                    tersedia
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onclick={() =>
+                                                    (scheduleMenuOpen = false)}
+                                                class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/15 dark:text-slate-400 dark:hover:bg-slate-800"
+                                                aria-label="Tutup daftar jadwal"
                                             >
-                                                <span
-                                                    class="text-base font-black leading-none"
-                                                    >{schedule.jam}</span
-                                                >
-                                            </span>
-                                            <span class="min-w-0 flex-1">
-                                                <span
-                                                    class="block truncate text-sm font-black text-slate-900 dark:text-slate-100"
-                                                >
-                                                    {schedule.unit_label}
-                                                </span>
-                                                <span
-                                                    class="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400"
-                                                >
-                                                    <Ticket
-                                                        class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
-                                                    />
-                                                    {schedule.total_seats} kursi
-                                                </span>
-                                            </span>
-                                            <span
-                                                class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1.5 text-[10px] font-black text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                                                class:bg-emerald-100={available >
-                                                    0}
-                                                class:text-emerald-800={available >
-                                                    0}
+                                                <X class="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                        <label class="relative block">
+                                            <Search
+                                                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                            />
+                                            <input
+                                                type="search"
+                                                aria-label="Cari jam atau unit"
+                                                bind:value={scheduleSearch}
+                                                placeholder="Cari jam atau unit"
+                                                class="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 py-0 pl-10 pr-3 text-base font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                            />
+                                        </label>
+                                    </div>
+                                    <div
+                                        class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-2"
+                                    >
+                                        {#if filteredSchedules.length === 0}
+                                            <p
+                                                class="px-3 py-8 text-center text-sm font-semibold text-slate-500 dark:text-slate-400"
                                             >
-                                                {#if available > 0}
-                                                    {available} tersedia
-                                                {:else}
-                                                    Penuh
-                                                {/if}
-                                            </span>
-                                        </button>
-                                    {/each}
+                                                Jadwal tidak ditemukan.
+                                            </p>
+                                        {:else}
+                                            {#each filteredSchedules as schedule (scheduleValue(schedule))}
+                                                {@const available =
+                                                    availableSeatCount(
+                                                        schedule,
+                                                    )}
+                                                <button
+                                                    type="button"
+                                                    role="option"
+                                                    aria-selected={scheduleKey ===
+                                                        scheduleValue(schedule)}
+                                                    aria-label={scheduleOptionLabel(
+                                                        schedule,
+                                                    )}
+                                                    onclick={() =>
+                                                        chooseSchedule(
+                                                            schedule,
+                                                        )}
+                                                    class="flex min-h-[4.5rem] w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left transition hover:border-slate-200 hover:bg-slate-50 active:scale-[0.99] dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                                    class:border-emerald-300={scheduleKey ===
+                                                        scheduleValue(schedule)}
+                                                    class:bg-emerald-50={scheduleKey ===
+                                                        scheduleValue(schedule)}
+                                                >
+                                                    <span
+                                                        class="grid h-11 w-14 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                                        class:bg-emerald-600={scheduleKey ===
+                                                            scheduleValue(
+                                                                schedule,
+                                                            )}
+                                                        class:text-white={scheduleKey ===
+                                                            scheduleValue(
+                                                                schedule,
+                                                            )}
+                                                    >
+                                                        <span
+                                                            class="text-base font-black leading-none"
+                                                            >{schedule.jam}</span
+                                                        >
+                                                    </span>
+                                                    <span
+                                                        class="min-w-0 flex-1"
+                                                    >
+                                                        <span
+                                                            class="block truncate text-sm font-black text-slate-900 dark:text-slate-100"
+                                                        >
+                                                            {schedule.unit_label}
+                                                        </span>
+                                                        <span
+                                                            class="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400"
+                                                        >
+                                                            <Ticket
+                                                                class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+                                                            />
+                                                            {schedule.total_seats}
+                                                            kursi
+                                                        </span>
+                                                    </span>
+                                                    <span
+                                                        class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1.5 text-[10px] font-black text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                                        class:bg-emerald-100={available >
+                                                            0}
+                                                        class:text-emerald-800={available >
+                                                            0}
+                                                    >
+                                                        {#if available > 0}
+                                                            {available} tersedia
+                                                        {:else}
+                                                            Penuh
+                                                        {/if}
+                                                    </span>
+                                                </button>
+                                            {/each}
+                                        {/if}
+                                    </div>
                                 </div>
                             {/if}
                         </div>
@@ -1364,8 +1528,9 @@
                                         seat,
                                         event.currentTarget.value,
                                     )}
-                                placeholder="Nama lengkap"
-                                class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+                                autocomplete="name"
+                                placeholder="Contoh: BUDI"
+                                class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm uppercase focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                             />
                         </div>
                     {/each}
@@ -1376,9 +1541,12 @@
                             >Nama pemesan</label
                         ><input
                             id="contact-name"
-                            bind:value={contactName}
-                            placeholder="Nama yang bisa dihubungi"
-                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+                            value={contactName}
+                            oninput={(event) =>
+                                updateContactName(event.currentTarget.value)}
+                            autocomplete="name"
+                            placeholder="Contoh: BUDI"
+                            class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm uppercase focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                         />
                     </div>
                     <div>
@@ -1388,9 +1556,13 @@
                             >Nomor HP / WhatsApp</label
                         ><input
                             id="contact-phone"
-                            bind:value={phone}
+                            value={phone}
+                            oninput={(event) =>
+                                updatePhone(event.currentTarget.value)}
                             inputmode="tel"
-                            placeholder="08xxxxxxxxxx"
+                            autocomplete="tel"
+                            maxlength="13"
+                            placeholder="Contoh: 08123456789"
                             class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                         />
                     </div>
