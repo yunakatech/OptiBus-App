@@ -780,8 +780,7 @@
                             class="flex items-center gap-2"
                         >
                             <span
-                                class:!bg-emerald-400={step > index + 1}
-                                class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/15 text-white"
+                                class={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-black transition-colors ${step > index + 1 ? 'bg-emerald-400 text-emerald-950' : step === index + 1 ? 'bg-white text-emerald-950 shadow-sm shadow-black/20' : 'bg-white/15 text-white'}`}
                                 >{step > index + 1 ? '✓' : index + 1}</span
                             >
                             <span class="hidden sm:inline">{label}</span>
@@ -812,6 +811,7 @@
             <section class="space-y-4">
                 <div
                     class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                    class:hidden={step === 2}
                 >
                     <label
                         for="public-date"
@@ -841,6 +841,7 @@
                 </div>
                 <div
                     class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                    class:hidden={step === 2}
                 >
                     <label
                         for="public-segment"
@@ -1061,6 +1062,7 @@
                 {:else if selectedSegment}
                     <div
                         class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                        class:hidden={step === 2}
                     >
                         <div
                             class="mb-4 rounded-2xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800"
@@ -1329,11 +1331,22 @@
                                         )}
                                     </p>
                                 </div>
-                                <span
-                                    class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
+                                <div
+                                    class="flex shrink-0 flex-col items-end gap-2"
                                 >
-                                    {availableSeatCount(selectedSchedule)} tersedia
-                                </span>
+                                    <button
+                                        type="button"
+                                        onclick={() => void goToStep(1)}
+                                        class="min-h-10 rounded-xl px-2 text-xs font-black text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/15 dark:text-emerald-300 dark:hover:text-emerald-100"
+                                    >
+                                        Ubah
+                                    </button>
+                                    <span
+                                        class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
+                                    >
+                                        {availableSeatCount(selectedSchedule)} tersedia
+                                    </span>
+                                </div>
                             </div>
 
                             <div
