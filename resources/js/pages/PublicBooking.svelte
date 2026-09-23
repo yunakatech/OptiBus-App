@@ -1331,22 +1331,11 @@
                                         )}
                                     </p>
                                 </div>
-                                <div
-                                    class="flex shrink-0 flex-col items-end gap-2"
+                                <span
+                                    class="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
                                 >
-                                    <button
-                                        type="button"
-                                        onclick={() => void goToStep(1)}
-                                        class="min-h-10 rounded-xl px-2 text-xs font-black text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/15 dark:text-emerald-300 dark:hover:text-emerald-100"
-                                    >
-                                        Ubah
-                                    </button>
-                                    <span
-                                        class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
-                                    >
-                                        {availableSeatCount(selectedSchedule)} tersedia
-                                    </span>
-                                </div>
+                                    {availableSeatCount(selectedSchedule)} tersedia
+                                </span>
                             </div>
 
                             <div
@@ -1463,22 +1452,41 @@
                     <div
                         class="mx-auto flex max-w-xl items-center justify-between gap-3"
                     >
-                        <div>
-                            <p
-                                class="text-xs font-bold text-slate-500 dark:text-slate-400"
+                        {#if step === 2}
+                            <button
+                                type="button"
+                                onclick={() => void goToStep(1)}
+                                class="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 transition hover:border-emerald-300 hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-emerald-700 dark:hover:text-emerald-200"
                             >
-                                {selectedSchedule.jam} · {selectedSchedule.unit_label}
-                            </p>
-                            <p class="font-black">
-                                {selectedSeats.length} kursi dipilih
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onclick={continueToDetails}
-                            class="flex h-12 items-center gap-2 rounded-2xl bg-emerald-700 px-5 text-sm font-black text-white shadow-lg shadow-emerald-700/20"
-                            >Lanjut <ArrowRight class="h-4 w-4" /></button
-                        >
+                                <ArrowLeft class="h-4 w-4 shrink-0" />
+                                Ubah jadwal
+                            </button>
+                            <button
+                                type="button"
+                                onclick={continueToDetails}
+                                class="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-3 text-sm font-black text-white shadow-lg shadow-emerald-700/20"
+                                >Lanjut <ArrowRight
+                                    class="h-4 w-4 shrink-0"
+                                /></button
+                            >
+                        {:else}
+                            <div>
+                                <p
+                                    class="text-xs font-bold text-slate-500 dark:text-slate-400"
+                                >
+                                    {selectedSchedule.jam} · {selectedSchedule.unit_label}
+                                </p>
+                                <p class="font-black">
+                                    {selectedSeats.length} kursi dipilih
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onclick={continueToDetails}
+                                class="flex h-12 items-center gap-2 rounded-2xl bg-emerald-700 px-5 text-sm font-black text-white shadow-lg shadow-emerald-700/20"
+                                >Lanjut <ArrowRight class="h-4 w-4" /></button
+                            >
+                        {/if}
                     </div>
                 </div>
             {/if}
