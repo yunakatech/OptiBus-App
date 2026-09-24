@@ -20,7 +20,7 @@ use RuntimeException;
 
 class PublicBookingService
 {
-    private const HOLD_MINUTES = 15;
+    private const BOOKING_CUTOFF_MINUTES = 120;
 
     /** @return array<string, mixed> */
     public function settings(?int $userId = null): array
@@ -290,6 +290,12 @@ class PublicBookingService
         }
 
         $jam = substr((string) $schedule->jam, 0, 5);
+        $holdExpiresAt = $this->bookingCutoffAt($date, (string) $schedule->jam);
+        if (now()->greaterThanOrEqualTo($holdExpiresAt)) {
+            throw ValidationException::withMessages([
+                'schedule_id' => 'Pemesanan online ditutup 2 jam sebelum keberangkatan.',
+            ]);
+        }
         $seatTokens = $this->seatTokens($schedule);
         $passengers = is_array($data['passengers'] ?? null) ? $data['passengers'] : [];
         $selectedSeats = array_values(array_unique(array_map(
@@ -312,11 +318,15 @@ class PublicBookingService
             : null;
         $requestId = 0;
         $requestCode = '';
-        $holdExpiresAt = now()->addMinutes(self::HOLD_MINUTES);
         DB::transaction(function () use (&$requestId, &$requestCode, $tenantId, $route, $segment, $schedule, $date, $unit, $price, $pickupTime, $selectedSeats, $passengers, $data, $poolId, $holdExpiresAt): void {
             $lockedSchedule = DB::table('schedules')->where('id', (int) $schedule->id)->lockForUpdate()->first();
             if (! $lockedSchedule) {
                 throw ValidationException::withMessages(['schedule_id' => 'Jadwal tidak tersedia.']);
+            }
+            if (now()->greaterThanOrEqualTo($holdExpiresAt)) {
+                throw ValidationException::withMessages([
+                    'schedule_id' => 'Pemesanan online ditutup 2 jam sebelum keberangkatan.',
+                ]);
             }
 
             $occupied = $this->occupiedSeatValues($tenantId, (int) $route['id'], (string) $route['name'], $lockedSchedule, $date, $unit, true);
@@ -484,9 +494,10 @@ class PublicBookingService
             if ((string) $request->status !== 'pending') {
                 throw new RuntimeException('Request ini sudah diproses.');
             }
-            if (Carbon::parse((string) $request->hold_expires_at)->isPast()) {
+            $bookingCutoffAt = $this->bookingCutoffAt((string) $request->tanggal, (string) $request->jam);
+            if (Carbon::parse((string) $request->hold_expires_at)->isPast() || now()->greaterThanOrEqualTo($bookingCutoffAt)) {
                 DB::table('public_booking_requests')->where('id', $requestId)->update(['status' => 'expired', 'updated_at' => now()]);
-                throw new RuntimeException('Hold kursi sudah kedaluwarsa.');
+                throw new RuntimeException('Batas persetujuan booking sudah berakhir 2 jam sebelum keberangkatan.');
             }
 
             $route = DB::table('routes')
@@ -846,6 +857,8 @@ class PublicBookingService
         $seats = $this->seatTokens($schedule);
         $units = max(1, (int) ($schedule->units ?? 1));
         $unitLabels = $this->scheduleUnitLabels($tenantId, (int) $schedule->id);
+        $bookingCutoffAt = $this->bookingCutoffAt($date, (string) $schedule->jam);
+        $bookingOpen = now()->lessThan($bookingCutoffAt);
         $payload = [];
         for ($unit = 1; $unit <= $units; $unit++) {
             $booked = $this->bookingSeatsQuery($tenantId, (int) $route['id'], (string) $route['name'], $schedule, $date, $unit)->get()->map(fn ($row): string => $this->normalizeSeat((string) $row->seat))->unique()->all();
@@ -866,11 +879,19 @@ class PublicBookingService
                 'layout' => $layout,
                 'seats' => array_map(fn (string $seat): array => ['code' => $seat, 'status' => in_array($seat, $booked, true) ? 'booked' : (in_array($seat, $held, true) ? 'held' : 'available')], $seats),
                 'total_seats' => count($seats),
+                'booking_open' => $bookingOpen,
+                'booking_cutoff_at' => $bookingCutoffAt->toIso8601String(),
                 'segment' => $segment ? $this->segmentSchedulePayload($segment, $schedule) : null,
             ];
         }
 
         return $payload;
+    }
+
+    private function bookingCutoffAt(string $date, string $time): Carbon
+    {
+        return Carbon::createFromFormat('Y-m-d H:i', $date.' '.substr($time, 0, 5))
+            ->subMinutes(self::BOOKING_CUTOFF_MINUTES);
     }
 
     /** @return array<int, string> */
