@@ -71,6 +71,8 @@
         unit_label: string;
         seats: Seat[];
         total_seats: number;
+        booking_open?: boolean;
+        booking_cutoff_at?: string;
         layout: LayoutRow[];
         segment: {
             id: number;
@@ -104,6 +106,7 @@
     let datePicker: FlatpickrInstance | null = null;
     let availabilityController: AbortController | null = null;
     let availabilitySequence = 0;
+    let cutoffClock = $state(Date.now());
     let copyTimer: ReturnType<typeof setTimeout> | undefined;
     let routes = $state<RouteOption[]>([]);
     let segments = $state<SegmentOption[]>([]);
@@ -171,6 +174,9 @@
         dateValue = dateMin;
         paymentMethod = paymentMethods[0] ?? 'Belum Lunas';
         void loadAvailability();
+        const cutoffClockTimer = window.setInterval(() => {
+            cutoffClock = Date.now();
+        }, 30_000);
         const unregisterBack = registerBackHandler(() => {
             if (datePicker?.isOpen) {
                 datePicker.close();
@@ -195,8 +201,19 @@
             unregisterBack();
             availabilitySequence += 1;
             availabilityController?.abort();
+            window.clearInterval(cutoffClockTimer);
             clearTimeout(copyTimer);
         };
+    });
+
+    $effect(() => {
+        if (
+            selectedSchedule &&
+            !isScheduleBookingOpen(selectedSchedule) &&
+            selectedSeats.length > 0
+        ) {
+            selectedSeats = [];
+        }
     });
 
     function bookingDatePicker(node: HTMLInputElement) {
@@ -321,20 +338,24 @@
             const currentSchedule = schedules.find(
                 (item) => scheduleValue(item) === scheduleKey,
             );
-            const retainedSeats = selectedSeats.filter((code) =>
-                currentSchedule?.seats.some(
-                    (seat) => seat.code === code && seat.status === 'available',
-                ),
-            );
+            const retainedSeats = isScheduleBookingOpen(currentSchedule)
+                ? selectedSeats.filter((code) =>
+                      currentSchedule?.seats.some(
+                          (seat) =>
+                              seat.code === code && seat.status === 'available',
+                      ),
+                  )
+                : [];
 
             if (retainedSeats.length !== selectedSeats.length) {
-                error =
-                    'Ketersediaan kursi berubah. Pilih kembali kursi yang tersedia; data penumpang tetap tersimpan.';
+                error = isScheduleBookingOpen(currentSchedule)
+                    ? 'Ketersediaan kursi berubah. Pilih kembali kursi yang tersedia; data penumpang tetap tersimpan.'
+                    : 'Pemesanan untuk jadwal ini sudah ditutup 2 jam sebelum keberangkatan.';
             }
 
             selectedSeats = retainedSeats;
 
-            if (!currentSchedule) {
+            if (!currentSchedule || !isScheduleBookingOpen(currentSchedule)) {
                 scheduleKey = '';
             }
         } catch (cause) {
@@ -444,6 +465,14 @@
     }
 
     function chooseSchedule(schedule: Schedule) {
+        if (!isScheduleBookingOpen(schedule)) {
+            error =
+                'Pemesanan untuk jadwal ini sudah ditutup 2 jam sebelum keberangkatan.';
+            void focusError();
+
+            return;
+        }
+
         if (scheduleKey !== scheduleValue(schedule)) {
             selectedSeats = [];
         }
@@ -455,6 +484,10 @@
     }
 
     function scheduleOptionLabel(schedule: Schedule): string {
+        if (!isScheduleBookingOpen(schedule)) {
+            return `${schedule.jam} ${schedule.unit_label} Pemesanan ditutup 2 jam sebelum keberangkatan`;
+        }
+
         return `${schedule.jam} · ${schedule.unit_label} · ${availableSeatCount(schedule)} kursi tersedia`;
     }
 
@@ -465,6 +498,20 @@
     function availableSeatCount(schedule: Schedule): number {
         return schedule.seats.filter((seat) => seat.status === 'available')
             .length;
+    }
+
+    function isScheduleBookingOpen(
+        schedule: Schedule | null | undefined,
+    ): boolean {
+        if (schedule?.booking_open === false) {
+            return false;
+        }
+
+        const cutoffAt = new Date(schedule?.booking_cutoff_at ?? '');
+
+        return (
+            Number.isNaN(cutoffAt.getTime()) || cutoffClock < cutoffAt.getTime()
+        );
     }
 
     function formatRupiah(value: number): string {
@@ -551,6 +598,7 @@
         if (
             seat.status !== 'available' ||
             !selectedSchedule ||
+            !isScheduleBookingOpen(selectedSchedule) ||
             loading ||
             availabilityFailed
         ) {
@@ -572,9 +620,12 @@
             availabilityFailed ||
             !selectedSegment ||
             !selectedSchedule ||
+            !isScheduleBookingOpen(selectedSchedule) ||
             selectedSeats.length === 0
         ) {
-            error = 'Pilih tujuan, jadwal, dan minimal satu kursi.';
+            error = isScheduleBookingOpen(selectedSchedule)
+                ? 'Pilih tujuan, jadwal, dan minimal satu kursi.'
+                : 'Pemesanan untuk jadwal ini sudah ditutup 2 jam sebelum keberangkatan.';
             void focusError();
 
             return;
@@ -585,6 +636,13 @@
 
     function continueToReview() {
         error = '';
+        if (!isScheduleBookingOpen(selectedSchedule)) {
+            error =
+                'Pemesanan untuk jadwal ini sudah ditutup 2 jam sebelum keberangkatan.';
+            void focusError();
+
+            return;
+        }
         contactName = normalizeNameForBooking(contactName);
         phone = normalizePhoneForBooking(phone);
         passengerNames = Object.fromEntries(
@@ -612,11 +670,20 @@
     }
 
     async function submitRequest() {
+        if (!isScheduleBookingOpen(selectedSchedule)) {
+            error =
+                'Pemesanan untuk jadwal ini sudah ditutup 2 jam sebelum keberangkatan.';
+            void focusError();
+
+            return;
+        }
+
         if (
             step !== 4 ||
             !selectedSchedule ||
             !selectedRoute ||
             !selectedSegment ||
+            !isScheduleBookingOpen(selectedSchedule) ||
             !selectedSeats.length ||
             submitting ||
             submitUnknown ||
@@ -1220,9 +1287,14 @@
                                                     availableSeatCount(
                                                         schedule,
                                                     )}
+                                                {@const bookingOpen =
+                                                    isScheduleBookingOpen(
+                                                        schedule,
+                                                    )}
                                                 <button
                                                     type="button"
                                                     role="option"
+                                                    disabled={!bookingOpen}
                                                     aria-selected={scheduleKey ===
                                                         scheduleValue(schedule)}
                                                     aria-label={scheduleOptionLabel(
@@ -1232,7 +1304,7 @@
                                                         chooseSchedule(
                                                             schedule,
                                                         )}
-                                                    class="flex min-h-[4.5rem] w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left transition hover:border-slate-200 hover:bg-slate-50 active:scale-[0.99] dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                                    class="flex min-h-[4.5rem] w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left transition hover:border-slate-200 hover:bg-slate-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55 dark:hover:border-slate-700 dark:hover:bg-slate-800"
                                                     class:border-emerald-300={scheduleKey ===
                                                         scheduleValue(schedule)}
                                                     class:bg-emerald-50={scheduleKey ===
@@ -1274,12 +1346,14 @@
                                                     </span>
                                                     <span
                                                         class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1.5 text-[10px] font-black text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                                                        class:bg-emerald-100={available >
-                                                            0}
-                                                        class:text-emerald-800={available >
-                                                            0}
+                                                        class:bg-emerald-100={bookingOpen &&
+                                                            available > 0}
+                                                        class:text-emerald-800={bookingOpen &&
+                                                            available > 0}
                                                     >
-                                                        {#if available > 0}
+                                                        {#if !bookingOpen}
+                                                            Tutup H-2 jam
+                                                        {:else if available > 0}
                                                             {available} tersedia
                                                         {:else}
                                                             Penuh
@@ -1402,7 +1476,10 @@
                                                                     seat,
                                                                 )}
                                                             disabled={seat.status !==
-                                                                'available'}
+                                                                'available' ||
+                                                                !isScheduleBookingOpen(
+                                                                    selectedSchedule,
+                                                                )}
                                                             aria-label={`Kursi ${seat.code} ${seat.status === 'booked' ? 'terisi' : seat.status === 'held' ? 'ditahan' : selectedSeats.includes(seat.code) ? 'dipilih' : 'tersedia'}`}
                                                             class:!bg-slate-300={seat.status ===
                                                                 'booked'}
@@ -1819,8 +1896,8 @@
                 <div
                     class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200"
                 >
-                    Setelah dikirim, kursi ditahan selama 15 menit sambil
-                    menunggu konfirmasi admin pool.
+                    Setelah dikirim, kursi ditahan sampai 2 jam sebelum
+                    keberangkatan sambil menunggu konfirmasi admin pool.
                 </div>
             </section>
             <div
@@ -1861,8 +1938,8 @@
                 <p
                     class="mx-auto mt-3 max-w-xs text-sm leading-6 text-slate-300"
                 >
-                    Admin pool akan memeriksa dan menyetujui booking Anda. Kursi
-                    ditahan sampai pukul {requestResult
+                    Admin pool dapat menyetujui booking sampai 2 jam sebelum
+                    keberangkatan. Kursi ditahan sampai pukul {requestResult
                         ? formatHold(requestResult.hold_expires_at)
                         : '-'}.
                 </p>

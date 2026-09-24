@@ -93,6 +93,65 @@ class PublicBookingTest extends TestCase
             ->assertJsonPath('schedules.1.unit_label', 'Armada Siang');
     }
 
+    public function test_public_availability_closes_today_schedule_two_hours_before_departure(): void
+    {
+        [$tenantId, $routeId, $scheduleId] = $this->fixture();
+        $date = '2026-09-01';
+        DB::table('schedules')->where('id', $scheduleId)->update([
+            'dow' => Carbon::parse($date)->dayOfWeek,
+        ]);
+        Carbon::setTestNow(Carbon::parse('2026-09-01 07:00:00'));
+
+        $this->getJson(route('api.public.booking.availability', [
+            'tenantSlug' => 'qbus-default',
+            'tanggal' => $date,
+            'route_id' => $routeId,
+        ]))->assertOk()
+            ->assertJsonPath('schedules.0.booking_open', false)
+            ->assertJsonPath('schedules.0.booking_cutoff_at', '2026-09-01T07:00:00+08:00');
+    }
+
+    public function test_public_request_is_rejected_at_the_two_hour_booking_cutoff(): void
+    {
+        [$tenantId, $routeId, $scheduleId] = $this->fixture();
+        $date = '2026-09-01';
+        DB::table('schedules')->where('id', $scheduleId)->update([
+            'dow' => Carbon::parse($date)->dayOfWeek,
+        ]);
+        Carbon::setTestNow(Carbon::parse('2026-09-01 07:00:00'));
+
+        $this->postJson(route('api.public.booking.requests.store', ['tenantSlug' => 'qbus-default']), [
+            ...$this->requestPayload($routeId, $scheduleId),
+            'tanggal' => $date,
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('schedule_id');
+    }
+
+    public function test_public_request_holds_seats_until_two_hours_before_departure(): void
+    {
+        [$tenantId, $routeId, $scheduleId] = $this->fixture();
+
+        $response = $this->postJson(
+            route('api.public.booking.requests.store', ['tenantSlug' => 'qbus-default']),
+            $this->requestPayload($routeId, $scheduleId),
+        )->assertCreated();
+
+        $requestId = (int) $response->json('request_id');
+        $this->assertSame(
+            '2026-09-02 07:00:00',
+            Carbon::parse((string) DB::table('public_booking_requests')->where('id', $requestId)->value('hold_expires_at'))->format('Y-m-d H:i:s'),
+        );
+
+        Carbon::setTestNow(Carbon::parse('2026-09-02 07:00:00'));
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $this->postJson(route('api.admin.public-booking-requests.approve', ['id' => $requestId]))
+            ->assertConflict();
+        $this->assertDatabaseHas('public_booking_requests', [
+            'id' => $requestId,
+            'status' => 'expired',
+        ]);
+    }
+
     public function test_public_request_holds_multiple_seats_and_is_visible_as_held(): void
     {
         [$tenantId, $routeId, $scheduleId] = $this->fixture();
