@@ -728,6 +728,7 @@ class PublicBookingService
             'slug' => (string) $tenant->slug,
             'phone' => (string) ($tenant->phone ?? ''),
             'logo_url' => $tenant->logo_url ?? null,
+            'support_whatsapp_url' => $this->supportWhatsappUrl($tenant),
         ];
     }
 
@@ -1146,6 +1147,16 @@ class PublicBookingService
         $message = "Halo {$tenant->name}, saya mengirim request booking {$code}.\nNama: {$contactName}\nRute: {$route['name']}\nTanggal: {$date}\nJam: ".substr((string) $schedule->jam, 0, 5)."\nUnit: {$unit}\nKursi: ".implode(', ', $seats)."\nMohon dibantu konfirmasi.";
 
         return 'https://wa.me/'.$phone.'?text='.rawurlencode($message);
+    }
+
+    private function supportWhatsappUrl(object $tenant): ?string
+    {
+        $phone = $this->normalizeWhatsapp((string) ($tenant->public_booking_whatsapp ?? ''));
+        if (! $phone) {
+            return null;
+        }
+
+        return 'https://wa.me/'.$phone.'?text='.rawurlencode("Halo {$tenant->name}, saya membutuhkan bantuan booking online.");
     }
 
     private function normalizeWhatsapp(string $value): ?string

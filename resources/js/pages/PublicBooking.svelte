@@ -28,6 +28,7 @@
         slug: string;
         phone: string;
         logo_url: string | null;
+        support_whatsapp_url: string | null;
     };
     type RouteOption = {
         id: number;
@@ -823,10 +824,27 @@
                             </h1>
                         {/if}
                     </div>
-                    <Ticket
-                        class="h-9 w-9 shrink-0 text-emerald-300"
-                        strokeWidth={1.5}
-                    />
+                    <div class="flex shrink-0 items-center gap-2">
+                        {#if tenant.support_whatsapp_url}
+                            <a
+                                use:externalLink
+                                href={tenant.support_whatsapp_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                class="flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 text-xs font-black text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/40"
+                                aria-label={`Butuh bantuan booking dari ${tenant.name} melalui WhatsApp`}
+                            >
+                                <MessageCircle
+                                    class="h-4 w-4 text-emerald-300"
+                                />
+                                Bantuan
+                            </a>
+                        {/if}
+                        <Ticket
+                            class="h-8 w-8 text-emerald-300"
+                            strokeWidth={1.5}
+                        />
+                    </div>
                 </div>
                 <div>
                     <p class="text-sm text-emerald-300">

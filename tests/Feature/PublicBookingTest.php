@@ -317,6 +317,22 @@ class PublicBookingTest extends TestCase
         $response->assertCreated()->assertJsonPath('whatsapp_url', null);
     }
 
+    public function test_public_booking_page_exposes_help_link_for_configured_booking_whatsapp(): void
+    {
+        $tenantId = $this->defaultTestTenantId();
+        DB::table('tenants')->where('id', $tenantId)->update([
+            'public_booking_enabled' => true,
+            'public_booking_whatsapp' => '0811-2222-3333',
+        ]);
+
+        $this->get(route('public.booking.show', ['tenantSlug' => 'qbus-default']))
+            ->assertSuccessful()
+            ->assertInertia(fn ($page) => $page->where(
+                'tenant.support_whatsapp_url',
+                fn ($url) => str_starts_with((string) $url, 'https://wa.me/6281122223333?'),
+            ));
+    }
+
     public function test_admin_can_save_public_booking_whatsapp_number(): void
     {
         $tenantId = $this->defaultTestTenantId();
