@@ -487,7 +487,7 @@ class PublicBookingService
     {
         $userId ??= (int) (auth()->id() ?? 0);
 
-        return DB::transaction(function () use ($requestId, $userId): array {
+        $result = DB::transaction(function () use ($requestId, $userId): array {
             $request = DB::table('public_booking_requests')->where('id', $requestId)->lockForUpdate()->first();
             $this->assertAdminRequestAccess($request, $userId);
 
@@ -497,7 +497,13 @@ class PublicBookingService
             $bookingCutoffAt = $this->bookingCutoffAt((string) $request->tanggal, (string) $request->jam);
             if (Carbon::parse((string) $request->hold_expires_at)->isPast() || now()->greaterThanOrEqualTo($bookingCutoffAt)) {
                 DB::table('public_booking_requests')->where('id', $requestId)->update(['status' => 'expired', 'updated_at' => now()]);
-                throw new RuntimeException('Batas persetujuan booking sudah berakhir 2 jam sebelum keberangkatan.');
+
+                return [
+                    'request_id' => $requestId,
+                    'request_code' => (string) $request->request_code,
+                    'booking_ids' => [],
+                    'status' => 'expired',
+                ];
             }
 
             $route = DB::table('routes')
@@ -620,6 +626,12 @@ class PublicBookingService
 
             return ['request_id' => $requestId, 'request_code' => (string) $request->request_code, 'booking_ids' => $bookingIds, 'status' => 'approved'];
         }, 3);
+
+        if (($result['status'] ?? '') === 'expired') {
+            throw new RuntimeException('Batas persetujuan booking sudah berakhir 2 jam sebelum keberangkatan.');
+        }
+
+        return $result;
     }
 
     public function reject(int $requestId, string $reason, ?int $userId = null): array
