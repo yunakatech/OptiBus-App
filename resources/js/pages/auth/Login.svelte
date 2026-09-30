@@ -128,10 +128,18 @@
                     <InputError message={errors.password} />
                 </div>
 
-                <div class="flex items-center justify-between gap-3">
-                    <Label for="remember" class="flex items-center gap-2">
-                        <Checkbox id="remember" name="remember" />
-                        <span class="text-xs text-[#53615d]">Ingat saya</span>
+                <div class="flex items-center justify-between gap-2 sm:gap-3">
+                    <Label
+                        for="remember"
+                        class="flex min-h-10 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1 text-left touch-manipulation sm:min-h-0 sm:flex-none sm:px-0 sm:py-0"
+                    >
+                        <Checkbox
+                            id="remember"
+                            name="remember"
+                            aria-label="Ingat saya"
+                            class="size-5 rounded-md border-[#aebbb5] shadow-none data-[state=checked]:border-[#0d7066] data-[state=checked]:bg-[#0d7066] focus-visible:ring-[#0d7066]/35 sm:size-4"
+                        />
+                        <span class="truncate text-xs text-[#53615d]">Ingat saya</span>
                     </Label>
                     <TextLink
                         href="/forgot-password"
