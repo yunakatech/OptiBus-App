@@ -36,7 +36,7 @@
         WalletCards,
         X,
     } from 'lucide-svelte';
-    import { onMount } from 'svelte';
+    import { onMount, untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
@@ -689,6 +689,69 @@
     let bookingListDateInput = $state<HTMLInputElement | null>(null);
     let bookingDatePicker: FlatpickrInstance | null = null;
     let bookingListDatePicker: FlatpickrInstance | null = null;
+    let bookingListDatePickerRequest = 0;
+
+    $effect(() => {
+        const shouldShowBookingList =
+            listOnly && !consoleOnly && !groupDetailPage;
+        const input = bookingListDateInput;
+
+        if (!shouldShowBookingList || !input) {
+            bookingListDatePicker?.destroy();
+            bookingListDatePicker = null;
+            bookingListDatePickerRequest += 1;
+
+            return;
+        }
+
+        if (bookingListDatePicker?.input === input) {
+            return;
+        }
+
+        bookingListDatePicker?.destroy();
+        bookingListDatePicker = null;
+        const requestId = ++bookingListDatePickerRequest;
+        let cancelled = false;
+
+        void loadFlatpickr()
+            .then((flatpickr) => {
+                if (
+                    cancelled ||
+                    requestId !== bookingListDatePickerRequest ||
+                    bookingListDateInput !== input ||
+                    !listOnly ||
+                    consoleOnly ||
+                    groupDetailPage
+                ) {
+                    return;
+                }
+
+                const currentDate = untrack(
+                    () => bookingListDateFrom || today,
+                );
+                bookingListDatePicker = flatpickr(input, {
+                    dateFormat: 'Y-m-d',
+                    defaultDate: currentDate,
+                    disableMobile: true,
+                    onChange: (_selectedDates, dateStr) => {
+                        if (dateStr && dateStr !== bookingListDateFrom) {
+                            setBookingListDate(dateStr);
+                        }
+                    },
+                });
+            })
+            .catch(() => {
+                // Keep the native input usable if Flatpickr fails to load.
+            });
+
+        return () => {
+            cancelled = true;
+            if (bookingListDatePicker?.input === input) {
+                bookingListDatePicker.destroy();
+                bookingListDatePicker = null;
+            }
+        };
+    });
     const API_TIMEOUT_MS = 15000;
     const BOOKING_LIST_PAGE_SIZE = 24;
     const BOOKING_SUCCESS_MESSAGE_TITLE = 'BOOKING BERHASIL';
@@ -6344,18 +6407,6 @@
                 });
             }
 
-            if (bookingListDateInput && !bookingListDatePicker) {
-                bookingListDatePicker = flatpickr(bookingListDateInput, {
-                    dateFormat: 'Y-m-d',
-                    defaultDate: bookingListDateFrom || today,
-                    disableMobile: true,
-                    onChange: (_selectedDates, dateStr) => {
-                        if (dateStr && dateStr !== bookingListDateFrom) {
-                            setBookingListDate(dateStr);
-                        }
-                    },
-                });
-            }
         };
 
         void initPickers();
@@ -6392,8 +6443,6 @@
 
             bookingDatePicker?.destroy();
             bookingDatePicker = null;
-            bookingListDatePicker?.destroy();
-            bookingListDatePicker = null;
         };
     });
 </script>

@@ -246,7 +246,7 @@
                 Inbox Booking Publik
             </h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                Request baru ditahan 15 menit sebelum kursi kembali tersedia.
+                Request booking ditahan selama 24 jam sejak diterima sebelum kursi kembali tersedia.
             </p>
         </div>
         <button
