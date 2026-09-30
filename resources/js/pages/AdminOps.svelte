@@ -14,6 +14,7 @@
     import {
         Armchair,
         ArrowUpRight,
+        Eye,
         CheckCircle2,
         Clock3,
         ChevronDown,
@@ -44,6 +45,12 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
+    import {
+        Dialog,
+        DialogContent,
+        DialogDescription,
+        DialogTitle,
+    } from '@/components/ui/dialog';
     import DataTable from '@/components/terminal/DataTable.svelte';
     import AdminOpsPoolsPanel from '@/components/admin-ops/AdminOpsPoolsPanel.svelte';
     import AdminOpsUnitsLayoutPanel from '@/components/admin-ops/AdminOpsUnitsLayoutPanel.svelte';
@@ -194,6 +201,33 @@
         gmaps: string | null;
         pool_id?: number | null;
         pool_name?: string | null;
+    };
+    type CustomerHistoryCancellation = {
+        cancellation_id: number;
+        booking_id: number;
+        reason: string | null;
+        canceled_at: string | null;
+        rute: string;
+        tanggal: string;
+        jam: string;
+        unit: number;
+        seat: string;
+    };
+    type CustomerHistoryDeparture = {
+        rute: string;
+        tanggal: string;
+        jam: string;
+        unit: number;
+        status: string;
+    };
+    type CustomerHistory = {
+        customer: Pick<CustomerRow, 'id' | 'name' | 'phone'>;
+        summary: {
+            cancellation_count: number;
+            successful_departure_count: number;
+        };
+        cancellations: CustomerHistoryCancellation[];
+        successful_departures: CustomerHistoryDeparture[];
     };
     type Pagination = {
         page: number;
@@ -768,6 +802,11 @@
     let services = $state<ServiceRow[]>([]);
     let segments = $state<SegmentRow[]>([]);
     let customers = $state<CustomerRow[]>([]);
+    let customerHistoryOpen = $state(false);
+    let customerHistoryLoading = $state(false);
+    let customerHistoryError = $state('');
+    let customerHistory = $state<CustomerHistory | null>(null);
+    let customerHistoryRequest = 0;
     let armadas = $state<ArmadaRow[]>([]);
     let pools = $state<PoolRow[]>([]);
     let canManagePools = $state(true);
@@ -4048,6 +4087,35 @@
             customerMeta = r.pagination ?? customerMeta;
         } catch (e) {
             error = e instanceof Error ? e.message : 'Gagal memuat customers.';
+        }
+    };
+
+    const openCustomerHistory = async (customer: CustomerRow) => {
+        const requestId = ++customerHistoryRequest;
+        customerHistory = null;
+        customerHistoryError = '';
+        customerHistoryLoading = true;
+        customerHistoryOpen = true;
+
+        try {
+            const result = await api(
+                'GET',
+                `/api/admin/customers/${customer.id}/history`,
+            );
+            if (requestId === customerHistoryRequest) {
+                customerHistory = result as CustomerHistory;
+            }
+        } catch (e) {
+            if (requestId === customerHistoryRequest) {
+                customerHistoryError =
+                    e instanceof Error
+                        ? e.message
+                        : 'Gagal memuat riwayat pelanggan.';
+            }
+        } finally {
+            if (requestId === customerHistoryRequest) {
+                customerHistoryLoading = false;
+            }
         }
     };
 
@@ -9720,6 +9788,12 @@
                                                 class="z-[120] w-44"
                                             >
                                                 <DropdownMenuItem
+                                                    onclick={() => void openCustomerHistory(row)}
+                                                >
+                                                    <Eye class="mr-2 h-3.5 w-3.5" />
+                                                    Detail Riwayat
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
                                                     onclick={() => {
                                                         customerForm = {
                                                             id: row.id,
@@ -9943,6 +10017,12 @@
                                                         sideOffset={8}
                                                         class="z-[120] w-44"
                                                     >
+                                                        <DropdownMenuItem
+                                                            onclick={() => void openCustomerHistory(row)}
+                                                        >
+                                                            <Eye class="mr-2 h-3.5 w-3.5" />
+                                                            Detail Riwayat
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             onclick={() => {
                                                                 customerForm = {
@@ -12822,4 +12902,134 @@
             {/if}
         </CardContent>
     </Card>
+    <Dialog bind:open={customerHistoryOpen}>
+        <DialogContent class="sm:max-w-3xl">
+            <div class="space-y-1">
+                <DialogTitle>Detail Riwayat Pelanggan</DialogTitle>
+                <DialogDescription>
+                    Riwayat pembatalan dan keberangkatan yang telah tiba.
+                </DialogDescription>
+            </div>
+
+            {#if customerHistoryLoading}
+                <div
+                    class="rounded-lg border border-dashed border-border/80 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
+                    role="status"
+                >
+                    Memuat riwayat pelanggan...
+                </div>
+            {:else if customerHistoryError}
+                <div
+                    class="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                    role="alert"
+                >
+                    {customerHistoryError}
+                </div>
+            {:else if customerHistory}
+                <div class="space-y-4">
+                    <div
+                        class="flex flex-col gap-1 rounded-lg border border-border/70 bg-muted/15 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div>
+                            <p class="text-sm font-semibold text-foreground">
+                                {customerHistory.customer.name}
+                            </p>
+                            <p class="text-xs text-muted-foreground">
+                                {customerHistory.customer.phone}
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <Badge variant="secondary">
+                                {customerHistory.summary.cancellation_count}
+                                pembatalan
+                            </Badge>
+                            <Badge variant="secondary">
+                                {customerHistory.summary.successful_departure_count}
+                                keberangkatan sukses
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <section class="space-y-2">
+                        <h3 class="text-sm font-semibold">
+                            Riwayat pembatalan
+                        </h3>
+                        {#if customerHistory.cancellations.length === 0}
+                            <p
+                                class="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground"
+                            >
+                                Belum ada catatan pembatalan.
+                            </p>
+                        {:else}
+                            <div class="max-h-56 space-y-2 overflow-y-auto">
+                                {#each customerHistory.cancellations as item (item.cancellation_id)}
+                                    <article
+                                        class="rounded-lg border border-border/70 px-3 py-2"
+                                    >
+                                        <div
+                                            class="flex flex-wrap items-center justify-between gap-1"
+                                        >
+                                            <p
+                                                class="text-xs font-semibold text-foreground"
+                                            >
+                                                {item.rute}
+                                            </p>
+                                            <span
+                                                class="text-[11px] text-muted-foreground"
+                                            >
+                                                {item.tanggal} · {item.jam.slice(0, 5)}
+                                            </span>
+                                        </div>
+                                        <p
+                                            class="mt-1 text-[11px] text-muted-foreground"
+                                        >
+                                            Unit {item.unit} · Kursi {item.seat}
+                                        </p>
+                                        <p class="mt-1 text-xs">
+                                            Alasan: {item.reason?.trim() || 'Tidak dicantumkan'}
+                                        </p>
+                                    </article>
+                                {/each}
+                            </div>
+                        {/if}
+                    </section>
+
+                    <section class="space-y-2">
+                        <h3 class="text-sm font-semibold">
+                            Keberangkatan sukses
+                        </h3>
+                        {#if customerHistory.successful_departures.length === 0}
+                            <p
+                                class="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground"
+                            >
+                                Belum ada keberangkatan yang berstatus tiba.
+                            </p>
+                        {:else}
+                            <div class="max-h-56 space-y-2 overflow-y-auto">
+                                {#each customerHistory.successful_departures as item (`${item.rute}-${item.tanggal}-${item.jam}-${item.unit}`)}
+                                    <article
+                                        class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 px-3 py-2"
+                                    >
+                                        <div>
+                                            <p
+                                                class="text-xs font-semibold text-foreground"
+                                            >
+                                                {item.rute}
+                                            </p>
+                                            <p
+                                                class="mt-1 text-[11px] text-muted-foreground"
+                                            >
+                                                {item.tanggal} · {item.jam.slice(0, 5)} · Unit {item.unit}
+                                            </p>
+                                        </div>
+                                        <Badge variant="secondary">Tiba</Badge>
+                                    </article>
+                                {/each}
+                            </div>
+                        {/if}
+                    </section>
+                </div>
+            {/if}
+        </DialogContent>
+    </Dialog>
 </div>

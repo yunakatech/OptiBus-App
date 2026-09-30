@@ -322,6 +322,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::get('customers/template', [AdminOpsApiController::class, 'customersTemplate'])->middleware('permission:customer.import')->name('customers.template');
         Route::post('customers/import', [AdminOpsApiController::class, 'customersImport'])->middleware('permission:customer.import')->name('customers.import');
         Route::get('customers', [AdminOpsApiController::class, 'customersIndex'])->middleware('permission:customer.view')->name('customers.index');
+        Route::get('customers/{id}/history', [AdminOpsApiController::class, 'customerHistory'])->middleware('permission:customer.view')->name('customers.history');
         Route::post('customers', [AdminOpsApiController::class, 'customersSave'])->middleware('permission:customer.create,customer.update')->name('customers.save');
         Route::delete('customers/{id}', [AdminOpsApiController::class, 'customersDelete'])->middleware('permission:customer.delete')->name('customers.delete');
 
