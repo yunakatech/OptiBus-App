@@ -13106,7 +13106,7 @@
             <div class="space-y-1">
                 <DialogTitle>Detail Riwayat Pelanggan</DialogTitle>
                 <DialogDescription>
-                    Riwayat pembatalan dan keberangkatan yang telah tiba.
+                    Riwayat pembatalan dan keberangkatan yang telah tiba pada tahun berjalan.
                 </DialogDescription>
             </div>
 
@@ -13223,7 +13223,7 @@
 
                     <section class="space-y-2">
                         <h3 class="text-sm font-semibold">
-                            Keberangkatan sukses
+                            Keberangkatan sukses tahun berjalan
                         </h3>
                         {#if customerHistory.successful_departures.length === 0}
                             <p

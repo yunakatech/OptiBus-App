@@ -1407,6 +1407,7 @@ class AdminOpsApiController extends Controller
             }
 
             if (SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'status')) {
+                $currentYear = now()->year;
                 $departureQuery = DB::table('trip_assignments as t')
                     ->join('bookings as b', function ($join): void {
                         $join->on('b.rute', '=', 't.rute')
@@ -1417,6 +1418,10 @@ class AdminOpsApiController extends Controller
                     ->where('b.phone', $phone)
                     ->where('b.status', '!=', 'canceled')
                     ->where('t.status', 'arrived')
+                    ->whereBetween('t.tanggal', [
+                        sprintf('%d-01-01', $currentYear),
+                        sprintf('%d-12-31', $currentYear),
+                    ])
                     ->distinct()
                     ->orderByDesc('t.tanggal')
                     ->orderByDesc('t.jam');
