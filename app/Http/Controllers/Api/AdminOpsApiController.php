@@ -1342,6 +1342,102 @@ class AdminOpsApiController extends Controller
         ]);
     }
 
+    public function customerHistory(int $id): JsonResponse
+    {
+        $customerQuery = DB::table('customers')
+            ->where('id', $id);
+        PoolScope::applyCustomerScope($customerQuery, 'customers');
+        $this->applyTenantScopeIfExists($customerQuery, 'customers');
+        $customer = $customerQuery->first(['id', 'name', 'phone']);
+
+        if (! $customer) {
+            return $this->error('Customer tidak ditemukan.', 404);
+        }
+
+        $cancellations = collect();
+        $departures = collect();
+        $phone = trim((string) $customer->phone);
+
+        if ($phone !== '' && SchemaCache::hasTable('bookings')) {
+            if (SchemaCache::hasTable('cancellations')) {
+                $cancellationQuery = DB::table('cancellations as c')
+                    ->join('bookings as b', 'b.id', '=', 'c.booking_id')
+                    ->where('b.phone', $phone)
+                    ->orderByDesc('c.created_at')
+                    ->orderByDesc('c.id');
+                $this->applyTenantScopeIfExists($cancellationQuery, 'bookings', 'b');
+                PoolScope::applyPoolOrRouteScope(
+                    $cancellationQuery,
+                    SchemaCache::hasColumn('bookings', 'pool_id') ? 'b.pool_id' : '',
+                    SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
+                    'b.rute',
+                );
+                $cancellations = $cancellationQuery->get([
+                    'c.id as cancellation_id',
+                    'c.booking_id',
+                    'c.reason',
+                    'c.created_at as canceled_at',
+                    'b.rute',
+                    'b.tanggal',
+                    'b.jam',
+                    'b.unit',
+                    'b.seat',
+                ]);
+            }
+
+            if (SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'status')) {
+                $departureQuery = DB::table('trip_assignments as t')
+                    ->join('bookings as b', function ($join): void {
+                        $join->on('b.rute', '=', 't.rute')
+                            ->on('b.tanggal', '=', 't.tanggal')
+                            ->on('b.jam', '=', 't.jam')
+                            ->on('b.unit', '=', 't.unit');
+                    })
+                    ->where('b.phone', $phone)
+                    ->where('b.status', '!=', 'canceled')
+                    ->where('t.status', 'arrived')
+                    ->distinct()
+                    ->orderByDesc('t.tanggal')
+                    ->orderByDesc('t.jam');
+                $this->applyTenantScopeIfExists($departureQuery, 'bookings', 'b');
+                $this->applyTenantScopeIfExists($departureQuery, 'trip_assignments', 't');
+                PoolScope::applyPoolOrRouteScope(
+                    $departureQuery,
+                    SchemaCache::hasColumn('bookings', 'pool_id') ? 'b.pool_id' : '',
+                    SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
+                    'b.rute',
+                );
+                PoolScope::applyPoolOrRouteScope(
+                    $departureQuery,
+                    SchemaCache::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
+                    SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+                    't.rute',
+                );
+                $departures = $departureQuery->get([
+                    't.rute',
+                    't.tanggal',
+                    't.jam',
+                    't.unit',
+                    't.status',
+                ]);
+            }
+        }
+
+        return $this->ok([
+            'customer' => [
+                'id' => (int) $customer->id,
+                'name' => (string) $customer->name,
+                'phone' => (string) $customer->phone,
+            ],
+            'summary' => [
+                'cancellation_count' => $cancellations->count(),
+                'successful_departure_count' => $departures->count(),
+            ],
+            'cancellations' => $cancellations->values()->all(),
+            'successful_departures' => $departures->values()->all(),
+        ]);
+    }
+
     public function customersSave(Request $request): JsonResponse
     {
         $data = $request->validate([
