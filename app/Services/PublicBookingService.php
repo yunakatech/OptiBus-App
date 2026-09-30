@@ -22,6 +22,8 @@ class PublicBookingService
 {
     private const BOOKING_CUTOFF_MINUTES = 120;
 
+    private const BOOKING_HOLD_MINUTES = 1440;
+
     /** @return array<string, mixed> */
     public function settings(?int $userId = null): array
     {
@@ -290,8 +292,9 @@ class PublicBookingService
         }
 
         $jam = substr((string) $schedule->jam, 0, 5);
-        $holdExpiresAt = $this->bookingCutoffAt($date, (string) $schedule->jam);
-        if (now()->greaterThanOrEqualTo($holdExpiresAt)) {
+        $bookingCutoffAt = $this->bookingCutoffAt($date, (string) $schedule->jam);
+        $holdExpiresAt = now()->addMinutes(self::BOOKING_HOLD_MINUTES);
+        if (now()->greaterThanOrEqualTo($bookingCutoffAt)) {
             throw ValidationException::withMessages([
                 'schedule_id' => 'Pemesanan online ditutup 2 jam sebelum keberangkatan.',
             ]);
@@ -318,12 +321,12 @@ class PublicBookingService
             : null;
         $requestId = 0;
         $requestCode = '';
-        DB::transaction(function () use (&$requestId, &$requestCode, $tenantId, $route, $segment, $schedule, $date, $unit, $price, $pickupTime, $selectedSeats, $passengers, $data, $poolId, $holdExpiresAt): void {
+        DB::transaction(function () use (&$requestId, &$requestCode, $tenantId, $route, $segment, $schedule, $date, $unit, $price, $pickupTime, $selectedSeats, $passengers, $data, $poolId, $holdExpiresAt, $bookingCutoffAt): void {
             $lockedSchedule = DB::table('schedules')->where('id', (int) $schedule->id)->lockForUpdate()->first();
             if (! $lockedSchedule) {
                 throw ValidationException::withMessages(['schedule_id' => 'Jadwal tidak tersedia.']);
             }
-            if (now()->greaterThanOrEqualTo($holdExpiresAt)) {
+            if (now()->greaterThanOrEqualTo($bookingCutoffAt)) {
                 throw ValidationException::withMessages([
                     'schedule_id' => 'Pemesanan online ditutup 2 jam sebelum keberangkatan.',
                 ]);
