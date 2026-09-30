@@ -227,7 +227,9 @@
             successful_departure_count: number;
         };
         cancellations: CustomerHistoryCancellation[];
+        cancellation_pagination: Pagination;
         successful_departures: CustomerHistoryDeparture[];
+        successful_departure_pagination: Pagination;
     };
     type Pagination = {
         page: number;
@@ -999,6 +1001,18 @@
 
     let customerSearch = $state('');
     let customerFiltersExpanded = $state(false);
+    let customerSuggestions = $state<CustomerRow[]>([]);
+    let customerSuggestionsOpen = $state(false);
+    let customerSuggestionsLoading = $state(false);
+    let customerSuggestionsError = $state('');
+    let customerSuggestionsTimer: ReturnType<typeof setTimeout> | null = null;
+    let customerSuggestionsRequest = 0;
+    const handleCustomerSuggestionOutsideClick = (event: MouseEvent) => {
+        const target = event.target as HTMLElement | null;
+        if (!target?.closest('[data-customer-search]')) {
+            customerSuggestionsOpen = false;
+        }
+    };
     let driverSearch = $state('');
     let driverPeriod = $state(
         `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
@@ -4090,17 +4104,107 @@
         }
     };
 
-    const openCustomerHistory = async (customer: CustomerRow) => {
-        const requestId = ++customerHistoryRequest;
-        customerHistory = null;
-        customerHistoryError = '';
-        customerHistoryLoading = true;
-        customerHistoryOpen = true;
+    const loadCustomerSuggestions = async (value: string) => {
+        const query = value.trim();
+        const requestId = ++customerSuggestionsRequest;
+
+        if (query.length < 2) {
+            customerSuggestions = [];
+            customerSuggestionsOpen = false;
+            customerSuggestionsLoading = false;
+            customerSuggestionsError = '';
+            return;
+        }
+
+        customerSuggestionsLoading = true;
+        customerSuggestionsOpen = true;
+        customerSuggestionsError = '';
 
         try {
+            const params = new URLSearchParams({
+                q: query,
+                page: '1',
+                per_page: '8',
+            });
             const result = await api(
                 'GET',
-                `/api/admin/customers/${customer.id}/history`,
+                `/api/admin/customers?${params.toString()}`,
+            );
+            if (requestId === customerSuggestionsRequest) {
+                customerSuggestions = result.customers ?? [];
+            }
+        } catch (e) {
+            if (requestId === customerSuggestionsRequest) {
+                customerSuggestionsError =
+                    e instanceof Error
+                        ? e.message
+                        : 'Gagal memuat suggesti pelanggan.';
+                customerSuggestions = [];
+            }
+        } finally {
+            if (requestId === customerSuggestionsRequest) {
+                customerSuggestionsLoading = false;
+            }
+        }
+    };
+
+    const scheduleCustomerSuggestions = (value: string) => {
+        if (customerSuggestionsTimer) {
+            clearTimeout(customerSuggestionsTimer);
+        }
+        customerSuggestionsTimer = setTimeout(
+            () => void loadCustomerSuggestions(value),
+            280,
+        );
+    };
+
+    const submitCustomerSearch = () => {
+        customerSuggestionsOpen = false;
+        void loadCustomers(1);
+    };
+
+    const resetCustomerSearch = () => {
+        if (customerSuggestionsTimer) {
+            clearTimeout(customerSuggestionsTimer);
+        }
+        customerSearch = '';
+        customerSuggestionsRequest += 1;
+        customerSuggestions = [];
+        customerSuggestionsOpen = false;
+        customerSuggestionsLoading = false;
+        customerSuggestionsError = '';
+        void loadCustomers(1);
+    };
+
+    const selectCustomerSuggestion = (customer: CustomerRow) => {
+        customerSearch = customer.name;
+        customerSuggestionsOpen = false;
+        customerSuggestions = [];
+        void loadCustomers(1);
+    };
+
+    const loadCustomerHistory = async (
+        customerId: number,
+        cancellationPage = 1,
+        departurePage = 1,
+        clearCurrent = false,
+    ) => {
+        const requestId = ++customerHistoryRequest;
+        if (clearCurrent) {
+            customerHistory = null;
+        }
+        customerHistoryError = '';
+        customerHistoryLoading = true;
+
+        try {
+            const params = new URLSearchParams({
+                cancellation_page: String(cancellationPage),
+                departure_page: String(departurePage),
+                per_page: '10',
+            });
+            const result = await api(
+                'GET',
+                `/api/admin/customers/${customerId}/history?${params.toString()}`,
             );
             if (requestId === customerHistoryRequest) {
                 customerHistory = result as CustomerHistory;
@@ -4117,6 +4221,36 @@
                 customerHistoryLoading = false;
             }
         }
+    };
+
+    const openCustomerHistory = (customer: CustomerRow) => {
+        customerHistoryOpen = true;
+        void loadCustomerHistory(customer.id, 1, 1, true);
+    };
+
+    const changeCustomerHistoryPage = (
+        section: 'cancellations' | 'departures',
+        page: number,
+    ) => {
+        if (!customerHistory || customerHistoryLoading) {
+            return;
+        }
+
+        const customerId = customerHistory.customer.id;
+        const cancellationPage =
+            section === 'cancellations'
+                ? page
+                : customerHistory.cancellation_pagination.page;
+        const departurePage =
+            section === 'departures'
+                ? page
+                : customerHistory.successful_departure_pagination.page;
+
+        void loadCustomerHistory(
+            customerId,
+            cancellationPage,
+            departurePage,
+        );
     };
 
     const jumpCustomerPage = async (page: number) => {
@@ -5810,6 +5944,10 @@
     });
 
     onMount(() => {
+        document.addEventListener(
+            'click',
+            handleCustomerSuggestionOutsideClick,
+        );
         if (lockedFromServer) {
             lockedMenuView = true;
         }
@@ -5870,6 +6008,13 @@
     });
 
     onDestroy(() => {
+        document.removeEventListener(
+            'click',
+            handleCustomerSuggestionOutsideClick,
+        );
+        if (customerSuggestionsTimer) {
+            clearTimeout(customerSuggestionsTimer);
+        }
         if (armadaTemplateBlurTimer) {
             clearTimeout(armadaTemplateBlurTimer);
         }
@@ -9699,21 +9844,75 @@
                                 </Button>
                             </div>
                             <div
+                                data-customer-search
                                 class={customerFiltersExpanded
                                     ? 'flex flex-col gap-1.5 md:w-[260px] md:flex-row md:items-center md:gap-3'
                                     : 'hidden md:flex md:w-[260px] md:flex-row md:items-center md:gap-3'}
                             >
-                                <Input
-                                    placeholder="Cari nama, phone, atau pickup point"
-                                    bind:value={customerSearch}
-                                    class="h-8 text-[11px] md:flex-1 md:min-w-0"
-                                />
+                                <div class="relative min-w-0 flex-1">
+                                    <Input
+                                        placeholder="Cari nama, phone, atau pickup point"
+                                        bind:value={customerSearch}
+                                        oninput={(event) =>
+                                            scheduleCustomerSuggestions(
+                                                (event.currentTarget as HTMLInputElement).value,
+                                            )}
+                                        onfocus={() => {
+                                            if (customerSuggestions.length > 0) {
+                                                customerSuggestionsOpen = true;
+                                            }
+                                        }}
+                                        class="h-8 w-full text-[11px]"
+                                    />
+                                    {#if customerSuggestionsOpen}
+                                        <div
+                                            class="absolute left-0 right-0 top-9 z-[130] overflow-hidden rounded-md border border-border bg-background shadow-lg"
+                                        >
+                                            {#if customerSuggestionsLoading}
+                                                <p class="px-3 py-2 text-[11px] text-muted-foreground">
+                                                    Mencari pelanggan...
+                                                </p>
+                                            {:else if customerSuggestionsError}
+                                                <p class="px-3 py-2 text-[11px] text-destructive">
+                                                    {customerSuggestionsError}
+                                                </p>
+                                            {:else if customerSuggestions.length === 0}
+                                                <p class="px-3 py-2 text-[11px] text-muted-foreground">
+                                                    Tidak ada pelanggan yang cocok.
+                                                </p>
+                                            {:else}
+                                                {#each customerSuggestions as suggestion (suggestion.id)}
+                                                    <button
+                                                        type="button"
+                                                        class="block w-full border-b border-border/60 px-3 py-2 text-left last:border-0 hover:bg-muted/50"
+                                                        onclick={() => selectCustomerSuggestion(suggestion)}
+                                                    >
+                                                        <span class="block truncate text-[11px] font-semibold">
+                                                            {suggestion.name}
+                                                        </span>
+                                                        <span class="block truncate text-[10px] text-muted-foreground">
+                                                            {suggestion.phone}{suggestion.pickup_point ? ` · ${suggestion.pickup_point}` : ''}
+                                                        </span>
+                                                    </button>
+                                                {/each}
+                                            {/if}
+                                        </div>
+                                    {/if}
+                                </div>
                                 <Button
                                     type="button"
                                     class="h-8 px-3 text-[11px] md:ml-1 md:w-auto md:shrink-0"
-                                    onclick={() => void loadCustomers(1)}
+                                    onclick={submitCustomerSearch}
                                     >Cari</Button
                                 >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-8 px-3 text-[11px] md:w-auto md:shrink-0"
+                                    onclick={resetCustomerSearch}
+                                >
+                                    Reset
+                                </Button>
                             </div>
                             {#if customerImportSummary}
                                 <div
@@ -12991,6 +13190,34 @@
                                     </article>
                                 {/each}
                             </div>
+                            {#if customerHistory.cancellation_pagination.last_page > 1}
+                                <div
+                                    class="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
+                                >
+                                    <span class="text-[11px] text-muted-foreground">
+                                        Halaman {customerHistory.cancellation_pagination.page} dari {customerHistory.cancellation_pagination.last_page}
+                                        · {customerHistory.cancellation_pagination.total} data
+                                    </span>
+                                    <div class="flex items-center gap-1.5">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-7 px-2 text-[11px]"
+                                            disabled={customerHistoryLoading || (customerHistory?.cancellation_pagination.page ?? 1) <= 1}
+                                            onclick={() => changeCustomerHistoryPage('cancellations', (customerHistory?.cancellation_pagination.page ?? 1) - 1)}
+                                        >Sebelumnya</Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-7 px-2 text-[11px]"
+                                            disabled={customerHistoryLoading || (customerHistory?.cancellation_pagination.page ?? 1) >= (customerHistory?.cancellation_pagination.last_page ?? 1)}
+                                            onclick={() => changeCustomerHistoryPage('cancellations', (customerHistory?.cancellation_pagination.page ?? 1) + 1)}
+                                        >Berikutnya</Button>
+                                    </div>
+                                </div>
+                            {/if}
                         {/if}
                     </section>
 
@@ -13026,6 +13253,34 @@
                                     </article>
                                 {/each}
                             </div>
+                            {#if customerHistory.successful_departure_pagination.last_page > 1}
+                                <div
+                                    class="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
+                                >
+                                    <span class="text-[11px] text-muted-foreground">
+                                        Halaman {customerHistory.successful_departure_pagination.page} dari {customerHistory.successful_departure_pagination.last_page}
+                                        · {customerHistory.successful_departure_pagination.total} data
+                                    </span>
+                                    <div class="flex items-center gap-1.5">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-7 px-2 text-[11px]"
+                                            disabled={customerHistoryLoading || (customerHistory?.successful_departure_pagination.page ?? 1) <= 1}
+                                            onclick={() => changeCustomerHistoryPage('departures', (customerHistory?.successful_departure_pagination.page ?? 1) - 1)}
+                                        >Sebelumnya</Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-7 px-2 text-[11px]"
+                                            disabled={customerHistoryLoading || (customerHistory?.successful_departure_pagination.page ?? 1) >= (customerHistory?.successful_departure_pagination.last_page ?? 1)}
+                                            onclick={() => changeCustomerHistoryPage('departures', (customerHistory?.successful_departure_pagination.page ?? 1) + 1)}
+                                        >Berikutnya</Button>
+                                    </div>
+                                </div>
+                            {/if}
                         {/if}
                     </section>
                 </div>

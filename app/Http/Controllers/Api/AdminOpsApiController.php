@@ -1305,10 +1305,10 @@ class AdminOpsApiController extends Controller
             $qLike = '%'.$q.'%';
             $query->where(function ($builder) use ($qLike) {
                 $builder
-                    ->where('name', 'like', $qLike)
-                    ->orWhere('phone', 'like', $qLike)
-                    ->orWhere('pickup_point', 'like', $qLike)
-                    ->orWhere('gmaps', 'like', $qLike);
+                    ->whereRaw('LOWER(name) LIKE LOWER(?)', [$qLike])
+                    ->orWhereRaw('LOWER(phone) LIKE LOWER(?)', [$qLike])
+                    ->orWhereRaw('LOWER(pickup_point) LIKE LOWER(?)', [$qLike])
+                    ->orWhereRaw('LOWER(gmaps) LIKE LOWER(?)', [$qLike]);
             });
         }
 
@@ -1342,8 +1342,11 @@ class AdminOpsApiController extends Controller
         ]);
     }
 
-    public function customerHistory(int $id): JsonResponse
+    public function customerHistory(Request $request, int $id): JsonResponse
     {
+        $cancellationPage = max(1, (int) $request->query('cancellation_page', 1));
+        $departurePage = max(1, (int) $request->query('departure_page', 1));
+        $perPage = max(5, min(50, (int) $request->query('per_page', 10)));
         $customerQuery = DB::table('customers')
             ->where('id', $id);
         PoolScope::applyCustomerScope($customerQuery, 'customers');
@@ -1356,6 +1359,8 @@ class AdminOpsApiController extends Controller
 
         $cancellations = collect();
         $departures = collect();
+        $cancellationPagination = $this->paginationMeta(0, $cancellationPage, $perPage);
+        $departurePagination = $this->paginationMeta(0, $departurePage, $perPage);
         $phone = trim((string) $customer->phone);
 
         if ($phone !== '' && SchemaCache::hasTable('bookings')) {
@@ -1364,7 +1369,18 @@ class AdminOpsApiController extends Controller
                     ->join('bookings as b', 'b.id', '=', 'c.booking_id')
                     ->where('b.phone', $phone)
                     ->orderByDesc('c.created_at')
-                    ->orderByDesc('c.id');
+                    ->orderByDesc('c.id')
+                    ->select([
+                        'c.id as cancellation_id',
+                        'c.booking_id',
+                        'c.reason',
+                        'c.created_at as canceled_at',
+                        'b.rute',
+                        'b.tanggal',
+                        'b.jam',
+                        'b.unit',
+                        'b.seat',
+                    ]);
                 $this->applyTenantScopeIfExists($cancellationQuery, 'bookings', 'b');
                 PoolScope::applyPoolOrRouteScope(
                     $cancellationQuery,
@@ -1372,17 +1388,22 @@ class AdminOpsApiController extends Controller
                     SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
                     'b.rute',
                 );
-                $cancellations = $cancellationQuery->get([
-                    'c.id as cancellation_id',
-                    'c.booking_id',
-                    'c.reason',
-                    'c.created_at as canceled_at',
-                    'b.rute',
-                    'b.tanggal',
-                    'b.jam',
-                    'b.unit',
-                    'b.seat',
-                ]);
+                $cancellationResult = $this->paginateQuery($cancellationQuery, $cancellationPage, $perPage);
+                $cancellationPagination = $cancellationResult['meta'];
+                $cancellations = $cancellationResult['data'];
+                $cancellations = $cancellations->map(function ($row): object {
+                    return (object) [
+                        'cancellation_id' => (int) $row->cancellation_id,
+                        'booking_id' => (int) $row->booking_id,
+                        'reason' => $row->reason,
+                        'canceled_at' => $row->canceled_at,
+                        'rute' => (string) $row->rute,
+                        'tanggal' => (string) $row->tanggal,
+                        'jam' => (string) $row->jam,
+                        'unit' => (int) $row->unit,
+                        'seat' => (string) $row->seat,
+                    ];
+                });
             }
 
             if (SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'status')) {
@@ -1413,13 +1434,29 @@ class AdminOpsApiController extends Controller
                     SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
                     't.rute',
                 );
-                $departures = $departureQuery->get([
+                $departureColumns = [
                     't.rute',
                     't.tanggal',
                     't.jam',
                     't.unit',
                     't.status',
-                ]);
+                ];
+                $departureTotal = (int) DB::query()
+                    ->fromSub((clone $departureQuery)->reorder()->select($departureColumns)->distinct(), 'customer_departures')
+                    ->count();
+                $departurePagination = $this->paginationMeta($departureTotal, $departurePage, $perPage);
+                $departures = $departureQuery
+                    ->forPage($departurePagination['page'], $departurePagination['per_page'])
+                    ->get($departureColumns)
+                    ->map(function ($row): object {
+                        return (object) [
+                            'rute' => (string) $row->rute,
+                            'tanggal' => (string) $row->tanggal,
+                            'jam' => (string) $row->jam,
+                            'unit' => (int) $row->unit,
+                            'status' => (string) $row->status,
+                        ];
+                    });
             }
         }
 
@@ -1430,11 +1467,13 @@ class AdminOpsApiController extends Controller
                 'phone' => (string) $customer->phone,
             ],
             'summary' => [
-                'cancellation_count' => $cancellations->count(),
-                'successful_departure_count' => $departures->count(),
+                'cancellation_count' => $cancellationPagination['total'],
+                'successful_departure_count' => $departurePagination['total'],
             ],
             'cancellations' => $cancellations->values()->all(),
+            'cancellation_pagination' => $cancellationPagination,
             'successful_departures' => $departures->values()->all(),
+            'successful_departure_pagination' => $departurePagination,
         ]);
     }
 
