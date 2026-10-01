@@ -137,7 +137,7 @@
                             id="remember"
                             name="remember"
                             aria-label="Ingat saya"
-                            class="size-5 rounded-md border-[#aebbb5] shadow-none data-[state=checked]:border-[#0d7066] data-[state=checked]:bg-[#0d7066] focus-visible:ring-[#0d7066]/35 sm:size-4"
+                            class="inline-flex h-5 max-h-5 min-h-5 w-5 max-w-5 min-w-5 shrink-0 aspect-square items-center justify-center rounded-md border-[#aebbb5] p-0 leading-none shadow-none data-[state=checked]:border-[#0d7066] data-[state=checked]:bg-[#0d7066] focus-visible:ring-[#0d7066]/35 sm:h-4 sm:max-h-4 sm:min-h-4 sm:w-4 sm:max-w-4 sm:min-w-4"
                         />
                         <span class="truncate text-xs text-[#53615d]">Ingat saya</span>
                     </Label>
