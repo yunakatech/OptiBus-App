@@ -1053,7 +1053,7 @@
                         </div>
                     {/snippet}
                     {#snippet filters()}
-                        <div class="grid gap-3">
+                        <div class="grid gap-5">
                             <label class="grid gap-1.5 text-sm font-medium">
                                 Sumber transaksi
                                 <select
@@ -1075,28 +1075,33 @@
                                     bind:value={paymentFilterDraft.search}
                                 />
                             </label>
-                            <div class="grid gap-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm font-medium">Rentang tanggal</span>
-                                    <span class="text-xs text-muted-foreground">Maks. 3 bulan</span>
+                            <div class="grid gap-3 rounded-2xl border border-border/70 bg-muted/20 p-3">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <span class="block text-sm font-semibold">Rentang tanggal</span>
+                                        <span class="text-xs font-normal text-muted-foreground">Pilih periode transaksi</span>
+                                    </div>
+                                    <span class="shrink-0 rounded-full bg-background px-2 py-1 text-[11px] font-medium text-muted-foreground">Maks. 3 bulan</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
                                     <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('today', true)}>Hari ini</Button>
                                     <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('current', true)}>Bulan ini</Button>
                                     <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('previous', true)}>Bulan lalu</Button>
                                 </div>
-                                <FilterDateInput
-                                    label="Dari tanggal"
-                                    bind:value={paymentFilterDraft.dateFrom}
-                                    maxDate={draftDateFromMax()}
-                                />
-                                <FilterDateInput
-                                    label="Sampai tanggal"
-                                    bind:value={paymentFilterDraft.dateTo}
-                                    minDate={draftDateToMin()}
-                                    maxDate={draftDateToMax()}
-                                />
-                                <p class="text-xs text-muted-foreground">Pilih tanggal mulai dan selesai untuk menyaring transaksi.</p>
+                                <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                                    <FilterDateInput
+                                        label="Dari tanggal"
+                                        bind:value={paymentFilterDraft.dateFrom}
+                                        maxDate={draftDateFromMax()}
+                                    />
+                                    <span class="mb-3 text-xs font-medium text-muted-foreground">sampai</span>
+                                    <FilterDateInput
+                                        label="Sampai tanggal"
+                                        bind:value={paymentFilterDraft.dateTo}
+                                        minDate={draftDateToMin()}
+                                        maxDate={draftDateToMax()}
+                                    />
+                                </div>
                             </div>
                             <label class="grid gap-1.5 text-sm font-medium">
                                 Jumlah per halaman
@@ -1115,7 +1120,7 @@
                 <div
                     class="hidden flex-col gap-2 md:flex md:flex-row md:flex-wrap md:items-center md:justify-end"
                 >
-                    <div class="grid min-w-0 gap-2 md:w-[31rem]">
+                    <div class="grid min-w-0 gap-2 md:w-[32rem]">
                         <div class="flex items-center justify-between px-1">
                             <span class="text-xs font-semibold text-muted-foreground">Rentang tanggal</span>
                             <span class="text-[11px] text-muted-foreground">Maks. 3 bulan</span>
@@ -1125,7 +1130,7 @@
                             <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('current')}>Bulan ini</Button>
                             <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('previous')}>Bulan lalu</Button>
                         </div>
-                        <div class="grid min-w-0 gap-2 rounded-2xl border border-border/70 bg-background/80 p-1.5 sm:grid-cols-2">
+                        <div class="grid min-w-0 gap-2 rounded-2xl border border-border/70 bg-background/80 p-1.5 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
                         <label class="relative block min-w-0">
                             <span class="sr-only">Dari tanggal</span>
                             <CalendarDays
@@ -1145,6 +1150,7 @@
                                 }}
                             />
                         </label>
+                        <span class="hidden px-0.5 text-xs font-medium text-muted-foreground sm:block">sampai</span>
                         <label class="relative block min-w-0">
                             <span class="sr-only">Sampai tanggal</span>
                             <CalendarDays
