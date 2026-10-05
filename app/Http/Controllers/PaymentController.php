@@ -322,8 +322,8 @@ class PaymentController extends Controller
         $rawTo = $this->parseDateFilter($request->query('date_to'));
 
         if ($rawFrom === null && $rawTo === null) {
-            $from = $today->subMonthsNoOverflow(3);
-            $to = $today;
+            $from = $today->startOfMonth();
+            $to = $today->endOfMonth();
         } elseif ($rawFrom !== null && $rawTo === null) {
             $from = $rawFrom;
             $to = $rawFrom->addMonthsNoOverflow(3);

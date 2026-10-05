@@ -74,6 +74,15 @@
             picker.clear(false);
         }
     });
+
+    $effect(() => {
+        if (!picker) {
+            return;
+        }
+
+        picker.set('minDate', minDate || null);
+        picker.set('maxDate', maxDate || null);
+    });
 </script>
 
 <label class="grid gap-1.5 text-sm font-medium text-foreground">

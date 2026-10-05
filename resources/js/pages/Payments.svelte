@@ -277,6 +277,54 @@
         return next;
     };
 
+    const monthRange = (offset = 0) => {
+        const today = new Date();
+        const first = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+        const last = new Date(today.getFullYear(), today.getMonth() + offset + 1, 0);
+
+        return {
+            from: formatDateValue(first),
+            to: formatDateValue(last),
+        };
+    };
+
+    const todayRange = () => {
+        const today = formatDateValue(new Date());
+
+        return { from: today, to: today };
+    };
+
+    const setDateRange = (range: { from: string; to: string }, draft = false) => {
+        if (draft) {
+            paymentFilterDraft.dateFrom = range.from;
+            paymentFilterDraft.dateTo = range.to;
+
+            return;
+        }
+
+        dateFrom = range.from;
+        dateTo = range.to;
+        dateRangeMessage = '';
+        syncDatePickerValues();
+        reloadData(1);
+    };
+
+    const applyQuickDateRange = (kind: 'today' | 'current' | 'previous', draft = false) => {
+        const range = kind === 'today'
+            ? todayRange()
+            : monthRange(kind === 'previous' ? -1 : 0);
+
+        setDateRange(range, draft);
+    };
+
+    const draftDateFromMax = () => paymentFilterDraft.dateTo || undefined;
+    const draftDateToMin = () => paymentFilterDraft.dateFrom || undefined;
+    const draftDateToMax = () => {
+        const from = parseDateValue(paymentFilterDraft.dateFrom);
+
+        return from ? formatDateValue(addMonthsClamped(from, 3)) : undefined;
+    };
+
     const syncDatePickerBounds = () => {
         const from = parseDateValue(dateFrom);
         const to = parseDateValue(dateTo);
@@ -671,17 +719,27 @@
         dateFrom = paymentFilterDraft.dateFrom;
         dateTo = paymentFilterDraft.dateTo;
         perPage = paymentFilterDraft.perPage;
+        normalizeDateRange('to');
         reloadData(1);
     };
 
     const resetPaymentFilterDraft = () => {
+        const range = monthRange();
         paymentFilterDraft = {
             source: 'all',
             search: '',
-            dateFrom: '',
-            dateTo: '',
+            dateFrom: range.from,
+            dateTo: range.to,
             perPage: 20,
         };
+        activeSource = 'all';
+        searchQuery = '';
+        dateFrom = range.from;
+        dateTo = range.to;
+        perPage = 20;
+        dateRangeMessage = '';
+        syncDatePickerValues();
+        reloadData(1);
     };
 
     const clearBulkSelection = () => {
@@ -1017,15 +1075,28 @@
                                     bind:value={paymentFilterDraft.search}
                                 />
                             </label>
-                            <div class="grid gap-3">
+                            <div class="grid gap-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium">Rentang tanggal</span>
+                                    <span class="text-xs text-muted-foreground">Maks. 3 bulan</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('today', true)}>Hari ini</Button>
+                                    <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('current', true)}>Bulan ini</Button>
+                                    <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('previous', true)}>Bulan lalu</Button>
+                                </div>
                                 <FilterDateInput
                                     label="Dari tanggal"
                                     bind:value={paymentFilterDraft.dateFrom}
+                                    maxDate={draftDateFromMax()}
                                 />
                                 <FilterDateInput
                                     label="Sampai tanggal"
                                     bind:value={paymentFilterDraft.dateTo}
+                                    minDate={draftDateToMin()}
+                                    maxDate={draftDateToMax()}
                                 />
+                                <p class="text-xs text-muted-foreground">Pilih tanggal mulai dan selesai untuk menyaring transaksi.</p>
                             </div>
                             <label class="grid gap-1.5 text-sm font-medium">
                                 Jumlah per halaman
@@ -1044,11 +1115,19 @@
                 <div
                     class="hidden flex-col gap-2 md:flex md:flex-row md:flex-wrap md:items-center md:justify-end"
                 >
-                    <div
-                        class="grid min-w-0 gap-2 rounded-full border border-border/70 bg-background/80 p-1.5 sm:grid-cols-2 md:w-[23rem]"
-                    >
+                    <div class="grid min-w-0 gap-2 md:w-[31rem]">
+                        <div class="flex items-center justify-between px-1">
+                            <span class="text-xs font-semibold text-muted-foreground">Rentang tanggal</span>
+                            <span class="text-[11px] text-muted-foreground">Maks. 3 bulan</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('today')}>Hari ini</Button>
+                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('current')}>Bulan ini</Button>
+                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('previous')}>Bulan lalu</Button>
+                        </div>
+                        <div class="grid min-w-0 gap-2 rounded-2xl border border-border/70 bg-background/80 p-1.5 sm:grid-cols-2">
                         <label class="relative block min-w-0">
-                            <span class="sr-only">Tanggal mulai</span>
+                            <span class="sr-only">Dari tanggal</span>
                             <CalendarDays
                                 class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
                             />
@@ -1067,7 +1146,7 @@
                             />
                         </label>
                         <label class="relative block min-w-0">
-                            <span class="sr-only">Tanggal akhir</span>
+                            <span class="sr-only">Sampai tanggal</span>
                             <CalendarDays
                                 class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
                             />
@@ -1085,6 +1164,7 @@
                                 }}
                             />
                         </label>
+                        </div>
                     </div>
                     <div class="relative min-w-0 md:w-80">
                         <Search
