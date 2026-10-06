@@ -1020,20 +1020,6 @@
             <div
                 class="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/80 p-3 shadow-sm md:flex-row md:items-center md:justify-between"
             >
-                <div class="hidden flex-wrap gap-2 md:flex">
-                    {#each sourceTabs as tab (tab.key)}
-                        <Button
-                            type="button"
-                            variant={activeSource === tab.key
-                                ? 'default'
-                                : 'outline'}
-                            class="h-8 rounded-full px-3 text-xs"
-                            onclick={() => setSource(tab.key)}
-                        >
-                            {tab.label}
-                        </Button>
-                    {/each}
-                </div>
                 <ResponsiveFilterBar
                     label="Pembayaran"
                     activeCount={paymentFilterActiveCount}
@@ -1118,17 +1104,24 @@
                     {/snippet}
                 </ResponsiveFilterBar>
                 <div
-                    class="hidden flex-col gap-2 md:flex md:flex-row md:flex-wrap md:items-center md:justify-end"
+                    class="hidden flex-col gap-2 md:flex md:flex-row md:flex-wrap md:items-end md:justify-end"
                 >
-                    <div class="grid min-w-0 gap-2 md:w-[32rem]">
+                    <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground md:w-40">
+                        Sumber transaksi
+                        <select
+                            class="h-9 w-full rounded-full border border-input bg-background px-3 text-sm font-normal text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35"
+                            bind:value={activeSource}
+                            onchange={() => reloadData(1)}
+                        >
+                            {#each sourceTabs as tab (tab.key)}
+                                <option value={tab.key}>{tab.label}</option>
+                            {/each}
+                        </select>
+                    </label>
+                    <div class="grid min-w-0 gap-2 md:w-[24rem]">
                         <div class="flex items-center justify-between px-1">
                             <span class="text-xs font-semibold text-muted-foreground">Rentang tanggal</span>
                             <span class="text-[11px] text-muted-foreground">Maks. 3 bulan</span>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('today')}>Hari ini</Button>
-                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('current')}>Bulan ini</Button>
-                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('previous')}>Bulan lalu</Button>
                         </div>
                         <div class="grid min-w-0 gap-2 rounded-2xl border border-border/70 bg-background/80 p-1.5 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
                         <label class="relative block min-w-0">
@@ -1170,6 +1163,11 @@
                                 }}
                             />
                         </label>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('today')}>Hari ini</Button>
+                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('current')}>Bulan ini</Button>
+                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('previous')}>Bulan lalu</Button>
                         </div>
                     </div>
                     <div class="relative min-w-0 md:w-80">
