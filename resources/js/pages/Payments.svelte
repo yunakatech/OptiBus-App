@@ -1017,9 +1017,7 @@
         </CardHeader>
 
         <CardContent class="space-y-4 p-4">
-            <div
-                class="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/80 p-3 shadow-sm md:flex-row md:items-center md:justify-between"
-            >
+            <div class="rounded-xl border border-border/70 bg-card/80 p-3 shadow-sm">
                 <ResponsiveFilterBar
                     label="Pembayaran"
                     activeCount={paymentFilterActiveCount}
@@ -1103,123 +1101,72 @@
                         </div>
                     {/snippet}
                 </ResponsiveFilterBar>
-                <div
-                    class="hidden flex-col gap-2 md:flex md:flex-row md:flex-wrap md:items-end md:justify-end"
-                >
-                    <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground md:w-40">
-                        Sumber transaksi
-                        <select
-                            class="h-9 w-full rounded-full border border-input bg-background px-3 text-sm font-normal text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35"
-                            bind:value={activeSource}
-                            onchange={() => reloadData(1)}
-                        >
-                            {#each sourceTabs as tab (tab.key)}
-                                <option value={tab.key}>{tab.label}</option>
-                            {/each}
-                        </select>
-                    </label>
-                    <div class="grid min-w-0 gap-2 md:w-[24rem]">
-                        <div class="flex items-center justify-between px-1">
-                            <span class="text-xs font-semibold text-muted-foreground">Rentang tanggal</span>
-                            <span class="text-[11px] text-muted-foreground">Maks. 3 bulan</span>
-                        </div>
-                        <div class="grid min-w-0 gap-2 rounded-2xl border border-border/70 bg-background/80 p-1.5 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-                        <label class="relative block min-w-0">
-                            <span class="sr-only">Dari tanggal</span>
-                            <CalendarDays
-                                class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
-                            />
-                            <input
-                                bind:this={dateFromInput}
-                                bind:value={dateFrom}
-                                class="h-9 w-full rounded-full border border-transparent bg-transparent pr-3 pl-9 text-sm outline-none transition focus:border-cyan-300 focus:bg-background focus:ring-2 focus:ring-cyan-500/15"
-                                placeholder="Dari tanggal"
-                                autocomplete="off"
-                                onblur={() => normalizeDateRange('from')}
-                                onkeydown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        reloadData(1);
-                                    }
-                                }}
-                            />
+                <div class="hidden gap-4 md:grid">
+                    <div class="grid gap-3 md:grid-cols-[10rem_minmax(0,1fr)_minmax(0,1fr)] md:items-end">
+                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
+                            Sumber transaksi
+                            <select class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-normal text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35" bind:value={activeSource} onchange={() => reloadData(1)}>
+                                {#each sourceTabs as tab (tab.key)}
+                                    <option value={tab.key}>{tab.label}</option>
+                                {/each}
+                            </select>
                         </label>
-                        <span class="hidden px-0.5 text-xs font-medium text-muted-foreground sm:block">sampai</span>
-                        <label class="relative block min-w-0">
-                            <span class="sr-only">Sampai tanggal</span>
-                            <CalendarDays
-                                class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
-                            />
-                            <input
-                                bind:this={dateToInput}
-                                bind:value={dateTo}
-                                class="h-9 w-full rounded-full border border-transparent bg-transparent pr-3 pl-9 text-sm outline-none transition focus:border-cyan-300 focus:bg-background focus:ring-2 focus:ring-cyan-500/15"
-                                placeholder="Sampai tanggal"
-                                autocomplete="off"
-                                onblur={() => normalizeDateRange('to')}
-                                onkeydown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        reloadData(1);
-                                    }
-                                }}
-                            />
+                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
+                            Cari transaksi
+                            <span class="relative">
+                                <Search class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                <Input class="h-10 rounded-lg pl-9" placeholder="Nama, kode, no HP, rute..." bind:value={searchQuery} oninput={schedulePaymentSearch} onkeydown={(event) => event.key === 'Enter' && reloadData(1)} />
+                            </span>
                         </label>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('today')}>Hari ini</Button>
-                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('current')}>Bulan ini</Button>
-                            <Button type="button" variant="outline" class="h-8 rounded-full px-3 text-xs" onclick={() => applyQuickDateRange('previous')}>Bulan lalu</Button>
+                        <div class="flex h-10 items-center justify-between rounded-lg border border-dashed border-border/80 px-3 text-xs">
+                            <span class="font-semibold text-foreground">Rentang tanggal</span>
+                            <span class="text-muted-foreground">Maks. 3 bulan</span>
                         </div>
                     </div>
-                    <div class="relative min-w-0 md:w-80">
-                        <Search
-                            class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
-                        />
-                        <Input
-                            class="h-9 rounded-full pl-9"
-                            placeholder="Cari nama, kode, no HP, rute..."
-                            bind:value={searchQuery}
-                            oninput={schedulePaymentSearch}
-                            onkeydown={(event) =>
-                                event.key === 'Enter' && reloadData(1)}
-                        />
+                    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] md:items-end">
+                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
+                            Dari tanggal
+                            <span class="relative">
+                                <CalendarDays class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                <input bind:this={dateFromInput} bind:value={dateFrom} class="h-10 w-full rounded-lg border border-input bg-background pr-3 pl-9 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35" placeholder="Pilih tanggal mulai" autocomplete="off" onblur={() => normalizeDateRange('from')} onkeydown={(event) => event.key === 'Enter' && reloadData(1)} />
+                            </span>
+                        </label>
+                        <span class="mb-3 text-xs font-medium text-muted-foreground">sampai</span>
+                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
+                            Sampai tanggal
+                            <span class="relative">
+                                <CalendarDays class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                <input bind:this={dateToInput} bind:value={dateTo} class="h-10 w-full rounded-lg border border-input bg-background pr-3 pl-9 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35" placeholder="Pilih tanggal selesai" autocomplete="off" onblur={() => normalizeDateRange('to')} onkeydown={(event) => event.key === 'Enter' && reloadData(1)} />
+                            </span>
+                        </label>
+                        <div class="flex flex-wrap gap-1.5 pb-0.5">
+                            <Button type="button" variant="outline" class="h-10 rounded-lg px-3 text-xs" onclick={() => applyQuickDateRange('today')}>Hari ini</Button>
+                            <Button type="button" variant="outline" class="h-10 rounded-lg px-3 text-xs" onclick={() => applyQuickDateRange('current')}>Bulan ini</Button>
+                            <Button type="button" variant="outline" class="h-10 rounded-lg px-3 text-xs" onclick={() => applyQuickDateRange('previous')}>Bulan lalu</Button>
+                        </div>
                     </div>
-                    <select
-                        class="h-9 rounded-full border border-input bg-background px-3 text-sm"
-                        bind:value={perPage}
-                        onchange={() => reloadData(1)}
-                    >
-                        <option value={10}>10/baris</option>
-                        <option value={20}>20/baris</option>
-                        <option value={50}>50/baris</option>
-                    </select>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="h-9 rounded-full"
-                        onclick={() => reloadData(1)}
-                    >
-                        <RefreshCw
-                            class={`mr-1.5 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
-                        />
-                        Muat
-                    </Button>
-                    <Button
-                        asChild
-                        variant="outline"
-                        class="h-9 rounded-full border-cyan-200 bg-cyan-50/70 text-cyan-800 hover:bg-cyan-100 dark:border-cyan-400/20 dark:bg-cyan-950/20 dark:text-cyan-100"
-                    >
-                        {#snippet children(props)}
-                            <a
-                                {...props}
-                                href={exportUrl()}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                <Download class="mr-1.5 h-4 w-4" />
-                                Export CSV
-                            </a>
-                        {/snippet}
-                    </Button>
+                    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border/70 pt-3">
+                        <label class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            Jumlah per halaman
+                            <select class="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground" bind:value={perPage} onchange={() => reloadData(1)}>
+                                <option value={10}>10/baris</option>
+                                <option value={20}>20/baris</option>
+                                <option value={50}>50/baris</option>
+                            </select>
+                        </label>
+                        <Button type="button" variant="outline" class="h-10 rounded-lg" onclick={() => reloadData(1)}>
+                            <RefreshCw class={`mr-1.5 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            Muat
+                        </Button>
+                        <Button asChild variant="outline" class="h-10 rounded-lg border-cyan-200 bg-cyan-50/70 text-cyan-800 hover:bg-cyan-100 dark:border-cyan-400/20 dark:bg-cyan-950/20 dark:text-cyan-100">
+                            {#snippet children(props)}
+                                <a {...props} href={exportUrl()} target="_blank" rel="noreferrer">
+                                    <Download class="mr-1.5 h-4 w-4" />
+                                    Export CSV
+                                </a>
+                            {/snippet}
+                        </Button>
+                    </div>
                 </div>
             </div>
 
