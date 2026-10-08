@@ -9,6 +9,7 @@
         SidebarMenuItem,
         useSidebar,
     } from '@/components/ui/sidebar';
+    import { bookingInboxNudge } from '@/lib/bookingInboxNudge.svelte';
     import { toUrl } from '@/lib/utils';
     import type { NavItem } from '@/types';
 
@@ -103,6 +104,9 @@
         section.items.some((item) => isItemActive(item.href));
 
     const isSectionOpen = (id: string) => Boolean(openSections[id] ?? false);
+    const hasInboxNudge = (href: NavItem['href']) =>
+        toUrl(href) === '/booking-requests' &&
+        bookingInboxNudge.hasPending;
     const isCollapsedDesktop = () =>
         $sidebarState === 'collapsed' && !$isMobile;
 
@@ -162,11 +166,17 @@
                                             href={toUrl(item.href)}
                                             class={props.class}
                                             onclick={handleNavigate}
+                                            aria-label={hasInboxNudge(item.href)
+                                                ? `${item.title}, ada booking masuk`
+                                                : item.title}
                                         >
                                             {#if item.icon}
-                                                <item.icon
-                                                    class="size-3 shrink-0"
-                                                />
+                                                <span class="relative inline-flex shrink-0">
+                                                    <item.icon class="size-3" />
+                                                    {#if hasInboxNudge(item.href)}
+                                                        <span class="absolute -top-1 -right-1 size-2 rounded-full bg-red-500 ring-2 ring-background" aria-hidden="true"></span>
+                                                    {/if}
+                                                </span>
                                             {/if}
                                             <span>{item.title}</span>
                                         </Link>
@@ -191,10 +201,18 @@
                                 <Link
                                     href={toUrl(item.href)}
                                     onclick={handleNavigate}
+                                    aria-label={hasInboxNudge(item.href)
+                                        ? `${item.title}, ada booking masuk`
+                                        : item.title}
                                     class={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isItemActive(item.href) ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : ''}`}
                                 >
                                     {#if item.icon}
-                                        <item.icon class="size-3 shrink-0" />
+                                        <span class="relative inline-flex shrink-0">
+                                            <item.icon class="size-3" />
+                                            {#if hasInboxNudge(item.href)}
+                                                <span class="absolute -top-1 -right-1 size-2 rounded-full bg-red-500 ring-2 ring-background" aria-hidden="true"></span>
+                                            {/if}
+                                        </span>
                                     {/if}
                                     <span>{item.title}</span>
                                 </Link>

@@ -287,6 +287,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     });
 
     Route::prefix('api/admin')->name('api.admin.')->middleware(RedirectBrowserApiRequests::class)->group(function () {
+        Route::get('public-booking-requests/count', [AdminPublicBookingApiController::class, 'pendingCount'])->middleware('permission:booking.view')->name('public-booking-requests.count');
         Route::get('public-booking-requests', [AdminPublicBookingApiController::class, 'index'])->middleware('permission:booking.view')->name('public-booking-requests.index');
         Route::post('public-booking-requests/{id}/approve', [AdminPublicBookingApiController::class, 'approve'])->middleware('permission:booking.create')->name('public-booking-requests.approve');
         Route::post('public-booking-requests/{id}/reject', [AdminPublicBookingApiController::class, 'reject'])->middleware('permission:booking.create')->name('public-booking-requests.reject');

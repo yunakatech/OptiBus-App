@@ -19,6 +19,14 @@ class AdminPublicBookingApiController extends Controller
         ]);
     }
 
+    public function pendingCount(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'pending_count' => $this->bookingService->adminPendingCount(),
+        ]);
+    }
+
     public function approve(int $id): JsonResponse
     {
         try {

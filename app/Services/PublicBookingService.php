@@ -485,6 +485,26 @@ class PublicBookingService
         ])->values()->all();
     }
 
+    public function adminPendingCount(?int $userId = null): int
+    {
+        $userId ??= (int) (auth()->id() ?? 0);
+        $tenantId = PoolScope::tenantId($userId);
+        $poolIds = PoolScope::accessiblePoolIds($userId, false);
+
+        if ($tenantId <= 0 || $poolIds === []) {
+            return 0;
+        }
+
+        return (int) DB::table('public_booking_requests as r')
+            ->join('routes as route', 'r.route_id', '=', 'route.id')
+            ->join('pools as pool', 'r.pool_id', '=', 'pool.id')
+            ->where('r.tenant_id', $tenantId)
+            ->whereIn('r.pool_id', $poolIds)
+            ->where('r.status', 'pending')
+            ->where('r.hold_expires_at', '>', now())
+            ->count();
+    }
+
     /** @return array<string, mixed> */
     public function approve(int $requestId, ?int $userId = null): array
     {

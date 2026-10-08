@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -182,6 +183,61 @@ class PublicBookingTest extends TestCase
 
         $availability->assertJsonPath('schedules.0.seats.0.status', 'held')
             ->assertJsonPath('schedules.0.seats.1.status', 'held');
+    }
+
+    public function test_admin_pending_count_only_counts_requests_with_unexpired_holds(): void
+    {
+        [$tenantId, $routeId, $scheduleId] = $this->fixture();
+        $request = $this->postJson(
+            route('api.public.booking.requests.store', ['tenantSlug' => 'qbus-default']),
+            $this->requestPayload($routeId, $scheduleId),
+        )->assertCreated();
+
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $response = $this->getJson(route('api.admin.public-booking-requests.count'))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('pending_count', 1);
+
+        $this->assertSame(['success', 'pending_count'], array_keys($response->json()));
+
+        DB::table('public_booking_requests')
+            ->where('id', (int) $request->json('request_id'))
+            ->update(['hold_expires_at' => now()->subSecond()]);
+
+        $this->getJson(route('api.admin.public-booking-requests.count'))
+            ->assertOk()
+            ->assertJsonPath('pending_count', 0);
+    }
+
+    public function test_admin_pending_count_requires_booking_view_permission(): void
+    {
+        $tenantId = (int) DB::table('tenants')->insertGetId([
+            'name' => 'Limited Access Travel',
+            'slug' => 'limited-access-'.uniqid(),
+            'email' => 'limited@example.com',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $planId = (int) DB::table('plans')->where('slug', 'pro')->value('id');
+        DB::table('subscriptions')->insert([
+            'tenant_id' => $tenantId,
+            'plan_id' => $planId,
+            'status' => 'active',
+            'starts_at' => now()->subDay()->toDateString(),
+            'ends_at' => now()->addYear()->toDateString(),
+            'billing_interval' => 'monthly',
+            'grace_period_days' => 7,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $user = User::factory()->create(['is_super_admin' => false]);
+        DB::table('users')->where('id', $user->id)->update(['tenant_id' => $tenantId]);
+
+        $this->actingAs($user->fresh());
+        $this->getJson(route('api.admin.public-booking-requests.count'))
+            ->assertForbidden();
     }
 
     public function test_public_booking_uses_segment_price_pickup_and_parent_route_schedule(): void
