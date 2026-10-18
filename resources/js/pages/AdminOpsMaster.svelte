@@ -1534,7 +1534,7 @@
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveCarterRoute}
                     >
-                        <div class="border-b border-border/70 px-4 py-3">
+                        <div class="border-b border-border/70 px-4 py-3 sm:px-5">
                             <h3
                                 class="text-base font-semibold tracking-tight text-foreground"
                             >
@@ -1542,7 +1542,7 @@
                             </h3>
                         </div>
                         <div
-                            class="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4"
+                            class="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-4"
                         >
                             <div class="space-y-1.5 md:col-span-2">
                                 <label
@@ -1669,7 +1669,7 @@
                             </div>
                         </div>
                         <div
-                            class="flex flex-wrap items-center gap-2 border-t border-border/70 px-4 py-3"
+                            class="flex flex-col gap-2 border-t border-border/70 px-4 py-3 sm:flex-row sm:items-center sm:px-5"
                         >
                             <LoadingButton
                                 type="submit"
@@ -1678,6 +1678,7 @@
                                 loadingText={carterRouteForm.id
                                     ? 'Menyimpan...'
                                     : 'Membuat...'}
+                                class="w-full sm:w-auto"
                                 >{carterRouteForm.id
                                     ? 'Simpan Perubahan'
                                     : 'Simpan Preset'}</LoadingButton
@@ -1687,6 +1688,7 @@
                                 variant="outline"
                                 onclick={() =>
                                     (carterRouteForm = newCarterRouteForm())}
+                                class="w-full sm:w-auto"
                                 >Reset</Button
                             >
                         </div>
@@ -1697,7 +1699,7 @@
                             class="overflow-hidden rounded-lg border border-border/70 bg-background shadow-sm"
                         >
                             <div
-                                class="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3"
+                                class="flex flex-col items-stretch gap-3 border-b border-border/70 px-4 py-3 sm:px-5 md:flex-row md:items-center md:justify-between"
                             >
                                 <div>
                                     <p
@@ -1758,7 +1760,66 @@
                             </div>
 
                             {#if carterRoutes.length > 0}
-                                <div class="overflow-x-auto">
+                                <div class="space-y-3 p-3 md:hidden">
+                                    {#each carterRoutes as row (row.id)}
+                                        <article class="rounded-xl border border-border/70 bg-background p-4 shadow-sm">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <p class="break-words text-base font-semibold text-foreground">
+                                                        {row.name}
+                                                    </p>
+                                                    <p class="mt-1 break-words text-sm text-muted-foreground">
+                                                        {row.origin ?? '-'} <span aria-hidden="true">→</span> {row.destination ?? '-'}
+                                                    </p>
+                                                </div>
+                                                <span class="shrink-0 rounded-full border border-cyan-200/70 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
+                                                    {row.duration ?? '-'}
+                                                </span>
+                                            </div>
+                                            <div class="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-muted/40 p-3">
+                                                <div>
+                                                    <p class="text-[11px] uppercase tracking-wide text-muted-foreground">Harga rental</p>
+                                                    <p class="mt-1 text-sm font-semibold text-foreground">{formatCurrencyDisplay(row.rental_price)}</p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[11px] uppercase tracking-wide text-muted-foreground">BOP</p>
+                                                    <p class="mt-1 text-sm font-semibold text-foreground">{formatCurrencyDisplay(row.bop_price)}</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    class="h-10 w-full rounded-lg"
+                                                    disabled={tenantWriteDisabled}
+                                                    onclick={() => {
+                                                        carterRouteForm = {
+                                                            id: row.id,
+                                                            name: row.name,
+                                                            origin: row.origin ?? '',
+                                                            destination: row.destination ?? '',
+                                                            duration: row.duration ?? defaultMasterCarterService,
+                                                            rental_price: Number(row.rental_price),
+                                                            bop_price: Number(row.bop_price),
+                                                            notes: row.notes ?? '',
+                                                        };
+                                                        setFormMode('form');
+                                                    }}
+                                                >Edit</Button>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    class="h-10 w-full rounded-lg"
+                                                    disabled={pendingDeleteKey === `/api/admin/charter-routes/${row.id}` || tenantWriteDisabled}
+                                                    onclick={() => void removeRow(`/api/admin/charter-routes/${row.id}`, 'Rute carter deleted.')}
+                                                >{pendingDeleteKey === `/api/admin/charter-routes/${row.id}` ? 'Menghapus...' : 'Delete'}</Button>
+                                            </div>
+                                        </article>
+                                    {/each}
+                                </div>
+                                <div class="hidden overflow-x-auto md:block">
                                     <table class="min-w-full text-sm">
                                         <thead
                                             class="bg-muted/50 text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
@@ -1956,13 +2017,11 @@
                             <div
                                 class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5"
                             >
-                                <p
-                                    class="hidden text-sm text-muted-foreground sm:block"
-                                >
+                                <p class="text-xs text-muted-foreground sm:text-sm">
                                     Menampilkan {carterRoutes.length} data pada halaman
                                     ini.
                                 </p>
-                                <div class="flex items-center gap-2">
+                                <div class="flex w-full items-center justify-between gap-2 sm:w-auto">
                                     <Button
                                         type="button"
                                         variant="outline"
