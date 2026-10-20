@@ -97,12 +97,12 @@ class ActivityLog
      *
      * @return array<int, array<string, string>>
      */
-    public static function recentForTenant(int $limit = 50, int $offset = 0, ?string $since = null): array
+    public static function recentForTenant(int $limit = 50, int $offset = 0, ?string $since = null, ?string $search = null): array
     {
         $scope = self::tenantScope();
 
         if (self::usesDatabase()) {
-            return self::recentFromDatabase(max(1, $limit), max(0, $offset), $scope, $since);
+            return self::recentFromDatabase(max(1, $limit), max(0, $offset), $scope, $since, $search);
         }
 
         $path = storage_path('logs/activity.log');
@@ -125,6 +125,9 @@ class ActivityLog
                 continue;
             }
             if ($since !== null && $row['created_at'] < $since) {
+                continue;
+            }
+            if (! self::matchesSearch($row, $search)) {
                 continue;
             }
             $items[] = $row;
@@ -181,7 +184,7 @@ class ActivityLog
         return $count;
     }
 
-    public static function countForTenant(?int $max = null, ?string $since = null): int
+    public static function countForTenant(?int $max = null, ?string $since = null, ?string $search = null): int
     {
         $scope = self::tenantScope();
         $max = $max !== null ? max(1, $max) : null;
@@ -193,6 +196,7 @@ class ActivityLog
                 if ($since !== null) {
                     $query->where('created_at', '>=', $since);
                 }
+                self::applySearch($query, $search);
 
                 if ($max !== null) {
                     return (int) DB::query()
@@ -203,7 +207,7 @@ class ActivityLog
                 return (int) $query->count();
             }
 
-            return self::countFromDatabase($scope, $max, $since);
+            return self::countFromDatabase($scope, $max, $since, $search);
         }
 
         $path = storage_path('logs/activity.log');
@@ -221,6 +225,9 @@ class ActivityLog
             $row = self::parseJsonLine($line);
             if ($row !== null && self::isVisibleForScope($row, $scope)) {
                 if ($since !== null && $row['created_at'] < $since) {
+                    continue;
+                }
+                if (! self::matchesSearch($row, $search)) {
                     continue;
                 }
                 $count += 1;
@@ -281,10 +288,10 @@ class ActivityLog
      * @param array<string, mixed> $scope
      * @return array<int, array<string, string>>
      */
-    private static function recentFromDatabase(int $limit, int $offset, array $scope, ?string $since = null): array
+    private static function recentFromDatabase(int $limit, int $offset, array $scope, ?string $since = null, ?string $search = null): array
     {
         if ($scope['all']) {
-            $rows = self::databaseQueryForScope($scope, $since)
+            $rows = self::databaseQueryForScope($scope, $since, $search)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($offset)
@@ -304,7 +311,7 @@ class ActivityLog
         $batchSize = max(100, min(500, $needed * 4));
 
         while (true) {
-            $rows = self::databaseQueryForScope($scope, $since)
+            $rows = self::databaseQueryForScope($scope, $since, $search)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($scanOffset)
@@ -339,14 +346,14 @@ class ActivityLog
     /**
      * @param array<string, mixed> $scope
      */
-    private static function countFromDatabase(array $scope, ?int $max = null, ?string $since = null): int
+    private static function countFromDatabase(array $scope, ?int $max = null, ?string $since = null, ?string $search = null): int
     {
         $count = 0;
         $offset = 0;
         $batchSize = 500;
 
         while (true) {
-            $rows = self::databaseQueryForScope($scope, $since)
+            $rows = self::databaseQueryForScope($scope, $since, $search)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($offset)
@@ -406,7 +413,7 @@ class ActivityLog
     /**
      * @param array<string, mixed> $scope
      */
-    private static function databaseQueryForScope(array $scope, ?string $since = null): \Illuminate\Database\Query\Builder
+    private static function databaseQueryForScope(array $scope, ?string $since = null, ?string $search = null): \Illuminate\Database\Query\Builder
     {
         $query = DB::table('activity_logs')->where('title', '!=', '');
         $tenantId = (int) ($scope['tenant_id'] ?? 0);
@@ -422,7 +429,46 @@ class ActivityLog
             $query->where('created_at', '>=', $since);
         }
 
+        self::applySearch($query, $search);
+
         return $query;
+    }
+
+    private static function applySearch(\Illuminate\Database\Query\Builder $query, ?string $search): void
+    {
+        $search = trim((string) $search);
+        if ($search === '') {
+            return;
+        }
+
+        $term = '%' . mb_strtolower($search) . '%';
+        $query->where(static function (\Illuminate\Database\Query\Builder $query) use ($term): void {
+            $query
+                ->whereRaw("LOWER(COALESCE(tag, '')) LIKE ?", [$term])
+                ->orWhereRaw("LOWER(COALESCE(title, '')) LIKE ?", [$term])
+                ->orWhereRaw("LOWER(COALESCE(meta, '')) LIKE ?", [$term])
+                ->orWhereRaw("LOWER(COALESCE(actor, '')) LIKE ?", [$term]);
+        });
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private static function matchesSearch(array $row, ?string $search): bool
+    {
+        $search = trim((string) $search);
+        if ($search === '') {
+            return true;
+        }
+
+        $haystack = mb_strtolower(implode(' ', [
+            (string) ($row['tag'] ?? ''),
+            (string) ($row['title'] ?? ''),
+            (string) ($row['meta'] ?? ''),
+            (string) ($row['actor'] ?? ''),
+        ]));
+
+        return str_contains($haystack, mb_strtolower($search));
     }
 
     /**
