@@ -50,6 +50,30 @@
         armada_id?: number | null;
         pool_id?: number | null;
         pool_name?: string | null;
+        monthly?: {
+            summary: {
+                period_label: string;
+                charter_count: number;
+                departure_count: number;
+                luggage_count: number;
+                charter_revenue: number;
+                departure_revenue: number;
+                luggage_revenue: number;
+                total_revenue: number;
+                charter_bop: number;
+                departure_bop: number;
+                total_bop: number;
+                gross: number;
+                fixed_cost: number;
+                net_margin: number;
+                target_revenue: number;
+                achievement: number;
+                status: string;
+            };
+            bookings: Array<{ id: number; tanggal: string; jam: string; departure_date: string; rute: string; unit: number; seat: string; name: string; phone: string; pickup_point: string; pembayaran: string; status: string; total: number; revenue: number; bop: number }>;
+            charters: Array<{ id: number; start_date: string; end_date: string; departure_date: string; departure_time: string; name: string; phone: string; pickup_point: string; drop_point: string; layanan: string; payment_status: string; bop_status: string; status: string; armada_nopol: string; driver_name: string; total: number; revenue: number; bop: number }>;
+            bagasi: Array<{ id: number; tanggal: string; created_at: string; departure_date: string; kode_resi: string; sender_name: string; receiver_name: string; quantity: number; payment_status: string; status: string; service_name: string; total: number; revenue: number; bop: number; departure_time: string; departure_unit: number }>;
+        } | null;
     };
 
     let {
@@ -73,6 +97,7 @@
         driverStatus,
         loadDrivers,
         openDriverView,
+        driverDetailLoading = false,
         editDriver,
         removeDriver,
         goBackToData,
@@ -92,6 +117,7 @@
         driverStatus: (row: DriverRow) => string;
         loadDrivers: (page?: number) => void | Promise<void>;
         openDriverView: (row: DriverRow) => void;
+        driverDetailLoading?: boolean;
         editDriver: (row: DriverRow) => void;
         removeDriver: (id: number) => void | Promise<void>;
         goBackToData: () => void;
@@ -123,6 +149,19 @@
     const selectedPeriodLabel = () =>
         periodOptions.find((option) => option.value === driverPeriod)?.label ??
         'Periode sekarang';
+
+    const formatDateLabel = (value: string) => {
+        const raw = String(value ?? '').trim();
+        if (raw === '') return '-';
+        const date = new Date(`${raw}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return raw;
+
+        return new Intl.DateTimeFormat('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        }).format(date);
+    };
 
     const exportHref = $derived.by(() => {
         const params = new URLSearchParams();
@@ -357,294 +396,69 @@
         {@const achievement = driverAchievement(driver)}
         {@const status = driverStatus(driver)}
         {@const detailCards = driverDetailCards(driver)}
-        <div
-            class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm"
-        >
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="min-w-0 space-y-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h3
-                            class="truncate text-lg font-bold tracking-tight text-foreground"
-                        >
-                            {driver.nama}
-                        </h3>
-                        <Badge
-                            variant="secondary"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
-                        >
-                            {driver.category || '-'}
-                        </Badge>
-                        <Badge
-                            variant="outline"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
-                        >
-                            {status}
-                        </Badge>
-                        <Badge
-                            variant="outline"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
-                        >
-                            {achievement.toFixed(1)}%
-                        </Badge>
-                    </div>
-                    <p class="text-sm text-muted-foreground">
-                        {driver.phone || '-'} · {driver.pool_name ||
-                            'Semua Pool'} · {driver.category || '-'}
-                    </p>
-                </div>
-
-                <div class="flex shrink-0 flex-wrap gap-2">
-                    {#if canManage}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            class="h-9 rounded-md"
-                            onclick={() => editDriver(driver)}
-                        >
-                            Edit
-                        </Button>
-                    {/if}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="h-9 rounded-md"
-                        onclick={goBackToData}
-                    >
-                        Kembali
-                    </Button>
+        {#if driverDetailLoading}
+            <div class="animate-pulse space-y-4 rounded-xl border border-border/70 p-4">
+                <div class="h-36 rounded-xl bg-muted"></div>
+                <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                    {#each Array(8) as _, index (index)}<div class="h-20 rounded-lg bg-muted"></div>{/each}
                 </div>
             </div>
-
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {#each detailCards as card (card.key)}
-                    <article
-                        class="rounded-xl border border-border/70 bg-card/95 p-3 shadow-sm"
-                    >
-                        <p
-                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                        >
-                            {card.label}
-                        </p>
-                        <p
-                            class={`mt-2 text-xl font-bold tabular-nums ${card.tone}`}
-                        >
-                            {card.valueText}
-                        </p>
-                        <p class="mt-1 text-[11px] text-muted-foreground">
-                            {card.note}
-                        </p>
-                    </article>
-                {/each}
-            </div>
-
-            <div
-                class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]"
-            >
-                <section
-                    class="rounded-xl border border-border/70 bg-card/95 p-4 shadow-sm"
-                >
-                    <div class="flex items-center justify-between gap-3">
+        {:else}
+        {@const monthlyDetail = driver.monthly ?? null}
+        {@const monthly = monthlyDetail?.summary ?? null}
+        <div class="space-y-5">
+            <section class="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-950 px-4 py-5 text-white shadow-md sm:px-6">
+                <div class="pointer-events-none absolute -right-12 -top-16 size-56 rounded-full border-[28px] border-cyan-400/10"></div>
+                <div class="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0 space-y-4">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary" class="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10">{driver.pool_name || 'Semua Pool'}</Badge>
+                            <Badge variant="outline" class="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-cyan-100">{driver.category || 'Driver'}</Badge>
+                        </div>
                         <div>
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                            >
-                                Identitas Driver
-                            </p>
-                            <h4
-                                class="mt-1 text-sm font-semibold text-foreground"
-                            >
-                                Informasi utama dan penugasan
-                            </h4>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">Detail Driver</p>
+                            <h2 class="mt-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">{driver.nama}</h2>
+                            <p class="mt-1 text-sm text-slate-300">{driver.phone || 'Kontak belum dicatat'}{driver.nopol ? ` · ${driver.nopol}` : ''}</p>
                         </div>
-                        <Badge
-                            variant="secondary"
-                            class={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide ${driverStatusTone(status)}`}
-                        >
-                            {status}
-                        </Badge>
+                        <div class="grid gap-3 text-xs text-slate-300 sm:grid-cols-3">
+                            <div><p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Kategori</p><p class="mt-1 font-medium text-slate-100">{driver.category || '-'}</p></div>
+                            <div><p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Trip / Rit</p><p class="mt-1 font-medium text-slate-100">{Number(driver.departure_count || 0)} keberangkatan</p></div>
+                            <div><p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Status</p><p class="mt-1 font-medium text-slate-100">{status}</p></div>
+                        </div>
                     </div>
+                    <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+                        {#if canManage}<Button type="button" variant="outline" class="h-10 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white" onclick={() => editDriver(driver)}>Edit</Button>{/if}
+                        <Button type="button" variant="outline" class="h-10 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white" onclick={goBackToData}>Kembali ke daftar</Button>
+                    </div>
+                </div>
+            </section>
 
-                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                        <div
-                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
-                        >
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                            >
-                                Kontak
-                            </p>
-                            <p
-                                class="mt-1 text-sm font-semibold text-foreground"
-                            >
-                                {driver.phone || '-'}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
-                        >
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                            >
-                                Kategori
-                            </p>
-                            <p
-                                class="mt-1 text-sm font-semibold text-foreground"
-                            >
-                                {driver.category || '-'}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
-                        >
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                            >
-                                Pool
-                            </p>
-                            <p
-                                class="mt-1 text-sm font-semibold text-foreground"
-                            >
-                                {driver.pool_name || 'Semua Pool'}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
-                        >
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                            >
-                                Trip / Rit
-                            </p>
-                            <p
-                                class="mt-1 text-sm font-semibold text-foreground"
-                            >
-                                {Number(driver.departure_count || 0)}
-                            </p>
-                        </div>
-                    </div>
+            <section class="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
+                <div class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div><p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ringkasan bulanan</p><h3 class="mt-1 text-base font-semibold tracking-tight">{monthly?.period_label ?? selectedPeriodLabel()}</h3></div>
+                    <div class="flex flex-wrap items-center gap-2"><Badge variant="secondary" class="rounded-full px-2.5 py-1 text-xs font-bold tabular-nums">{(monthly?.achievement ?? achievement).toFixed(1)}% tercapai</Badge><Badge variant="outline" class={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide ${driverStatusTone(monthly?.status ?? status)}`}>{monthly?.status ?? status}</Badge></div>
+                </div>
+                <div class="grid gap-px bg-border/60 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {#each detailCards as card (card.key)}<article class="min-w-0 bg-background px-4 py-3.5 sm:px-5"><p class="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">{card.label}</p><p class={`mt-1.5 break-words text-base font-bold tabular-nums ${card.tone}`}>{card.valueText}</p><p class="mt-1 text-[11px] leading-4 text-muted-foreground">{card.note}</p></article>{/each}
+                </div>
+            </section>
 
-                    <div
-                        class="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3"
-                    >
-                        <p
-                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                        >
-                            Ringkasan Finansial
-                        </p>
-                        <p class="mt-1 text-sm text-foreground">
-                            Revenue {formatCurrency(
-                                Number(driver.revenue || 0),
-                            )} · Gross {formatCurrency(gross)} · Net {formatCurrency(
-                                net,
-                            )}
-                        </p>
-                    </div>
+            <div class="grid gap-4 2xl:grid-cols-3">
+                <section class="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
+                    <div class="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3.5"><div><p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Manifest keberangkatan</p><h4 class="mt-1 text-sm font-semibold">{monthly?.departure_count ?? 0} trip</h4></div><Badge variant="secondary" class="rounded-full px-2 py-1 text-[10px]">{formatCurrency(monthly?.departure_revenue ?? 0)}</Badge></div>
+                    <div class="max-h-[26rem] overflow-auto"><table class="w-full min-w-[680px] text-left text-xs"><thead class="sticky top-0 z-10 bg-muted/60 text-[10px] uppercase tracking-wide text-muted-foreground backdrop-blur"><tr><th class="px-3 py-2">Tanggal</th><th class="px-3 py-2">Rute</th><th class="px-3 py-2">Slot</th><th class="px-3 py-2">Pelanggan</th><th class="px-3 py-2 text-right">Revenue</th></tr></thead><tbody class="divide-y divide-border/60">{#if (monthlyDetail?.bookings ?? []).length === 0}<tr><td class="px-4 py-8 text-center text-muted-foreground" colspan="5">Tidak ada manifest pada periode ini.</td></tr>{:else}{#each monthlyDetail?.bookings ?? [] as row (row.id)}<tr class="align-top hover:bg-muted/30"><td class="whitespace-nowrap px-3 py-2.5 text-muted-foreground">{formatDateLabel(row.departure_date || row.tanggal)}<div class="text-[10px]">{row.jam}</div></td><td class="px-3 py-2.5 font-medium">{row.rute}</td><td class="px-3 py-2.5 tabular-nums">{row.unit}</td><td class="px-3 py-2.5"><div class="font-medium">{row.name}</div><div class="text-[10px] text-muted-foreground">{row.seat} · {row.pickup_point}</div></td><td class="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td></tr>{/each}{/if}</tbody></table></div>
                 </section>
-
-                <section
-                    class="rounded-xl border border-border/70 bg-card/95 p-4 shadow-sm"
-                >
-                    <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                            >
-                                Komposisi Revenue
-                            </p>
-                            <h4
-                                class="mt-1 text-sm font-semibold text-foreground"
-                            >
-                                Detail sumber pendapatan
-                            </h4>
-                        </div>
-                        <Badge
-                            variant="secondary"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
-                        >
-                            Target {formatCurrency(
-                                Number(driver.target_revenue_bulanan || 0),
-                            )}
-                        </Badge>
-                    </div>
-
-                    <div class="mt-4 space-y-3">
-                        <div
-                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
-                        >
-                            <div
-                                class="flex items-center justify-between gap-2"
-                            >
-                                <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                >
-                                    Charter Revenue
-                                </span>
-                                <span
-                                    class="font-semibold tabular-nums text-foreground"
-                                >
-                                    {formatCurrency(
-                                        Number(driver.charter_revenue || 0),
-                                    )}
-                                </span>
-                            </div>
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                Charter BOP {formatCurrency(
-                                    Number(driver.charter_bop || 0),
-                                )}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
-                        >
-                            <div
-                                class="flex items-center justify-between gap-2"
-                            >
-                                <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                >
-                                    Keberangkatan Revenue
-                                </span>
-                                <span
-                                    class="font-semibold tabular-nums text-foreground"
-                                >
-                                    {formatCurrency(
-                                        Number(driver.departure_revenue || 0),
-                                    )}
-                                </span>
-                            </div>
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                Keberangkatan BOP {formatCurrency(
-                                    Number(driver.departure_bop || 0),
-                                )}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-lg border border-border/60 bg-muted/20 p-3"
-                        >
-                            <div
-                                class="flex items-center justify-between gap-2"
-                            >
-                                <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                >
-                                    Bagasi Revenue
-                                </span>
-                                <span
-                                    class="font-semibold tabular-nums text-foreground"
-                                >
-                                    {formatCurrency(
-                                        Number(driver.luggage_revenue || 0),
-                                    )}
-                                </span>
-                            </div>
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                Komponen bagasi driver
-                            </p>
-                        </div>
-                    </div>
+                <section class="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
+                    <div class="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3.5"><div><p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Carter</p><h4 class="mt-1 text-sm font-semibold">{monthly?.charter_count ?? 0} data</h4></div><Badge variant="secondary" class="rounded-full px-2 py-1 text-[10px]">{formatCurrency(monthly?.charter_revenue ?? 0)}</Badge></div>
+                    <div class="max-h-[26rem] overflow-auto"><table class="w-full min-w-[760px] text-left text-xs"><thead class="sticky top-0 z-10 bg-muted/60 text-[10px] uppercase tracking-wide text-muted-foreground backdrop-blur"><tr><th class="px-3 py-2">Tanggal</th><th class="px-3 py-2">Rute</th><th class="px-3 py-2">Penyewa</th><th class="px-3 py-2">Armada</th><th class="px-3 py-2 text-right">Revenue</th><th class="px-3 py-2 text-right">BOP</th></tr></thead><tbody class="divide-y divide-border/60">{#if (monthlyDetail?.charters ?? []).length === 0}<tr><td class="px-4 py-8 text-center text-muted-foreground" colspan="6">Tidak ada carter pada periode ini.</td></tr>{:else}{#each monthlyDetail?.charters ?? [] as row (row.id)}<tr class="align-top hover:bg-muted/30"><td class="whitespace-nowrap px-3 py-2.5 text-muted-foreground">{formatDateLabel(row.departure_date || row.start_date)}<div class="text-[10px]">{row.departure_time || '-'}</div></td><td class="px-3 py-2.5"><div class="font-medium">{row.pickup_point}</div><div class="text-[10px] text-muted-foreground">{row.drop_point}</div></td><td class="px-3 py-2.5"><div class="font-medium">{row.name}</div><div class="text-[10px] text-muted-foreground">{row.phone}</div></td><td class="px-3 py-2.5"><div class="font-medium">{row.armada_nopol || '-'}</div><div class="text-[10px] text-muted-foreground">{row.layanan}</div></td><td class="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td><td class="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">{formatCurrency(row.bop ?? 0)}</td></tr>{/each}{/if}</tbody></table></div>
+                </section>
+                <section class="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
+                    <div class="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3.5"><div><p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Bagasi</p><h4 class="mt-1 text-sm font-semibold">{monthly?.luggage_count ?? 0} data</h4></div><Badge variant="secondary" class="rounded-full px-2 py-1 text-[10px]">{formatCurrency(monthly?.luggage_revenue ?? 0)}</Badge></div>
+                    <div class="max-h-[26rem] overflow-auto"><table class="w-full min-w-[760px] text-left text-xs"><thead class="sticky top-0 z-10 bg-muted/60 text-[10px] uppercase tracking-wide text-muted-foreground backdrop-blur"><tr><th class="px-3 py-2">Tanggal</th><th class="px-3 py-2">Resi</th><th class="px-3 py-2">Pengirim</th><th class="px-3 py-2">Penerima</th><th class="px-3 py-2 text-right">Revenue</th><th class="px-3 py-2 text-right">BOP</th></tr></thead><tbody class="divide-y divide-border/60">{#if (monthlyDetail?.bagasi ?? []).length === 0}<tr><td class="px-4 py-8 text-center text-muted-foreground" colspan="6">Tidak ada bagasi pada periode ini.</td></tr>{:else}{#each monthlyDetail?.bagasi ?? [] as row (row.id)}<tr class="align-top hover:bg-muted/30"><td class="whitespace-nowrap px-3 py-2.5 text-muted-foreground">{formatDateLabel(row.departure_date || row.tanggal)}<div class="text-[10px]">Slot {row.departure_unit || '-'}</div></td><td class="px-3 py-2.5"><div class="font-medium">{row.kode_resi}</div><div class="text-[10px] text-muted-foreground">{row.service_name}</div></td><td class="px-3 py-2.5"><div class="font-medium">{row.sender_name}</div><div class="text-[10px] text-muted-foreground">Qty {row.quantity}</div></td><td class="px-3 py-2.5"><div class="font-medium">{row.receiver_name}</div><div class="text-[10px] text-muted-foreground">Slot {row.departure_unit}</div></td><td class="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">{formatCurrency(row.revenue ?? row.total)}</td><td class="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">{formatCurrency(row.bop ?? 0)}</td></tr>{/each}{/if}</tbody></table></div>
                 </section>
             </div>
         </div>
+        {/if}
     {:else}
         <div
             class="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground"

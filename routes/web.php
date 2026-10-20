@@ -330,6 +330,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
         Route::get('activity-logs', [AdminOpsApiController::class, 'activityLogsIndex'])->middleware('permission:logs.view')->name('activity-logs.index');
         Route::get('armadas/export', [AdminOpsApiController::class, 'armadasExport'])->middleware('permission:report.export')->name('armadas.export');
         Route::get('drivers/export', [AdminOpsApiController::class, 'driversExport'])->middleware('permission:report.export')->name('drivers.export');
+        Route::get('drivers/{id}', [AdminOpsApiController::class, 'driversShow'])->middleware('permission:driver.view')->name('drivers.show');
         Route::get('reports/summary', [AdminOpsApiController::class, 'reportsSummary'])->middleware('permission:report.view')->name('reports.summary');
         Route::get('reports/bookings-csv', [AdminOpsApiController::class, 'reportsBookingsCsv'])->middleware('permission:report.export')->name('reports.bookings-csv');
         Route::get('reports/revenue-csv', [AdminOpsApiController::class, 'reportsRevenueCsv'])->middleware('permission:report.export')->name('reports.revenue-csv');
